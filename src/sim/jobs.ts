@@ -6,7 +6,7 @@ import {
 import { BUILDINGS } from '../data/buildings';
 import { def } from './content';
 import { gain, type Fx } from './gain';
-import { chance, rand } from './rng';
+import { chance } from './rng';
 import { isWorking } from './state';
 import type { Building, CheckResult, GameState, JobId, Resident, ResourceId } from './types';
 
@@ -44,11 +44,18 @@ export function openJobs(s: GameState): { job: Exclude<JobId, 'none'>; appeal: n
   return JOBS.filter((j) => used(s, j.id) < slots(s, j.id)).map((j) => ({ job: j.id, appeal: j.appeal }));
 }
 
-/** A job picked at random, weighted by appeal. Null when no slot is open. */
-export function autoPick(s: GameState): Exclude<JobId, 'none'> | null {
+/**
+ * A job picked at random, weighted by appeal. Null when no slot is open.
+ * The roll comes from a hash of the month and the resident, not the game's random stream,
+ * so choosing jobs never shifts when events or arrivals happen.
+ */
+export function autoPick(s: GameState, salt = 0): Exclude<JobId, 'none'> | null {
   const open = openJobs(s);
   if (open.length === 0) return null;
-  let roll = rand(s) * open.reduce((n, o) => n + o.appeal, 0);
+  let h = Math.imul(s.month * 7919 + salt + 1, 0x9e3779b1) ^ s.rng;
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  let roll = (((h ^ (h >>> 16)) >>> 0) / 4294967296) * open.reduce((n, o) => n + o.appeal, 0);
   for (const o of open) if ((roll -= o.appeal) < 0) return o.job;
   return open[open.length - 1].job;
 }
@@ -56,7 +63,7 @@ export function autoPick(s: GameState): Exclude<JobId, 'none'> | null {
 function autoAssign(s: GameState, fx: Fx): void {
   for (const r of s.residents) {
     if (r.job !== 'none' || r.manual) continue;
-    const job = autoPick(s);
+    const job = autoPick(s, r.id);
     if (!job) return;
     assign(s, r, job);
     const site = jobSite(s, job);

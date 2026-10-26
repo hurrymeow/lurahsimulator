@@ -1,5 +1,6 @@
 import { EN, type Key } from './en';
 import { ID } from './id';
+import { ID_HIGHER_DATA } from './higher-id';
 import { ID_DATA } from './id-data';
 
 export type Lang = 'id' | 'en';
@@ -33,7 +34,7 @@ export function t(key: Key, vars?: Record<string, string | number>): string {
 
 /** Data-file strings: English inline in the data, Indonesian looked up by key. */
 export function tr(key: string, english: string): string {
-  return lang === 'id' ? (ID_DATA[key] ?? english) : english;
+  return lang === 'id' ? (ID_DATA[key] ?? ID_HIGHER_DATA[key] ?? english) : english;
 }
 
 // Data accessors. Pass the def so callers never build keys by hand.

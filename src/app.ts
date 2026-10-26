@@ -14,6 +14,7 @@ import type { GameState, ResourceId, SimEffect } from './sim/types';
 import { audio } from './audio';
 import { loadSettings, saveSettings, type Settings } from './settings';
 import { storage } from './storage';
+import { reportExtra } from './ui/report';
 import { h, missingList } from './ui/dom';
 import { RIVAL_NAME } from './data/ranking';
 import { score } from './sim/ranking';
@@ -32,7 +33,12 @@ interface Notice {
   tone: 'good' | 'bad' | 'info';
   /** Extra content under the body, such as the stat changes of an event. */
   extra?: Node;
+  /** Extra class on the card. */
+  cls?: string;
 }
+
+type ExplainId = ResourceId | 'pop';
+const HINT_KEY = 'pakrt.hinted';
 
 export const RES_META: Record<ResourceId, { label: () => string; icon: string }> = {
   rupiah: { label: () => t('res.rupiah'), icon: 'rupiah' },
@@ -136,6 +142,11 @@ export class App {
         if (f.fanfare) this.view.pulse();
         if (f.fanfare) this.modal(f);
         else this.notice(f);
+      } else if (f.kind === 'report') {
+        const r = reportExtra(f.report);
+        this.view.pulse();
+        audio.play('fanfare');
+        this.modal({ title: r.title, body: r.body, tone: 'info', extra: r.extra, cls: 'report-card' });
       } else if (f.kind === 'event') {
         this.haptic(25);
         audio.play('event');
@@ -178,9 +189,10 @@ export class App {
       const check = checkChoice(this.s, c);
       const cost = eventCost(this.s, c);
       const label = eLabel(e, i, c).replace(/ · Rp [\d.]+/, '').replace(/ · \d Orang Dalam/, '');
-      const price = [cost.rupiah ? rupiah(cost.rupiah) : '', cost.orangDalam ? `${cost.orangDalam} ${t('res.orangDalam')}` : ''].filter(Boolean).join(' + ');
+      const od = cost.orangDalam ? [`${cost.orangDalam} `, h('img', { src: iconURL('orangDalam'), alt: t('res.orangDalam'), width: 18, height: 18, class: 'inline-icon' })] : [];
+      const price: Node[] = [...(cost.rupiah ? [document.createTextNode(rupiah(cost.rupiah))] : []), ...(cost.rupiah && od.length ? [document.createTextNode(' + ')] : []), ...od.map((x) => (x instanceof Node ? x : document.createTextNode(x)))];
       return h('div', { class: 'action' },
-        h('button', { class: `btn ${i === 0 ? '' : 'btn-primary'}`, disabled: !check.ok, onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i); } }, price ? `${label} · ${price}` : label),
+        h('button', { class: `btn ${i === 0 ? '' : 'btn-primary'}`, disabled: !check.ok, onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i); } }, label, ...(price.length ? [' · ', ...price] : [])),
         check.ok ? null : missingList(check.missing),
       );
     });
@@ -218,9 +230,8 @@ export class App {
       .map((id) => {
         const v = out.delta![id]!;
         const amt = id === 'rupiah' ? rupiah(Math.abs(v)) : String(Math.round(Math.abs(v) * 10) / 10);
-        return h('div', { class: `outcome-chip ${v < 0 ? 'negative' : 'positive'}`, style: `--c:${RES_COLOUR[id]}` },
+        return h('div', { class: `outcome-chip ${v < 0 ? 'negative' : 'positive'}`, style: `--c:${RES_COLOUR[id]}`, role: 'text', 'aria-label': `${RES_META[id].label()} ${v < 0 ? '-' : '+'}${amt}` },
           h('img', { src: iconURL(RES_META[id].icon), alt: '', width: 24, height: 24 }),
-          h('span', { class: 'outcome-name' }, RES_META[id].label()),
           h('span', { class: 'outcome-value' }, `${v < 0 ? '▼ -' : '▲ +'}${amt}`),
         );
       });
@@ -303,7 +314,7 @@ export class App {
       return;
     }
     el.replaceChildren(
-      h('div', { class: `card ${n.fanfare ? 'fanfare' : ''}`, role: 'dialog', 'aria-live': 'polite' },
+      h('div', { class: `card ${n.fanfare ? 'fanfare' : ''} ${n.cls ?? ''}`, role: 'dialog', 'aria-live': 'polite' },
         n.fanfare ? h('div', { class: 'fanfare-tag' }, t('modal.new')) : null,
         h('h2', {}, n.title),
         h('p', {}, n.body),
@@ -327,21 +338,27 @@ export class App {
   // ---------- HUD ----------
   private buildHud(): void {
     const hud = document.getElementById('hud')!;
-    const chips = (Object.keys(RES_META) as ResourceId[]).map((id) =>
-      h('div', { class: 'chip', id: `chip-${id}`, style: `--c:${RES_COLOUR[id]}` },
-        h('img', { src: iconURL(RES_META[id].icon), alt: '', width: 18, height: 18 }),
-        h('span', { class: 'chip-label' }, RES_META[id].label()),
+    const chip = (id: ExplainId, icon: Node, label: string) =>
+      h('button', { class: 'chip', type: 'button', id: `chip-${id}`, 'aria-label': label, style: `--c:${id === 'pop' ? '#f4f4f5' : RES_COLOUR[id]}`, onclick: () => this.explain(id) },
+        icon,
         h('span', { class: 'chip-value' }, ''),
-      ),
-    );
-    const pop = h('div', { class: 'chip', id: 'chip-pop', style: '--c:#f4f4f5' },
-      h('img', { src: iconURL('people'), alt: '', width: 18, height: 18 }),
-      h('span', { class: 'chip-label' }, t('res.warga')),
-      h('span', { class: 'chip-value' }, ''),
-    );
-    hud.replaceChildren(...chips, pop);
-    hud.onclick = () => this.openStats();
+      );
+    const img = (name: string) => h('img', { src: iconURL(name), alt: '', width: 18, height: 18 });
+    const chips = (Object.keys(RES_META) as ResourceId[]).map((id) => chip(id, img(RES_META[id].icon), RES_META[id].label()));
+    hud.replaceChildren(...chips, chip('pop', h('span', { class: 'chip-text' }, t('res.pop')), t('res.pop')));
     this.refresh();
+  }
+
+  /** Tap-to-dismiss card: what the resource is, what moves it, what the extremes do. */
+  explain(id: ExplainId): void {
+    if (!this.idle) return;
+    this.tap();
+    const row = (kind: 'up' | 'down' | 'edge') =>
+      h('p', { class: `exp-row exp-${kind}` }, h('strong', {}, `${{ up: '▲', down: '▼', edge: '■' }[kind]} ${t(`exp.${kind}`)}`), ` ${t(`exp.${id}.${kind}` as Key)}`);
+    const icon = id === 'pop' ? h('span', { class: 'chip-text' }, t('res.pop')) : h('img', { src: iconURL(RES_META[id].icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
+    const title = id === 'pop' ? t('res.warga') : RES_META[id].label();
+    this.modalQueue.push({ title, body: t(`exp.${id}.what` as Key), tone: 'info', extra: h('div', { class: 'exp', style: `--c:${id === 'pop' ? '#f4f4f5' : RES_COLOUR[id]}` }, icon, row('up'), row('down'), row('edge')) });
+    this.showModal();
   }
 
   refresh(): void {
@@ -383,9 +400,20 @@ export class App {
         chip.classList.remove('flash-up', 'flash-down');
         void chip.offsetWidth;
         chip.classList.add(v > was ? 'flash-up' : 'flash-down');
+        this.hintChip(k, chip);
       }
     }
     this.lastRes = now;
+  }
+
+  /** The first time a chip moves, ring it so players find the tap. Remembered across sessions. */
+  private hintChip(id: string, chip: HTMLElement): void {
+    let seen: string[] = [];
+    try { seen = JSON.parse(storage.get(HINT_KEY) ?? '[]'); } catch { /* fresh */ }
+    if (seen.includes(id)) return;
+    storage.set(HINT_KEY, JSON.stringify([...seen, id]));
+    chip.classList.add('hint');
+    chip.addEventListener('animationend', (e) => { if ((e as AnimationEvent).animationName === 'hint') chip.classList.remove('hint'); });
   }
 
   openStats(): void {

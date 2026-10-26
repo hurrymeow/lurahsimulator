@@ -215,7 +215,7 @@ describe('auto jobs', () => {
     s.buildings.push({ uid: 99, def: 'wifi', x: 5, y: 5, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
     const n: Record<string, number> = {};
     for (let i = 0; i < 600; i++) {
-      const j = autoPick(s)!;
+      const j = autoPick(s, i)!;
       n[j] = (n[j] ?? 0) + 1;
     }
     expect(n.buzzer).toBeGreaterThan(n.influencer);
