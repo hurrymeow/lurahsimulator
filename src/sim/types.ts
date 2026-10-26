@@ -3,10 +3,51 @@
 export type ResourceId = 'rupiah' | 'sabar' | 'orangDalam' | 'viral';
 export type Resources = Record<ResourceId, number>;
 
+export type StageId = 'rt' | 'rw' | 'kelurahan';
+export type Stars = 0 | 1 | 2 | 3;
+
+/**
+ * One line of a star checklist. To add a kind: add it here, add a check in
+ * GOAL_CHECKS (sim/stages.ts) and a line in the i18n files. The compiler lists the gaps.
+ */
+export type Goal =
+  | { kind: 'residents'; n: number }
+  | { kind: 'combos'; n: number }
+  /** Total yearly ranking wins. */
+  | { kind: 'rankWins'; n: number }
+  /** Ranking wins in a row, counting back from the latest year. */
+  | { kind: 'winStreak'; n: number }
+  | { kind: 'sabar'; n: number };
+
+/** What it takes to earn star number `index + 1`, and what that star gives. */
+export interface StarDef {
+  goals: Goal[];
+  /** Building def ids that open when this star is earned. */
+  unlocks: string[];
+  reward?: Partial<Resources>;
+}
+
+export interface StageDef {
+  id: StageId;
+  /** Title shown in the Menu header, one per star count (0 to 3 stars). */
+  titles: [string, string, string, string];
+  /** The stage the SK at 3 stars promotes to. */
+  next?: StageId;
+  stars: [StarDef, StarDef, StarDef];
+}
+
+export interface StageState {
+  current: StageId;
+  /** Stars per stage. They only ever go up. */
+  stars: Record<StageId, Stars>;
+}
+
 export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer';
 
 export interface Requirement {
   population?: number;
+  /** Needs at least this many stars in a stage. */
+  stars?: { stage: StageId; n: number };
   buildings?: string[];
   year?: number;
 }
@@ -121,6 +162,7 @@ export interface GameState {
   pendingEvent: string | null;
   /** Month each event last fired, for cooldowns. Absent in older saves. */
   lastEvent?: Record<string, number>;
+  stage: StageState;
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
   stats: { earned: number; spent: number; arrived: number; left: number };

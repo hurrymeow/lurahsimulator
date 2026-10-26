@@ -23,6 +23,13 @@ export const EN = {
   'date.months': 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
   'date.label': '{month} · Year {year}',
 
+  // stages
+  'stage.goal.residents': '{n} residents (have {have})',
+  'stage.goal.combos': '{n} combos found (have {have})',
+  'stage.goal.rankWins': '{n} ranking wins (have {have})',
+  'stage.goal.winStreak': '{n} ranking wins in a row (have {have})',
+  'stage.goal.sabar': 'Sabar of at least {n} (have {have})',
+
   // menu
   'menu.kampung': 'Kampung',
   'menu.records': 'Records',
