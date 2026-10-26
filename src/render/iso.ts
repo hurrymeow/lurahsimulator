@@ -1,6 +1,7 @@
 // Isometric pixel art, rasterised in code at 1 art pixel per canvas pixel. No external art.
 // Party-game look: flat cel shading, a warm storybook palette and a bold ink outline round every shape and
 // along every face edge. Geometry stays straight and isometric so the map never gets busy.
+import { HIGHER_ART } from './art-higher';
 import { PALETTE } from './sprites';
 
 /** Art-pixel size of one ground diamond. The view scales these up by a whole number. */
@@ -34,7 +35,7 @@ function shade(c: string, f: number): string {
 /** Two-tone cel shading: lit left face, shaded right face, bright top. */
 const FACE_SHADE: Record<Face, number> = { L: 1, R: 0.72, T: 1.18 };
 
-class Painter {
+export class Painter {
   readonly w = TW;
   readonly h = TOP + TH;
   readonly data: Uint8ClampedArray;
@@ -388,7 +389,7 @@ export function iso(name: string, variant?: string): Art {
   const hit = cache.get(key);
   if (hit) return hit;
   const p = new Painter();
-  (ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant);
+  (ART[name] ?? HIGHER_ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant);
   const art = p.finish();
   cache.set(key, art);
   return art;
