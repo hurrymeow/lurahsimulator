@@ -49,6 +49,7 @@ export const cEffect = (c: { id: string; effect: string }) => tr(`combo.${c.id}.
 export const jName = (j: { id: string; name: string }) => tr(`job.${j.id}.name`, j.name);
 export const jBlurb = (j: { id: string; blurb: string }) => tr(`job.${j.id}.blurb`, j.blurb);
 export const wName = (w: { id: string; name: string }) => tr(`wacana.${w.id}.name`, w.name);
+export const wTrade = (w: { id: string; trade: string }) => tr(`wacana.${w.id}.trade`, w.trade);
 export const wLine = (w: { id: string; line: string }) => tr(`wacana.${w.id}.line`, w.line);
 export const eName = (e: { id: string; name: string }) => tr(`event.${e.id}.name`, e.name);
 export const eBody = (e: { id: string; body: string }) => tr(`event.${e.id}.body`, e.body);
