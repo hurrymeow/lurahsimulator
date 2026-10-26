@@ -76,3 +76,12 @@ One line per decision, with the reason. Newest at the bottom.
 - **Animated backdrop:** the sun bobs 2 art pixels and blinks (happy closed eyes) every 3.2 s with a double blink now and then; it has big sparkly eyes, rosy cheeks and an open smile. Trees round the kampung bounce in a slow wave, stretching up to 1 art pixel from the roots so pixels stay whole. Both are ambient life and hold still with reduce motion. Sun and trees are drawn per frame over the static world canvas, culled to the view.
 - **HD-2D lighting (Octopath Traveler references):** baked wall-base occlusion plus a soft contact shadow under each building (always on). With effects on: a warm soft-light grade from the top left, breathing god rays, a deep warm vignette, dust motes that become fireflies at night, and a tilt-shift blur on the top 20% of the map only, so tapped tiles stay sharp. Each layer is cached at view size and costs one blit. The far mountains are hazed toward the sky. Rules live in ART.md.
 - **Lighting cost (frame-rate test failed on main):** the first lighting pass used full-screen `soft-light` and `screen` blends, about 8 ms a frame, and the effects-on frame rate dropped below 80% of effects-off on a CI machine. Grade, rays and vignette are now baked into one plain-alpha layer (plus a night vignette) and motes use plain alpha. That costs about 0.5 ms, or 97% of the effects-off frame rate at 6x CPU throttle. The rays no longer breathe.
+
+## Resource chips explain themselves
+
+- HUD chips are icon plus number. Population shows the word "Pop" because the people icon read as a building.
+- Each chip is a 48px button. Tap opens a dismiss-on-tap card: meaning, what raises it, what drains it, extremes. Texts live in the EN and ID tables (`exp.*`).
+- Each chip rings once the first time its value moves, remembered in `pakrt.hinted`. Reduce motion turns the ring off.
+- Outcome chips and event/skip-queue costs drop the resource name for the icon. "Need X" messages keep names because they say exactly what is missing.
+- Stats panel is no longer on the HUD tap. It stays under Menu, Records.
+- No new art made. Existing icons reused, so the artist's sprites apply once they land on main.
