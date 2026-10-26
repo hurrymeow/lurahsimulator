@@ -194,6 +194,8 @@ export interface Building {
   placedAt: number;
   /** Uid of the shop a tukang parkir belongs to. */
   owner?: number;
+  /** 1 draws the building mirrored. Free to turn, no effect on play. */
+  rot?: 0 | 1;
   /** A restarted project never freezes again. */
   restarted?: boolean;
   /** No path links it to the Kantor RT, so it earns and attracts nothing. Set by refreshAccess. */

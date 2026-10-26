@@ -1138,3 +1138,33 @@ test.describe('build mode', () => {
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'jalan').length)).toBe(5);
   });
 });
+
+test.describe('moving and turning', () => {
+  test('a placed building moves and turns for free from its inspector', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const pk = <T,>(code: string) => page.evaluate((c) => new Function('a', `return ${c}`)((window as unknown as { pakrt: unknown }).pakrt), code) as Promise<T>;
+    const uid = await pk<number>("a.s.buildings.find((b) => b.def === 'rumah').uid");
+    const cash = await pk<number>('a.s.res.rupiah');
+    await pk(`a.inspect(${uid})`);
+    await expect(page.locator('#sheet .action-row .btn')).toHaveCount(2);
+    await expectLegible(page, 'inspector with move and rotate');
+    await page.locator('#sheet .action-row .btn').nth(1).click();
+    expect(await pk(`a.s.buildings.find((b) => b.uid === ${uid}).rot`)).toBe(1);
+
+    await page.locator('#sheet .action-row .btn').nth(0).click();
+    await expect(page.locator('#place-float')).toBeVisible();
+    const box = (await page.locator('#map').boundingBox())!;
+    const at = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      return app.view.tileCentre(k.x, k.y - 1);
+    });
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    await expect(page.locator('#place-ok')).toBeEnabled();
+    await page.locator('#place-ok').click();
+    const k = await pk<{ x: number; y: number }>("a.s.buildings.find((b) => b.def === 'kantorRT')");
+    expect(await pk<number>(`a.s.buildings.find((b) => b.uid === ${uid}).y`)).toBe(k.y - 1);
+    expect(await pk<number>('a.s.res.rupiah')).toBe(cash);
+  });
+});

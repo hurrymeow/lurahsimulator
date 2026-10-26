@@ -7,14 +7,14 @@ import { iconURL } from './render/sprites';
 import { def } from './sim/content';
 import { eventDef } from './data/events';
 import { checkChoice, eventCost, resolveEvent } from './sim/events';
-import { checkPlace, place } from './sim/rules';
+import { checkMove, checkPlace, moveBuilding, place } from './sim/rules';
 import { linePath, placeLine, type LineTile } from './sim/line';
 import { lotAt } from './sim/area';
 import { promote } from './sim/grow';
 import { RT_H, RT_W } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
-import { attractTarget, buildCost, buildingAt, footprintOf, newGame, population, housing } from './sim/state';
+import { attractTarget, buildCost, buildingAt, byUid, footprintOf, newGame, population, housing } from './sim/state';
 import { tick } from './sim/tick';
 import type { GameState, ResourceId, SimEffect } from './sim/types';
 import { audio } from './audio';
@@ -560,8 +560,24 @@ export class App {
   private line: { a: { x: number; y: number }; b: { x: number; y: number } | null } | null = null;
   private lineTiles: LineTile[] = [];
 
+  /** Uid of the building being moved, or null while placing something new. */
+  private moving: number | null = null;
+
+  /** Picks a placed building up. Moving is free, and the building keeps its level and timers. */
+  startMoving(uid: number): void {
+    const b = byUid(this.s, uid);
+    if (!b) return;
+    this.startPlacing(b.def);
+    this.moving = uid;
+    this.view.hidden = uid;
+    this.view.ghost = { x: b.x, y: b.y, ok: true, sprite: def(b.def).sprite, n: footprintOf(b.def), flip: b.rot === 1 };
+    this.updatePlacing();
+  }
+
   startPlacing(id: string): void {
     closeSheet();
+    this.moving = null;
+    this.view.hidden = null;
     this.placing = id;
     this.line = null;
     this.view.ghost = null;
@@ -573,6 +589,8 @@ export class App {
 
   stopPlacing(): void {
     this.placing = null;
+    this.moving = null;
+    this.view.hidden = null;
     this.line = null;
     this.view.ghost = null;
     document.getElementById('mainbar')!.hidden = false;
@@ -595,7 +613,9 @@ export class App {
     const n = footprintOf(id);
     const gx = tile.x - Math.floor((n - 1) / 2);
     const gy = tile.y - Math.floor((n - 1) / 2);
-    this.view.ghost = { x: gx, y: gy, ok: checkPlace(this.s, id, gx, gy).ok, sprite: d.sprite, n };
+    const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
+    const ok = mover ? checkMove(this.s, mover, gx, gy).ok : checkPlace(this.s, id, gx, gy).ok;
+    this.view.ghost = { x: gx, y: gy, ok, sprite: d.sprite, n, flip: mover?.rot === 1 };
     this.updatePlacing();
   }
 
@@ -626,6 +646,17 @@ export class App {
       this.refresh();
       return;
     }
+    const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
+    if (mover) {
+      if (!moveBuilding(this.s, mover, g.x, g.y).ok) return;
+      this.view.burst(g.x, g.y);
+      this.haptic(15);
+      audio.play('build');
+      this.stopPlacing();
+      this.save();
+      this.refresh();
+      return;
+    }
     const r = place(this.s, this.placing, g.x, g.y);
     if (r.ok) {
       this.view.burst(g.x, g.y);
@@ -646,7 +677,8 @@ export class App {
     const btn = document.getElementById('place-ok') as HTMLButtonElement;
     const float = document.getElementById('place-float')!;
     const g = this.view.ghost;
-    const title = h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`);
+    const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
+    const title = h('strong', {}, mover ? t('build.moveTitle', { name: bName(d) }) : `${bName(d)} · ${rupiah(buildCost(this.s, d))}`);
     float.hidden = !g;
     document.getElementById('place-exit')!.hidden = !!g;
     if (this.line && g?.tiles) {
@@ -670,12 +702,12 @@ export class App {
       btn.disabled = true;
       return;
     }
-    const check = checkPlace(this.s, this.placing, g.x, g.y);
+    const check = mover ? checkMove(this.s, mover, g.x, g.y) : checkPlace(this.s, this.placing, g.x, g.y);
     g.ok = check.ok;
     btn.disabled = !check.ok;
     const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
     const noRoad = check.ok && !FLAT.has(d.id) && !d.id.startsWith('kantor') && (d.scope ?? 'rt') === 'rt' && !hasRoadBeside(connectedRoad(this.s), { def: d.id, x: g.x, y: g.y });
-    info.replaceChildren(title, check.ok ? h('span', noRoad ? { class: 'warn' } : {}, noRoad ? t('build.noRoad') : instant ? t('build.noPermit') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
+    info.replaceChildren(title, check.ok ? h('span', noRoad ? { class: 'warn' } : {}, noRoad ? t('build.noRoad') : mover ? t('build.moveFree') : instant ? t('build.noPermit') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
   }
 
   /** Keeps the Place and Cancel buttons just below the chosen tile, above it when the tile is near the bottom edge. */

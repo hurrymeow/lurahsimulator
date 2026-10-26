@@ -7,7 +7,7 @@ import { gateOpen } from './gate';
 import { neighbourAt } from './grow';
 import { stageTitle } from './stages';
 import { refreshAccess } from './access';
-import { addBuilding, buildCost, buildingAt, count, housing, inBounds, footprintOf, population, tilesOf, upgradeCost, year } from './state';
+import { addBuilding, buildCost, count, covers, footprintOf, housing, inBounds, population, tilesOf, upgradeCost, year } from './state';
 import type { Building, BuildingDef, CheckResult, GameState } from './types';
 
 export { gateOpen };
@@ -33,20 +33,27 @@ export function requirementGaps(s: GameState, d: BuildingDef, opts: { ignoreLimi
   return missing;
 }
 
+/** What is wrong with standing a building on this spot: off the map, in the way, or on the wrong lot. `ignore` is a building that is moving, so it never blocks itself. */
+export function siteGaps(s: GameState, d: BuildingDef, x: number, y: number, ignore?: number): string[] {
+  const missing: string[] = [];
+  const tiles = footprintOf(d.id) === 1 ? [{ x, y }] : tilesOf({ def: d.id, x, y });
+  const off = tiles.find((p) => !inBounds(p.x, p.y));
+  const hit = off ? undefined : tiles.map((p) => s.buildings.find((o) => o.uid !== ignore && covers(o, p.x, p.y)) ?? neighbourAt(s, p.x, p.y)).find(Boolean);
+  const lots = off ? [] : tiles.map((p) => lotAt(p.x, p.y));
+  if (off) missing.push(t('sim.offMap'));
+  else if (hit) missing.push(t('sim.tileHas', { name: bName(def(hit.def)) }));
+  else if (lots.includes('other')) missing.push(t('sim.notYours'));
+  else if (lots.some((l) => l !== (d.scope ?? 'rt'))) missing.push(t(d.scope && d.scope !== 'rt' ? 'sim.needLot' : 'sim.needRtLot'));
+  return missing;
+}
+
 export function checkPlace(s: GameState, id: string, x: number, y: number): CheckResult {
   if (!hasDef(id)) return { ok: false, missing: [t('sim.unknownBuilding')] };
   const d = def(id);
   const missing: string[] = [];
   if (!d.placeable) missing.push(t('sim.cannotPlace', { name: bName(d) }));
   missing.push(...requirementGaps(s, d));
-  const tiles = footprintOf(id) === 1 ? [{ x, y }] : tilesOf({ def: id, x, y });
-  const off = tiles.find((p) => !inBounds(p.x, p.y));
-  const hit = off ? undefined : tiles.map((p) => buildingAt(s, p.x, p.y) ?? neighbourAt(s, p.x, p.y)).find(Boolean);
-  const lots = off ? [] : tiles.map((p) => lotAt(p.x, p.y));
-  if (off) missing.push(t('sim.offMap'));
-  else if (hit) missing.push(t('sim.tileHas', { name: bName(def(hit.def)) }));
-  else if (lots.includes('other')) missing.push(t('sim.notYours'));
-  else if (lots.some((l) => l !== (d.scope ?? 'rt'))) missing.push(t(d.scope && d.scope !== 'rt' ? 'sim.needLot' : 'sim.needRtLot'));
+  missing.push(...siteGaps(s, d, x, y));
   moneyGap(s, buildCost(s, d), missing);
   return result(missing);
 }
@@ -123,4 +130,23 @@ export function skipPermit(s: GameState, b: Building): CheckResult {
   b.status = 'building';
   b.timer = Math.max(1, def(b.def).buildMonths);
   return check;
+}
+
+/** Moving is free. The building keeps its level, status and timers. */
+export function checkMove(s: GameState, b: Building, x: number, y: number): CheckResult {
+  return result(siteGaps(s, def(b.def), x, y, b.uid));
+}
+
+export function moveBuilding(s: GameState, b: Building, x: number, y: number): CheckResult {
+  const check = checkMove(s, b, x, y);
+  if (!check.ok) return check;
+  b.x = x;
+  b.y = y;
+  refreshAccess(s);
+  return check;
+}
+
+/** Turns a building to face the other way. Free, and it changes nothing but the picture. */
+export function rotateBuilding(b: Building): void {
+  b.rot = b.rot ? 0 : 1;
 }
