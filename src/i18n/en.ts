@@ -19,6 +19,7 @@ export const EN = {
   'page.cancel': 'Cancel',
   'page.place': 'Place',
   'page.pause': 'Pause',
+  'page.autoPaused': 'Paused',
   'page.play': 'Play',
   'page.speed': 'Speed {n}x. Tap to change.',
   'page.close': 'Close',

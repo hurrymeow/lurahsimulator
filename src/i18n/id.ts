@@ -19,6 +19,7 @@ export const ID: Record<Key, string> = {
   'page.cancel': 'Batal',
   'page.place': 'Pasang',
   'page.pause': 'Jeda',
+  'page.autoPaused': 'Jeda',
   'page.play': 'Main',
   'page.speed': 'Kecepatan {n}x. Ketuk untuk ganti.',
   'page.close': 'Tutup',

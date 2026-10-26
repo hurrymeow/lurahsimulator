@@ -23,6 +23,7 @@ import { h, missingList } from './ui/dom';
 import { RIVAL_NAMES } from './data/ranking';
 import { areaScore } from './sim/ranking';
 import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
+import { autoPaused, simRunning, type PauseInputs } from './ui/autopause';
 
 export const MONTH_MS = 8000;
 export const SPEEDS = [0, 1, 2, 4] as const;
@@ -96,8 +97,20 @@ export class App {
   }
 
   // ---------- loop ----------
+  private pauseInputs(): PauseInputs {
+    return {
+      speed: this.speed,
+      held: this.held,
+      sheetOpen: sheetOpen(),
+      modals: this.modalQueue.length,
+      pendingEvent: !!this.s.pendingEvent,
+      placing: !!this.placing,
+      howtoOpen: !document.getElementById('howto')!.hidden,
+    };
+  }
+
   get running(): boolean {
-    return this.speed > 0 && !this.held && !sheetOpen() && this.modalQueue.length === 0 && !this.s.pendingEvent;
+    return simRunning(this.pauseInputs());
   }
 
   private frame(now: number): void {
@@ -111,6 +124,8 @@ export class App {
         if (!this.running) break;
       }
     }
+    const badge = document.getElementById('auto-pause');
+    if (badge) badge.hidden = this.held || !autoPaused(this.pauseInputs());
     const bar = document.getElementById('month-progress');
     if (bar) bar.style.width = `${(this.acc / MONTH_MS) * 100}%`;
     this.view.clock = this.s.month + this.acc / MONTH_MS;

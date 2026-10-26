@@ -3,7 +3,7 @@ import { scanLegibility } from './legibility';
 
 /** The project name ends in -id or -en. See playwright.config.ts. */
 const lang = (): 'id' | 'en' => (test.info().project.name.endsWith('-en') ? 'en' : 'id');
-const WORDS = { id: { play: 'Main', onOff: /Nyala|Mati/ }, en: { play: 'Play', onOff: /On|Off/ } };
+const WORDS = { id: { play: 'Main', paused: 'Jeda', close: 'Tutup', onOff: /Nyala|Mati/ }, en: { play: 'Play', paused: 'Paused', close: 'Close', onOff: /On|Off/ } };
 
 async function start(page: Page): Promise<void> {
   await page.goto(`/?debug&lang=${lang()}`);
@@ -346,6 +346,37 @@ test.describe('slim HUD and one menu', () => {
     }
     await expect(page.locator('#chip-pop')).toContainText('Pop');
     await expect(page.locator('#chip-sabar')).not.toContainText(/Sabar/);
+  });
+
+  test('menu and build mode hold game time, then resume; a manual pause stays', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const pk = (fn: string) => page.evaluate(`(() => { const a = window.pakrt; return ${fn}; })()`);
+    const badge = page.locator('#auto-pause');
+    await expect(badge).toBeHidden();
+    expect(await pk('a.running')).toBe(true);
+
+    await page.locator('#menu-btn').click();
+    await expect(badge).toBeVisible();
+    await expect(badge).toHaveText(WORDS[lang()].paused);
+    expect(await pk('a.running')).toBe(false);
+    expect(await pk('a.speed')).toBe(1);
+    await page.getByRole('button', { name: WORDS[lang()].close }).click();
+    await expect(badge).toBeHidden();
+    expect(await pk('a.running')).toBe(true);
+
+    await pk("a.startPlacing('rumah')");
+    await expect(badge).toBeVisible();
+    expect(await pk('a.running')).toBe(false);
+    await pk('a.stopPlacing()');
+    await expect(badge).toBeHidden();
+    expect(await pk('a.running')).toBe(true);
+
+    await page.locator('#pause-btn').click();
+    await page.locator('#menu-btn').click();
+    await page.getByRole('button', { name: WORDS[lang()].close }).click();
+    expect(await pk('a.speed')).toBe(0);
+    expect(await pk('a.running')).toBe(false);
   });
 
   test('pause toggles and speed cycles 1x, 2x, 4x', async ({ page }) => {

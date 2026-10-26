@@ -129,6 +129,8 @@ html.no-effects #dof { display: none; }
 #speed-btn { min-width: 56px; padding: 0 8px; font-weight: 700; font-variant-numeric: tabular-nums; }
 #pause-btn { font-size: 18px; }
 #pause-btn[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
+#auto-pause { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 5; padding: 4px 12px; border-radius: 12px; background: var(--surface-2); color: var(--text); font-size: 14px; font-weight: 700; pointer-events: none; }
+#auto-pause[hidden] { display: none; }
 #menu-btn { padding: 0 20px; }
 .date-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
 .month-track { width: 100%; max-width: 140px; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
