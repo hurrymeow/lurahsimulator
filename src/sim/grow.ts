@@ -11,7 +11,7 @@ import { letterMult } from './rw';
 import { pick } from './rng';
 import { score } from './ranking';
 import { stageDef, goalProgress } from './stages';
-import { housing, price } from './state';
+import { covers, housing, price } from './state';
 import { GRID_W, RT_H, RT_W, setGrid, type Building, type GameState, type Neighbour, type RtTrait, type StageId } from './types';
 
 /** The ladder this engine climbs. Matches `next` in the stage data. */
@@ -28,7 +28,7 @@ const WANTS: Record<RtTrait, string[]> = {
 
 export const neighbourAt = (s: GameState, x: number, y: number): Building | undefined => {
   const { cx, cy } = cellOf(x, y);
-  return s.neighbours.find((n) => n.cx === cx && n.cy === cy)?.buildings.find((b) => b.x === x && b.y === y);
+  return s.neighbours.find((n) => n.cx === cx && n.cy === cy)?.buildings.find((b) => covers(b, x, y));
 };
 
 function addTo(s: GameState, n: Neighbour, id: string, x: number, y: number): Building {

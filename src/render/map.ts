@@ -1,5 +1,6 @@
 import { rupiahShort } from '../format';
 import { def } from '../sim/content';
+import { footprintOf, tilesOf } from '../sim/state';
 import { GRID_H, GRID_W, RT_H, RT_W, type Building, type GameState, type ResourceId } from '../sim/types';
 import { Atmosphere } from './atmosphere';
 import { drawTint, darkness, dusk, Fx } from './fx';
@@ -79,6 +80,8 @@ export interface Ghost {
   y: number;
   ok: boolean;
   sprite: string;
+  /** Tiles on each side. */
+  n: number;
 }
 
 interface Hit {
@@ -87,6 +90,8 @@ interface Hit {
   left: number;
   top: number;
   art: Art;
+  /** Whole-number scale of the art, for a footprint wider than one tile. */
+  k: number;
 }
 
 /** Diamonds are at least 32px tall, so the tap area matches a 32px square. */
@@ -221,8 +226,8 @@ export class MapView {
     if (buildings)
       for (let k = this.hits.length - 1; k >= 0; k--) {
         const h = this.hits[k];
-        const ax = Math.floor((px - h.left) / this.scale);
-        const ay = Math.floor((py - h.top) / this.scale);
+        const ax = Math.floor((px - h.left) / (this.scale * h.k));
+        const ay = Math.floor((py - h.top) / (this.scale * h.k));
         if (ax >= 0 && ay >= 0 && ax < h.art.canvas.width && ay < h.art.canvas.height && h.art.alpha[ay * h.art.canvas.width + ax] > 0) return { x: h.x, y: h.y };
       }
     const a = (px - this.ox) / ((TW * this.scale) / 2);
@@ -272,20 +277,22 @@ export class MapView {
   });
 
   /** squash flattens the art for an income bounce, anchored on the ground. */
-  private art(ctx: CanvasRenderingContext2D, art: Art, x: number, y: number, grow = 1, squash = 0): Hit {
+  private art(ctx: CanvasRenderingContext2D, art: Art, x: number, y: number, grow = 1, squash = 0, n = 1): Hit {
     const c = this.corner(x, y);
     const s = this.scale;
-    const left = c.x - (TW * s) / 2;
-    const top = c.y - TOP * s;
+    // A bigger footprint draws the same sprite n times larger, so its ground diamond covers every tile.
+    const k = s * n;
+    const left = c.x - (TW * k) / 2;
+    const top = c.y - TOP * k;
     if (grow < 1 || squash) {
-      // Scale up from the tile's ground centre, so the building rises out of its plot.
+      // Scale up from the footprint's ground centre, so the building rises out of its plot.
       const gx = c.x;
-      const gy = c.y + (TH * s) / 2;
-      const w = art.canvas.width * s * grow * (1 + squash / 2);
-      const h = art.canvas.height * s * grow * (1 - squash);
-      ctx.drawImage(art.canvas, gx - w / 2, gy - (TOP + TH / 2) * s * grow * (1 - squash), w, h);
-    } else ctx.drawImage(art.canvas, left, top, art.canvas.width * s, art.canvas.height * s);
-    return { x, y, left, top, art };
+      const gy = c.y + (TH * k) / 2;
+      const w = art.canvas.width * k * grow * (1 + squash / 2);
+      const h = art.canvas.height * k * grow * (1 - squash);
+      ctx.drawImage(art.canvas, gx - w / 2, gy - (TOP + TH / 2) * k * grow * (1 - squash), w, h);
+    } else ctx.drawImage(art.canvas, left, top, art.canvas.width * k, art.canvas.height * k);
+    return { x, y, left, top, art, k: n };
   }
 
   /** Flat 2D sprite standing on the tile centre, used for the permit sign. */
@@ -296,10 +303,10 @@ export class MapView {
     ctx.drawImage(src, c.x - w / 2, c.y - w, w, w);
   }
 
-  private diamond(ctx: CanvasRenderingContext2D, x: number, y: number, grow = 0): void {
-    const c = this.tileCentre(x, y);
-    const hw = ((TW * this.scale) / 2) * (1 + grow);
-    const hh = ((TH * this.scale) / 2) * (1 + grow);
+  private diamond(ctx: CanvasRenderingContext2D, x: number, y: number, grow = 0, n = 1): void {
+    const c = this.tileCentre(x + (n - 1) / 2, y + (n - 1) / 2);
+    const hw = ((TW * this.scale * n) / 2) * (1 + grow);
+    const hh = ((TH * this.scale * n) / 2) * (1 + grow);
     ctx.beginPath();
     ctx.moveTo(c.x, c.y - hh);
     ctx.lineTo(c.x + hw, c.y);
@@ -309,8 +316,8 @@ export class MapView {
   }
 
   /** Top of a tile's art, in CSS pixels, for badges and pops. */
-  private artTop(x: number, y: number, art: Art | null): number {
-    return this.tileCentre(x, y).y - (art ? art.height : 0) * this.scale;
+  private artTop(x: number, y: number, art: Art | null, n = 1): number {
+    return this.tileCentre(x + (n - 1) / 2, y + (n - 1) / 2).y - (art ? art.height : 0) * this.scale * n;
   }
 
   /** Tiles holding a selokan and tiles holding anything, rebuilt each frame so lookups stay O(1) on a big map. */
@@ -364,29 +371,32 @@ export class MapView {
     const all: Building[] = [...s.buildings];
     for (const n of s.neighbours) for (const b of n.buildings) { all.push(b); ai.add(b.uid); }
     for (const b of all) {
-      this.occupied.add(b.y * GRID_W + b.x);
+      for (const p of tilesOf(b)) this.occupied.add(p.y * GRID_W + p.x);
       if (b.def === 'selokan') this.selokan.add(b.y * GRID_W + b.x);
     }
     for (const b of all) {
       if (FLAT_AO.has(b.def) || !this.onScreen(b.x, b.y)) continue;
-      const c = this.tileCentre(b.x, b.y);
-      const w = TW * 1.5 * sc;
+      const n = footprintOf(b.def);
+      const c = this.tileCentre(b.x + (n - 1) / 2, b.y + (n - 1) / 2);
+      const w = TW * 1.5 * sc * n;
       ctx.drawImage(ao, c.x - w / 2, c.y - w / 4, w, w / 2);
     }
 
     if (sel) {
-      this.diamond(ctx, sel.x, sel.y);
+      this.diamond(ctx, sel.x, sel.y, 0, footprintOf(sel.def));
       ctx.fillStyle = 'rgba(244, 244, 245, 0.25)';
       ctx.fill();
     }
     if (this.ghost) {
-      this.diamond(ctx, this.ghost.x, this.ghost.y);
+      this.diamond(ctx, this.ghost.x, this.ghost.y, 0, this.ghost.n);
       ctx.fillStyle = this.ghost.ok ? 'rgba(74, 222, 128, 0.35)' : 'rgba(248, 113, 113, 0.35)';
       ctx.fill();
     }
 
     // Back to front: tiles further up the screen draw first. Walkers slot in by the same depth.
-    const sorted = all.sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
+    // A big building sorts by its front tile, so it draws over what stands behind it and under what stands in front.
+    const front = (b: Building) => b.x + b.y + 2 * (footprintOf(b.def) - 1);
+    const sorted = all.sort((a, b) => front(a) - front(b) || a.x - b.x);
     const tops = new Map<number, number>();
     this.hits = [];
     // Scenery on empty tiles joins the same back-to-front order, but never the tap list.
@@ -414,30 +424,31 @@ export class MapView {
       if (!this.onScreen(b.x, b.y)) return;
       const d = def(b.def);
       const art = iso(d.sprite, this.variant(b));
+      const n = footprintOf(b.def);
       if (ai.has(b.uid)) {
-        this.art(ctx, art, b.x, b.y);
-        tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, art));
+        this.art(ctx, art, b.x, b.y, 1, 0, n);
+        tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, art, n));
         return;
       }
       if (b.status === 'permit') {
         ctx.globalAlpha = 0.35;
-        this.hits.push(this.art(ctx, art, b.x, b.y));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n));
         ctx.globalAlpha = 1;
         this.sign(ctx, 'permit', b.x, b.y);
       } else if (b.status === 'building') {
         ctx.globalAlpha = 0.5;
-        this.hits.push(this.art(ctx, art, b.x, b.y));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n));
         ctx.globalAlpha = 1;
-        this.art(ctx, iso('scaffold'), b.x, b.y);
+        this.art(ctx, iso('scaffold'), b.x, b.y, 1, 0, n);
         if (this.effects) this.fx.construct(b.x, b.y, now);
       } else if (b.status === 'mangkrak') {
         ctx.filter = 'grayscale(1) brightness(0.7)';
-        this.hits.push(this.art(ctx, art, b.x, b.y));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n));
         ctx.filter = 'none';
-        this.art(ctx, iso('scaffold'), b.x, b.y);
+        this.art(ctx, iso('scaffold'), b.x, b.y, 1, 0, n);
       } else if (b.status === 'damaged') {
         ctx.filter = 'sepia(1) brightness(0.6)';
-        this.hits.push(this.art(ctx, art, b.x, b.y));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n));
         ctx.filter = 'none';
       } else if (b.noRoad) {
         ctx.filter = 'grayscale(1) brightness(0.75)';
@@ -447,18 +458,18 @@ export class MapView {
         const born = this.spawned.get(b.uid);
         const k = born === undefined ? 1 : Math.min(1, (now - born) / 350);
         if (k >= 1) this.spawned.delete(b.uid);
-        this.hits.push(this.art(ctx, art, b.x, b.y, 0.6 + 0.4 * (1 - (1 - k) ** 3), this.squash(b, now)));
-        if (b.level > 1) this.levelPips(ctx, b.x, b.y, b.level);
+        this.hits.push(this.art(ctx, art, b.x, b.y, 0.6 + 0.4 * (1 - (1 - k) ** 3), this.squash(b, now), n));
+        if (b.level > 1) this.levelPips(ctx, b.x + n - 1, b.y + n - 1, b.level);
         this.idle(ctx, b, now);
       }
-      tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' || b.status === 'mangkrak' ? iso('scaffold') : art));
+      tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' || b.status === 'mangkrak' ? iso('scaffold') : art, n));
     };
     // Flat pieces are ground: paths, fields and ponds draw first, so no walker or building ever hides under them.
     const { ground, standing } = groundFirst(sorted);
     for (const b of ground) drawOne(b);
     for (const b of standing) {
-      decoUntil(b.x + b.y, b.x);
-      this.crowd.drawUntil(ctx, b.x + b.y + 1, this.project, sc, now, this.motion && !this.frozen);
+      decoUntil(front(b), b.x);
+      this.crowd.drawUntil(ctx, front(b) + 1, this.project, sc, now, this.motion && !this.frozen);
       drawOne(b);
     }
 
@@ -485,9 +496,9 @@ export class MapView {
     if (this.ghost) {
       const g = this.ghost;
       ctx.globalAlpha = 0.6;
-      this.art(ctx, iso(g.sprite), g.x, g.y);
+      this.art(ctx, iso(g.sprite), g.x, g.y, 1, 0, g.n);
       ctx.globalAlpha = 1;
-      this.diamond(ctx, g.x, g.y);
+      this.diamond(ctx, g.x, g.y, 0, g.n);
       ctx.strokeStyle = g.ok ? '#4ade80' : '#f87171';
       ctx.lineWidth = 2;
       ctx.setLineDash(g.ok ? [] : [4, 3]);
@@ -495,7 +506,7 @@ export class MapView {
       ctx.setLineDash([]);
     }
     if (sel) {
-      this.diamond(ctx, sel.x, sel.y);
+      this.diamond(ctx, sel.x, sel.y, 0, footprintOf(sel.def));
       ctx.strokeStyle = '#f4f4f5';
       ctx.lineWidth = 2;
       ctx.stroke();

@@ -13,7 +13,7 @@ import { promote } from './sim/grow';
 import { RT_H, RT_W } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
-import { attractTarget, buildCost, buildingAt, newGame, population, housing } from './sim/state';
+import { attractTarget, buildCost, buildingAt, footprintOf, newGame, population, housing } from './sim/state';
 import { tick } from './sim/tick';
 import type { GameState, ResourceId, SimEffect } from './sim/types';
 import { audio } from './audio';
@@ -536,8 +536,12 @@ export class App {
       const tile = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top, !this.placing);
       if (!tile) return;
       if (this.placing) {
-        const ok = checkPlace(this.s, this.placing, tile.x, tile.y).ok;
-        this.view.ghost = { x: tile.x, y: tile.y, ok, sprite: def(this.placing).sprite };
+        // The tapped tile is the middle of a big footprint, not its corner.
+        const n = footprintOf(this.placing);
+        const gx = tile.x - Math.floor((n - 1) / 2);
+        const gy = tile.y - Math.floor((n - 1) / 2);
+        const ok = checkPlace(this.s, this.placing, gx, gy).ok;
+        this.view.ghost = { x: gx, y: gy, ok, sprite: def(this.placing).sprite, n };
         this.updatePlacing();
         return;
       }

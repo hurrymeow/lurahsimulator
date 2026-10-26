@@ -7,7 +7,7 @@ import { gateOpen } from './gate';
 import { neighbourAt } from './grow';
 import { stageTitle } from './stages';
 import { refreshAccess } from './access';
-import { addBuilding, buildCost, buildingAt, count, housing, inBounds, population, upgradeCost, year } from './state';
+import { addBuilding, buildCost, buildingAt, count, housing, inBounds, footprintOf, population, tilesOf, upgradeCost, year } from './state';
 import type { Building, BuildingDef, CheckResult, GameState } from './types';
 
 export { gateOpen };
@@ -39,10 +39,14 @@ export function checkPlace(s: GameState, id: string, x: number, y: number): Chec
   const missing: string[] = [];
   if (!d.placeable) missing.push(t('sim.cannotPlace', { name: bName(d) }));
   missing.push(...requirementGaps(s, d));
-  if (!inBounds(x, y)) missing.push(t('sim.offMap'));
-  else if (buildingAt(s, x, y) ?? neighbourAt(s, x, y)) missing.push(t('sim.tileHas', { name: bName(def((buildingAt(s, x, y) ?? neighbourAt(s, x, y))!.def)) }));
-  else if (lotAt(x, y) === 'other') missing.push(t('sim.notYours'));
-  else if (lotAt(x, y) !== (d.scope ?? 'rt')) missing.push(t(d.scope && d.scope !== 'rt' ? 'sim.needLot' : 'sim.needRtLot'));
+  const tiles = footprintOf(id) === 1 ? [{ x, y }] : tilesOf({ def: id, x, y });
+  const off = tiles.find((p) => !inBounds(p.x, p.y));
+  const hit = off ? undefined : tiles.map((p) => buildingAt(s, p.x, p.y) ?? neighbourAt(s, p.x, p.y)).find(Boolean);
+  const lots = off ? [] : tiles.map((p) => lotAt(p.x, p.y));
+  if (off) missing.push(t('sim.offMap'));
+  else if (hit) missing.push(t('sim.tileHas', { name: bName(def(hit.def)) }));
+  else if (lots.includes('other')) missing.push(t('sim.notYours'));
+  else if (lots.some((l) => l !== (d.scope ?? 'rt'))) missing.push(t(d.scope && d.scope !== 'rt' ? 'sim.needLot' : 'sim.needRtLot'));
   moneyGap(s, buildCost(s, d), missing);
   return result(missing);
 }

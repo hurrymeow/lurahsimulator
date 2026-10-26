@@ -1,7 +1,7 @@
 import { NAMES, TITLES } from '../data/names';
 import { EMAS } from '../data/ranking';
 import { BASE_ATTRACT, DECOR_CAP, LEVEL_BONUS, SPRAWL_FREE, SPRAWL_STEP, START, START_RESIDENTS } from './balance';
-import { def } from './content';
+import { def, footprintFor } from './content';
 import { pick } from './rng';
 import { lotAt } from './area';
 import { refreshAccess } from './access';
@@ -70,7 +70,37 @@ export function addResident(s: GameState): Resident {
 
 export const year = (s: GameState) => Math.floor(s.month / 12) + 1;
 export const inBounds = (x: number, y: number) => x >= 0 && y >= 0 && x < GRID_W && y < GRID_H;
-export const buildingAt = (s: GameState, x: number, y: number) => s.buildings.find((b) => b.x === x && b.y === y);
+/** Tiles on each side of a building's footprint. */
+export const footprintOf = footprintFor;
+
+/** True when the tile is one of the building's footprint tiles. */
+export function covers(b: { def: string; x: number; y: number }, x: number, y: number): boolean {
+  if (x < b.x || y < b.y) return false;
+  if (x === b.x && y === b.y) return true;
+  const n = footprintOf(b.def);
+  return x < b.x + n && y < b.y + n;
+}
+
+/** Every tile a building covers, top corner first. */
+export function tilesOf(b: { def: string; x: number; y: number }): { x: number; y: number }[] {
+  const n = footprintOf(b.def);
+  const out: { x: number; y: number }[] = [];
+  for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) out.push({ x: b.x + dx, y: b.y + dy });
+  return out;
+}
+
+export function buildingAt(s: GameState, x: number, y: number): Building | undefined {
+  // Hot: runs for every tile probe. A plain loop, and the footprint is only looked up for a building up and to the left.
+  const all = s.buildings;
+  for (let i = 0; i < all.length; i++) {
+    const b = all[i];
+    const dx = x - b.x;
+    const dy = y - b.y;
+    if (dx < 0 || dy < 0) continue;
+    if ((dx === 0 && dy === 0) || (dx < footprintOf(b.def) && dy < footprintOf(b.def))) return b;
+  }
+  return undefined;
+}
 export const byUid = (s: GameState, uid: number) => s.buildings.find((b) => b.uid === uid);
 export const population = (s: GameState) => s.residents.length;
 export const levelMult = (level: number) => 1 + LEVEL_BONUS * (level - 1);
@@ -109,15 +139,29 @@ export function upgradeCost(s: GameState, b: Building): number {
   return price(s, def(b.def).cost * b.level * sprawl(s));
 }
 
-export function neighbours(s: GameState, b: { x: number; y: number }, radius = 1): Building[] {
-  return s.buildings.filter((o) => (o.x !== b.x || o.y !== b.y) && Math.abs(o.x - b.x) <= radius && Math.abs(o.y - b.y) <= radius);
+/** Buildings within radius tiles of the tile or footprint, not counting the building itself. */
+export function neighbours(s: GameState, b: { x: number; y: number; def?: string }, radius = 1): Building[] {
+  const n = b.def ? footprintOf(b.def) : 1;
+  const hiX = b.x + n - 1 + radius;
+  const hiY = b.y + n - 1 + radius;
+  return s.buildings.filter((o) => {
+    // Cheap rejects first: this runs for every empty tile every month.
+    if (o.x > hiX || o.y > hiY || (o.x === b.x && o.y === b.y)) return false;
+    const m = footprintOf(o.def);
+    return o.x + m - 1 >= b.x - radius && o.y + m - 1 >= b.y - radius;
+  });
 }
 
 export function emptyTiles(s: GameState): { x: number; y: number }[] {
-  const taken = new Set(s.buildings.map((b) => b.y * GRID_W + b.x));
+  const taken = new Uint8Array(GRID_W * GRID_H);
+  for (const b of s.buildings) {
+    const n = footprintOf(b.def);
+    if (n === 1) taken[b.y * GRID_W + b.x] = 1;
+    else for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) taken[(b.y + dy) * GRID_W + b.x + dx] = 1;
+  }
   const out: { x: number; y: number }[] = [];
   // Residents only settle inside the player's own RT, never on a seam lot or in a neighbour.
-  for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (!taken.has(y * GRID_W + x) && lotAt(x, y) === 'rt') out.push({ x, y });
+  for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (!taken[y * GRID_W + x] && lotAt(x, y) === 'rt') out.push({ x, y });
   return out;
 }
 
@@ -137,9 +181,16 @@ export function decorMult(s: GameState, b: Building): number {
 export function pathMult(s: GameState, b: Building): number {
   if (!def(b.def).income || def(b.def).pathIncome) return 1;
   let bonus = 0;
-  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-    const o = buildingAt(s, b.x + dx, b.y + dy);
+  const n = footprintOf(b.def);
+  const look = (x: number, y: number) => {
+    const o = buildingAt(s, x, y);
     if (o && isWorking(o)) bonus = Math.max(bonus, def(o.def).pathIncome ?? 0);
+  };
+  for (let i = 0; i < n; i++) {
+    look(b.x + i, b.y - 1);
+    look(b.x + i, b.y + n);
+    look(b.x - 1, b.y + i);
+    look(b.x + n, b.y + i);
   }
   return 1 + bonus;
 }
