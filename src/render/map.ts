@@ -5,7 +5,7 @@ import { Atmosphere } from './atmosphere';
 import { drawTint, darkness, dusk, Fx } from './fx';
 import { iso, TH, TOP, TW, type Art } from './iso';
 import { Crowd } from './people';
-import { buildWorld, decoAt, layoutWorld, HORIZON, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
+import { buildWorld, decoAt, farRoofs, layoutWorld, HORIZON, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
 import { ICONS, ROOF_COLOURS, sprite } from './sprites';
 
 export const RES_COLOUR: Record<ResourceId, string> = {
@@ -383,6 +383,9 @@ export class MapView {
         const name = decoAt(x, y);
         if (name && !(this.ghost && this.ghost.x === x && this.ghost.y === y)) deco.push({ x, y, name });
       }
+    // From 2 stars the scenery edge thins and the neighbours' roofs show beyond the road.
+    if (s.stage.current === 'rt' && s.stage.stars.rt >= 2) for (const r of farRoofs()) if (this.onScreen(r.x, r.y)) deco.push(r);
+    deco.sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
     let di = 0;
     const decoUntil = (depth: number, x: number) => {
       for (; di < deco.length && (deco[di].x + deco[di].y < depth || (deco[di].x + deco[di].y === depth && deco[di].x < x)); di++) this.art(ctx, iso(deco[di].name), deco[di].x, deco[di].y);

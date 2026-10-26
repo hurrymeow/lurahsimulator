@@ -1,5 +1,6 @@
 // The land around the kampung: a ring road, sawah, kebun, a beach and sea in front, and the two
 // mountains with the sun between them from every kid's "pemandangan" drawing. Decorative only.
+import { isSeam } from '../sim/area';
 import { GRID_H, GRID_W } from '../sim/types';
 import { INK, TH, TOP, TW } from './iso';
 
@@ -61,7 +62,8 @@ function hash(x: number, y: number): number {
 }
 
 function terrain(tx: number, ty: number): Terrain {
-  if (tx >= 0 && ty >= 0 && tx < GRID_W && ty < GRID_H) return 'grass';
+  // Seam lots between the RTs are packed dirt, so the bigger buildings have somewhere obvious to stand.
+  if (tx >= 0 && ty >= 0 && tx < GRID_W && ty < GRID_H) return isSeam(tx, ty) ? 'road' : 'grass';
   if (tx >= -1 && ty >= -1 && tx <= GRID_W && ty <= GRID_H) return 'road';
   // The front two sides run down to a beach and the sea, with a ragged coastline.
   const coast = Math.max(tx - GRID_W - 3, ty - GRID_H - 5) + hash(tx, ty) * 1.2;
@@ -256,8 +258,18 @@ export function sunArt(blink: boolean): HTMLCanvasElement {
   return c;
 }
 
+/** Roofs of the neighbouring RTs beyond the ring road, shown from 2 stars. The sawah thins out where they stand. */
+export function farRoofs(): { x: number; y: number; name: string }[] {
+  const out: { x: number; y: number; name: string }[] = [];
+  for (const y of [2, 6, 10]) out.push({ x: GRID_W + 3, y: Math.min(y, GRID_H - 1), name: 'rumah' });
+  for (const x of [1, 4, 7]) out.push({ x: Math.min(x, GRID_W - 1), y: GRID_H + 3, name: 'rumah' });
+  out.push({ x: GRID_W + 4, y: GRID_H + 4, name: 'rumah' });
+  return out;
+}
+
 /** Decoration for an empty buildable tile, or null for plain grass. Stable per tile. */
 export function decoAt(x: number, y: number): string | null {
+  if (isSeam(x, y)) return null;
   const n = hash(x * 11 + 3, y * 17 + 5);
   return n < 0.12 ? 'flowers' : n < 0.22 ? 'bush' : n < 0.45 ? 'rumput' : null;
 }
