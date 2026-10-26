@@ -115,6 +115,21 @@ class Painter {
         if (Math.abs(x + 0.5 - cx) / hw + Math.abs(y + 0.5 - cy) / hh <= 1) this.set(x, y, '#000000', 70);
   }
 
+  /** A round leafy clump centred r art pixels above the ground centre, lit from the top left. */
+  blob(dx: number, up: number, r: number, colour: string): void {
+    const cx = TW / 2 + dx;
+    const cy = TOP + TH / 2 - up;
+    for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++)
+      for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) {
+        const ex = (x + 0.5 - cx) / r;
+        const ey = (y + 0.5 - cy) / (r * 0.85);
+        const d = ex * ex + ey * ey;
+        if (d > 1) continue;
+        const lit = ex + ey < -0.5 ? 1.25 : ex + ey > 0.6 ? 0.75 : 1;
+        this.set(x, y, shade(colour, (x * 7 + y * 3) % 11 === 0 ? lit * 0.85 : lit));
+      }
+  }
+
   finish(): Art {
     const c = document.createElement('canvas');
     c.width = this.w;
@@ -233,6 +248,54 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
       if (j === 12 && i % 3 === 0) return 'y';
       return i % 6 === 0 || j % 4 === 0 || (i + j) % 6 === 0 ? undefined : null;
     }),
+  // Scenery. These never go in the tap list, so the tile under them stays buildable.
+  bush: (p) => {
+    p.shadow(5);
+    p.blob(-3, 3, 4, 'G');
+    p.blob(3, 2, 3.5, 'g');
+  },
+  flowers: (p) => {
+    // Three small clumps: a stem pixel with a petal on top.
+    for (const [dx, dy, c] of [[-6, 0, 'y'], [-3, 3, 'p'], [5, 1, 'w'], [2, -2, 'y']] as const) {
+      p.set(TW / 2 + dx, TOP + TH / 2 + dy, 'G');
+      p.set(TW / 2 + dx, TOP + TH / 2 + dy - 1, c);
+    }
+  },
+  rumput: (p) => {
+    for (const [dx, dy] of [[-4, 1], [-3, 0], [-2, 1], [3, -1], [4, -2], [5, -1]]) p.set(TW / 2 + dx, TOP + TH / 2 + dy, '#577a3c');
+  },
+  pisang: (p) => {
+    p.shadow(5);
+    p.box(7, 9, 'G');
+    for (const [dx, up, r] of [[-5, 12, 4], [5, 13, 4], [0, 15, 4], [-2, 10, 3], [3, 10, 3]]) p.blob(dx, up, r, 'g');
+  },
+  kelapa: (p) => {
+    p.shadow(5);
+    // A slightly leaning trunk, then fronds that droop on both sides.
+    for (let k = 0; k < 26; k++) {
+      const x = TW / 2 + Math.round(Math.sin(k / 9) * 2);
+      p.set(x, TOP + TH / 2 - k, k % 3 ? 'n' : 'N');
+      p.set(x + 1, TOP + TH / 2 - k, 'N');
+    }
+    const tx = TW / 2 + Math.round(Math.sin(26 / 9) * 2);
+    const ty = TOP + TH / 2 - 26;
+    for (let k = 1; k <= 9; k++) {
+      const droop = Math.round((k * k) / 12);
+      for (const dir of [-1, 1]) {
+        p.set(tx + dir * k, ty + droop, 'G');
+        p.set(tx + dir * k, ty + droop - 1, 'g');
+        p.set(tx + Math.round(dir * k * 0.5), ty - Math.round(k * 0.6) + Math.round(droop / 2), 'g');
+      }
+    }
+    p.set(tx, ty + 1, 'n');
+    p.set(tx + 1, ty + 1, 'N');
+  },
+  pohon: (p) => {
+    p.shadow(4);
+    p.box(7, 8, 'N');
+    p.blob(0, 16, 8, 'G');
+    p.blob(-3, 19, 4, 'g');
+  },
 };
 
 const cache = new Map<string, Art>();

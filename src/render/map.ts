@@ -2,7 +2,8 @@ import { rupiahShort } from '../format';
 import { def } from '../sim/content';
 import { GRID_H, GRID_W, type Building, type GameState, type ResourceId } from '../sim/types';
 import { iso, TH, TOP, TW, type Art } from './iso';
-import { ICONS, PALETTE, ROOF_COLOURS, sprite } from './sprites';
+import { buildWorld, decoAt, HORIZON, SEA, SKY, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W } from './scenery';
+import { ICONS, ROOF_COLOURS, sprite } from './sprites';
 
 export const RES_COLOUR: Record<ResourceId, string> = {
   rupiah: '#4ade80',
@@ -45,11 +46,16 @@ interface Hit {
 const MIN_SCALE = 2;
 const POP_MS = 1200;
 const BURST_MS = 600;
-/** Dirt edge under the map, in art pixels. */
+/** Margin below the map's front corner, in art pixels, so the bottom row is not flush with the edge. */
 const DEPTH = 6;
 /** Art-pixel size of the whole map, from the left corner to the right and from the headroom to the dirt edge. */
 const MAP_W = ((GRID_W + GRID_H) * TW) / 2;
 const MAP_H = TOP + ((GRID_W + GRID_H) * TH) / 2 + DEPTH;
+/** How far dragging can go around the grid, in art pixels from tile (0,0)'s top corner. Up far enough to see the mountains. */
+const PAN_LEFT = (GRID_H * TW) / 2 + TW;
+const PAN_TOP = WORLD_OY - HORIZON + 150;
+const PAN_W = PAN_LEFT + (GRID_W * TW) / 2 + TW;
+const PAN_H = PAN_TOP + ((GRID_W + GRID_H) * TH) / 2 + TH;
 
 export class MapView {
   /** Art pixels to CSS pixels. */
@@ -62,7 +68,7 @@ export class MapView {
   effects = true;
   private pops: Pop[] = [];
   private bursts: Burst[] = [];
-  private ground: HTMLCanvasElement | null = null;
+  private world: HTMLCanvasElement | null = null;
   private hits: Hit[] = [];
   ghost: Ghost | null = null;
   selected: number | null = null;
@@ -87,22 +93,22 @@ export class MapView {
     this.viewH = h;
     if (!this.centred && w > 0) {
       // Open on the middle of the kampung, where the Kantor RT stands.
-      this.panX = (w - MAP_W * this.scale) / 2;
-      this.panY = (h - MAP_H * this.scale) / 2;
+      this.panX = w / 2 - (((GRID_W - GRID_H) * TW) / 4 + PAN_LEFT) * this.scale;
+      this.panY = h / 2 - (((GRID_W + GRID_H) * TH) / 4 + PAN_TOP) * this.scale;
       this.centred = true;
     }
     this.clampPan();
   }
 
   private clampPan(): void {
-    const gw = MAP_W * this.scale;
-    const gh = MAP_H * this.scale;
+    const gw = PAN_W * this.scale;
+    const gh = PAN_H * this.scale;
     this.panX = gw <= this.viewW ? 0 : Math.max(this.viewW - gw, Math.min(0, this.panX));
     this.panY = gh <= this.viewH ? 0 : Math.max(this.viewH - gh, Math.min(0, this.panY));
     const left = Math.floor(gw <= this.viewW ? (this.viewW - gw) / 2 : this.panX);
     const top = Math.floor(gh <= this.viewH ? (this.viewH - gh) / 2 : this.panY);
-    this.ox = left + (GRID_H * TW * this.scale) / 2;
-    this.oy = top + TOP * this.scale;
+    this.ox = left + PAN_LEFT * this.scale;
+    this.oy = top + PAN_TOP * this.scale;
   }
 
   panBy(dx: number, dy: number): void {
@@ -113,7 +119,7 @@ export class MapView {
 
   /** True when the map is bigger than the view, so dragging pans. */
   get scrolls(): boolean {
-    return MAP_W * this.scale > this.viewW || MAP_H * this.scale > this.viewH;
+    return PAN_W * this.scale > this.viewW || PAN_H * this.scale > this.viewH;
   }
 
   /** CSS position of a tile's top corner. */
@@ -164,40 +170,9 @@ export class MapView {
     if (this.effects) this.bursts.push({ x, y, born: performance.now() });
   }
 
-  /** Grass diamonds plus the dirt edge, drawn once at art resolution. */
-  private drawGround(): HTMLCanvasElement {
-    if (this.ground) return this.ground;
-    const c = document.createElement('canvas');
-    c.width = MAP_W;
-    c.height = MAP_H;
-    const ctx = c.getContext('2d')!;
-    const img = ctx.createImageData(MAP_W, MAP_H);
-    const put = (x: number, y: number, col: string) => {
-      const n = parseInt(col.slice(1), 16);
-      img.data.set([(n >> 16) & 255, (n >> 8) & 255, n & 255, 255], (y * MAP_W + x) * 4);
-    };
-    const mx = (GRID_H * TW) / 2;
-    for (let y = 0; y < MAP_H; y++)
-      for (let x = 0; x < MAP_W; x++) {
-        const rx = (x + 0.5 - mx) / (TW / 2);
-        const ry = (y + 0.5 - TOP) / (TH / 2);
-        const a = (rx + ry) / 2;
-        const b = (ry - rx) / 2;
-        const tx = Math.floor(a);
-        const ty = Math.floor(b);
-        if (tx >= 0 && ty >= 0 && tx < GRID_W && ty < GRID_H) {
-          const seed = (x * 7919 + y * 104729) % 97;
-          put(x, y, seed < 3 ? '#577a3c' : (tx + ty) % 2 ? '#3d5f2b' : '#43672f');
-          continue;
-        }
-        // Dirt edge below the two front sides of the diamond.
-        const front = x < mx + ((GRID_W - GRID_H) * TW) / 2;
-        const edge = front ? TOP + (GRID_H * TH) / 2 + (x + 0.5) / 2 : TOP + ((GRID_W + GRID_H) * TH) / 2 - (x + 0.5 - (mx + ((GRID_W - GRID_H) * TW) / 2)) / 2;
-        if (y + 0.5 > edge && y + 0.5 <= edge + DEPTH) put(x, y, front ? PALETTE.n : PALETTE.N);
-      }
-    ctx.putImageData(img, 0, 0);
-    this.ground = c;
-    return c;
+  /** The kampung and the land around it, drawn once at art resolution. */
+  private drawWorld(): HTMLCanvasElement {
+    return (this.world ??= buildWorld());
   }
 
   /** Draws art for a tile. Returns where it landed, for tap picking. */
@@ -257,9 +232,14 @@ export class MapView {
     const sc = this.scale;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#0b0b0c';
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.drawImage(this.drawGround(), this.ox - (GRID_H * TW * sc) / 2, this.oy - TOP * sc, MAP_W * sc, MAP_H * sc);
+    const wx = this.ox - WORLD_OX * sc;
+    const wy = this.oy - WORLD_OY * sc;
+    // Past the world's edges the sky and sea carry on.
+    ctx.fillStyle = SEA;
+    ctx.fillRect(0, 0, this.viewW, this.viewH);
+    ctx.fillStyle = SKY;
+    ctx.fillRect(0, 0, this.viewW, Math.max(0, wy + HORIZON * sc));
+    ctx.drawImage(this.drawWorld(), wx, wy, WORLD_W * sc, WORLD_H * sc);
 
     const sel = s.buildings.find((b) => b.uid === this.selected);
     if (sel) {
@@ -277,7 +257,20 @@ export class MapView {
     const sorted = [...s.buildings].sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
     const tops = new Map<number, number>();
     this.hits = [];
+    // Scenery on empty tiles joins the same back-to-front order, but never the tap list.
+    const deco: { x: number; y: number; name: string }[] = [];
+    for (let d = 0; d < GRID_W + GRID_H - 1; d++)
+      for (let x = Math.max(0, d - GRID_H + 1); x <= Math.min(d, GRID_W - 1); x++) {
+        const y = d - x;
+        const name = decoAt(x, y);
+        if (name && !(this.ghost && this.ghost.x === x && this.ghost.y === y) && !s.buildings.some((b) => b.x === x && b.y === y)) deco.push({ x, y, name });
+      }
+    let di = 0;
+    const decoUntil = (depth: number, x: number) => {
+      for (; di < deco.length && (deco[di].x + deco[di].y < depth || (deco[di].x + deco[di].y === depth && deco[di].x < x)); di++) this.art(ctx, iso(deco[di].name), deco[di].x, deco[di].y);
+    };
     for (const b of sorted) {
+      decoUntil(b.x + b.y, b.x);
       const d = def(b.def);
       const art = iso(d.sprite, this.variant(s, b));
       if (b.status === 'permit') {
@@ -308,6 +301,8 @@ export class MapView {
       }
       tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' || b.status === 'mangkrak' ? iso('scaffold') : art));
     }
+
+    decoUntil(Infinity, 0);
 
     // Badges sit above every building so a taller neighbour in front never hides them.
     for (const b of sorted) {
