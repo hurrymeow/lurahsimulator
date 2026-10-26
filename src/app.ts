@@ -1,4 +1,4 @@
-import { eBody, eLabel, eName, bName, initialLang, setLang, t, type Key, type Lang } from './i18n';
+import { eBody, eLabel, eName, bName, getLang, initialLang, setLang, t, type Key, type Lang } from './i18n';
 import { dateLabel, rupiah, rupiahHud } from './format';
 import { MapView, RES_COLOUR } from './render/map';
 import { iconURL } from './render/sprites';
@@ -29,6 +29,8 @@ interface Notice {
   title: string;
   body: string;
   tone: 'good' | 'bad' | 'info';
+  /** Extra content under the body, such as the stat changes of an event. */
+  extra?: Node;
 }
 
 export const RES_META: Record<ResourceId, { label: () => string; icon: string }> = {
@@ -176,7 +178,7 @@ export class App {
       const label = eLabel(e, i, c).replace(/ · Rp [\d.]+/, '').replace(/ · \d Orang Dalam/, '');
       const price = [cost.rupiah ? rupiah(cost.rupiah) : '', cost.orangDalam ? `${cost.orangDalam} ${t('res.orangDalam')}` : ''].filter(Boolean).join(' + ');
       return h('div', { class: 'action' },
-        h('button', { class: `btn ${i === 0 ? '' : 'btn-primary'}`, disabled: !check.ok, onclick: () => this.chooseEvent(i) }, price ? `${label} · ${price}` : label),
+        h('button', { class: `btn ${i === 0 ? '' : 'btn-primary'}`, disabled: !check.ok, onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i); } }, price ? `${label} · ${price}` : label),
         check.ok ? null : missingList(check.missing),
       );
     });
@@ -198,9 +200,33 @@ export class App {
     if (!out.ok) return;
     document.getElementById('modal')!.hidden = true;
     this.handleFx(fx);
-    this.notice({ title: t('event.result'), body: out.text, tone: 'info' });
+    // The event card bypasses the queue, so show the outcome now, ahead of anything waiting.
+    const n: Notice = { title: t('event.result'), body: out.text, tone: 'info', extra: this.outcomeChips(out) };
+    this.log.unshift(n);
+    this.modalQueue.unshift(n);
+    this.showModal();
     this.save();
     this.refresh();
+  }
+
+  /** One chip per changed resource, plus the timed income modifier if the choice started one. */
+  private outcomeChips(out: { delta?: Partial<Record<ResourceId, number>>; modifier?: { label: string; incomeMult: number; months: number } }): Node {
+    const rows: Node[] = (Object.keys(RES_META) as ResourceId[])
+      .filter((id) => out.delta?.[id])
+      .map((id) => {
+        const v = out.delta![id]!;
+        const amt = id === 'rupiah' ? rupiah(Math.abs(v)) : String(Math.round(Math.abs(v) * 10) / 10);
+        return h('div', { class: `outcome-chip ${v < 0 ? 'negative' : 'positive'}`, style: `--c:${RES_COLOUR[id]}` },
+          h('img', { src: iconURL(RES_META[id].icon), alt: '', width: 24, height: 24 }),
+          h('span', { class: 'outcome-name' }, RES_META[id].label()),
+          h('span', { class: 'outcome-value' }, `${v < 0 ? '▼ -' : '▲ +'}${amt}`),
+        );
+      });
+    if (out.modifier) {
+      const mult = String(out.modifier.incomeMult).replace('.', getLang() === 'id' ? ',' : '.');
+      rows.push(h('div', { class: 'outcome-mod' }, t('event.mod', { label: out.modifier.label, mult, n: out.modifier.months })));
+    }
+    return h('div', { class: 'outcome-list' }, ...rows);
   }
 
   /** A short screen shake for bad news. Skipped when effects are off. */
@@ -279,6 +305,7 @@ export class App {
         n.fanfare ? h('div', { class: 'fanfare-tag' }, t('modal.new')) : null,
         h('h2', {}, n.title),
         h('p', {}, n.body),
+        n.extra,
         n.tip?.pics,
         h('p', { class: 'tap-hint' }, t('modal.tap')),
         n.tip ? h('button', { class: 'btn tip-skip', onclick: (e: Event) => { e.stopPropagation(); n.tip!.skip(); this.dropTips(); } }, t('tip.skip')) : null,
