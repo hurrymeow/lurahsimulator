@@ -80,10 +80,10 @@ export const COMBOS: ComboDef[] = [
   {
     id: 'kaliBersih',
     name: 'Kali Bersih',
-    needs: ['bankSampah', 'selokan'],
+    needs: ['bankSampah', 'biopori'],
     radius: 1,
-    hint: 'What goes in the bank stays out of the drain.',
-    story: 'The plastic is weighed and the water runs. The kali has not looked this good in years.',
+    hint: 'What goes in the bank stays out of the hole.',
+    story: 'The plastic is weighed and the water soaks in. The kali has not looked this good in years.',
     banjirProtect: 0.2,
     effect: 'Banjir damage 20% lower. The 80% cap stays.',
   },

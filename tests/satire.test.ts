@@ -97,7 +97,7 @@ describe('tukang parkir liar', () => {
 
   it('spawns one per shop, not for non-shops', () => {
     const s = newGame(6);
-    for (const id of ['selokan', 'posRonda']) addBuilding(s, id, 0, id === 'selokan' ? 0 : 1, 'building').timer = 1;
+    for (const id of ['biopori', 'posRonda']) addBuilding(s, id, 0, id === 'biopori' ? 0 : 1, 'building').timer = 1;
     run(s, 1);
     expect(count(s, 'parkir')).toBe(0);
   });
@@ -258,7 +258,7 @@ describe('proyek mangkrak', () => {
 describe('content rules', () => {
   it('every building moves at least one number', () => {
     for (const b of BUILDINGS) {
-      const moves = b.income || b.upkeep || b.perMonth || b.attract || b.housing || b.jobSlots || b.pathIncome;
+      const moves = b.income || b.upkeep || b.perMonth || b.attract || b.housing || b.jobSlots || b.pathIncome || b.boost;
       expect(Boolean(moves), b.id).toBe(true);
     }
   });

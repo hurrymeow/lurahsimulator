@@ -67,3 +67,6 @@ export const STEMPEL = {
   /** Letters a build sends. Jarang Muncul sends double. */
   perBuild: 1,
 };
+
+/** Most extra income decorations can add to one building, however many stand nearby. */
+export const DECOR_CAP = 0.6;

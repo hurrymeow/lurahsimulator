@@ -3,7 +3,7 @@ import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR
 import { STAGE_EVENTS } from '../data/higher';
 import { rupiah } from '../format';
 import { activeCombos } from './combos';
-import { def } from './content';
+import { def, isCover } from './content';
 import { gateOpen } from './gate';
 import type { StageEventChoice } from '../data/higher';
 import { gain, type Fx } from './gain';
@@ -25,10 +25,10 @@ export function checkChoice(s: GameState, c: EventChoice): CheckResult {
 }
 
 export function banjirProtection(s: GameState): number {
-  const levels = s.buildings.filter((b) => b.def === 'selokan' && b.status === 'active').reduce((n, b) => n + b.level, 0);
+  const levels = s.buildings.filter((b) => b.def === 'biopori' && b.status === 'active').reduce((n, b) => n + b.level, 0);
   const combos = activeCombos(s).reduce((n, a) => n + (a.combo.banjirProtect ?? 0), 0);
-  // Kerja Bakti makes the selokan work harder for a while.
-  const boost = s.modifiers.filter((m) => m.target === 'selokan').reduce((m, x) => m * x.incomeMult, 1);
+  // Kerja Bakti makes the biopori work harder for a while.
+  const boost = s.modifiers.filter((m) => m.target === 'biopori').reduce((m, x) => m * x.incomeMult, 1);
   return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL * boost + combos);
 }
 
@@ -74,7 +74,7 @@ function floodDamage(s: GameState, fx: Fx): string {
   const protect = banjirProtection(s);
   const sabarHit = Math.round(BANJIR_SABAR * (1 - protect));
   gain(s, fx, 'sabar', -sabarHit);
-  const targets = s.buildings.filter((b) => b.status === 'active' && b.def !== 'rumah' && b.def !== 'parkir' && b.def !== 'selokan' && !def(b.def).pathIncome);
+  const targets = s.buildings.filter((b) => b.status === 'active' && b.def !== 'rumah' && b.def !== 'parkir' && b.def !== 'biopori' && !isCover(def(b.def)));
   let hit = 0;
   for (const b of targets) {
     if (s.month < 12 && hit >= 1) break;

@@ -1,7 +1,7 @@
 import { NEIGHBOUR } from './balance';
 import type { GameState, Neighbour, Resident } from './types';
 
-const SOCIAL = new Set(['posRonda', 'wifi', 'selokan']);
+const SOCIAL = new Set(['posRonda', 'wifi', 'biopori']);
 
 /** The AI RT as a state of its own, so the player's scoring, combo and star code can read it unchanged. */
 export function viewOf(s: GameState, n: Neighbour): GameState {

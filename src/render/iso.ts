@@ -1,6 +1,7 @@
 // Isometric pixel art, rasterised in code at 1 art pixel per canvas pixel. No external art.
 // Party-game look: flat cel shading, a warm storybook palette and a bold ink outline round every shape and
 // along every face edge. Geometry stays straight and isometric so the map never gets busy.
+import { CONTENT_ART } from './art-content';
 import { HIGHER_ART } from './art-higher';
 import { PALETTE } from './sprites';
 
@@ -469,7 +470,7 @@ export function iso(name: string, variant?: string): Art {
   const hit = cache.get(key);
   if (hit) return hit;
   const p = new Painter();
-  (ART[name] ?? HIGHER_ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant);
+  (ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant);
   const art = p.finish();
   cache.set(key, art);
   return art;

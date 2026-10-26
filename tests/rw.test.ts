@@ -252,9 +252,9 @@ describe('RW events', () => {
     expect(areaScore(s)).toBe(honest);
   });
 
-  it('Kerja Bakti makes the selokan protect more against banjir', () => {
+  it('Kerja Bakti makes the biopori protect more against banjir', () => {
     const s = rw(0);
-    put(s, 'selokan', 3, 3);
+    put(s, 'biopori', 3, 3);
     const before = banjirProtection(s);
     choose(s, 'kerjaBakti', 1);
     expect(banjirProtection(s)).toBeGreaterThan(before);

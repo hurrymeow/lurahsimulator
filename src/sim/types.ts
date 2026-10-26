@@ -153,6 +153,10 @@ export interface BuildingDef {
   footprint?: 1 | 2;
   /** Free tile that never works on its own. Buildings beside it earn this fraction more income. Tune it here. */
   pathIncome?: number;
+  /** Decoration aura: each working one within `radius` tiles adds `bonus` (a fraction) to every income building's income. The total is capped by DECOR_CAP. */
+  boost?: { radius: number; bonus: number };
+  /** Orang Dalam spent when it is placed, on top of the rupiah. A shortcut through the paperwork. */
+  orangDalamCost?: number;
 }
 
 export type BuildingStatus = 'permit' | 'building' | 'active' | 'mangkrak' | 'damaged';

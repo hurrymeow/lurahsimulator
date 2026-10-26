@@ -9,7 +9,7 @@ export const MAX_WALKERS = 16;
 /** Ditches and parking lots are flat, so people walk over them. */
 /** Cost of a step on open ground, against 1 on a path. Above 1 makes walkers detour onto paths. */
 const WALK_OFF_PATH = 2.5;
-const FLAT = new Set(['selokan', 'parkir', 'jalan', 'aspalUlang', 'sawahIrigasi', 'embung', 'taman']);
+const FLAT = new Set(['selokan', 'biopori', 'kolamIkan', 'parkir', 'jalan', 'aspalUlang', 'sawahIrigasi', 'embung', 'taman']);
 const VIP_ID = -1;
 const WALK_SPEED = 0.9;
 const OJOL_SPEED = 2.8;

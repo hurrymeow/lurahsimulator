@@ -13,6 +13,7 @@ export function deserialize(raw: string | null): GameState | null {
     const s = JSON.parse(raw) as GameState;
     if (!s || (s.version !== SAVE_VERSION && s.version !== 1)) return null;
     if (!Array.isArray(s.buildings) || !Array.isArray(s.residents) || typeof s.res?.rupiah !== 'number') return null;
+    migrateSelokan(s);
     if (!s.buildings.every((b) => hasDef(b.def))) return null;
     if (s.version === 1) migrateV1(s);
     // Saves from before stages: start at 0 stars. The first tick catches the stars up.
@@ -37,4 +38,13 @@ function migrateV1(s: GameState): void {
     b.y += dy;
   }
   s.version = SAVE_VERSION;
+}
+
+/** The selokan became the biopori, at the same level. Old saves swap it over, including unlocks and Kerja Bakti. */
+function migrateSelokan(s: GameState): void {
+  const swap = (id: string) => (id === 'selokan' ? 'biopori' : id);
+  for (const b of s.buildings) b.def = swap(b.def);
+  for (const n of s.neighbours ?? []) for (const b of n.buildings) b.def = swap(b.def);
+  s.unlocked = [...new Set((s.unlocked ?? []).map(swap))];
+  for (const m of s.modifiers ?? []) m.target = swap(m.target);
 }

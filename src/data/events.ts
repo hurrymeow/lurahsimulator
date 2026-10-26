@@ -58,7 +58,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'banjir',
     name: 'Banjir',
-    body: 'Hujan deras for three days. Selokan level decides how much of the kampung floats. Each selokan level cuts the damage by 20%.',
+    body: 'Hujan deras for three days. Biopori level decides how much of the kampung floats. Each biopori level cuts the damage by 20%.',
     when: { months: [10, 11, 0, 1], minMonth: 10, chance: 0.3, cooldown: 9 },
     choices: [{ label: 'Check the damage', special: 'banjir', result: '' }],
   },
@@ -86,7 +86,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatan',
     name: 'Kecamatan Inspection',
-    body: 'A Kecamatan inspector visits in 2 months to score the kampung: selokan, Patience, abandoned projects and parkir liar. A good score earns Orang Inside. A bad one costs Patience. Fresh paint counts too.',
+    body: 'A Kecamatan inspector visits in 2 months to score the kampung: drainage, Patience, abandoned projects and parkir liar. A good score earns Orang Inside. A bad one costs Patience. Fresh paint counts too.',
     // Raised by the inspection system on its own schedule, never at random.
     when: { chance: 0 },
     choices: [
@@ -95,7 +95,7 @@ export const EVENTS: EventDef[] = [
         label: 'Cat ulang pagar · Rp 750.000',
         cost: { rupiah: 750_000 },
         inspectPrep: 20,
-        result: 'Every fence got fresh paint. The selokan did not.',
+        result: 'Every fence got fresh paint. The drainage did not.',
       },
       {
         label: 'Nasi kotak for the rombongan · 1 Orang Inside',
