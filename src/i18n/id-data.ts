@@ -1,6 +1,9 @@
 // Bahasa Indonesia for the data files, keyed by `<kind>.<id>.<field>`.
 // A missing key falls back to the English text in the data file.
+import { ID_EVENTS_MORE } from './events-id';
+
 export const ID_DATA: Record<string, string> = {
+  ...ID_EVENTS_MORE,
   'building.warung.blurb': 'Jual kopi sachet dan gosip. Pemasukan stabil, menarik warga.',
   'building.posRonda.blurb': 'Pos jaga malam. +2 Kesabaran per bulan. Belum ada yang pernah lihat orang jaga.',
   'building.selokan.blurb': 'Saluran air. Bangunan termurah, izin terlama. Tiap level meredam kerusakan banjir.',

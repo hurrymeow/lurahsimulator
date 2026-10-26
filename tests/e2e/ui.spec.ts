@@ -264,7 +264,7 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#modal .card.report-card')).toBeHidden();
   });
 
-  for (const id of ['agustusan', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga']) {
+  for (const id of ['agustusan', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga', 'partTime', 'padam', 'hibah']) {
     for (const broke of [false, true]) {
       test(`event ${id}${broke ? ' while broke' : ''} is legible and has a free choice`, async ({ page }) => {
         await start(page);

@@ -7,6 +7,7 @@ import { comboIncomeMult, comboSystem } from './combos';
 import { def, placeableDefs } from './content';
 import { EMAS } from '../data/ranking';
 import { eventSystem } from './events';
+import { lineSystem } from './lines';
 import { debtSystem, iuranFromNeighbours, neighboursSystem, neighboursYearEnd, stempelSystem } from './grow';
 import { inspectionSystem } from './inspection';
 import { jobsSystem } from './jobs';
@@ -192,6 +193,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   checkUnlocks,
   inspectionSystem,
   eventSystem,
+  lineSystem,
   quarterSystem,
 ];
 

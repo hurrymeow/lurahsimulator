@@ -3,6 +3,7 @@ import { BUILDINGS } from '../src/data/buildings';
 import { COMBOS } from '../src/data/combos';
 import { EVENTS } from '../src/data/events';
 import { JOBS } from '../src/data/jobs';
+import { LINES } from '../src/data/lines';
 import { STAGES } from '../src/data/stages';
 import { WACANA } from '../src/data/wacana';
 import { EN } from '../src/i18n/en';
@@ -37,7 +38,12 @@ describe('string tables', () => {
         expected.add(`event.${e.id}.c${i}.label`);
         if (c.result) expected.add(`event.${e.id}.c${i}.result`);
         if (c.modifier) expected.add(`event.${e.id}.c${i}.mod`);
+        c.outcomes?.forEach((_, j) => expected.add(`event.${e.id}.c${i}.o${j}.result`));
       });
+    }
+    for (const l of LINES) {
+      expected.add(`line.${l.id}.name`);
+      expected.add(`line.${l.id}.line`);
     }
     for (const k of expected) expect(ID_DATA[k], k).toBeTruthy();
     const orphans = Object.keys(ID_DATA).filter((k) => !expected.has(k) && !/\.(name)$/.test(k));
