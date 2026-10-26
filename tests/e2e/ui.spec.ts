@@ -1035,7 +1035,14 @@ test.describe('Kelurahan stage', () => {
     expect(got).toEqual({ stage: 'kelurahan', path: 'desa' });
     await page.locator('#menu-btn').click();
     await page.locator('#act-build').click();
-    await expect(page.locator('.sheet').getByText('Balai Desa', { exact: true }).first()).toBeVisible();
+    // Build is split into tabs, so walk them until Balai Desa shows up.
+    const tabs = await page.locator('.sheet .tabs .tab').count();
+    let found = false;
+    for (let i = 0; i < tabs && !found; i++) {
+      await page.locator('.sheet .tabs .tab').nth(i).click();
+      found = (await page.locator('.sheet .card-title strong', { hasText: /^Balai Desa$/ }).count()) > 0;
+    }
+    expect(found).toBe(true);
     await expectLegible(page, 'Desa build menu');
   });
 });
