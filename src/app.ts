@@ -146,7 +146,7 @@ export class App {
         if (f.fanfare) this.modal(f);
         else this.notice(f);
       } else if (f.kind === 'report') {
-        const r = reportExtra(f.report);
+        const r = reportExtra(this.s, f.report);
         this.view.pulse();
         audio.play('fanfare');
         this.modal({ title: r.title, body: r.body, tone: 'info', extra: r.extra, cls: 'report-card' });

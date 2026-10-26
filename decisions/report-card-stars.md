@@ -1,0 +1,1 @@
+- **Stars on the report card:** the card shows the current stage title with its stars and the next missing goal, read live from `sim/stages.ts` when the card opens. Nothing is stored in the report, so it can never disagree with the Menu header. It reuses the Menu's `stage.next` line so the wording matches.

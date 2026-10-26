@@ -1,0 +1,1 @@
+- Quarterly report card now shows the stage title, stars and next missing goal (follow-up to #25, after RT stars #24).

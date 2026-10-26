@@ -4,7 +4,7 @@ export interface JobDef {
   id: Exclude<JobId, 'none'>;
   name: string;
   blurb: string;
-  /** How attractive residents find it when choosing for themselves. Weighted odds, not a hard rank. */
+  /** How attractive residents find it when choosing for themselves. Weighted odds. 0 means only the player assigns it. */
   appeal: number;
   /** Resource change per month for each person with this job. */
   perMonth: Partial<Record<ResourceId, number>>;
@@ -17,7 +17,7 @@ export const JOBS: JobDef[] = [
   { id: 'pns', appeal: 20, name: 'PNS', blurb: 'Produces nothing. Only stat: Pensiun, which fills for 10 years then costs the kas a payout.', perMonth: {}, perLevel: { resources: [], boost: 0 } },
   { id: 'ojol', appeal: 90, name: 'Ojol', blurb: 'Komisi to the kas, paid for in Sabar by hujan and macet.', perMonth: { rupiah: 90_000, sabar: -0.3 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
   { id: 'influencer', appeal: 50, name: 'Influencer', blurb: 'Makes real Viral. It decays 10% a month, so keep posting.', perMonth: { viral: 3 }, perLevel: { resources: ['viral'], boost: 0.25 } },
-  { id: 'buzzer', appeal: 100, name: 'Buzzer', blurb: 'Pays well and makes fake Viral fast. Gets exposed sooner or later.', perMonth: { rupiah: 60_000, viral: 6 }, perLevel: { resources: ['viral'], boost: 0.25 } },
+  { id: 'buzzer', appeal: 0, name: 'Buzzer', blurb: 'Pays well and makes fake Viral fast. Gets exposed sooner or later.', perMonth: { rupiah: 60_000, viral: 6 }, perLevel: { resources: ['viral'], boost: 0.25 } },
 ];
 
 export const jobDef = (id: JobId): JobDef | undefined => JOBS.find((j) => j.id === id);
