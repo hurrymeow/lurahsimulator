@@ -1,4 +1,4 @@
-# Kampung Kita
+# Kampung Story
 
 A satirical kampung management sim, shipped as a PWA. You play Pak RT.
 
