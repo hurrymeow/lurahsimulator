@@ -5,7 +5,8 @@ import { Atmosphere } from './atmosphere';
 import { drawTint, darkness, dusk, Fx } from './fx';
 import { iso, TH, TOP, TW, type Art } from './iso';
 import { Crowd } from './people';
-import { buildWorld, decoAt, HORIZON, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
+import { Weather } from './weather';
+import { buildWorld, decoAt, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
 import { ICONS, ROOF_COLOURS, sprite } from './sprites';
 
 export const RES_COLOUR: Record<ResourceId, string> = {
@@ -113,6 +114,7 @@ export class MapView {
   readonly crowd = new Crowd();
   readonly fx = new Fx();
   private readonly air = new Atmosphere();
+  readonly weather = new Weather();
   /** Income squash per tile key, by start time. */
   private bounces = new Map<number, number>();
   /** Night level this frame, 0 to 1. */
@@ -391,6 +393,7 @@ export class MapView {
       this.air.draw(ctx, this.viewW, this.viewH, now, this.night, dusk(this.clock), this.motion);
       drawTint(ctx, this.viewW, this.viewH, this.clock);
       this.drawLights(ctx);
+      this.weather.draw(ctx, this.viewW, this.viewH, sc, now, (x, y) => ({ x: wx + x * sc, y: wy + y * sc }), shorePoints());
     }
 
     // Badges sit above every building so a taller neighbour in front never hides them.
