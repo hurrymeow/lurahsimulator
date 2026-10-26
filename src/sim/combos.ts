@@ -2,6 +2,7 @@ import { bName, cEffect, cName, cStory, t } from '../i18n';
 import { COMBOS, type ComboDef } from '../data/combos';
 import { STAGE_COMBOS, type StageComboDef } from '../data/higher';
 import { def } from './content';
+import { within } from './footprint';
 import { gateOpen } from './gate';
 import { gain, type Fx } from './gain';
 import { isWorking } from './state';
@@ -12,7 +13,8 @@ export interface ActiveCombo {
   members: Building[];
 }
 
-const near = (a: Building, b: Building, r: number) => Math.abs(a.x - b.x) <= r && Math.abs(a.y - b.y) <= r;
+/** Radius counts from the edge of each footprint, so a 2x2 shop is not penalised for its size. */
+const near = within;
 
 /** Combos that can fire now: the RT ones, plus later-stage ones whose gate is open. */
 export const liveCombos = (s: GameState): ComboDef[] => [...COMBOS, ...STAGE_COMBOS.filter((c) => gateOpen(s, c.gate))];

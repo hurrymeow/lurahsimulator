@@ -49,7 +49,7 @@ async function seed(page: Page): Promise<void> {
     const add = (def: string, x: number, y: number, status = 'active', level = 1) =>
       s.buildings.push({ uid: s.nextUid++, def, x, y, level, status, timer: 2, invested: 3_000_000, placedAt: 0 });
     add('warung', 2, 3); add('posRonda', 3, 3); add('wifi', 4, 3);
-    add('indomaret', 2, 5, 'mangkrak'); add('alfamart', 3, 5, 'permit'); add('selokan', 5, 5, 'building'); add('warung', 6, 7, 'damaged');
+    add('indomaret', 2, 5, 'mangkrak'); add('alfamart', 4, 5, 'permit'); add('selokan', 6, 5, 'building'); add('warung', 6, 7, 'damaged');
     s.ranking.push({ year: 1, us: 90, them: 80, won: true }, { year: 2, us: 100, them: 130, won: false });
     add('parkir', 1, 3);
     for (let i = 0; i < 6; i++) app.s.residents.push({ id: s.nextResidentId++, name: 'Mbak Rizki Putri', job: 'none', pensiun: 0, fake: 0, arrived: 0 });
@@ -886,5 +886,66 @@ test.describe('home screen', () => {
     await page.locator('#home-gear').click();
     await expect(page.locator('#sheet')).toBeVisible();
     await expectLegible(page, 'settings over home');
+  });
+});
+
+test.describe('big lots, zoom and the Warga list', () => {
+  test('a 2x2 shop shows its size in Build and its ghost covers four tiles', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.res.rupiah = 50_000_000;
+      for (let i = 0; i < 8; i++) app.s.residents.push({ id: app.s.nextResidentId++, name: 'Bu Sri', job: 'none', pensiun: 0, fake: 0, arrived: 0 });
+      app.startPlacing('wifi');
+    });
+    await expect(page.locator('#place-info')).toContainText('2×2');
+    await expectLegible(page, 'placing a 2x2');
+  });
+
+  test('after picking a job, the Warga list stays on that resident', async ({ page }) => {
+    await start(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      for (let i = 0; i < 30; i++) app.s.residents.push({ id: app.s.nextResidentId++, name: `Pak Budi ${i}`, job: 'none', pensiun: 0, fake: 0, arrived: 0 });
+    });
+    await dismissModals(page);
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.actions.find((a: any) => a.id === 'warga').open((window as any).pakrt));
+    const row = page.locator('#sheet [data-rid]').nth(25);
+    const id = await row.getAttribute('data-rid');
+    await row.scrollIntoViewIfNeeded();
+    await row.click();
+    // Pick "no job" again: always allowed, and it sends the player back to the list.
+    await page.locator('#sheet .action .btn').first().click();
+    const back = page.locator(`#sheet [data-rid="${id}"]`);
+    await expect(back).toBeInViewport();
+    await expect(back).toBeFocused();
+    expect(await page.locator('#sheet').evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  });
+
+  test('wheel and pinch zoom in and out in whole steps, around the pointer', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const scale = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.scale as number);
+    const box = (await page.locator('#map').boundingBox())!;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    const s0 = await scale();
+    await page.mouse.move(cx, cy);
+    await page.mouse.wheel(0, -120);
+    await expect.poll(scale).toBe(s0 + 1);
+    await page.mouse.wheel(0, 120);
+    await page.mouse.wheel(0, 120);
+    await expect.poll(scale).toBe(s0 - 1);
+    // Two fingers spreading apart zoom in, and the pinch never counts as a tap on the map.
+    const cdp = await page.context().newCDPSession(page);
+    const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', d: number) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: cx - d, y: cy, id: 1 }, { x: cx + d, y: cy, id: 2 }] });
+    const before = await scale();
+    await touch('touchStart', 20);
+    for (const d of [30, 40, 50, 60]) await touch('touchMove', d);
+    await touch('touchEnd', 0);
+    await expect.poll(scale).toBeGreaterThan(before);
+    await expect(page.locator('#modal')).toBeHidden();
+    await expectLegible(page, 'zoomed map');
   });
 });

@@ -4,9 +4,10 @@ import { BASE_ATTRACT, LEVEL_BONUS, START, START_RESIDENTS } from './balance';
 import { def } from './content';
 import { pick } from './rng';
 import { lotAt } from './area';
+import { covers, edgeTiles, tileGap, tilesOf } from './footprint';
 import { GRID_H, GRID_W, setGrid, type Building, type BuildingDef, type GameState, type Resident, type StageState } from './types';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export const newStageState = (): StageState => ({ current: 'rt', stars: { rt: 0, rw: 0, kelurahan: 0 } });
 
@@ -62,7 +63,8 @@ export function addResident(s: GameState): Resident {
 
 export const year = (s: GameState) => Math.floor(s.month / 12) + 1;
 export const inBounds = (x: number, y: number) => x >= 0 && y >= 0 && x < GRID_W && y < GRID_H;
-export const buildingAt = (s: GameState, x: number, y: number) => s.buildings.find((b) => b.x === x && b.y === y);
+/** The building standing on a tile, whichever of its tiles it is. */
+export const buildingAt = (s: GameState, x: number, y: number) => s.buildings.find((b) => covers(b, x, y));
 export const byUid = (s: GameState, uid: number) => s.buildings.find((b) => b.uid === uid);
 export const population = (s: GameState) => s.residents.length;
 export const levelMult = (level: number) => 1 + LEVEL_BONUS * (level - 1);
@@ -95,12 +97,13 @@ export function upgradeCost(s: GameState, b: Building): number {
   return price(s, def(b.def).cost * b.level);
 }
 
-export function neighbours(s: GameState, b: { x: number; y: number }, radius = 1): Building[] {
-  return s.buildings.filter((o) => (o.x !== b.x || o.y !== b.y) && Math.abs(o.x - b.x) <= radius && Math.abs(o.y - b.y) <= radius);
+/** Buildings within `radius` tiles of a tile, not counting one standing on it. */
+export function neighbours(s: GameState, p: { x: number; y: number }, radius = 1): Building[] {
+  return s.buildings.filter((o) => tileGap(o, p) > 0 && tileGap(o, p) <= radius);
 }
 
 export function emptyTiles(s: GameState): { x: number; y: number }[] {
-  const taken = new Set(s.buildings.map((b) => b.y * GRID_W + b.x));
+  const taken = new Set(s.buildings.flatMap((b) => tilesOf(b).map((t) => t.y * GRID_W + t.x)));
   const out: { x: number; y: number }[] = [];
   // Residents only settle inside the player's own RT, never on a seam lot or in a neighbour.
   for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (!taken.has(y * GRID_W + x) && lotAt(x, y) === 'rt') out.push({ x, y });
@@ -111,8 +114,8 @@ export function emptyTiles(s: GameState): { x: number; y: number }[] {
 export function pathMult(s: GameState, b: Building): number {
   if (!def(b.def).income || def(b.def).pathIncome) return 1;
   let bonus = 0;
-  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-    const o = buildingAt(s, b.x + dx, b.y + dy);
+  for (const t of edgeTiles(b)) {
+    const o = buildingAt(s, t.x, t.y);
     if (o && isWorking(o)) bonus = Math.max(bonus, def(o.def).pathIncome ?? 0);
   }
   return 1 + bonus;

@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { placeableDefs } from '../src/sim/content';
 import { checkRepair, repair, resolveEvent } from '../src/sim/events';
 import { checkRestart, restart } from '../src/sim/projects';
-import { checkPlace, place, skipPermit, upgrade } from '../src/sim/rules';
-import { emptyTiles, newGame, population } from '../src/sim/state';
+import { checkPlace, lotGaps, place, requirementGaps, skipPermit, upgrade } from '../src/sim/rules';
+import { tilesAt } from '../src/sim/footprint';
+import { activeCombos } from '../src/sim/combos';
+import { addBuilding, emptyTiles, neighbours, newGame, population } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
 import type { GameState } from '../src/sim/types';
 
@@ -14,13 +16,27 @@ function play(seed: number, years: number, smart: boolean, starMonths: number[] 
   for (let m = 0; m < years * 12; m++) {
     if (s.pendingEvent) resolveEvent(s, [], 0);
     if (smart) {
-      // The bot packs a 9x4 corner (the old map width) so combo members stay in range, and does not plan paths.
+      // The bot packs a 9x5 corner so combo members stay in range, and does not plan paths. 2x2 buildings made it one row deeper.
       for (const d of placeableDefs().filter((p) => !p.pathIncome)) {
-        const spot = emptyTiles(s).find((t) => t.y < 4 && t.x < 9);
-        // Sensible player: keep a cash buffer and do not stack buildings that only cost upkeep.
+        // Sensible player: keep a cash buffer and do not stack buildings that only cost upkeep, or one spare when two years pass with no combo.
         const have = s.buildings.filter((b) => b.def === d.id).length;
-        const worthIt = d.income > d.upkeep || have === 0;
-        if (spot && worthIt && have < 4 && checkPlace(s, d.id, spot.x, spot.y).ok && s.res.rupiah > d.cost * 3) place(s, d.id, spot.x, spot.y);
+        const worthIt = d.income > d.upkeep || have === 0 || (have === 1 && s.discovered.length === 0 && s.month >= 24);
+        if (!worthIt || have >= 4 || s.res.rupiah <= d.cost * 3 || requirementGaps(s, d).length) continue;
+        // Small builds take the first free tile. A 2x2, or a spare upkeep-only building, goes where it would
+        // complete the most combos, as a player reading the Buku Combo would, then where it touches the most kinds of building.
+        const big = (d.footprint ?? 1) > 1;
+        const aimed = big || (have > 0 && d.income <= d.upkeep);
+        const fits = emptyTiles(s).filter((t) => t.y < 5 && t.x < 9 && (!big || lotGaps(s, d, t.x, t.y).length === 0));
+        const score = (t: { x: number; y: number }) => {
+          const kinds = new Set(tilesAt(t.x, t.y, d.footprint ?? 1).flatMap((p) => neighbours(s, p)).filter((b) => b.def !== 'rumah' && b.def !== 'parkir' && b.def !== d.id).map((b) => b.def)).size;
+          addBuilding(s, d.id, t.x, t.y, 'active');
+          const combos = activeCombos(s).length;
+          s.buildings.pop();
+          s.nextUid--;
+          return combos * 10 + kinds;
+        };
+        const spot = aimed ? fits.map((t) => ({ t, k: score(t) })).reduce<{ t: { x: number; y: number }; k: number } | undefined>((a, b) => (!a || b.k > a.k ? b : a), undefined)?.t : fits[0];
+        if (spot && checkPlace(s, d.id, spot.x, spot.y).ok) place(s, d.id, spot.x, spot.y);
       }
       for (const b of s.buildings) {
         if (b.status === 'permit') skipPermit(s, b);

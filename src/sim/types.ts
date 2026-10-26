@@ -149,7 +149,7 @@ export interface BuildingDef {
   sprite: string;
   /** Which lots it may stand on. RT buildings go inside an RT, RW buildings on RW seams. Defaults to 'rt'. */
   scope?: 'rt' | 'rw' | 'kel';
-  /** Tiles on each side. Kelurahan buildings take 2x2. Defaults to 1. */
+  /** Tiles on each side: 2 takes a 2x2 lot. Shops, towers and fields are bigger than a warung. Defaults to 1. */
   footprint?: 1 | 2;
   /** Free tile that never works on its own. Buildings beside it earn this fraction more income. Tune it here. */
   pathIncome?: number;
@@ -174,6 +174,8 @@ export interface Building {
   owner?: number;
   /** A restarted project never freezes again. */
   restarted?: boolean;
+  /** Tiles on each side, when it differs from the def's footprint: an old save's building with no room to grow. */
+  size?: number;
 }
 
 export interface Resident {

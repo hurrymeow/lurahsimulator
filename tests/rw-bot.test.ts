@@ -47,5 +47,6 @@ describe('RW bot', () => {
     
     expect(got.filter((g) => g.stars >= 2).length, JSON.stringify(got)).toBeGreaterThanOrEqual(4);
     for (const g of got) expect(g.combos.length, `seed ${g.seed}`).toBeGreaterThanOrEqual(2);
-  });
+    // Five 12-year runs that test every seam tile each month. 2x2 lots check four tiles, so give it room on slow CI.
+  }, 20_000);
 });

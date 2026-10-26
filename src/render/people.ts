@@ -1,6 +1,7 @@
 // Residents walking between buildings, ojol riders, and the tukang parkir's wave. Purely visual:
 // nothing here touches the simulation.
 import { lotAt } from '../sim/area';
+import { tilesOf } from '../sim/footprint';
 import { GRID_H, GRID_W, type GameState, type JobId } from '../sim/types';
 import { doorsOf, findPath, type Pt } from './path';
 
@@ -169,7 +170,7 @@ export class Crowd {
     for (const b of s.buildings) {
       if (b.def === 'jalan' && b.status === 'active') this.onPath[b.y * GRID_W + b.x] = 1;
       if (FLAT.has(b.def)) continue;
-      this.blocked[b.y * GRID_W + b.x] = 1;
+      for (const t of tilesOf(b)) this.blocked[t.y * GRID_W + t.x] = 1;
       if (b.status !== 'active') continue;
       sites.push(b);
       if (b.def === 'rumah') homes.push(b);

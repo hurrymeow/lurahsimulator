@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { deserialize, serialize } from '../src/sim/save';
 import { place } from '../src/sim/rules';
 import { score } from '../src/sim/ranking';
-import { addBuilding, newGame } from '../src/sim/state';
+import { SAVE_VERSION, addBuilding, newGame } from '../src/sim/state';
 import { buildingIncome } from '../src/sim/tick';
 import { GRID_H, GRID_W } from '../src/sim/types';
 
@@ -31,7 +31,7 @@ describe('jalan', () => {
     s.buildings = [];
     addBuilding(s, 'warung', 3, 4, 'active');
     const l = deserialize(serialize(s))!;
-    expect(l.version).toBe(2);
+    expect(l.version).toBe(SAVE_VERSION);
     expect(l.buildings[0]).toMatchObject({ x: 5, y: 6 });
     expect(l.buildings[0].x).toBeLessThan(GRID_W);
     expect(l.buildings[0].y).toBeLessThan(GRID_H);

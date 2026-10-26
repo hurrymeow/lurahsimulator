@@ -4,6 +4,8 @@ import { RIVAL_BASE, RIVAL_PER_YEAR } from '../data/ranking';
 import { IURAN, NEIGHBOUR, STEMPEL } from './balance';
 import { viewOf } from './neighbourView';
 import { cellOf, isSeam, neighbourCells } from './area';
+import { covers, footprintOf, gap, tilesAt, tilesOf } from './footprint';
+import { def } from './content';
 import { activeCombos } from './combos';
 import type { Fx } from './gain';
 import { gain } from './gain';
@@ -28,7 +30,7 @@ const WANTS: Record<RtTrait, string[]> = {
 
 export const neighbourAt = (s: GameState, x: number, y: number): Building | undefined => {
   const { cx, cy } = cellOf(x, y);
-  return s.neighbours.find((n) => n.cx === cx && n.cy === cy)?.buildings.find((b) => b.x === x && b.y === y);
+  return s.neighbours.find((n) => n.cx === cx && n.cy === cy)?.buildings.find((b) => covers(b, x, y));
 };
 
 function addTo(s: GameState, n: Neighbour, id: string, x: number, y: number): Building {
@@ -37,11 +39,13 @@ function addTo(s: GameState, n: Neighbour, id: string, x: number, y: number): Bu
   return b;
 }
 
-function freeTiles(n: Neighbour): { x: number; y: number }[] {
-  const taken = new Set(n.buildings.map((b) => `${b.x},${b.y}`));
+/** Spots in the RT where a building `size` tiles on a side fits: every tile inside the cell, off the seams and empty. */
+function freeTiles(n: Neighbour, size = 1): { x: number; y: number }[] {
+  const taken = new Set(n.buildings.flatMap((b) => tilesOf(b).map((t) => `${t.x},${t.y}`)));
+  const ok = (x: number, y: number) => x < (n.cx + 1) * RT_W && y < (n.cy + 1) * RT_H && !isSeam(x, y) && !taken.has(`${x},${y}`);
   const out: { x: number; y: number }[] = [];
   for (let y = n.cy * RT_H; y < (n.cy + 1) * RT_H; y++)
-    for (let x = n.cx * RT_W; x < (n.cx + 1) * RT_W; x++) if (!isSeam(x, y) && !taken.has(`${x},${y}`)) out.push({ x, y });
+    for (let x = n.cx * RT_W; x < (n.cx + 1) * RT_W; x++) if (tilesAt(x, y, size).every((t) => ok(t.x, t.y))) out.push({ x, y });
   return out;
 }
 
@@ -76,8 +80,6 @@ export function fundNeighbour(s: GameState, n: Neighbour): string | null {
 
 function build(s: GameState, n: Neighbour): void {
   const v = viewOf(s, n);
-  const free = freeTiles(n);
-  if (!free.length) return;
   let id: string;
   // Houses and shops take turns, or a full RT would only ever add houses and never find a combo.
   if (n.pop >= housing(v) && n.buildings.at(-1)?.def !== 'rumah') id = 'rumah';
@@ -85,10 +87,20 @@ function build(s: GameState, n: Neighbour): void {
     const list = WANTS[n.trait];
     id = list[n.buildings.filter((b) => b.def !== 'rumah' && b.def !== 'kantorRT').length % list.length];
   }
-  // Settle next to what is already there, like the player's kampung does.
-  const near = free.filter((f) => n.buildings.some((b) => Math.abs(b.x - f.x) <= 1 && Math.abs(b.y - f.y) <= 1));
+  // A big shop that no longer fits waits for a small one's turn.
+  let size = footprintOf(def(id));
+  let free = freeTiles(n, size);
+  if (!free.length && size > 1) {
+    id = 'warung';
+    size = 1;
+    free = freeTiles(n);
+  }
+  if (!free.length) return;
+  // Settle next to what is already there, like the player's kampung does. Distance runs from the new lot's edge.
+  const touching = (f: { x: number; y: number }) => n.buildings.filter((b) => gap(b, { def: id, x: f.x, y: f.y, size }) <= 1);
+  const near = free.filter((f) => touching(f).length > 0);
   // Shops go where they have the most different neighbours, which is how combos happen. Ties are drawn.
-  const mix = (f: { x: number; y: number }) => new Set(n.buildings.filter((b) => b.def !== 'rumah' && Math.abs(b.x - f.x) <= 1 && Math.abs(b.y - f.y) <= 1).map((b) => b.def)).size;
+  const mix = (f: { x: number; y: number }) => new Set(touching(f).filter((b) => b.def !== 'rumah').map((b) => b.def)).size;
   const pool = near.length ? near : free;
   const best = id === 'rumah' ? 0 : Math.max(...pool.map(mix));
   const spot = pick(s, id === 'rumah' ? pool : pool.filter((f) => mix(f) === best));

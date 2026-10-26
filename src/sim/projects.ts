@@ -1,6 +1,7 @@
 import { bName, t } from '../i18n';
 import { rupiah } from '../format';
 import { def, stageFx } from './content';
+import { tileGap } from './footprint';
 import { gain, type Fx } from './gain';
 import { chance } from './rng';
 import { EMAS } from '../data/ranking';
@@ -39,8 +40,8 @@ export function onBuildingFinished(s: GameState, fx: Fx, b: Building): 'ok' | 'm
 function spawnParkir(s: GameState, fx: Fx, shop: Building): void {
   const empty = emptyTiles(s);
   if (!empty.length) return;
-  const next = empty.filter((t) => Math.abs(t.x - shop.x) <= 1 && Math.abs(t.y - shop.y) <= 1);
-  const spot = (next.length ? next : empty).sort((a, b) => Math.abs(a.x - shop.x) + Math.abs(a.y - shop.y) - (Math.abs(b.x - shop.x) + Math.abs(b.y - shop.y)))[0];
+  const next = empty.filter((t) => tileGap(shop, t) <= 1);
+  const spot = (next.length ? next : empty).sort((a, b) => tileGap(shop, a) - tileGap(shop, b))[0];
   const p = addBuilding(s, 'parkir', spot.x, spot.y, 'active');
   p.owner = shop.uid;
   fx.push({ kind: 'built', uid: p.uid });

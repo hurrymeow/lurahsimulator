@@ -37,6 +37,7 @@ export const RW_BUILDINGS: StageBuildingDef[] = [
     removeBlockedReason: 'The balai RW outlives every Pak RW.',
     jobSlots: { pns: 2, calo: 1 },
     sprite: 'balaiRW',
+    footprint: 2, // A hall for the whole RW to queue in.
     gate: RW0,
     fx: { stempel: 1 },
   },
@@ -97,6 +98,7 @@ export const RW_BUILDINGS: StageBuildingDef[] = [
     requires: { buildings: ['balaiRW'] },
     mangkrakChance: 0.1,
     sprite: 'pasarKaget',
+    footprint: 2, // Stalls, tarps and the parkir between them.
     gate: RW2,
     fx: { burst: { every: 4, mult: 3 }, spawns: { def: 'parkir', count: 2 } },
   },

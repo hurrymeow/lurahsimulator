@@ -1,5 +1,6 @@
 import { rupiahShort } from '../format';
 import { def } from '../sim/content';
+import { sizeOf, tilesOf } from '../sim/footprint';
 import { GRID_H, GRID_W, RT_H, RT_W, type Building, type GameState, type ResourceId } from '../sim/types';
 import { Atmosphere } from './atmosphere';
 import { drawTint, darkness, dusk, Fx } from './fx';
@@ -73,6 +74,8 @@ export interface Ghost {
   y: number;
   ok: boolean;
   sprite: string;
+  /** Tiles on a side. Defaults to 1. */
+  size?: number;
 }
 
 interface Hit {
@@ -81,10 +84,15 @@ interface Hit {
   left: number;
   top: number;
   art: Art;
+  /** CSS pixels per art pixel. A 2x2 building draws at twice the map scale. */
+  k: number;
 }
 
 /** Diamonds are at least 32px tall, so the tap area matches a 32px square. */
 const MIN_SCALE = 2;
+/** Zoom stays on whole-number scales so pixels stay crisp. 1 is an overview: tiles get small, but taps still land. */
+export const ZOOM_MIN = 1;
+export const ZOOM_MAX = 6;
 const POP_MS = 1200;
 const BURST_MS = 600;
 /** Margin below the map's front corner, in art pixels, so the bottom row is not flush with the edge. */
@@ -146,6 +154,8 @@ export class MapView {
   private panX = 0;
   private panY = 0;
   private centred = false;
+  /** Scale the player zoomed to. Null follows the screen size. */
+  private zoomed: number | null = null;
 
   /** The grid changed size: lay the world out again, redraw it and open on the player's RT. */
   regrid(): void {
@@ -162,7 +172,7 @@ export class MapView {
     this.canvas.width = Math.round(w * dpr);
     this.canvas.height = Math.round(h * dpr);
     // Whole-number scale keeps pixels crisp. A small screen pans instead of shrinking tiles.
-    this.scale = Math.max(MIN_SCALE, Math.floor(Math.min(w / MAP_W, h / MAP_H)));
+    this.scale = this.zoomed ?? Math.max(MIN_SCALE, Math.floor(Math.min(w / MAP_W, h / MAP_H)));
     this.tile = TH * this.scale;
     this.viewW = w;
     this.viewH = h;
@@ -184,6 +194,25 @@ export class MapView {
     const top = Math.floor(gh <= this.viewH ? (this.viewH - gh) / 2 : this.panY);
     this.ox = left + PAN_LEFT * this.scale;
     this.oy = top + PAN_TOP * this.scale;
+  }
+
+  /**
+   * Zooms by whole steps, keeping the ground under (cx, cy) in place: the mouse pointer, or the middle
+   * of a pinch. Returns false at either end of the range.
+   */
+  zoomBy(steps: number, cx = this.viewW / 2, cy = this.viewH / 2): boolean {
+    const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, this.scale + steps));
+    if (next === this.scale) return false;
+    // Art-pixel point under the anchor, measured from tile (0,0)'s top corner.
+    const ax = (cx - this.ox) / this.scale;
+    const ay = (cy - this.oy) / this.scale;
+    this.zoomed = next;
+    this.scale = next;
+    this.tile = TH * next;
+    this.panX = cx - ax * next - PAN_LEFT * next;
+    this.panY = cy - ay * next - PAN_TOP * next;
+    this.clampPan();
+    return true;
   }
 
   panBy(dx: number, dy: number): void {
@@ -210,8 +239,8 @@ export class MapView {
     if (buildings)
       for (let k = this.hits.length - 1; k >= 0; k--) {
         const h = this.hits[k];
-        const ax = Math.floor((px - h.left) / this.scale);
-        const ay = Math.floor((py - h.top) / this.scale);
+        const ax = Math.floor((px - h.left) / h.k);
+        const ay = Math.floor((py - h.top) / h.k);
         if (ax >= 0 && ay >= 0 && ax < h.art.canvas.width && ay < h.art.canvas.height && h.art.alpha[ay * h.art.canvas.width + ax] > 0) return { x: h.x, y: h.y };
       }
     const a = (px - this.ox) / ((TW * this.scale) / 2);
@@ -260,10 +289,10 @@ export class MapView {
     y: this.oy + ((fx + fy) * TH * this.scale) / 2,
   });
 
-  /** squash flattens the art for an income bounce, anchored on the ground. */
-  private art(ctx: CanvasRenderingContext2D, art: Art, x: number, y: number, grow = 1, squash = 0): Hit {
+  /** squash flattens the art for an income bounce, anchored on the ground. n is the footprint: a 2x2 draws twice as big over its four tiles. */
+  private art(ctx: CanvasRenderingContext2D, art: Art, x: number, y: number, grow = 1, squash = 0, n = 1): Hit {
     const c = this.corner(x, y);
-    const s = this.scale;
+    const s = this.scale * n;
     const left = c.x - (TW * s) / 2;
     const top = c.y - TOP * s;
     if (grow < 1 || squash) {
@@ -274,21 +303,21 @@ export class MapView {
       const h = art.canvas.height * s * grow * (1 - squash);
       ctx.drawImage(art.canvas, gx - w / 2, gy - (TOP + TH / 2) * s * grow * (1 - squash), w, h);
     } else ctx.drawImage(art.canvas, left, top, art.canvas.width * s, art.canvas.height * s);
-    return { x, y, left, top, art };
+    return { x, y, left, top, art, k: s };
   }
 
   /** Flat 2D sprite standing on the tile centre, used for the permit sign. */
-  private sign(ctx: CanvasRenderingContext2D, name: string, x: number, y: number): void {
-    const c = this.tileCentre(x, y);
+  private sign(ctx: CanvasRenderingContext2D, name: string, x: number, y: number, n = 1): void {
+    const c = this.project(x + n / 2, y + n / 2);
     const src = sprite(name);
     const w = src.width * this.scale;
     ctx.drawImage(src, c.x - w / 2, c.y - w, w, w);
   }
 
-  private diamond(ctx: CanvasRenderingContext2D, x: number, y: number, grow = 0): void {
-    const c = this.tileCentre(x, y);
-    const hw = ((TW * this.scale) / 2) * (1 + grow);
-    const hh = ((TH * this.scale) / 2) * (1 + grow);
+  private diamond(ctx: CanvasRenderingContext2D, x: number, y: number, grow = 0, n = 1): void {
+    const c = this.project(x + n / 2, y + n / 2);
+    const hw = ((TW * this.scale * n) / 2) * (1 + grow);
+    const hh = ((TH * this.scale * n) / 2) * (1 + grow);
     ctx.beginPath();
     ctx.moveTo(c.x, c.y - hh);
     ctx.lineTo(c.x + hw, c.y);
@@ -298,8 +327,8 @@ export class MapView {
   }
 
   /** Top of a tile's art, in CSS pixels, for badges and pops. */
-  private artTop(x: number, y: number, art: Art | null): number {
-    return this.tileCentre(x, y).y - (art ? art.height : 0) * this.scale;
+  private artTop(x: number, y: number, art: Art | null, n = 1): number {
+    return this.project(x + n / 2, y + n / 2).y - (art ? art.height : 0) * this.scale * n;
   }
 
   /** Tiles holding a selokan and tiles holding anything, rebuilt each frame so lookups stay O(1) on a big map. */
@@ -353,29 +382,32 @@ export class MapView {
     const all: Building[] = [...s.buildings];
     for (const n of s.neighbours) for (const b of n.buildings) { all.push(b); ai.add(b.uid); }
     for (const b of all) {
-      this.occupied.add(b.y * GRID_W + b.x);
+      for (const t of tilesOf(b)) this.occupied.add(t.y * GRID_W + t.x);
       if (b.def === 'selokan') this.selokan.add(b.y * GRID_W + b.x);
     }
     for (const b of all) {
       if (FLAT_AO.has(b.def) || !this.onScreen(b.x, b.y)) continue;
-      const c = this.tileCentre(b.x, b.y);
-      const w = TW * 1.5 * sc;
+      const n = sizeOf(b);
+      const c = this.project(b.x + n / 2, b.y + n / 2);
+      const w = TW * 1.5 * sc * n;
       ctx.drawImage(ao, c.x - w / 2, c.y - w / 4, w, w / 2);
     }
 
     if (sel) {
-      this.diamond(ctx, sel.x, sel.y);
+      this.diamond(ctx, sel.x, sel.y, 0, sizeOf(sel));
       ctx.fillStyle = 'rgba(244, 244, 245, 0.25)';
       ctx.fill();
     }
     if (this.ghost) {
-      this.diamond(ctx, this.ghost.x, this.ghost.y);
+      this.diamond(ctx, this.ghost.x, this.ghost.y, 0, this.ghost.size);
       ctx.fillStyle = this.ghost.ok ? 'rgba(74, 222, 128, 0.35)' : 'rgba(248, 113, 113, 0.35)';
       ctx.fill();
     }
 
     // Back to front: tiles further up the screen draw first. Walkers slot in by the same depth.
-    const sorted = all.sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
+    // A big building sorts by its front tile, so whatever stands behind any of its tiles draws first.
+    const depth = (b: Building) => b.x + b.y + 2 * (sizeOf(b) - 1);
+    const sorted = all.sort((a, b) => depth(a) - depth(b) || a.x - b.x);
     const tops = new Map<number, number>();
     this.hits = [];
     // Scenery on empty tiles joins the same back-to-front order, but never the tap list.
@@ -385,7 +417,9 @@ export class MapView {
         const y = d - x;
         if (!this.onScreen(x, y) || this.occupied.has(y * GRID_W + x)) continue;
         const name = decoAt(x, y);
-        if (name && !(this.ghost && this.ghost.x === x && this.ghost.y === y)) deco.push({ x, y, name });
+        const g = this.ghost;
+        const n = g?.size ?? 1;
+        if (name && !(g && x >= g.x && y >= g.y && x < g.x + n && y < g.y + n)) deco.push({ x, y, name });
       }
     // From 2 stars the scenery edge thins and the neighbours' roofs show beyond the road.
     if (s.stage.current === 'rt' && s.stage.stars.rt >= 2) for (const r of farRoofs()) if (this.onScreen(r.x, r.y)) deco.push(r);
@@ -399,45 +433,46 @@ export class MapView {
     this.crowd.update(s, now, this.motion);
     this.crowd.begin();
     for (const b of sorted) {
-      decoUntil(b.x + b.y, b.x);
-      this.crowd.drawUntil(ctx, b.x + b.y + 1, this.project, sc, now, this.motion);
+      decoUntil(depth(b), b.x);
+      this.crowd.drawUntil(ctx, depth(b) + 1, this.project, sc, now, this.motion);
       if (!this.onScreen(b.x, b.y)) continue;
       const d = def(b.def);
+      const n = sizeOf(b);
       const art = iso(d.sprite, this.variant(b));
       if (ai.has(b.uid)) {
-        this.art(ctx, art, b.x, b.y);
-        tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, art));
+        this.art(ctx, art, b.x, b.y, 1, 0, n);
+        tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, art, n));
         continue;
       }
       if (b.status === 'permit') {
         ctx.globalAlpha = 0.35;
-        this.hits.push(this.art(ctx, art, b.x, b.y));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n));
         ctx.globalAlpha = 1;
-        this.sign(ctx, 'permit', b.x, b.y);
+        this.sign(ctx, 'permit', b.x, b.y, n);
       } else if (b.status === 'building') {
         ctx.globalAlpha = 0.5;
-        this.hits.push(this.art(ctx, art, b.x, b.y));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n));
         ctx.globalAlpha = 1;
-        this.art(ctx, iso('scaffold'), b.x, b.y);
+        this.art(ctx, iso('scaffold'), b.x, b.y, 1, 0, n);
         if (this.effects) this.fx.construct(b.x, b.y, now);
       } else if (b.status === 'mangkrak') {
         ctx.filter = 'grayscale(1) brightness(0.7)';
-        this.hits.push(this.art(ctx, art, b.x, b.y));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n));
         ctx.filter = 'none';
-        this.art(ctx, iso('scaffold'), b.x, b.y);
+        this.art(ctx, iso('scaffold'), b.x, b.y, 1, 0, n);
       } else if (b.status === 'damaged') {
         ctx.filter = 'sepia(1) brightness(0.6)';
-        this.hits.push(this.art(ctx, art, b.x, b.y));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n));
         ctx.filter = 'none';
       } else {
         const born = this.spawned.get(b.uid);
         const k = born === undefined ? 1 : Math.min(1, (now - born) / 350);
         if (k >= 1) this.spawned.delete(b.uid);
-        this.hits.push(this.art(ctx, art, b.x, b.y, 0.6 + 0.4 * (1 - (1 - k) ** 3), this.squash(b, now)));
-        if (b.level > 1) this.levelPips(ctx, b.x, b.y, b.level);
+        this.hits.push(this.art(ctx, art, b.x, b.y, 0.6 + 0.4 * (1 - (1 - k) ** 3), this.squash(b, now), n));
+        if (b.level > 1) this.levelPips(ctx, b.x, b.y, b.level, n);
         this.idle(ctx, b, now);
       }
-      tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' || b.status === 'mangkrak' ? iso('scaffold') : art));
+      tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' || b.status === 'mangkrak' ? iso('scaffold') : art, n));
     }
 
     decoUntil(Infinity, 0);
@@ -463,9 +498,9 @@ export class MapView {
     if (this.ghost) {
       const g = this.ghost;
       ctx.globalAlpha = 0.6;
-      this.art(ctx, iso(g.sprite), g.x, g.y);
+      this.art(ctx, iso(g.sprite), g.x, g.y, 1, 0, g.size);
       ctx.globalAlpha = 1;
-      this.diamond(ctx, g.x, g.y);
+      this.diamond(ctx, g.x, g.y, 0, g.size);
       ctx.strokeStyle = g.ok ? '#4ade80' : '#f87171';
       ctx.lineWidth = 2;
       ctx.setLineDash(g.ok ? [] : [4, 3]);
@@ -473,7 +508,7 @@ export class MapView {
       ctx.setLineDash([]);
     }
     if (sel) {
-      this.diamond(ctx, sel.x, sel.y);
+      this.diamond(ctx, sel.x, sel.y, 0, sizeOf(sel));
       ctx.strokeStyle = '#f4f4f5';
       ctx.lineWidth = 2;
       ctx.stroke();
@@ -571,8 +606,8 @@ export class MapView {
       const cx = l.x + s;
       const cy = l.y + s;
       const hidden = this.hits.slice(l.after).some((h) => {
-        const ax = Math.floor((cx - h.left) / s);
-        const ay = Math.floor((cy - h.top) / s);
+        const ax = Math.floor((cx - h.left) / h.k);
+        const ay = Math.floor((cy - h.top) / h.k);
         return ax >= 0 && ay >= 0 && ax < h.art.canvas.width && ay < h.art.canvas.height && h.art.alpha[ay * h.art.canvas.width + ax] > 0;
       });
       if (!hidden) ctx.fillRect(l.x, l.y, 2 * s, 3 * s);
@@ -595,8 +630,9 @@ export class MapView {
 
   /** Small loops on working buildings: the wifi light blinks, warung steam rises, the tukang parkir waves. */
   private idle(ctx: CanvasRenderingContext2D, b: Building, now: number): void {
-    const c = this.tileCentre(b.x, b.y);
-    const s = this.scale;
+    const n = sizeOf(b);
+    const c = this.project(b.x + n / 2, b.y + n / 2);
+    const s = this.scale * n;
     const px = (x: number, y: number, col: string) => {
       ctx.fillStyle = col;
       ctx.fillRect(Math.round(c.x + x * s), Math.round(c.y + y * s), s, s);
@@ -636,9 +672,9 @@ export class MapView {
   }
 
   /** Level pips along the tile's front corner. */
-  private levelPips(ctx: CanvasRenderingContext2D, x: number, y: number, level: number): void {
-    const c = this.tileCentre(x, y);
-    const by = c.y + (TH * this.scale) / 2 - 10;
+  private levelPips(ctx: CanvasRenderingContext2D, x: number, y: number, level: number, n = 1): void {
+    const c = this.project(x + n / 2, y + n / 2);
+    const by = c.y + (TH * this.scale * n) / 2 - 10;
     const left = c.x - (level * 7) / 2;
     for (let i = 0; i < level; i++) {
       ctx.fillStyle = '#0b0b0c';

@@ -14,10 +14,11 @@ import { h } from './dom';
 import { openSheet } from './sheet';
 
 // ---------- Warga ----------
-export function openResidents(app: App): void {
+/** focus: the resident just edited. The list opens scrolled to their row instead of the top. */
+export function openResidents(app: App, focus?: number): void {
   const s = app.s;
   const rows = s.residents.map((r) =>
-    h('button', { class: 'card-btn slim', onclick: () => openResident(app, r.id) },
+    h('button', { class: 'card-btn slim', 'data-rid': String(r.id), onclick: () => openResident(app, r.id) },
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, r.name), h('span', { class: 'meta' }, `${jobDef(r.job) ? jName(jobDef(r.job)!) : t('res.noJob')} · ${t('res.level', { n: levelOf(r) })}`)),
         r.job === 'pns' ? h('p', { class: 'meta' }, t('res.pensiun', { n: Math.round(r.pensiun) })) : null,
@@ -27,6 +28,11 @@ export function openResidents(app: App): void {
   );
   const summary = liveJobs(s).map((j) => `${jName(j)} ${used(s, j.id)}/${slots(s, j.id)}`).join(' · ');
   openSheet(t('menu.warga'), [h('p', { class: 'meta' }, t('res.slots', { summary })), ...rows]);
+  const row = focus === undefined ? null : document.querySelector<HTMLElement>(`#sheet [data-rid="${focus}"]`);
+  if (row) {
+    row.scrollIntoView({ block: 'center' });
+    row.focus({ preventScroll: true });
+  }
 }
 
 function openResident(app: App, id: number): void {
@@ -36,7 +42,7 @@ function openResident(app: App, id: number): void {
     const check = checkAssign(app.s, r, job);
     const label = job === 'none' ? t('res.noJob') : jName(jobDef(job)!);
     return h('div', { class: 'action' },
-      h('button', { class: `btn ${r.job === job ? 'btn-primary' : ''}`, disabled: !check.ok, 'aria-pressed': String(r.job === job), onclick: () => { assign(app.s, r, job, true); app.save(); app.refresh(); openResidents(app); } }, r.job === job ? t('res.current', { label }) : label),
+      h('button', { class: `btn ${r.job === job ? 'btn-primary' : ''}`, disabled: !check.ok, 'aria-pressed': String(r.job === job), onclick: () => { assign(app.s, r, job, true); app.save(); app.refresh(); openResidents(app, r.id); } }, r.job === job ? t('res.current', { label }) : label),
       job !== 'none' ? h('p', { class: 'meta' }, jBlurb(jobDef(job)!)) : null,
       check.ok ? null : h('ul', { class: 'missing' }, ...check.missing.map((m) => h('li', {}, m))),
     );

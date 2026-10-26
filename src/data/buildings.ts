@@ -1,6 +1,7 @@
 import type { BuildingDef } from '../sim/types';
 
 // Add or tweak buildings here. The engine reads only these fields.
+// footprint is tiles on a side (default 1). Sizes follow real lot sizes, see decisions/building-footprints.md.
 // Every building must move at least one number.
 export const BUILDINGS: BuildingDef[] = [
   {
@@ -83,6 +84,7 @@ export const BUILDINGS: BuildingDef[] = [
     mangkrakChance: 0.25,
     jobSlots: { ojol: 3, influencer: 2, buzzer: 2 },
     sprite: 'wifi',
+    footprint: 2, // A BTS site wants about 400 m² of land.
   },
   {
     id: 'indomaret',
@@ -102,6 +104,7 @@ export const BUILDINGS: BuildingDef[] = [
     requires: { stars: { stage: 'rt', n: 1 }, buildings: ['warung'] },
     mangkrakChance: 0.2,
     sprite: 'indomaret',
+    footprint: 2, // Minimarkets ask for 120-250 m², ten warungs.
   },
   {
     id: 'alfamart',
@@ -121,6 +124,7 @@ export const BUILDINGS: BuildingDef[] = [
     requires: { stars: { stage: 'rt', n: 1 }, buildings: ['warung'] },
     mangkrakChance: 0.2,
     sprite: 'alfamart',
+    footprint: 2,
   },
   {
     id: 'kantorRT',
@@ -160,6 +164,7 @@ export const BUILDINGS: BuildingDef[] = [
     removable: true,
     requires: { stars: { stage: 'rt', n: 1 } },
     sprite: 'kosan',
+    footprint: 2, // A row of six rooms with a shared corridor.
   },
   {
     id: 'lapangan',
@@ -177,6 +182,7 @@ export const BUILDINGS: BuildingDef[] = [
     removable: true,
     requires: { stars: { stage: 'rt', n: 2 } },
     sprite: 'lapangan',
+    footprint: 2, // A badminton court alone is 13.4 x 6.1 m, before the upacara crowd.
   },
   {
     id: 'bankSampah',

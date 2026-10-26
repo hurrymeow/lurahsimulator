@@ -3,6 +3,7 @@ import { rupiah } from '../format';
 import { REFUND } from './balance';
 import { lotAt } from './area';
 import { def, gateOf, hasDef } from './content';
+import { footprintOf, tilesAt } from './footprint';
 import { gateOpen } from './gate';
 import { neighbourAt } from './grow';
 import { stageTitle } from './stages';
@@ -31,16 +32,27 @@ export function requirementGaps(s: GameState, d: BuildingDef, opts: { ignoreLimi
   return missing;
 }
 
+/** What is wrong with the ground at (x, y) for this building. A big building needs every tile of its lot free, inside the map, and on the right kind of lot. */
+export function lotGaps(s: GameState, d: BuildingDef, x: number, y: number): string[] {
+  const missing: string[] = [];
+  const n = footprintOf(d);
+  const tiles = tilesAt(x, y, n);
+  const at = (p: { x: number; y: number }) => buildingAt(s, p.x, p.y) ?? neighbourAt(s, p.x, p.y);
+  let taken: Building | undefined;
+  if (!tiles.every((p) => inBounds(p.x, p.y))) missing.push(n > 1 ? t('sim.needRoom', { n }) : t('sim.offMap'));
+  else if (tiles.some((p) => (taken = at(p)))) missing.push(n > 1 && taken !== at(tiles[0]) ? t('sim.needRoomTaken', { n, name: bName(def(taken!.def)) }) : t('sim.tileHas', { name: bName(def(taken!.def)) }));
+  else if (tiles.some((p) => lotAt(p.x, p.y) === 'other')) missing.push(t('sim.notYours'));
+  else if (tiles.some((p) => lotAt(p.x, p.y) !== (d.scope ?? 'rt'))) missing.push(t(d.scope && d.scope !== 'rt' ? 'sim.needLot' : 'sim.needRtLot'));
+  return missing;
+}
+
 export function checkPlace(s: GameState, id: string, x: number, y: number): CheckResult {
   if (!hasDef(id)) return { ok: false, missing: [t('sim.unknownBuilding')] };
   const d = def(id);
   const missing: string[] = [];
   if (!d.placeable) missing.push(t('sim.cannotPlace', { name: bName(d) }));
   missing.push(...requirementGaps(s, d));
-  if (!inBounds(x, y)) missing.push(t('sim.offMap'));
-  else if (buildingAt(s, x, y) ?? neighbourAt(s, x, y)) missing.push(t('sim.tileHas', { name: bName(def((buildingAt(s, x, y) ?? neighbourAt(s, x, y))!.def)) }));
-  else if (lotAt(x, y) === 'other') missing.push(t('sim.notYours'));
-  else if (lotAt(x, y) !== (d.scope ?? 'rt')) missing.push(t(d.scope && d.scope !== 'rt' ? 'sim.needLot' : 'sim.needRtLot'));
+  missing.push(...lotGaps(s, d, x, y));
   moneyGap(s, buildCost(s, d), missing);
   return result(missing);
 }
