@@ -18,12 +18,20 @@ function load(): TipState {
   }
 }
 
+let shared: TipState | null = null;
+
+/** New game: every tip is taught again. */
+export function resetTips(): void {
+  storage.remove(KEY);
+  if (shared) Object.assign(shared, { seen: [], off: false });
+}
+
 /**
  * Teaches each mechanic the first time it matters. A tip is a tap-to-advance modal,
  * never on a timer, saved as seen the moment it shows, and "Skip tips" turns them all off.
  */
 export function setupTips(app: App): void {
-  const st = load();
+  const st = (shared = load());
   const save = () => storage.set(KEY, JSON.stringify(st));
   app.refreshers.push((a) => {
     if (st.off || !a.idle) return;
