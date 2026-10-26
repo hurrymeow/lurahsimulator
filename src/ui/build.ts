@@ -1,12 +1,14 @@
-import { bBlurb, bName, t } from '../i18n';
+import { bBlurb, bName, t, type Key } from '../i18n';
 import type { App } from '../app';
 import { rupiah } from '../format';
+import { CATEGORIES, categoryOf } from '../data/categories';
 import { isoURL } from '../render/iso';
 import { gateOf, placeableDefs } from '../sim/content';
 import { gateOpen } from '../sim/rules';
 import { requirementGaps } from '../sim/rules';
 import { attractTarget, buildCost, housing, population } from '../sim/state';
 import { nextStarChecklist } from '../sim/stages';
+import type { BuildCategory } from '../sim/types';
 import { h, missingList } from './dom';
 import { openSheet } from './sheet';
 
@@ -22,10 +24,14 @@ function populationBits(d: { housing?: number; attract?: number }): string[] {
   return bits;
 }
 
+/** The tab the player last used, so a second build opens where the first left off. */
+let lastTab: BuildCategory | null = null;
+
 export function openBuild(app: App): void {
   const s = app.s;
   // A later stage's buildings stay out of sight until the player is in that stage.
-  const cards = placeableDefs().filter((d) => { const g = gateOf(d); return !g || s.stage.current === g.stage || gateOpen(s, g); }).map((d) => {
+  const visible = placeableDefs().filter((d) => { const g = gateOf(d); return !g || s.stage.current === g.stage || gateOpen(s, g); });
+  const card = (d: (typeof visible)[number]): HTMLElement => {
     const cost = buildCost(s, d);
     const missing = requirementGaps(s, d);
     if (s.res.rupiah < cost) missing.push(t('build.needMore', { amt: rupiah(cost - s.res.rupiah) }));
@@ -40,14 +46,26 @@ export function openBuild(app: App): void {
         ok ? h('p', { class: 'meta' }, meta.join(' · ')) : missingList(missing),
       ),
     );
-  });
+  };
+  const tabs = CATEGORIES.filter((c) => visible.some((d) => categoryOf(d) === c));
+  let tab = lastTab && tabs.includes(lastTab) ? lastTab : tabs[0];
+  const list = h('div', { class: 'build-list' });
+  const bar = h('div', { class: 'tabs', role: 'group', 'aria-label': t('build.cat.tabs') });
+  const show = (c: BuildCategory) => {
+    tab = c;
+    lastTab = c;
+    list.replaceChildren(...visible.filter((d) => categoryOf(d) === c).map(card));
+    bar.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tab === c)));
+  };
+  for (const c of tabs) bar.append(h('button', { class: 'btn tab', 'data-tab': c, 'aria-pressed': 'false', onclick: () => show(c) }, t(`build.cat.${c}` as Key)));
+  if (tab) show(tab);
   // The two population levers, and what the next star wants, right where the player acts.
   const goal = nextStarChecklist(s)?.find((l) => !l.done);
   const head: Node[] = [
     h('p', { class: 'meta' }, t('pop.line', { pop: population(s), housing: housing(s), attract: attractTarget(s) })),
   ];
   if (goal) head.push(h('p', { class: 'meta' }, t('stage.next', { goal: goal.text })));
-  openSheet(t('build.title'), [...head, ...cards]);
+  openSheet(t('build.title'), [...head, bar, list]);
 }
 
 export { spriteImg };

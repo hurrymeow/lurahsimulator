@@ -29,6 +29,10 @@
       <main id="stage">
         <canvas id="map" data-i18n-aria="page.map" aria-label="Kampung map"></canvas>
         <div id="dof" aria-hidden="true"></div>
+        <div id="place-float" class="place-float" hidden>
+          <button id="place-cancel" class="btn" data-i18n="page.cancel">Cancel</button>
+          <button id="place-ok" class="btn btn-primary" disabled data-i18n="page.place">Place</button>
+        </div>
         <div id="auto-pause" role="status" hidden data-i18n="page.autoPaused">Paused</div>
       </main>
       <footer id="bottombar">
@@ -43,8 +47,7 @@
         </div>
         <div id="placebar" class="row" hidden>
           <div id="place-info" class="place-info"></div>
-          <button id="place-cancel" class="btn" data-i18n="page.cancel">Cancel</button>
-          <button id="place-ok" class="btn btn-primary" disabled data-i18n="page.place">Place</button>
+          <button id="place-exit" class="btn" data-i18n="page.cancel">Cancel</button>
         </div>
       </footer>
       <div id="howto" role="dialog" aria-modal="true" aria-labelledby="howtoTitle" hidden></div>

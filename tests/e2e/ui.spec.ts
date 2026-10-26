@@ -1075,3 +1075,66 @@ test.describe('home screen', () => {
     await expectLegible(page, 'settings over home');
   });
 });
+
+test.describe('build mode', () => {
+  test('Build splits into category tabs that stay legible', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-build').click();
+    const tabs = page.locator('#sheet .tabs .tab');
+    expect(await tabs.count()).toBeGreaterThan(2);
+    await expect(page.locator('#sheet .tabs .tab[aria-pressed="true"]')).toHaveCount(1);
+    await expectLegible(page, 'build tabs');
+    await page.locator('#sheet .tabs .tab[data-tab="paths"]').click();
+    await expect(page.locator('#sheet .card-btn').first()).toBeVisible();
+    await expect(page.locator('#sheet .tabs .tab[data-tab="paths"]')).toHaveAttribute('aria-pressed', 'true');
+    await expectLegible(page, 'paths tab');
+  });
+
+  test('Place and Cancel sit right under the chosen tile', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
+    await expect(page.locator('#place-float')).toBeHidden();
+    const box = (await page.locator('#map').boundingBox())!;
+    const at = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      return app.view.tileCentre(k.x, k.y - 1);
+    });
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    const float = page.locator('#place-float');
+    await expect(float).toBeVisible();
+    const fb = (await float.boundingBox())!;
+    expect(fb.y).toBeGreaterThan(box.y + at.y - 4);
+    expect(Math.abs(fb.x + fb.width / 2 - (box.x + at.x))).toBeLessThan(fb.width);
+    await expectLegible(page, 'place buttons under the tile');
+    await page.locator('#place-ok').click();
+    await expect(float).toBeHidden();
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'rumah').length)).toBe(3);
+  });
+
+  test('a path takes a start tile, an end tile and Yes', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('jalan'));
+    const box = (await page.locator('#map').boundingBox())!;
+    const tap = async (dx: number, dy: number) => {
+      const at = await page.evaluate(([x, y]) => {
+        const app = (window as unknown as { pakrt: any }).pakrt;
+        const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+        return app.view.tileCentre(k.x + x, k.y + y);
+      }, [dx, dy]);
+      await page.mouse.click(box.x + at.x, box.y + at.y);
+    };
+    await tap(-2, -2);
+    await expect(page.locator('#place-float')).toBeHidden();
+    await tap(2, -2);
+    await expect(page.locator('#place-ok')).toHaveText(lang() === 'en' ? 'Yes' : 'Ya');
+    await expect(page.locator('#place-ok')).toBeEnabled();
+    await expectLegible(page, 'path preview');
+    await page.locator('#place-ok').click();
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'jalan').length)).toBe(5);
+  });
+});

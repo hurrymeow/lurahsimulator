@@ -82,6 +82,8 @@ export interface Ghost {
   sprite: string;
   /** Tiles on each side. */
   n: number;
+  /** A path being laid: every tile on it. x,y is then the last tile tapped. */
+  tiles?: { x: number; y: number; ok: boolean; have: boolean }[];
 }
 
 interface Hit {
@@ -264,6 +266,16 @@ export class MapView {
     this.fx.dustRing(x, y, performance.now());
   }
 
+  /** Where the Place buttons go: the ghost's bottom corner, and its top corner for when there is no room below. Canvas pixels. */
+  ghostAnchor(): { x: number; below: number; above: number } | null {
+    const g = this.ghost;
+    if (!g) return null;
+    const n = g.tiles ? 1 : g.n;
+    const c = this.tileCentre(g.x + (n - 1) / 2, g.y + (n - 1) / 2);
+    const hh = (TH * this.scale * n) / 2;
+    return { x: c.x, below: c.y + hh, above: c.y - hh };
+  }
+
   /** The kampung and the land around it, drawn once at art resolution. */
   private drawWorld(): HTMLCanvasElement {
     return (this.world ??= buildWorld());
@@ -388,9 +400,11 @@ export class MapView {
       ctx.fill();
     }
     if (this.ghost) {
-      this.diamond(ctx, this.ghost.x, this.ghost.y, 0, this.ghost.n);
-      ctx.fillStyle = this.ghost.ok ? 'rgba(74, 222, 128, 0.35)' : 'rgba(248, 113, 113, 0.35)';
-      ctx.fill();
+      for (const g of this.ghost.tiles ?? [this.ghost]) {
+        this.diamond(ctx, g.x, g.y, 0, this.ghost.tiles ? 1 : this.ghost.n);
+        ctx.fillStyle = g.ok ? 'rgba(74, 222, 128, 0.35)' : 'rgba(248, 113, 113, 0.35)';
+        ctx.fill();
+      }
     }
 
     // Back to front: tiles further up the screen draw first. Walkers slot in by the same depth.
@@ -495,15 +509,19 @@ export class MapView {
 
     if (this.ghost) {
       const g = this.ghost;
-      ctx.globalAlpha = 0.6;
-      this.art(ctx, iso(g.sprite), g.x, g.y, 1, 0, g.n);
-      ctx.globalAlpha = 1;
-      this.diamond(ctx, g.x, g.y, 0, g.n);
-      ctx.strokeStyle = g.ok ? '#4ade80' : '#f87171';
-      ctx.lineWidth = 2;
-      ctx.setLineDash(g.ok ? [] : [4, 3]);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      for (const p of g.tiles ?? [g]) {
+        if ('have' in p && p.have) continue;
+        const n = g.tiles ? 1 : g.n;
+        ctx.globalAlpha = 0.6;
+        if (p.ok) this.art(ctx, iso(g.sprite), p.x, p.y, 1, 0, n);
+        ctx.globalAlpha = 1;
+        this.diamond(ctx, p.x, p.y, 0, n);
+        ctx.strokeStyle = p.ok ? '#4ade80' : '#f87171';
+        ctx.lineWidth = 2;
+        ctx.setLineDash(p.ok ? [] : [4, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
     }
     if (sel) {
       this.diamond(ctx, sel.x, sel.y, 0, footprintOf(sel.def));

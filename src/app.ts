@@ -8,6 +8,7 @@ import { def } from './sim/content';
 import { eventDef } from './data/events';
 import { checkChoice, eventCost, resolveEvent } from './sim/events';
 import { checkPlace, place } from './sim/rules';
+import { linePath, placeLine, type LineTile } from './sim/line';
 import { lotAt } from './sim/area';
 import { promote } from './sim/grow';
 import { RT_H, RT_W } from './sim/types';
@@ -132,6 +133,7 @@ export class App {
     this.view.frozen = !this.running;
     this.view.clock = this.s.month + this.acc / MONTH_MS;
     this.view.draw(this.s);
+    this.positionPlace();
     requestAnimationFrame((t) => this.frame(t));
   }
 
@@ -536,13 +538,7 @@ export class App {
       const tile = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top, !this.placing);
       if (!tile) return;
       if (this.placing) {
-        // The tapped tile is the middle of a big footprint, not its corner.
-        const n = footprintOf(this.placing);
-        const gx = tile.x - Math.floor((n - 1) / 2);
-        const gy = tile.y - Math.floor((n - 1) / 2);
-        const ok = checkPlace(this.s, this.placing, gx, gy).ok;
-        this.view.ghost = { x: gx, y: gy, ok, sprite: def(this.placing).sprite, n };
-        this.updatePlacing();
+        this.tapPlacing(tile);
         return;
       }
       const b = buildingAt(this.s, tile.x, tile.y);
@@ -560,9 +556,14 @@ export class App {
   }
 
   // ---------- placement ----------
+  /** First and last tile of a path being laid. */
+  private line: { a: { x: number; y: number }; b: { x: number; y: number } | null } | null = null;
+  private lineTiles: LineTile[] = [];
+
   startPlacing(id: string): void {
     closeSheet();
     this.placing = id;
+    this.line = null;
     this.view.ghost = null;
     this.view.selected = null;
     document.getElementById('mainbar')!.hidden = true;
@@ -572,26 +573,67 @@ export class App {
 
   stopPlacing(): void {
     this.placing = null;
+    this.line = null;
     this.view.ghost = null;
     document.getElementById('mainbar')!.hidden = false;
     document.getElementById('placebar')!.hidden = true;
+    document.getElementById('place-float')!.hidden = true;
+  }
+
+  private tapPlacing(tile: { x: number; y: number }): void {
+    const id = this.placing!;
+    const d = def(id);
+    if (d.pathIncome) {
+      // Paths take two taps, a start and an end, then Yes.
+      if (!this.line || this.line.b) this.line = { a: tile, b: null };
+      else this.line.b = tile;
+      this.refreshLine();
+      this.updatePlacing();
+      return;
+    }
+    // The tapped tile is the middle of a big footprint, not its corner.
+    const n = footprintOf(id);
+    const gx = tile.x - Math.floor((n - 1) / 2);
+    const gy = tile.y - Math.floor((n - 1) / 2);
+    this.view.ghost = { x: gx, y: gy, ok: checkPlace(this.s, id, gx, gy).ok, sprite: d.sprite, n };
+    this.updatePlacing();
+  }
+
+  private refreshLine(): void {
+    const l = this.line;
+    if (!l || !this.placing) return;
+    const end = l.b ?? l.a;
+    this.lineTiles = linePath(this.s, this.placing, l.a, end);
+    this.view.ghost = { x: end.x, y: end.y, ok: this.lineTiles.some((p) => p.ok && !p.have), sprite: def(this.placing).sprite, n: 1, tiles: this.lineTiles };
   }
 
   confirmPlace(): void {
     const g = this.view.ghost;
     if (!this.placing || !g) return;
+    const d = def(this.placing);
+    if (this.line) {
+      const n = placeLine(this.s, this.placing, this.lineTiles);
+      if (!n) return;
+      const last = this.lineTiles[this.lineTiles.length - 1];
+      this.view.burst(last.x, last.y);
+      this.haptic(15);
+      audio.play('build');
+      // Keep going: the next two taps start another path. Cancel leaves build mode.
+      this.line = null;
+      this.view.ghost = null;
+      this.updatePlacing();
+      this.save();
+      this.refresh();
+      return;
+    }
     const r = place(this.s, this.placing, g.x, g.y);
     if (r.ok) {
       this.view.burst(g.x, g.y);
-      const cost = buildCost(this.s, def(this.placing));
+      const cost = buildCost(this.s, d);
       if (cost) this.view.pop(g.x, g.y, 'rupiah', -cost);
       this.haptic(15);
       audio.play('build');
-      // Paths are free, so keep painting them until the player taps Cancel.
-      if (def(this.placing).pathIncome) {
-        this.view.ghost = null;
-        this.updatePlacing();
-      } else this.stopPlacing();
+      this.stopPlacing();
       this.save();
       this.refresh();
     }
@@ -602,9 +644,29 @@ export class App {
     const d = def(this.placing);
     const info = document.getElementById('place-info')!;
     const btn = document.getElementById('place-ok') as HTMLButtonElement;
+    const float = document.getElementById('place-float')!;
     const g = this.view.ghost;
+    const title = h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`);
+    float.hidden = !g;
+    document.getElementById('place-exit')!.hidden = !!g;
+    if (this.line && g?.tiles) {
+      const fresh = this.lineTiles.filter((p) => p.ok && !p.have).length;
+      const blocked = this.lineTiles.filter((p) => !p.ok).length;
+      if (!this.line.b) {
+        info.replaceChildren(title, h('span', {}, t('build.lineEnd')));
+        float.hidden = true;
+        document.getElementById('place-exit')!.hidden = false;
+        btn.disabled = true;
+        return;
+      }
+      btn.disabled = fresh === 0;
+      btn.textContent = t('page.yes');
+      info.replaceChildren(title, h('span', {}, fresh ? t('build.lineGo', { n: fresh, cost: rupiah(buildCost(this.s, d) * fresh) }) : t('build.lineNone')), ...(blocked ? [h('span', { class: 'meta' }, t('build.lineBlocked', { n: blocked }))] : []));
+      return;
+    }
+    btn.textContent = t('page.place');
     if (!g) {
-      info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), h('span', {}, t('build.tapTile')));
+      info.replaceChildren(title, h('span', {}, d.pathIncome ? t('build.lineStart') : t('build.tapTile')));
       btn.disabled = true;
       return;
     }
@@ -613,7 +675,21 @@ export class App {
     btn.disabled = !check.ok;
     const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
     const noRoad = check.ok && !FLAT.has(d.id) && !d.id.startsWith('kantor') && (d.scope ?? 'rt') === 'rt' && !hasRoadBeside(connectedRoad(this.s), { def: d.id, x: g.x, y: g.y });
-    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', noRoad ? { class: 'warn' } : {}, noRoad ? t('build.noRoad') : d.pathIncome ? t('build.instant') : instant ? t('build.noPermit') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
+    info.replaceChildren(title, check.ok ? h('span', noRoad ? { class: 'warn' } : {}, noRoad ? t('build.noRoad') : instant ? t('build.noPermit') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
+  }
+
+  /** Keeps the Place and Cancel buttons just below the chosen tile, above it when the tile is near the bottom edge. */
+  private positionPlace(): void {
+    const float = document.getElementById('place-float');
+    if (!float || float.hidden) return;
+    const a = this.view.ghostAnchor();
+    if (!a) return;
+    const w = float.offsetWidth;
+    const hgt = float.offsetHeight;
+    const room = float.parentElement!.clientHeight;
+    const x = Math.min(Math.max(a.x - w / 2, 4), float.parentElement!.clientWidth - w - 4);
+    const y = a.below + 8 + hgt > room ? Math.max(4, a.above - 8 - hgt) : a.below + 8;
+    float.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
   }
 
   // ---------- language ----------
