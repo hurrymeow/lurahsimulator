@@ -1,12 +1,13 @@
 import { t } from '../i18n';
 import { LOSE, RIVAL_BASE, RIVAL_JITTER, RIVAL_NAME, RIVAL_PER_YEAR, SCORE, WIN } from '../data/ranking';
+import { def } from './content';
 import { gain, type Fx } from './gain';
 import { randInt } from './rng';
 import { isWorking, population } from './state';
 import type { GameState } from './types';
 
 export function score(s: GameState): number {
-  const working = s.buildings.filter((b) => isWorking(b) && b.def !== 'rumah' && b.def !== 'parkir').length;
+  const working = s.buildings.filter((b) => isWorking(b) && b.def !== 'rumah' && b.def !== 'parkir' && !def(b.def).pathIncome).length;
   return Math.round(
     population(s) * SCORE.perResident + working * SCORE.perBuilding + s.discovered.length * SCORE.perCombo + s.res.sabar * SCORE.perSabar + s.emas * SCORE.perEmas,
   );

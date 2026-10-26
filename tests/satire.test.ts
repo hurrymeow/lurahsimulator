@@ -256,7 +256,7 @@ describe('proyek mangkrak', () => {
 describe('content rules', () => {
   it('every building moves at least one number', () => {
     for (const b of BUILDINGS) {
-      const moves = b.income || b.upkeep || b.perMonth || b.attract || b.housing || b.jobSlots;
+      const moves = b.income || b.upkeep || b.perMonth || b.attract || b.housing || b.jobSlots || b.pathIncome;
       expect(Boolean(moves), b.id).toBe(true);
     }
   });

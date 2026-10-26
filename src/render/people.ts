@@ -6,7 +6,9 @@ import { doorsOf, findPath, type Pt } from './path';
 /** More walkers than this cost frame time and crowd a 9x13 map. */
 export const MAX_WALKERS = 16;
 /** Ditches and parking lots are flat, so people walk over them. */
-const FLAT = new Set(['selokan', 'parkir']);
+/** Cost of a step on open ground, against 1 on a path. Above 1 makes walkers detour onto paths. */
+const WALK_OFF_PATH = 2.5;
+const FLAT = new Set(['selokan', 'parkir', 'jalan']);
 const WALK_SPEED = 0.9;
 const OJOL_SPEED = 2.8;
 
@@ -84,6 +86,7 @@ export class Crowd {
   private order: Walker[] = [];
   private cursor = 0;
   private blocked = new Uint8Array(GRID_W * GRID_H);
+  private onPath = new Uint8Array(GRID_W * GRID_H);
   private last = 0;
 
   private walkable = (x: number, y: number) => !this.blocked[y * GRID_W + x];
@@ -96,8 +99,14 @@ export class Crowd {
 
   /** findPath over the grid plus its ring road, shifted so the ring sits at 0. */
   private route(from: Pt, to: Pt, ojol: boolean): Pt[] | null {
-    const path = findPath(GRID_W + 2, GRID_H + 2, (x, y) => this.free(x - 1, y - 1, ojol), { x: from.x + 1, y: from.y + 1 }, { x: to.x + 1, y: to.y + 1 });
+    const path = findPath(GRID_W + 2, GRID_H + 2, (x, y) => this.free(x - 1, y - 1, ojol), { x: from.x + 1, y: from.y + 1 }, { x: to.x + 1, y: to.y + 1}, (x, y) => this.stepCost(x - 1, y - 1));
     return path && path.map((t) => ({ x: t.x - 1, y: t.y - 1 }));
+  }
+
+  /** Walkers prefer paths and the ring road over open ground. */
+  private stepCost(x: number, y: number): number {
+    if (x < 0 || y < 0 || x >= GRID_W || y >= GRID_H) return 1;
+    return this.onPath[y * GRID_W + x] ? 1 : WALK_OFF_PATH;
   }
 
   private ring(): Pt {
@@ -112,9 +121,11 @@ export class Crowd {
     const dt = Math.min(100, this.last ? now - this.last : 0);
     this.last = now;
     this.blocked.fill(0);
+    this.onPath.fill(0);
     const sites: Pt[] = [];
     const homes: Pt[] = [];
     for (const b of s.buildings) {
+      if (b.def === 'jalan' && b.status === 'active') this.onPath[b.y * GRID_W + b.x] = 1;
       if (FLAT.has(b.def)) continue;
       this.blocked[b.y * GRID_W + b.x] = 1;
       if (b.status !== 'active') continue;

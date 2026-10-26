@@ -9,15 +9,20 @@ export interface Pt {
  * Shortest 4-way path from a to b over walkable tiles, excluding a and including b.
  * Returns null when b cannot be reached.
  */
-export function findPath(w: number, h: number, walkable: (x: number, y: number) => boolean, a: Pt, b: Pt): Pt[] | null {
+export function findPath(w: number, h: number, walkable: (x: number, y: number) => boolean, a: Pt, b: Pt, cost: (x: number, y: number) => number = () => 1): Pt[] | null {
   if (a.x === b.x && a.y === b.y) return [];
   const prev = new Int16Array(w * h).fill(-1);
+  const dist = new Float32Array(w * h).fill(Infinity);
   const start = a.y * w + a.x;
   const goal = b.y * w + b.x;
   prev[start] = start;
-  const queue = [start];
-  for (let q = 0; q < queue.length; q++) {
-    const k = queue[q];
+  dist[start] = 0;
+  // Dijkstra over a small grid. Cheap tiles (paths) pull the route toward them.
+  const open = [start];
+  while (open.length) {
+    let bi = 0;
+    for (let i = 1; i < open.length; i++) if (dist[open[i]] < dist[open[bi]]) bi = i;
+    const k = open.splice(bi, 1)[0];
     if (k === goal) break;
     const x = k % w;
     const y = (k - x) / w;
@@ -25,9 +30,12 @@ export function findPath(w: number, h: number, walkable: (x: number, y: number) 
       const nx = x + dx;
       const ny = y + dy;
       const n = ny * w + nx;
-      if (nx < 0 || ny < 0 || nx >= w || ny >= h || prev[n] !== -1 || !walkable(nx, ny)) continue;
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h || !walkable(nx, ny)) continue;
+      const d = dist[k] + cost(nx, ny);
+      if (d >= dist[n]) continue;
+      dist[n] = d;
       prev[n] = k;
-      queue.push(n);
+      open.push(n);
     }
   }
   if (prev[goal] === -1) return null;

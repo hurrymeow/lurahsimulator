@@ -35,6 +35,17 @@ Follow these every session. If a change breaks one, fix the change.
 - Clean modern pixel UI. No cluttered Windows-XP-style panels.
 - Map art follows [ART.md](ART.md): palette, ink, shading, lighting and motion rules.
 
+## Art style
+
+The artist's restyle is the reference ([ART.md](ART.md) has the full rules). New art must match it.
+
+- Warm storybook palette: terracotta, mustard, teal, cream, olive. Keys live in `PALETTE`.
+- 1px dark-brown ink (`#2a1810`) round every silhouette and face edge. Never pure black.
+- Flat two-tone cel shading, light from the top left. No dithering or noise.
+- Straight isometric lines on a 32x16 tile, scaled by whole numbers only.
+- Flat ground art (selokan, jalan) sets `bare` and draws its own edges so neighbours join.
+- Never overwrite the artist's sprites. Add new ones beside them.
+
 ## Feedback
 
 - Combo or unlock gets fanfare. Routine income gets a small number pop.

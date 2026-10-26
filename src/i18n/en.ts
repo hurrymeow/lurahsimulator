@@ -125,6 +125,7 @@ export const EN = {
   // build + inspect
   'build.title': 'Build',
   'build.needMore': 'Need {amt} more',
+  'build.instant': 'Free · built at once · tap more tiles to keep going',
   'build.permit': 'Permit {permit} mo · build {build} mo',
   'build.permitShort': 'Permit {permit} mo, build {build} mo.',
   'build.tapTile': 'Tap a tile.',
@@ -138,6 +139,7 @@ export const EN = {
   'insp.status': '{status}{left} · Level {level}/{max}',
   'insp.left': ' · {n} mo left',
   'insp.money': 'Income {income} · upkeep {upkeep} a month',
+  'insp.pathBonus': 'Beside a path: +{pct}% income',
   'insp.perMonth': '{bits} a month',
   'insp.skip': 'Skip queue · 1',
   'insp.maxLevel': 'Max level',
