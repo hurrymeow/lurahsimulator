@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { EVENTS, eventDef } from '../src/data/events';
+import { LINES } from '../src/data/lines';
 import { RIVAL_BASE, RIVAL_PER_YEAR, RIVAL_JITTER } from '../src/data/ranking';
-import { banjirProtection, checkChoice, checkRepair, repair, resolveEvent } from '../src/sim/events';
+import { banjirProtection, checkChoice, checkRepair, eventCost, repair, resolveEvent } from '../src/sim/events';
 import { inspectionScore } from '../src/sim/inspection';
 import { score } from '../src/sim/ranking';
 import { place } from '../src/sim/rules';
@@ -27,7 +28,8 @@ describe('events', () => {
     for (let i = 0; i < 8; i++) {
       const fx = tick(s);
       if (fx.some((f) => f.kind === 'event' && f.eventId === 'agustusan')) raised = 'yes';
-      if (s.pendingEvent) break;
+      if (s.pendingEvent === 'agustusan') break;
+      s.pendingEvent = null;
     }
     expect(raised).toBe('yes');
     expect(s.month).toBe(7);
@@ -88,6 +90,79 @@ describe('events', () => {
     expect(s.res.rupiah - a).toBeLessThan(base.res.rupiah - b);
     run(s, 5);
     expect(s.modifiers.length).toBe(0);
+  });
+});
+
+describe('more events', () => {
+  const advice = EVENTS.filter((e) => e.choices.some((c) => c.outcomes));
+
+  it('has at least 20 new events, 10 of them advice', () => {
+    expect(EVENTS.length).toBeGreaterThanOrEqual(24);
+    expect(advice.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it('every paid choice costs at least its base, and rises with income', () => {
+    const poor = newGame(1);
+    const rich = newGame(1);
+    for (let i = 0; i < 12; i++) addBuilding(rich, 'warung', i % 6, 2 + Math.floor(i / 6), 'active');
+    const c = eventDef('truckSampah')!.choices[1];
+    expect(eventCost(poor, c).rupiah).toBeGreaterThanOrEqual(200_000);
+    expect(eventCost(rich, c).rupiah).toBeGreaterThan(eventCost(poor, c).rupiah);
+  });
+
+  it('advice rolls different outcomes, each one moving a number, and every outcome is reachable', () => {
+    for (const e of advice) {
+      const idx = e.choices.findIndex((c) => c.outcomes);
+      const seen = new Set<string>();
+      for (let seed = 1; seed <= 200; seed++) {
+        const s = newGame(seed);
+        s.res.rupiah = 50_000_000;
+        s.res.sabar = 50;
+        const before = { ...s.res };
+        s.pendingEvent = e.id;
+        const out = resolveEvent(s, [], idx);
+        expect(out.ok, e.id).toBe(true);
+        expect(Object.keys(out.delta ?? {}).length, e.id).toBeGreaterThan(0);
+        seen.add(out.text);
+        expect(s.res.rupiah, e.id).not.toBeNaN();
+        void before;
+      }
+      expect(seen.size, e.id).toBe(e.choices[idx].outcomes!.length);
+    }
+  });
+
+  it('popups are rationed: random events come at most once every five months', () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const s = newGame(seed);
+      s.res.sabar = 60;
+      const months: number[] = [];
+      for (let i = 0; i < 120; i++) {
+        const fx = tick(s);
+        s.res.sabar = 60;
+        s.res.rupiah = Math.max(s.res.rupiah, 1_000_000);
+        if (fx.some((f) => f.kind === 'event')) {
+          if (!['agustusan', 'banjir', 'kecamatan'].includes(s.pendingEvent!)) months.push(s.month);
+          s.pendingEvent = null;
+        }
+      }
+      for (let i = 1; i < months.length; i++) expect(months[i] - months[i - 1], `seed ${seed}`).toBeGreaterThanOrEqual(5);
+    }
+  });
+
+  it('minor log lines show most months, never repeat close together, and never pause the game', () => {
+    const s = newGame(3);
+    s.res.sabar = 60;
+    const titles: string[] = [];
+    let lines = 0;
+    for (let i = 0; i < 60; i++) {
+      const fx = tick(s);
+      s.pendingEvent = null;
+      s.res.sabar = 60;
+      for (const f of fx) if (f.kind === 'notice' && !f.fanfare && LINES.some((l) => l.name === f.title)) titles.push(f.title);
+      lines += fx.filter((f) => f.kind === 'notice' && LINES.some((l) => l.name === f.title)).length;
+    }
+    expect(lines).toBeGreaterThan(25);
+    for (let i = 0; i < titles.length; i++) expect(titles.slice(Math.max(0, i - 8), i), titles[i]).not.toContain(titles[i]);
   });
 });
 

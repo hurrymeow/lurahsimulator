@@ -85,6 +85,20 @@ export interface RwState {
   popReport?: { pct: number; until: number };
 }
 
+/** State only the Kelurahan or Desa stage uses. */
+export interface KelState {
+  /** The year's Anggaran. 0 until the first one arrives. */
+  budget: number;
+  /** stats.spent when this year's budget arrived. */
+  spentBase: number;
+  /** Months in a row with serapan at or above the target. */
+  serapanRun: number;
+  /** Tim Audit visits that found every receipt. */
+  cleanAudits: number;
+  /** Lomba Kelurahan: paint spending lifts the area score until this month. */
+  lomba?: { mult: number; until: number };
+}
+
 export type RtTrait = 'rajin' | 'hobi' | 'jarang';
 
 /** An AI-run RT. Its buildings sit apart from the player's so the player's income, combos and ranking never see them. */
@@ -107,7 +121,7 @@ export interface Neighbour {
   ranking: RankingResult[];
 }
 
-export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'petani' | 'peternak' | 'pengepul' | 'guru' | 'satpam' | 'tukang' | 'panitia' | 'kaderPosyandu' | 'calo';
+export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'petani' | 'peternak' | 'pengepul' | 'guru' | 'satpam' | 'tukang' | 'panitia' | 'kaderPosyandu' | 'calo' | 'honorer' | 'pendampingDesa';
 
 export interface Requirement {
   population?: number;
@@ -278,6 +292,8 @@ export interface GameState {
   pendingEvent: string | null;
   /** Month each event last fired, for cooldowns. Absent in older saves. */
   lastEvent?: Record<string, number>;
+  /** Ids of the last minor log lines shown, so the ticker does not repeat itself. Absent in older saves. */
+  recentLines?: string[];
   stage: StageState;
   /** AI-run RTs next to the player's. Empty at the RT stage. */
   neighbours: Neighbour[];
@@ -287,6 +303,8 @@ export interface GameState {
   debtFree: number;
   /** RW stage state. Absent in older saves. */
   rw: RwState;
+  /** Kelurahan stage state. Absent in older saves. */
+  kel: KelState;
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
   /** Month a resident last moved in. Drives the perantau safety valve. */

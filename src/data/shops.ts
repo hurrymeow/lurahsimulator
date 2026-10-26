@@ -1,6 +1,6 @@
 import type { BuildingDef } from '../sim/types';
 
-// Shops, facilities and housing added after the first playtest. Shops earn. Facilities give Patience,
+// Shops, facilities and housing added after the first playtest. Shops earn. Facilities give Popularitas,
 // Orang Inside or jobs. Housing adds beds. Each opens up a different thing to spend on.
 const base = { upkeep: 0, income: 0, attract: 0, maxLevel: 1, placeable: true, removable: true } as const;
 

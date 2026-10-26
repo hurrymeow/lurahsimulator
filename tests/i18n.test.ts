@@ -3,6 +3,7 @@ import { BUILDINGS } from '../src/data/buildings';
 import { COMBOS } from '../src/data/combos';
 import { EVENTS } from '../src/data/events';
 import { JOBS } from '../src/data/jobs';
+import { LINES } from '../src/data/lines';
 import { STAGES } from '../src/data/stages';
 import { WACANA } from '../src/data/wacana';
 import { EN } from '../src/i18n/en';
@@ -29,7 +30,7 @@ describe('string tables', () => {
     for (const c of COMBOS) ['hint', 'story', 'effect'].forEach((f) => expected.add(`combo.${c.id}.${f}`));
     for (const j of JOBS) expected.add(`job.${j.id}.blurb`);
     for (const st of STAGES) st.titles.forEach((_, i) => expected.add(`stage.${st.id}.title${i}`));
-    for (const w of WACANA) expected.add(`wacana.${w.id}.line`);
+    for (const w of WACANA) { expected.add(`wacana.${w.id}.line`); expected.add(`wacana.${w.id}.trade`); }
     for (const e of EVENTS) {
       expected.add(`event.${e.id}.name`);
       expected.add(`event.${e.id}.body`);
@@ -37,7 +38,12 @@ describe('string tables', () => {
         expected.add(`event.${e.id}.c${i}.label`);
         if (c.result) expected.add(`event.${e.id}.c${i}.result`);
         if (c.modifier) expected.add(`event.${e.id}.c${i}.mod`);
+        c.outcomes?.forEach((_, j) => expected.add(`event.${e.id}.c${i}.o${j}.result`));
       });
+    }
+    for (const l of LINES) {
+      expected.add(`line.${l.id}.name`);
+      expected.add(`line.${l.id}.line`);
     }
     for (const k of expected) expect(ID_DATA[k], k).toBeTruthy();
     const orphans = Object.keys(ID_DATA).filter((k) => !expected.has(k) && !/\.(name)$/.test(k));

@@ -8,7 +8,7 @@ export const RW_METERS: MeterDef[] = [
   {
     id: 'stempel',
     name: 'Stempel',
-    blurb: 'Refills 3 a month. Every Surat Pengantar from an RT needs one. Each unstamped letter drains 0.5 Patience a month.',
+    blurb: 'Refills 3 a month. Every Surat Pengantar from an RT needs one. Each unstamped letter drains 0.5 Popularitas a month.',
     gate: RW0,
   },
   {
@@ -43,7 +43,7 @@ export const RW_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'posyandu',
     name: 'Posyandu',
-    blurb: '+1 Patience a month to every neighbouring RT. Kader work for free.',
+    blurb: '+1 Popularitas a month to every neighbouring RT. Kader work for free.',
     cost: 3_500_000,
     upkeep: 120_000,
     income: 0,
@@ -63,7 +63,7 @@ export const RW_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'portal',
     name: 'Portal',
-    blurb: '+1 Patience a month. Ojol income -30%, because riders stop at the barrier.',
+    blurb: '+1 Popularitas a month. Ojol income -30%, because riders stop at the barrier.',
     cost: 2_500_000,
     upkeep: 40_000,
     income: 0,
@@ -130,7 +130,7 @@ export const RW_COMBOS: StageComboDef[] = [
     story: 'The portal closes for the pasar. Ojol riders circle the block twice and give up.',
     incomeMult: { pasarKaget: 1.5 },
     perMonth: { sabar: -1 },
-    effect: 'Pasar Kaget income x1.5. Ojol income is 0 that month. -1 Patience a month.',
+    effect: 'Pasar Kaget income x1.5. Ojol income is 0 that month. -1 Popularitas a month.',
     gate: RW2,
   },
   {
@@ -142,7 +142,7 @@ export const RW_COMBOS: StageComboDef[] = [
     hint: 'Two Ketua RT who think alike. One group chat.',
     story: 'Two RTs, one trait, one group chat. Every rumour is now faster than the SK.',
     perMonth: { viral: 2, sabar: -1 },
-    effect: 'Two neighbouring RTs with the same trait: +2 Virality and -1 Patience a month.',
+    effect: 'Two neighbouring RTs with the same trait: +2 Virality and -1 Popularitas a month.',
     gate: RW1,
   },
   {
@@ -153,7 +153,7 @@ export const RW_COMBOS: StageComboDef[] = [
     hint: 'A health post and a barrier. The kader check who comes in.',
     story: 'The portal now opens only after the posyandu has weighed everyone. Nobody has complained yet, because nobody can get out to.',
     perMonth: { sabar: 1, viral: 1 },
-    effect: '+1 Patience and +1 Virality a month.',
+    effect: '+1 Popularitas and +1 Virality a month.',
     gate: RW1,
   },
   {
@@ -173,7 +173,7 @@ export const RW_JOBS: StageJobDef[] = [
   {
     id: 'kaderPosyandu',
     name: 'Kader Posyandu',
-    blurb: '+0.5 Patience a month, unpaid. Output falls 20% a year unless you pay an Apresiasi of Rp 300.000.',
+    blurb: '+0.5 Popularitas a month, unpaid. Output falls 20% a year unless you pay an Apresiasi of Rp 300.000.',
     gate: RW1,
     perMonth: { sabar: 0.5 },
     decay: { perYear: 0.2, apresiasi: 300_000 },
@@ -181,7 +181,7 @@ export const RW_JOBS: StageJobDef[] = [
   {
     id: 'calo',
     name: 'Calo',
-    blurb: 'Turns Rp 200.000 into 1 Stempel and +0.1 Orang Inside. 5% a month chance of a scandal: -6 Patience.',
+    blurb: 'Turns Rp 200.000 into 1 Stempel and +0.1 Orang Inside. 5% a month chance of a scandal: -6 Popularitas.',
     gate: RW2,
     perMonth: { orangDalam: 0.1 },
     converts: { rupiah: -200_000, stempel: 1, orangDalam: 0.1 },
@@ -193,7 +193,7 @@ export const RW_EVENTS: StageEventDef[] = [
   {
     id: 'kerjaBakti',
     name: 'Kerja Bakti',
-    body: 'Sunday morning, 7 am. The sound system is louder than the shovels. Attendance is Patience.',
+    body: 'Sunday morning, 7 am. The sound system is louder than the shovels. Attendance is Popularitas.',
     gate: RW0,
     when: { months: [2, 8], minMonth: 12, chance: 0.5, cooldown: 6 },
     choices: [

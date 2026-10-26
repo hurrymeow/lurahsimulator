@@ -22,6 +22,7 @@ export function deserialize(raw: string | null): GameState | null {
     s.stempel ??= { stock: 0, backlog: 0, clear: 0 };
     s.debtFree ??= 0;
     s.rw ??= { kaderDecay: 0 };
+    s.kel ??= { budget: 0, spentBase: 0, serapanRun: 0, cleanAudits: 0 };
     setGrid(s.stage.current);
     return s;
   } catch {

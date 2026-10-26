@@ -32,7 +32,7 @@ export const MORE_COMBOS: ComboDef[] = [
     story: 'Telur in the kopi, ayam on the roof. The neighbours stopped complaining once they got a cup.',
     incomeMult: { warung: 1.25 },
     perMonth: { sabar: 0.5 },
-    effect: 'Warung income x1.25. +0.5 Patience a month.',
+    effect: 'Warung income x1.25. +0.5 Popularitas a month.',
   },
   {
     id: 'sayurSegar',
@@ -62,7 +62,7 @@ export const MORE_COMBOS: ComboDef[] = [
     hint: 'Swings next to the classroom.',
     story: 'Parents sit on the bench and call it a meeting. Nobody is in a hurry.',
     perMonth: { sabar: 1 },
-    effect: '+1 Patience a month.',
+    effect: '+1 Popularitas a month.',
   },
   {
     id: 'cukurKopi',
@@ -93,7 +93,7 @@ export const MORE_COMBOS: ComboDef[] = [
     hint: 'A gate and a pharmacy keep the street calm.',
     story: 'The satpam knows which balsem works. The apotek knows who is on night shift.',
     perMonth: { sabar: 1 },
-    effect: '+1 Patience a month.',
+    effect: '+1 Popularitas a month.',
   },
   {
     id: 'urusanSurat',
@@ -114,7 +114,7 @@ export const MORE_COMBOS: ComboDef[] = [
     story: 'The rapat has eleven agenda items and one nasi kotak order. Item twelve is the nasi kotak.',
     incomeMult: { warteg: 1.3 },
     perMonth: { orangDalam: 0.3, sabar: -0.5 },
-    effect: 'Warteg income x1.3. +0.3 Orang Inside, -0.5 Patience a month.',
+    effect: 'Warteg income x1.3. +0.3 Orang Inside, -0.5 Popularitas a month.',
   },
   {
     id: 'proyekSemen',
@@ -156,7 +156,7 @@ export const MORE_COMBOS: ComboDef[] = [
     story: 'The tree gives shade, the bench gives time, the warkop gives the bill.',
     incomeMult: { warkop: 1.35 },
     perMonth: { sabar: 0.5 },
-    effect: 'Warkop income x1.35. +0.5 Patience a month.',
+    effect: 'Warkop income x1.35. +0.5 Popularitas a month.',
   },
   {
     id: 'wisataKolam',
@@ -197,7 +197,7 @@ export const MORE_COMBOS: ComboDef[] = [
     hint: 'A fountain and a playground make a Sunday.',
     story: 'Everyone walks one loop and calls it exercise. The sabar returns before the legs do.',
     perMonth: { sabar: 1.5 },
-    effect: '+1.5 Patience a month.',
+    effect: '+1.5 Popularitas a month.',
   },
   {
     id: 'upacaraMural',

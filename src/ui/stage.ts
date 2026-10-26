@@ -10,7 +10,7 @@ export const starRow = (n: number) => '★'.repeat(n) + '☆'.repeat(3 - n);
 export function stageHeader(app: App): HTMLElement {
   const s = app.s;
   const stars = starsOf(s);
-  const title = stageTitle(s.stage.current, stars);
+  const title = stageTitle(s.stage.current, stars, s.stage.path);
   const open = nextStarChecklist(s)?.find((l) => !l.done);
   return h(
     'button',
@@ -28,7 +28,7 @@ export function openStage(app: App): void {
   const body: Node[] = [h('p', { class: 'stage-stars big', 'aria-hidden': 'true' }, starRow(stars))];
   if (lines) {
     body.push(
-      h('h3', {}, t('stage.goalTitle', { title: stageTitle(s.stage.current, stars + 1) })),
+      h('h3', {}, t('stage.goalTitle', { title: stageTitle(s.stage.current, stars + 1, s.stage.path) })),
       h('ul', { class: 'checklist' }, ...lines.map((l) => h('li', { class: l.done ? 'done' : '' }, h('span', { 'aria-hidden': 'true' }, l.done ? '✓' : '○'), ' ', l.text))),
     );
   }
@@ -37,7 +37,13 @@ export function openStage(app: App): void {
     body.push(h('h3', {}, t('stage.skTitle')), h('p', {}, t('stage.skBody')));
     if (s.stage.sk === 'offered') {
       body.push(
-        h('button', { class: 'btn', id: 'sk-accept', disabled: !canPromote(s), onclick: () => (closeSheet(), app.accept()) }, t('stage.accept')),
+        ...(next === 'kelurahan'
+          ? [
+              h('p', { class: 'meta' }, t('stage.pathBody')),
+              h('button', { class: 'btn', id: 'sk-accept-kelurahan', disabled: !canPromote(s), onclick: () => (closeSheet(), app.accept('kelurahan')) }, t('stage.acceptKelurahan')),
+              h('button', { class: 'btn', id: 'sk-accept-desa', disabled: !canPromote(s), onclick: () => (closeSheet(), app.accept('desa')) }, t('stage.acceptDesa')),
+            ]
+          : [h('button', { class: 'btn', id: 'sk-accept', disabled: !canPromote(s), onclick: () => (closeSheet(), app.accept()) }, t('stage.accept'))]),
         h('button', { class: 'btn', id: 'sk-decline', onclick: () => (declineSK(s), openStage(app)) }, t('stage.decline')),
       );
       if (!canPromote(s) && next) body.push(h('p', { class: 'meta' }, t('stage.soon')));
@@ -45,5 +51,5 @@ export function openStage(app: App): void {
       body.push(h('button', { class: 'btn', id: 'sk-reoffer', onclick: () => (reofferSK(s), openStage(app)) }, t('stage.reoffer')));
     }
   }
-  openSheet(stageTitle(s.stage.current, stars), body);
+  openSheet(stageTitle(s.stage.current, stars, s.stage.path), body);
 }

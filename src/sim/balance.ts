@@ -14,6 +14,13 @@ export const BROKE_SABAR_DRAIN = 1;
 export const VIRAL_DECAY = 0.1;
 export const SABAR_MAX = 100;
 export const VIRAL_MAX = 100;
+/** Each building past the first SPRAWL_FREE makes the next one dearer: land, permits and "uang rapat" grow with the kampung. */
+export const SPRAWL_FREE = 8;
+export const SPRAWL_STEP = 0.05;
+/** Share of building income that goes up the chain as "setoran". Paying is the choice, so the kas never snowballs. */
+export const SETORAN_RATE = 0.12;
+/** Popularitas lost each month per resident: bigger kampung, bigger expectations. */
+export const EXPECT_PER_RESIDENT = 0.1;
 /** Months without anything new before the pacing director steps in. */
 export const NOVELTY_GAP = 8;
 /** Each Viral point adds this fraction to shop income. */

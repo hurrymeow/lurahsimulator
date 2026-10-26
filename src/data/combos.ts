@@ -34,7 +34,7 @@ const CORE_COMBOS: ComboDef[] = [
     story: 'Nobody is on ronda. Everyone is on wifi. The kopi sachet sells itself.',
     incomeMult: { warung: 1.5 },
     perMonth: { sabar: 1, viral: 1 },
-    effect: 'Warung income x1.5. +1 Patience and +1 Virality a month.',
+    effect: 'Warung income x1.5. +1 Popularitas and +1 Virality a month.',
   },
   {
     id: 'rivalitas',
@@ -45,7 +45,7 @@ const CORE_COMBOS: ComboDef[] = [
     story: 'Promo war. Diskon every day. The queue for the diskon is the real product.',
     incomeMult: { indomaret: 1.4, alfamart: 1.4 },
     perMonth: { sabar: -2 },
-    effect: 'Both stores income x1.4. -2 Patience a month from diskon queues.',
+    effect: 'Both stores income x1.4. -2 Popularitas a month from diskon queues.',
   },
   {
     id: 'rapatMalam',

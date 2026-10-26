@@ -32,7 +32,8 @@ export function ojolMult(s: GameState): number {
     if (v !== undefined && s.buildings.some((b) => b.def === d.id && isWorking(b))) m = Math.min(m, v);
   }
   const closed = activeCombos(s).some((a) => a.combo.id === 'jalanDitutup' && a.members.some((b) => isBurstMonth(s, b)));
-  return closed ? 0 : m;
+  const war = activeCombos(s).some((a) => a.combo.id === 'perangTarif') ? 1.3 : 1;
+  return closed ? 0 : m * war;
 }
 
 /** Surat Pengantar multiplier while Musim Pindahan lasts. */

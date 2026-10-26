@@ -19,20 +19,20 @@ export interface JobDef {
 // Slots come from buildings (see jobSlots in data/buildings.ts).
 export const JOBS: JobDef[] = [
   { id: 'pns', appeal: 20, name: 'PNS', blurb: 'Produces nothing. Only stat: Pensiun, which fills for 10 years then costs the kas a payout.', perMonth: {}, perLevel: { resources: [], boost: 0 } },
-  { id: 'ojol', appeal: 90, name: 'Ojol', blurb: 'Komisi to the kas, paid for in Patience by hujan and macet.', perMonth: { rupiah: 90_000, sabar: -0.3 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
+  { id: 'ojol', appeal: 90, name: 'Ojol', blurb: 'Komisi to the kas, paid for in Popularitas by hujan and macet.', perMonth: { rupiah: 90_000, sabar: -0.3 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
   { id: 'influencer', appeal: 50, name: 'Influencer', blurb: 'Makes real Virality. It decays 10% a month, so keep posting.', perMonth: { viral: 3 }, perLevel: { resources: ['viral'], boost: 0.25 } },
   { id: 'petani', appeal: 60, name: 'Petani', blurb: 'Works the fields. Steady rupiah and a calmer mind. Needs a kebun or sawah.', perMonth: { rupiah: 70_000, sabar: 0.1 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
   { id: 'peternak', appeal: 40, name: 'Peternak', blurb: 'Tends the lele and the ayam. Cheap protein pays a little and settles the neighbours.', perMonth: { rupiah: 50_000, sabar: 0.2 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
   { id: 'pengepul', appeal: 40, name: 'Pengepul', blurb: 'Weighs plastic at the Bank Sampah. Pays a little and keeps the street tidy.', perMonth: { rupiah: 40_000, sabar: 0.2 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
-  { id: 'guru', appeal: 25, name: 'Guru PAUD', blurb: 'Teaches the little ones and calms the parents. Raises Patience, paid from the kas.', perMonth: { sabar: 0.6, rupiah: -30_000 }, perLevel: { resources: ['sabar'], boost: 0.2 } },
-  { id: 'satpam', appeal: 25, name: 'Satpam', blurb: 'Watches the gate so the pos ronda does not have to. Raises Patience, paid from the kas.', perMonth: { sabar: 1, rupiah: -20_000 }, perLevel: { resources: ['sabar'], boost: 0.15 } },
+  { id: 'guru', appeal: 25, name: 'Guru PAUD', blurb: 'Teaches the little ones and calms the parents. Raises Popularitas, paid from the kas.', perMonth: { sabar: 0.6, rupiah: -30_000 }, perLevel: { resources: ['sabar'], boost: 0.2 } },
+  { id: 'satpam', appeal: 25, name: 'Satpam', blurb: 'Watches the gate so the pos ronda does not have to. Raises Popularitas, paid from the kas.', perMonth: { sabar: 1, rupiah: -20_000 }, perLevel: { resources: ['sabar'], boost: 0.15 } },
   { id: 'tukang', appeal: 30, name: 'Tukang', blurb: 'Builds things. Each tukang on the crew speeds up every construction site by a quarter. Pays a little.', perMonth: { rupiah: 50_000 }, perLevel: { resources: ['rupiah'], boost: 0.15 } },
   { id: 'panitia', appeal: 15, name: 'Panitia', blurb: 'Sits on committees. Makes Orang Inside, and the konsumsi comes out of the kas.', perMonth: { orangDalam: 0.12, rupiah: -40_000 }, perLevel: { resources: ['orangDalam'], boost: 0.25 } },
   { id: 'buzzer', appeal: 0, name: 'Buzzer', blurb: 'Pays well and makes fake Virality fast. Gets exposed sooner or later.', perMonth: { rupiah: 60_000, viral: 6 }, perLevel: { resources: ['viral'], boost: 0.25 } },
 ];
 
 /** Auto-pick odds for later-stage jobs. Calo is only ever assigned by the player. */
-const STAGE_APPEAL: Record<string, number> = { kaderPosyandu: 25, calo: 0 };
+const STAGE_APPEAL: Record<string, number> = { kaderPosyandu: 25, calo: 0, honorer: 15, pendampingDesa: 15 };
 
 const stageJobs: JobDef[] = STAGE_JOBS.map((j) => ({ id: j.id as JobDef['id'], appeal: STAGE_APPEAL[j.id] ?? 0, name: j.name, blurb: j.blurb, perMonth: j.perMonth, perLevel: { resources: [], boost: 0 }, gate: j.gate, stage: j }));
 
@@ -55,7 +55,7 @@ export const levelMult = (boost: number, level: number): number => 1 + boost * (
 
 export const PENSIUN_MONTHS = 120;
 export const PENSIUN_PAYOUT = 1_500_000;
-export const EMPLOYED_SABAR = 0.2;
+export const EMPLOYED_SABAR = 0.08;
 export const BUZZER_FAKE_PER_MONTH = 6;
 export const BUZZER_EXPOSE_BASE = 0.05;
 export const BUZZER_EXPOSE_PER_FAKE = 0.004;
