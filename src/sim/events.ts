@@ -1,8 +1,11 @@
 import { eModLabel, eResult, t } from '../i18n';
 import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR_SABAR, EVENTS, REPAIR_FRACTION, eventDef, type EventChoice } from '../data/events';
+import { STAGE_EVENTS } from '../data/higher';
 import { rupiah } from '../format';
 import { activeCombos } from './combos';
 import { def } from './content';
+import { gateOpen } from './gate';
+import type { StageEventChoice } from '../data/higher';
 import { gain, type Fx } from './gain';
 import { VIRAL_REPAIR_AT } from './projects';
 import { chance } from './rng';
@@ -24,7 +27,9 @@ export function checkChoice(s: GameState, c: EventChoice): CheckResult {
 export function banjirProtection(s: GameState): number {
   const levels = s.buildings.filter((b) => b.def === 'selokan' && b.status === 'active').reduce((n, b) => n + b.level, 0);
   const combos = activeCombos(s).reduce((n, a) => n + (a.combo.banjirProtect ?? 0), 0);
-  return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL + combos);
+  // Kerja Bakti makes the selokan work harder for a while.
+  const boost = s.modifiers.filter((m) => m.target === 'selokan').reduce((m, x) => m * x.incomeMult, 1);
+  return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL * boost + combos);
 }
 
 /** Lapangan doubles the 17 Agustus prize. Panjat Pinang adds half again. */
@@ -38,7 +43,7 @@ export function agustusMult(s: GameState): number {
 export function eventSystem(s: GameState, fx: Fx): void {
   if (s.pendingEvent) return;
   const m = s.month % 12;
-  for (const e of EVENTS) {
+  for (const e of [...EVENTS, ...STAGE_EVENTS.filter((x) => gateOpen(s, x.gate))]) {
     const w = e.when;
     if (w.chance <= 0) continue;
     if (w.minMonth !== undefined && s.month < w.minMonth) continue;
@@ -97,6 +102,9 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
   s.res.orangDalam -= cost.orangDalam;
   for (const [k, v] of Object.entries(c.res ?? {})) s.res[k as 'sabar'] += e.id === 'agustusan' && (v as number) > 0 ? Math.round((v as number) * agustusMult(s)) : (v as number);
   if (c.inspectPrep && s.inspection) s.inspection.prep += c.inspectPrep;
+  const efx = (c as StageEventChoice).fx;
+  if (efx?.letterMult) s.rw.letterMult = { mult: efx.letterMult, until: s.month + (efx.months ?? 1) };
+  if (efx?.popReportPct) s.rw.popReport = { pct: efx.popReportPct, until: s.month + (efx.months ?? 1) };
   if (c.modifier) s.modifiers.push({ id: `${e.id}-${s.month}`, label: eModLabel(e, choiceIdx, c.modifier.label), target: c.modifier.target, incomeMult: c.modifier.incomeMult, monthsLeft: c.modifier.months });
   const text = c.special === 'banjir' ? floodDamage(s, fx) : eResult(e, choiceIdx, c);
   s.pendingEvent = null;

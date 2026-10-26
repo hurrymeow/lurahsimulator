@@ -128,6 +128,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 - **Portal:** **+1** Sabar a month, ojol income **-30%**. Riders stop at the barrier.
 - **Jalan Ditutup** combo (Pasar Kaget + Portal): market **x1.5**, ojol income **0** that month, **-1** Sabar.
 - **Grup Chat Warga** combo (two neighbouring RTs with the same trait): **+2** Viral, **-1** Sabar a month.
+- **Pos Siaga** combo (Posyandu + Portal): **+1** Sabar and **+1** Viral a month. It gives a 1★ player a second RW combo for the 2★ goal.
 - **Agustusan Akbar** combo (Gapura + Lapangan): 17 Agustus pays **x2**.
 - **Rivalitas Abadi** now also runs between your RT and Kampung Sebelah.
 - **Kader Posyandu** job: **+0.5** Sabar a month, unpaid. Output falls **20%** a year unless you pay an Apresiasi of **Rp 300rb**.

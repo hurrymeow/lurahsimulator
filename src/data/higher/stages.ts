@@ -8,6 +8,7 @@ import type { Path } from './types';
 
 export const RW_STAGE: StageDef = {
   id: 'rw',
+  playable: true,
   titles: ['Pak RW', 'RW Rintisan', 'RW Berkembang', 'RW Teladan'],
   next: 'kelurahan',
   stars: [

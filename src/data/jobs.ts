@@ -1,4 +1,5 @@
 import type { JobId, ResourceId } from '../sim/types';
+import { STAGE_JOBS, type Gate, type StageJobDef } from './higher';
 
 export interface JobDef {
   id: Exclude<JobId, 'none'>;
@@ -8,6 +9,9 @@ export interface JobDef {
   appeal: number;
   /** Resource change per month for each person with this job. */
   perMonth: Partial<Record<ResourceId, number>>;
+  /** Later-stage jobs only: when it opens, and the rules the engine reads (see StageJobDef). */
+  gate?: Gate;
+  stage?: StageJobDef;
   /** Which per-month amounts grow with level, and by what fraction per level above 1. Tune here. */
   perLevel: { resources: ResourceId[]; boost: number };
 }
@@ -20,7 +24,15 @@ export const JOBS: JobDef[] = [
   { id: 'buzzer', appeal: 0, name: 'Buzzer', blurb: 'Pays well and makes fake Viral fast. Gets exposed sooner or later.', perMonth: { rupiah: 60_000, viral: 6 }, perLevel: { resources: ['viral'], boost: 0.25 } },
 ];
 
-export const jobDef = (id: JobId): JobDef | undefined => JOBS.find((j) => j.id === id);
+/** Auto-pick odds for later-stage jobs. Calo is only ever assigned by the player. */
+const STAGE_APPEAL: Record<string, number> = { kaderPosyandu: 25, calo: 0 };
+
+const stageJobs: JobDef[] = STAGE_JOBS.map((j) => ({ id: j.id as JobDef['id'], appeal: STAGE_APPEAL[j.id] ?? 0, name: j.name, blurb: j.blurb, perMonth: j.perMonth, perLevel: { resources: [], boost: 0 }, gate: j.gate, stage: j }));
+
+/** Every job, RT and later stages. Ask gateOpen before offering a later-stage one. */
+export const ALL_JOBS: JobDef[] = [...JOBS, ...stageJobs];
+
+export const jobDef = (id: JobId): JobDef | undefined => ALL_JOBS.find((j) => j.id === id);
 
 /** Months worked needed to reach each level. Index 0 is level 1. */
 export const LEVEL_MONTHS = [0, 6, 18, 36, 60];

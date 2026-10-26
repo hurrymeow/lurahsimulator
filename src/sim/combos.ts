@@ -1,6 +1,8 @@
 import { bName, cEffect, cName, cStory, t } from '../i18n';
 import { COMBOS, type ComboDef } from '../data/combos';
+import { STAGE_COMBOS, type StageComboDef } from '../data/higher';
 import { def } from './content';
+import { gateOpen } from './gate';
 import { gain, type Fx } from './gain';
 import { isWorking } from './state';
 import type { Building, GameState } from './types';
@@ -12,13 +14,27 @@ export interface ActiveCombo {
 
 const near = (a: Building, b: Building, r: number) => Math.abs(a.x - b.x) <= r && Math.abs(a.y - b.y) <= r;
 
+/** Combos that can fire now: the RT ones, plus later-stage ones whose gate is open. */
+export const liveCombos = (s: GameState): ComboDef[] => [...COMBOS, ...STAGE_COMBOS.filter((c) => gateOpen(s, c.gate))];
+
+/** Combos the Buku Combo lists: the RT ones, plus every combo of a stage the player has reached. */
+export const bookCombos = (s: GameState): ComboDef[] => [...COMBOS, ...STAGE_COMBOS.filter((c) => gateOpen(s, { ...c.gate, stars: 0 }))];
+
+/** Two AI RTs in the area share a trait. */
+const sameTraitNeighbours = (s: GameState): boolean => s.neighbours.some((n, i) => s.neighbours.some((o, j) => j > i && o.trait === n.trait));
+
 /** Finds every working combo. One instance per anchor building. */
 export function activeCombos(s: GameState): ActiveCombo[] {
   const working = s.buildings.filter(isWorking);
   const out: ActiveCombo[] = [];
-  for (const combo of COMBOS) {
+  for (const combo of liveCombos(s)) {
     const [anchorId, ...rest] = combo.needs;
+    const rule = (combo as Partial<StageComboDef>).rule;
     for (const anchor of working.filter((b) => b.def === anchorId)) {
+      if (rule === 'sameTraitNeighbours') {
+        if (sameTraitNeighbours(s)) out.push({ combo, members: [anchor] });
+        continue;
+      }
       const members = [anchor];
       for (const id of rest) {
         const hit = working.find((b) => b.def === id && near(anchor, b, combo.radius) && !members.includes(b));

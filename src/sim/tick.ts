@@ -12,6 +12,7 @@ import { inspectionSystem } from './inspection';
 import { jobsSystem } from './jobs';
 import { mangkrakSystem, onBuildingFinished } from './projects';
 import { addEmas, yearlyRanking } from './ranking';
+import { rwSystem, rwYearEnd, burstMult } from './rw';
 import { stageSystem } from './stages';
 import { wacanaSystem } from './wacana';
 import { chance, pick, randInt } from './rng';
@@ -35,7 +36,7 @@ export function incomeMult(s: GameState, b: Building): number {
 export function buildingIncome(s: GameState, b: Building): number {
   if (!isWorking(b)) return 0;
   const d = def(b.def);
-  return Math.round(d.income * levelMult(b.level) * incomeMult(s, b) * pathMult(s, b));
+  return Math.round(d.income * levelMult(b.level) * incomeMult(s, b) * pathMult(s, b) * burstMult(s, b));
 }
 
 export function buildingUpkeep(s: GameState, b: Building): number {
@@ -159,6 +160,7 @@ export function yearEnd(s: GameState, fx: Fx): void {
   s.inflation *= 1 + INFLATION_PER_YEAR;
   addEmas(s, EMAS.perYear);
   neighboursYearEnd(s, s.month / 12);
+  rwYearEnd(s, fx);
   yearlyRanking(s, fx, s.month / 12);
   fx.push({ kind: 'notice', title: t('sim.yearTitle', { n: s.month / 12 + 1 }), body: t('sim.yearBody', { pct: Math.round(INFLATION_PER_YEAR * 100) }), tone: 'info' });
 }
@@ -168,6 +170,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   advanceConstruction,
   collectIncome,
   comboSystem,
+  rwSystem,
   neighboursSystem,
   stempelSystem,
   jobsSystem,

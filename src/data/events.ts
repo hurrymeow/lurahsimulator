@@ -1,4 +1,5 @@
 import type { Resources } from '../sim/types';
+import { STAGE_EVENTS } from './higher';
 
 export interface EventChoice {
   label: string;
@@ -106,7 +107,7 @@ export const EVENTS: EventDef[] = [
   },
 ];
 
-export const eventDef = (id: string) => EVENTS.find((e) => e.id === id);
+export const eventDef = (id: string): EventDef | undefined => EVENTS.find((e) => e.id === id) ?? STAGE_EVENTS.find((e) => e.id === id);
 
 export const BANJIR_PROTECT_PER_LEVEL = 0.2;
 export const BANJIR_MAX_PROTECT = 0.8;
