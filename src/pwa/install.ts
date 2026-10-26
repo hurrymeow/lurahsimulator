@@ -12,31 +12,39 @@ function isIos(): boolean {
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
 }
 
+let deferred: BeforeInstallPromptEvent | null = null;
+let listening = false;
+const buttons = new Set<HTMLButtonElement>();
+const setHidden = (hidden: boolean) => buttons.forEach((b) => (b.hidden = hidden));
+
 // Shows the install button when the browser offers an install prompt.
 // iOS has no prompt, so the button shows Add to Home Screen steps instead.
+// Call once per button (Menu, home screen): they share one prompt and hide together.
 export function setupInstall(button: HTMLButtonElement, showHint: (text: string) => void): void {
   if (isStandalone()) return;
-  let deferred: BeforeInstallPromptEvent | null = null;
+  buttons.add(button);
+  button.hidden = !(deferred || isIos());
 
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferred = e as BeforeInstallPromptEvent;
-    button.hidden = false;
-  });
-
-  window.addEventListener('appinstalled', () => {
-    deferred = null;
-    button.hidden = true;
-  });
-
-  if (isIos()) button.hidden = false;
+  if (!listening) {
+    listening = true;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferred = e as BeforeInstallPromptEvent;
+      setHidden(false);
+    });
+    window.addEventListener('appinstalled', () => {
+      deferred = null;
+      setHidden(true);
+    });
+  }
 
   button.addEventListener('click', async () => {
     if (deferred) {
-      await deferred.prompt();
-      await deferred.userChoice;
+      const d = deferred;
       deferred = null;
-      button.hidden = true;
+      await d.prompt();
+      await d.userChoice;
+      setHidden(true);
     } else if (isIos()) {
       showHint(t('install.ios'));
     }

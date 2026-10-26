@@ -763,7 +763,7 @@ test.describe('home screen', () => {
     await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
     await page.evaluate(() => document.fonts.ready);
     await expect(page.locator('#home .home-title')).toHaveText(await page.title());
-    await expect(page.locator('#home button')).toHaveCount(2);
+    await expect(page.locator('#home button:visible')).toHaveCount(2);
     await expect(page.locator('#home-start')).toHaveText(W[lang()].start);
     const vh = page.viewportSize()!.height;
     const box = (await page.locator('#home-start').boundingBox())!;
@@ -806,6 +806,27 @@ test.describe('home screen', () => {
     await page.locator('#home-wipe').click();
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.res.rupiah)).not.toBe(777_000);
     await expect(page.locator('#howto')).toBeVisible();
+  });
+
+  test('Install shows under Start only when the browser offers it, and hides once used', async ({ page }) => {
+    await page.goto(`/?debug&lang=${lang()}`);
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.evaluate(() => document.fonts.ready);
+    await expect(page.locator('#home-install')).toBeHidden();
+    await page.evaluate(() => {
+      const e = new Event('beforeinstallprompt') as Event & { prompt: () => Promise<void>; userChoice: Promise<unknown> };
+      e.prompt = async () => { (window as unknown as { asked: boolean }).asked = true; };
+      e.userChoice = Promise.resolve({ outcome: 'accepted' });
+      window.dispatchEvent(e);
+    });
+    await expect(page.locator('#home-install')).toBeVisible();
+    const start = (await page.locator('#home-start').boundingBox())!;
+    const install = (await page.locator('#home-install').boundingBox())!;
+    expect(install.y).toBeGreaterThan(start.y);
+    await expectLegible(page, 'home with install');
+    await page.locator('#home-install').click();
+    await expect(page.locator('#home-install')).toBeHidden();
+    expect(await page.evaluate(() => (window as unknown as { asked?: boolean }).asked)).toBe(true);
   });
 
   test('the gear opens Settings over the home screen', async ({ page }) => {
