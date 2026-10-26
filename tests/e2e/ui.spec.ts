@@ -154,7 +154,11 @@ test.describe('events, ranking, settings', () => {
       app.applySettings();
     });
     await expectLegible(page, 'large text main');
+    await page.locator('#menu-btn').click();
+    await expectLegible(page, 'large text menu');
+    await page.locator('.sheet-head .btn').click();
     for (const id of ['build', 'warga', 'wacana', 'combo']) {
+      await page.locator('#menu-btn').click();
       await page.locator(`#act-${id}`).click();
       await expectLegible(page, `large text ${id}`);
       await page.locator('.sheet-head .btn').click();
@@ -176,6 +180,9 @@ test.describe('events, ranking, settings', () => {
     }
     await expectLegible(page, 'effects off');
     expect(await page.locator('#map.shake').count()).toBe(0);
+  });
+});
+
 test.describe('slim HUD and one menu', () => {
   test('main screen has only pause, speed and Menu buttons', async ({ page }) => {
     await start(page);
