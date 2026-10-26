@@ -14,8 +14,8 @@ export function eventCost(s: GameState, c: EventChoice): { rupiah: number; orang
 export function checkChoice(s: GameState, c: EventChoice): CheckResult {
   const cost = eventCost(s, c);
   const missing: string[] = [];
-  if (s.res.rupiah < cost.rupiah) missing.push(`Need ${rupiah(cost.rupiah - s.res.rupiah)} more (costs ${rupiah(cost.rupiah)})`);
-  if (s.res.orangDalam < cost.orangDalam) missing.push(`Need ${cost.orangDalam} Orang Dalam (have ${Math.floor(s.res.orangDalam)})`);
+  if (cost.rupiah > 0 && s.res.rupiah < cost.rupiah) missing.push(`Need ${rupiah(cost.rupiah - s.res.rupiah)} more (costs ${rupiah(cost.rupiah)})`);
+  if (cost.orangDalam > 0 && s.res.orangDalam < cost.orangDalam) missing.push(`Need ${cost.orangDalam} Orang Dalam (have ${Math.floor(s.res.orangDalam)})`);
   return missing.length ? { ok: false, missing } : { ok: true };
 }
 

@@ -208,3 +208,14 @@ describe('yearly ranking and Indonesia Emas', () => {
     expect(withDamaged).toBe(score(s));
   });
 });
+
+describe('free choices while in debt', () => {
+  it('stay available when the kas is negative, so an event can never freeze the game', () => {
+    for (const e of EVENTS) {
+      const s = newGame(20);
+      s.res.rupiah = -500_000;
+      s.res.orangDalam = 0;
+      expect(checkChoice(s, e.choices[0]).ok, e.id).toBe(true);
+    }
+  });
+});
