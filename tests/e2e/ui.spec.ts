@@ -418,3 +418,16 @@ test.describe('text is legible and never cut off', () => {
     }
   });
 });
+
+test.describe('update banner', () => {
+  test('Menu button stays on screen and tappable while the banner shows', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => ((document.getElementById('update-banner') as HTMLElement).hidden = false));
+    const box = await page.locator('#menu-btn').boundingBox();
+    const vh = page.viewportSize()!.height;
+    expect(box && box.y >= 0 && box.y + box.height <= vh, `menu at ${JSON.stringify(box)} in ${vh}px`).toBe(true);
+    await page.locator('#menu-btn').click();
+    await expect(page.locator('.sheet:not([hidden])')).toBeVisible();
+  });
+});
