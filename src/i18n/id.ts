@@ -22,6 +22,12 @@ export const ID: Record<Key, string> = {
   'date.months': 'Jan,Feb,Mar,Apr,Mei,Jun,Jul,Agu,Sep,Okt,Nov,Des',
   'date.label': '{month} · Tahun {year}',
 
+  'stage.goal.residents': '{n} warga (punya {have})',
+  'stage.goal.combos': '{n} combo ditemukan (punya {have})',
+  'stage.goal.rankWins': '{n} kali menang peringkat (punya {have})',
+  'stage.goal.winStreak': '{n} kali menang peringkat berturut-turut (punya {have})',
+  'stage.goal.sabar': 'Sabar minimal {n} (punya {have})',
+
   'menu.kampung': 'Kampung',
   'menu.records': 'Arsip',
   'menu.game': 'Permainan',
