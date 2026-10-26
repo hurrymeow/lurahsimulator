@@ -1184,9 +1184,9 @@ test.describe('build mode', () => {
       }, [dx, dy]);
       await page.mouse.click(box.x + at.x, box.y + at.y);
     };
-    await tap(-2, -2);
+    await tap(-2, -3);
     await expect(page.locator('#place-float')).toBeHidden();
-    await tap(2, -2);
+    await tap(2, -3);
     await expect(page.locator('#place-ok')).toHaveText(lang() === 'en' ? 'Yes' : 'Ya');
     await expect(page.locator('#place-ok')).toBeEnabled();
     await expectLegible(page, 'path preview');
