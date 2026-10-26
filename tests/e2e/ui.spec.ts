@@ -532,3 +532,43 @@ test.describe('walkers and effects', () => {
     expect(busy, `effects off ${plain.toFixed(0)} fps, busy ${busy.toFixed(0)} fps`).toBeGreaterThan(plain * 0.8);
   });
 });
+
+test.describe('stars', () => {
+  test('Menu header shows the stage title and stars, and a tap lists what is missing', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    const head = page.locator('#stage-btn');
+    await expect(head).toBeVisible();
+    await expect(head).toContainText('☆☆☆');
+    await expectLegible(page, 'menu stage header');
+    await head.click();
+    await expect(page.locator('.checklist li')).toHaveCount(2);
+    await expect(page.locator('.checklist li').first()).toContainText(/\d/);
+    await expectLegible(page, 'star checklist');
+  });
+
+  test('earning a star plays a message, then the SK at 3 stars can be declined and asked for again', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const s = (window as unknown as { pakrt: any }).pakrt.s;
+      s.stage.stars.rt = 2;
+      s.res.sabar = 90;
+      s.discovered.push('a', 'b', 'c');
+      s.ranking = [{ year: 1, us: 1, them: 0, won: true }, { year: 2, us: 1, them: 0, won: true }];
+      const r = s.residents[0];
+      for (let i = 0; i < 40; i++) s.residents.push({ ...r, id: 500 + i });
+      (window as unknown as { pakrt: any }).pakrt.runTick();
+    });
+    await expect(page.locator('#modal .card.fanfare').first()).toContainText('3★');
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#stage-btn').click();
+    await page.locator('#sk-decline').click();
+    await expect(page.locator('#sk-reoffer')).toBeVisible();
+    await expectLegible(page, 'declined SK');
+    await page.locator('#sk-reoffer').click();
+    await expect(page.locator('#sk-accept')).toBeDisabled();
+  });
+});

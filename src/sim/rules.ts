@@ -2,6 +2,7 @@ import { bBlock, bName, t } from '../i18n';
 import { rupiah } from '../format';
 import { REFUND } from './balance';
 import { def, hasDef } from './content';
+import { stageTitle } from './stages';
 import { addBuilding, buildCost, buildingAt, count, inBounds, population, upgradeCost, year } from './state';
 import type { Building, BuildingDef, CheckResult, GameState } from './types';
 
@@ -16,6 +17,7 @@ export function requirementGaps(s: GameState, d: BuildingDef, opts: { ignoreLimi
   const missing: string[] = [];
   const r = d.requires;
   if (r?.population && population(s) < r.population) missing.push(t('sim.needPop', { n: r.population, have: population(s) }));
+  if (r?.stars && s.stage.stars[r.stars.stage] < r.stars.n) missing.push(t('sim.needStars', { title: stageTitle(r.stars.stage, r.stars.n), n: r.stars.n }));
   for (const id of r?.buildings ?? []) if (count(s, id, true) === 0) missing.push(t('sim.needBuilding', { name: bName(def(id)) }));
   if (r?.year && year(s) < r.year) missing.push(t('sim.unlocksYear', { n: r.year }));
   if (!opts.ignoreLimit && d.maxCount && count(s, d.id) >= d.maxCount) missing.push(t('sim.limit', { n: d.maxCount }));
@@ -51,7 +53,11 @@ export function checkUpgrade(s: GameState, b: Building): CheckResult {
   const missing: string[] = [];
   if (b.status !== 'active') missing.push(t('sim.mustWork', { status: t(`status.${b.status}`) }));
   if (b.level >= d.maxLevel) missing.push(t('sim.maxLevel', { n: d.maxLevel }));
-  else moneyGap(s, upgradeCost(s, b), missing);
+  else {
+    const need = d.upgradeStars?.[b.level + 1];
+    if (need && s.stage.stars.rt < need) missing.push(t('sim.needStars', { title: stageTitle('rt', need), n: need }));
+    moneyGap(s, upgradeCost(s, b), missing);
+  }
   return result(missing);
 }
 
