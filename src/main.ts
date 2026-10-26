@@ -9,7 +9,7 @@ import { setupInstall } from './pwa/install';
 import { setupUpdates } from './pwa/update';
 import { openBuild } from './ui/build';
 import { h } from './ui/dom';
-import { glyphURL } from './ui/glyphs';
+import { GLYPH_PX, glyphURL } from './ui/glyphs';
 import { inspect } from './ui/inspect';
 import { showHome } from './ui/home';
 import { showHowto } from './ui/howto';
@@ -35,7 +35,7 @@ app.actions.push(
 );
 
 // Lives in the Menu's Game group. Hidden until the browser offers an install.
-const installBtn = h('button', { class: 'tile', id: 'install-btn', hidden: true }, h('img', { src: glyphURL('install')!, alt: '', width: 32, height: 32, class: 'pixel' }), h('span', { id: 'install-label' }, t('menu.install')));
+const installBtn = h('button', { class: 'tile', id: 'install-btn', hidden: true }, h('img', { src: glyphURL('install')!, alt: '', width: GLYPH_PX, height: GLYPH_PX, class: 'pixel' }), h('span', { id: 'install-label' }, t('menu.install')));
 
 $('menu-btn').addEventListener('click', () => openMenu(app, [installBtn]));
 $('hud').addEventListener('keydown', (e) => {

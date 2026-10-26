@@ -7,8 +7,6 @@ const WORDS = { id: { play: 'Main', paused: 'Jeda', close: 'Tutup', onOff: /Nyal
 
 async function start(page: Page): Promise<void> {
   await page.goto(`/?debug&lang=${lang()}`);
-  await page.evaluate(() => localStorage.clear());
-  await page.reload();
   await passHome(page);
   await page.evaluate(() => document.fonts.ready);
 }
@@ -135,7 +133,7 @@ test.describe('population and houses', () => {
   test('the Build screen names both levers, and a house placed by hand fills up', async ({ page }) => {
     const POP_LINE = { en: /want to live here/, id: /ingin tinggal di sini/ }[lang()];
     const HOUSES = { en: 'Houses 3', id: 'Menampung 3' }[lang()];
-    const ATTRACTS = { en: 'Attracts 1', id: 'Menarik 1' }[lang()];
+    const ATTRACTS = { en: 'Attracts new residents', id: 'Menarik warga baru' }[lang()];
     await start(page);
     await dismissModals(page);
     await page.locator('#menu-btn').click();
@@ -264,7 +262,7 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#modal .card.report-card')).toBeHidden();
   });
 
-  for (const id of ['agustusan', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga']) {
+  for (const id of ['agustusan', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga', 'partTime', 'padam', 'hibah']) {
     for (const broke of [false, true]) {
       test(`event ${id}${broke ? ' while broke' : ''} is legible and has a free choice`, async ({ page }) => {
         await start(page);
@@ -638,6 +636,9 @@ test.describe('walkers and effects', () => {
   const spots = (page: Page) =>
     page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.crowd.people.map((p: any) => `${p.fx.toFixed(2)},${p.fy.toFixed(2)}`).join(' '));
 
+  /** Sim time stays still (speed 0) while the walkers are let loose, since a pause now freezes them too. */
+  const letWalk = `(() => { const a = window.pakrt; a.speed = 0; Object.defineProperty(a, 'running', { get: () => true, configurable: true }); })()`;
+
   test('residents walk the map and ojol riders join them', async ({ page }) => {
     await start(page);
     await dismissModals(page);
@@ -645,8 +646,8 @@ test.describe('walkers and effects', () => {
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.s.residents[0].job = 'ojol';
-      app.speed = 0;
     });
+    await page.evaluate(letWalk);
     await page.waitForTimeout(200);
     const people = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.crowd.people);
     expect(people.length).toBeGreaterThan(4);
@@ -685,6 +686,27 @@ test.describe('walkers and effects', () => {
     expect(r.noRoad).toBe(true);
   });
 
+  test('walkers stand still while paused, manually or by a menu, and walk on after', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    const run = async () => {
+      const a = await spots(page);
+      await page.waitForTimeout(2500);
+      return a !== (await spots(page));
+    };
+    expect(await run()).toBe(true);
+    await page.locator('#pause-btn').click();
+    await page.waitForTimeout(150);
+    expect(await run()).toBe(false);
+    await page.locator('#menu-btn').click();
+    await page.waitForTimeout(150);
+    expect(await run()).toBe(false);
+    await page.getByRole('button', { name: WORDS[lang()].close }).click();
+    await page.locator('#pause-btn').click();
+    expect(await run()).toBe(true);
+  });
+
   test('reduce motion keeps walkers still and effects off skips particles', async ({ page }) => {
     await start(page);
     await dismissModals(page);
@@ -715,7 +737,7 @@ test.describe('walkers and effects', () => {
         (busy) =>
           new Promise<number>((done) => {
             const app = (window as unknown as { pakrt: any }).pakrt;
-            app.speed = 0;
+            app.speed = 0; Object.defineProperty(app, 'running', { get: () => true, configurable: true });
             app.settings.effects = busy;
             app.applySettings();
             let n = 0;

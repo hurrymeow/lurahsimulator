@@ -1,11 +1,26 @@
 import type { Resources } from '../sim/types';
+import { MORE_EVENTS } from './eventsMore';
 import { STAGE_EVENTS } from './higher';
+
+/** One possible result of an advice choice. The game rolls one by weight and reveals it in the result popup. */
+export interface EventOutcome {
+  weight: number;
+  res?: Partial<Resources>;
+  /** Rupiah as a fraction of one month's net income (-0.1 = lose 10%). Scales with the economy. */
+  incomePct?: number;
+  result: string;
+}
 
 export interface EventChoice {
   label: string;
-  cost?: { rupiah?: number; orangDalam?: number };
+  /** `incomeMonths` prices the choice as that many months of net income. The dearer of it and `rupiah` applies. */
+  cost?: { rupiah?: number; orangDalam?: number; incomeMonths?: number };
   /** Instant resource change. */
   res?: Partial<Resources>;
+  /** Rupiah as a fraction of one month's net income (+1.2 = a bonus worth 1.2 months). Scales with the economy. */
+  incomePct?: number;
+  /** Advice: roll one of these instead of the fixed result. Costs and `res` still apply first. */
+  outcomes?: EventOutcome[];
   /** Timed income multiplier. */
   modifier?: { label: string; target: string; incomeMult: number; months: number };
   /** Special handling in code, for effects that need the map. */
@@ -27,14 +42,21 @@ export interface EventDef {
     minMonth?: number;
     /** RT stars needed before it can happen. */
     minStars?: number;
-    /** Chance each eligible month. 1 = always. */
+    /** Weight among the random events that are eligible. 1 = always, on schedule. */
     chance: number;
+    /** Building that must be standing and working. */
+    needs?: string;
     /** Months before the same event can come back. */
     cooldown?: number;
   };
   /** The first choice must always be free so an event can never soft-lock. */
   choices: EventChoice[];
 }
+
+/** Random events raise a popup at most once in this many months. Scheduled ones (chance 1) ignore it. */
+export const POPUP_GAP = 5;
+/** Chance a month with an eligible random event raises one, once the gap has passed. */
+export const POPUP_CHANCE = 0.4;
 
 // Rupiah costs here are base prices. The engine applies inflation.
 export const EVENTS: EventDef[] = [
@@ -86,7 +108,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatan',
     name: 'Kecamatan Inspection',
-    body: 'A Kecamatan inspector visits in 2 months to score the kampung: selokan, Patience, abandoned projects and parkir liar. A good score earns Orang Inside. A bad one costs Patience. Fresh paint counts too.',
+    body: 'A Kecamatan inspector visits in 2 months to score the kampung: selokan, Popularitas, abandoned projects and parkir liar. A good score earns Orang Inside. A bad one costs Popularitas. Fresh paint counts too.',
     // Raised by the inspection system on its own schedule, never at random.
     when: { chance: 0 },
     choices: [
@@ -105,6 +127,7 @@ export const EVENTS: EventDef[] = [
       },
     ],
   },
+  ...MORE_EVENTS,
 ];
 
 export const eventDef = (id: string): EventDef | undefined => EVENTS.find((e) => e.id === id) ?? STAGE_EVENTS.find((e) => e.id === id);

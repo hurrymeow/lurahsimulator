@@ -43,7 +43,7 @@ interface Notice {
   cls?: string;
 }
 
-type ExplainId = ResourceId | 'pop';
+type ExplainId = ResourceId | 'pop' | 'emas';
 const HINT_KEY = 'pakrt.hinted';
 
 export const RES_META: Record<ResourceId, { label: () => string; icon: string }> = {
@@ -129,6 +129,7 @@ export class App {
     if (badge) badge.hidden = this.held || !autoPaused(this.pauseInputs());
     const bar = document.getElementById('month-progress');
     if (bar) bar.style.width = `${(this.acc / MONTH_MS) * 100}%`;
+    this.view.frozen = !this.running;
     this.view.clock = this.s.month + this.acc / MONTH_MS;
     this.view.draw(this.s);
     requestAnimationFrame((t) => this.frame(t));
@@ -278,9 +279,9 @@ export class App {
   }
 
   /** The player accepts the SK: the stage rises and the map grows. */
-  accept(): void {
+  accept(path?: 'kelurahan' | 'desa'): void {
     const fx: SimEffect[] = [];
-    if (!acceptSK(this.s, fx)) return;
+    if (!acceptSK(this.s, fx, path)) return;
     this.view.regrid();
     this.handleFx(fx);
     this.save();
@@ -385,13 +386,16 @@ export class App {
   // ---------- HUD ----------
   private buildHud(): void {
     const hud = document.getElementById('hud')!;
-    const chip = (id: ExplainId, icon: Node, label: string) =>
+    const chip = (id: ResourceId | 'pop', icon: Node, label: string) =>
       h('button', { class: 'chip', type: 'button', id: `chip-${id}`, 'aria-label': label, style: `--c:${id === 'pop' ? '#f4f4f5' : RES_COLOUR[id]}`, onclick: () => this.explain(id) },
         icon,
         h('span', { class: 'chip-value' }, ''),
       );
     const img = (name: string) => h('img', { src: iconURL(name), alt: '', width: 18, height: 18 });
     const chips = (Object.keys(RES_META) as ResourceId[]).map((id) => chip(id, img(RES_META[id].icon), RES_META[id].label()));
+    const emasBar = document.getElementById('emas');
+    emasBar?.addEventListener('click', () => this.explain('emas'));
+    emasBar?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') this.explain('emas'); });
     hud.replaceChildren(...chips, chip('pop', h('span', { class: 'chip-text' }, t('res.pop')), t('res.pop')));
     this.refresh();
   }
@@ -402,12 +406,14 @@ export class App {
     this.tap();
     const row = (kind: 'up' | 'down' | 'edge') =>
       h('p', { class: `exp-row exp-${kind}` }, h('strong', {}, `${{ up: '▲', down: '▼', edge: '■' }[kind]} ${t(`exp.${kind}`)}`), ` ${t(`exp.${id}.${kind}` as Key)}`);
-    const icon = id === 'pop' ? h('span', { class: 'chip-text' }, t('res.pop')) : h('img', { src: iconURL(RES_META[id].icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
-    const title = id === 'pop' ? t('res.warga') : RES_META[id].label();
+    const text = id === 'pop' || id === 'emas';
+    const colour = id === 'pop' ? '#f4f4f5' : id === 'emas' ? '#fbbf24' : RES_COLOUR[id];
+    const icon = text ? h('span', { class: 'chip-text' }, id === 'emas' ? 'Emas' : t('res.pop')) : h('img', { src: iconURL(RES_META[id].icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
+    const title = id === 'pop' ? t('res.warga') : id === 'emas' ? t('stats.emasTitle') : RES_META[id].label();
     const body = id === 'pop'
       ? `${t('exp.pop.what')} ${t('pop.line', { pop: population(this.s), housing: housing(this.s), attract: attractTarget(this.s) })}`
       : t(`exp.${id}.what` as Key);
-    this.modalQueue.push({ title, body, tone: 'info', extra: h('div', { class: 'exp', style: `--c:${id === 'pop' ? '#f4f4f5' : RES_COLOUR[id]}` }, icon, row('up'), row('down'), row('edge')) });
+    this.modalQueue.push({ title, body, tone: 'info', extra: h('div', { class: 'exp', style: `--c:${colour}` }, icon, row('up'), row('down'), row('edge')) });
     this.showModal();
   }
 

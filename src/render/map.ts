@@ -91,6 +91,8 @@ interface Hit {
 
 /** Diamonds are at least 32px tall, so the tap area matches a 32px square. */
 const MIN_SCALE = 2;
+/** Grids at least this wide open at half size. */
+const HALF_ZOOM_GRID_W = 52;
 const POP_MS = 1200;
 const BURST_MS = 600;
 /** Margin below the map's front corner, in art pixels, so the bottom row is not flush with the edge. */
@@ -127,6 +129,8 @@ export class MapView {
   effects = true;
   /** Walkers and idle loops move. Off with reduce motion. */
   motion = true;
+  /** Game time is held (manual or auto pause). Walkers stand still; weather and idle loops go on. */
+  frozen = false;
   /** Game time in months, fractional, for day and night. */
   clock = 0;
   readonly crowd = new Crowd();
@@ -168,7 +172,8 @@ export class MapView {
     this.canvas.width = Math.round(w * dpr);
     this.canvas.height = Math.round(h * dpr);
     // Whole-number scale keeps pixels crisp. A small screen pans instead of shrinking tiles.
-    this.scale = Math.max(MIN_SCALE, Math.floor(Math.min(w / MAP_W, h / MAP_H)));
+    // Kelurahan is 52 tiles wide, so it opens at half size. Its lots take 2x2 tiles and still tap like one RT tile.
+    this.scale = Math.max(GRID_W >= HALF_ZOOM_GRID_W ? MIN_SCALE / 2 : MIN_SCALE, Math.floor(Math.min(w / MAP_W, h / MAP_H)));
     this.tile = TH * this.scale;
     this.viewW = w;
     this.viewH = h;
@@ -403,7 +408,7 @@ export class MapView {
     this.night = this.effects ? darkness(this.clock) : 0;
     this.lights = [];
     this.crowd.bubbles = this.effects;
-    this.crowd.update(s, now, this.motion);
+    this.crowd.update(s, now, this.motion && !this.frozen);
     this.crowd.begin();
     const drawOne = (b: Building): void => {
       if (!this.onScreen(b.x, b.y)) return;
@@ -453,12 +458,12 @@ export class MapView {
     for (const b of ground) drawOne(b);
     for (const b of standing) {
       decoUntil(b.x + b.y, b.x);
-      this.crowd.drawUntil(ctx, b.x + b.y + 1, this.project, sc, now, this.motion);
+      this.crowd.drawUntil(ctx, b.x + b.y + 1, this.project, sc, now, this.motion && !this.frozen);
       drawOne(b);
     }
 
     decoUntil(Infinity, 0);
-    this.crowd.drawUntil(ctx, Infinity, this.project, sc, now, this.motion);
+    this.crowd.drawUntil(ctx, Infinity, this.project, sc, now, this.motion && !this.frozen);
     this.fx.drawPuffs(ctx, this.project, sc, now, (fx, fy) => {
       const k = Math.floor(fy) * GRID_W + Math.floor(fx);
       return this.project(fx, fy).y - (tops.get(k) ?? this.project(fx, fy).y);

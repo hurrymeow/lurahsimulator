@@ -29,7 +29,8 @@ export function activeCombos(s: GameState): ActiveCombo[] {
   const out: ActiveCombo[] = [];
   for (const combo of liveCombos(s)) {
     const [anchorId, ...rest] = combo.needs;
-    const rule = (combo as Partial<StageComboDef>).rule;
+    const { rule, needsJob } = combo as Partial<StageComboDef>;
+    if (needsJob && !s.residents.some((r) => r.job === needsJob)) continue;
     for (const anchor of working.filter((b) => b.def === anchorId)) {
       if (rule === 'sameTraitNeighbours') {
         if (sameTraitNeighbours(s)) out.push({ combo, members: [anchor] });

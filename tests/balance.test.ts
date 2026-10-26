@@ -95,7 +95,7 @@ describe('star pacing', () => {
       if (m[1] !== undefined && m[1] <= 48) two++;
       expect(population(s), `population, seed ${seed}`).toBeGreaterThan(20);
     }
-    // 3 stars needs 3 combos and Sabar 50, which this bot does not plan for.
+    // 3 stars needs 3 combos and Sabar 65, which this bot does not plan for.
     expect(two).toBeGreaterThanOrEqual(8);
   });
 });
