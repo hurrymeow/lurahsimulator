@@ -92,7 +92,7 @@ export const ID_DATA: Record<string, string> = {
   'event.cabai.c2.label': 'Operasi pasar · 1 Orang Dalam',
   'event.cabai.c2.result': 'Satu truk cabai tiba.',
   'event.cabai.c2.mod': 'Operasi pasar',
-  'event.kecamatan.name': 'Kecamatan Datang',
+  'event.kecamatan.name': 'Inspeksi Kecamatan',
   'event.kecamatan.body': 'Petugas Kecamatan datang dalam 2 bulan untuk menilai kampung: selokan, Kesabaran, proyek mangkrak dan parkir liar. Nilai bagus memberi Orang Dalam. Nilai buruk mengurangi Kesabaran. Cat baru juga dihitung.',
   'event.kecamatan.c0.label': 'Biasa saja',
   'event.kecamatan.c0.result': 'Petugas akan melihat kampung apa adanya.',
