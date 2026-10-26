@@ -1,3 +1,4 @@
+import { bName, jName, t } from '../i18n';
 import {
   BUZZER_EXPOSE_BASE, BUZZER_EXPOSE_PER_FAKE, BUZZER_EXPOSE_SABAR, BUZZER_FAKE_PER_MONTH, EMPLOYED_SABAR,
   JOBS, PENSIUN_MONTHS, PENSIUN_PAYOUT, jobDef,
@@ -24,8 +25,8 @@ export function checkAssign(s: GameState, r: Resident, job: JobId): CheckResult 
   if (job === 'none' || r.job === job) return { ok: true };
   const total = slots(s, job);
   if (used(s, job) < total) return { ok: true };
-  const where = BUILDINGS.filter((b) => b.jobSlots?.[job]).map((b) => b.name).join(' or ');
-  return { ok: false, missing: [total === 0 ? `No ${jobDef(job)!.name} slots. Needs a working ${where}` : `All ${total} ${jobDef(job)!.name} slots taken. Upgrade the ${where} for more`] };
+  const where = BUILDINGS.filter((b) => b.jobSlots?.[job]).map((b) => bName(b)).join(t('sim.or'));
+  return { ok: false, missing: [total === 0 ? t('sim.noSlots', { job: jName(jobDef(job)!), where }) : t('sim.slotsTaken', { n: total, job: jName(jobDef(job)!), where })] };
 }
 
 export function assign(s: GameState, r: Resident, job: JobId): CheckResult {
@@ -61,7 +62,7 @@ export function jobsSystem(s: GameState, fx: Fx): void {
       if (r.pensiun >= 100) {
         const payout = Math.round(PENSIUN_PAYOUT * s.inflation);
         gain(s, fx, 'rupiah', -payout, site);
-        fx.push({ kind: 'notice', title: `${r.name} pensiun`, body: `Pensiun hit 100. The kas pays out ${payout}. The desk is free for the next PNS.`, tone: 'info', x: site?.x, y: site?.y });
+        fx.push({ kind: 'notice', title: t('sim.pensiunTitle', { name: r.name }), body: t('sim.pensiunBody', { amt: payout }), tone: 'info', x: site?.x, y: site?.y });
         r.job = 'none';
         r.pensiun = 0;
       }
@@ -72,7 +73,7 @@ export function jobsSystem(s: GameState, fx: Fx): void {
       if (chance(s, BUZZER_EXPOSE_BASE + r.fake * BUZZER_EXPOSE_PER_FAKE)) {
         gain(s, fx, 'viral', -r.fake, site);
         gain(s, fx, 'sabar', -BUZZER_EXPOSE_SABAR, site);
-        fx.push({ kind: 'notice', title: `${r.name} exposed as a buzzer`, body: `Fake Viral collapsed: -${Math.round(r.fake)} Viral, -${BUZZER_EXPOSE_SABAR} Sabar. The screenshots are everywhere.`, tone: 'bad', x: site?.x, y: site?.y });
+        fx.push({ kind: 'notice', title: t('sim.exposedTitle', { name: r.name }), body: t('sim.exposedBody', { viral: Math.round(r.fake), sabar: BUZZER_EXPOSE_SABAR }), tone: 'bad', x: site?.x, y: site?.y });
         r.job = 'none';
         r.fake = 0;
       }

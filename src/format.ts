@@ -1,4 +1,4 @@
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+import { t } from './i18n';
 
 /** Full Rupiah with dot separators: Rp 5.200.000 */
 export function rupiah(n: number): string {
@@ -30,11 +30,11 @@ export function rupiahShort(n: number): string {
 }
 
 export function monthName(month: number): string {
-  return MONTHS[((month % 12) + 12) % 12];
+  return t('date.months').split(',')[((month % 12) + 12) % 12];
 }
 
 export function dateLabel(month: number): string {
-  return `${monthName(month)} · Year ${Math.floor(month / 12) + 1}`;
+  return t('date.label', { month: monthName(month), year: Math.floor(month / 12) + 1 });
 }
 
 export function signed(n: number): string {
