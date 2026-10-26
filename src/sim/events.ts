@@ -1,6 +1,7 @@
 import { eModLabel, eResult, t } from '../i18n';
 import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR_SABAR, EVENTS, REPAIR_FRACTION, eventDef, type EventChoice } from '../data/events';
 import { rupiah } from '../format';
+import { activeCombos } from './combos';
 import { def } from './content';
 import { gain, type Fx } from './gain';
 import { VIRAL_REPAIR_AT } from './projects';
@@ -22,7 +23,15 @@ export function checkChoice(s: GameState, c: EventChoice): CheckResult {
 
 export function banjirProtection(s: GameState): number {
   const levels = s.buildings.filter((b) => b.def === 'selokan' && b.status === 'active').reduce((n, b) => n + b.level, 0);
-  return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL);
+  const combos = activeCombos(s).reduce((n, a) => n + (a.combo.banjirProtect ?? 0), 0);
+  return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL + combos);
+}
+
+/** Lapangan doubles the 17 Agustus prize. Panjat Pinang adds half again. */
+export function agustusMult(s: GameState): number {
+  let m = s.buildings.some((b) => b.def === 'lapangan' && b.status === 'active') ? 2 : 1;
+  for (const a of activeCombos(s)) m *= a.combo.agustusMult ?? 1;
+  return m;
 }
 
 /** Monthly system: maybe raise an event. At most one per month. */
@@ -33,6 +42,7 @@ export function eventSystem(s: GameState, fx: Fx): void {
     const w = e.when;
     if (w.chance <= 0) continue;
     if (w.minMonth !== undefined && s.month < w.minMonth) continue;
+    if (w.minStars !== undefined && s.stage.stars.rt < w.minStars) continue;
     if (w.months && !w.months.includes(m)) continue;
     const last = s.lastEvent?.[e.id];
     if (w.cooldown && last !== undefined && s.month - last < w.cooldown) continue;
@@ -85,7 +95,7 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
   s.res.rupiah -= cost.rupiah;
   s.stats.spent += cost.rupiah;
   s.res.orangDalam -= cost.orangDalam;
-  for (const [k, v] of Object.entries(c.res ?? {})) s.res[k as 'sabar'] += v as number;
+  for (const [k, v] of Object.entries(c.res ?? {})) s.res[k as 'sabar'] += e.id === 'agustusan' && (v as number) > 0 ? Math.round((v as number) * agustusMult(s)) : (v as number);
   if (c.inspectPrep && s.inspection) s.inspection.prep += c.inspectPrep;
   if (c.modifier) s.modifiers.push({ id: `${e.id}-${s.month}`, label: eModLabel(e, choiceIdx, c.modifier.label), target: c.modifier.target, incomeMult: c.modifier.incomeMult, monthsLeft: c.modifier.months });
   const text = c.special === 'banjir' ? floodDamage(s, fx) : eResult(e, choiceIdx, c);

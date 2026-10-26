@@ -24,6 +24,8 @@ export interface EventDef {
     months?: number[];
     /** Earliest month since start. */
     minMonth?: number;
+    /** RT stars needed before it can happen. */
+    minStars?: number;
     /** Chance each eligible month. 1 = always. */
     chance: number;
     /** Months before the same event can come back. */
@@ -63,7 +65,7 @@ export const EVENTS: EventDef[] = [
     id: 'cabai',
     name: 'Harga Cabai Naik',
     body: 'Cabai rawit at a price nobody can explain. Every warung is affected.',
-    when: { minMonth: 4, chance: 0.07, cooldown: 6 },
+    when: { minMonth: 4, minStars: 1, chance: 0.07, cooldown: 6 },
     choices: [
       {
         label: 'Let it ride',

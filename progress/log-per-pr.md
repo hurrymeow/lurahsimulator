@@ -1,0 +1,1 @@
+- Split the shared logs into `decisions/` and `progress/`, one file per PR. `node scripts/logs.mjs <dir>` prints them all. Docs only, pushed to main.

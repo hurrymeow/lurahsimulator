@@ -20,7 +20,7 @@ import { nextStarChecklist } from '../src/sim/stages';
 import { newGame } from '../src/sim/state';
 
 // Ids that RT-stage content adds in another change. Remove each once it lands in BUILDINGS.
-const PENDING_RT = ['lapangan'];
+const PENDING_RT: string[] = [];
 
 const buildingIds = new Set([...BUILDINGS.map((b) => b.id), ...STAGE_BUILDINGS.map((b) => b.id), ...PENDING_RT]);
 

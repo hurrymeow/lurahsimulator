@@ -3,6 +3,7 @@ import { BUILDINGS } from '../src/data/buildings';
 import { COMBOS } from '../src/data/combos';
 import { EVENTS } from '../src/data/events';
 import { JOBS } from '../src/data/jobs';
+import { STAGES } from '../src/data/stages';
 import { WACANA } from '../src/data/wacana';
 import { EN } from '../src/i18n/en';
 import { ID } from '../src/i18n/id';
@@ -27,6 +28,7 @@ describe('string tables', () => {
     }
     for (const c of COMBOS) ['hint', 'story', 'effect'].forEach((f) => expected.add(`combo.${c.id}.${f}`));
     for (const j of JOBS) expected.add(`job.${j.id}.blurb`);
+    for (const st of STAGES) st.titles.forEach((_, i) => expected.add(`stage.${st.id}.title${i}`));
     for (const w of WACANA) expected.add(`wacana.${w.id}.line`);
     for (const e of EVENTS) {
       expected.add(`event.${e.id}.name`);
