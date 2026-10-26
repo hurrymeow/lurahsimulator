@@ -512,39 +512,25 @@ test.describe('walkers and effects', () => {
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.fx.count)).toBe(0);
   });
 
-  test('a dense 36x52 map keeps the frame rate', async ({ page }) => {
+  test('a dense Kelurahan map keeps the frame rate', async ({ page }) => {
     await start(page);
+    await dismissModals(page);
     // 6x CPU throttle stands in for a mid-range phone.
     const cdp = await page.context().newCDPSession(page);
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 6 });
-    await dismissModals(page);
-    await page.evaluate(() => {
-      const app = (window as unknown as { pakrt: any }).pakrt;
-      app.speed = 0;
-      const s = app.s;
-      const defs = ['rumah', 'warung', 'posRonda', 'wifi', 'indomaret', 'alfamart', 'selokan'];
-      let n = 0;
-      for (let y = 0; y < 68; y++)
-        for (let x = 0; x < 52; x++) {
-          if ((x + y) % 2 || s.buildings.some((b: any) => b.x === x && b.y === y)) continue;
-          s.buildings.push({ uid: s.nextUid++, def: defs[n++ % defs.length], x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
-        }
-      for (let i = 0; i < 16; i++) s.residents.push({ id: 900 + i, name: 'Mas Joko', job: i % 3 ? 'none' : 'ojol', pensiun: 0, fake: 0, arrived: 0 });
-      s.month = 2;
-    });
     const fps = (busy: boolean) =>
       page.evaluate(
         (busy) =>
           new Promise<number>((done) => {
             const app = (window as unknown as { pakrt: any }).pakrt;
+            app.speed = 0;
             app.settings.effects = busy;
             app.applySettings();
-            app.acc = 4800;
             let n = 0;
             const t0 = performance.now();
             const f = (now: number) => {
               n++;
-              if (n % 20 === 0) app.handleFx([{ kind: 'pop', x: 20, y: 30, res: 'rupiah', amount: 900000 }]);
+              if (n % 20 === 0) app.handleFx([{ kind: 'pop', x: 4, y: 6, res: 'rupiah', amount: 900000 }]);
               if (now - t0 < 1500) requestAnimationFrame(f);
               else done((n * 1000) / (now - t0));
             };
@@ -552,14 +538,52 @@ test.describe('walkers and effects', () => {
           }),
         busy,
       );
-    let plain = 0;
-    let busy = 0;
-    for (let i = 0; i < 3; i++) {
-      plain = Math.max(plain, await fps(false));
-      busy = Math.max(busy, await fps(true));
-    }
-    console.log(`SPIKE effects off ${plain.toFixed(0)} fps, effects on ${busy.toFixed(0)} fps`);
-    expect(busy, `effects off ${plain.toFixed(0)} fps, busy ${busy.toFixed(0)} fps`).toBeGreaterThan(plain * 0.8);
+    const best = async (busy: boolean) => {
+      let top = 0;
+      for (let i = 0; i < 3; i++) top = Math.max(top, await fps(busy));
+      return top;
+    };
+    // A packed RT first, for scale.
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const s = app.s;
+      const defs = ['rumah', 'warung', 'posRonda', 'wifi', 'indomaret', 'alfamart', 'selokan'];
+      let n = 0;
+      for (let y = 0; y < 13; y++)
+        for (let x = 0; x < 9; x++)
+          if (!((x + y) % 2) && !s.buildings.some((o: any) => o.x === x && o.y === y))
+            s.buildings.push({ uid: s.nextUid++, def: defs[n++ % defs.length], x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      for (let i = 0; i < 16; i++) s.residents.push({ id: 900 + i, name: 'Mas Joko', job: i % 3 ? 'none' : 'ojol', pensiun: 0, fake: 0, arrived: 0 });
+      s.month = 2;
+    });
+    const small = await best(false);
+    // Then the whole Kelurahan, 16 times the tiles, with the same density.
+    const size = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.promote();
+      app.promote();
+      const s = app.s;
+      const defs = ['rumah', 'warung', 'posRonda', 'wifi', 'indomaret', 'alfamart', 'selokan'];
+      let n = 0;
+      for (let y = 0; y < 13 * 4; y++)
+        for (let x = 0; x < 9 * 4; x++) {
+          if ((x + y) % 2) continue;
+          const b = { uid: s.nextUid++, def: defs[n++ % defs.length], x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 };
+          const hit = s.neighbours.find((nb: any) => Math.floor(x / 9) === nb.cx && Math.floor(y / 13) === nb.cy);
+          if (hit) hit.buildings.push(b);
+          else if (!s.buildings.some((o: any) => o.x === x && o.y === y)) s.buildings.push(b);
+        }
+      return { count: s.buildings.length + s.neighbours.reduce((t: number, nb: any) => t + nb.buildings.length, 0), cells: s.neighbours.length };
+    });
+    expect(size.cells).toBe(15);
+    expect(size.count).toBeGreaterThan(800);
+    const big = await best(false);
+    const bigBusy = await best(true);
+    console.log(`RT ${small.toFixed(0)} fps, Kelurahan ${big.toFixed(0)} fps, Kelurahan with effects ${bigBusy.toFixed(0)} fps`);
+    // Only what is on screen costs anything, so 16 times the map must not cost half the frames.
+    expect(big, `RT ${small.toFixed(0)} fps, Kelurahan ${big.toFixed(0)} fps`).toBeGreaterThan(small * 0.5);
+    // The effects overhead is fixed, and the RT test above holds it to 80%. Here it only has to stay in the same league.
+    expect(bigBusy, `Kelurahan ${big.toFixed(0)} fps, with effects ${bigBusy.toFixed(0)} fps`).toBeGreaterThan(big * 0.6);
   });
 
   test('walkers, particles and night keep the frame rate', async ({ page }) => {

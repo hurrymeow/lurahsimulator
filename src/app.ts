@@ -6,6 +6,8 @@ import { def } from './sim/content';
 import { eventDef } from './data/events';
 import { checkChoice, eventCost, resolveEvent } from './sim/events';
 import { checkPlace, place } from './sim/rules';
+import { lotAt } from './sim/area';
+import { promote } from './sim/grow';
 import { deserialize, serialize } from './sim/save';
 import { buildCost, buildingAt, newGame, population, housing } from './sim/state';
 import { tick } from './sim/tick';
@@ -45,7 +47,7 @@ export const RES_META: Record<ResourceId, { label: () => string; icon: string }>
 
 /** Extension points for later systems: extra action buttons and fx handlers. */
 export type MenuGroup = 'kampung' | 'records' | 'game';
-export type ActionButton = { id: string; label: () => string; open: (app: App) => void; group?: MenuGroup; icon?: string };
+export type ActionButton = { id: string; label: () => string; open: (app: App) => void; group?: MenuGroup; icon?: string; show?: (app: App) => boolean };
 
 export class App {
   s: GameState;
@@ -70,6 +72,7 @@ export class App {
     setLang(initialLang(this.settings.lang));
     this.applyStaticText();
     this.view = new MapView(document.getElementById('map') as HTMLCanvasElement);
+    this.view.regrid();
     audio.init(this.settings);
     this.applySettings();
     this.buildHud();
@@ -246,12 +249,23 @@ export class App {
     stage.classList.add('shake');
   }
 
+  /** The SK arrives: the map grows and the new cells fill with AI RTs. */
+  promote(): void {
+    const fx: SimEffect[] = [];
+    if (!promote(this.s, fx)) return;
+    this.view.regrid();
+    this.handleFx(fx);
+    this.save();
+    this.refresh();
+  }
+
   save(): void {
     if (this.storageOk) this.storageOk = storage.set(SAVE_KEY, serialize(this.s));
   }
 
   newGame(): void {
     this.s = newGame();
+    this.view.regrid();
     this.log = [];
     this.save();
     this.refresh();
@@ -465,6 +479,7 @@ export class App {
       }
       const b = buildingAt(this.s, tile.x, tile.y);
       if (b) this.inspect(b.uid);
+      else if (lotAt(tile.x, tile.y) === 'other') this.actions.find((a) => a.id === 'neighbours')?.open(this);
       else this.notice({ title: t('build.emptyTile'), body: t('build.emptyTileBody'), tone: 'info' });
     });
     document.getElementById('ticker')!.addEventListener('click', () => this.openLog());

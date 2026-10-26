@@ -16,7 +16,7 @@ export const RES_COLOUR: Record<ResourceId, string> = {
 };
 
 /** Flat pieces cast no contact shadow. */
-const FLAT_AO = new Set(['selokan', 'parkir']);
+const FLAT_AO = new Set(['selokan', 'parkir', 'aspalUlang', 'sawahIrigasi', 'embung', 'taman']);
 
 let aoCache: HTMLCanvasElement | null = null;
 

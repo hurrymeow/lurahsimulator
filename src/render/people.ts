@@ -7,7 +7,7 @@ import { doorsOf, findPath, type Pt } from './path';
 /** More walkers than this cost frame time and crowd a 9x13 map. */
 export const MAX_WALKERS = 16;
 /** Ditches and parking lots are flat, so people walk over them. */
-const FLAT = new Set(['selokan', 'parkir']);
+const FLAT = new Set(['selokan', 'parkir', 'aspalUlang', 'sawahIrigasi', 'embung', 'taman']);
 const WALK_SPEED = 0.9;
 const OJOL_SPEED = 2.8;
 

@@ -14,6 +14,7 @@ import { inspect } from './ui/inspect';
 import { hasSeenHowto, showHowto } from './ui/howto';
 import { setupTips } from './ui/tips';
 import { openSettings } from './ui/settings';
+import { openNeighbours } from './ui/neighbours';
 import { openMenu } from './ui/menu';
 import { closeSheet } from './ui/sheet';
 import { registerSystems } from './systems';
@@ -25,6 +26,7 @@ app.inspect = (uid) => inspect(app, uid);
 app.actions.push({ id: 'build', label: () => t('menu.build'), open: openBuild });
 registerSystems(app);
 app.actions.push(
+  { id: 'neighbours', label: () => t('grow.title'), show: (a) => a.s.neighbours.length > 0, open: openNeighbours },
   { id: 'log', label: () => t('menu.log'), group: 'records', open: (a) => a.openLog() },
   { id: 'stats', label: () => t('menu.stats'), group: 'records', open: (a) => a.openStats() },
   { id: 'howto', label: () => t('menu.howto'), group: 'game', open: (a) => { closeSheet(); showHowto(a); } },
