@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { h } from './dom';
 
 const sheet = () => document.getElementById('sheet') as HTMLElement;
@@ -7,7 +8,7 @@ let onClose: (() => void) | null = null;
 export function openSheet(title: string, body: Node[], closed?: () => void): void {
   const el = sheet();
   el.replaceChildren(
-    h('div', { class: 'sheet-head' }, h('h2', {}, title), h('button', { class: 'btn btn-icon', 'aria-label': 'Close', onclick: closeSheet }, '✕')),
+    h('div', { class: 'sheet-head' }, h('h2', {}, title), h('button', { class: 'btn btn-icon', 'aria-label': t('page.close'), onclick: closeSheet }, '✕')),
     ...body,
   );
   el.hidden = false;

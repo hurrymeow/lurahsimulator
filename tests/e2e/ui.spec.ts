@@ -1,8 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 import { scanLegibility } from './legibility';
 
+/** The project name ends in -id or -en. See playwright.config.ts. */
+const lang = (): 'id' | 'en' => (test.info().project.name.endsWith('-en') ? 'en' : 'id');
+const WORDS = { id: { play: 'Main', onOff: /Nyala|Mati/ }, en: { play: 'Play', onOff: /On|Off/ } };
+
 async function start(page: Page): Promise<void> {
-  await page.goto('/?debug');
+  await page.goto(`/?debug&lang=${lang()}`);
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
@@ -45,12 +49,58 @@ async function seed(page: Page): Promise<void> {
   await dismissModals(page);
 }
 
+test.describe('tips', () => {
+  test('a mechanic is taught once, on tap, and Skip tips silences the rest', async ({ page }) => {
+    const RANKED = { id: 'Tiap tahun kamu diperingkat.', en: 'Every year you are ranked.' }[lang()];
+    await start(page);
+    await page.locator('#howtoGo').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    // Banjir has fired: its tip waits for a tap, with no timer.
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.s.lastEvent = { banjir: 0 };
+      a.refresh();
+    });
+    await expect(page.locator('#modal .card h2')).toHaveText({ id: 'Banjir menguji selokanmu.', en: 'Banjir tests your selokan.' }[lang()]);
+    await expectLegible(page, 'tip');
+    await page.waitForTimeout(1500);
+    await expect(page.locator('#modal')).toBeVisible();
+    await page.locator('#modal .tap-hint').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    // Seen once, never again, even after a reload.
+    await page.reload();
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.s.lastEvent = { banjir: 0 };
+      a.s.month = 9;
+      a.refresh();
+    });
+    // One tip at a time: tap through whatever is due, then Skip tips on the next.
+    for (let i = 0; i < 6; i++) {
+      await expect(page.locator('#modal')).toBeVisible();
+      if ((await page.locator('#modal .card h2').textContent()) === RANKED) break;
+      await page.locator('#modal .tap-hint').click();
+      await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+    }
+    await expect(page.locator('#modal .card h2')).toHaveText(RANKED);
+    await page.locator('#modal .tip-skip').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.s.stats.arrived = 1;
+      a.refresh();
+    });
+    await expect(page.locator('#modal')).toBeHidden();
+  });
+});
+
 test.describe('how to play', () => {
   test('shows on first launch, is legible, pauses the game, and stays dismissed', async ({ page }) => {
     await start(page);
     await expect(page.locator('#howto')).toBeVisible();
     await expectLegible(page, 'how to play');
-    await expect(page.locator('#howto .steps li').first()).toBeVisible();
+    await expect(page.locator('#howto .steps li')).toHaveCount(2);
     await page.locator('#howtoGo').scrollIntoViewIfNeeded();
     await page.locator('#howtoGo').click();
     await expect(page.locator('#howto')).toBeHidden();
@@ -60,6 +110,7 @@ test.describe('how to play', () => {
     await page.locator('#menu-btn').click();
     await page.locator('#act-howto').click();
     await expect(page.locator('#howto')).toBeVisible();
+    expect(await page.locator('#howto .steps li').count()).toBeGreaterThan(5);
     const speed = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.speed);
     expect(speed).toBe(0);
     await page.locator('#howtoGo').click();
@@ -130,7 +181,7 @@ test.describe('events, ranking, settings', () => {
       const before = await t.getAttribute('aria-checked');
       await t.click();
       expect(await t.getAttribute('aria-checked')).not.toBe(before);
-      await expect(t).toContainText(/On|Off/);
+      await expect(t).toContainText(WORDS[lang()].onOff);
     }
     await expectLegible(page, 'settings toggled');
     await page.locator('.sheet-head .btn').click();
@@ -141,6 +192,53 @@ test.describe('events, ranking, settings', () => {
     await page.locator('#act-settings').click();
     const saved = await page.locator('#sheet .toggle').evaluateAll((els) => els.map((e) => e.getAttribute('aria-checked')));
     expect(saved.length).toBe(5);
+  });
+
+  test('volume sliders start audio on first tap and persist', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    const music = page.locator('#sheet input.slider').nth(0);
+    const sfx = page.locator('#sheet input.slider').nth(1);
+    await expect(music).toHaveValue('50');
+    await expect(sfx).toHaveValue('100');
+    await music.fill('20');
+    await sfx.fill('0');
+    await expectLegible(page, 'settings with volume sliders');
+    await page.reload();
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    await expect(page.locator('#sheet input.slider').nth(0)).toHaveValue('20');
+    await expect(page.locator('#sheet input.slider').nth(1)).toHaveValue('0');
+  });
+
+  test('defaults to Bahasa Indonesia, switches live, and remembers the choice', async ({ page }) => {
+    test.skip(lang() !== 'id', 'runs once, with no ?lang override');
+    await page.goto('/?debug');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await dismissModals(page);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'id');
+    await expect(page.locator('#menu-btn')).toHaveText('Menu');
+    await expect(page.locator('#place-ok')).toHaveText('Pasang');
+    await page.locator('#menu-btn').click();
+    await expect(page.locator('#act-settings')).toContainText('Pengaturan');
+    await page.locator('#act-settings').click();
+    await expect(page.locator('#sheet')).toContainText('Bahasa');
+    await page.locator('#sheet [data-lang="en"]').click();
+    await expect(page.locator('#sheet .sheet-head h2')).toHaveText('Settings');
+    await expect(page.locator('#sheet [data-lang="en"]')).toHaveAttribute('aria-pressed', 'true');
+    await expectLegible(page, 'settings after switching to English');
+    await page.locator('.sheet-head .btn').click();
+    await expect(page.locator('#place-ok')).toHaveText('Place');
+    await expect(page.locator('#pause-btn')).toHaveAttribute('aria-label', 'Pause');
+    await page.reload();
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await expect(page.locator('#place-ok')).toHaveText('Place');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   });
 
   test('large text and high contrast stay legible on busy panels', async ({ page }) => {
@@ -207,7 +305,7 @@ test.describe('slim HUD and one menu', () => {
     await page.locator('#speed-btn').click();
     await page.locator('#pause-btn').click();
     expect(await speed()).toBe(0);
-    await expect(page.locator('#pause-btn')).toHaveAttribute('aria-label', 'Play');
+    await expect(page.locator('#pause-btn')).toHaveAttribute('aria-label', WORDS[lang()].play);
     await page.locator('#pause-btn').click();
     expect(await speed()).toBe(2);
   });

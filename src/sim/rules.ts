@@ -1,3 +1,4 @@
+import { bBlock, bName, t } from '../i18n';
 import { rupiah } from '../format';
 import { REFUND } from './balance';
 import { def, hasDef } from './content';
@@ -7,28 +8,28 @@ import type { Building, BuildingDef, CheckResult, GameState } from './types';
 const result = (missing: string[]): CheckResult => (missing.length ? { ok: false, missing } : { ok: true });
 
 function moneyGap(s: GameState, cost: number, missing: string[]): void {
-  if (s.res.rupiah < cost) missing.push(`Need ${rupiah(cost - s.res.rupiah)} more (costs ${rupiah(cost)})`);
+  if (s.res.rupiah < cost) missing.push(t('sim.moneyGap', { amt: rupiah(cost - s.res.rupiah), cost: rupiah(cost) }));
 }
 
 /** Requirements that do not depend on the tile. Every miss says exactly what is missing. */
-export function requirementGaps(s: GameState, d: BuildingDef): string[] {
+export function requirementGaps(s: GameState, d: BuildingDef, opts: { ignoreLimit?: boolean } = {}): string[] {
   const missing: string[] = [];
   const r = d.requires;
-  if (r?.population && population(s) < r.population) missing.push(`Need ${r.population} residents (have ${population(s)})`);
-  for (const id of r?.buildings ?? []) if (count(s, id, true) === 0) missing.push(`Need a working ${def(id).name}`);
-  if (r?.year && year(s) < r.year) missing.push(`Unlocks in year ${r.year}`);
-  if (d.maxCount && count(s, d.id) >= d.maxCount) missing.push(`Limit ${d.maxCount}. Upgrade the one you have instead`);
+  if (r?.population && population(s) < r.population) missing.push(t('sim.needPop', { n: r.population, have: population(s) }));
+  for (const id of r?.buildings ?? []) if (count(s, id, true) === 0) missing.push(t('sim.needBuilding', { name: bName(def(id)) }));
+  if (r?.year && year(s) < r.year) missing.push(t('sim.unlocksYear', { n: r.year }));
+  if (!opts.ignoreLimit && d.maxCount && count(s, d.id) >= d.maxCount) missing.push(t('sim.limit', { n: d.maxCount }));
   return missing;
 }
 
 export function checkPlace(s: GameState, id: string, x: number, y: number): CheckResult {
-  if (!hasDef(id)) return { ok: false, missing: ['Unknown building'] };
+  if (!hasDef(id)) return { ok: false, missing: [t('sim.unknownBuilding')] };
   const d = def(id);
   const missing: string[] = [];
-  if (!d.placeable) missing.push(`${d.name} cannot be placed by hand`);
+  if (!d.placeable) missing.push(t('sim.cannotPlace', { name: bName(d) }));
   missing.push(...requirementGaps(s, d));
-  if (!inBounds(x, y)) missing.push('Tile is off the map');
-  else if (buildingAt(s, x, y)) missing.push(`Tile has a ${def(buildingAt(s, x, y)!.def).name}`);
+  if (!inBounds(x, y)) missing.push(t('sim.offMap'));
+  else if (buildingAt(s, x, y)) missing.push(t('sim.tileHas', { name: bName(def(buildingAt(s, x, y)!.def)) }));
   moneyGap(s, buildCost(s, d), missing);
   return result(missing);
 }
@@ -48,8 +49,8 @@ export function place(s: GameState, id: string, x: number, y: number): CheckResu
 export function checkUpgrade(s: GameState, b: Building): CheckResult {
   const d = def(b.def);
   const missing: string[] = [];
-  if (b.status !== 'active') missing.push(`Must be working first (now: ${b.status})`);
-  if (b.level >= d.maxLevel) missing.push(`Already max level ${d.maxLevel}`);
+  if (b.status !== 'active') missing.push(t('sim.mustWork', { status: t(`status.${b.status}`) }));
+  if (b.level >= d.maxLevel) missing.push(t('sim.maxLevel', { n: d.maxLevel }));
   else moneyGap(s, upgradeCost(s, b), missing);
   return result(missing);
 }
@@ -67,7 +68,7 @@ export function upgrade(s: GameState, b: Building): CheckResult {
 
 export function checkDemolish(s: GameState, b: Building): CheckResult {
   const d = def(b.def);
-  if (!d.removable) return { ok: false, missing: [d.removeBlockedReason ?? `${d.name} cannot be removed`] };
+  if (!d.removable) return { ok: false, missing: [bBlock(d) ?? t('sim.cannotRemove', { name: bName(d) })] };
   void s;
   return { ok: true };
 }
@@ -84,8 +85,8 @@ export function demolish(s: GameState, b: Building): CheckResult & { refund?: nu
 /** Orang Dalam skips the permit queue entirely. */
 export function checkSkipPermit(s: GameState, b: Building): CheckResult {
   const missing: string[] = [];
-  if (b.status !== 'permit') missing.push('Not waiting for a permit');
-  if (s.res.orangDalam < 1) missing.push(`Need 1 Orang Dalam (have ${Math.floor(s.res.orangDalam)})`);
+  if (b.status !== 'permit') missing.push(t('sim.notWaiting'));
+  if (s.res.orangDalam < 1) missing.push(t('sim.needOD', { have: Math.floor(s.res.orangDalam) }));
   return result(missing);
 }
 

@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -37,7 +38,7 @@ export function setupInstall(button: HTMLButtonElement, showHint: (text: string)
       deferred = null;
       button.hidden = true;
     } else if (isIos()) {
-      showHint('Tap Share, then "Add to Home Screen".');
+      showHint(t('install.ios'));
     }
   });
 }

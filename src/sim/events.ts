@@ -1,3 +1,4 @@
+import { eModLabel, eResult, t } from '../i18n';
 import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR_SABAR, EVENTS, REPAIR_FRACTION, eventDef, type EventChoice } from '../data/events';
 import { rupiah } from '../format';
 import { def } from './content';
@@ -14,8 +15,8 @@ export function eventCost(s: GameState, c: EventChoice): { rupiah: number; orang
 export function checkChoice(s: GameState, c: EventChoice): CheckResult {
   const cost = eventCost(s, c);
   const missing: string[] = [];
-  if (cost.rupiah > 0 && s.res.rupiah < cost.rupiah) missing.push(`Need ${rupiah(cost.rupiah - s.res.rupiah)} more (costs ${rupiah(cost.rupiah)})`);
-  if (cost.orangDalam > 0 && s.res.orangDalam < cost.orangDalam) missing.push(`Need ${cost.orangDalam} Orang Dalam (have ${Math.floor(s.res.orangDalam)})`);
+  if (cost.rupiah > 0 && s.res.rupiah < cost.rupiah) missing.push(t('sim.moneyGap', { amt: rupiah(cost.rupiah - s.res.rupiah), cost: rupiah(cost.rupiah) }));
+  if (cost.orangDalam > 0 && s.res.orangDalam < cost.orangDalam) missing.push(t('sim.needODn', { n: cost.orangDalam, have: Math.floor(s.res.orangDalam) }));
   return missing.length ? { ok: false, missing } : { ok: true };
 }
 
@@ -64,23 +65,23 @@ function floodDamage(s: GameState, fx: Fx): string {
     }
   }
   const pct = Math.round(protect * 100);
-  if (!hit) return `Selokan held (${pct}% protection). Sabar -${sabarHit}. Nothing broke.`;
-  return `${hit} building${hit > 1 ? 's' : ''} flooded (selokan protection ${pct}%). Sabar -${sabarHit}. Repair them from the tile, free once Viral hits 30.`;
+  if (!hit) return t('sim.floodHeld', { pct, sabar: sabarHit });
+  return t(hit > 1 ? 'sim.floodN' : 'sim.flood1', { n: hit, pct, sabar: sabarHit, at: VIRAL_REPAIR_AT });
 }
 
 export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutcome {
   const e = s.pendingEvent ? eventDef(s.pendingEvent) : undefined;
   const c = e?.choices[choiceIdx];
-  if (!e || !c) return { ok: false, text: 'No event waiting.' };
+  if (!e || !c) return { ok: false, text: t('sim.noEvent') };
   const check = checkChoice(s, c);
-  if (!check.ok) return { ok: false, text: 'Cannot afford that.', missing: check.missing };
+  if (!check.ok) return { ok: false, text: t('sim.cantAfford'), missing: check.missing };
   const cost = eventCost(s, c);
   s.res.rupiah -= cost.rupiah;
   s.stats.spent += cost.rupiah;
   s.res.orangDalam -= cost.orangDalam;
   for (const [k, v] of Object.entries(c.res ?? {})) s.res[k as 'sabar'] += v as number;
-  if (c.modifier) s.modifiers.push({ id: `${e.id}-${s.month}`, label: c.modifier.label, target: c.modifier.target, incomeMult: c.modifier.incomeMult, monthsLeft: c.modifier.months });
-  const text = c.special === 'banjir' ? floodDamage(s, fx) : c.result;
+  if (c.modifier) s.modifiers.push({ id: `${e.id}-${s.month}`, label: eModLabel(e, choiceIdx, c.modifier.label), target: c.modifier.target, incomeMult: c.modifier.incomeMult, monthsLeft: c.modifier.months });
+  const text = c.special === 'banjir' ? floodDamage(s, fx) : eResult(e, choiceIdx, c);
   s.pendingEvent = null;
   return { ok: true, text };
 }
@@ -90,10 +91,10 @@ export function repairCost(s: GameState, b: Building): number {
 }
 
 export function checkRepair(s: GameState, b: Building): CheckResult {
-  if (b.status !== 'damaged') return { ok: false, missing: ['Not damaged'] };
+  if (b.status !== 'damaged') return { ok: false, missing: [t('sim.notDamaged')] };
   const cost = repairCost(s, b);
   if (s.res.rupiah >= cost) return { ok: true };
-  return { ok: false, missing: [`Need ${rupiah(cost - s.res.rupiah)} more (repair costs ${rupiah(cost)}). Free once Viral hits 30 (have ${Math.floor(s.res.viral)})`] };
+  return { ok: false, missing: [t('sim.repairGap', { amt: rupiah(cost - s.res.rupiah), cost: rupiah(cost), at: VIRAL_REPAIR_AT, have: Math.floor(s.res.viral) })] };
 }
 
 export function repair(s: GameState, b: Building): CheckResult {

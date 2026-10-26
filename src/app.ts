@@ -1,3 +1,4 @@
+import { eBody, eLabel, eName, bName, initialLang, setLang, t, type Key, type Lang } from './i18n';
 import { dateLabel, rupiah, rupiahHud } from './format';
 import { MapView, RES_COLOUR } from './render/map';
 import { iconURL } from './render/sprites';
@@ -9,6 +10,7 @@ import { deserialize, serialize } from './sim/save';
 import { buildCost, buildingAt, newGame, population, housing } from './sim/state';
 import { tick } from './sim/tick';
 import type { GameState, ResourceId, SimEffect } from './sim/types';
+import { audio } from './audio';
 import { loadSettings, saveSettings, type Settings } from './settings';
 import { storage } from './storage';
 import { h, missingList } from './ui/dom';
@@ -22,21 +24,23 @@ export type Speed = (typeof SPEEDS)[number];
 const SAVE_KEY = 'pakrt.save';
 
 interface Notice {
+  /** Set on tutorial tips. Adds a way to switch all tips off. */
+  tip?: { pics: Node; skip: () => void };
   title: string;
   body: string;
   tone: 'good' | 'bad' | 'info';
 }
 
-export const RES_META: Record<ResourceId, { label: string; icon: string }> = {
-  rupiah: { label: 'Rupiah', icon: 'rupiah' },
-  sabar: { label: 'Sabar', icon: 'sabar' },
-  orangDalam: { label: 'Orang Dalam', icon: 'orangDalam' },
-  viral: { label: 'Viral', icon: 'viral' },
+export const RES_META: Record<ResourceId, { label: () => string; icon: string }> = {
+  rupiah: { label: () => t('res.rupiah'), icon: 'rupiah' },
+  sabar: { label: () => t('res.sabar'), icon: 'sabar' },
+  orangDalam: { label: () => t('res.orangDalam'), icon: 'orangDalam' },
+  viral: { label: () => t('res.viral'), icon: 'viral' },
 };
 
 /** Extension points for later systems: extra action buttons and fx handlers. */
 export type MenuGroup = 'kampung' | 'records' | 'game';
-export type ActionButton = { id: string; label: string; open: (app: App) => void; group?: MenuGroup; icon?: string };
+export type ActionButton = { id: string; label: () => string; open: (app: App) => void; group?: MenuGroup; icon?: string };
 
 export class App {
   s: GameState;
@@ -58,14 +62,17 @@ export class App {
     this.s = loaded ?? newGame();
     this.storageOk = storage.set('pakrt.probe', '1');
     this.settings = loadSettings();
+    setLang(initialLang(this.settings.lang));
+    this.applyStaticText();
     this.view = new MapView(document.getElementById('map') as HTMLCanvasElement);
+    audio.init(this.settings);
     this.applySettings();
     this.buildHud();
     this.bindMap();
     this.bindSpeed();
     new ResizeObserver(() => this.view.resize()).observe(document.getElementById('map')!);
     this.view.resize();
-    if (!this.storageOk) this.notice({ title: 'Saving is off', body: 'This browser blocks storage. The game runs, but progress is lost when you close it.', tone: 'info' });
+    if (!this.storageOk) this.notice({ title: t('noticeSaveOff'), body: t('noticeSaveOffBody'), tone: 'info' });
     if (this.s.pendingEvent) this.showEvent();
     requestAnimationFrame((t) => this.frame(t));
   }
@@ -120,12 +127,14 @@ export class App {
           this.view.spawn(b.uid);
         }
         this.haptic(20);
+        audio.play('build');
       } else if (f.kind === 'notice') {
         if (f.fanfare) this.view.pulse();
         if (f.fanfare) this.modal(f);
         else this.notice(f);
       } else if (f.kind === 'event') {
         this.haptic(25);
+        audio.play('event');
         this.showEventSoon = true;
       }
     }
@@ -164,8 +173,8 @@ export class App {
     const choices = e.choices.map((c, i) => {
       const check = checkChoice(this.s, c);
       const cost = eventCost(this.s, c);
-      const label = c.label.replace(/ · Rp [\d.]+/, '').replace(/ · \d Orang Dalam/, '');
-      const price = [cost.rupiah ? rupiah(cost.rupiah) : '', cost.orangDalam ? `${cost.orangDalam} Orang Dalam` : ''].filter(Boolean).join(' + ');
+      const label = eLabel(e, i, c).replace(/ · Rp [\d.]+/, '').replace(/ · \d Orang Dalam/, '');
+      const price = [cost.rupiah ? rupiah(cost.rupiah) : '', cost.orangDalam ? `${cost.orangDalam} ${t('res.orangDalam')}` : ''].filter(Boolean).join(' + ');
       return h('div', { class: 'action' },
         h('button', { class: `btn ${i === 0 ? '' : 'btn-primary'}`, disabled: !check.ok, onclick: () => this.chooseEvent(i) }, price ? `${label} · ${price}` : label),
         check.ok ? null : missingList(check.missing),
@@ -173,8 +182,8 @@ export class App {
     });
     el.replaceChildren(
       h('div', { class: 'card event', role: 'dialog', 'aria-live': 'polite' },
-        h('h2', {}, e.name),
-        h('p', {}, e.body),
+        h('h2', {}, eName(e)),
+        h('p', {}, eBody(e)),
         ...choices,
       ),
     );
@@ -189,7 +198,7 @@ export class App {
     if (!out.ok) return;
     document.getElementById('modal')!.hidden = true;
     this.handleFx(fx);
-    this.notice({ title: 'Event result', body: out.text, tone: 'info' });
+    this.notice({ title: t('event.result'), body: out.text, tone: 'info' });
     this.save();
     this.refresh();
   }
@@ -225,12 +234,19 @@ export class App {
     }
   }
 
+  /** Haptic plus a UI click for button presses. */
+  tap(ms = 15): void {
+    this.haptic(ms);
+    audio.play('tap');
+  }
+
   notice(n: Notice): void {
     this.log.unshift(n);
     this.log.length = Math.min(this.log.length, 40);
-    const t = document.getElementById('ticker')!;
-    t.replaceChildren(h('strong', {}, n.title), h('span', {}, n.body));
-    t.dataset.tone = n.tone;
+    const ticker = document.getElementById('ticker')!;
+    ticker.replaceChildren(h('strong', {}, n.title), h('span', {}, n.body));
+    ticker.dataset.tone = n.tone;
+    delete ticker.dataset.i18n;
   }
 
   /** Important message. Pauses the game until tapped. Never advances on a timer. */
@@ -238,6 +254,16 @@ export class App {
     this.log.unshift(n);
     this.modalQueue.push(n);
     if (this.modalQueue.length === 1) this.showModal();
+  }
+
+  /** True when a tip can show without stacking on another message. */
+  get idle(): boolean {
+    return this.modalQueue.length === 0 && !this.s.pendingEvent && !sheetOpen() && document.getElementById('howto')!.hidden;
+  }
+
+  private dropTips(): void {
+    this.modalQueue = this.modalQueue.filter((m) => !m.tip);
+    this.showModal();
   }
 
   private showModal(): void {
@@ -250,14 +276,19 @@ export class App {
     }
     el.replaceChildren(
       h('div', { class: `card ${n.fanfare ? 'fanfare' : ''}`, role: 'dialog', 'aria-live': 'polite' },
-        n.fanfare ? h('div', { class: 'fanfare-tag' }, '★ New ★') : null,
+        n.fanfare ? h('div', { class: 'fanfare-tag' }, t('modal.new')) : null,
         h('h2', {}, n.title),
         h('p', {}, n.body),
-        h('p', { class: 'tap-hint' }, 'Tap to continue'),
+        n.tip?.pics,
+        h('p', { class: 'tap-hint' }, t('modal.tap')),
+        n.tip ? h('button', { class: 'btn tip-skip', onclick: (e: Event) => { e.stopPropagation(); n.tip!.skip(); this.dropTips(); } }, t('tip.skip')) : null,
       ),
     );
     el.hidden = false;
-    if (n.fanfare) this.haptic([30, 40, 30]);
+    if (n.fanfare) {
+      this.haptic([30, 40, 30]);
+      audio.play('fanfare');
+    }
     el.onclick = () => {
       this.modalQueue.shift();
       this.showModal();
@@ -270,13 +301,13 @@ export class App {
     const chips = (Object.keys(RES_META) as ResourceId[]).map((id) =>
       h('div', { class: 'chip', id: `chip-${id}`, style: `--c:${RES_COLOUR[id]}` },
         h('img', { src: iconURL(RES_META[id].icon), alt: '', width: 18, height: 18 }),
-        h('span', { class: 'chip-label' }, RES_META[id].label),
+        h('span', { class: 'chip-label' }, RES_META[id].label()),
         h('span', { class: 'chip-value' }, ''),
       ),
     );
     const pop = h('div', { class: 'chip', id: 'chip-pop', style: '--c:#f4f4f5' },
       h('img', { src: iconURL('people'), alt: '', width: 18, height: 18 }),
-      h('span', { class: 'chip-label' }, 'Warga'),
+      h('span', { class: 'chip-label' }, t('res.warga')),
       h('span', { class: 'chip-value' }, ''),
     );
     hud.replaceChildren(...chips, pop);
@@ -292,11 +323,11 @@ export class App {
       chip.querySelector('.chip-value')!.textContent = v;
       chip.setAttribute('aria-label', `${label} ${v}`);
     };
-    set('rupiah', rupiahHud(r.rupiah), `Rupiah ${rupiah(r.rupiah)},`);
-    set('sabar', `${Math.round(r.sabar)}`, 'Sabar');
-    set('orangDalam', `${Math.floor(r.orangDalam)}`, 'Orang Dalam');
-    set('viral', `${Math.round(r.viral)}`, 'Viral');
-    set('pop', `${population(this.s)}/${housing(this.s)}`, 'Residents');
+    set('rupiah', rupiahHud(r.rupiah), `${t('res.rupiah')} ${rupiah(r.rupiah)},`);
+    set('sabar', `${Math.round(r.sabar)}`, t('res.sabar'));
+    set('orangDalam', `${Math.floor(r.orangDalam)}`, t('res.orangDalam'));
+    set('viral', `${Math.round(r.viral)}`, t('res.viral'));
+    set('pop', `${population(this.s)}/${housing(this.s)}`, t('page.resourcesLabel'));
     document.getElementById('chip-rupiah')!.classList.toggle('negative', r.rupiah < 0);
     this.flashChanges();
     const emas = document.getElementById('emas-value');
@@ -332,18 +363,18 @@ export class App {
     const s = this.s;
     const ranks = [...s.ranking].reverse().map((r) =>
       h('div', { class: `log-row tone-${r.won ? 'good' : 'bad'}` },
-        h('strong', {}, `Year ${r.year}: ${r.won ? 'You won' : `${RIVAL_NAME} won`}`),
-        h('p', {}, `Us ${r.us}, them ${r.them}`),
+        h('strong', {}, r.won ? t('stats.won', { year: r.year }) : t('stats.lost', { year: r.year, rival: RIVAL_NAME })),
+        h('p', {}, t('stats.usThem', { us: r.us, them: r.them })),
       ),
     );
-    openSheet('Kas, warga, ranking', [
-      h('p', {}, 'Rupiah pays for buildings. Sabar below 25 stops new residents, below 15 people leave. Orang Dalam skips permit queues. Viral lifts shop income and decays 10% a month.'),
-      h('p', { class: 'meta' }, `Earned ${rupiah(s.stats.earned)}. Spent ${rupiah(s.stats.spent)}. Arrived ${s.stats.arrived}. Left ${s.stats.left}.`),
-      h('h3', {}, 'Indonesia Emas 2045'),
-      h('p', { class: 'meta' }, `${s.emas.toFixed(2)}% done. Wacana and winning the yearly ranking nudge it. Frozen projects pull it back.`),
-      h('h3', {}, `Ranking vs ${RIVAL_NAME}`),
-      h('p', { class: 'meta' }, `Your score now: ${score(s)}. Scored every year end from residents, working buildings, combos, Sabar and Emas.`),
-      ...(ranks.length ? ranks : [h('p', { class: 'meta' }, 'First ranking at the end of year 1.')]),
+    openSheet(t('stats.title'), [
+      h('p', {}, t('stats.intro')),
+      h('p', { class: 'meta' }, t('stats.totals', { earned: rupiah(s.stats.earned), spent: rupiah(s.stats.spent), arrived: s.stats.arrived, left: s.stats.left })),
+      h('h3', {}, t('stats.emasTitle')),
+      h('p', { class: 'meta' }, t('stats.emas', { n: s.emas.toFixed(2) })),
+      h('h3', {}, t('stats.rankTitle', { rival: RIVAL_NAME })),
+      h('p', { class: 'meta' }, t('stats.score', { n: score(s) })),
+      ...(ranks.length ? ranks : [h('p', { class: 'meta' }, t('stats.firstRank'))]),
     ]);
   }
 
@@ -360,11 +391,11 @@ export class App {
     if (sp) this.pace = sp;
     const pause = document.getElementById('pause-btn')!;
     pause.textContent = sp ? '❚❚' : '▶';
-    pause.setAttribute('aria-label', sp ? 'Pause' : 'Play');
+    pause.setAttribute('aria-label', sp ? t('page.pause') : t('page.play'));
     pause.setAttribute('aria-pressed', String(!sp));
     const speed = document.getElementById('speed-btn')!;
     speed.textContent = `${this.pace}x`;
-    speed.setAttribute('aria-label', `Speed ${this.pace}x. Tap to change.`);
+    speed.setAttribute('aria-label', t('page.speed', { n: this.pace }));
   }
 
   // ---------- map input ----------
@@ -388,17 +419,17 @@ export class App {
       down = null;
       if (wasDrag) return;
       const rect = canvas.getBoundingClientRect();
-      const t = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top, !this.placing);
-      if (!t) return;
+      const tile = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top, !this.placing);
+      if (!tile) return;
       if (this.placing) {
-        const ok = checkPlace(this.s, this.placing, t.x, t.y).ok;
-        this.view.ghost = { x: t.x, y: t.y, ok, sprite: def(this.placing).sprite };
+        const ok = checkPlace(this.s, this.placing, tile.x, tile.y).ok;
+        this.view.ghost = { x: tile.x, y: tile.y, ok, sprite: def(this.placing).sprite };
         this.updatePlacing();
         return;
       }
-      const b = buildingAt(this.s, t.x, t.y);
+      const b = buildingAt(this.s, tile.x, tile.y);
       if (b) this.inspect(b.uid);
-      else this.notice({ title: 'Empty tile', body: 'Open Menu, then Build, to put something here.', tone: 'info' });
+      else this.notice({ title: t('build.emptyTile'), body: t('build.emptyTileBody'), tone: 'info' });
     });
     document.getElementById('ticker')!.addEventListener('click', () => this.openLog());
   }
@@ -406,7 +437,7 @@ export class App {
   inspect: (uid: number) => void = () => {};
 
   openLog(): void {
-    openSheet('Kampung log', this.log.length ? this.log.map((n) => h('div', { class: `log-row tone-${n.tone}` }, h('strong', {}, n.title), h('p', {}, n.body))) : [h('p', {}, 'Nothing yet.')]);
+    openSheet(t('log.title'), this.log.length ? this.log.map((n) => h('div', { class: `log-row tone-${n.tone}` }, h('strong', {}, n.title), h('p', {}, n.body))) : [h('p', {}, t('page.nothingYet'))]);
   }
 
   // ---------- placement ----------
@@ -435,6 +466,7 @@ export class App {
       this.view.burst(g.x, g.y);
       this.view.pop(g.x, g.y, 'rupiah', -buildCost(this.s, def(this.placing)));
       this.haptic(15);
+      audio.play('build');
       this.stopPlacing();
       this.save();
       this.refresh();
@@ -448,14 +480,31 @@ export class App {
     const btn = document.getElementById('place-ok') as HTMLButtonElement;
     const g = this.view.ghost;
     if (!g) {
-      info.replaceChildren(h('strong', {}, `${d.name} · ${rupiah(buildCost(this.s, d))}`), h('span', {}, 'Tap a tile.'));
+      info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), h('span', {}, t('build.tapTile')));
       btn.disabled = true;
       return;
     }
     const check = checkPlace(this.s, this.placing, g.x, g.y);
     g.ok = check.ok;
     btn.disabled = !check.ok;
-    info.replaceChildren(h('strong', {}, `${d.name} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', {}, `Permit ${d.permitMonths} mo, build ${d.buildMonths} mo.`) : missingList(check.missing));
+    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', {}, t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
+  }
+
+  // ---------- language ----------
+  /** Static page text carries data-i18n (text) or data-i18n-aria (aria-label). */
+  applyStaticText(): void {
+    document.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => (el.textContent = t(el.dataset.i18n as Key)));
+    document.querySelectorAll<HTMLElement>('[data-i18n-aria]').forEach((el) => el.setAttribute('aria-label', t(el.dataset.i18nAria as Key)));
+  }
+
+  /** Switches language live: relabels the page, HUD and speed buttons. Open panels are reopened by the caller. */
+  setLanguage(lang: Lang): void {
+    setLang(lang);
+    this.settings.lang = lang;
+    saveSettings(this.settings);
+    this.applyStaticText();
+    this.buildHud();
+    this.setSpeed(this.speed);
   }
 
   // ---------- settings ----------
@@ -466,6 +515,7 @@ export class App {
     this.view.effects = this.settings.effects && !this.settings.reduceMotion;
     this.view.motion = !this.settings.reduceMotion;
     if (!this.view.effects) this.view.fx.clear();
+    audio.set(this.settings);
     saveSettings(this.settings);
   }
 }

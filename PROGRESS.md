@@ -9,6 +9,7 @@
 | 3 | Satire mechanics: combos, Buku Combo, tukang parkir, jobs, wacana, proyek mangkrak | #3 | live |
 | - | Legibility fix (font, wrapping, tap targets) and Playwright E2E scan at 320/360/390px | #4 | live |
 | - | How to play page (modelled on mainpecah) | #5 | live |
+| - | Paced tutorial: basics on first launch, contextual tips afterwards | PR open | - |
 | 4 | Events, yearly ranking, Indonesia Emas bar, juice, accessibility settings, balance fixes | #6 | live |
 | - | Walking residents, ojol riders, waving tukang parkir, dust, coins, fanfare pulse, day and night | #11 | live |
 
@@ -40,3 +41,9 @@ See `DECISIONS.md`. The ones most worth a look:
 - Sabar floor: below 30 it recovers 4 a month by itself, so a neglected kampung stalls instead of collapsing.
 - Ranking formula and Kampung Sebelah curve (55 + 26 per year).
 - Mono Dark was not defined anywhere, so I used near-black `#0b0b0c` with white pixel glyph.
+
+## Bahasa Indonesia
+
+- i18n layer, EN and ID tables, language buttons at the top of Settings, saved to localStorage. Default is Indonesian.
+- UI, tutorial, buildings, combos, jobs, wacana and events are translated. Old log entries keep the language they were written in.
+- E2E runs every phone size in both languages, so text-fit is checked for the longer Indonesian strings.
