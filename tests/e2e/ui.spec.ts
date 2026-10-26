@@ -138,6 +138,11 @@ test.describe('events, ranking, settings', () => {
         await page.waitForTimeout(300);
         expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month)).toBe(before);
         await page.locator('#modal .card.event .btn').first().click();
+        // The outcome is a tap-to-dismiss popup with the stat changes.
+        await expect(page.locator('#modal .card h2')).toHaveText({ id: 'Hasil kejadian', en: 'Event result' }[lang()]);
+        if (id !== 'banjir') await expect(page.locator('#modal .outcome-chip, #modal .outcome-mod').first()).toBeVisible();
+        await expectLegible(page, `outcome ${id}`);
+        await page.locator('#modal .tap-hint').click();
         await expect(page.locator('#modal')).toBeHidden();
         expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.pendingEvent)).toBeNull();
         await expectLegible(page, `after event ${id}`);
@@ -272,6 +277,7 @@ test.describe('events, ranking, settings', () => {
       await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
       await dismissModals(page);
       if (await page.locator('#modal .card.event .btn').first().isVisible()) await page.locator('#modal .card.event .btn').first().click();
+      await dismissModals(page);
     }
     await expectLegible(page, 'effects off');
     expect(await page.locator('#map.shake').count()).toBe(0);

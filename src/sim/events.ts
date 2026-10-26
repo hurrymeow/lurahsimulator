@@ -6,7 +6,7 @@ import { gain, type Fx } from './gain';
 import { VIRAL_REPAIR_AT } from './projects';
 import { chance } from './rng';
 import { price } from './state';
-import type { Building, CheckResult, GameState } from './types';
+import type { Building, CheckResult, GameState, Resources } from './types';
 
 export function eventCost(s: GameState, c: EventChoice): { rupiah: number; orangDalam: number } {
   return { rupiah: c.cost?.rupiah ? price(s, c.cost.rupiah) : 0, orangDalam: c.cost?.orangDalam ?? 0 };
@@ -48,6 +48,10 @@ export interface EventOutcome {
   ok: boolean;
   text: string;
   missing?: string[];
+  /** Net change per resource, costs included. */
+  delta?: Partial<Resources>;
+  /** Timed income modifier the choice started. */
+  modifier?: { label: string; incomeMult: number; months: number };
 }
 
 function floodDamage(s: GameState, fx: Fx): string {
@@ -75,6 +79,7 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
   if (!e || !c) return { ok: false, text: t('sim.noEvent') };
   const check = checkChoice(s, c);
   if (!check.ok) return { ok: false, text: t('sim.cantAfford'), missing: check.missing };
+  const before = { ...s.res };
   const cost = eventCost(s, c);
   s.res.rupiah -= cost.rupiah;
   s.stats.spent += cost.rupiah;
@@ -83,7 +88,10 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
   if (c.modifier) s.modifiers.push({ id: `${e.id}-${s.month}`, label: eModLabel(e, choiceIdx, c.modifier.label), target: c.modifier.target, incomeMult: c.modifier.incomeMult, monthsLeft: c.modifier.months });
   const text = c.special === 'banjir' ? floodDamage(s, fx) : eResult(e, choiceIdx, c);
   s.pendingEvent = null;
-  return { ok: true, text };
+  const delta: Partial<Resources> = {};
+  for (const k of Object.keys(before) as (keyof Resources)[]) if (s.res[k] !== before[k]) delta[k] = s.res[k] - before[k];
+  const mod = c.modifier && { label: eModLabel(e, choiceIdx, c.modifier.label), incomeMult: c.modifier.incomeMult, months: c.modifier.months };
+  return { ok: true, text, delta, modifier: mod };
 }
 
 export function repairCost(s: GameState, b: Building): number {
