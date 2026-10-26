@@ -41,6 +41,6 @@ See `DECISIONS.md`. The ones most worth a look:
 
 ## Bahasa Indonesia
 
-- i18n layer, EN and ID tables, language buttons at the top of Settings, saved to localStorage. Default is Indonesian.
+- i18n layer, EN and ID tables, language buttons at the top of Settings, saved to localStorage. Default is English.
 - UI, tutorial, buildings, combos, jobs, wacana and events are translated. Old log entries keep the language they were written in.
 - E2E runs every phone size in both languages, so text-fit is checked for the longer Indonesian strings.
