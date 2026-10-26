@@ -1,4 +1,4 @@
-import type { BuildingDef } from '../sim/types';
+import type { BuildCategory, BuildingDef } from '../sim/types';
 import { DECOR_BUILDINGS } from './decor';
 import { FARM_BUILDINGS } from './farm';
 import { SHOP_BUILDINGS } from './shops';
@@ -239,5 +239,23 @@ const CORE_BUILDINGS: BuildingDef[] = [
   },
 ];
 
-/** Every RT building: the core set, then each content wave in turn. */
-export const BUILDINGS: BuildingDef[] = [...CORE_BUILDINGS, ...SHOP_BUILDINGS, ...FARM_BUILDINGS, ...DECOR_BUILDINGS];
+/** Build tab for every RT building. Anything not listed here is a facility. */
+const CATEGORY: Record<string, BuildCategory> = {
+  rumah: 'housing', kosan: 'housing', kontrakan: 'housing',
+  warung: 'shops', indomaret: 'shops', alfamart: 'shops', parkir: 'shops', gerobakBakso: 'shops', warteg: 'shops', warkop: 'shops', tokoKelontong: 'shops',
+  fotokopi: 'shops', barbershop: 'shops', bengkel: 'shops', apotek: 'shops', koperasi: 'shops',
+  kebunSayur: 'farm', sawah: 'farm', kandangAyam: 'farm', kolamLele: 'farm',
+  jalan: 'paths', biopori: 'paths',
+  potBunga: 'decoration', pohonRindang: 'decoration', bangku: 'decoration', lampuTaman: 'decoration', mural: 'decoration',
+  kolamIkan: 'decoration', tamanBermain: 'decoration', airMancur: 'decoration', patungIkon: 'decoration',
+};
+
+/** Tiles on each side for the buildings bigger than one tile. A lapangan should dwarf a house. */
+const FOOTPRINT: Record<string, number> = { lapangan: 3, sawah: 2, tamanBermain: 2, balaiWarga: 2, paud: 2, gudangMaterial: 2 };
+
+/** Every RT building: the core set, then each content wave in turn, with its Build tab and size. */
+export const BUILDINGS: BuildingDef[] = [...CORE_BUILDINGS, ...SHOP_BUILDINGS, ...FARM_BUILDINGS, ...DECOR_BUILDINGS].map((d) => ({
+  ...d,
+  category: d.category ?? CATEGORY[d.id] ?? 'facilities',
+  ...(FOOTPRINT[d.id] ? { footprint: FOOTPRINT[d.id] } : {}),
+}));
