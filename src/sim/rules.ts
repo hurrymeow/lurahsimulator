@@ -6,6 +6,7 @@ import { def, gateOf, hasDef } from './content';
 import { gateOpen } from './gate';
 import { neighbourAt } from './grow';
 import { stageTitle } from './stages';
+import { refreshAccess } from './access';
 import { addBuilding, buildCost, buildingAt, count, housing, inBounds, population, upgradeCost, year } from './state';
 import type { Building, BuildingDef, CheckResult, GameState } from './types';
 
@@ -57,6 +58,7 @@ export function place(s: GameState, id: string, x: number, y: number): CheckResu
   const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
   const b = addBuilding(s, id, x, y, instant ? 'active' : d.permitMonths > 0 ? 'permit' : 'building', cost);
   b.timer = instant ? 0 : d.permitMonths > 0 ? d.permitMonths : Math.max(1, d.buildMonths);
+  refreshAccess(s);
   return { ok: true, uid: b.uid };
 }
 
@@ -98,6 +100,7 @@ export function demolish(s: GameState, b: Building): CheckResult & { refund?: nu
   const refund = Math.round((b.invested * REFUND) / 1000) * 1000;
   s.res.rupiah += refund;
   s.buildings = s.buildings.filter((o) => o.uid !== b.uid);
+  refreshAccess(s);
   return { ok: true, refund };
 }
 

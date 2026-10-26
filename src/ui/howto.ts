@@ -38,6 +38,7 @@ export const STEPS: Step[] = [
   { id: 'wacana', n: 6, when: (s) => s.month >= 3 && s.buildings.some((b) => b.def === 'kantorRT' && b.status === 'active'), pics: [{ sprite: 'kantorRT' }, { icon: 'sabar' }] },
   { id: 'trouble', n: 7, when: (s) => s.buildings.some((b) => b.def === 'parkir' || b.status === 'mangkrak'), pics: [{ sprite: 'indomaret' }, { text: '80%' }, { sprite: 'parkir' }] },
   { id: 'banjir', n: 9, when: (s) => s.lastEvent?.banjir !== undefined, pics: [{ sprite: 'biopori' }, { icon: 'sabar' }] },
+  { id: 'road', n: 12, when: (s) => s.buildings.some((b) => b.noRoad && b.status === 'active'), pics: [{ sprite: 'jalan' }, { text: '›' }, { sprite: 'warung' }] },
   { id: 'ranking', n: 10, when: (s) => s.month >= 9, pics: [{ icon: 'people' }, { text: 'vs' }, { icon: 'sabar' }] },
 ];
 

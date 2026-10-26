@@ -192,6 +192,8 @@ export interface Building {
   owner?: number;
   /** A restarted project never freezes again. */
   restarted?: boolean;
+  /** No path links it to the Kantor RT, so it earns and attracts nothing. Set by refreshAccess. */
+  noRoad?: boolean;
 }
 
 export interface Resident {
@@ -269,6 +271,8 @@ export interface QuarterTrack {
 }
 
 export interface GameState {
+  /** True once old saves have had their paths laid. */
+  roadsLaid?: boolean;
   version: number;
   seed: number;
   rng: number;

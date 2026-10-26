@@ -406,3 +406,4 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .home-actions .btn { width: 100%; min-height: 48px; }
 .home-start { font-size: 22px; }
 .home-warn { margin: 0; padding: 8px 12px; text-align: center; line-height: 1.4; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.warn { color: var(--danger); }
