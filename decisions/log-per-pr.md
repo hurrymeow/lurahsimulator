@@ -1,0 +1,1 @@
+- **One log file per PR:** parallel PRs all appended to DECISIONS.md and PROGRESS.md, so they conflicted on every merge. Each PR now adds its own file in `decisions/` and `progress/`. The old logs are frozen as history.

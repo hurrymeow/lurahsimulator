@@ -1,5 +1,7 @@
 # Progress
 
+> **Frozen.** Do not edit. New entries go in `progress/<pr-or-slug>.md`, one file per PR. Read all with `node scripts/logs.mjs progress`.
+
 **Live:** https://hurrymeow.github.io/lurahsimulator/
 
 | # | What | PR | Deploy |
