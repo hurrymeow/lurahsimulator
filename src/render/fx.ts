@@ -146,11 +146,12 @@ export class Fx {
     const age = now - this.pulseAt;
     if (age >= PULSE_MS) return;
     const k = 1 - age / PULSE_MS;
-    const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.75);
-    g.addColorStop(0, 'rgba(250, 204, 21, 0)');
-    g.addColorStop(1, `rgba(250, 204, 21, ${0.45 * k})`);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
+    // Nested frames instead of a full-screen gradient: only the edges get painted, which keeps it cheap.
+    for (let i = 0; i < 4; i++) {
+      ctx.strokeStyle = `rgba(250, 204, 21, ${0.4 * k * (1 - i / 4)})`;
+      ctx.lineWidth = 8;
+      ctx.strokeRect(4 + i * 8, 4 + i * 8, w - 8 - i * 16, h - 8 - i * 16);
+    }
   }
 }
 
@@ -168,14 +169,11 @@ export function dusk(clock: number): number {
 
 /** Navy over the map at night, amber at dusk. Drawn under badges and pops so they stay readable. */
 export function drawTint(ctx: CanvasRenderingContext2D, w: number, h: number, clock: number): void {
-  const d = darkness(clock);
-  const a = dusk(clock);
-  if (a > 0) {
-    ctx.fillStyle = `rgba(251, 146, 60, ${0.14 * a})`;
-    ctx.fillRect(0, 0, w, h);
-  }
-  if (d > 0) {
-    ctx.fillStyle = `rgba(15, 23, 62, ${0.42 * d})`;
-    ctx.fillRect(0, 0, w, h);
-  }
+  const d = 0.42 * darkness(clock);
+  const a = 0.14 * dusk(clock);
+  if (d + a <= 0.01) return;
+  // One fill that mixes amber and navy by weight, so dusk costs no more than night.
+  const mix = (warm: number, cool: number) => Math.round((warm * a + cool * d) / (a + d));
+  ctx.fillStyle = `rgba(${mix(251, 15)}, ${mix(146, 23)}, ${mix(60, 62)}, ${Math.min(0.5, a + d)})`;
+  ctx.fillRect(0, 0, w, h);
 }

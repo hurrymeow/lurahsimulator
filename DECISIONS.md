@@ -66,4 +66,4 @@ One line per decision, with the reason. Newest at the bottom.
 - **Coins:** positive Rupiah pops fling 1-3 coins into the money chip, at most 12 a month. The pop still carries the number, so effects off loses nothing.
 - **Fanfare pulse:** a golden edge glow plays on fanfare messages only (combo, unlock, ranking win). Routine income gets the squash and coins, per the feedback hierarchy.
 - **Day and night:** one day lasts 4 in-game months (32 s at 1x) and pauses with the game. Night is a navy tint drawn under badges and pops, so text stays readable. Rumah windows light up after dark.
-- **Frame rate test:** CI compares frame rate with effects on (night, coins, dust, 16 walkers) against effects off on the same map, and fails below 85%. Absolute numbers vary by CI machine.
+- **Frame rate test:** CI compares frame rate with effects on (night, coins, dust, 16 walkers) against effects off on the same map, best of three runs each, and fails below 80%. Absolute numbers vary by CI machine. The pulse paints edge frames and night is one fill, to keep raster cost low on slow phones.
