@@ -1,4 +1,7 @@
-import { t } from '../i18n';
+import { cName, t } from '../i18n';
+import { COMBOS } from '../data/combos';
+import { RW_COMBOS } from '../data/higher/rw';
+import { comboConditions, comboStatus, comboStatusText } from '../sim/combos';
 import type { App } from '../app';
 import { canPromote, currentStage, declineSK, nextStarChecklist, reofferSK, stageTitle, starsOf } from '../sim/stages';
 import { h } from './dom';
@@ -29,7 +32,7 @@ export function openStage(app: App): void {
   if (lines) {
     body.push(
       h('h3', {}, t('stage.goalTitle', { title: stageTitle(s.stage.current, stars + 1, s.stage.path) })),
-      h('ul', { class: 'checklist' }, ...lines.map((l) => h('li', { class: l.done ? 'done' : '' }, h('span', { 'aria-hidden': 'true' }, l.done ? '✓' : '○'), ' ', l.text))),
+      h('ul', { class: 'checklist' }, ...lines.map((l) => h('li', { class: l.done ? 'done' : '' }, h('span', { 'aria-hidden': 'true' }, l.done ? '✓' : '○'), ' ', l.text, comboList(app, l.goal.kind)))),
     );
   }
   if (s.stage.sk) {
@@ -52,4 +55,14 @@ export function openStage(app: App): void {
     }
   }
   openSheet(stageTitle(s.stage.current, stars, s.stage.path), body);
+}
+
+/** Under a combo goal: every combo of that kind, what it needs, and whether it is active in town. */
+function comboList(app: App, kind: string): Node | null {
+  const list = kind === 'combos' ? COMBOS : kind === 'rwCombos' ? RW_COMBOS : null;
+  if (!list) return null;
+  return h('ul', { class: 'combo-list' }, ...list.map((c) => {
+    const st = comboStatus(app.s, c);
+    return h('li', { class: st.state }, h('strong', {}, `${st.state === 'active' ? '✓' : '○'} ${cName(c)}`), ' ', h('span', { class: 'meta' }, `${comboConditions(c)} ${comboStatusText(st)}`));
+  }));
 }
