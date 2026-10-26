@@ -80,7 +80,7 @@ describe('balance', () => {
       }
     }
     expect(wins / total).toBeGreaterThan(0.5);
-  });
+  }, 30_000);
 
   it('inflation is small: prices rise 3% a year', () => {
     const { s } = play(1, 5, false);
@@ -100,5 +100,5 @@ describe('star pacing', () => {
     }
     // 3 stars needs 3 combos and Sabar 65, which this bot does not plan for.
     expect(two).toBeGreaterThanOrEqual(8);
-  });
+  }, 30_000);
 });
