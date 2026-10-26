@@ -1,6 +1,6 @@
 import { NAMES, TITLES } from '../data/names';
 import { EMAS } from '../data/ranking';
-import { BASE_ATTRACT, LEVEL_BONUS, START, START_RESIDENTS } from './balance';
+import { BASE_ATTRACT, LEVEL_BONUS, SPRAWL_FREE, SPRAWL_STEP, START, START_RESIDENTS } from './balance';
 import { def, hasDef } from './content';
 import { pick } from './rng';
 import { lotAt } from './area';
@@ -106,12 +106,18 @@ export function price(s: GameState, base: number): number {
   return Math.round((base * s.inflation) / 1000) * 1000;
 }
 
+/** 1 for a small kampung, then +5% for every building past the eighth. Paths do not count. */
+export function sprawl(s: GameState): number {
+  const n = s.buildings.filter((b) => !def(b.def).pathIncome).length;
+  return 1 + SPRAWL_STEP * Math.max(0, n - SPRAWL_FREE);
+}
+
 export function buildCost(s: GameState, d: BuildingDef): number {
-  return price(s, d.cost);
+  return price(s, d.cost * sprawl(s));
 }
 
 export function upgradeCost(s: GameState, b: Building): number {
-  return price(s, def(b.def).cost * b.level);
+  return price(s, def(b.def).cost * b.level * sprawl(s));
 }
 
 /** Buildings within radius tiles of the tile or footprint, not counting the building itself. */

@@ -65,7 +65,7 @@ export const KEL_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'puskesmasPembantu',
     name: 'Puskesmas Pembantu',
-    blurb: '+2 Patience a month. The queue is long and the paracetamol is free.',
+    blurb: '+2 Popularitas a month. The queue is long and the paracetamol is free.',
     cost: 12_000_000,
     upkeep: 300_000,
     income: 0,
@@ -103,7 +103,7 @@ export const KEL_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'terminal',
     name: 'Terminal',
-    blurb: 'Income from every bus and every ojol waiting beside it. -1 Patience a month for the horns.',
+    blurb: 'Income from every bus and every ojol waiting beside it. -1 Popularitas a month for the horns.',
     cost: 18_000_000,
     upkeep: 350_000,
     income: 1_000_000,
@@ -123,7 +123,7 @@ export const KEL_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'taman',
     name: 'Taman',
-    blurb: '+2 Patience and +1 Virality a month. Mowing costs more than anyone planned.',
+    blurb: '+2 Popularitas and +1 Virality a month. Mowing costs more than anyone planned.',
     cost: 9_000_000,
     upkeep: 200_000,
     income: 0,
@@ -257,7 +257,7 @@ export const KEL_COMBOS: StageComboDef[] = [
     story: 'Everyone is stuck. Everyone is also spending. The jam is the economy.',
     incomeMult: { pasar: 1.6, terminal: 1.6 },
     perMonth: { sabar: -3 },
-    effect: 'Pasar and Terminal income x1.6. -3 Patience a month.',
+    effect: 'Pasar and Terminal income x1.6. -3 Popularitas a month.',
     gate: KP2,
   },
   {
@@ -270,7 +270,7 @@ export const KEL_COMBOS: StageComboDef[] = [
     story: 'The terminal cuts its fare. The ojol cuts it again. Passengers learn to wait for the next cut.',
     incomeMult: { terminal: 1.3 },
     perMonth: { sabar: -2 },
-    effect: 'Terminal and ojol income x1.3. -2 Patience a month.',
+    effect: 'Terminal and ojol income x1.3. -2 Popularitas a month.',
     gate: KP2,
   },
   {
@@ -304,7 +304,7 @@ export const KEL_COMBOS: StageComboDef[] = [
     hint: 'Tourists who want to hold a cangkul for ten minutes.',
     story: 'School trips plant rice at noon and post it by one. The rice never gets planted straight.',
     perMonth: { viral: 4, sabar: -1 },
-    effect: '+4 Virality and -1 Patience a month.',
+    effect: '+4 Virality and -1 Popularitas a month.',
     gate: D2,
   },
 ];
@@ -339,7 +339,7 @@ export const KEL_EVENTS: StageEventDef[] = [
       {
         label: 'Show what you have',
         fx: { sabarPerWacanaNoReceipt: 2 },
-        result: 'Each wacana with no receipt costs 2 Patience. The folder is thinner than the promise.',
+        result: 'Each wacana with no receipt costs 2 Popularitas. The folder is thinner than the promise.',
       },
       {
         label: 'Cash a rapi-rapi · Rp 1.500.000',

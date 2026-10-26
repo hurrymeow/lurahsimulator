@@ -12,4 +12,4 @@ export const SCORE = { perResident: 8, perBuilding: 5, perCombo: 10, perSabar: 0
 export const WIN = { sabar: 10, orangDalam: 1, emas: 0.03 };
 export const LOSE = { sabar: -5 };
 /** Indonesia Emas 2045 barely moves. These are percentage points. */
-export const EMAS = { start: 0.01, perYear: 0.02, perWacana: 0.001, perRestart: 0.005, perMangkrak: -0.004 };
+export const EMAS = { start: 0.01, perYear: 0.02, perWacana: 0.004, perRestart: 0.005, perMangkrak: -0.004 };

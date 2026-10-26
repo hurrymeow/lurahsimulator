@@ -1,12 +1,13 @@
 import { bBlurb, bName, t } from '../i18n';
 import {
   ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
-  NOVELTY_GAP, QUEUE_SABAR_DRAIN, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
+  EXPECT_PER_RESIDENT, NOVELTY_GAP, QUEUE_SABAR_DRAIN, SETORAN_RATE, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
 } from './balance';
 import { comboIncomeMult, comboSystem } from './combos';
 import { def, placeableDefs } from './content';
 import { EMAS } from '../data/ranking';
 import { eventSystem } from './events';
+import { lineSystem } from './lines';
 import { debtSystem, iuranFromNeighbours, neighboursSystem, neighboursYearEnd, stempelSystem } from './grow';
 import { inspectionSystem } from './inspection';
 import { jobsSystem } from './jobs';
@@ -76,8 +77,10 @@ export function advanceConstruction(s: GameState, fx: Fx): void {
 }
 
 export function collectIncome(s: GameState, fx: Fx): void {
+  let gross = 0;
   for (const b of s.buildings) {
     const d = def(b.def);
+    gross += buildingIncome(s, b);
     const net = buildingIncome(s, b) - buildingUpkeep(s, b);
     gain(s, fx, 'rupiah', net, b);
     noteNet(s, b.uid, net);
@@ -88,6 +91,16 @@ export function collectIncome(s: GameState, fx: Fx): void {
   const kantor = s.buildings.find((b) => b.def === 'kantorRT');
   gain(s, fx, 'rupiah', population(s) * IURAN, kantor);
   iuranFromNeighbours(s, fx);
+  const setoran = Math.round(gross * SETORAN_RATE);
+  if (setoran > 0) {
+    s.res.rupiah -= setoran;
+    s.stats.spent += setoran;
+  }
+}
+
+/** A bigger kampung expects more. Without this, jobs and policies pin Popularitas at the top. */
+export function expectations(s: GameState, fx: Fx): void {
+  gain(s, fx, 'sabar', -population(s) * EXPECT_PER_RESIDENT);
 }
 
 /** Year 1 safety net: upkeep can never push the kas below zero. */
@@ -186,6 +199,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   jobsSystem,
   wacanaSystem,
   mangkrakSystem,
+  expectations,
   sabarRegen,
   safetyNet,
   debtSystem,
@@ -194,6 +208,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   checkUnlocks,
   inspectionSystem,
   eventSystem,
+  lineSystem,
   quarterSystem,
 ];
 
