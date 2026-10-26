@@ -1,6 +1,6 @@
 {
-  "name": "Pak RT",
-  "short_name": "Pak RT",
+  "name": "Kampung Story",
+  "short_name": "Kampung Story",
   "description": "A satirical kampung management sim. Every joke moves a number.",
   "start_url": "./",
   "scope": "./",

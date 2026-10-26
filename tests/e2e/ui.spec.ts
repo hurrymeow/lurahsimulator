@@ -9,8 +9,18 @@ async function start(page: Page): Promise<void> {
   await page.goto(`/?debug&lang=${lang()}`);
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+  await passHome(page);
   await page.evaluate(() => document.fonts.ready);
+}
+
+/** Taps Start on the home screen, then Continue if there is a save, otherwise New game. */
+async function passHome(page: Page): Promise<void> {
+  await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+  await page.locator('#home-start').click();
+  const cont = page.locator('#home-continue');
+  if (await cont.isVisible()) await cont.click();
+  else await page.locator('#home-new').click();
+  await expect(page.locator('#home')).toHaveCount(0);
 }
 
 /** Taps through every queued message. */
@@ -69,7 +79,7 @@ test.describe('tips', () => {
     await expect(page.locator('#modal')).toBeHidden();
     // Seen once, never again, even after a reload.
     await page.reload();
-    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await passHome(page);
     await page.evaluate(() => {
       const a = (window as unknown as { pakrt: any }).pakrt;
       a.s.lastEvent = { banjir: 0 };
@@ -105,7 +115,7 @@ test.describe('how to play', () => {
     await page.locator('#howtoGo').click();
     await expect(page.locator('#howto')).toBeHidden();
     await page.reload();
-    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await passHome(page);
     await expect(page.locator('#howto')).toBeHidden();
     await page.locator('#menu-btn').click();
     await page.locator('#act-howto').click();
@@ -218,7 +228,7 @@ test.describe('events, ranking, settings', () => {
     await page.locator('.sheet-head .btn').click();
     await expectLegible(page, 'game with every setting flipped');
     await page.reload();
-    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await passHome(page);
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
     const saved = await page.locator('#sheet .toggle').evaluateAll((els) => els.map((e) => e.getAttribute('aria-checked')));
@@ -238,7 +248,7 @@ test.describe('events, ranking, settings', () => {
     await sfx.fill('0');
     await expectLegible(page, 'settings with volume sliders');
     await page.reload();
-    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await passHome(page);
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
     await expect(page.locator('#sheet input.slider').nth(0)).toHaveValue('20');
@@ -250,7 +260,7 @@ test.describe('events, ranking, settings', () => {
     await page.goto('/?debug');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
-    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await passHome(page);
     await dismissModals(page);
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.locator('#place-ok')).toHaveText('Place');
@@ -264,7 +274,7 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#place-ok')).toHaveText('Pasang');
     await expect(page.locator('#pause-btn')).toHaveAttribute('aria-label', 'Jeda');
     await page.reload();
-    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await passHome(page);
     await expect(page.locator('#place-ok')).toHaveText('Pasang');
     await expect(page.locator('html')).toHaveAttribute('lang', 'id');
   });
@@ -612,5 +622,69 @@ test.describe('stars', () => {
     await expectLegible(page, 'declined SK');
     await page.locator('#sk-reoffer').click();
     await expect(page.locator('#sk-accept')).toBeDisabled();
+  });
+});
+
+test.describe('home screen', () => {
+  const W = { id: { start: 'Mulai', wipe: 'Hapus dan mulai ulang' }, en: { start: 'Start', wipe: 'Wipe and start over' } };
+
+  test('shows the map, only Start and a gear, and asks Continue or New game', async ({ page }) => {
+    await page.goto(`/?debug&lang=${lang()}`);
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.evaluate(() => document.fonts.ready);
+    await expect(page.locator('#home .home-title')).toHaveText(await page.title());
+    await expect(page.locator('#home button')).toHaveCount(2);
+    await expect(page.locator('#home-start')).toHaveText(W[lang()].start);
+    const vh = page.viewportSize()!.height;
+    const box = (await page.locator('#home-start').boundingBox())!;
+    expect(box.y).toBeGreaterThan((vh * 2) / 3);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.running)).toBe(false);
+    await expectLegible(page, 'home');
+    await page.locator('#home-start').click();
+    // No save yet: New game only, no Continue.
+    await expect(page.locator('#home-continue')).toHaveCount(0);
+    await expectLegible(page, 'home choice, no save');
+    await page.locator('#home-new').click();
+    await expect(page.locator('#home')).toHaveCount(0);
+    await expect(page.locator('#howto')).toBeVisible();
+  });
+
+  test('Continue keeps the save, New game asks before it wipes it', async ({ page }) => {
+    await start(page);
+    await page.locator('#howtoGo').click();
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.s.res.rupiah = 777_000;
+      a.save();
+    });
+    await page.reload();
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.locator('#home-start').click();
+    await expect(page.locator('#home-continue')).toBeVisible();
+    await expectLegible(page, 'home choice, with save');
+    await page.locator('#home-new').click();
+    await expect(page.locator('#home-wipe')).toHaveText(W[lang()].wipe);
+    await expectLegible(page, 'home wipe confirm');
+    await page.locator('#home .btn:not(.btn-danger):not(.home-gear)').click();
+    await page.locator('#home-continue').click();
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.res.rupiah)).toBe(777_000);
+    await expect(page.locator('#howto')).toBeHidden();
+    await page.reload();
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.locator('#home-start').click();
+    await page.locator('#home-new').click();
+    await page.locator('#home-wipe').click();
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.res.rupiah)).not.toBe(777_000);
+    await expect(page.locator('#howto')).toBeVisible();
+  });
+
+  test('the gear opens Settings over the home screen', async ({ page }) => {
+    await page.goto(`/?debug&lang=${lang()}`);
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.locator('#home-gear').click();
+    await expect(page.locator('#sheet')).toBeVisible();
+    await expectLegible(page, 'settings over home');
   });
 });

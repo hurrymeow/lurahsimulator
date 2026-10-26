@@ -1,4 +1,5 @@
-import { eBody, eLabel, eName, bName, getLang, initialLang, setLang, t, type Key, type Lang } from './i18n';
+import { eBody, eLabel, eName, bName, jName, getLang, initialLang, setLang, t, type Key, type Lang } from './i18n';
+import { jobDef } from './data/jobs';
 import { dateLabel, rupiah, rupiahHud } from './format';
 import { MapView, RES_COLOUR } from './render/map';
 import { iconURL } from './render/sprites';
@@ -22,7 +23,7 @@ import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
 export const MONTH_MS = 8000;
 export const SPEEDS = [0, 1, 2, 4] as const;
 export type Speed = (typeof SPEEDS)[number];
-const SAVE_KEY = 'pakrt.save';
+export const SAVE_KEY = 'pakrt.save';
 
 interface Notice {
   /** Set on tutorial tips. Adds a way to switch all tips off. */
@@ -64,6 +65,8 @@ export class App {
   placing: string | null = null;
   private storageOk: boolean;
   actions: ActionButton[] = [];
+  /** True while the home screen is up. The sim waits. */
+  held = false;
   
   constructor() {
     const loaded = deserialize(storage.get(SAVE_KEY));
@@ -87,7 +90,7 @@ export class App {
 
   // ---------- loop ----------
   get running(): boolean {
-    return this.speed > 0 && !sheetOpen() && this.modalQueue.length === 0 && !this.s.pendingEvent;
+    return this.speed > 0 && !this.held && !sheetOpen() && this.modalQueue.length === 0 && !this.s.pendingEvent;
   }
 
   private frame(now: number): void {
@@ -128,6 +131,7 @@ export class App {
     this.flyCoins([...pops.values()].filter((p) => p.res === 'rupiah' && p.amount > 0));
     for (const f of fx) {
       if (f.kind === 'pop') continue;
+      else if (f.kind === 'job') this.view.pop(f.x, f.y, 'viral', 0, t('sim.jobPick', { name: f.name, job: jName(jobDef(f.job)!) }));
       else if (f.kind === 'built') {
         const b = this.s.buildings.find((o) => o.uid === f.uid);
         if (b) {
@@ -519,10 +523,15 @@ export class App {
     const r = place(this.s, this.placing, g.x, g.y);
     if (r.ok) {
       this.view.burst(g.x, g.y);
-      this.view.pop(g.x, g.y, 'rupiah', -buildCost(this.s, def(this.placing)));
+      const cost = buildCost(this.s, def(this.placing));
+      if (cost) this.view.pop(g.x, g.y, 'rupiah', -cost);
       this.haptic(15);
       audio.play('build');
-      this.stopPlacing();
+      // Paths are free, so keep painting them until the player taps Cancel.
+      if (def(this.placing).pathIncome) {
+        this.view.ghost = null;
+        this.updatePlacing();
+      } else this.stopPlacing();
       this.save();
       this.refresh();
     }
@@ -542,7 +551,7 @@ export class App {
     const check = checkPlace(this.s, this.placing, g.x, g.y);
     g.ok = check.ok;
     btn.disabled = !check.ok;
-    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', {}, t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
+    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', {}, d.pathIncome ? t('build.instant') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
   }
 
   // ---------- language ----------

@@ -69,7 +69,7 @@ function floodDamage(s: GameState, fx: Fx): string {
   const protect = banjirProtection(s);
   const sabarHit = Math.round(BANJIR_SABAR * (1 - protect));
   gain(s, fx, 'sabar', -sabarHit);
-  const targets = s.buildings.filter((b) => b.status === 'active' && b.def !== 'rumah' && b.def !== 'parkir' && b.def !== 'selokan');
+  const targets = s.buildings.filter((b) => b.status === 'active' && b.def !== 'rumah' && b.def !== 'parkir' && b.def !== 'selokan' && !def(b.def).pathIncome);
   let hit = 0;
   for (const b of targets) {
     if (s.month < 12 && hit >= 1) break;

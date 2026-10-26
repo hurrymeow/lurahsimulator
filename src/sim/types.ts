@@ -104,6 +104,8 @@ export interface BuildingDef {
   /** Job slots per level. */
   jobSlots?: Partial<Record<JobId, number>>;
   sprite: string;
+  /** Free tile that never works on its own. Buildings beside it earn this fraction more income. Tune it here. */
+  pathIncome?: number;
 }
 
 export type BuildingStatus = 'permit' | 'building' | 'active' | 'mangkrak' | 'damaged';
@@ -136,6 +138,8 @@ export interface Resident {
   /** Buzzer only: fake Viral this resident has pumped and not yet paid back. */
   fake: number;
   arrived: number;
+  /** Player picked this job (or none) by hand, so residents stop choosing for themselves. */
+  manual?: boolean;
 }
 
 export interface WacanaState {
@@ -232,11 +236,15 @@ export interface GameState {
 export type SimEffect =
   | { kind: 'pop'; x: number; y: number; res: ResourceId; amount: number }
   | { kind: 'notice'; title: string; body: string; tone: 'good' | 'bad' | 'info'; fanfare?: boolean; x?: number; y?: number }
+  | { kind: 'job'; x: number; y: number; name: string; job: Exclude<JobId, 'none'> }
   | { kind: 'event'; eventId: string }
   | { kind: 'built'; uid: number }
   | { kind: 'report'; report: QuarterReport };
 
 export type CheckResult = { ok: true } | { ok: false; missing: string[] };
 
-export const GRID_W = 9;
-export const GRID_H = 13;
+export const GRID_W = 13;
+export const GRID_H = 17;
+/** Grid size before the map was expanded (save v1). Old saves are centred in the new grid. */
+export const OLD_GRID_W = 9;
+export const OLD_GRID_H = 13;

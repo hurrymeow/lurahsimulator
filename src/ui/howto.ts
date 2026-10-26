@@ -51,6 +51,10 @@ export function picRow(s: Step): Node {
 
 let resume: (() => void) | null = null;
 
+export function resetHowto(): void {
+  storage.remove(SEEN);
+}
+
 export function hasSeenHowto(): boolean {
   return storage.get(SEEN) === '1';
 }

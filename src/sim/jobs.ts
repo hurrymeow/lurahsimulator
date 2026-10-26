@@ -29,13 +29,46 @@ export function checkAssign(s: GameState, r: Resident, job: JobId): CheckResult 
   return { ok: false, missing: [total === 0 ? t('sim.noSlots', { job: jName(jobDef(job)!), where }) : t('sim.slotsTaken', { n: total, job: jName(jobDef(job)!), where })] };
 }
 
-export function assign(s: GameState, r: Resident, job: JobId): CheckResult {
+export function assign(s: GameState, r: Resident, job: JobId, manual = false): CheckResult {
   const check = checkAssign(s, r, job);
   if (!check.ok) return check;
   if (r.job === 'buzzer' && job !== 'buzzer') r.fake = 0;
   if (r.job === 'pns' && job !== 'pns') r.pensiun = 0;
   r.job = job;
+  if (manual) r.manual = true;
   return check;
+}
+
+/** Jobs with an open slot, each with its appeal as the odds of being picked. */
+export function openJobs(s: GameState): { job: Exclude<JobId, 'none'>; appeal: number }[] {
+  return JOBS.filter((j) => used(s, j.id) < slots(s, j.id)).map((j) => ({ job: j.id, appeal: j.appeal }));
+}
+
+/**
+ * A job picked at random, weighted by appeal. Null when no slot is open.
+ * The roll comes from a hash of the month and the resident, not the game's random stream,
+ * so choosing jobs never shifts when events or arrivals happen.
+ */
+export function autoPick(s: GameState, salt = 0): Exclude<JobId, 'none'> | null {
+  const open = openJobs(s);
+  if (open.length === 0) return null;
+  let h = Math.imul(s.month * 7919 + salt + 1, 0x9e3779b1) ^ s.rng;
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  let roll = (((h ^ (h >>> 16)) >>> 0) / 4294967296) * open.reduce((n, o) => n + o.appeal, 0);
+  for (const o of open) if ((roll -= o.appeal) < 0) return o.job;
+  return open[open.length - 1].job;
+}
+
+function autoAssign(s: GameState, fx: Fx): void {
+  for (const r of s.residents) {
+    if (r.job !== 'none' || r.manual) continue;
+    const job = autoPick(s, r.id);
+    if (!job) return;
+    assign(s, r, job);
+    const site = jobSite(s, job);
+    fx.push({ kind: 'job', x: site?.x ?? 0, y: site?.y ?? 0, name: r.name, job });
+  }
 }
 
 /** Residents whose building went away lose the job instead of keeping a ghost slot. */
@@ -49,6 +82,7 @@ function trimOverflow(s: GameState): void {
 
 export function jobsSystem(s: GameState, fx: Fx): void {
   trimOverflow(s);
+  autoAssign(s, fx);
   let employed = 0;
   for (const r of s.residents) {
     const j = jobDef(r.job);
@@ -64,6 +98,7 @@ export function jobsSystem(s: GameState, fx: Fx): void {
         gain(s, fx, 'rupiah', -payout, site);
         fx.push({ kind: 'notice', title: t('sim.pensiunTitle', { name: r.name }), body: t('sim.pensiunBody', { amt: payout }), tone: 'info', x: site?.x, y: site?.y });
         r.job = 'none';
+        r.manual = true;
         r.pensiun = 0;
       }
     }
@@ -75,6 +110,7 @@ export function jobsSystem(s: GameState, fx: Fx): void {
         gain(s, fx, 'sabar', -BUZZER_EXPOSE_SABAR, site);
         fx.push({ kind: 'notice', title: t('sim.exposedTitle', { name: r.name }), body: t('sim.exposedBody', { viral: Math.round(r.fake), sabar: BUZZER_EXPOSE_SABAR }), tone: 'bad', x: site?.x, y: site?.y });
         r.job = 'none';
+        r.manual = true;
         r.fake = 0;
       }
     }

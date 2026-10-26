@@ -16,7 +16,7 @@ export const RES_COLOUR: Record<ResourceId, string> = {
 };
 
 /** Flat pieces cast no contact shadow. */
-const FLAT_AO = new Set(['selokan', 'parkir']);
+const FLAT_AO = new Set(['selokan', 'parkir', 'jalan']);
 
 let aoCache: HTMLCanvasElement | null = null;
 
@@ -204,8 +204,8 @@ export class MapView {
     return { x: c.x, y: c.y + (TH * this.scale) / 2 };
   }
 
-  pop(x: number, y: number, res: ResourceId, amount: number): void {
-    const text = res === 'rupiah' ? rupiahShort(amount) : `${amount > 0 ? '+' : ''}${Math.round(amount * 10) / 10}`;
+  pop(x: number, y: number, res: ResourceId, amount: number, label?: string): void {
+    const text = label ?? (res === 'rupiah' ? rupiahShort(amount) : `${amount > 0 ? '+' : ''}${Math.round(amount * 10) / 10}`);
     // Several resources on one tile stack upward instead of overlapping.
     const stack = this.pops.filter((p) => p.x === x && p.y === y && performance.now() - p.born < POP_MS).length;
     this.pops.push({ x, y, text, res, born: performance.now(), dy: stack * 22 });

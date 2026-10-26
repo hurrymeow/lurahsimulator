@@ -128,8 +128,10 @@ describe('jobs', () => {
   it('ojol pay komisi and cost Sabar', () => {
     const s = newGame(9);
     add(s, 'wifi', 0, 0);
+    for (const r of s.residents) r.manual = true;
     assign(s, s.residents[0], 'ojol');
     const without = newGame(9);
+    for (const r of without.residents) r.manual = true;
     add(without, 'wifi', 0, 0);
     tick(s);
     tick(without);
@@ -256,7 +258,7 @@ describe('proyek mangkrak', () => {
 describe('content rules', () => {
   it('every building moves at least one number', () => {
     for (const b of BUILDINGS) {
-      const moves = b.income || b.upkeep || b.perMonth || b.attract || b.housing || b.jobSlots;
+      const moves = b.income || b.upkeep || b.perMonth || b.attract || b.housing || b.jobSlots || b.pathIncome;
       expect(Boolean(moves), b.id).toBe(true);
     }
   });

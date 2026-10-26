@@ -3,6 +3,7 @@ import { def } from '../src/sim/content';
 import { checkPlace, demolish, place, skipPermit, upgrade } from '../src/sim/rules';
 import { deserialize, serialize } from '../src/sim/save';
 import { buildCost, byUid, count, emptyTiles, newGame, population } from '../src/sim/state';
+import { assign, autoPick } from '../src/sim/jobs';
 import { tick } from '../src/sim/tick';
 import type { GameState } from '../src/sim/types';
 
@@ -188,5 +189,59 @@ describe('save and load', () => {
     expect(deserialize(JSON.stringify({ ...s, version: 0 }))).toBeNull();
     s.buildings[0].def = 'monas';
     expect(deserialize(serialize(s))).toBeNull();
+  });
+});
+
+describe('auto jobs', () => {
+  it('fills only open slots and leaves the rest unemployed', () => {
+    const s = newGame(7);
+    const fx = tick(s);
+    const pns = s.residents.filter((r) => r.job === 'pns');
+    expect(pns).toHaveLength(2);
+    expect(s.residents.filter((r) => r.job === 'none').length).toBe(s.residents.length - 2);
+    expect(fx.filter((f) => f.kind === 'job')).toHaveLength(2);
+  });
+
+  it('picks nothing when no slot is open', () => {
+    const s = newGame(7);
+    s.buildings = s.buildings.filter((b) => !def(b.def).jobSlots);
+    expect(autoPick(s)).toBeNull();
+    tick(s);
+    expect(s.residents.every((r) => r.job === 'none')).toBe(true);
+  });
+
+  it('favours appealing jobs over many draws', () => {
+    const s = newGame(11);
+    s.buildings.push({ uid: 99, def: 'wifi', x: 5, y: 5, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+    const n: Record<string, number> = {};
+    for (let i = 0; i < 600; i++) {
+      const j = autoPick(s, i)!;
+      n[j] = (n[j] ?? 0) + 1;
+    }
+    expect(n.buzzer).toBeGreaterThan(n.influencer);
+    expect(n.pns).toBeLessThan(n.buzzer);
+  });
+
+  it('keeps a manual choice, including no job', () => {
+    const s = newGame(7);
+    const r = s.residents[0];
+    assign(s, r, 'none', true);
+    for (let i = 0; i < 3; i++) tick(s);
+    expect(r.job).toBe('none');
+    const other = s.residents[1];
+    assign(s, other, 'pns', true);
+    tick(s);
+    expect(other.job).toBe('pns');
+  });
+
+  it('does not rehire a retired resident', () => {
+    const s = newGame(7);
+    const r = s.residents[0];
+    assign(s, r, 'pns');
+    r.pensiun = 99.99;
+    tick(s);
+    expect(r.job).toBe('none');
+    tick(s);
+    expect(r.job).toBe('none');
   });
 });
