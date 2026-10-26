@@ -1,6 +1,6 @@
 import { bName, t } from '../i18n';
 import { rupiah } from '../format';
-import { def } from './content';
+import { def, stageFx } from './content';
 import { gain, type Fx } from './gain';
 import { chance } from './rng';
 import { EMAS } from '../data/ranking';
@@ -32,7 +32,7 @@ export function onBuildingFinished(s: GameState, fx: Fx, b: Building): 'ok' | 'm
     });
     return 'mangkrak';
   }
-  if (d.shop) spawnParkir(s, fx, b);
+  if (d.shop) for (let i = 0; i < (stageFx(d)?.spawns?.count ?? 1); i++) spawnParkir(s, fx, b);
   return 'ok';
 }
 

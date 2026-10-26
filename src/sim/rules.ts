@@ -3,19 +3,13 @@ import { rupiah } from '../format';
 import { REFUND } from './balance';
 import { lotAt } from './area';
 import { def, gateOf, hasDef } from './content';
+import { gateOpen } from './gate';
 import { neighbourAt } from './grow';
 import { stageTitle } from './stages';
 import { addBuilding, buildCost, buildingAt, count, inBounds, population, upgradeCost, year } from './state';
 import type { Building, BuildingDef, CheckResult, GameState } from './types';
 
-const ORDER = ['rt', 'rw', 'kelurahan'] as const;
-
-/** A later stage's content opens once the player stands in that stage with enough stars. A path is picked at the Kelurahan promotion. */
-export function gateOpen(s: GameState, g: { stage: 'rw' | 'kelurahan'; stars: number; path?: string }): boolean {
-  if (ORDER.indexOf(s.stage.current) < ORDER.indexOf(g.stage)) return false;
-  if (g.path && s.stage.path !== g.path) return false;
-  return s.stage.stars[g.stage] >= g.stars;
-}
+export { gateOpen };
 
 const result = (missing: string[]): CheckResult => (missing.length ? { ok: false, missing } : { ok: true });
 

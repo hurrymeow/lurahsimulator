@@ -75,6 +75,16 @@ export interface Stempel {
   clear: number;
 }
 
+/** State only the RW stage uses. Timed effects carry the month they end. */
+export interface RwState {
+  /** Share of a Kader's output lost since the last Apresiasi, 0 to 0.8. */
+  kaderDecay: number;
+  /** Surat Pengantar multiplier from Musim Pindahan. */
+  letterMult?: { mult: number; until: number };
+  /** Population the player reported to Pusat, as a percent over the true count. */
+  popReport?: { pct: number; until: number };
+}
+
 export type RtTrait = 'rajin' | 'hobi' | 'jarang';
 
 /** An AI-run RT. Its buildings sit apart from the player's so the player's income, combos and ranking never see them. */
@@ -97,7 +107,7 @@ export interface Neighbour {
   ranking: RankingResult[];
 }
 
-export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer';
+export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'kaderPosyandu' | 'calo';
 
 export interface Requirement {
   population?: number;
@@ -271,6 +281,8 @@ export interface GameState {
   stempel: Stempel;
   /** Months in a row with the kas at or above zero. */
   debtFree: number;
+  /** RW stage state. Absent in older saves. */
+  rw: RwState;
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
   /** Kecamatan inspections. Absent in older saves. */

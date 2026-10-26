@@ -35,6 +35,8 @@ export const GRADE_BONUS = {
 
 /** AI-run RTs. */
 export const NEIGHBOUR = {
+  /** Sabar every Posyandu level adds to an AI RT's modelled Sabar. */
+  sabarPerPosyandu: 3,
   /** Rp one Dana pays an RT, before inflation. Each Dana is one build. Matches RW.danaPerBuild. */
   fundCost: 1_000_000,
   /** Builds one RT can have banked at once. */

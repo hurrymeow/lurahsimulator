@@ -107,7 +107,7 @@ describe('star engine', () => {
     expect(s.stage.stars.rt).toBe(3);
     expect(s.stage.sk).toBe('offered');
     expect(fx.some((f) => f.kind === 'notice' && f.title === 'An SK has arrived')).toBe(true);
-    expect(canPromote(s)).toBe(false); // RW is not marked playable yet
+    expect(canPromote(s)).toBe(true);
     declineSK(s);
     expect(s.stage.sk).toBe('declined');
     reofferSK(s);

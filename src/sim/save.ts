@@ -20,6 +20,7 @@ export function deserialize(raw: string | null): GameState | null {
     s.neighbours ??= [];
     s.stempel ??= { stock: 0, backlog: 0, clear: 0 };
     s.debtFree ??= 0;
+    s.rw ??= { kaderDecay: 0 };
     setGrid(s.stage.current);
     return s;
   } catch {
