@@ -117,6 +117,8 @@ export interface Requirement {
   year?: number;
 }
 
+export type BuildCategory = 'housing' | 'shops' | 'facilities' | 'farm' | 'decoration' | 'paths';
+
 export interface BuildingDef {
   id: string;
   name: string;
@@ -149,8 +151,10 @@ export interface BuildingDef {
   sprite: string;
   /** Which lots it may stand on. RT buildings go inside an RT, RW buildings on RW seams. Defaults to 'rt'. */
   scope?: 'rt' | 'rw' | 'kel';
-  /** Tiles on each side. Kelurahan buildings take 2x2. Defaults to 1. */
-  footprint?: 1 | 2;
+  /** Tiles on each side. A building covers footprint x footprint tiles from its top corner. Defaults to 1. */
+  footprint?: number;
+  /** Which Build tab it sits under. Defaults to 'facilities'. */
+  category?: BuildCategory;
   /** Free tile that never works on its own. Buildings beside it earn this fraction more income. Tune it here. */
   pathIncome?: number;
 }

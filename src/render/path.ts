@@ -3,6 +3,8 @@
 export interface Pt {
   x: number;
   y: number;
+  /** Footprint side, for a building's top corner. Defaults to 1. */
+  n?: number;
 }
 
 /**
@@ -46,7 +48,9 @@ export function findPath(w: number, h: number, walkable: (x: number, y: number) 
 
 /** Free tiles beside a building, where a walker can stand at its door. */
 export function doorsOf(w: number, h: number, walkable: (x: number, y: number) => boolean, p: Pt): Pt[] {
-  return [[1, 0], [0, 1], [-1, 0], [0, -1]]
-    .map(([dx, dy]) => ({ x: p.x + dx, y: p.y + dy }))
+  const n = p.n ?? 1;
+  const ring: Pt[] = [];
+  for (let i = 0; i < n; i++) ring.push({ x: p.x + n, y: p.y + i }, { x: p.x + i, y: p.y + n }, { x: p.x - 1, y: p.y + i }, { x: p.x + i, y: p.y - 1 });
+  return ring
     .filter((d) => d.x >= 0 && d.y >= 0 && d.x < w && d.y < h && walkable(d.x, d.y));
 }
