@@ -4,6 +4,8 @@ export const ID_DATA: Record<string, string> = {
   'building.warung.blurb': 'Jual kopi sachet dan gosip. Pemasukan stabil, menarik warga.',
   'building.posRonda.blurb': 'Pos jaga malam. +2 Sabar per bulan. Belum ada yang pernah lihat orang jaga.',
   'building.selokan.blurb': 'Saluran air. Bangunan termurah, izin terlama. Tiap level meredam kerusakan banjir.',
+  'building.jalan.name': 'Jalan Setapak',
+  'building.jalan.blurb': 'Jalan setapak gratis. Bangunan di sampingnya untung 10% lebih banyak, dan warga lebih suka lewat sini. Memakan satu petak. Bisa dibongkar kapan saja.',
   'building.wifi.name': 'Menara Wifi',
   'building.wifi.blurb': 'Jual voucher. Membuka kerja ojol, influencer dan buzzer.',
   'building.indomaret.blurb': 'Pemasukan besar. Memunculkan tukang parkir. Benci Alfamart.',

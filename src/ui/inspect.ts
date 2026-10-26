@@ -4,7 +4,7 @@ import { rupiah } from '../format';
 import { def } from '../sim/content';
 import { checkDemolish, checkSkipPermit, checkUpgrade, demolish, skipPermit, upgrade } from '../sim/rules';
 import { REFUND } from '../sim/balance';
-import { byUid, levelMult, upgradeCost } from '../sim/state';
+import { byUid, levelMult, pathMult, upgradeCost } from '../sim/state';
 import { buildingIncome, buildingUpkeep } from '../sim/tick';
 import type { Building, CheckResult } from '../sim/types';
 import { spriteImg } from './build';
@@ -46,6 +46,8 @@ export function inspect(app: App, uid: number): void {
     const bits = Object.entries(d.perMonth).map(([k, v]) => `${t(`res.${k}` as Key)} +${Math.round(v * levelMult(b.level) * 100) / 100}`);
     lines.push(h('p', { class: 'meta' }, t('insp.perMonth', { bits: bits.join(' · ') })));
   }
+  const pm = pathMult(s, b);
+  if (pm > 1 && b.status === 'active') lines.push(h('p', { class: 'meta' }, t('insp.pathBonus', { pct: Math.round((pm - 1) * 100) })));
   for (const extra of inspectExtras) lines.push(...extra(app, b));
   if (b.status === 'permit') {
     lines.push(actionButton(t('insp.skip'), checkSkipPermit(s, b), () => {

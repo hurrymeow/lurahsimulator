@@ -86,6 +86,7 @@ export const ID: Record<Key, string> = {
 
   'build.title': 'Bangun',
   'build.needMore': 'Kurang {amt}',
+  'build.instant': 'Gratis · langsung jadi · ketuk petak lain untuk lanjut',
   'build.permit': 'Izin {permit} bln · bangun {build} bln',
   'build.permitShort': 'Izin {permit} bln, bangun {build} bln.',
   'build.tapTile': 'Ketuk sebuah petak.',
@@ -99,6 +100,7 @@ export const ID: Record<Key, string> = {
   'insp.status': '{status}{left} · Level {level}/{max}',
   'insp.left': ' · sisa {n} bln',
   'insp.money': 'Pemasukan {income} · biaya {upkeep} per bulan',
+  'insp.pathBonus': 'Di samping jalan: pemasukan +{pct}%',
   'insp.perMonth': '{bits} per bulan',
   'insp.skip': 'Lewati antrean · 1 Orang Dalam',
   'insp.maxLevel': 'Level maks',

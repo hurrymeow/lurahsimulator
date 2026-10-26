@@ -39,6 +39,8 @@ export interface BuildingDef {
   /** Job slots per level. */
   jobSlots?: Partial<Record<JobId, number>>;
   sprite: string;
+  /** Free tile that never works on its own. Buildings beside it earn this fraction more income. Tune it here. */
+  pathIncome?: number;
 }
 
 export type BuildingStatus = 'permit' | 'building' | 'active' | 'mangkrak' | 'damaged';
@@ -134,5 +136,8 @@ export type SimEffect =
 
 export type CheckResult = { ok: true } | { ok: false; missing: string[] };
 
-export const GRID_W = 9;
-export const GRID_H = 13;
+export const GRID_W = 13;
+export const GRID_H = 17;
+/** Grid size before the map was expanded (save v1). Old saves are centred in the new grid. */
+export const OLD_GRID_W = 9;
+export const OLD_GRID_H = 13;

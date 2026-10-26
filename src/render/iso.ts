@@ -293,6 +293,16 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
       return Math.floor(a * 6) % 3 === 0 && Math.abs(b - 0.5) < 0.05 ? 'w' : 'l';
     });
   },
+  // Paving stones. Bare, so neighbouring path tiles join up without an outline between them.
+  jalan: (p) => {
+    p.bare = true;
+    p.ground((a, b) => {
+      if (a < 0.03 || a > 0.97 || b < 0.03 || b > 0.97) return 'n';
+      const row = Math.floor(b * 4);
+      const seam = Math.abs(((a * 4 + (row % 2) * 0.5) % 1) - 0.5) > 0.46 || (b * 4) % 1 < 0.1;
+      return seam ? 's' : 't';
+    });
+  },
   wifi: (p) => {
     p.shadow(6);
     p.box(5, 3, 'S');

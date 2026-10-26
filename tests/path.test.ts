@@ -27,3 +27,11 @@ describe('walker pathfinding', () => {
     expect(doorsOf(3, 3, busy, { x: 0, y: 0 })).toEqual([{ x: 0, y: 1 }]);
   });
 });
+
+describe('path preference', () => {
+  it('detours onto cheap tiles', () => {
+    const cost = (_x: number, y: number) => (y === 0 ? 1 : 5);
+    const p = findPath(5, 3, open, { x: 0, y: 1 }, { x: 4, y: 1 }, cost)!;
+    expect(p.filter((t) => t.y === 0).length).toBeGreaterThan(3);
+  });
+});

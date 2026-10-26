@@ -24,7 +24,7 @@ export function openBuild(app: App): void {
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, bName(d)), h('span', { class: 'cost' }, rupiah(cost))),
         h('p', {}, bBlurb(d)),
-        ok ? h('p', { class: 'meta' }, t('build.permit', { permit: d.permitMonths, build: d.buildMonths })) : missingList(missing),
+        ok ? h('p', { class: 'meta' }, d.pathIncome ? t('build.instant') : t('build.permit', { permit: d.permitMonths, build: d.buildMonths })) : missingList(missing),
       ),
     );
   });
