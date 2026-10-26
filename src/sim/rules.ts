@@ -29,6 +29,7 @@ export function requirementGaps(s: GameState, d: BuildingDef, opts: { ignoreLimi
   if (gate && !gateOpen(s, gate)) missing.push(t('sim.needStars', { title: stageTitle(gate.stage, gate.stars), n: gate.stars }));
   if (r?.year && year(s) < r.year) missing.push(t('sim.unlocksYear', { n: r.year }));
   if (!opts.ignoreLimit && d.maxCount && count(s, d.id) >= d.maxCount) missing.push(t('sim.limit', { n: d.maxCount }));
+  if (!opts.ignoreLimit && d.orangDalamCost && s.res.orangDalam < d.orangDalamCost) missing.push(t('sim.needODn', { n: d.orangDalamCost, have: Math.floor(s.res.orangDalam) }));
   return missing;
 }
 
@@ -52,6 +53,7 @@ export function place(s: GameState, id: string, x: number, y: number): CheckResu
   const d = def(id);
   const cost = buildCost(s, d);
   s.res.rupiah -= cost;
+  s.res.orangDalam -= d.orangDalamCost ?? 0;
   s.stats.spent += cost;
   const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
   const b = addBuilding(s, id, x, y, instant ? 'active' : d.permitMonths > 0 ? 'permit' : 'building', cost);

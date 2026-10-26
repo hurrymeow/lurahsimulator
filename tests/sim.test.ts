@@ -64,7 +64,7 @@ describe('placing buildings', () => {
 
   it('lets Orang Dalam skip the permit queue', () => {
     const s = newGame(5);
-    const r = place(s, 'selokan', 0, 0);
+    const r = place(s, 'biopori', 0, 0);
     const b = byUid(s, r.uid!)!;
     expect(skipPermit(s, b).ok).toBe(true);
     expect(b.status).toBe('building');
@@ -75,7 +75,7 @@ describe('placing buildings', () => {
 
   it('drains Sabar while a permit waits in the queue', () => {
     const s = newGame(6);
-    place(s, 'selokan', 0, 0);
+    place(s, 'biopori', 0, 0);
     const before = s.res.sabar;
     tick(s);
     expect(s.res.sabar).toBeLessThan(before + 1);

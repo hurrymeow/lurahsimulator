@@ -1,7 +1,7 @@
 import { bBlurb, bName, t } from '../i18n';
 import {
   ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
-  EXPECT_PER_RESIDENT, NOVELTY_GAP, QUEUE_SABAR_DRAIN, SETORAN_RATE, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
+  EXPECT_PER_RESIDENT, NOVELTY_GAP, QUEUE_SABAR_DRAIN, SETORAN_RATE, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, TUKANG_MAX, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
 } from './balance';
 import { accessSystem, connectedRoad, hasRoadBeside } from './access';
 import { comboIncomeMult, comboSystem } from './combos';
@@ -11,7 +11,7 @@ import { eventSystem } from './events';
 import { lineSystem } from './lines';
 import { debtSystem, iuranFromNeighbours, neighboursSystem, neighboursYearEnd, stempelSystem } from './grow';
 import { inspectionSystem } from './inspection';
-import { jobsSystem } from './jobs';
+import { jobsSystem, used } from './jobs';
 import { mangkrakSystem, onBuildingFinished } from './projects';
 import { addEmas, yearlyRanking } from './ranking';
 import { kelSystem, comboUpkeepMult } from './kel';
@@ -21,7 +21,7 @@ import { wacanaSystem } from './wacana';
 import { chance, pick, randInt } from './rng';
 import { noteNet, quarterSystem, snapshot } from './report';
 import { requirementGaps } from './rules';
-import { addBuilding, addResident, attractTarget, emptyTiles, housing, isWorking, levelMult, neighbours, pathMult, population } from './state';
+import { addBuilding, addResident, attractTarget, decorMult, emptyTiles, housing, isWorking, levelMult, neighbours, pathMult, population } from './state';
 import { gain, type Fx } from './gain';
 import type { Building, GameState, ResourceId } from './types';
 
@@ -39,7 +39,7 @@ export function incomeMult(s: GameState, b: Building): number {
 export function buildingIncome(s: GameState, b: Building): number {
   if (!isWorking(b)) return 0;
   const d = def(b.def);
-  return Math.round(d.income * levelMult(b.level) * incomeMult(s, b) * pathMult(s, b) * burstMult(s, b));
+  return Math.round(d.income * levelMult(b.level) * incomeMult(s, b) * pathMult(s, b) * decorMult(s, b) * burstMult(s, b));
 }
 
 export function buildingUpkeep(s: GameState, b: Building): number {
@@ -59,9 +59,11 @@ function novelty(s: GameState): void {
 }
 
 export function advanceConstruction(s: GameState, fx: Fx): void {
+  // Each tukang on the crew gives every site an extra month of progress one month in four.
+  const crew = Math.min(TUKANG_MAX, used(s, 'tukang'));
   for (const b of s.buildings) {
     if (b.status !== 'permit' && b.status !== 'building') continue;
-    b.timer--;
+    b.timer -= b.status === 'building' && (s.month + b.uid) % 4 < crew ? 2 : 1;
     if (b.status === 'permit') {
       gain(s, fx, 'sabar', -QUEUE_SABAR_DRAIN, b);
       if (b.timer <= 0) {
@@ -161,15 +163,18 @@ export function residentsMove(s: GameState, fx: Fx): void {
   if (arrived === 0 && s.month - (s.lastArrival ?? 0) >= NOVELTY_GAP) arrive(s, fx, t('sim.arrivePerantau'), true);
 }
 
+/** One notice per month, however many buildings opened: a star can unlock a dozen and they must not queue a dozen pop-ups. */
 export function checkUnlocks(s: GameState, fx: Fx): void {
-  for (const d of placeableDefs()) {
-    if (s.unlocked.includes(d.id)) continue;
-    const gaps = requirementGaps(s, d, { ignoreLimit: true });
-    if (gaps.length) continue;
-    s.unlocked.push(d.id);
+  const opened = placeableDefs().filter((d) => !s.unlocked.includes(d.id) && requirementGaps(s, d, { ignoreLimit: true }).length === 0);
+  if (!opened.length) return;
+  for (const d of opened) s.unlocked.push(d.id);
+  novelty(s);
+  if (opened.length === 1) {
+    const d = opened[0];
     fx.push({ kind: 'notice', title: t('sim.unlockedTitle', { name: bName(d) }), body: bBlurb(d), tone: 'good', fanfare: true });
-    novelty(s);
+    return;
   }
+  fx.push({ kind: 'notice', title: t('sim.unlockedManyTitle', { n: opened.length }), body: t('sim.unlockedManyBody', { names: opened.map(bName).join(', ') }), tone: 'good', fanfare: true });
 }
 
 /** A calm village settles back toward a floor. Bad choices slow you down, they never trap you at zero. */

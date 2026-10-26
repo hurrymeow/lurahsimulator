@@ -5,6 +5,7 @@ import { checkRestart, restart } from '../src/sim/projects';
 import { checkPlace, place, skipPermit, upgrade } from '../src/sim/rules';
 import { attractTarget, emptyTiles, housing, newGame, population } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
+import { announce } from '../src/sim/wacana';
 import type { GameState } from '../src/sim/types';
 
 /**
@@ -39,6 +40,8 @@ function play(seed: number, years: number, smart: boolean, starMonths: number[] 
         const worthIt = d.income > d.upkeep || have === 0;
         if (spot && worthIt && have < 4 && checkPlace(s, d.id, spot.x, spot.y).ok && s.res.rupiah > d.cost * 3) place(s, d.id, spot.x, spot.y);
       }
+      // A player watches Popularitas: when it sags and there is cash, announce a cheap policy.
+      if (s.res.sabar < 55 && s.res.rupiah > 2_000_000 && s.month % 3 === 0) announce(s, 'hijau');
       for (const b of s.buildings) {
         if (b.status === 'permit') skipPermit(s, b);
         else if (b.status === 'damaged' && checkRepair(s, b).ok) repair(s, b);
