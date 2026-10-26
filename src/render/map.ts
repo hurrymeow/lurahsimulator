@@ -5,7 +5,8 @@ import { Atmosphere } from './atmosphere';
 import { drawTint, darkness, dusk, Fx } from './fx';
 import { iso, TH, TOP, TW, type Art } from './iso';
 import { Crowd } from './people';
-import { buildWorld, decoAt, farRoofs, layoutWorld, HORIZON, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
+import { Weather } from './weather';
+import { buildWorld, decoAt, farRoofs, layoutWorld, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
 import { ICONS, ROOF_COLOURS, sprite } from './sprites';
 
 export const RES_COLOUR: Record<ResourceId, string> = {
@@ -123,6 +124,7 @@ export class MapView {
   readonly crowd = new Crowd();
   readonly fx = new Fx();
   private readonly air = new Atmosphere();
+  readonly weather = new Weather();
   /** Income squash per tile key, by start time. */
   private bounces = new Map<number, number>();
   /** Night level this frame, 0 to 1. */
@@ -223,8 +225,8 @@ export class MapView {
     return { x: c.x, y: c.y + (TH * this.scale) / 2 };
   }
 
-  pop(x: number, y: number, res: ResourceId, amount: number): void {
-    const text = res === 'rupiah' ? rupiahShort(amount) : `${amount > 0 ? '+' : ''}${Math.round(amount * 10) / 10}`;
+  pop(x: number, y: number, res: ResourceId, amount: number, label?: string): void {
+    const text = label ?? (res === 'rupiah' ? rupiahShort(amount) : `${amount > 0 ? '+' : ''}${Math.round(amount * 10) / 10}`);
     // Several resources on one tile stack upward instead of overlapping.
     const stack = this.pops.filter((p) => p.x === x && p.y === y && performance.now() - p.born < POP_MS).length;
     this.pops.push({ x, y, text, res, born: performance.now(), dy: stack * 22 });
@@ -446,6 +448,7 @@ export class MapView {
       this.air.draw(ctx, this.viewW, this.viewH, now, this.night, dusk(this.clock), this.motion);
       drawTint(ctx, this.viewW, this.viewH, this.clock);
       this.drawLights(ctx);
+      this.weather.draw(ctx, this.viewW, this.viewH, sc, now, (x, y) => ({ x: wx + x * sc, y: wy + y * sc }), shorePoints());
     }
 
     // Badges sit above every building so a taller neighbour in front never hides them.

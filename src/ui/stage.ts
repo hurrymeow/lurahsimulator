@@ -4,7 +4,7 @@ import { canPromote, currentStage, declineSK, nextStarChecklist, reofferSK, stag
 import { h } from './dom';
 import { closeSheet, openSheet } from './sheet';
 
-const starRow = (n: number) => '★'.repeat(n) + '☆'.repeat(3 - n);
+export const starRow = (n: number) => '★'.repeat(n) + '☆'.repeat(3 - n);
 
 /** Menu header: stage title with its stars, and the next line of the checklist. Tap for the full list. */
 export function stageHeader(app: App): HTMLElement {

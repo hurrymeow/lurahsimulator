@@ -173,6 +173,7 @@ describe('yearly ranking and Indonesia Emas', () => {
 
     const lose = newGame(10);
     lose.month = 11;
+    for (const r of lose.residents) r.manual = true;
     lose.res.sabar = 50;
     tick(lose);
     expect(lose.ranking[0].won).toBe(false);

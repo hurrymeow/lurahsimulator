@@ -39,40 +39,67 @@ const SHIRTS: Record<Kind, string> = {
 /** Unemployed residents wear one of these, so the crowd is not all cream. */
 const CASUAL = ['#f6ecd4', '#5a9bd0', '#df4a2c', '#5fb3a6', '#f4b935'];
 
-// Art-pixel frames. f skin, h hair, s shirt, d trousers, k shoes, p phone, G helmet, m bike, w tyre, x spoke.
+// Art-pixel frames, 7x10 for walkers and 11x9 for ojol riders.
+// h hair, H hair shine, f skin, F skin shade, e eye, s shirt, S shirt shade, c collar, b belt,
+// d trousers, D trousers shade, k shoes, p phone. Ojol: G helmet, g helmet shine, v visor,
+// m bike, M bike shade, L headlight, w tyre, x spoke.
 const WALK: string[][] = [
-  ['..hhh..', '..fff..', '..fff..', '.sssss.', '.sssss.', '.fsssf.', '..ddd..', '..d.d..', '..d.d..', '..k.k..'],
-  ['..hhh..', '..fff..', '..fff..', '.sssss.', '.sssss.', '.fsssf.', '..ddd..', '.d...d.', '.d...d.', '.k...k.'],
+  ['..hhh..', '.hHhhh.', '.hefeh.', '..fFf..', '.sscsS.', 'fssssSf', '..bbb..', '..d.D..', '..d.D..', '..k.k..'],
+  ['..hhh..', '.hHhhh.', '.hefeh.', '..fFf..', '.sscsS.', 'fssssSf', '..bbb..', '.d...D.', '.d...D.', '.k...k.'],
 ];
-const PHONE: string[][] = WALK.map((f) => f.map((row, i) => (i === 3 ? '.ssssfp' : i === 4 ? '.sssss.' : i === 5 ? '.fsss..' : row)));
+const PHONE: string[][] = WALK.map((f) => f.map((row, i) => (i === 4 ? '.sscsfp' : i === 5 ? 'fssssS.' : row)));
 const OJOL: string[][] = [
-  ['....GGG....', '....Gff....', '....sss....', '...ssss.m..', '...ssssfm..', '.mmmddmmmm.', 'mmmmmmmmmmm', '.wxw...wxw.', '..w.....w..'],
-  ['....GGG....', '....Gff....', '....sss....', '...ssss.m..', '...ssssfm..', '.mmmddmmmm.', 'mmmmmmmmmmm', '.www...www.', '..x.....x..'],
+  ['....GgG....', '....Gvf....', '....sss....', '...ssSs.m..', '...ssSSfm..', '.mmmddmmmL.', 'MmmmmmmmmmM', '.wxw...wxw.', '..w.....w..'],
+  ['....GgG....', '....Gvf....', '....sss....', '...ssSs.m..', '...ssSSfm..', '.mmmddmmmL.', 'MmmmmmmmmmM', '.www...www.', '..x.....x..'],
 ];
-const INK: Record<string, string> = { f: '#e7b07a', h: '#2a1810', d: '#4a4060', k: '#2a1810', p: '#f6ecd4', G: '#4fae3e', m: '#df4a2c', w: '#2a1810', x: '#bdb4a3' };
-/** Outline round each figure, matching the buildings. */
-const OUTLINE = '#2a1810';
+const INK: Record<string, string> = {
+  f: '#e7b07a', F: '#c98c5a', e: '#2a1810', c: '#fbf6ea', b: '#6a4a2c', d: '#4a4f72', D: '#363a58', k: '#3a2618', p: '#f6ecd4',
+  G: '#4fae3e', g: '#8fd46a', v: '#2f3a52', m: '#df4a2c', M: '#a8321f', L: '#fff2b0', w: '#2a1810', x: '#bdb4a3',
+};
+/** Hair colours, picked per resident so the crowd varies. */
+const HAIR = ['#2a1810', '#4a2c1c', '#6b3e22', '#1f2430', '#8a5a32'];
+
+function shade(c: string, f: number): string {
+  const n = parseInt(c.slice(1), 16);
+  const ch = (s: number) => Math.max(0, Math.min(255, Math.round(((n >> s) & 255) * f)));
+  return `#${((ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).padStart(6, '0')}`;
+}
 
 const cache = new Map<string, HTMLCanvasElement>();
 
-/** A frame rasterised once at art resolution with a 1px outline, mirrored when facing left. */
-function frame(rows: string[], shirt: string, face: 1 | -1): HTMLCanvasElement {
-  const key = `${rows.join('/')}:${shirt}:${face}`;
+/**
+ * A frame rasterised once at art resolution, mirrored when facing left. The 1px outline is
+ * coloured, not black: each outline pixel is a dark shade of the fill it borders, so hair gets a
+ * dark brown edge, a red shirt a deep red one, and so on.
+ */
+function frame(rows: string[], shirt: string, hair: string, face: 1 | -1): HTMLCanvasElement {
+  const key = `${rows.join('/')}:${shirt}:${hair}:${face}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const c = document.createElement('canvas');
   c.width = rows[0].length + 2;
   c.height = rows.length + 2;
   const ctx = c.getContext('2d')!;
-  const on = (x: number, y: number) => rows[y]?.[x] !== undefined && rows[y][x] !== '.';
+  const colour = (ch: string): string =>
+    ch === 's' ? shirt : ch === 'S' ? shade(shirt, 0.74) : ch === 'h' ? hair : ch === 'H' ? shade(hair, 1.9) : INK[ch];
+  const at = (x: number, y: number): string | null => {
+    const ch = rows[y]?.[x];
+    return ch === undefined || ch === '.' ? null : ch;
+  };
   const px = (x: number, y: number) => ctx.fillRect(face === 1 ? x + 1 : c.width - 2 - x, y + 1, 1, 1);
-  ctx.fillStyle = OUTLINE;
   for (let y = -1; y <= rows.length; y++)
-    for (let x = -1; x <= rows[0].length; x++) if (!on(x, y) && (on(x - 1, y) || on(x + 1, y) || on(x, y - 1) || on(x, y + 1))) px(x, y);
+    for (let x = -1; x <= rows[0].length; x++) {
+      if (at(x, y)) continue;
+      // Prefer the fill below, then the sides, then above, so feet and heads get their own edge.
+      const next = at(x, y + 1) ?? at(x - 1, y) ?? at(x + 1, y) ?? at(x, y - 1);
+      if (!next) continue;
+      ctx.fillStyle = shade(colour(next), next === 'e' || next === 'w' || next === 'k' ? 1 : 0.45);
+      px(x, y);
+    }
   rows.forEach((row, y) =>
     [...row].forEach((ch, x) => {
       if (ch === '.') return;
-      ctx.fillStyle = ch === 's' ? shirt : INK[ch];
+      ctx.fillStyle = colour(ch);
       px(x, y);
     }),
   );
@@ -253,7 +280,7 @@ export class Crowd {
     const moving = motion && p.path.length > 0;
     const leg = moving ? Math.floor(p.stride * (p.kind === 'ojol' ? 6 : 5)) % 2 : 0;
     const rows = p.kind === 'ojol' ? OJOL[leg] : p.kind === 'influencer' || p.kind === 'buzzer' ? PHONE[leg] : WALK[leg];
-    const img = frame(rows, p.shirt, p.face);
+    const img = frame(rows, p.shirt, HAIR[p.id % HAIR.length], p.face);
     // Idle walkers breathe: a one-pixel bob every second or so.
     const bob = !moving && motion && Math.floor((now + p.id * 377) / 600) % 2 ? 1 : 0;
     const w = img.width * s;

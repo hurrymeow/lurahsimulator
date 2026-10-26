@@ -385,3 +385,22 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .checklist { list-style: none; margin: 0 0 12px; padding: 0; }
 .checklist li { padding: 8px 0; font-size: 16px; border-bottom: 1px solid var(--line); }
 .checklist li.done { color: var(--muted); text-decoration: line-through; }
+
+/* Home screen: the map shows through, the HUD hides, one Start button sits in the bottom third. */
+#app.home-open :is(#hud, #emas, #ticker, #bottombar, #update-banner) { visibility: hidden; }
+.home {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  background: linear-gradient(rgba(11, 11, 12, 0.7), rgba(11, 11, 12, 0) 40%, rgba(11, 11, 12, 0) 55%, rgba(11, 11, 12, 0.75));
+}
+.home-title { margin: 12vh 0 0; font-family: var(--font-pixel); font-size: 40px; text-align: center; text-shadow: 0 2px 0 #000; }
+.home-gear { position: absolute; top: calc(8px + env(safe-area-inset-top)); right: 8px; width: 48px; height: 48px; }
+.home-actions { margin-top: auto; width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 8px; }
+.home-actions .btn { width: 100%; min-height: 48px; }
+.home-start { font-size: 22px; }
+.home-warn { margin: 0; padding: 8px 12px; text-align: center; line-height: 1.4; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }

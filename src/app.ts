@@ -1,4 +1,5 @@
-import { eBody, eLabel, eName, bName, getLang, initialLang, setLang, t, type Key, type Lang } from './i18n';
+import { eBody, eLabel, eName, bName, jName, getLang, initialLang, setLang, t, type Key, type Lang } from './i18n';
+import { jobDef } from './data/jobs';
 import { dateLabel, rupiah, rupiahHud } from './format';
 import { MapView, RES_COLOUR } from './render/map';
 import { iconURL } from './render/sprites';
@@ -26,7 +27,7 @@ import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
 export const MONTH_MS = 8000;
 export const SPEEDS = [0, 1, 2, 4] as const;
 export type Speed = (typeof SPEEDS)[number];
-const SAVE_KEY = 'pakrt.save';
+export const SAVE_KEY = 'pakrt.save';
 
 interface Notice {
   /** Set on tutorial tips. Adds a way to switch all tips off. */
@@ -70,6 +71,8 @@ export class App {
   actions: ActionButton[] = [];
   /** One RT's size in tiles. The map is 1, 2 or 4 of these across. */
   readonly rt = { w: RT_W, h: RT_H };
+  /** True while the home screen is up. The sim waits. */
+  held = false;
   
   constructor() {
     const loaded = deserialize(storage.get(SAVE_KEY));
@@ -94,7 +97,7 @@ export class App {
 
   // ---------- loop ----------
   get running(): boolean {
-    return this.speed > 0 && !sheetOpen() && this.modalQueue.length === 0 && !this.s.pendingEvent;
+    return this.speed > 0 && !this.held && !sheetOpen() && this.modalQueue.length === 0 && !this.s.pendingEvent;
   }
 
   private frame(now: number): void {
@@ -135,6 +138,7 @@ export class App {
     this.flyCoins([...pops.values()].filter((p) => p.res === 'rupiah' && p.amount > 0));
     for (const f of fx) {
       if (f.kind === 'pop') continue;
+      else if (f.kind === 'job') this.view.pop(f.x, f.y, 'viral', 0, t('sim.jobPick', { name: f.name, job: jName(jobDef(f.job)!) }));
       else if (f.kind === 'built') {
         const b = this.s.buildings.find((o) => o.uid === f.uid);
         if (b) {
@@ -148,7 +152,7 @@ export class App {
         if (f.fanfare) this.modal(f);
         else this.notice(f);
       } else if (f.kind === 'report') {
-        const r = reportExtra(f.report);
+        const r = reportExtra(this.s, f.report);
         this.view.pulse();
         audio.play('fanfare');
         this.modal({ title: r.title, body: r.body, tone: 'info', extra: r.extra, cls: 'report-card' });
