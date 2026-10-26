@@ -34,6 +34,9 @@ jobs:
   # Runs in parallel with build. Each shard builds its own copy through the Playwright webServer.
   e2e:
     runs-on: ubuntu-latest
+    # Browsers and system deps come with the image. Keep the tag in step with @playwright/test in package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
     strategy:
       fail-fast: false
       matrix:
@@ -45,17 +48,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - id: pw
-        run: echo "version=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
-      - id: pw-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
-      - if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
-      - if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
       - run: npx playwright test --shard=${{ matrix.shard }}/4
         env:
           CI: 'true'
