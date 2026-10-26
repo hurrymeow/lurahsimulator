@@ -8,6 +8,7 @@ import { checkChoice, eventCost, resolveEvent } from './sim/events';
 import { checkPlace, place } from './sim/rules';
 import { lotAt } from './sim/area';
 import { promote } from './sim/grow';
+import { RT_H, RT_W } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
 import { buildCost, buildingAt, newGame, population, housing } from './sim/state';
@@ -67,6 +68,8 @@ export class App {
   placing: string | null = null;
   private storageOk: boolean;
   actions: ActionButton[] = [];
+  /** One RT's size in tiles. The map is 1, 2 or 4 of these across. */
+  readonly rt = { w: RT_W, h: RT_H };
   
   constructor() {
     const loaded = deserialize(storage.get(SAVE_KEY));
@@ -546,10 +549,15 @@ export class App {
     const r = place(this.s, this.placing, g.x, g.y);
     if (r.ok) {
       this.view.burst(g.x, g.y);
-      this.view.pop(g.x, g.y, 'rupiah', -buildCost(this.s, def(this.placing)));
+      const cost = buildCost(this.s, def(this.placing));
+      if (cost) this.view.pop(g.x, g.y, 'rupiah', -cost);
       this.haptic(15);
       audio.play('build');
-      this.stopPlacing();
+      // Paths are free, so keep painting them until the player taps Cancel.
+      if (def(this.placing).pathIncome) {
+        this.view.ghost = null;
+        this.updatePlacing();
+      } else this.stopPlacing();
       this.save();
       this.refresh();
     }
@@ -569,7 +577,7 @@ export class App {
     const check = checkPlace(this.s, this.placing, g.x, g.y);
     g.ok = check.ok;
     btn.disabled = !check.ok;
-    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', {}, t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
+    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', {}, d.pathIncome ? t('build.instant') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
   }
 
   // ---------- language ----------

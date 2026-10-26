@@ -141,6 +141,8 @@ export interface BuildingDef {
   scope?: 'rt' | 'rw' | 'kel';
   /** Tiles on each side. Kelurahan buildings take 2x2. Defaults to 1. */
   footprint?: 1 | 2;
+  /** Free tile that never works on its own. Buildings beside it earn this fraction more income. Tune it here. */
+  pathIncome?: number;
 }
 
 export type BuildingStatus = 'permit' | 'building' | 'active' | 'mangkrak' | 'damaged';
@@ -282,8 +284,8 @@ export type SimEffect =
 export type CheckResult = { ok: true } | { ok: false; missing: string[] };
 
 /** One RT. A RW is 2x2 RTs and a Kelurahan is 2x2 RWs, so the map only ever grows outwards from tile (0,0). */
-export const RT_W = 9;
-export const RT_H = 13;
+export const RT_W = 13;
+export const RT_H = 17;
 /** Current map size in tiles. Live bindings: setGrid changes them for every importer. */
 export let GRID_W = RT_W;
 export let GRID_H = RT_H;
@@ -295,3 +297,6 @@ export function setGrid(stage: StageId): void {
   GRID_W = RT_W * STAGE_SPAN[stage];
   GRID_H = RT_H * STAGE_SPAN[stage];
 }
+/** Grid size before the map was expanded (save v1). Old saves are centred in the new grid. */
+export const OLD_GRID_W = 9;
+export const OLD_GRID_H = 13;

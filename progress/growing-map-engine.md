@@ -1,6 +1,6 @@
 # Growing map engine
 
-- Map grows with the stage: 9x13, 18x26, 36x52. Promotion moves nothing the player built.
+- Map grows with the stage: 13x17, 26x34, 52x68. Promotion moves nothing the player built.
 - AI RTs build when funded, earn stars by the RT checklist, pay iuran into the Kas RW and count in the area ranking.
 - RW Sebelah and Kelurahan Sebelah replace Kampung Sebelah as the rival.
 - Neighbours panel in the Menu funds each RT. Tapping an AI RT opens it.

@@ -6,7 +6,7 @@ import { pick } from './rng';
 import { lotAt } from './area';
 import { GRID_H, GRID_W, setGrid, type Building, type BuildingDef, type GameState, type Resident, type StageState } from './types';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export const newStageState = (): StageState => ({ current: 'rt', stars: { rt: 0, rw: 0, kelurahan: 0 } });
 
@@ -104,4 +104,15 @@ export function emptyTiles(s: GameState): { x: number; y: number }[] {
   // Residents only settle inside the player's own RT, never on a seam lot or in a neighbour.
   for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (!taken.has(y * GRID_W + x) && lotAt(x, y) === 'rt') out.push({ x, y });
   return out;
+}
+
+/** Income multiplier for a working building beside a path (4-way, once however many paths touch it). */
+export function pathMult(s: GameState, b: Building): number {
+  if (!def(b.def).income || def(b.def).pathIncome) return 1;
+  let bonus = 0;
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const o = buildingAt(s, b.x + dx, b.y + dy);
+    if (o && isWorking(o)) bonus = Math.max(bonus, def(o.def).pathIncome ?? 0);
+  }
+  return 1 + bonus;
 }

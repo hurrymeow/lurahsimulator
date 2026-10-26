@@ -14,8 +14,9 @@ function play(seed: number, years: number, smart: boolean, starMonths: number[] 
   for (let m = 0; m < years * 12; m++) {
     if (s.pendingEvent) resolveEvent(s, [], 0);
     if (smart) {
-      for (const d of placeableDefs()) {
-        const spot = emptyTiles(s).find((t) => t.y < 4);
+      // The bot packs a 9x4 corner (the old map width) so combo members stay in range, and does not plan paths.
+      for (const d of placeableDefs().filter((p) => !p.pathIncome)) {
+        const spot = emptyTiles(s).find((t) => t.y < 4 && t.x < 9);
         // Sensible player: keep a cash buffer and do not stack buildings that only cost upkeep.
         const have = s.buildings.filter((b) => b.def === d.id).length;
         const worthIt = d.income > d.upkeep || have === 0;

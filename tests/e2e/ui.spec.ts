@@ -566,8 +566,9 @@ test.describe('walkers and effects', () => {
       const s = app.s;
       const defs = ['rumah', 'warung', 'posRonda', 'wifi', 'indomaret', 'alfamart', 'selokan'];
       let n = 0;
-      for (let y = 0; y < 13; y++)
-        for (let x = 0; x < 9; x++)
+      const { w, h } = app.rt;
+      for (let y = 0; y < h; y++)
+        for (let x = 0; x < w; x++)
           if (!((x + y) % 2) && !s.buildings.some((o: any) => o.x === x && o.y === y))
             s.buildings.push({ uid: s.nextUid++, def: defs[n++ % defs.length], x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
       for (let i = 0; i < 16; i++) s.residents.push({ id: 900 + i, name: 'Mas Joko', job: i % 3 ? 'none' : 'ojol', pensiun: 0, fake: 0, arrived: 0 });
@@ -582,18 +583,19 @@ test.describe('walkers and effects', () => {
       const s = app.s;
       const defs = ['rumah', 'warung', 'posRonda', 'wifi', 'indomaret', 'alfamart', 'selokan'];
       let n = 0;
-      for (let y = 0; y < 13 * 4; y++)
-        for (let x = 0; x < 9 * 4; x++) {
+      const { w, h } = app.rt;
+      for (let y = 0; y < h * 4; y++)
+        for (let x = 0; x < w * 4; x++) {
           if ((x + y) % 2) continue;
           const b = { uid: s.nextUid++, def: defs[n++ % defs.length], x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 };
-          const hit = s.neighbours.find((nb: any) => Math.floor(x / 9) === nb.cx && Math.floor(y / 13) === nb.cy);
+          const hit = s.neighbours.find((nb: any) => Math.floor(x / w) === nb.cx && Math.floor(y / h) === nb.cy);
           if (hit) hit.buildings.push(b);
           else if (!s.buildings.some((o: any) => o.x === x && o.y === y)) s.buildings.push(b);
         }
       return { count: s.buildings.length + s.neighbours.reduce((t: number, nb: any) => t + nb.buildings.length, 0), cells: s.neighbours.length };
     });
     expect(size.cells).toBe(15);
-    expect(size.count).toBeGreaterThan(800);
+    expect(size.count).toBeGreaterThan(1500);
     const big = await best(false);
     const bigBusy = await best(true);
     console.log(`RT ${small.toFixed(0)} fps, Kelurahan ${big.toFixed(0)} fps, Kelurahan with effects ${bigBusy.toFixed(0)} fps`);
@@ -725,9 +727,10 @@ test.describe('growing map', () => {
     // Bring the second RT into view, then tap its first tile.
     const at = await page.evaluate(() => {
       const v = (window as unknown as { pakrt: any }).pakrt.view;
-      const c = v.project(9 + 4.5, 6.5);
+      const { w, h } = (window as unknown as { pakrt: any }).pakrt.rt;
+      const c = v.project(w + w / 2, h / 2);
       v.panBy(v.viewW / 2 - c.x, v.viewH / 2 - c.y);
-      const p = v.project(9 + 4.5, 6.5);
+      const p = v.project(w + w / 2, h / 2);
       return { x: p.x, y: p.y };
     });
     const box = (await page.locator('#map').boundingBox())!;

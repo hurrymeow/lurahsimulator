@@ -16,7 +16,7 @@ import { wacanaSystem } from './wacana';
 import { chance, pick, randInt } from './rng';
 import { noteNet, quarterSystem, snapshot } from './report';
 import { requirementGaps } from './rules';
-import { addBuilding, addResident, attractTarget, emptyTiles, housing, isWorking, levelMult, neighbours, population } from './state';
+import { addBuilding, addResident, attractTarget, emptyTiles, housing, isWorking, levelMult, neighbours, pathMult, population } from './state';
 import { gain, type Fx } from './gain';
 import type { Building, GameState, ResourceId } from './types';
 
@@ -34,7 +34,7 @@ export function incomeMult(s: GameState, b: Building): number {
 export function buildingIncome(s: GameState, b: Building): number {
   if (!isWorking(b)) return 0;
   const d = def(b.def);
-  return Math.round(d.income * levelMult(b.level) * incomeMult(s, b));
+  return Math.round(d.income * levelMult(b.level) * incomeMult(s, b) * pathMult(s, b));
 }
 
 export function buildingUpkeep(s: GameState, b: Building): number {
