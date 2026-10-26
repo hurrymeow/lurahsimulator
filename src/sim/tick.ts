@@ -13,6 +13,7 @@ import { mangkrakSystem, onBuildingFinished } from './projects';
 import { addEmas, yearlyRanking } from './ranking';
 import { wacanaSystem } from './wacana';
 import { chance, pick, randInt } from './rng';
+import { noteNet, quarterSystem, snapshot } from './report';
 import { requirementGaps } from './rules';
 import { addBuilding, addResident, attractTarget, emptyTiles, housing, isWorking, levelMult, neighbours, population } from './state';
 import { gain, type Fx } from './gain';
@@ -75,6 +76,7 @@ export function collectIncome(s: GameState, fx: Fx): void {
     const d = def(b.def);
     const net = buildingIncome(s, b) - buildingUpkeep(s, b);
     gain(s, fx, 'rupiah', net, b);
+    noteNet(s, b.uid, net);
     if (isWorking(b) && d.perMonth) {
       for (const [res, v] of Object.entries(d.perMonth) as [ResourceId, number][]) gain(s, fx, res, v * levelMult(b.level), res === 'orangDalam' ? undefined : b);
     }
@@ -171,12 +173,14 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   checkUnlocks,
   inspectionSystem,
   eventSystem,
+  quarterSystem,
 ];
 
 /** One month. Pure apart from mutating the state it is given. */
 export function tick(s: GameState): Fx {
   const fx: Fx = [];
   if (s.pendingEvent) return fx;
+  s.quarter ??= snapshot(s);
   s.month++;
   for (const system of SYSTEMS) system(s, fx);
   decay(s);
