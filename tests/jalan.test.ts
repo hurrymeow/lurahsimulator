@@ -57,7 +57,9 @@ describe('building over a path', () => {
     const s = newGame(1);
     expect(s.buildings.filter((b) => b.def === 'jalan').length).toBeGreaterThan(15);
     const p = addBuilding(s, 'potBunga', 0, 0, 'active');
+    const bio = addBuilding(s, 'biopori', 1, 0, 'active');
     refreshAccess(s);
     expect(p.noRoad).toBeUndefined();
+    expect(bio.noRoad).toBeUndefined();
   });
 });
