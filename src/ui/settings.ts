@@ -1,5 +1,4 @@
 import type { App } from '../app';
-import type { Settings } from '../settings';
 import { h } from './dom';
 import { audio } from '../audio';
 import { closeSheet, openSheet } from './sheet';
