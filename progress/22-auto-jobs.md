@@ -1,0 +1,1 @@
+- Residents pick their own jobs in Warga-free play (PR #22): unemployed residents get a weighted pick among open slots, and the player can still reassign. Pop shows on the job building. Tutorial step 5 and the Warga hint say so in EN and ID.
