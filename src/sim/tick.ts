@@ -1,0 +1,167 @@
+import {
+  ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
+  NOVELTY_GAP, QUEUE_SABAR_DRAIN, SABAR_MAX, VIRAL_DECAY, VIRAL_MAX,
+} from './balance';
+import { def, placeableDefs } from './content';
+import { chance, pick, randInt } from './rng';
+import { requirementGaps } from './rules';
+import { addBuilding, addResident, attractTarget, emptyTiles, housing, isWorking, levelMult, neighbours, population } from './state';
+import type { Building, GameState, ResourceId, SimEffect } from './types';
+
+export type Fx = SimEffect[];
+
+/** Multiplier on a building's income from timed modifiers. Systems added later extend this. */
+export function incomeMult(s: GameState, b: Building): number {
+  let m = 1;
+  for (const mod of s.modifiers) if (mod.target === '*' || mod.target === b.def) m *= mod.incomeMult;
+  return m;
+}
+
+export function buildingIncome(s: GameState, b: Building): number {
+  if (!isWorking(b)) return 0;
+  const d = def(b.def);
+  return Math.round(d.income * levelMult(b.level) * incomeMult(s, b));
+}
+
+export function buildingUpkeep(s: GameState, b: Building): number {
+  const d = def(b.def);
+  if (b.status === 'mangkrak') return 0;
+  return Math.round(d.upkeep * levelMult(b.level) * s.inflation);
+}
+
+export function gain(s: GameState, fx: Fx, res: ResourceId, amount: number, at?: { x: number; y: number }): void {
+  if (!amount) return;
+  s.res[res] += amount;
+  if (res === 'rupiah' && amount > 0) s.stats.earned += amount;
+  if (at && Math.abs(amount) >= (res === 'rupiah' ? 1 : 0.5)) fx.push({ kind: 'pop', x: at.x, y: at.y, res, amount });
+}
+
+function clampResources(s: GameState): void {
+  s.res.sabar = Math.max(0, Math.min(SABAR_MAX, s.res.sabar));
+  s.res.viral = Math.max(0, Math.min(VIRAL_MAX, s.res.viral));
+  s.res.orangDalam = Math.max(0, s.res.orangDalam);
+}
+
+function novelty(s: GameState): void {
+  s.lastNovelty = s.month;
+}
+
+export function advanceConstruction(s: GameState, fx: Fx): void {
+  for (const b of s.buildings) {
+    if (b.status !== 'permit' && b.status !== 'building') continue;
+    b.timer--;
+    if (b.status === 'permit') {
+      gain(s, fx, 'sabar', -QUEUE_SABAR_DRAIN, b);
+      if (b.timer <= 0) {
+        b.status = 'building';
+        b.timer = Math.max(1, def(b.def).buildMonths);
+      }
+    } else if (b.timer <= 0) {
+      b.status = 'active';
+      fx.push({ kind: 'built', uid: b.uid });
+      fx.push({ kind: 'notice', title: `${def(b.def).name} is open`, body: def(b.def).blurb, tone: 'good', x: b.x, y: b.y });
+      novelty(s);
+    }
+  }
+}
+
+export function collectIncome(s: GameState, fx: Fx): void {
+  for (const b of s.buildings) {
+    const d = def(b.def);
+    const net = buildingIncome(s, b) - buildingUpkeep(s, b);
+    gain(s, fx, 'rupiah', net, b);
+    if (isWorking(b) && d.perMonth) {
+      for (const [res, v] of Object.entries(d.perMonth) as [ResourceId, number][]) gain(s, fx, res, v * levelMult(b.level), res === 'orangDalam' ? undefined : b);
+    }
+  }
+  const kantor = s.buildings.find((b) => b.def === 'kantorRT');
+  gain(s, fx, 'rupiah', population(s) * IURAN, kantor);
+}
+
+/** Year 1 safety net: upkeep can never push the kas below zero. */
+export function safetyNet(s: GameState, fx: Fx): void {
+  if (s.res.rupiah >= 0) return;
+  if (s.month < 12) {
+    fx.push({ kind: 'notice', title: 'Dana talangan', body: `The kelurahan covered ${-Math.round(s.res.rupiah)} of upkeep. Only in year 1.`, tone: 'info' });
+    s.res.rupiah = 0;
+  } else {
+    gain(s, fx, 'sabar', -BROKE_SABAR_DRAIN);
+  }
+}
+
+function spawnRumah(s: GameState): Building | null {
+  const empty = emptyTiles(s);
+  if (!empty.length) return null;
+  const near = empty.filter((t) => neighbours(s, t).some((b) => b.def !== 'rumah' || chance(s, 0.5)));
+  const spot = pick(s, near.length ? near : empty);
+  return addBuilding(s, 'rumah', spot.x, spot.y, 'active');
+}
+
+function arrive(s: GameState, fx: Fx, reason: string): boolean {
+  if (population(s) + 1 > housing(s) && !spawnRumah(s)) return false;
+  const r = addResident(s);
+  s.stats.arrived++;
+  const home = s.buildings.filter((b) => b.def === 'rumah').at(-1);
+  fx.push({ kind: 'notice', title: `${r.name} moved in`, body: reason, tone: 'good', x: home?.x, y: home?.y });
+  novelty(s);
+  return true;
+}
+
+export function residentsMove(s: GameState, fx: Fx): void {
+  const target = attractTarget(s);
+  if (s.res.sabar < LEAVE_BELOW_SABAR && population(s) > MIN_RESIDENTS) {
+    const r = s.residents.splice(randInt(s, 0, s.residents.length - 1), 1)[0];
+    s.stats.left++;
+    fx.push({ kind: 'notice', title: `${r.name} moved out`, body: `Sabar is below ${LEAVE_BELOW_SABAR}. Raise it to stop people leaving.`, tone: 'bad' });
+    return;
+  }
+  if (population(s) < target && s.res.sabar >= ARRIVE_MIN_SABAR) {
+    const n = Math.min(2, target - population(s));
+    for (let i = 0; i < n; i++) arrive(s, fx, 'Heard the kampung has a warung and decent wifi rumours.');
+  } else if (s.month - s.lastNovelty >= NOVELTY_GAP) {
+    arrive(s, fx, 'A perantau looking for a cheap kos. Pacing bonus resident.');
+  }
+}
+
+export function checkUnlocks(s: GameState, fx: Fx): void {
+  for (const d of placeableDefs()) {
+    if (s.unlocked.includes(d.id)) continue;
+    const gaps = requirementGaps(s, d).filter((g) => !g.startsWith('Limit'));
+    if (gaps.length) continue;
+    s.unlocked.push(d.id);
+    fx.push({ kind: 'notice', title: `Unlocked: ${d.name}`, body: d.blurb, tone: 'good', fanfare: true });
+    novelty(s);
+  }
+}
+
+export function decay(s: GameState): void {
+  s.res.viral *= 1 - VIRAL_DECAY;
+  for (const m of s.modifiers) m.monthsLeft--;
+  s.modifiers = s.modifiers.filter((m) => m.monthsLeft > 0);
+}
+
+export function yearEnd(s: GameState, fx: Fx): void {
+  s.inflation *= 1 + INFLATION_PER_YEAR;
+  fx.push({ kind: 'notice', title: `Year ${s.month / 12 + 1} begins`, body: `Prices up ${Math.round(INFLATION_PER_YEAR * 100)}%. Inflation, not greed.`, tone: 'info' });
+}
+
+/** Ordered list of monthly systems. Later milestones insert their systems here. */
+export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
+  advanceConstruction,
+  collectIncome,
+  safetyNet,
+  residentsMove,
+  checkUnlocks,
+];
+
+/** One month. Pure apart from mutating the state it is given. */
+export function tick(s: GameState): Fx {
+  const fx: Fx = [];
+  if (s.pendingEvent) return fx;
+  s.month++;
+  for (const system of SYSTEMS) system(s, fx);
+  decay(s);
+  if (s.month % 12 === 0) yearEnd(s, fx);
+  clampResources(s);
+  return fx;
+}

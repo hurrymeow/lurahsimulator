@@ -25,11 +25,29 @@
         <span>New version ready.</span>
         <button id="update-btn" class="btn btn-primary">Update</button>
       </div>
+      <div id="hud" role="button" aria-label="Resources"></div>
+      <button id="ticker" class="ticker" aria-live="polite">Welcome, Pak RT.</button>
       <main id="stage">
         <canvas id="map" aria-label="Kampung map"></canvas>
       </main>
-      <nav id="bottombar" aria-label="Actions"></nav>
+      <footer id="bottombar">
+        <div class="row">
+          <div id="speed" class="segmented" role="group" aria-label="Speed"></div>
+          <div class="date-wrap">
+            <span id="date"></span>
+            <div class="month-track"><div id="month-progress"></div></div>
+          </div>
+        </div>
+        <nav id="actions" class="row" aria-label="Actions"></nav>
+        <div id="placebar" class="row" hidden>
+          <div id="place-info" class="place-info"></div>
+          <button id="place-cancel" class="btn">Cancel</button>
+          <button id="place-ok" class="btn btn-primary" disabled>Place</button>
+        </div>
+      </footer>
+      <div id="scrim" class="scrim" hidden></div>
       <div id="sheet" class="sheet" hidden></div>
+      <div id="modal" class="modal" hidden></div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
