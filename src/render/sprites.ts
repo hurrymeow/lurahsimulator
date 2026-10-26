@@ -209,8 +209,8 @@ export const SPRITES: Record<string, string[]> = {
 export const ICONS: Record<string, string[]> = {
   rupiah: ['........', 'gggggggg', 'gGwwwwGg', 'gwGGGGwg', 'gwGGGGwg', 'gGwwwwGg', 'gggggggg', '........'],
   sabar: ['........', '.ll..ll.', 'llllllll', 'llllllll', '.llllll.', '..llll..', '...ll...', '........'],
-  orangDalam: ['........', '.aaa....', 'a...a...', 'a...aaaa', 'a...a.a.', '.aaa..a.', '........', '........'],
-  viral: ['...p....', '...pp...', '..ppp...', '..pppp.p', '.pppppp.', '.ppwwpp.', '..pwwp..', '...pp...'],
+  orangDalam: ['..NNNN..', '..NgGN..', 'NNNgGNNN', 'NRwwwwRN', 'NwRwwRwN', 'NwwRRwwN', 'NNNNNNNN', '........'],
+  viral: ['BBBB.p.p', 'BccB.ppp', 'BccB..p.', 'BccB....', 'BccB....', 'BccB....', 'BBBB....', '........'],
   people: ['........', '..ww....', '..ww.ww.', '.wwwwww.', '.ww.ww..', '.ww.ww..', '.ww.ww..', '........'],
 };
 

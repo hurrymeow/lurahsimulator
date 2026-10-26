@@ -22,7 +22,7 @@ export const BUILDINGS: BuildingDef[] = [
   {
     id: 'posRonda',
     name: 'Pos Ronda',
-    blurb: 'Night watch hut. +2 Sabar a month. Nobody has seen anyone on watch.',
+    blurb: 'Night watch hut. +2 Patience a month. Nobody has seen anyone on watch.',
     cost: 800_000,
     upkeep: 50_000,
     income: 0,
@@ -125,7 +125,7 @@ export const BUILDINGS: BuildingDef[] = [
   {
     id: 'kantorRT',
     name: 'Kantor RT',
-    blurb: 'Stamps letters. Earns Orang Dalam over time. Each level adds 2 PNS desks.',
+    blurb: 'Stamps letters. Earns Orang Inside over time. Each level adds 2 PNS desks.',
     cost: 5_000_000,
     upkeep: 100_000,
     income: 0,
@@ -145,7 +145,7 @@ export const BUILDINGS: BuildingDef[] = [
   {
     id: 'kosan',
     name: 'Kos-kosan',
-    blurb: 'Houses 6 and pays rent. The noise costs 1 Sabar a month.',
+    blurb: 'Houses 6 and pays rent. The noise costs 1 Patience a month.',
     cost: 4_000_000,
     upkeep: 80_000,
     income: 200_000,
@@ -181,7 +181,7 @@ export const BUILDINGS: BuildingDef[] = [
   {
     id: 'bankSampah',
     name: 'Bank Sampah',
-    blurb: 'Trades plastic for pocket money. Earns up to Rp 40rb a month and +0.5 Sabar.',
+    blurb: 'Trades plastic for pocket money. Earns up to Rp 40rb a month and +0.5 Patience.',
     cost: 1_000_000,
     upkeep: 0,
     income: 40_000,
@@ -209,13 +209,13 @@ export const BUILDINGS: BuildingDef[] = [
     maxLevel: 1,
     placeable: false,
     removable: false,
-    removeBlockedReason: 'Residents live here. Evicting them costs more Sabar than you have.',
+    removeBlockedReason: 'Residents live here. Evicting them costs more Patience than you have.',
     sprite: 'rumah',
   },
   {
     id: 'parkir',
     name: 'Tukang Parkir Liar',
-    blurb: 'Appears beside every new shop. Pays small retribusi to the kas, costs Sabar. Upgrade it, you cannot remove it.',
+    blurb: 'Appears beside every new shop. Pays small retribusi to the kas, costs Patience. Upgrade it, you cannot remove it.',
     cost: 300_000,
     upkeep: 0,
     income: 60_000,

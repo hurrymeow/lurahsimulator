@@ -52,7 +52,7 @@ export const EVENTS: EventDef[] = [
         modifier: { label: 'Lomba crowd', target: '*', incomeMult: 1.2, months: 2 },
         result: 'The kampung got a proper lomba.',
       },
-      { label: 'Ask a sponsor · 1 Orang Dalam', cost: { orangDalam: 1 }, res: { sabar: 10 }, result: 'A "sponsor" appeared.' },
+      { label: 'Ask a sponsor · 1 Orang Inside', cost: { orangDalam: 1 }, res: { sabar: 10 }, result: 'A "sponsor" appeared.' },
     ],
   },
   {
@@ -76,7 +76,7 @@ export const EVENTS: EventDef[] = [
       },
       { label: 'Subsidise · Rp 500.000', cost: { rupiah: 500_000 }, res: { sabar: 3 }, result: 'Sambal stays affordable.' },
       {
-        label: 'Operasi pasar · 1 Orang Dalam',
+        label: 'Operasi pasar · 1 Orang Inside',
         cost: { orangDalam: 1 },
         modifier: { label: 'Operasi pasar', target: 'warung', incomeMult: 0.9, months: 2 },
         result: 'A truck of cabai arrived.',
@@ -86,7 +86,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatan',
     name: 'Kecamatan Is Coming',
-    body: 'A Kecamatan inspector visits in 2 months to score the kampung: selokan, Sabar, abandoned projects and parkir liar. A good score earns Orang Dalam. A bad one costs Sabar. Fresh paint counts too.',
+    body: 'A Kecamatan inspector visits in 2 months to score the kampung: selokan, Patience, abandoned projects and parkir liar. A good score earns Orang Inside. A bad one costs Patience. Fresh paint counts too.',
     // Raised by the inspection system on its own schedule, never at random.
     when: { chance: 0 },
     choices: [
@@ -98,7 +98,7 @@ export const EVENTS: EventDef[] = [
         result: 'Every fence got fresh paint. The selokan did not.',
       },
       {
-        label: 'Nasi kotak for the rombongan · 1 Orang Dalam',
+        label: 'Nasi kotak for the rombongan · 1 Orang Inside',
         cost: { orangDalam: 1 },
         inspectPrep: 12,
         result: 'The rombongan will leave with full stomachs and generous scores.',
