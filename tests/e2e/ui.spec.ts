@@ -1107,7 +1107,12 @@ test.describe('build mode', () => {
     const float = page.locator('#place-float');
     await expect(float).toBeVisible();
     const fb = (await float.boundingBox())!;
-    expect(fb.y).toBeGreaterThan(box.y + at.y - 4);
+    // Below the tile, or above it when the tile sits near the bottom edge. Never over the tile itself.
+    const cy = box.y + at.y;
+    expect(fb.y + fb.height <= cy - 4 || fb.y >= cy - 4).toBe(true);
+    expect(Math.abs(fb.y + fb.height / 2 - cy)).toBeLessThan(160);
+    expect(fb.y).toBeGreaterThanOrEqual(box.y);
+    expect(fb.y + fb.height).toBeLessThanOrEqual(box.y + box.height);
     expect(Math.abs(fb.x + fb.width / 2 - (box.x + at.x))).toBeLessThan(fb.width);
     await expectLegible(page, 'place buttons under the tile');
     await page.locator('#place-ok').click();
@@ -1118,6 +1123,8 @@ test.describe('build mode', () => {
   test('a path takes a start tile, an end tile and Yes', async ({ page }) => {
     await start(page);
     await dismissModals(page);
+    const roads = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'jalan').length);
+    const had = await roads();
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('jalan'));
     const box = (await page.locator('#map').boundingBox())!;
     const tap = async (dx: number, dy: number) => {
@@ -1135,7 +1142,7 @@ test.describe('build mode', () => {
     await expect(page.locator('#place-ok')).toBeEnabled();
     await expectLegible(page, 'path preview');
     await page.locator('#place-ok').click();
-    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'jalan').length)).toBe(5);
+    expect(await roads()).toBe(had + 5);
   });
 });
 
