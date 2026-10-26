@@ -998,6 +998,48 @@ test.describe('RW stage', () => {
   });
 });
 
+test.describe('Kelurahan stage', () => {
+  test('the RW SK offers Kelurahan or Desa, and the Desa path opens its build menu', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.s.stage.stars.rt = 3;
+      app.s.stage.sk = 'offered';
+      app.refresh();
+    });
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#stage-btn').click();
+    await page.locator('#sk-accept').click();
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.stage.stars.rw = 3;
+      app.s.stage.sk = 'offered';
+      app.refresh();
+    });
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#stage-btn').click();
+    await expect(page.locator('#sk-accept-kelurahan')).toBeEnabled();
+    await expectLegible(page, 'path choice');
+    await page.locator('#sk-accept-desa').click();
+    await dismissModals(page);
+    const got = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      return { stage: app.s.stage.current, path: app.s.stage.path };
+    });
+    expect(got).toEqual({ stage: 'kelurahan', path: 'desa' });
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-build').click();
+    await expect(page.locator('.sheet').getByText('Balai Desa', { exact: true }).first()).toBeVisible();
+    await expectLegible(page, 'Desa build menu');
+  });
+});
+
 test.describe('home screen', () => {
   const W = { id: { start: 'Mulai', wipe: 'Hapus dan mulai ulang' }, en: { start: 'Start', wipe: 'Wipe and start over' } };
 
