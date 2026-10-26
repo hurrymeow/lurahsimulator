@@ -57,7 +57,8 @@ test.describe('how to play', () => {
     await page.reload();
     await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
     await expect(page.locator('#howto')).toBeHidden();
-    await page.locator('#help-btn').click();
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-howto').click();
     await expect(page.locator('#howto')).toBeVisible();
     const speed = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.speed);
     expect(speed).toBe(0);
@@ -120,7 +121,8 @@ test.describe('events, ranking, settings', () => {
   test('every setting flips, saves, and leaves the game readable', async ({ page }) => {
     await start(page);
     await dismissModals(page);
-    await page.locator('#settings-btn').click();
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
     const toggles = page.locator('#sheet .toggle');
     expect(await toggles.count()).toBe(5);
     for (let i = 0; i < 5; i++) {
@@ -135,7 +137,8 @@ test.describe('events, ranking, settings', () => {
     await expectLegible(page, 'game with every setting flipped');
     await page.reload();
     await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
-    await page.locator('#settings-btn').click();
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
     const saved = await page.locator('#sheet .toggle').evaluateAll((els) => els.map((e) => e.getAttribute('aria-checked')));
     expect(saved.length).toBe(5);
   });
@@ -151,7 +154,11 @@ test.describe('events, ranking, settings', () => {
       app.applySettings();
     });
     await expectLegible(page, 'large text main');
+    await page.locator('#menu-btn').click();
+    await expectLegible(page, 'large text menu');
+    await page.locator('.sheet-head .btn').click();
     for (const id of ['build', 'warga', 'wacana', 'combo']) {
+      await page.locator('#menu-btn').click();
       await page.locator(`#act-${id}`).click();
       await expectLegible(page, `large text ${id}`);
       await page.locator('.sheet-head .btn').click();
@@ -176,6 +183,36 @@ test.describe('events, ranking, settings', () => {
   });
 });
 
+test.describe('slim HUD and one menu', () => {
+  test('main screen has only pause, speed and Menu buttons', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const ids = await page.evaluate(() =>
+      [...document.querySelectorAll('button')].filter((b) => b.getClientRects().length && b.id !== 'ticker').map((b) => b.id),
+    );
+    expect(ids).toEqual(['pause-btn', 'speed-btn', 'menu-btn']);
+    const hud = (await page.locator('#hud').boundingBox())!;
+    expect(hud.height).toBeLessThanOrEqual(80);
+  });
+
+  test('pause toggles and speed cycles 1x, 2x, 4x', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const speed = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.speed);
+    for (const want of [2, 4, 1]) {
+      await page.locator('#speed-btn').click();
+      expect(await speed()).toBe(want);
+      await expect(page.locator('#speed-btn')).toHaveText(`${want}x`);
+    }
+    await page.locator('#speed-btn').click();
+    await page.locator('#pause-btn').click();
+    expect(await speed()).toBe(0);
+    await expect(page.locator('#pause-btn')).toHaveAttribute('aria-label', 'Play');
+    await page.locator('#pause-btn').click();
+    expect(await speed()).toBe(2);
+  });
+});
+
 test.describe('text is legible and never cut off', () => {
   test('first screen and welcome message', async ({ page }) => {
     await start(page);
@@ -191,16 +228,18 @@ test.describe('text is legible and never cut off', () => {
     await seed(page);
     await expectLegible(page, 'busy main screen');
 
-    for (const [id, name] of [['build', 'Build'], ['warga', 'Warga'], ['wacana', 'Wacana'], ['combo', 'Buku Combo']] as const) {
+    await page.locator('#menu-btn').click();
+    await expectLegible(page, 'Menu');
+    await page.locator('.sheet-head .btn').click();
+
+    const panels = [['build', 'Build'], ['warga', 'Warga'], ['wacana', 'Wacana'], ['combo', 'Buku Combo'], ['log', 'Log'], ['stats', 'Kas & ranking'], ['settings', 'Settings']] as const;
+    for (const [id, name] of panels) {
+      await page.locator('#menu-btn').click();
       await page.locator(`#act-${id}`).click();
       await expect(page.locator('#sheet')).toBeVisible();
       await expectLegible(page, `${name} panel`);
       await page.locator('.sheet-head .btn').click();
     }
-
-    await page.locator('#settings-btn').click();
-    await expectLegible(page, 'Settings panel');
-    await page.locator('.sheet-head .btn').click();
 
     await page.locator('#hud').click();
     await expectLegible(page, 'Stats panel');

@@ -14,37 +14,31 @@
   </head>
   <body>
     <div id="app">
-      <header id="topbar">
-        <h1 class="title">Pak RT</h1>
-        <div class="top-actions">
-          <button id="install-btn" class="btn btn-ghost" hidden>Install</button>
-          <button id="help-btn" class="btn btn-icon" aria-label="How to play">?</button>
-          <button id="settings-btn" class="btn btn-icon" aria-label="Settings">⚙</button>
-        </div>
-      </header>
-      <div id="update-banner" class="banner" role="status" hidden>
-        <span>New version ready.</span>
-        <button id="update-btn" class="btn btn-primary">Update</button>
-      </div>
-      <div id="hud" role="button" aria-label="Resources"></div>
+      <h1 class="sr-only">Pak RT</h1>
+      <header id="hud" role="button" tabindex="0" aria-label="Resources. Tap for details."></header>
       <div id="emas" class="emas" aria-label="Indonesia Emas 2045 progress">
         <span class="emas-label">Indonesia Emas 2045</span>
         <div class="emas-track"><div id="emas-fill"></div></div>
         <span id="emas-value" class="emas-value">0.01%</span>
+      </div>
+      <div id="update-banner" class="banner" role="status" hidden>
+        <span>New version ready.</span>
+        <button id="update-btn" class="btn btn-primary">Update</button>
       </div>
       <button id="ticker" class="ticker" aria-live="polite">Welcome, Pak RT.</button>
       <main id="stage">
         <canvas id="map" aria-label="Kampung map"></canvas>
       </main>
       <footer id="bottombar">
-        <div class="row">
-          <div id="speed" class="segmented" role="group" aria-label="Speed"></div>
+        <div id="mainbar" class="row">
+          <button id="pause-btn" class="btn btn-icon" aria-label="Pause">❚❚</button>
+          <button id="speed-btn" class="btn">1x</button>
           <div class="date-wrap">
             <span id="date"></span>
             <div class="month-track"><div id="month-progress"></div></div>
           </div>
+          <button id="menu-btn" class="btn btn-primary" aria-haspopup="dialog">Menu</button>
         </div>
-        <nav id="actions" class="row" aria-label="Actions"></nav>
         <div id="placebar" class="row" hidden>
           <div id="place-info" class="place-info"></div>
           <button id="place-cancel" class="btn">Cancel</button>
