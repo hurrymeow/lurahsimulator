@@ -82,6 +82,10 @@ export interface Ghost {
   sprite: string;
   /** Tiles on each side. */
   n: number;
+  /** A path being laid: every tile on it. x,y is then the last tile tapped. */
+  tiles?: { x: number; y: number; ok: boolean; have: boolean }[];
+  /** Draw the sprite mirrored, for a building that has been turned. */
+  flip?: boolean;
 }
 
 interface Hit {
@@ -92,6 +96,8 @@ interface Hit {
   art: Art;
   /** Whole-number scale of the art, for a footprint wider than one tile. */
   k: number;
+  /** Drawn mirrored. */
+  flip: boolean;
 }
 
 /** Diamonds are at least 32px tall, so the tap area matches a 32px square. */
@@ -152,6 +158,8 @@ export class MapView {
   private world: HTMLCanvasElement | null = null;
   private hits: Hit[] = [];
   ghost: Ghost | null = null;
+  /** A building being moved is hidden from its old spot while its ghost shows the new one. */
+  hidden: number | null = null;
   selected: number | null = null;
 
   constructor(private canvas: HTMLCanvasElement) {}
@@ -226,7 +234,8 @@ export class MapView {
     if (buildings)
       for (let k = this.hits.length - 1; k >= 0; k--) {
         const h = this.hits[k];
-        const ax = Math.floor((px - h.left) / (this.scale * h.k));
+        const raw = Math.floor((px - h.left) / (this.scale * h.k));
+        const ax = h.flip ? h.art.canvas.width - 1 - raw : raw;
         const ay = Math.floor((py - h.top) / (this.scale * h.k));
         if (ax >= 0 && ay >= 0 && ax < h.art.canvas.width && ay < h.art.canvas.height && h.art.alpha[ay * h.art.canvas.width + ax] > 0) return { x: h.x, y: h.y };
       }
@@ -264,6 +273,16 @@ export class MapView {
     this.fx.dustRing(x, y, performance.now());
   }
 
+  /** Where the Place buttons go: the ghost's bottom corner, and its top corner for when there is no room below. Canvas pixels. */
+  ghostAnchor(): { x: number; below: number; above: number } | null {
+    const g = this.ghost;
+    if (!g) return null;
+    const n = g.tiles ? 1 : g.n;
+    const c = this.tileCentre(g.x + (n - 1) / 2, g.y + (n - 1) / 2);
+    const hh = (TH * this.scale * n) / 2;
+    return { x: c.x, below: c.y + hh, above: c.y - hh };
+  }
+
   /** The kampung and the land around it, drawn once at art resolution. */
   private drawWorld(): HTMLCanvasElement {
     return (this.world ??= buildWorld());
@@ -277,13 +296,19 @@ export class MapView {
   });
 
   /** squash flattens the art for an income bounce, anchored on the ground. */
-  private art(ctx: CanvasRenderingContext2D, art: Art, x: number, y: number, grow = 1, squash = 0, n = 1): Hit {
+  private art(ctx: CanvasRenderingContext2D, art: Art, x: number, y: number, grow = 1, squash = 0, n = 1, flip = false): Hit {
     const c = this.corner(x, y);
     const s = this.scale;
     // A bigger footprint draws the same sprite n times larger, so its ground diamond covers every tile.
     const k = s * n;
     const left = c.x - (TW * k) / 2;
     const top = c.y - TOP * k;
+    if (flip) {
+      ctx.save();
+      ctx.translate(c.x, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-c.x, 0);
+    }
     if (grow < 1 || squash) {
       // Scale up from the footprint's ground centre, so the building rises out of its plot.
       const gx = c.x;
@@ -292,7 +317,8 @@ export class MapView {
       const h = art.canvas.height * k * grow * (1 - squash);
       ctx.drawImage(art.canvas, gx - w / 2, gy - (TOP + TH / 2) * k * grow * (1 - squash), w, h);
     } else ctx.drawImage(art.canvas, left, top, art.canvas.width * k, art.canvas.height * k);
-    return { x, y, left, top, art, k: n };
+    if (flip) ctx.restore();
+    return { x, y, left, top, art, k: n, flip };
   }
 
   /** Flat 2D sprite standing on the tile centre, used for the permit sign. */
@@ -388,9 +414,11 @@ export class MapView {
       ctx.fill();
     }
     if (this.ghost) {
-      this.diamond(ctx, this.ghost.x, this.ghost.y, 0, this.ghost.n);
-      ctx.fillStyle = this.ghost.ok ? 'rgba(74, 222, 128, 0.35)' : 'rgba(248, 113, 113, 0.35)';
-      ctx.fill();
+      for (const g of this.ghost.tiles ?? [this.ghost]) {
+        this.diamond(ctx, g.x, g.y, 0, this.ghost.tiles ? 1 : this.ghost.n);
+        ctx.fillStyle = g.ok ? 'rgba(74, 222, 128, 0.35)' : 'rgba(248, 113, 113, 0.35)';
+        ctx.fill();
+      }
     }
 
     // Back to front: tiles further up the screen draw first. Walkers slot in by the same depth.
@@ -421,34 +449,35 @@ export class MapView {
     this.crowd.update(s, now, this.motion && !this.frozen);
     this.crowd.begin();
     const drawOne = (b: Building): void => {
-      if (!this.onScreen(b.x, b.y)) return;
+      if (!this.onScreen(b.x, b.y) || b.uid === this.hidden) return;
       const d = def(b.def);
       const art = iso(d.sprite, this.variant(b));
       const n = footprintOf(b.def);
+      const flip = b.rot === 1;
       if (ai.has(b.uid)) {
-        this.art(ctx, art, b.x, b.y, 1, 0, n);
+        this.art(ctx, art, b.x, b.y, 1, 0, n, flip);
         tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, art, n));
         return;
       }
       if (b.status === 'permit') {
         ctx.globalAlpha = 0.35;
-        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.globalAlpha = 1;
         this.sign(ctx, 'permit', b.x, b.y);
       } else if (b.status === 'building') {
         ctx.globalAlpha = 0.5;
-        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.globalAlpha = 1;
-        this.art(ctx, iso('scaffold'), b.x, b.y, 1, 0, n);
+        this.art(ctx, iso('scaffold'), b.x, b.y, 1, 0, n, flip);
         if (this.effects) this.fx.construct(b.x, b.y, now);
       } else if (b.status === 'mangkrak') {
         ctx.filter = 'grayscale(1) brightness(0.7)';
-        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.filter = 'none';
-        this.art(ctx, iso('scaffold'), b.x, b.y, 1, 0, n);
+        this.art(ctx, iso('scaffold'), b.x, b.y, 1, 0, n, flip);
       } else if (b.status === 'damaged') {
         ctx.filter = 'sepia(1) brightness(0.6)';
-        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.filter = 'none';
       } else if (b.noRoad) {
         ctx.filter = 'grayscale(1) brightness(0.75)';
@@ -458,7 +487,7 @@ export class MapView {
         const born = this.spawned.get(b.uid);
         const k = born === undefined ? 1 : Math.min(1, (now - born) / 350);
         if (k >= 1) this.spawned.delete(b.uid);
-        this.hits.push(this.art(ctx, art, b.x, b.y, 0.6 + 0.4 * (1 - (1 - k) ** 3), this.squash(b, now), n));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 0.6 + 0.4 * (1 - (1 - k) ** 3), this.squash(b, now), n, flip));
         if (b.level > 1) this.levelPips(ctx, b.x + n - 1, b.y + n - 1, b.level);
         this.idle(ctx, b, now);
       }
@@ -495,15 +524,19 @@ export class MapView {
 
     if (this.ghost) {
       const g = this.ghost;
-      ctx.globalAlpha = 0.6;
-      this.art(ctx, iso(g.sprite), g.x, g.y, 1, 0, g.n);
-      ctx.globalAlpha = 1;
-      this.diamond(ctx, g.x, g.y, 0, g.n);
-      ctx.strokeStyle = g.ok ? '#4ade80' : '#f87171';
-      ctx.lineWidth = 2;
-      ctx.setLineDash(g.ok ? [] : [4, 3]);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      for (const p of g.tiles ?? [g]) {
+        if ('have' in p && p.have) continue;
+        const n = g.tiles ? 1 : g.n;
+        ctx.globalAlpha = 0.6;
+        if (p.ok) this.art(ctx, iso(g.sprite), p.x, p.y, 1, 0, n, g.flip);
+        ctx.globalAlpha = 1;
+        this.diamond(ctx, p.x, p.y, 0, n);
+        ctx.strokeStyle = p.ok ? '#4ade80' : '#f87171';
+        ctx.lineWidth = 2;
+        ctx.setLineDash(p.ok ? [] : [4, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
     }
     if (sel) {
       this.diamond(ctx, sel.x, sel.y, 0, footprintOf(sel.def));
@@ -642,7 +675,7 @@ export class MapView {
     } else if (b.def === 'warung' && this.effects) this.fx.steam(b.x, b.y, now);
     else if (b.def === 'rumah' && this.night > 0) {
       // Windows light up after dark. They draw over the night tint, so note which buildings sit in front.
-      for (const [x, y] of [[-8, -5], [2, -3], [6, -5]]) this.lights.push({ x: Math.round(c.x + x * s), y: Math.round(c.y + y * s), after: this.hits.length });
+      for (const [x, y] of [[-8, -5], [2, -3], [6, -5]]) this.lights.push({ x: Math.round(c.x + (b.rot ? -x : x) * s), y: Math.round(c.y + y * s), after: this.hits.length });
     } else if (b.def === 'parkir') {
       // Waves at everyone, faster when someone walks past. Even pedestrians get the prit.
       const gap = this.crowd.near(b.x, b.y, 2) ? 140 : 420;

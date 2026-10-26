@@ -3,7 +3,7 @@ import type { App } from '../app';
 import { iconURL } from '../render/sprites';
 import { rupiah } from '../format';
 import { def } from '../sim/content';
-import { checkDemolish, checkSkipPermit, checkUpgrade, demolish, skipPermit, upgrade } from '../sim/rules';
+import { checkDemolish, checkSkipPermit, checkUpgrade, demolish, rotateBuilding, skipPermit, upgrade } from '../sim/rules';
 import { REFUND } from '../sim/balance';
 import { byUid, levelMult, pathMult, upgradeCost } from '../sim/state';
 import { buildingIncome, buildingUpkeep } from '../sim/tick';
@@ -69,6 +69,17 @@ export function inspect(app: App, uid: number): void {
       app.tap(15);
       done();
     }, b.status === 'active'));
+  }
+  // Moving and turning a building cost nothing. Paths are tiles, so they just get demolished.
+  if (!d.pathIncome) {
+    lines.push(h('div', { class: 'row action-row' },
+      h('button', { class: 'btn', onclick: () => app.startMoving(uid) }, t('insp.move')),
+      h('button', { class: 'btn', onclick: () => {
+        rotateBuilding(b);
+        app.tap(15);
+        done();
+      } }, t('insp.rotate')),
+    ));
   }
   const dem = checkDemolish(s, b);
   lines.push(actionButton(dem.ok ? t('insp.demolishRefund', { amt: rupiah(Math.round((b.invested * REFUND) / 1000) * 1000) }) : t('insp.demolish'), dem, () => {

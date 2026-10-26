@@ -42,6 +42,7 @@ $('hud').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') app.openStats();
 });
 $('place-cancel').addEventListener('click', () => app.stopPlacing());
+$('place-exit').addEventListener('click', () => app.stopPlacing());
 $('place-ok').addEventListener('click', () => app.confirmPlace());
 $('scrim').addEventListener('click', closeSheet);
 

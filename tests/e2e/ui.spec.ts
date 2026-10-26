@@ -971,10 +971,17 @@ test.describe('RW stage', () => {
 
     await page.locator('#menu-btn').click();
     await page.locator('#act-build').click();
-    for (const name of ['Balai RW', 'Posyandu', 'Portal', 'Pasar Kaget', 'Gapura']) {
-      await expect(page.locator('.sheet').getByText(name, { exact: true }).first()).toBeVisible();
+    // Build is split into tabs, so walk them until every RW building has shown up.
+    const seen = new Set<string>();
+    const tabs = await page.locator('.sheet .tabs .tab').count();
+    for (let i = 0; i < tabs; i++) {
+      await page.locator('.sheet .tabs .tab').nth(i).click();
+      for (const name of ['Balai RW', 'Posyandu', 'Portal', 'Pasar Kaget', 'Gapura']) {
+        if (await page.locator('.sheet .card-title strong', { hasText: new RegExp(`^${name}$`) }).count()) seen.add(name);
+      }
+      if (i === tabs - 1 || seen.size === 5) await expectLegible(page, `RW build menu tab ${i}`);
     }
-    await expectLegible(page, 'RW build menu');
+    expect([...seen].sort()).toEqual(['Balai RW', 'Gapura', 'Pasar Kaget', 'Portal', 'Posyandu']);
     await page.locator('.sheet-head .btn').click();
 
     await page.locator('#menu-btn').click();
@@ -1073,5 +1080,105 @@ test.describe('home screen', () => {
     await page.locator('#home-gear').click();
     await expect(page.locator('#sheet')).toBeVisible();
     await expectLegible(page, 'settings over home');
+  });
+});
+
+test.describe('build mode', () => {
+  test('Build splits into category tabs that stay legible', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-build').click();
+    const tabs = page.locator('#sheet .tabs .tab');
+    expect(await tabs.count()).toBeGreaterThan(2);
+    await expect(page.locator('#sheet .tabs .tab[aria-pressed="true"]')).toHaveCount(1);
+    await expectLegible(page, 'build tabs');
+    await page.locator('#sheet .tabs .tab[data-tab="paths"]').click();
+    await expect(page.locator('#sheet .card-btn').first()).toBeVisible();
+    await expect(page.locator('#sheet .tabs .tab[data-tab="paths"]')).toHaveAttribute('aria-pressed', 'true');
+    await expectLegible(page, 'paths tab');
+  });
+
+  test('Place and Cancel sit right under the chosen tile', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
+    await expect(page.locator('#place-float')).toBeHidden();
+    const box = (await page.locator('#map').boundingBox())!;
+    const at = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      return app.view.tileCentre(k.x, k.y - 1);
+    });
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    const float = page.locator('#place-float');
+    await expect(float).toBeVisible();
+    const fb = (await float.boundingBox())!;
+    // Below the tile, or above it when the tile sits near the bottom edge. Never over the tile itself.
+    const cy = box.y + at.y;
+    expect(fb.y + fb.height <= cy - 4 || fb.y >= cy - 4).toBe(true);
+    expect(Math.abs(fb.y + fb.height / 2 - cy)).toBeLessThan(160);
+    expect(fb.y).toBeGreaterThanOrEqual(box.y);
+    expect(fb.y + fb.height).toBeLessThanOrEqual(box.y + box.height);
+    expect(Math.abs(fb.x + fb.width / 2 - (box.x + at.x))).toBeLessThan(fb.width);
+    await expectLegible(page, 'place buttons under the tile');
+    await page.locator('#place-ok').click();
+    await expect(float).toBeHidden();
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'rumah').length)).toBe(3);
+  });
+
+  test('a path takes a start tile, an end tile and Yes', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const roads = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'jalan').length);
+    const had = await roads();
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('jalan'));
+    const box = (await page.locator('#map').boundingBox())!;
+    const tap = async (dx: number, dy: number) => {
+      const at = await page.evaluate(([x, y]) => {
+        const app = (window as unknown as { pakrt: any }).pakrt;
+        const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+        return app.view.tileCentre(k.x + x, k.y + y);
+      }, [dx, dy]);
+      await page.mouse.click(box.x + at.x, box.y + at.y);
+    };
+    await tap(-2, -2);
+    await expect(page.locator('#place-float')).toBeHidden();
+    await tap(2, -2);
+    await expect(page.locator('#place-ok')).toHaveText(lang() === 'en' ? 'Yes' : 'Ya');
+    await expect(page.locator('#place-ok')).toBeEnabled();
+    await expectLegible(page, 'path preview');
+    await page.locator('#place-ok').click();
+    expect(await roads()).toBe(had + 5);
+  });
+});
+
+test.describe('moving and turning', () => {
+  test('a placed building moves and turns for free from its inspector', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const pk = <T,>(code: string) => page.evaluate((c) => new Function('a', `return ${c}`)((window as unknown as { pakrt: unknown }).pakrt), code) as Promise<T>;
+    const uid = await pk<number>("a.s.buildings.find((b) => b.def === 'rumah').uid");
+    const cash = await pk<number>('a.s.res.rupiah');
+    await pk(`a.inspect(${uid})`);
+    await expect(page.locator('#sheet .action-row .btn')).toHaveCount(2);
+    await expectLegible(page, 'inspector with move and rotate');
+    await page.locator('#sheet .action-row .btn').nth(1).click();
+    expect(await pk(`a.s.buildings.find((b) => b.uid === ${uid}).rot`)).toBe(1);
+
+    await page.locator('#sheet .action-row .btn').nth(0).click();
+    await expect(page.locator('#place-float')).toBeVisible();
+    const box = (await page.locator('#map').boundingBox())!;
+    const at = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      return app.view.tileCentre(k.x, k.y - 1);
+    });
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    await expect(page.locator('#place-ok')).toBeEnabled();
+    await page.locator('#place-ok').click();
+    const k = await pk<{ x: number; y: number }>("a.s.buildings.find((b) => b.def === 'kantorRT')");
+    expect(await pk<number>(`a.s.buildings.find((b) => b.uid === ${uid}).y`)).toBe(k.y - 1);
+    expect(await pk<number>('a.s.res.rupiah')).toBe(cash);
   });
 });
