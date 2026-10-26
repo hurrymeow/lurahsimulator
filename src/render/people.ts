@@ -8,12 +8,17 @@ import { GRID_H, GRID_W, type GameState, type JobId } from '../sim/types';
 import { findPath, type Pt } from './path';
 
 /** More walkers than this cost frame time and crowd a 9x13 map. */
-export const MAX_WALKERS = 16;
+export const MAX_WALKERS = 10;
+/** Night level above which commuters head home, and below which they head out to work. */
+const DAY_BELOW = 0.2;
+const NIGHT_ABOVE = 0.5;
+/** Chance an idle worker leaves the RT for the day, each time they pick a trip. */
+const COMMUTE_CHANCE = 0.5;
 /** Chance a walker says something on reaching a door, and how long the bubble stays. */
-const SAY_CHANCE = 0.55;
-const SAY_MS = 2600;
+const SAY_CHANCE = 0.12;
+const SAY_MS = 1800;
 /** Buildings with lines in en.ts as `say.<def>.<n>`. Others stay quiet. */
-const LINES: Record<string, number> = { rumah: 2, warung: 3, posRonda: 2, wifi: 2, indomaret: 2, alfamart: 2, kantorRT: 2, kosan: 2, lapangan: 2, bankSampah: 2 };
+const LINES: Record<string, number> = { rumah: 6, warung: 7, posRonda: 6, wifi: 6, indomaret: 6, alfamart: 6, kantorRT: 6, kosan: 6, lapangan: 6, bankSampah: 6 };
 const VIP_ID = -1;
 const WALK_SPEED = 0.9;
 const OJOL_SPEED = 2.8;
@@ -37,6 +42,10 @@ export interface Walker {
   /** Speech bubble text and the time it goes away. */
   say?: string;
   sayUntil?: number;
+  /** Heading out along the ring road to work. May step outside the grid. */
+  leaving?: boolean;
+  /** At work beyond the map: not drawn until evening. */
+  away?: boolean;
 }
 
 const SHIRTS: Record<Kind, string> = {
@@ -148,6 +157,8 @@ export class Crowd {
   /** Walkable ground: active paths and seams. Nobody walks anywhere else. */
   private onPath: Uint8Array = new Uint8Array(GRID_W * GRID_H);
   private last = 0;
+  private night = 0;
+  private lastLine = '';
   /** Speech bubbles show only with effects and motion on. */
   bubbles = true;
 
@@ -173,7 +184,8 @@ export class Crowd {
   }
 
   /** Matches walkers to residents and moves them. With motion off they stand still. */
-  update(s: GameState, now: number, motion: boolean): void {
+  update(s: GameState, now: number, motion: boolean, night = 0): void {
+    this.night = night;
     const dt = Math.min(100, this.last ? now - this.last : 0);
     this.last = now;
     if (this.foreign.length !== GRID_W * GRID_H) {
@@ -220,6 +232,7 @@ export class Crowd {
       p.kind = kind;
       p.shirt = kind === 'none' ? CASUAL[r.id % CASUAL.length] : SHIRTS[kind];
       if (motion) this.move(p, dt, sites, now);
+      else if (p.away && this.night > NIGHT_ABOVE) p.away = false;
     }
   }
 
@@ -251,6 +264,14 @@ export class Crowd {
   }
 
   private move(p: Walker, dt: number, sites: Site[], now: number): void {
+    if (p.away) {
+      // Home again once evening comes: back in at a random edge tile of the ring road.
+      if (this.night > NIGHT_ABOVE) {
+        const back = this.ring();
+        Object.assign(p, { away: false, leaving: false, fx: back.x + 0.5, fy: back.y + 0.5, path: [], wait: 0 });
+      }
+      return;
+    }
     const tx = Math.floor(p.fx);
     const ty = Math.floor(p.fy);
     // The path under this walker was removed: step to the nearest one.
@@ -273,7 +294,7 @@ export class Crowd {
       return;
     }
     const next = p.path[0];
-    if (!this.free(next.x, next.y, p.kind === 'ojol')) {
+    if (!this.free(next.x, next.y, p.kind === 'ojol' || !!p.leaving)) {
       p.path = [];
       return;
     }
@@ -289,7 +310,10 @@ export class Crowd {
       p.fx = next.x + 0.5;
       p.fy = next.y + 0.5;
       p.path.shift();
-      if (!p.path.length && p.dest) this.greet(p, now);
+      if (!p.path.length && p.leaving && (next.x < 0 || next.y < 0 || next.x >= GRID_W || next.y >= GRID_H)) {
+        p.away = true;
+        p.leaving = false;
+      } else if (!p.path.length && p.dest) this.greet(p, now);
     } else {
       p.fx += (dx / dist) * step;
       p.fy += (dy / dist) * step;
@@ -299,8 +323,12 @@ export class Crowd {
   /** At the door: sometimes say something about the place. Cosmetic only. */
   private greet(p: Walker, now: number): void {
     const n = LINES[p.dest ?? ''];
-    if (n && p.kind !== 'ojol' && Math.random() < SAY_CHANCE) {
-      p.say = t(`say.${p.dest}.${Math.floor(Math.random() * n)}` as Key);
+    // One bubble on the map at a time, and never the line just heard.
+    if (n && p.kind !== 'ojol' && Math.random() < SAY_CHANCE && !this.people.some((o) => o.say)) {
+      let i = Math.floor(Math.random() * n);
+      if (`${p.dest}.${i}` === this.lastLine) i = (i + 1) % n;
+      this.lastLine = `${p.dest}.${i}`;
+      p.say = t(`say.${p.dest}.${i}` as Key);
       p.sayUntil = now + SAY_MS;
     }
     p.dest = undefined;
@@ -313,21 +341,31 @@ export class Crowd {
       if (p.kind === 'ojol') {
         to = Math.random() < 0.5 ? this.ring() : this.randomFree();
         if (to && Math.abs(to.x - from.x) + Math.abs(to.y - from.y) < 4) continue;
+      } else if (this.commutes(p) && Math.random() < COMMUTE_CHANCE) {
+        // Off to work beyond the map, along the ring road.
+        to = this.ring();
+        p.leaving = true;
       } else {
         const site = this.pick(sites);
         to = site && this.pick(site.doors);
         if (to && site) p.dest = site.def;
       }
       if (!to) continue;
-      const path = this.route(from, to, p.kind === 'ojol');
+      const path = this.route(from, to, p.kind === 'ojol' || !!p.leaving);
       if (path && path.length) return path;
+      p.leaving = false;
     }
     return null;
   }
 
+  /** Workers with a job leave the RT in daylight. The unemployed and ojol riders stay. */
+  private commutes(p: Walker): boolean {
+    return this.night < DAY_BELOW && p.kind !== 'none' && p.kind !== 'ojol' && p.kind !== 'vip';
+  }
+
   /** Call once per frame before drawUntil. Sorts back to front. */
   begin(): void {
-    this.order = [...this.people].sort((a, b) => a.fx + a.fy - (b.fx + b.fy));
+    this.order = this.people.filter((p) => !p.away).sort((a, b) => a.fx + a.fy - (b.fx + b.fy));
     this.cursor = 0;
   }
 
@@ -362,24 +400,24 @@ export class Crowd {
 
   /** A small speech bubble above a walker's head. */
   private bubble(ctx: CanvasRenderingContext2D, text: string, cx: number, bottom: number): void {
-    ctx.font = '700 13px "Atkinson Hyperlegible", system-ui, sans-serif';
+    ctx.font = '700 11px "Atkinson Hyperlegible", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const w = ctx.measureText(text).width + 12;
+    const w = ctx.measureText(text).width + 10;
     const x = Math.round(cx - w / 2);
-    const y = Math.round(bottom - 24);
+    const y = Math.round(bottom - 22);
     ctx.fillStyle = '#fbf6ea';
-    ctx.fillRect(x, y, w, 20);
+    ctx.fillRect(x, y, w, 18);
     ctx.fillStyle = '#2a1810';
     ctx.fillRect(x, y, w, 1);
-    ctx.fillRect(x, y + 19, w, 1);
-    ctx.fillRect(x, y, 1, 20);
-    ctx.fillRect(x + w - 1, y, 1, 20);
-    ctx.fillRect(Math.round(cx) - 2, y + 20, 4, 3);
+    ctx.fillRect(x, y + 17, w, 1);
+    ctx.fillRect(x, y, 1, 18);
+    ctx.fillRect(x + w - 1, y, 1, 18);
+    ctx.fillRect(Math.round(cx) - 2, y + 18, 4, 3);
     ctx.fillStyle = '#fbf6ea';
-    ctx.fillRect(Math.round(cx) - 1, y + 19, 2, 2);
+    ctx.fillRect(Math.round(cx) - 1, y + 17, 2, 2);
     ctx.fillStyle = '#2a1810';
-    ctx.fillText(text, cx, y + 11);
+    ctx.fillText(text, cx, y + 10);
   }
 
   /** Walkers within reach of a tile, so the tukang parkir knows to wave harder. */
