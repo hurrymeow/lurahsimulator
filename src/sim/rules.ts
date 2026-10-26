@@ -7,7 +7,7 @@ import { gateOpen } from './gate';
 import { neighbourAt } from './grow';
 import { stageTitle } from './stages';
 import { addBuilding, buildCost, buildingAt, count, housing, inBounds, population, upgradeCost, year } from './state';
-import type { Building, BuildingDef, CheckResult, GameState } from './types';
+import type { Building, BuildingDef, CheckResult, GameState, Rotation } from './types';
 
 export { gateOpen };
 
@@ -31,21 +31,29 @@ export function requirementGaps(s: GameState, d: BuildingDef, opts: { ignoreLimi
   return missing;
 }
 
+/** What is wrong with the ground itself, ignoring price and requirements. A building may stand on its own tile. */
+function tileGaps(s: GameState, d: BuildingDef, x: number, y: number, ignore?: Building): string[] {
+  if (!inBounds(x, y)) return [t('sim.offMap')];
+  const missing: string[] = [];
+  const taken = buildingAt(s, x, y) ?? neighbourAt(s, x, y);
+  if (taken && taken.uid !== ignore?.uid) missing.push(t('sim.tileHas', { name: bName(def(taken.def)) }));
+  else if (lotAt(x, y) === 'other') missing.push(t('sim.notYours'));
+  else if (lotAt(x, y) !== (d.scope ?? 'rt')) missing.push(t(d.scope && d.scope !== 'rt' ? 'sim.needLot' : 'sim.needRtLot'));
+  return missing;
+}
+
 export function checkPlace(s: GameState, id: string, x: number, y: number): CheckResult {
   if (!hasDef(id)) return { ok: false, missing: [t('sim.unknownBuilding')] };
   const d = def(id);
   const missing: string[] = [];
   if (!d.placeable) missing.push(t('sim.cannotPlace', { name: bName(d) }));
   missing.push(...requirementGaps(s, d));
-  if (!inBounds(x, y)) missing.push(t('sim.offMap'));
-  else if (buildingAt(s, x, y) ?? neighbourAt(s, x, y)) missing.push(t('sim.tileHas', { name: bName(def((buildingAt(s, x, y) ?? neighbourAt(s, x, y))!.def)) }));
-  else if (lotAt(x, y) === 'other') missing.push(t('sim.notYours'));
-  else if (lotAt(x, y) !== (d.scope ?? 'rt')) missing.push(t(d.scope && d.scope !== 'rt' ? 'sim.needLot' : 'sim.needRtLot'));
+  missing.push(...tileGaps(s, d, x, y));
   moneyGap(s, buildCost(s, d), missing);
   return result(missing);
 }
 
-export function place(s: GameState, id: string, x: number, y: number): CheckResult & { uid?: number } {
+export function place(s: GameState, id: string, x: number, y: number, rot: Rotation = 0): CheckResult & { uid?: number } {
   const check = checkPlace(s, id, x, y);
   if (!check.ok) return check;
   const d = def(id);
@@ -53,9 +61,29 @@ export function place(s: GameState, id: string, x: number, y: number): CheckResu
   s.res.rupiah -= cost;
   s.stats.spent += cost;
   const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
-  const b = addBuilding(s, id, x, y, instant ? 'active' : d.permitMonths > 0 ? 'permit' : 'building', cost);
+  const b = addBuilding(s, id, x, y, instant ? 'active' : d.permitMonths > 0 ? 'permit' : 'building', cost, rot);
   b.timer = instant ? 0 : d.permitMonths > 0 ? d.permitMonths : Math.max(1, d.buildMonths);
   return { ok: true, uid: b.uid };
+}
+
+/** Repositioning is free. The same permit, level, invested rupiah and owner move with it. */
+export function checkMove(s: GameState, b: Building, x: number, y: number): CheckResult {
+  return result(tileGaps(s, def(b.def), x, y, b));
+}
+
+export function move(s: GameState, b: Building, x: number, y: number): CheckResult {
+  const check = checkMove(s, b, x, y);
+  if (!check.ok) return check;
+  b.x = x;
+  b.y = y;
+  return check;
+}
+
+/** Quarter turn clockwise. Free, and the same for every building. */
+export function rotate(b: Building): Rotation {
+  const rot = (((b.rot ?? 0) + 1) % 4) as Rotation;
+  b.rot = rot;
+  return rot;
 }
 
 export function checkUpgrade(s: GameState, b: Building): CheckResult {

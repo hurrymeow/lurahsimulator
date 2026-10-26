@@ -157,6 +157,9 @@ export interface BuildingDef {
 
 export type BuildingStatus = 'permit' | 'building' | 'active' | 'mangkrak' | 'damaged';
 
+/** Quarter turns clockwise. Which side of the building faces the camera. */
+export type Rotation = 0 | 1 | 2 | 3;
+
 export interface Building {
   uid: number;
   def: string;
@@ -170,6 +173,8 @@ export interface Building {
   invested: number;
   /** Month it was placed. */
   placedAt: number;
+  /** Quarter turns from the art's default facing. Absent in older saves, which means 0. */
+  rot?: Rotation;
   /** Uid of the shop a tukang parkir belongs to. */
   owner?: number;
   /** A restarted project never freezes again. */

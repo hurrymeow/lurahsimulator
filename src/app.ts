@@ -6,15 +6,16 @@ import { iconURL } from './render/sprites';
 import { def } from './sim/content';
 import { eventDef } from './data/events';
 import { checkChoice, eventCost, resolveEvent } from './sim/events';
-import { checkPlace, place } from './sim/rules';
+import { checkMove, checkPlace, move, place } from './sim/rules';
 import { lotAt } from './sim/area';
 import { promote } from './sim/grow';
-import { RT_H, RT_W } from './sim/types';
+import { RT_H, RT_W, type Rotation } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
-import { attractTarget, buildCost, buildingAt, newGame, population, housing } from './sim/state';
+import { attractTarget, buildCost, buildingAt, byUid, newGame, population, housing } from './sim/state';
 import { tick } from './sim/tick';
-import type { GameState, ResourceId, SimEffect } from './sim/types';
+import type { BuildingDef, CheckResult, GameState, ResourceId, SimEffect } from './sim/types';
+import { ROOF_COLOURS } from './render/sprites';
 import { audio } from './audio';
 import { loadSettings, saveSettings, type Settings } from './settings';
 import { storage } from './storage';
@@ -68,6 +69,10 @@ export class App {
   private modalQueue: (Notice & { fanfare?: boolean })[] = [];
   log: Notice[] = [];
   placing: string | null = null;
+  /** Uid of the building being moved. Never both this and `placing`. */
+  moving: number | null = null;
+  /** Quarter turns chosen for the building in hand. */
+  private placementRot: Rotation = 0;
   private storageOk: boolean;
   actions: ActionButton[] = [];
   /** One RT's size in tiles. The map is 1, 2 or 4 of these across. */
@@ -104,7 +109,7 @@ export class App {
       sheetOpen: sheetOpen(),
       modals: this.modalQueue.length,
       pendingEvent: !!this.s.pendingEvent,
-      placing: !!this.placing,
+      placing: !!this.placing || this.moving !== null,
       howtoOpen: !document.getElementById('howto')!.hidden,
     };
   }
@@ -526,11 +531,13 @@ export class App {
       down = null;
       if (wasDrag) return;
       const rect = canvas.getBoundingClientRect();
-      const tile = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top, !this.placing);
+      const tile = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top, !this.placing && this.moving === null);
       if (!tile) return;
-      if (this.placing) {
-        const ok = checkPlace(this.s, this.placing, tile.x, tile.y).ok;
-        this.view.ghost = { x: tile.x, y: tile.y, ok, sprite: def(this.placing).sprite };
+      if (this.placing || this.moving !== null) {
+        const d = this.placementDef();
+        if (!d) return;
+        const ok = this.checkAt(tile.x, tile.y).ok;
+        this.view.ghost = { x: tile.x, y: tile.y, ok, sprite: d.sprite, variant: this.ghostVariant(), rot: this.placementRot };
         this.updatePlacing();
         return;
       }
@@ -548,10 +555,51 @@ export class App {
     openSheet(t('log.title'), this.log.length ? this.log.map((n) => h('div', { class: `log-row tone-${n.tone}` }, h('strong', {}, n.title), h('p', {}, n.body))) : [h('p', {}, t('page.nothingYet'))]);
   }
 
-  // ---------- placement ----------
+  // ---------- placement and moving ----------
+  /** The def in hand: a new building, or the one being moved. */
+  private placementDef(): BuildingDef | null {
+    if (this.placing) return def(this.placing);
+    const b = this.moving !== null ? byUid(this.s, this.moving) : undefined;
+    return b ? def(b.def) : null;
+  }
+
+  private placementBuilding() {
+    return this.moving !== null ? byUid(this.s, this.moving) : undefined;
+  }
+
+  /** Roof colour for the ghost, so a preview matches the house that will stand there. */
+  private ghostVariant(): string | undefined {
+    const d = this.placementDef();
+    if (!d || d.id !== 'rumah') return undefined;
+    return ROOF_COLOURS[(this.moving ?? this.s.nextUid) % ROOF_COLOURS.length];
+  }
+
+  private checkAt(x: number, y: number): CheckResult {
+    if (this.placing) return checkPlace(this.s, this.placing, x, y);
+    const b = this.placementBuilding();
+    return b ? checkMove(this.s, b, x, y) : { ok: false, missing: [] };
+  }
+
   startPlacing(id: string): void {
     closeSheet();
     this.placing = id;
+    this.moving = null;
+    this.placementRot = 0;
+    this.view.ghost = null;
+    this.view.selected = null;
+    document.getElementById('mainbar')!.hidden = true;
+    document.getElementById('placebar')!.hidden = false;
+    this.updatePlacing();
+  }
+
+  /** Picks up an existing building. Free: it keeps its level, investment, permit and timer. */
+  startMoving(uid: number): void {
+    const b = byUid(this.s, uid);
+    if (!b) return;
+    closeSheet();
+    this.placing = null;
+    this.moving = uid;
+    this.placementRot = (b.rot ?? 0) as Rotation;
     this.view.ghost = null;
     this.view.selected = null;
     document.getElementById('mainbar')!.hidden = true;
@@ -561,47 +609,69 @@ export class App {
 
   stopPlacing(): void {
     this.placing = null;
+    this.moving = null;
+    this.placementRot = 0;
     this.view.ghost = null;
     document.getElementById('mainbar')!.hidden = false;
     document.getElementById('placebar')!.hidden = true;
   }
 
+  /** Turns the building in hand a quarter turn. Free, and the choice follows it onto the map. */
+  rotatePlacement(): void {
+    if (!this.placing && this.moving === null) return;
+    this.placementRot = ((this.placementRot + 1) % 4) as Rotation;
+    if (this.view.ghost) this.view.ghost.rot = this.placementRot;
+    this.updatePlacing();
+    this.tap(10);
+  }
+
   confirmPlace(): void {
     const g = this.view.ghost;
-    if (!this.placing || !g) return;
-    const r = place(this.s, this.placing, g.x, g.y);
-    if (r.ok) {
-      this.view.burst(g.x, g.y);
+    if (!g) return;
+    const rot = (g.rot ?? this.placementRot) as Rotation;
+    const building = this.placementBuilding();
+    if (building) {
+      if (!move(this.s, building, g.x, g.y).ok) return;
+      building.rot = rot;
+    } else {
+      if (!this.placing) return;
+      const r = place(this.s, this.placing, g.x, g.y, rot);
+      if (!r.ok) return;
       const cost = buildCost(this.s, def(this.placing));
       if (cost) this.view.pop(g.x, g.y, 'rupiah', -cost);
-      this.haptic(15);
-      audio.play('build');
-      // Paths are free, so keep painting them until the player taps Cancel.
-      if (def(this.placing).pathIncome) {
-        this.view.ghost = null;
-        this.updatePlacing();
-      } else this.stopPlacing();
-      this.save();
-      this.refresh();
     }
+    this.view.burst(g.x, g.y);
+    this.haptic(15);
+    audio.play('build');
+    // Paths are free, so keep painting them until the player taps Cancel.
+    if (!building && def(this.placing!).pathIncome) {
+      this.view.ghost = null;
+      this.updatePlacing();
+    } else this.stopPlacing();
+    this.save();
+    this.refresh();
   }
 
   private updatePlacing(): void {
-    if (!this.placing) return;
-    const d = def(this.placing);
+    const d = this.placementDef();
+    if (!d) return;
+    const moving = this.moving !== null;
     const info = document.getElementById('place-info')!;
     const btn = document.getElementById('place-ok') as HTMLButtonElement;
+    btn.textContent = moving ? t('page.move') : t('page.place');
     const g = this.view.ghost;
+    const price = moving ? t('build.freeMove') : rupiah(buildCost(this.s, d));
     if (!g) {
-      info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), h('span', {}, t('build.tapTile')));
+      info.replaceChildren(h('strong', {}, `${bName(d)} · ${price}`), h('span', {}, moving ? t('build.tapMove') : t('build.tapTile')));
       btn.disabled = true;
       return;
     }
-    const check = checkPlace(this.s, this.placing, g.x, g.y);
+    const check = this.checkAt(g.x, g.y);
     g.ok = check.ok;
     btn.disabled = !check.ok;
     const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
-    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', {}, d.pathIncome ? t('build.instant') : instant ? t('build.noPermit') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
+    const hint = moving ? t('build.freeMoveHint') : d.pathIncome ? t('build.instant') : instant ? t('build.noPermit') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths });
+    info.replaceChildren(h('strong', {}, `${bName(d)} · ${price}`), check.ok ? h('span', {}, hint) : missingList(check.missing));
   }
 
   // ---------- language ----------

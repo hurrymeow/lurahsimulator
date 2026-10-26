@@ -10,8 +10,8 @@ import { nextStarChecklist } from '../sim/stages';
 import { h, missingList } from './dom';
 import { openSheet } from './sheet';
 
-function spriteImg(name: string, size = 40): HTMLImageElement {
-  return h('img', { src: isoURL(name), alt: '', width: size, height: size, class: 'pixel' });
+function spriteImg(name: string, size = 40, rot = 0, variant?: string): HTMLImageElement {
+  return h('img', { src: isoURL(name, 3, rot, variant), alt: '', width: size, height: size, class: 'pixel' });
 }
 
 /** "Houses 3 · Attracts 1", so the population effect is visible before buying. */

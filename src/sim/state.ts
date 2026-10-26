@@ -49,8 +49,8 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
   return s;
 }
 
-export function addBuilding(s: GameState, id: string, x: number, y: number, status: Building['status'], invested = 0): Building {
-  const b: Building = { uid: s.nextUid++, def: id, x, y, level: 1, status, timer: 0, invested, placedAt: s.month };
+export function addBuilding(s: GameState, id: string, x: number, y: number, status: Building['status'], invested = 0, rot: Building['rot'] = 0): Building {
+  const b: Building = { uid: s.nextUid++, def: id, x, y, level: 1, status, timer: 0, invested, placedAt: s.month, rot };
   s.buildings.push(b);
   return b;
 }

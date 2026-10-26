@@ -208,6 +208,65 @@ test.describe('population and houses', () => {
   });
 });
 
+test.describe('free move and rotate', () => {
+  test('a building turns and moves for free, keeping its level and investment', async ({ page }) => {
+    const MOVE = { en: 'Move · free', id: 'Pindah · gratis' }[lang()];
+    const ROTATE = { en: 'Rotate · free', id: 'Putar · gratis' }[lang()];
+    const MOVE_BTN = { en: 'Move', id: 'Pindah' }[lang()];
+    const FREE_MOVE = { en: 'Free move', id: 'Pindah gratis' }[lang()];
+    await start(page);
+    await dismissModals(page);
+    const before = await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.speed = 0;
+      const s = a.s;
+      // A working, upgraded building in a free tile above the Kantor RT.
+      const b = { uid: s.nextUid++, def: 'warung', x: 6, y: 7, level: 3, status: 'active', timer: 0, invested: 1_234_000, placedAt: 2, rot: 0 };
+      s.buildings.push(b);
+      a.refresh();
+      return { uid: b.uid, money: s.res.rupiah, spent: s.stats.spent };
+    });
+
+    await page.evaluate((uid) => (window as unknown as { pakrt: any }).pakrt.inspect(uid), before.uid);
+    await expect(page.locator('.sheet-head h2')).toHaveText('Warung');
+    await expectLegible(page, 'inspector with move and rotate');
+
+    await page.locator('#sheet .action-row .btn', { hasText: ROTATE }).click();
+    const turned = await page.evaluate((uid) => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      const b = a.s.buildings.find((o: any) => o.uid === uid);
+      return { rot: b.rot, money: a.s.res.rupiah, spent: a.s.stats.spent };
+    }, before.uid);
+    expect(turned.rot).toBe(1);
+    expect(turned.money).toBe(before.money);
+    expect(turned.spent).toBe(before.spent);
+
+    await page.locator('#sheet .action-row .btn', { hasText: MOVE }).click();
+    await expect(page.locator('#placebar')).toBeVisible();
+    await expect(page.locator('#place-ok')).toHaveText(MOVE_BTN);
+    await expect(page.locator('#place-info')).toContainText(FREE_MOVE);
+    await expectLegible(page, 'move mode');
+
+    // Turn it once more from the placement bar, then drop it two tiles up.
+    await page.locator('#place-rotate').click();
+    const box = (await page.locator('#map').boundingBox())!;
+    const at = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.tileCentre(6, 6));
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    await expect(page.locator('#place-ok')).toBeEnabled();
+    const ghostRot = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ghost.rot);
+    expect(ghostRot).toBe(2);
+    await page.locator('#place-ok').click();
+    await expect(page.locator('#placebar')).toBeHidden();
+
+    const after = await page.evaluate((uid) => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      const b = a.s.buildings.find((o: any) => o.uid === uid);
+      return { x: b.x, y: b.y, rot: b.rot, level: b.level, invested: b.invested, money: a.s.res.rupiah, spent: a.s.stats.spent };
+    }, before.uid);
+    expect(after).toMatchObject({ x: 6, y: 6, rot: 2, level: 3, invested: 1_234_000, money: before.money, spent: before.spent });
+  });
+});
+
 test.describe('how to play', () => {
   test('shows on first launch, is legible, pauses the game, and stays dismissed', async ({ page }) => {
     await start(page);

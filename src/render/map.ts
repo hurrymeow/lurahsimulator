@@ -78,6 +78,10 @@ export interface Ghost {
   y: number;
   ok: boolean;
   sprite: string;
+  /** Roof colour variant, so a ghost matches the building it will become. */
+  variant?: string;
+  /** Quarter turns of the preview. */
+  rot?: number;
 }
 
 interface Hit {
@@ -406,7 +410,7 @@ export class MapView {
     const drawOne = (b: Building): void => {
       if (!this.onScreen(b.x, b.y)) return;
       const d = def(b.def);
-      const art = iso(d.sprite, this.variant(b));
+      const art = iso(d.sprite, this.variant(b), b.rot ?? 0);
       if (ai.has(b.uid)) {
         this.art(ctx, art, b.x, b.y);
         tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, art));
@@ -474,7 +478,7 @@ export class MapView {
     if (this.ghost) {
       const g = this.ghost;
       ctx.globalAlpha = 0.6;
-      this.art(ctx, iso(g.sprite), g.x, g.y);
+      this.art(ctx, iso(g.sprite, g.variant, g.rot), g.x, g.y);
       ctx.globalAlpha = 1;
       this.diamond(ctx, g.x, g.y);
       ctx.strokeStyle = g.ok ? '#4ade80' : '#f87171';

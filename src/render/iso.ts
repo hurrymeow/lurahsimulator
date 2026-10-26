@@ -45,6 +45,22 @@ export class Painter {
   id = 1;
   /** Skip the ink pass, for specks too small to outline. */
   bare = false;
+  /** Quarter turns clockwise. Side details move to whichever faces the turn brings forward. */
+  yaw = 0;
+
+  /** Where a screen face's paint comes from after the building turns, and whether it is seen in a mirror. */
+  private sourceFace(face: Face): { face: Face; flip: boolean } {
+    if (face === 'T' || (this.yaw & 3) === 0) return { face, flip: false };
+    switch (this.yaw & 3) {
+      case 1:
+        return face === 'L' ? { face: 'R', flip: false } : { face: 'L', flip: true };
+      case 2:
+        // The two faces now in view are the backs of the faces the art paints.
+        return { face, flip: true };
+      default:
+        return face === 'L' ? { face: 'R', flip: true } : { face: 'L', flip: false };
+    }
+  }
   constructor() {
     this.data = new Uint8ClampedArray(this.w * this.h * 4);
     this.ids = new Uint16Array(this.w * this.h);
@@ -91,7 +107,8 @@ export class Painter {
         const face: Face | null = py <= yb && py >= yb - h ? (left ? 'L' : 'R') : Math.abs(px - cx) / hw + Math.abs(py - (cy - h)) / hh <= 1 ? 'T' : null;
         if (!face) continue;
         const j = face === 'T' ? 0 : Math.floor(yb - py);
-        const p = paint(face, u, j, i);
+        const src = this.sourceFace(face);
+        const p = paint(src.face, src.flip ? 1 - u : u, j, i);
         if (p === null) continue;
         this.id = FACE_ID[face];
         // Baked ambient occlusion: walls darken toward the ground they stand on.
@@ -464,22 +481,24 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
 const cache = new Map<string, Art>();
 
 /** Isometric art for a sprite name. variant is a roof colour for rumah, or 'y' for a selokan. Unknown names get a plain box. */
-export function iso(name: string, variant?: string): Art {
-  const key = `${name}:${variant ?? ''}`;
+export function iso(name: string, variant?: string, yaw = 0): Art {
+  const turn = yaw & 3;
+  const key = `${name}:${variant ?? ''}:${turn}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const p = new Painter();
+  p.yaw = turn;
   (ART[name] ?? HIGHER_ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant);
   const art = p.finish();
   cache.set(key, art);
   return art;
 }
 
-export function isoURL(name: string, scale = 3): string {
-  const { canvas } = iso(name);
+export function isoURL(name: string, scale = 3, yaw = 0, variant?: string): string {
+  const { canvas } = iso(name, variant, yaw);
   // Crop the empty headroom so the thumbnail fills its button.
   let top = 0;
-  const a = iso(name).alpha;
+  const a = iso(name, variant, yaw).alpha;
   while (top < canvas.height && !a.slice(top * canvas.width, (top + 1) * canvas.width).some((v) => v)) top++;
   const h = canvas.height - top;
   const c = document.createElement('canvas');

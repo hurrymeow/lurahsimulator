@@ -1,9 +1,9 @@
 import { bBlurb, bName, t, type Key } from '../i18n';
 import type { App } from '../app';
-import { iconURL } from '../render/sprites';
+import { iconURL, ROOF_COLOURS } from '../render/sprites';
 import { rupiah } from '../format';
 import { def } from '../sim/content';
-import { checkDemolish, checkSkipPermit, checkUpgrade, demolish, skipPermit, upgrade } from '../sim/rules';
+import { checkDemolish, checkSkipPermit, checkUpgrade, demolish, rotate as rotateBuilding, skipPermit, upgrade } from '../sim/rules';
 import { REFUND } from '../sim/balance';
 import { byUid, levelMult, pathMult, upgradeCost } from '../sim/state';
 import { buildingIncome, buildingUpkeep } from '../sim/tick';
@@ -35,7 +35,7 @@ export function inspect(app: App, uid: number): void {
     inspect(app, uid);
   };
   const lines: Node[] = [
-    h('div', { class: 'inspect-head' }, spriteImg(d.sprite), h('div', {},
+    h('div', { class: 'inspect-head' }, spriteImg(d.sprite, 40, b.rot ?? 0, b.def === 'rumah' ? ROOF_COLOURS[b.uid % ROOF_COLOURS.length] : undefined), h('div', {},
       h('p', { class: 'meta' }, t('insp.status', { status: t(`status.${b.status}`), left: b.timer > 0 && (b.status === 'permit' || b.status === 'building') ? t('insp.left', { n: b.timer }) : '', level: b.level, max: d.maxLevel })),
       h('p', {}, bBlurb(d)),
     )),
@@ -69,6 +69,17 @@ export function inspect(app: App, uid: number): void {
       done();
     }, b.status === 'active'));
   }
+  lines.push(h('div', { class: 'action-row' },
+    actionButton(t('insp.move'), { ok: true }, () => {
+      app.tap(10);
+      app.startMoving(b.uid);
+    }, true),
+    actionButton(t('insp.rotate'), { ok: true }, () => {
+      rotateBuilding(b);
+      app.tap(10);
+      done();
+    }),
+  ));
   const dem = checkDemolish(s, b);
   lines.push(actionButton(dem.ok ? t('insp.demolishRefund', { amt: rupiah(Math.round((b.invested * REFUND) / 1000) * 1000) }) : t('insp.demolish'), dem, () => {
     demolish(s, b);
