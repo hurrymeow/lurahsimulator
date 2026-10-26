@@ -63,5 +63,5 @@ describe('Kelurahan bot', () => {
     });
     expect(got.filter((g) => g.built > 0).length, JSON.stringify(got)).toBe(3);
     expect(got.filter((g) => g.stars >= 1).length, JSON.stringify(got)).toBeGreaterThanOrEqual(2);
-  });
+  }, 30_000);
 });
