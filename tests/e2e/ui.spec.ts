@@ -512,6 +512,56 @@ test.describe('walkers and effects', () => {
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.fx.count)).toBe(0);
   });
 
+  test('a dense 36x52 map keeps the frame rate', async ({ page }) => {
+    await start(page);
+    // 6x CPU throttle stands in for a mid-range phone.
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 6 });
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      const s = app.s;
+      const defs = ['rumah', 'warung', 'posRonda', 'wifi', 'indomaret', 'alfamart', 'selokan'];
+      let n = 0;
+      for (let y = 0; y < 68; y++)
+        for (let x = 0; x < 52; x++) {
+          if ((x + y) % 2 || s.buildings.some((b: any) => b.x === x && b.y === y)) continue;
+          s.buildings.push({ uid: s.nextUid++, def: defs[n++ % defs.length], x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+        }
+      for (let i = 0; i < 16; i++) s.residents.push({ id: 900 + i, name: 'Mas Joko', job: i % 3 ? 'none' : 'ojol', pensiun: 0, fake: 0, arrived: 0 });
+      s.month = 2;
+    });
+    const fps = (busy: boolean) =>
+      page.evaluate(
+        (busy) =>
+          new Promise<number>((done) => {
+            const app = (window as unknown as { pakrt: any }).pakrt;
+            app.settings.effects = busy;
+            app.applySettings();
+            app.acc = 4800;
+            let n = 0;
+            const t0 = performance.now();
+            const f = (now: number) => {
+              n++;
+              if (n % 20 === 0) app.handleFx([{ kind: 'pop', x: 20, y: 30, res: 'rupiah', amount: 900000 }]);
+              if (now - t0 < 1500) requestAnimationFrame(f);
+              else done((n * 1000) / (now - t0));
+            };
+            requestAnimationFrame(f);
+          }),
+        busy,
+      );
+    let plain = 0;
+    let busy = 0;
+    for (let i = 0; i < 3; i++) {
+      plain = Math.max(plain, await fps(false));
+      busy = Math.max(busy, await fps(true));
+    }
+    console.log(`SPIKE effects off ${plain.toFixed(0)} fps, effects on ${busy.toFixed(0)} fps`);
+    expect(busy, `effects off ${plain.toFixed(0)} fps, busy ${busy.toFixed(0)} fps`).toBeGreaterThan(plain * 0.8);
+  });
+
   test('walkers, particles and night keep the frame rate', async ({ page }) => {
     await start(page);
     await dismissModals(page);

@@ -31,3 +31,23 @@ export const GRADE_BONUS = {
   C: {},
   D: {},
 } as const;
+
+
+/** AI-run RTs. */
+export const NEIGHBOUR = {
+  /** Rp the player pays to fund one RT, before inflation. */
+  fundCost: 500_000,
+  /** Months of building one funding buys, and the most it can bank. */
+  fundMonths: 3,
+  fundMax: 6,
+  /** Months between builds. Rajin builds faster. */
+  buildEvery: 3,
+  buildEveryRajin: 2,
+  /** Rajin earns this much more from each building. Kept for the iuran their residents pay. */
+  rajinIuran: 1.2,
+  /** Sabar an AI RT holds, from a base plus its social buildings. */
+  sabarBase: 45,
+  sabarPerSocial: 5,
+  sabarMax: 80,
+  startPop: 2,
+};

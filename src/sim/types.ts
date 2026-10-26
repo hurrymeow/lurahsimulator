@@ -60,6 +60,26 @@ export interface StageState {
   stars: Record<StageId, Stars>;
 }
 
+export type RtTrait = 'rajin' | 'hobi' | 'jarang';
+
+/** An AI-run RT. Its buildings sit apart from the player's so the player's income, combos and ranking never see them. */
+export interface Neighbour {
+  /** Which RT cell of the map it holds, counted in RTs from the player's at (0,0). Stable as the map grows. */
+  cx: number;
+  cy: number;
+  trait: RtTrait;
+  buildings: Building[];
+  pop: number;
+  stars: Stars;
+  /** Months of funding left. It builds only while this is above 0. */
+  funded: number;
+  lastBuild: number;
+  /** Builds attempted, for Hobi Wacana's skipped turns. */
+  turns: number;
+  discovered: string[];
+  ranking: RankingResult[];
+}
+
 export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer';
 
 export interface Requirement {
@@ -98,6 +118,10 @@ export interface BuildingDef {
   /** Job slots per level. */
   jobSlots?: Partial<Record<JobId, number>>;
   sprite: string;
+  /** Which lots it may stand on. RT buildings go inside an RT, RW buildings on RW seams. Defaults to 'rt'. */
+  scope?: 'rt' | 'rw' | 'kel';
+  /** Tiles on each side. Kelurahan buildings take 2x2. Defaults to 1. */
+  footprint?: 1 | 2;
 }
 
 export type BuildingStatus = 'permit' | 'building' | 'active' | 'mangkrak' | 'damaged';
@@ -214,6 +238,8 @@ export interface GameState {
   /** Month each event last fired, for cooldowns. Absent in older saves. */
   lastEvent?: Record<string, number>;
   stage: StageState;
+  /** AI-run RTs next to the player's. Empty at the RT stage. */
+  neighbours: Neighbour[];
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
   /** Quarterly report bookkeeping. Absent in older saves and on a fresh game. */
@@ -230,5 +256,17 @@ export type SimEffect =
 
 export type CheckResult = { ok: true } | { ok: false; missing: string[] };
 
-export const GRID_W = 9;
-export const GRID_H = 13;
+/** One RT. A RW is 2x2 RTs and a Kelurahan is 2x2 RWs, so the map only ever grows outwards from tile (0,0). */
+export const RT_W = 9;
+export const RT_H = 13;
+/** Current map size in tiles. Live bindings: setGrid changes them for every importer. */
+export let GRID_W = RT_W;
+export let GRID_H = RT_H;
+
+/** RTs along each side of the map at a stage. */
+export const STAGE_SPAN: Record<StageId, number> = { rt: 1, rw: 2, kelurahan: 4 };
+
+export function setGrid(stage: StageId): void {
+  GRID_W = RT_W * STAGE_SPAN[stage];
+  GRID_H = RT_H * STAGE_SPAN[stage];
+}

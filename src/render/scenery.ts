@@ -12,28 +12,45 @@ export const SEA = '#3f8f8c';
 /** World extent in tiles, beyond the buildable grid. */
 const XMIN = -12;
 const YMIN = -12;
-const XMAX = GRID_W + 8;
-const YMAX = GRID_H + 8;
 /** Headroom above the world's top corner, for the mountains. */
 const HEAD = 120;
-
-export const WORLD_W = (XMAX - XMIN + (YMAX - YMIN)) * (TW / 2);
-export const WORLD_H = HEAD + (XMAX - XMIN + (YMAX - YMIN)) * (TH / 2);
-/** Art position of grid tile (0,0)'s top corner inside the world canvas. */
-export const WORLD_OX = (YMAX - XMIN) * (TW / 2);
-export const WORLD_OY = HEAD - (XMIN + YMIN) * (TH / 2);
 /** Tiles further back than this are sky. Rows of equal depth are level on screen, so the horizon is flat. */
 const FAR = -12;
-/** Art row of the horizon inside the world canvas. */
-export const HORIZON = WORLD_OY + (FAR * TH) / 2;
-
-/** The sun sits in the valley between the two mountains, which stand on the horizon. */
-const M1 = WORLD_OX + (-8 * TW) / 2;
-const M2 = WORLD_OX + (4 * TW) / 2;
-export const SUN_X = (M1 + M2) / 2;
-export const SUN_Y = HORIZON - 70;
 /** Sun art is this many art pixels square, centred on SUN_X, SUN_Y. */
 export const SUN_SIZE = 44;
+
+let trees: Tree[] | null = null;
+let XMAX = 0;
+let YMAX = 0;
+// These follow the grid. layoutWorld sets them, and importers see the live values.
+export let WORLD_W = 0;
+export let WORLD_H = 0;
+/** Art position of grid tile (0,0)'s top corner inside the world canvas. */
+export let WORLD_OX = 0;
+export let WORLD_OY = 0;
+/** Art row of the horizon inside the world canvas. */
+export let HORIZON = 0;
+/** The sun sits in the valley between the two mountains, which stand on the horizon. */
+let M1 = 0;
+let M2 = 0;
+export let SUN_X = 0;
+export let SUN_Y = 0;
+
+/** Sizes the world for the current grid. Call after setGrid, then rebuild the cached canvas and trees. */
+export function layoutWorld(): void {
+  XMAX = GRID_W + 8;
+  YMAX = GRID_H + 8;
+  WORLD_W = (XMAX - XMIN + (YMAX - YMIN)) * (TW / 2);
+  WORLD_H = HEAD + (XMAX - XMIN + (YMAX - YMIN)) * (TH / 2);
+  WORLD_OX = (YMAX - XMIN) * (TW / 2);
+  WORLD_OY = HEAD - (XMIN + YMIN) * (TH / 2);
+  HORIZON = WORLD_OY + (FAR * TH) / 2;
+  M1 = WORLD_OX + (-8 * TW) / 2;
+  M2 = WORLD_OX + (4 * TW) / 2;
+  SUN_X = (M1 + M2) / 2;
+  SUN_Y = HORIZON - 70;
+  trees = null;
+}
 
 type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea';
 
@@ -174,7 +191,6 @@ export interface Tree {
   y: number;
 }
 
-let trees: Tree[] | null = null;
 
 /** Trees on the land round the kampung, back to front so nearer trees overlap farther ones. Drawn per frame so they can bounce. */
 export function worldTrees(): Tree[] {
@@ -245,3 +261,5 @@ export function decoAt(x: number, y: number): string | null {
   const n = hash(x * 11 + 3, y * 17 + 5);
   return n < 0.12 ? 'flowers' : n < 0.22 ? 'bush' : n < 0.45 ? 'rumput' : null;
 }
+
+layoutWorld();

@@ -1,11 +1,11 @@
 import { rupiahShort } from '../format';
 import { def } from '../sim/content';
-import { GRID_H, GRID_W, type Building, type GameState, type ResourceId } from '../sim/types';
+import { GRID_H, GRID_W, RT_H, RT_W, type Building, type GameState, type ResourceId } from '../sim/types';
 import { Atmosphere } from './atmosphere';
 import { drawTint, darkness, dusk, Fx } from './fx';
 import { iso, TH, TOP, TW, type Art } from './iso';
 import { Crowd } from './people';
-import { buildWorld, decoAt, HORIZON, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
+import { buildWorld, decoAt, layoutWorld, HORIZON, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
 import { ICONS, ROOF_COLOURS, sprite } from './sprites';
 
 export const RES_COLOUR: Record<ResourceId, string> = {
@@ -88,14 +88,24 @@ const POP_MS = 1200;
 const BURST_MS = 600;
 /** Margin below the map's front corner, in art pixels, so the bottom row is not flush with the edge. */
 const DEPTH = 6;
-/** Art-pixel size of the whole map, from the left corner to the right and from the headroom to the dirt edge. */
-const MAP_W = ((GRID_W + GRID_H) * TW) / 2;
-const MAP_H = TOP + ((GRID_W + GRID_H) * TH) / 2 + DEPTH;
+/** Art-pixel size of the whole map, from the left corner to the right and from the headroom to the dirt edge. Follows the grid. */
+let MAP_W = 0;
+let MAP_H = 0;
 /** How far dragging can go around the grid, in art pixels from tile (0,0)'s top corner. Up far enough to see the mountains. */
-const PAN_LEFT = (GRID_H * TW) / 2 + TW;
-const PAN_TOP = WORLD_OY - HORIZON + 150;
-const PAN_W = PAN_LEFT + (GRID_W * TW) / 2 + TW;
-const PAN_H = PAN_TOP + ((GRID_W + GRID_H) * TH) / 2 + TH;
+let PAN_LEFT = 0;
+let PAN_TOP = 0;
+let PAN_W = 0;
+let PAN_H = 0;
+
+function measure(): void {
+  MAP_W = ((GRID_W + GRID_H) * TW) / 2;
+  MAP_H = TOP + ((GRID_W + GRID_H) * TH) / 2 + DEPTH;
+  PAN_LEFT = (GRID_H * TW) / 2 + TW;
+  PAN_TOP = WORLD_OY - HORIZON + 150;
+  PAN_W = PAN_LEFT + (GRID_W * TW) / 2 + TW;
+  PAN_H = PAN_TOP + ((GRID_W + GRID_H) * TH) / 2 + TH;
+}
+measure();
 
 export class MapView {
   /** Art pixels to CSS pixels. */
@@ -133,6 +143,15 @@ export class MapView {
   private panY = 0;
   private centred = false;
 
+  /** The grid changed size: lay the world out again, redraw it and open on the player's RT. */
+  regrid(): void {
+    layoutWorld();
+    measure();
+    this.world = null;
+    this.centred = false;
+    this.resize();
+  }
+
   resize(): void {
     const dpr = window.devicePixelRatio || 1;
     const { clientWidth: w, clientHeight: h } = this.canvas;
@@ -145,8 +164,8 @@ export class MapView {
     this.viewH = h;
     if (!this.centred && w > 0) {
       // Open on the middle of the kampung, where the Kantor RT stands.
-      this.panX = w / 2 - (((GRID_W - GRID_H) * TW) / 4 + PAN_LEFT) * this.scale;
-      this.panY = h / 2 - (((GRID_W + GRID_H) * TH) / 4 + PAN_TOP) * this.scale;
+      this.panX = w / 2 - (((RT_W - RT_H) * TW) / 4 + PAN_LEFT) * this.scale;
+      this.panY = h / 2 - (((RT_W + RT_H) * TH) / 4 + PAN_TOP) * this.scale;
       this.centred = true;
     }
     this.clampPan();
@@ -279,10 +298,21 @@ export class MapView {
     return this.tileCentre(x, y).y - (art ? art.height : 0) * this.scale;
   }
 
-  private variant(s: GameState, b: Building): string | undefined {
+  /** Tiles holding a selokan and tiles holding anything, rebuilt each frame so lookups stay O(1) on a big map. */
+  private selokan = new Set<number>();
+  private occupied = new Set<number>();
+
+  /** True when a tile's art could reach the screen. Margin covers the tallest sprite and the walkers. */
+  private onScreen(x: number, y: number): boolean {
+    const c = this.corner(x, y);
+    const m = 80 * this.scale;
+    return c.x > -m && c.x < this.viewW + m && c.y > -m && c.y < this.viewH + m * 2;
+  }
+
+  private variant(b: Building): string | undefined {
     if (b.def === 'rumah') return ROOF_COLOURS[b.uid % ROOF_COLOURS.length];
     if (b.def !== 'selokan') return undefined;
-    const has = (dx: number, dy: number) => s.buildings.some((o) => o.def === 'selokan' && o.x === b.x + dx && o.y === b.y + dy);
+    const has = (dx: number, dy: number) => this.selokan.has((b.y + dy) * GRID_W + b.x + dx);
     return !has(1, 0) && !has(-1, 0) && (has(0, 1) || has(0, -1)) ? 'y' : undefined;
   }
 
@@ -301,14 +331,29 @@ export class MapView {
     ctx.fillRect(0, 0, this.viewW, this.viewH);
     ctx.fillStyle = SKY;
     ctx.fillRect(0, 0, this.viewW, Math.max(0, wy + HORIZON * sc));
-    ctx.drawImage(this.drawWorld(), wx, wy, WORLD_W * sc, WORLD_H * sc);
+    // Only the part of the world on screen, so a big map costs the same as a small one.
+    const sx = Math.max(0, Math.floor(-wx / sc));
+    const sy = Math.max(0, Math.floor(-wy / sc));
+    const sw = Math.min(WORLD_W - sx, Math.ceil(this.viewW / sc) + 2);
+    const sh = Math.min(WORLD_H - sy, Math.ceil(this.viewH / sc) + 2);
+    if (sw > 0 && sh > 0) ctx.drawImage(this.drawWorld(), sx, sy, sw, sh, wx + sx * sc, wy + sy * sc, sw * sc, sh * sc);
     this.drawBackdrop(ctx, wx, wy, now);
 
     const sel = s.buildings.find((b) => b.uid === this.selected);
     // Ambient occlusion: a soft contact shadow pooled round the foot of every standing building.
     const ao = contactShadow();
-    for (const b of s.buildings) {
-      if (FLAT_AO.has(b.def)) continue;
+    this.selokan.clear();
+    this.occupied.clear();
+    // AI-run RTs draw like the player's buildings but cannot be tapped or animated.
+    const ai = new Set<number>();
+    const all: Building[] = [...s.buildings];
+    for (const n of s.neighbours) for (const b of n.buildings) { all.push(b); ai.add(b.uid); }
+    for (const b of all) {
+      this.occupied.add(b.y * GRID_W + b.x);
+      if (b.def === 'selokan') this.selokan.add(b.y * GRID_W + b.x);
+    }
+    for (const b of all) {
+      if (FLAT_AO.has(b.def) || !this.onScreen(b.x, b.y)) continue;
       const c = this.tileCentre(b.x, b.y);
       const w = TW * 1.5 * sc;
       ctx.drawImage(ao, c.x - w / 2, c.y - w / 4, w, w / 2);
@@ -326,7 +371,7 @@ export class MapView {
     }
 
     // Back to front: tiles further up the screen draw first. Walkers slot in by the same depth.
-    const sorted = [...s.buildings].sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
+    const sorted = all.sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
     const tops = new Map<number, number>();
     this.hits = [];
     // Scenery on empty tiles joins the same back-to-front order, but never the tap list.
@@ -334,8 +379,9 @@ export class MapView {
     for (let d = 0; d < GRID_W + GRID_H - 1; d++)
       for (let x = Math.max(0, d - GRID_H + 1); x <= Math.min(d, GRID_W - 1); x++) {
         const y = d - x;
+        if (!this.onScreen(x, y) || this.occupied.has(y * GRID_W + x)) continue;
         const name = decoAt(x, y);
-        if (name && !(this.ghost && this.ghost.x === x && this.ghost.y === y) && !s.buildings.some((b) => b.x === x && b.y === y)) deco.push({ x, y, name });
+        if (name && !(this.ghost && this.ghost.x === x && this.ghost.y === y)) deco.push({ x, y, name });
       }
     let di = 0;
     const decoUntil = (depth: number, x: number) => {
@@ -348,8 +394,14 @@ export class MapView {
     for (const b of sorted) {
       decoUntil(b.x + b.y, b.x);
       this.crowd.drawUntil(ctx, b.x + b.y + 1, this.project, sc, now, this.motion);
+      if (!this.onScreen(b.x, b.y)) continue;
       const d = def(b.def);
-      const art = iso(d.sprite, this.variant(s, b));
+      const art = iso(d.sprite, this.variant(b));
+      if (ai.has(b.uid)) {
+        this.art(ctx, art, b.x, b.y);
+        tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, art));
+        continue;
+      }
       if (b.status === 'permit') {
         ctx.globalAlpha = 0.35;
         this.hits.push(this.art(ctx, art, b.x, b.y));
@@ -395,6 +447,7 @@ export class MapView {
 
     // Badges sit above every building so a taller neighbour in front never hides them.
     for (const b of sorted) {
+      if (!tops.has(b.y * GRID_W + b.x)) continue;
       const label = b.status === 'permit' || b.status === 'building' ? `${b.timer}` : b.status === 'mangkrak' ? '80%' : b.status === 'damaged' ? '!' : null;
       if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label);
     }

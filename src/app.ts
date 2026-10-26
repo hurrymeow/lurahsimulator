@@ -15,8 +15,8 @@ import { loadSettings, saveSettings, type Settings } from './settings';
 import { storage } from './storage';
 import { reportExtra } from './ui/report';
 import { h, missingList } from './ui/dom';
-import { RIVAL_NAME } from './data/ranking';
-import { score } from './sim/ranking';
+import { RIVAL_NAMES } from './data/ranking';
+import { areaScore } from './sim/ranking';
 import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
 
 export const MONTH_MS = 8000;
@@ -396,6 +396,7 @@ export class App {
 
   openStats(): void {
     const s = this.s;
+    const RIVAL_NAME = RIVAL_NAMES[s.stage.current];
     const ranks = [...s.ranking].reverse().map((r) =>
       h('div', { class: `log-row tone-${r.won ? 'good' : 'bad'}` },
         h('strong', {}, r.won ? t('stats.won', { year: r.year }) : t('stats.lost', { year: r.year, rival: RIVAL_NAME })),
@@ -408,7 +409,7 @@ export class App {
       h('h3', {}, t('stats.emasTitle')),
       h('p', { class: 'meta' }, t('stats.emas', { n: s.emas.toFixed(2) })),
       h('h3', {}, t('stats.rankTitle', { rival: RIVAL_NAME })),
-      h('p', { class: 'meta' }, t('stats.score', { n: score(s) })),
+      h('p', { class: 'meta' }, t('stats.score', { n: areaScore(s) })),
       ...(ranks.length ? ranks : [h('p', { class: 'meta' }, t('stats.firstRank'))]),
     ]);
   }

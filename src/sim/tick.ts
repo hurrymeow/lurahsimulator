@@ -7,6 +7,7 @@ import { comboIncomeMult, comboSystem } from './combos';
 import { def, placeableDefs } from './content';
 import { EMAS } from '../data/ranking';
 import { eventSystem } from './events';
+import { iuranFromNeighbours, neighboursSystem, neighboursYearEnd } from './grow';
 import { jobsSystem } from './jobs';
 import { mangkrakSystem, onBuildingFinished } from './projects';
 import { addEmas, yearlyRanking } from './ranking';
@@ -82,6 +83,7 @@ export function collectIncome(s: GameState, fx: Fx): void {
   }
   const kantor = s.buildings.find((b) => b.def === 'kantorRT');
   gain(s, fx, 'rupiah', population(s) * IURAN, kantor);
+  iuranFromNeighbours(s, fx);
 }
 
 /** Year 1 safety net: upkeep can never push the kas below zero. */
@@ -154,6 +156,7 @@ export function decay(s: GameState): void {
 export function yearEnd(s: GameState, fx: Fx): void {
   s.inflation *= 1 + INFLATION_PER_YEAR;
   addEmas(s, EMAS.perYear);
+  neighboursYearEnd(s, s.month / 12);
   yearlyRanking(s, fx, s.month / 12);
   fx.push({ kind: 'notice', title: t('sim.yearTitle', { n: s.month / 12 + 1 }), body: t('sim.yearBody', { pct: Math.round(INFLATION_PER_YEAR * 100) }), tone: 'info' });
 }
@@ -163,6 +166,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   advanceConstruction,
   collectIncome,
   comboSystem,
+  neighboursSystem,
   jobsSystem,
   wacanaSystem,
   mangkrakSystem,

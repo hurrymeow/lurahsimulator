@@ -1,5 +1,6 @@
 // Residents walking between buildings, ojol riders, and the tukang parkir's wave. Purely visual:
 // nothing here touches the simulation.
+import { lotAt } from '../sim/area';
 import { GRID_H, GRID_W, type GameState, type JobId } from '../sim/types';
 import { doorsOf, findPath, type Pt } from './path';
 
@@ -84,6 +85,8 @@ export class Crowd {
   private order: Walker[] = [];
   private cursor = 0;
   private blocked = new Uint8Array(GRID_W * GRID_H);
+  /** Tiles that belong to another RT. Walkers stay in their own. Rebuilt when the map grows. */
+  private foreign = new Uint8Array(0);
   private last = 0;
 
   private walkable = (x: number, y: number) => !this.blocked[y * GRID_W + x];
@@ -111,7 +114,12 @@ export class Crowd {
   update(s: GameState, now: number, motion: boolean): void {
     const dt = Math.min(100, this.last ? now - this.last : 0);
     this.last = now;
-    this.blocked.fill(0);
+    if (this.foreign.length !== GRID_W * GRID_H) {
+      this.foreign = new Uint8Array(GRID_W * GRID_H);
+      for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (lotAt(x, y) === 'other') this.foreign[y * GRID_W + x] = 1;
+      this.blocked = new Uint8Array(GRID_W * GRID_H);
+    }
+    this.blocked.set(this.foreign);
     const sites: Pt[] = [];
     const homes: Pt[] = [];
     for (const b of s.buildings) {

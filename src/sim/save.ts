@@ -1,5 +1,6 @@
 import { hasDef } from './content';
 import { SAVE_VERSION, newStageState } from './state';
+import { setGrid } from './types';
 import type { GameState } from './types';
 
 export function serialize(s: GameState): string {
@@ -16,6 +17,8 @@ export function deserialize(raw: string | null): GameState | null {
     if (!s.buildings.every((b) => hasDef(b.def))) return null;
     // Saves from before stages: start at 0 stars. The first tick catches the stars up.
     s.stage ??= newStageState();
+    s.neighbours ??= [];
+    setGrid(s.stage.current);
     return s;
   } catch {
     return null;

@@ -1,7 +1,9 @@
 import { bBlock, bName, t } from '../i18n';
 import { rupiah } from '../format';
 import { REFUND } from './balance';
+import { lotAt } from './area';
 import { def, hasDef } from './content';
+import { neighbourAt } from './grow';
 import { addBuilding, buildCost, buildingAt, count, inBounds, population, upgradeCost, year } from './state';
 import type { Building, BuildingDef, CheckResult, GameState } from './types';
 
@@ -29,7 +31,9 @@ export function checkPlace(s: GameState, id: string, x: number, y: number): Chec
   if (!d.placeable) missing.push(t('sim.cannotPlace', { name: bName(d) }));
   missing.push(...requirementGaps(s, d));
   if (!inBounds(x, y)) missing.push(t('sim.offMap'));
-  else if (buildingAt(s, x, y)) missing.push(t('sim.tileHas', { name: bName(def(buildingAt(s, x, y)!.def)) }));
+  else if (buildingAt(s, x, y) ?? neighbourAt(s, x, y)) missing.push(t('sim.tileHas', { name: bName(def((buildingAt(s, x, y) ?? neighbourAt(s, x, y))!.def)) }));
+  else if (lotAt(x, y) === 'other') missing.push(t('sim.notYours'));
+  else if (lotAt(x, y) !== (d.scope ?? 'rt')) missing.push(t(d.scope && d.scope !== 'rt' ? 'sim.needLot' : 'sim.needRtLot'));
   moneyGap(s, buildCost(s, d), missing);
   return result(missing);
 }
