@@ -5,6 +5,7 @@ import { rupiah } from '../format';
 import { activeCombos } from './combos';
 import { def } from './content';
 import { gateOpen } from './gate';
+import { banjirCut, wacanaNoReceipt } from './kel';
 import type { StageEventChoice } from '../data/higher';
 import { gain, type Fx } from './gain';
 import { VIRAL_REPAIR_AT } from './projects';
@@ -29,7 +30,7 @@ export function banjirProtection(s: GameState): number {
   const combos = activeCombos(s).reduce((n, a) => n + (a.combo.banjirProtect ?? 0), 0);
   // Kerja Bakti makes the selokan work harder for a while.
   const boost = s.modifiers.filter((m) => m.target === 'selokan').reduce((m, x) => m * x.incomeMult, 1);
-  return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL * boost + combos);
+  return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL * boost + combos + banjirCut(s));
 }
 
 /** Lapangan doubles the 17 Agustus prize. Panjat Pinang adds half again. */
@@ -104,6 +105,14 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
   if (c.inspectPrep && s.inspection) s.inspection.prep += c.inspectPrep;
   const efx = (c as StageEventChoice).fx;
   if (efx?.letterMult) s.rw.letterMult = { mult: efx.letterMult, until: s.month + (efx.months ?? 1) };
+  if (efx?.lombaScoreMult) s.kel.lomba = { mult: efx.lombaScoreMult, until: s.month + (efx.months ?? 1) };
+  if (efx?.cleanAudit) s.kel.cleanAudits += efx.cleanAudit;
+  if (efx?.sabarPerWacanaNoReceipt) {
+    const bare = wacanaNoReceipt(s);
+    s.res.sabar -= bare * efx.sabarPerWacanaNoReceipt;
+    // Showing everything counts as clean only when nothing is missing.
+    if (!bare) s.kel.cleanAudits++;
+  }
   if (efx?.popReportPct) s.rw.popReport = { pct: efx.popReportPct, until: s.month + (efx.months ?? 1) };
   if (c.modifier) s.modifiers.push({ id: `${e.id}-${s.month}`, label: eModLabel(e, choiceIdx, c.modifier.label), target: c.modifier.target, incomeMult: c.modifier.incomeMult, monthsLeft: c.modifier.months });
   const text = c.special === 'banjir' ? floodDamage(s, fx) : eResult(e, choiceIdx, c);

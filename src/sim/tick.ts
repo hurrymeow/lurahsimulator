@@ -12,6 +12,7 @@ import { inspectionSystem } from './inspection';
 import { jobsSystem } from './jobs';
 import { mangkrakSystem, onBuildingFinished } from './projects';
 import { addEmas, yearlyRanking } from './ranking';
+import { kelSystem, comboUpkeepMult } from './kel';
 import { rwSystem, rwYearEnd, burstMult } from './rw';
 import { stageSystem } from './stages';
 import { wacanaSystem } from './wacana';
@@ -42,7 +43,7 @@ export function buildingIncome(s: GameState, b: Building): number {
 export function buildingUpkeep(s: GameState, b: Building): number {
   const d = def(b.def);
   if (b.status === 'mangkrak') return 0;
-  return Math.round(d.upkeep * levelMult(b.level) * s.inflation);
+  return Math.round(d.upkeep * levelMult(b.level) * s.inflation * comboUpkeepMult(s, b));
 }
 
 function clampResources(s: GameState): void {
@@ -191,6 +192,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   collectIncome,
   comboSystem,
   rwSystem,
+  kelSystem,
   neighboursSystem,
   stempelSystem,
   jobsSystem,

@@ -7,8 +7,6 @@ const WORDS = { id: { play: 'Main', paused: 'Jeda', close: 'Tutup', onOff: /Nyal
 
 async function start(page: Page): Promise<void> {
   await page.goto(`/?debug&lang=${lang()}`);
-  await page.evaluate(() => localStorage.clear());
-  await page.reload();
   await passHome(page);
   await page.evaluate(() => document.fonts.ready);
 }
