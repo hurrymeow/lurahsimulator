@@ -268,3 +268,23 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
 .card-btn.static { cursor: default; }
 .meter { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; margin: 8px 0; border: 1px solid var(--line); }
 .meter > div { height: 100%; background: var(--sabar); }
+
+/* How to play: one full-screen page, shown on first launch and from the ? button. */
+#howto {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--bg);
+  overflow-y: auto;
+  padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+}
+.howto { width: min(420px, 100%); margin: 0 auto; display: flex; flex-direction: column; gap: 16px; text-align: center; }
+.howto h1 { margin: 0; font-family: var(--font-pixel); font-size: 30px; }
+.howto .meta { margin: 0; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.steps li { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.steps p { margin: 0; line-height: 1.4; color: var(--muted); }
+.steps p b { color: var(--text); }
+.pics { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; }
+.pic-text { font-size: 24px; font-weight: 700; color: var(--muted); padding: 0 4px; }
+#howtoGo { width: 100%; }

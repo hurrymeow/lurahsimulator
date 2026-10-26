@@ -42,3 +42,4 @@ One line per decision, with the reason. Newest at the bottom.
 - **No truncated text:** the ticker wraps over two lines instead of using an ellipsis.
 - **Map panning:** tiles have a 32px minimum, so a small phone pans the map by dragging instead of shrinking tiles to 20px.
 - **E2E tests:** Playwright at 320, 360 and 390px portrait, with a legibility scanner. Runs in CI on every PR. Canvas text is not covered by the scanner.
+- **Tutorial (Hari's ask, modelled on mainpecah):** one full-screen How to play page. Illustrated cards, one bold sentence plus one short sentence each, a single Got it button. Shown on first launch (flag in localStorage), reopenable from the ? button at the top. Pauses the game while open. Replaces the old welcome message.

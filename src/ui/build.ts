@@ -7,7 +7,7 @@ import { buildCost } from '../sim/state';
 import { h, missingList } from './dom';
 import { openSheet } from './sheet';
 
-function spriteImg(name: string): HTMLImageElement {
+function spriteImg(name: string, size = 40): HTMLImageElement {
   const src = sprite(name);
   const c = document.createElement('canvas');
   c.width = src.width * 4;
@@ -15,7 +15,7 @@ function spriteImg(name: string): HTMLImageElement {
   const ctx = c.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(src, 0, 0, c.width, c.height);
-  return h('img', { src: c.toDataURL(), alt: '', width: 40, height: 40, class: 'pixel' });
+  return h('img', { src: c.toDataURL(), alt: '', width: size, height: size, class: 'pixel' });
 }
 
 export function openBuild(app: App): void {
