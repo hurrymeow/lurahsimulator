@@ -1,7 +1,9 @@
 import { rupiahShort } from '../format';
 import { def } from '../sim/content';
 import { GRID_H, GRID_W, type Building, type GameState, type ResourceId } from '../sim/types';
+import { drawTint, darkness, Fx } from './fx';
 import { iso, TH, TOP, TW, type Art } from './iso';
+import { Crowd } from './people';
 import { buildWorld, decoAt, HORIZON, SEA, SKY, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W } from './scenery';
 import { ICONS, ROOF_COLOURS, sprite } from './sprites';
 
@@ -66,6 +68,17 @@ export class MapView {
   ox = 0;
   oy = 0;
   effects = true;
+  /** Walkers and idle loops move. Off with reduce motion. */
+  motion = true;
+  /** Game time in months, fractional, for day and night. */
+  clock = 0;
+  readonly crowd = new Crowd();
+  readonly fx = new Fx();
+  /** Income squash per tile key, by start time. */
+  private bounces = new Map<number, number>();
+  /** Night level this frame, 0 to 1. */
+  private night = 0;
+  private lights: { x: number; y: number; after: number }[] = [];
   private pops: Pop[] = [];
   private bursts: Burst[] = [];
   private world: HTMLCanvasElement | null = null;
@@ -157,6 +170,7 @@ export class MapView {
     // Several resources on one tile stack upward instead of overlapping.
     const stack = this.pops.filter((p) => p.x === x && p.y === y && performance.now() - p.born < POP_MS).length;
     this.pops.push({ x, y, text, res, born: performance.now(), dy: stack * 22 });
+    if (this.effects && amount > 0) this.bounces.set(y * GRID_W + x, performance.now());
   }
 
   private spawned = new Map<number, number>();
@@ -167,7 +181,9 @@ export class MapView {
   }
 
   burst(x: number, y: number): void {
-    if (this.effects) this.bursts.push({ x, y, born: performance.now() });
+    if (!this.effects) return;
+    this.bursts.push({ x, y, born: performance.now() });
+    this.fx.dustRing(x, y, performance.now());
   }
 
   /** The kampung and the land around it, drawn once at art resolution. */
@@ -176,18 +192,25 @@ export class MapView {
   }
 
   /** Draws art for a tile. Returns where it landed, for tap picking. */
-  private art(ctx: CanvasRenderingContext2D, art: Art, x: number, y: number, grow = 1): Hit {
+  /** CSS position of a ground point in tile space, where (x + 0.5, y + 0.5) is a tile centre. */
+  project = (fx: number, fy: number): { x: number; y: number } => ({
+    x: this.ox + ((fx - fy) * TW * this.scale) / 2,
+    y: this.oy + ((fx + fy) * TH * this.scale) / 2,
+  });
+
+  /** squash flattens the art for an income bounce, anchored on the ground. */
+  private art(ctx: CanvasRenderingContext2D, art: Art, x: number, y: number, grow = 1, squash = 0): Hit {
     const c = this.corner(x, y);
     const s = this.scale;
     const left = c.x - (TW * s) / 2;
     const top = c.y - TOP * s;
-    if (grow < 1) {
+    if (grow < 1 || squash) {
       // Scale up from the tile's ground centre, so the building rises out of its plot.
       const gx = c.x;
       const gy = c.y + (TH * s) / 2;
-      const w = art.canvas.width * s * grow;
-      const h = art.canvas.height * s * grow;
-      ctx.drawImage(art.canvas, gx - w / 2, gy - (TOP + TH / 2) * s * grow, w, h);
+      const w = art.canvas.width * s * grow * (1 + squash / 2);
+      const h = art.canvas.height * s * grow * (1 - squash);
+      ctx.drawImage(art.canvas, gx - w / 2, gy - (TOP + TH / 2) * s * grow * (1 - squash), w, h);
     } else ctx.drawImage(art.canvas, left, top, art.canvas.width * s, art.canvas.height * s);
     return { x, y, left, top, art };
   }
@@ -253,7 +276,7 @@ export class MapView {
       ctx.fill();
     }
 
-    // Back to front: tiles further up the screen draw first.
+    // Back to front: tiles further up the screen draw first. Walkers slot in by the same depth.
     const sorted = [...s.buildings].sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
     const tops = new Map<number, number>();
     this.hits = [];
@@ -269,8 +292,13 @@ export class MapView {
     const decoUntil = (depth: number, x: number) => {
       for (; di < deco.length && (deco[di].x + deco[di].y < depth || (deco[di].x + deco[di].y === depth && deco[di].x < x)); di++) this.art(ctx, iso(deco[di].name), deco[di].x, deco[di].y);
     };
+    this.night = this.effects ? darkness(this.clock) : 0;
+    this.lights = [];
+    this.crowd.update(s, now, this.motion);
+    this.crowd.begin();
     for (const b of sorted) {
       decoUntil(b.x + b.y, b.x);
+      this.crowd.drawUntil(ctx, b.x + b.y + 1, this.project, sc, now, this.motion);
       const d = def(b.def);
       const art = iso(d.sprite, this.variant(s, b));
       if (b.status === 'permit') {
@@ -283,6 +311,7 @@ export class MapView {
         this.hits.push(this.art(ctx, art, b.x, b.y));
         ctx.globalAlpha = 1;
         this.art(ctx, iso('scaffold'), b.x, b.y);
+        if (this.effects) this.fx.construct(b.x, b.y, now);
       } else if (b.status === 'mangkrak') {
         ctx.filter = 'grayscale(1) brightness(0.7)';
         this.hits.push(this.art(ctx, art, b.x, b.y));
@@ -296,13 +325,23 @@ export class MapView {
         const born = this.spawned.get(b.uid);
         const k = born === undefined ? 1 : Math.min(1, (now - born) / 350);
         if (k >= 1) this.spawned.delete(b.uid);
-        this.hits.push(this.art(ctx, art, b.x, b.y, 0.6 + 0.4 * (1 - (1 - k) ** 3)));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 0.6 + 0.4 * (1 - (1 - k) ** 3), this.squash(b, now)));
         if (b.level > 1) this.levelPips(ctx, b.x, b.y, b.level);
+        this.idle(ctx, b, now);
       }
       tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' || b.status === 'mangkrak' ? iso('scaffold') : art));
     }
 
     decoUntil(Infinity, 0);
+    this.crowd.drawUntil(ctx, Infinity, this.project, sc, now, this.motion);
+    this.fx.drawPuffs(ctx, this.project, sc, now, (fx, fy) => {
+      const k = Math.floor(fy) * GRID_W + Math.floor(fx);
+      return this.project(fx, fy).y - (tops.get(k) ?? this.project(fx, fy).y);
+    });
+    if (this.effects) {
+      drawTint(ctx, this.viewW, this.viewH, this.clock);
+      this.drawLights(ctx);
+    }
 
     // Badges sit above every building so a taller neighbour in front never hides them.
     for (const b of sorted) {
@@ -338,6 +377,8 @@ export class MapView {
       ctx.stroke();
     }
 
+    this.fx.drawPulse(ctx, this.viewW, this.viewH, now);
+    this.fx.drawCoins(ctx, this.project, sc, now);
     this.pops = this.pops.filter((p) => now - p.born < POP_MS);
     ctx.font = '700 16px "Atkinson Hyperlegible", system-ui, sans-serif';
     ctx.textAlign = 'center';
@@ -363,6 +404,75 @@ export class MapView {
       ctx.fillStyle = RES_COLOUR[p.res];
       ctx.fillText(p.text, cx + 6, py + 1);
       ctx.globalAlpha = 1;
+    }
+  }
+
+  /** Coins arc from a tile to a point on the canvas, such as the money chip. */
+  coins(x: number, y: number, n: number, to: { x: number; y: number }, land?: () => void): void {
+    if (this.effects) this.fx.coins(x, y, n, to, performance.now(), land);
+  }
+
+  /** Fanfare-tier glow around the map edge. */
+  pulse(): void {
+    if (this.effects) this.fx.pulse(performance.now());
+  }
+
+  /** Lit windows, skipping any hidden behind a building drawn in front of them. */
+  private drawLights(ctx: CanvasRenderingContext2D): void {
+    const s = this.scale;
+    ctx.globalAlpha = this.night;
+    ctx.fillStyle = '#fde68a';
+    for (const l of this.lights) {
+      const cx = l.x + s;
+      const cy = l.y + s;
+      const hidden = this.hits.slice(l.after).some((h) => {
+        const ax = Math.floor((cx - h.left) / s);
+        const ay = Math.floor((cy - h.top) / s);
+        return ax >= 0 && ay >= 0 && ax < h.art.canvas.width && ay < h.art.canvas.height && h.art.alpha[ay * h.art.canvas.width + ax] > 0;
+      });
+      if (!hidden) ctx.fillRect(l.x, l.y, 2 * s, 3 * s);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /** A building that just earned squashes down and springs back. */
+  private squash(b: Building, now: number): number {
+    const key = b.y * GRID_W + b.x;
+    const t = this.bounces.get(key);
+    if (t === undefined) return 0;
+    const k = (now - t) / 320;
+    if (k >= 1 || k < 0) {
+      this.bounces.delete(key);
+      return 0;
+    }
+    return 0.12 * Math.sin(k * Math.PI) * (1 - k);
+  }
+
+  /** Small loops on working buildings: the wifi light blinks, warung steam rises, the tukang parkir waves. */
+  private idle(ctx: CanvasRenderingContext2D, b: Building, now: number): void {
+    const c = this.tileCentre(b.x, b.y);
+    const s = this.scale;
+    const px = (x: number, y: number, col: string) => {
+      ctx.fillStyle = col;
+      ctx.fillRect(Math.round(c.x + x * s), Math.round(c.y + y * s), s, s);
+    };
+    if (b.def === 'wifi' && (!this.motion || Math.floor((now + b.uid * 211) / 450) % 3 === 0)) {
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
+      ctx.fillRect(Math.round(c.x - 2 * s), Math.round(c.y - 37 * s), 4 * s, 4 * s);
+      px(-1, -36, '#fca5a5');
+      px(0, -36, '#ef4444');
+    } else if (b.def === 'warung' && this.effects) this.fx.steam(b.x, b.y, now);
+    else if (b.def === 'rumah' && this.night > 0) {
+      // Windows light up after dark. They draw over the night tint, so note which buildings sit in front.
+      for (const [x, y] of [[-8, -5], [2, -3], [6, -5]]) this.lights.push({ x: Math.round(c.x + x * s), y: Math.round(c.y + y * s), after: this.hits.length });
+    } else if (b.def === 'parkir') {
+      // Waves at everyone, faster when someone walks past. Even pedestrians get the prit.
+      const gap = this.crowd.near(b.x, b.y, 2) ? 140 : 420;
+      const up = !this.motion || Math.floor((now + b.uid * 97) / gap) % 2 === 0;
+      const arm = up ? [[2, -8], [3, -9], [3, -10]] : [[2, -8], [3, -8], [4, -9]];
+      for (const [x, y] of arm) px(x, y, '#ea580c');
+      const hand = up ? [3, -11] : [5, -10];
+      px(hand[0], hand[1], '#d6b38a');
     }
   }
 
@@ -394,6 +504,6 @@ export class MapView {
   }
 
   get busy(): boolean {
-    return this.pops.length > 0 || this.bursts.length > 0;
+    return this.pops.length > 0 || this.bursts.length > 0 || this.fx.busy;
   }
 }

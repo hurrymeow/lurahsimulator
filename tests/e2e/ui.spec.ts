@@ -418,3 +418,98 @@ test.describe('text is legible and never cut off', () => {
     }
   });
 });
+
+test.describe('walkers and effects', () => {
+  /** Walker positions, rounded so idle bobbing does not count as moving. */
+  const spots = (page: Page) =>
+    page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.crowd.people.map((p: any) => `${p.fx.toFixed(2)},${p.fy.toFixed(2)}`).join(' '));
+
+  test('residents walk the map and ojol riders join them', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.residents[0].job = 'ojol';
+      app.speed = 0;
+    });
+    await page.waitForTimeout(200);
+    const people = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.crowd.people);
+    expect(people.length).toBeGreaterThan(4);
+    expect(people.some((p: { kind: string }) => p.kind === 'ojol')).toBe(true);
+    const before = await spots(page);
+    await page.waitForTimeout(4500);
+    expect(await spots(page)).not.toBe(before);
+    // Nobody stands inside a building.
+    const inside = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const solid = app.s.buildings.filter((b: any) => !['selokan', 'parkir'].includes(b.def));
+      return app.view.crowd.people.filter((p: any) => solid.some((b: any) => b.x === Math.floor(p.fx) && b.y === Math.floor(p.fy))).length;
+    });
+    expect(inside).toBe(0);
+  });
+
+  test('reduce motion keeps walkers still and effects off skips particles', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.settings.reduceMotion = true;
+      app.applySettings();
+      app.speed = 0;
+      app.handleFx([{ kind: 'pop', x: 2, y: 3, res: 'rupiah', amount: 900000 }]);
+      app.view.pulse();
+      app.view.burst(2, 3);
+    });
+    const before = await spots(page);
+    await page.waitForTimeout(1500);
+    expect(await spots(page)).toBe(before);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.fx.count)).toBe(0);
+  });
+
+  test('walkers, particles and night keep the frame rate', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      for (let i = 0; i < 20; i++) app.s.residents.push({ id: 900 + i, name: 'Mas Joko', job: i % 3 ? 'none' : 'ojol', pensiun: 0, fake: 0, arrived: 0 });
+    });
+    /** Frames per second over 1.5 s at night, with income every 20 frames. busy turns effects on: coins, dust, pulse, tint. */
+    const fps = (busy: boolean) =>
+      page.evaluate(
+        (busy) =>
+          new Promise<number>((done) => {
+            const app = (window as unknown as { pakrt: any }).pakrt;
+            app.settings.effects = busy;
+            app.applySettings();
+            app.s.month = 2;
+            app.acc = 4800;
+            let n = 0;
+            const t0 = performance.now();
+            const f = (now: number) => {
+              n++;
+              if (n % 20 === 0) {
+                app.handleFx([{ kind: 'pop', x: 2, y: 3, res: 'rupiah', amount: 900000 }, { kind: 'built', uid: app.s.buildings[0].uid }]);
+                app.view.pulse();
+              }
+              if (now - t0 < 1500) requestAnimationFrame(f);
+              else done((n * 1000) / (now - t0));
+            };
+            requestAnimationFrame(f);
+          }),
+        busy,
+      );
+    // Best of three runs each, interleaved, so one hiccup on a shared CI machine does not decide it.
+    let plain = 0;
+    let busy = 0;
+    for (let i = 0; i < 3; i++) {
+      plain = Math.max(plain, await fps(false));
+      busy = Math.max(busy, await fps(true));
+    }
+    // Compared with the same map with effects off, so a slow CI machine does not fail it.
+    expect(busy, `effects off ${plain.toFixed(0)} fps, busy ${busy.toFixed(0)} fps`).toBeGreaterThan(plain * 0.8);
+  });
+});

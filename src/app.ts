@@ -95,6 +95,7 @@ export class App {
     }
     const bar = document.getElementById('month-progress');
     if (bar) bar.style.width = `${(this.acc / MONTH_MS) * 100}%`;
+    this.view.clock = this.s.month + this.acc / MONTH_MS;
     this.view.draw(this.s);
     requestAnimationFrame((t) => this.frame(t));
   }
@@ -116,6 +117,7 @@ export class App {
       else pops.set(key, { ...f });
     }
     for (const p of pops.values()) if (Math.abs(p.amount) >= (p.res === 'rupiah' ? 1 : 0.5)) this.view.pop(p.x, p.y, p.res, p.amount);
+    this.flyCoins([...pops.values()].filter((p) => p.res === 'rupiah' && p.amount > 0));
     for (const f of fx) {
       if (f.kind === 'pop') continue;
       else if (f.kind === 'built') {
@@ -127,6 +129,7 @@ export class App {
         this.haptic(20);
         audio.play('build');
       } else if (f.kind === 'notice') {
+        if (f.fanfare) this.view.pulse();
         if (f.fanfare) this.modal(f);
         else this.notice(f);
       } else if (f.kind === 'event') {
@@ -142,6 +145,24 @@ export class App {
   }
 
   private showEventSoon = false;
+
+  /** Income coins arc into the money chip, which bumps as they land. A few per tick, biggest earners first. */
+  private flyCoins(earn: { x: number; y: number; amount: number }[]): void {
+    const chip = document.getElementById('chip-rupiah');
+    const map = document.getElementById('map');
+    if (!chip || !map || !this.view.effects) return;
+    const c = chip.getBoundingClientRect();
+    const m = map.getBoundingClientRect();
+    const to = { x: c.left + c.width / 2 - m.left, y: c.top + c.height / 2 - m.top };
+    const land = () => chip.animate?.([{ transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 160 });
+    let budget = 12;
+    for (const p of earn.sort((a, b) => b.amount - a.amount)) {
+      const n = Math.min(budget, p.amount >= 500_000 ? 3 : p.amount >= 150_000 ? 2 : 1);
+      if (n <= 0) break;
+      budget -= n;
+      this.view.coins(p.x, p.y, n, to, land);
+    }
+  }
 
   // ---------- events ----------
   /** A pending event pauses the game until the player picks a choice. The first choice is always free. */
@@ -492,6 +513,8 @@ export class App {
     document.documentElement.classList.toggle('reduce-motion', this.settings.reduceMotion);
     document.documentElement.classList.toggle('high-contrast', this.settings.highContrast);
     this.view.effects = this.settings.effects && !this.settings.reduceMotion;
+    this.view.motion = !this.settings.reduceMotion;
+    if (!this.view.effects) this.view.fx.clear();
     audio.set(this.settings);
     saveSettings(this.settings);
   }

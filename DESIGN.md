@@ -38,6 +38,8 @@ Follow these every session. If a change breaks one, fix the change.
 
 - Combo or unlock gets fanfare. Routine income gets a small number pop.
 - The game still feels OK with effects off.
+- Ambient life (walkers, idle loops) follows reduce motion. Particles, coins, pulse and night tint follow effects.
+- Canvas text (pops, badges) draws above the night tint.
 - Haptics toggle in settings.
 
 ## Accessibility
