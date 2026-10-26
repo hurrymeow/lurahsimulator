@@ -385,7 +385,7 @@ test.describe('text is legible and never cut off', () => {
     await expectLegible(page, 'Menu');
     await page.locator('.sheet-head .btn').click();
 
-    const panels = [['build', 'Build'], ['warga', 'Warga'], ['wacana', 'Wacana'], ['combo', 'Buku Combo'], ['log', 'Log'], ['stats', 'Kas & ranking'], ['settings', 'Settings']] as const;
+    const panels = [['build', 'Build'], ['warga', 'Residents'], ['wacana', 'Policies'], ['combo', 'Combo Book'], ['log', 'Log'], ['stats', 'Treasury & ranking'], ['settings', 'Settings']] as const;
     for (const [id, name] of panels) {
       await page.locator('#menu-btn').click();
       await page.locator(`#act-${id}`).click();
