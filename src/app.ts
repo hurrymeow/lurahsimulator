@@ -144,7 +144,7 @@ export class App {
     this.log.unshift(n);
     this.log.length = Math.min(this.log.length, 40);
     const t = document.getElementById('ticker')!;
-    t.replaceChildren(h('strong', {}, n.title), ' ', h('span', {}, n.body));
+    t.replaceChildren(h('strong', {}, n.title), h('span', {}, n.body));
     t.dataset.tone = n.tone;
   }
 
@@ -246,7 +246,23 @@ export class App {
   // ---------- map input ----------
   private bindMap(): void {
     const canvas = document.getElementById('map') as HTMLCanvasElement;
+    let down: { x: number; y: number; lastX: number; lastY: number; moved: boolean } | null = null;
+    canvas.addEventListener('pointerdown', (e) => {
+      canvas.setPointerCapture(e.pointerId);
+      down = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, moved: false };
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!down) return;
+      if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) down.moved = true;
+      if (down.moved) this.view.panBy(e.clientX - down.lastX, e.clientY - down.lastY);
+      down.lastX = e.clientX;
+      down.lastY = e.clientY;
+    });
+    canvas.addEventListener('pointercancel', () => (down = null));
     canvas.addEventListener('pointerup', (e) => {
+      const wasDrag = down?.moved;
+      down = null;
+      if (wasDrag) return;
       const rect = canvas.getBoundingClientRect();
       const t = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top);
       if (!t) return;

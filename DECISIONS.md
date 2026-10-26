@@ -38,3 +38,7 @@ One line per decision, with the reason. Newest at the bottom.
 - **Proyek mangkrak:** wifi 25%, Indomaret and Alfamart 20% chance to freeze at 80%. Never in year 1. A restarted project never freezes again, so it cannot soft-lock. Costs 1 Sabar a month while frozen.
 - **Viral repair path:** a frozen project restarts at normal price once Viral reaches 30, else at double. Viral is the only discount.
 - **Debug hook:** `?debug` in the URL exposes `window.pakrt` for play-testing.
+- **Font change (Hari feedback):** body and numbers now use Atkinson Hyperlegible. Pixelify Sans made 5 look like S/8 and was hard to read. Pixelify stays for the title, panel headings and primary buttons.
+- **No truncated text:** the ticker wraps over two lines instead of using an ellipsis.
+- **Map panning:** tiles have a 32px minimum, so a small phone pans the map by dragging instead of shrinking tiles to 20px.
+- **E2E tests:** Playwright at 320, 360 and 390px portrait, with a legibility scanner. Runs in CI on every PR. Canvas text is not covered by the scanner.
