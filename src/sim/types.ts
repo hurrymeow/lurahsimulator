@@ -123,6 +123,8 @@ export interface GameState {
   lastEvent?: Record<string, number>;
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
+  /** Kecamatan inspections. Absent in older saves. */
+  inspection?: { warnAt: number; visitAt?: number; prep: number };
   stats: { earned: number; spent: number; arrived: number; left: number };
 }
 

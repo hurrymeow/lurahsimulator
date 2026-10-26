@@ -7,6 +7,7 @@ import { comboIncomeMult, comboSystem } from './combos';
 import { def, placeableDefs } from './content';
 import { EMAS } from '../data/ranking';
 import { eventSystem } from './events';
+import { inspectionSystem } from './inspection';
 import { jobsSystem } from './jobs';
 import { mangkrakSystem, onBuildingFinished } from './projects';
 import { addEmas, yearlyRanking } from './ranking';
@@ -168,6 +169,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   safetyNet,
   residentsMove,
   checkUnlocks,
+  inspectionSystem,
   eventSystem,
 ];
 

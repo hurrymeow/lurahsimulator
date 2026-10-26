@@ -81,3 +81,5 @@ One line per decision, with the reason. Newest at the bottom.
 - **Kelurahan footprints (my call):** Kelurahan buildings take 2x2 tiles at half zoom, so they tap like one RT tile today. The tap rule becomes "tappable diamonds ≥32px". The 36x52 map must pass the CI frame-rate test before it is built.
 - **Stars (Hari):** 0★ to 3★ per stage, 3★ sends a declinable SK. Stars gate unlocks and never drop, so bad play only slows you.
 - **No elections:** the player is promoted by SK, never elected. Superiors stay faceless. This keeps higher stages out of real politics.
+- **Kecamatan inspections:** a scheduled event (first warning month 12, visit 2 months later, then every 10 months) scores the kampung 0-100 on selokan, Sabar, abandoned or flooded buildings and parkir liar. Baik pays 2 Orang Dalam and 5 Sabar, Cukup pays 1 Orang Dalam, Kurang costs 4 Sabar. It never soft-locks, and year 1 is untouched.
+- **Cat ulang:** the warning event offers paint (Rp 750.000, +20) or nasi kotak (1 Orang Dalam, +12). The bonus counts for that visit only and the report shows it as its own line, so the satire is a visible number. No real officials, only the process.
