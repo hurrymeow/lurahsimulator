@@ -521,10 +521,15 @@ export class App {
     const r = place(this.s, this.placing, g.x, g.y);
     if (r.ok) {
       this.view.burst(g.x, g.y);
-      this.view.pop(g.x, g.y, 'rupiah', -buildCost(this.s, def(this.placing)));
+      const cost = buildCost(this.s, def(this.placing));
+      if (cost) this.view.pop(g.x, g.y, 'rupiah', -cost);
       this.haptic(15);
       audio.play('build');
-      this.stopPlacing();
+      // Paths are free, so keep painting them until the player taps Cancel.
+      if (def(this.placing).pathIncome) {
+        this.view.ghost = null;
+        this.updatePlacing();
+      } else this.stopPlacing();
       this.save();
       this.refresh();
     }
@@ -544,7 +549,7 @@ export class App {
     const check = checkPlace(this.s, this.placing, g.x, g.y);
     g.ok = check.ok;
     btn.disabled = !check.ok;
-    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', {}, t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
+    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', {}, d.pathIncome ? t('build.instant') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
   }
 
   // ---------- language ----------

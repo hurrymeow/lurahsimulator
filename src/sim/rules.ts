@@ -43,8 +43,9 @@ export function place(s: GameState, id: string, x: number, y: number): CheckResu
   const cost = buildCost(s, d);
   s.res.rupiah -= cost;
   s.stats.spent += cost;
-  const b = addBuilding(s, id, x, y, d.permitMonths > 0 ? 'permit' : 'building', cost);
-  b.timer = d.permitMonths > 0 ? d.permitMonths : Math.max(1, d.buildMonths);
+  const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
+  const b = addBuilding(s, id, x, y, instant ? 'active' : d.permitMonths > 0 ? 'permit' : 'building', cost);
+  b.timer = instant ? 0 : d.permitMonths > 0 ? d.permitMonths : Math.max(1, d.buildMonths);
   return { ok: true, uid: b.uid };
 }
 

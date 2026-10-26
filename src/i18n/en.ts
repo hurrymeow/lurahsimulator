@@ -99,7 +99,7 @@ export const EN = {
   'set.languageHelp': 'Changes every label, message and the tutorial.',
   'set.newGame': 'New game',
   'set.newGameArmed': 'Tap again to wipe this kampung',
-  'set.satire': 'Pak RT is satire about systems and bureaucracy. Any resemblance to your actual kelurahan is a coincidence you should report, then wait 3 months for a reply.',
+  'set.satire': 'Kampung Kita is satire about systems and bureaucracy. Any resemblance to your actual kelurahan is a coincidence you should report, then wait 3 months for a reply.',
 
   // tutorial
   'how.title': 'How to play',
@@ -131,6 +131,7 @@ export const EN = {
   // build + inspect
   'build.title': 'Build',
   'build.needMore': 'Need {amt} more',
+  'build.instant': 'Free · built at once · tap more tiles to keep going',
   'build.permit': 'Permit {permit} mo · build {build} mo',
   'build.permitShort': 'Permit {permit} mo, build {build} mo.',
   'build.tapTile': 'Tap a tile.',
@@ -144,6 +145,7 @@ export const EN = {
   'insp.status': '{status}{left} · Level {level}/{max}',
   'insp.left': ' · {n} mo left',
   'insp.money': 'Income {income} · upkeep {upkeep} a month',
+  'insp.pathBonus': 'Beside a path: +{pct}% income',
   'insp.perMonth': '{bits} a month',
   'insp.skip': 'Skip queue · 1',
   'insp.maxLevel': 'Max level',
@@ -219,7 +221,7 @@ export const EN = {
   'modal.tap': 'Tap to continue',
   'event.result': 'Event result',
   'event.mod': '{label}: income x{mult} for {n} months',
-  'install.title': 'Install Pak RT',
+  'install.title': 'Install Kampung Kita',
   'install.ios': 'Tap Share, then "Add to Home Screen".',
 
   // sim messages
