@@ -58,6 +58,8 @@ export interface Building {
   placedAt: number;
   /** Uid of the shop a tukang parkir belongs to. */
   owner?: number;
+  /** A restarted project never freezes again. */
+  restarted?: boolean;
 }
 
 export interface Resident {

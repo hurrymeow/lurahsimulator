@@ -16,3 +16,5 @@ export const SABAR_MAX = 100;
 export const VIRAL_MAX = 100;
 /** Months without anything new before the pacing director steps in. */
 export const NOVELTY_GAP = 8;
+/** Each Viral point adds this fraction to shop income. */
+export const VIRAL_INCOME = 0.005;
