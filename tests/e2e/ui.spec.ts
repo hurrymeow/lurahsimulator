@@ -986,7 +986,7 @@ test.describe('RW stage', () => {
 
     await page.locator('#menu-btn').click();
     await page.locator('#act-combo').click();
-    await expect(page.locator('.sheet').getByText(lang() === 'en' ? /A health post and a barrier/ : /Pos kesehatan dan palang/).first()).toBeVisible();
+    await expect(page.locator('.sheet').getByText(lang() === 'en' ? /Needs .* within/ : /Butuh .* dalam jarak/).first()).toBeVisible();
     await expectLegible(page, 'RW Buku Combo');
     await page.locator('.sheet-head .btn').click();
 
