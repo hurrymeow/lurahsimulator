@@ -17,7 +17,7 @@ export interface InspectionScore {
 
 /** What the inspector sees. Prep inflates the total, never the real score. */
 export function inspectionScore(s: GameState): InspectionScore {
-  const levels = s.buildings.filter((b) => b.def === 'selokan' && b.status === 'active').reduce((n, b) => n + b.level, 0);
+  const levels = s.buildings.filter((b) => b.def === 'biopori' && b.status === 'active').reduce((n, b) => n + b.level, 0);
   const broken = s.buildings.filter((b) => b.status === 'mangkrak' || b.status === 'damaged').length;
   const selokan = Math.min(I.perCriterion, levels * I.selokanPerLevel);
   const sabar = Math.round((s.res.sabar / 100) * I.perCriterion);

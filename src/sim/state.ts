@@ -1,6 +1,6 @@
 import { NAMES, TITLES } from '../data/names';
 import { EMAS } from '../data/ranking';
-import { BASE_ATTRACT, LEVEL_BONUS, SPRAWL_FREE, SPRAWL_STEP, START, START_RESIDENTS } from './balance';
+import { BASE_ATTRACT, DECOR_CAP, LEVEL_BONUS, SPRAWL_FREE, SPRAWL_STEP, START, START_RESIDENTS } from './balance';
 import { def, hasDef } from './content';
 import { pick } from './rng';
 import { lotAt } from './area';
@@ -46,7 +46,7 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
   addBuilding(s, 'rumah', cx - 1, cy + 1, 'active');
   addBuilding(s, 'rumah', cx + 1, cy + 1, 'active');
   for (let i = 0; i < START_RESIDENTS; i++) addResident(s);
-  s.unlocked = ['rumah', 'warung', 'posRonda', 'selokan', 'jalan', 'kantorRT'];
+  s.unlocked = ['rumah', 'warung', 'posRonda', 'biopori', 'jalan', 'kantorRT'];
   return s;
 }
 
@@ -69,8 +69,10 @@ export const footprintOf = (id: string) => (hasDef(id) ? def(id).footprint ?? 1 
 
 /** True when the tile is one of the building's footprint tiles. */
 export function covers(b: { def: string; x: number; y: number }, x: number, y: number): boolean {
+  if (x < b.x || y < b.y) return false;
+  if (x === b.x && y === b.y) return true;
   const n = footprintOf(b.def);
-  return x >= b.x && y >= b.y && x < b.x + n && y < b.y + n;
+  return x < b.x + n && y < b.y + n;
 }
 
 /** Every tile a building covers, top corner first. */
@@ -123,19 +125,38 @@ export function upgradeCost(s: GameState, b: Building): number {
 /** Buildings within radius tiles of the tile or footprint, not counting the building itself. */
 export function neighbours(s: GameState, b: { x: number; y: number; def?: string }, radius = 1): Building[] {
   const n = b.def ? footprintOf(b.def) : 1;
+  const hiX = b.x + n - 1 + radius;
+  const hiY = b.y + n - 1 + radius;
   return s.buildings.filter((o) => {
-    if (o.x === b.x && o.y === b.y) return false;
+    // Cheap rejects first: this runs for every empty tile every month.
+    if (o.x > hiX || o.y > hiY || (o.x === b.x && o.y === b.y)) return false;
     const m = footprintOf(o.def);
-    return o.x <= b.x + n - 1 + radius && o.x + m - 1 >= b.x - radius && o.y <= b.y + n - 1 + radius && o.y + m - 1 >= b.y - radius;
+    return o.x + m - 1 >= b.x - radius && o.y + m - 1 >= b.y - radius;
   });
 }
 
 export function emptyTiles(s: GameState): { x: number; y: number }[] {
-  const taken = new Set(s.buildings.flatMap((b) => tilesOf(b).map((t) => t.y * GRID_W + t.x)));
+  const taken = new Set<number>();
+  for (const b of s.buildings) {
+    const n = footprintOf(b.def);
+    for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) taken.add((b.y + dy) * GRID_W + b.x + dx);
+  }
   const out: { x: number; y: number }[] = [];
   // Residents only settle inside the player's own RT, never on a seam lot or in a neighbour.
   for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (!taken.has(y * GRID_W + x) && lotAt(x, y) === 'rt') out.push({ x, y });
   return out;
+}
+
+/** Income multiplier from decorations standing near a working income building. Capped, and never on a decoration or path itself. */
+export function decorMult(s: GameState, b: Building): number {
+  const d = def(b.def);
+  if (!d.income || d.boost || d.pathIncome) return 1;
+  let bonus = 0;
+  for (const o of s.buildings) {
+    const od = def(o.def);
+    if (od.boost && isWorking(o) && Math.abs(o.x - b.x) <= od.boost.radius && Math.abs(o.y - b.y) <= od.boost.radius) bonus += od.boost.bonus;
+  }
+  return 1 + Math.min(DECOR_CAP, bonus);
 }
 
 /** Income multiplier for a working building beside a path (4-way, once however many paths touch it). */

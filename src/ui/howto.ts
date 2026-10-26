@@ -28,7 +28,7 @@ export const stepBody = (s: Step) => t(`how.${s.n}.body` as Key);
 
 // One card per idea: a picture row, one bold sentence, one short sentence.
 export const STEPS: Step[] = [
-  { id: 'build', n: 1, basic: true, pics: [{ sprite: 'warung' }, { text: '›' }, { sprite: 'selokan' }] },
+  { id: 'build', n: 1, basic: true, pics: [{ sprite: 'warung' }, { text: '›' }, { sprite: 'biopori' }] },
   { id: 'time', n: 8, basic: true, pics: [{ text: '❚❚' }, { text: '1x' }, { text: '2x' }, { text: '4x' }] },
   { id: 'orang', n: 2, when: (s) => s.res.orangDalam >= 1 && s.buildings.some((b) => b.status === 'permit'), pics: [{ icon: 'orangDalam' }, { text: '›' }, { sprite: 'permit' }, { text: '›' }, { sprite: 'warung' }] },
   { id: 'sabar', n: 3, when: (s) => s.stats.arrived >= 1 || s.res.sabar < 40, pics: [{ sprite: 'rumah' }, { icon: 'people' }, { icon: 'sabar' }] },
@@ -37,7 +37,7 @@ export const STEPS: Step[] = [
   { id: 'jobs', n: 5, when: (s) => s.month >= 3 && s.residents.length >= 3 && s.buildings.some((b) => b.status === 'active' && def(b.def).jobSlots), pics: [{ icon: 'people' }, { text: '›' }, { sprite: 'wifi' }, { icon: 'viral' }] },
   { id: 'wacana', n: 6, when: (s) => s.month >= 3 && s.buildings.some((b) => b.def === 'kantorRT' && b.status === 'active'), pics: [{ sprite: 'kantorRT' }, { icon: 'sabar' }] },
   { id: 'trouble', n: 7, when: (s) => s.buildings.some((b) => b.def === 'parkir' || b.status === 'mangkrak'), pics: [{ sprite: 'indomaret' }, { text: '80%' }, { sprite: 'parkir' }] },
-  { id: 'banjir', n: 9, when: (s) => s.lastEvent?.banjir !== undefined, pics: [{ sprite: 'selokan' }, { icon: 'sabar' }] },
+  { id: 'banjir', n: 9, when: (s) => s.lastEvent?.banjir !== undefined, pics: [{ sprite: 'biopori' }, { icon: 'sabar' }] },
   { id: 'ranking', n: 10, when: (s) => s.month >= 9, pics: [{ icon: 'people' }, { text: 'vs' }, { icon: 'sabar' }] },
 ];
 

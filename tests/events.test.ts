@@ -170,7 +170,7 @@ describe('banjir', () => {
   const flood = (selokanLevels: number, seed: number) => {
     const s = newGame(seed);
     s.month = 20;
-    for (let i = 0; i < selokanLevels; i++) addBuilding(s, 'selokan', i, 12, 'active');
+    for (let i = 0; i < selokanLevels; i++) addBuilding(s, 'biopori', i, 12, 'active');
     for (let i = 0; i < 6; i++) addBuilding(s, 'warung', i, 0, 'active');
     s.pendingEvent = 'banjir';
     resolveEvent(s, [], 0);
@@ -180,9 +180,9 @@ describe('banjir', () => {
   it('protection scales with selokan level and caps at 80%', () => {
     const s = newGame(7);
     expect(banjirProtection(s)).toBe(0);
-    addBuilding(s, 'selokan', 0, 0, 'active');
+    addBuilding(s, 'biopori', 0, 0, 'active');
     expect(banjirProtection(s)).toBeCloseTo(0.2);
-    for (let i = 1; i < 8; i++) addBuilding(s, 'selokan', i, 0, 'active');
+    for (let i = 1; i < 8; i++) addBuilding(s, 'biopori', i, 0, 'active');
     expect(banjirProtection(s)).toBe(0.8);
   });
 

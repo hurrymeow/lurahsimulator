@@ -1,8 +1,11 @@
 import type { BuildingDef } from '../sim/types';
+import { DECOR_BUILDINGS } from './decor';
+import { FARM_BUILDINGS } from './farm';
+import { SHOP_BUILDINGS } from './shops';
 
 // Add or tweak buildings here. The engine reads only these fields.
 // Every building must move at least one number.
-export const BUILDINGS: BuildingDef[] = [
+const CORE_BUILDINGS: BuildingDef[] = [
   {
     // The population lever. Listed first so a new player finds it before the shops.
     // One house, one more resident: `attract` 1 keeps houses from outrunning what the
@@ -55,19 +58,21 @@ export const BUILDINGS: BuildingDef[] = [
     sprite: 'posRonda',
   },
   {
-    id: 'selokan',
-    name: 'Selokan',
-    blurb: 'Drain. Cheapest build, longest permit. Each level softens banjir damage.',
-    cost: 500_000,
-    upkeep: 20_000,
+    // Replaced the selokan: a drain is one long connected channel, which a single tile cannot be.
+    // A biopori is a lone infiltration hole, so it makes sense on a tile by itself.
+    id: 'biopori',
+    name: 'Biopori',
+    blurb: 'Infiltration hole that soaks up rain. Cheap and quick. Each level softens banjir damage.',
+    cost: 400_000,
+    upkeep: 10_000,
     income: 0,
     attract: 0,
-    permitMonths: 3,
+    permitMonths: 1,
     buildMonths: 1,
     maxLevel: 3,
     placeable: true,
     removable: true,
-    sprite: 'selokan',
+    sprite: 'biopori',
   },
   {
     id: 'jalan',
@@ -200,7 +205,7 @@ export const BUILDINGS: BuildingDef[] = [
   {
     id: 'bankSampah',
     name: 'Bank Sampah',
-    blurb: 'Trades plastic for pocket money. Earns up to Rp 40rb a month and +0.5 Popularitas.',
+    blurb: 'Trades plastic for pocket money. Earns up to Rp 40rb a month and +0.5 Popularitas. Opens a pengepul job.',
     cost: 1_000_000,
     upkeep: 0,
     income: 40_000,
@@ -212,6 +217,7 @@ export const BUILDINGS: BuildingDef[] = [
     placeable: true,
     removable: true,
     requires: { stars: { stage: 'rt', n: 2 } },
+    jobSlots: { pengepul: 1 },
     sprite: 'bankSampah',
   },
   {
@@ -232,3 +238,6 @@ export const BUILDINGS: BuildingDef[] = [
     sprite: 'parkir',
   },
 ];
+
+/** Every RT building: the core set, then each content wave in turn. */
+export const BUILDINGS: BuildingDef[] = [...CORE_BUILDINGS, ...SHOP_BUILDINGS, ...FARM_BUILDINGS, ...DECOR_BUILDINGS];

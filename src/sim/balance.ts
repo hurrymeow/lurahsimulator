@@ -15,10 +15,10 @@ export const VIRAL_DECAY = 0.1;
 export const SABAR_MAX = 100;
 export const VIRAL_MAX = 100;
 /** Each building past the first SPRAWL_FREE makes the next one dearer: land, permits and "uang rapat" grow with the kampung. */
-export const SPRAWL_FREE = 8;
-export const SPRAWL_STEP = 0.05;
+export const SPRAWL_FREE = 10;
+export const SPRAWL_STEP = 0.03;
 /** Share of building income that goes up the chain as "setoran". Paying is the choice, so the kas never snowballs. */
-export const SETORAN_RATE = 0.12;
+export const SETORAN_RATE = 0.1;
 /** Popularitas lost each month per resident: bigger kampung, bigger expectations. */
 export const EXPECT_PER_RESIDENT = 0.1;
 /** Months without anything new before the pacing director steps in. */
@@ -74,3 +74,9 @@ export const STEMPEL = {
   /** Letters a build sends. Jarang Muncul sends double. */
   perBuild: 1,
 };
+
+/** Most extra income decorations can add to one building, however many stand nearby. */
+export const DECOR_CAP = 0.6;
+
+/** Most tukang that speed up construction. Each one adds a quarter more progress a month. */
+export const TUKANG_MAX = 3;

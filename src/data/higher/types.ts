@@ -37,7 +37,7 @@ export interface StageEffects {
   spawns?: { def: string; count: number };
   /** Resource gain in a calendar month only, and Rupiah owed in that month. 0 = January. */
   seasonal?: { month: number; res: Partial<Resources>; cost: number };
-  /** Cut to banjir damage, on top of selokan. The 80% cap stays. */
+  /** Cut to banjir damage, on top of biopori. The 80% cap stays. */
   banjirCut?: number;
   /** Counts as budget spent with no effect on the map. */
   countsAsSpent?: boolean;

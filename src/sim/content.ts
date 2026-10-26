@@ -29,3 +29,6 @@ export function hasDef(id: string): boolean {
 }
 
 export const placeableDefs = (): BuildingDef[] => ALL.filter((b) => b.placeable);
+
+/** Tiles that are ground cover, not places: paths, biopori and decorations. They never flood and never count as a building for the ranking. */
+export const isCover = (d: BuildingDef): boolean => !!(d.pathIncome || d.boost);
