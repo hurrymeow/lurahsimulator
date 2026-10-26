@@ -3,10 +3,9 @@ import type { App } from '../app';
 import { rupiah } from '../format';
 import { CATEGORIES, categoryOf } from '../data/categories';
 import { isoURL } from '../render/iso';
-import { gateOf, placeableDefs } from '../sim/content';
-import { gateOpen } from '../sim/rules';
+import { placeableDefs } from '../sim/content';
 import { requirementGaps } from '../sim/rules';
-import { attractTarget, buildCost, housing, population } from '../sim/state';
+import { attractTarget, buildCost, footprintOf, housing, population } from '../sim/state';
 import { nextStarChecklist } from '../sim/stages';
 import type { BuildCategory } from '../sim/types';
 import { h, missingList } from './dom';
@@ -29,15 +28,15 @@ let lastTab: BuildCategory | null = null;
 
 export function openBuild(app: App): void {
   const s = app.s;
-  // A later stage's buildings stay out of sight until the player is in that stage.
-  const visible = placeableDefs().filter((d) => { const g = gateOf(d); return !g || s.stage.current === g.stage || gateOpen(s, g); });
+  // Anything still locked (stars, population, a missing building, a year) stays out of sight. The header says what the next star wants.
+  const visible = placeableDefs().filter((d) => requirementGaps(s, d, { ignoreLimit: true }).length === 0);
   const card = (d: (typeof visible)[number]): HTMLElement => {
     const cost = buildCost(s, d);
     const missing = requirementGaps(s, d);
     if (s.res.rupiah < cost) missing.push(t('build.needMore', { amt: rupiah(cost - s.res.rupiah) }));
     const ok = missing.length === 0;
     const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
-    const meta = [instant ? t('build.noPermit') : t('build.permit', { permit: d.permitMonths, build: d.buildMonths }), ...populationBits(d)];
+    const meta = [t('build.size', { n: footprintOf(d.id) }), instant ? t('build.noPermit') : t('build.permit', { permit: d.permitMonths, build: d.buildMonths }), ...populationBits(d)];
     return h('button', { class: `card-btn ${ok ? '' : 'locked'}`, 'aria-disabled': String(!ok), onclick: () => (ok ? app.startPlacing(d.id) : undefined) },
       spriteImg(d.sprite),
       h('div', { class: 'card-text' },

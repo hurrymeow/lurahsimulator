@@ -6,7 +6,7 @@ import { def, gateOf, hasDef } from './content';
 import { gateOpen } from './gate';
 import { neighbourAt } from './grow';
 import { stageTitle } from './stages';
-import { refreshAccess } from './access';
+import { FLAT, refreshAccess } from './access';
 import { addBuilding, buildCost, count, covers, footprintOf, housing, inBounds, population, tilesOf, upgradeCost, year } from './state';
 import type { Building, BuildingDef, CheckResult, GameState } from './types';
 
@@ -33,12 +33,22 @@ export function requirementGaps(s: GameState, d: BuildingDef, opts: { ignoreLimi
   return missing;
 }
 
+/** A building stands on a jalan setapak and replaces it. Flat pieces (paths, plots, drains) never do. */
+const overwritesPath = (d: BuildingDef) => !FLAT.has(d.id);
+const pathUnder = (o: Building, d: BuildingDef) => o.def === 'jalan' && overwritesPath(d);
+
+/** Drops the plain paths a building is about to cover. */
+function clearPaths(s: GameState, d: BuildingDef, x: number, y: number, ignore?: number): void {
+  const tiles = footprintOf(d.id) === 1 ? [{ x, y }] : tilesOf({ def: d.id, x, y });
+  s.buildings = s.buildings.filter((o) => o.uid === ignore || !(pathUnder(o, d) && tiles.some((p) => covers(o, p.x, p.y))));
+}
+
 /** What is wrong with standing a building on this spot: off the map, in the way, or on the wrong lot. `ignore` is a building that is moving, so it never blocks itself. */
 export function siteGaps(s: GameState, d: BuildingDef, x: number, y: number, ignore?: number): string[] {
   const missing: string[] = [];
   const tiles = footprintOf(d.id) === 1 ? [{ x, y }] : tilesOf({ def: d.id, x, y });
   const off = tiles.find((p) => !inBounds(p.x, p.y));
-  const hit = off ? undefined : tiles.map((p) => s.buildings.find((o) => o.uid !== ignore && covers(o, p.x, p.y)) ?? neighbourAt(s, p.x, p.y)).find(Boolean);
+  const hit = off ? undefined : tiles.map((p) => s.buildings.find((o) => o.uid !== ignore && !pathUnder(o, d) && covers(o, p.x, p.y)) ?? neighbourAt(s, p.x, p.y)).find(Boolean);
   const lots = off ? [] : tiles.map((p) => lotAt(p.x, p.y));
   if (off) missing.push(t('sim.offMap'));
   else if (hit) missing.push(t('sim.tileHas', { name: bName(def(hit.def)) }));
@@ -67,6 +77,7 @@ export function place(s: GameState, id: string, x: number, y: number): CheckResu
   s.res.orangDalam -= d.orangDalamCost ?? 0;
   s.stats.spent += cost;
   const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
+  clearPaths(s, d, x, y);
   const b = addBuilding(s, id, x, y, instant ? 'active' : d.permitMonths > 0 ? 'permit' : 'building', cost);
   b.timer = instant ? 0 : d.permitMonths > 0 ? d.permitMonths : Math.max(1, d.buildMonths);
   refreshAccess(s);
@@ -140,6 +151,7 @@ export function checkMove(s: GameState, b: Building, x: number, y: number): Chec
 export function moveBuilding(s: GameState, b: Building, x: number, y: number): CheckResult {
   const check = checkMove(s, b, x, y);
   if (!check.ok) return check;
+  clearPaths(s, def(b.def), x, y, b.uid);
   b.x = x;
   b.y = y;
   refreshAccess(s);

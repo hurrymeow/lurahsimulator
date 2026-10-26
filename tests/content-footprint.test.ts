@@ -19,7 +19,7 @@ describe('categories and sizes', () => {
     const s = newGame(1);
     s.stage.stars.rt = 2;
     s.res.rupiah = 50_000_000;
-    const at = { x: 4, y: 4 };
+    const at = { x: 7, y: 3 };
     addBuilding(s, 'lapangan', at.x, at.y, 'active');
     expect(buildingAt(s, at.x + 2, at.y + 2)?.def).toBe('lapangan');
     expect(checkPlace(s, 'potBunga', at.x + 1, at.y + 1).ok).toBe(false);

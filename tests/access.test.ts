@@ -27,12 +27,14 @@ describe('road access', () => {
   it('a path chain from the kantor wakes it, and removing the chain switches it off again', () => {
     const s = newGame(1);
     const k = s.buildings.find((b) => b.def === 'kantorRT')!;
-    const w = addBuilding(s, 'warung', k.x + 3, k.y + 2, 'active');
-    place(s, 'jalan', k.x + 1, k.y + 2);
+    // The starter lanes end at k.x + 4, k.y + 2. The warung sits two tiles off them.
+    const w = addBuilding(s, 'warung', k.x + 5, k.y + 4, 'active');
+    refreshAccess(s);
+    place(s, 'jalan', k.x + 4, k.y + 3);
     expect(w.noRoad).toBe(true);
-    place(s, 'jalan', k.x + 2, k.y + 2);
+    place(s, 'jalan', k.x + 4, k.y + 4);
     expect(w.noRoad).toBeUndefined();
-    const link = buildingAt(s, k.x + 1, k.y + 2)!;
+    const link = buildingAt(s, k.x + 4, k.y + 3)!;
     demolish(s, link);
     expect(w.noRoad).toBe(true);
   });
