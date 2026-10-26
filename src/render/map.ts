@@ -92,6 +92,8 @@ const DEPTH = 6;
 /** Art-pixel size of the whole map, from the left corner to the right and from the headroom to the dirt edge. Follows the grid. */
 let MAP_W = 0;
 let MAP_H = 0;
+/** Extra pan below the grid's front corner, in tiles. The sea carries on past the world's edge, so it never runs out. */
+const PAN_BELOW = 7;
 /** How far dragging can go around the grid, in art pixels from tile (0,0)'s top corner. Up far enough to see the mountains. */
 let PAN_LEFT = 0;
 let PAN_TOP = 0;
@@ -104,7 +106,7 @@ function measure(): void {
   PAN_LEFT = (GRID_H * TW) / 2 + TW;
   PAN_TOP = WORLD_OY - HORIZON + 150;
   PAN_W = PAN_LEFT + (GRID_W * TW) / 2 + TW;
-  PAN_H = PAN_TOP + ((GRID_W + GRID_H) * TH) / 2 + TH;
+  PAN_H = PAN_TOP + ((GRID_W + GRID_H) * TH) / 2 + PAN_BELOW * TH;
 }
 measure();
 

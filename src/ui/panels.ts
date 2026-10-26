@@ -1,10 +1,10 @@
 import { cEffect, cHint, cName, cStory, jBlurb, jName, t, wLine, wName } from '../i18n';
-import { jobDef } from '../data/jobs';
+import { LEVEL_MONTHS, jobDef } from '../data/jobs';
 import { WACANA } from '../data/wacana';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { bookCombos, comboMemberNames } from '../sim/combos';
-import { checkAssign, assign, liveJobs, slots, used } from '../sim/jobs';
+import { checkAssign, assign, levelOf, liveJobs, slots, used } from '../sim/jobs';
 import { checkRepair, repair, repairCost } from '../sim/events';
 import { checkRestart, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
 import { announce, checkAnnounce, wacanaCost } from '../sim/wacana';
@@ -19,7 +19,7 @@ export function openResidents(app: App): void {
   const rows = s.residents.map((r) =>
     h('button', { class: 'card-btn slim', onclick: () => openResident(app, r.id) },
       h('div', { class: 'card-text' },
-        h('div', { class: 'card-title' }, h('strong', {}, r.name), h('span', { class: 'meta' }, jobDef(r.job) ? jName(jobDef(r.job)!) : t('res.noJob'))),
+        h('div', { class: 'card-title' }, h('strong', {}, r.name), h('span', { class: 'meta' }, `${jobDef(r.job) ? jName(jobDef(r.job)!) : t('res.noJob')} · ${t('res.level', { n: levelOf(r) })}`)),
         r.job === 'pns' ? h('p', { class: 'meta' }, t('res.pensiun', { n: Math.round(r.pensiun) })) : null,
         r.job === 'buzzer' ? h('p', { class: 'meta' }, t('res.fake', { n: Math.round(r.fake) })) : null,
       ),
@@ -41,7 +41,9 @@ function openResident(app: App, id: number): void {
       check.ok ? null : h('ul', { class: 'missing' }, ...check.missing.map((m) => h('li', {}, m))),
     );
   });
-  openSheet(r.name, choices);
+  const lv = levelOf(r);
+  const next = LEVEL_MONTHS[lv];
+  openSheet(r.name, [h('p', { class: 'meta' }, next === undefined ? t('res.levelMax', { n: lv }) : t('res.levelNext', { n: lv, left: next - (r.xp ?? 0) })), ...choices]);
 }
 
 // ---------- Wacana ----------
