@@ -1,6 +1,6 @@
 import type { App } from '../app';
 import { storage } from '../storage';
-import { picRow, STEPS } from './howto';
+import { picRow, STEPS, stepBody, stepHead } from './howto';
 
 const KEY = 'pakrt.tips';
 
@@ -32,8 +32,8 @@ export function setupTips(app: App): void {
     st.seen.push(next.id);
     save();
     a.modal({
-      title: next.head,
-      body: next.body,
+      title: stepHead(next),
+      body: stepBody(next),
       tone: 'info',
       tip: {
         pics: picRow(next),

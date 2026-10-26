@@ -1,5 +1,11 @@
 import { defineConfig } from '@playwright/test';
 
+const PHONES = [
+  { name: 'phone-360', viewport: { width: 360, height: 640 } },
+  { name: 'phone-390', viewport: { width: 390, height: 844 } },
+  { name: 'phone-320', viewport: { width: 320, height: 568 } },
+];
+
 export default defineConfig({
   testDir: 'tests/e2e',
   timeout: 60_000,
@@ -16,9 +22,12 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
-  projects: [
-    { name: 'phone-360', use: { viewport: { width: 360, height: 640 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true } },
-    { name: 'phone-390', use: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true } },
-    { name: 'phone-320', use: { viewport: { width: 320, height: 568 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true } },
-  ],
+  // Every phone runs in both languages. Indonesian strings run longer, so it is the one most likely to clip.
+  // The spec reads the language from the project name suffix.
+  projects: PHONES.flatMap((p) =>
+    (['id', 'en'] as const).map((lang) => ({
+      name: `${p.name}-${lang}`,
+      use: { viewport: p.viewport, deviceScaleFactor: 2, hasTouch: true, isMobile: true, locale: lang === 'id' ? 'id-ID' : 'en-US' },
+    })),
+  ),
 });

@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { LOSE, RIVAL_BASE, RIVAL_JITTER, RIVAL_NAME, RIVAL_PER_YEAR, SCORE, WIN } from '../data/ranking';
 import { gain, type Fx } from './gain';
 import { randInt } from './rng';
@@ -26,10 +27,10 @@ export function yearlyRanking(s: GameState, fx: Fx, year: number): void {
     gain(s, fx, 'sabar', WIN.sabar, hq);
     gain(s, fx, 'orangDalam', WIN.orangDalam);
     addEmas(s, WIN.emas);
-    fx.push({ kind: 'notice', title: `Year ${year}: you beat ${RIVAL_NAME}`, body: `${us} to ${them}. Sabar +${WIN.sabar}, Orang Dalam +${WIN.orangDalam}. Indonesia Emas moved ${WIN.emas}%.`, tone: 'good', fanfare: true });
+    fx.push({ kind: 'notice', title: t('sim.rankWinTitle', { year, rival: RIVAL_NAME }), body: t('sim.rankWinBody', { us, them, sabar: WIN.sabar, od: WIN.orangDalam, emas: WIN.emas }), tone: 'good', fanfare: true });
   } else {
     gain(s, fx, 'sabar', LOSE.sabar, hq);
-    fx.push({ kind: 'notice', title: `Year ${year}: ${RIVAL_NAME} won`, body: `${us} to ${them}. Sabar ${LOSE.sabar}. Grow your kampung and try next year.`, tone: 'bad' });
+    fx.push({ kind: 'notice', title: t('sim.rankLoseTitle', { year, rival: RIVAL_NAME }), body: t('sim.rankLoseBody', { us, them, sabar: LOSE.sabar }), tone: 'bad' });
   }
   s.lastNovelty = s.month;
 }

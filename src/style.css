@@ -322,3 +322,9 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 /* Tutorial tips: a modal card with a picture row and a Skip tips button. */
 .modal .card .pics { margin-bottom: 8px; }
 .tip-skip { margin-top: 8px; width: 100%; }
+
+.slider-row { display: flex; justify-content: space-between; gap: var(--gap); }
+.slider { width: 100%; min-height: 44px; accent-color: var(--accent); }
+
+.lang-row .row { flex-wrap: wrap; }
+.lang-row .row .btn { flex: 1 1 140px; }
