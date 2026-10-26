@@ -218,8 +218,10 @@ describe('auto jobs', () => {
       const j = autoPick(s, i)!;
       n[j] = (n[j] ?? 0) + 1;
     }
-    expect(n.buzzer).toBeGreaterThan(n.influencer);
-    expect(n.pns).toBeLessThan(n.buzzer);
+    expect(n.ojol).toBeGreaterThan(n.influencer);
+    expect(n.pns ?? 0).toBeLessThan(n.ojol);
+    // Buzzer exposure drains Sabar, so residents never walk into it on their own.
+    expect(n.buzzer).toBeUndefined();
   });
 
   it('keeps a manual choice, including no job', () => {

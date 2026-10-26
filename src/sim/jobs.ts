@@ -41,7 +41,7 @@ export function assign(s: GameState, r: Resident, job: JobId, manual = false): C
 
 /** Jobs with an open slot, each with its appeal as the odds of being picked. */
 export function openJobs(s: GameState): { job: Exclude<JobId, 'none'>; appeal: number }[] {
-  return JOBS.filter((j) => used(s, j.id) < slots(s, j.id)).map((j) => ({ job: j.id, appeal: j.appeal }));
+  return JOBS.filter((j) => j.appeal > 0 && used(s, j.id) < slots(s, j.id)).map((j) => ({ job: j.id, appeal: j.appeal }));
 }
 
 /**
