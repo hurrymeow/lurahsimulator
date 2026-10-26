@@ -10,6 +10,7 @@ import { eventSystem } from './events';
 import { jobsSystem } from './jobs';
 import { mangkrakSystem, onBuildingFinished } from './projects';
 import { addEmas, yearlyRanking } from './ranking';
+import { stageSystem } from './stages';
 import { wacanaSystem } from './wacana';
 import { chance, pick, randInt } from './rng';
 import { noteNet, quarterSystem, snapshot } from './report';
@@ -169,6 +170,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   sabarRegen,
   safetyNet,
   residentsMove,
+  stageSystem,
   checkUnlocks,
   eventSystem,
   quarterSystem,

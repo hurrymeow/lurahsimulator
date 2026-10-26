@@ -302,6 +302,37 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
     const ay = TOP + TH / 2 - 32;
     for (const [dx, dy] of [[-4, -1], [-5, -3], [-4, -5], [4, -1], [5, -3], [4, -5], [-7, -3], [7, -3], [0, -2], [0, -3]]) p.set(ax + dx, ay + dy, dx === 0 ? 'r' : 'c');
   },
+  // Two floors of rooms with a tin roof.
+  kosan: (p) => {
+    p.shadow(1);
+    p.box(1, 15, 'o', (face, u, j, i) => {
+      if (face === 'T') return undefined;
+      if (j < 1) return 'S';
+      if (face === 'L' && within(u, 0.42, 0.6) && j < 5) return 'k';
+      if ((j >= 7 && j < 10) || (j >= 2 && j < 4 && !(face === 'L' && within(u, 0.36, 0.66)))) return i % 5 >= 2 ? 'l' : undefined;
+      return undefined;
+    });
+    p.roof(1, 15, 6, 'R');
+  },
+  // Open field: grass with chalk lines and a goalpost.
+  lapangan: (p) => {
+    p.bare = true;
+    p.ground((a, b) => {
+      if (a < 0.06 || a > 0.94 || b < 0.06 || b > 0.94) return INK;
+      if (a < 0.1 || a > 0.9 || b < 0.1 || b > 0.9 || Math.abs(a - 0.5) < 0.03) return 'w';
+      return Math.floor(a * 5) % 2 ? 'g' : 'G';
+    });
+  },
+  // A low shed with blue bins out front.
+  bankSampah: (p) => {
+    p.shadow(3);
+    p.box(3, 7, 'a', (face, u, j) => {
+      if (face === 'L' && within(u, 0.15, 0.85) && within(j, 2, 5)) return 'B';
+      return j === 0 ? 'n' : undefined;
+    });
+    p.roof(3, 7, 4, 'B');
+    p.box(8, 3, 'g', undefined, 0);
+  },
   indomaret: minimarket(['B', 'b', 'r', 'y']),
   alfamart: minimarket(['r', 'y', 'B', 'B']),
   parkir: (p) => {
