@@ -9,6 +9,8 @@ export interface EventChoice {
   modifier?: { label: string; target: string; incomeMult: number; months: number };
   /** Special handling in code, for effects that need the map. */
   special?: 'banjir';
+  /** Points added to the next Kecamatan inspection score, for this visit only. */
+  inspectPrep?: number;
   /** Shown after choosing. */
   result: string;
 }
@@ -80,6 +82,28 @@ export const EVENTS: EventDef[] = [
       },
     ],
   },
+  {
+    id: 'kecamatan',
+    name: 'Kecamatan Is Coming',
+    body: 'A Kecamatan inspector visits in 2 months to score the kampung: selokan, Sabar, abandoned projects and parkir liar. A good score earns Orang Dalam. A bad one costs Sabar. Fresh paint counts too.',
+    // Raised by the inspection system on its own schedule, never at random.
+    when: { chance: 0 },
+    choices: [
+      { label: 'Carry on as usual', result: 'The inspector will see the kampung as it is.' },
+      {
+        label: 'Cat ulang pagar · Rp 750.000',
+        cost: { rupiah: 750_000 },
+        inspectPrep: 20,
+        result: 'Every fence got fresh paint. The selokan did not.',
+      },
+      {
+        label: 'Nasi kotak for the rombongan · 1 Orang Dalam',
+        cost: { orangDalam: 1 },
+        inspectPrep: 12,
+        result: 'The rombongan will leave with full stomachs and generous scores.',
+      },
+    ],
+  },
 ];
 
 export const eventDef = (id: string) => EVENTS.find((e) => e.id === id);
@@ -89,3 +113,22 @@ export const BANJIR_MAX_PROTECT = 0.8;
 export const BANJIR_HIT_CHANCE = 0.45;
 export const BANJIR_SABAR = 6;
 export const REPAIR_FRACTION = 0.25;
+
+/** Kecamatan inspections. The first warning lands in year 2, so year 1 stays safe. */
+export const INSPECTION = {
+  firstWarn: 12,
+  /** Months between the warning and the visit. */
+  lead: 2,
+  /** Months from one visit to the next warning. */
+  gap: 10,
+  /** Each criterion is worth up to this many points. */
+  perCriterion: 25,
+  selokanPerLevel: 8,
+  damagedPenalty: 8,
+  parkirPenalty: 6,
+  good: 70,
+  ok: 45,
+  goodReward: { orangDalam: 2, sabar: 5 },
+  okReward: { orangDalam: 1, sabar: 0 },
+  badReward: { orangDalam: 0, sabar: -4 },
+};

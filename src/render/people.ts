@@ -10,10 +10,11 @@ export const MAX_WALKERS = 16;
 /** Cost of a step on open ground, against 1 on a path. Above 1 makes walkers detour onto paths. */
 const WALK_OFF_PATH = 2.5;
 const FLAT = new Set(['selokan', 'parkir', 'jalan', 'aspalUlang', 'sawahIrigasi', 'embung', 'taman']);
+const VIP_ID = -1;
 const WALK_SPEED = 0.9;
 const OJOL_SPEED = 2.8;
 
-type Kind = JobId;
+type Kind = JobId | 'vip';
 
 export interface Walker {
   id: number;
@@ -30,6 +31,7 @@ export interface Walker {
 }
 
 const SHIRTS: Record<Kind, string> = {
+  vip: '#8a9a4a',
   none: '#f6ecd4',
   pns: '#c9a86a',
   ojol: '#4fae3e',
@@ -48,6 +50,8 @@ const WALK: string[][] = [
   ['..hhh..', '.hHhhh.', '.hefeh.', '..fFf..', '.sscsS.', 'fssssSf', '..bbb..', '.d...D.', '.d...D.', '.k...k.'],
 ];
 const PHONE: string[][] = WALK.map((f) => f.map((row, i) => (i === 4 ? '.sscsfp' : i === 5 ? 'fssssS.' : row)));
+// The Kecamatan inspector: the phone pose with a wide peci on top, so the phone reads as a clipboard.
+const VIP: string[][] = PHONE.map((f) => f.map((row, i) => (i === 0 ? '.hhhhh.' : row)));
 const OJOL: string[][] = [
   ['....GgG....', '....Gvf....', '....sss....', '...ssSs.m..', '...ssSSfm..', '.mmmddmmmL.', 'MmmmmmmmmmM', '.wxw...wxw.', '..w.....w..'],
   ['....GgG....', '....Gvf....', '....sss....', '...ssSs.m..', '...ssSSfm..', '.mmmddmmmL.', 'MmmmmmmmmmM', '.www...www.', '..x.....x..'],
@@ -171,7 +175,16 @@ export class Crowd {
 
     const residents = s.residents.slice(0, MAX_WALKERS);
     const ids = new Set(residents.map((r) => r.id));
+    // The inspector walks the map during the last month before the visit.
+    const vip = s.inspection?.visitAt !== undefined && s.inspection.visitAt - s.month <= 1;
+    if (vip) ids.add(VIP_ID);
     this.people = this.people.filter((p) => ids.has(p.id));
+    if (vip && !this.people.some((o) => o.id === VIP_ID)) {
+      const start = this.ring();
+      this.people.push({ id: VIP_ID, kind: 'vip', shirt: SHIRTS.vip, fx: Math.min(GRID_W - 0.5, Math.max(0.5, start.x + 0.5)), fy: Math.min(GRID_H - 0.5, Math.max(0.5, start.y + 0.5)), path: [], wait: 0, face: 1, stride: 0 });
+    }
+    const guest = this.people.find((o) => o.id === VIP_ID);
+    if (guest && motion) this.move(guest, dt, sites);
     for (const r of residents) {
       let p = this.people.find((o) => o.id === r.id);
       const kind: Kind = r.job;
@@ -279,8 +292,8 @@ export class Crowd {
     const g = project(p.fx, p.fy);
     const moving = motion && p.path.length > 0;
     const leg = moving ? Math.floor(p.stride * (p.kind === 'ojol' ? 6 : 5)) % 2 : 0;
-    const rows = p.kind === 'ojol' ? OJOL[leg] : p.kind === 'influencer' || p.kind === 'buzzer' ? PHONE[leg] : WALK[leg];
-    const img = frame(rows, p.shirt, HAIR[p.id % HAIR.length], p.face);
+    const rows = p.kind === 'ojol' ? OJOL[leg] : p.kind === 'vip' ? VIP[leg] : p.kind === 'influencer' || p.kind === 'buzzer' ? PHONE[leg] : WALK[leg];
+    const img = frame(rows, p.shirt, HAIR[Math.abs(p.id) % HAIR.length], p.face);
     // Idle walkers breathe: a one-pixel bob every second or so.
     const bob = !moving && motion && Math.floor((now + p.id * 377) / 600) % 2 ? 1 : 0;
     const w = img.width * s;

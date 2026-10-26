@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { EVENTS, eventDef } from '../src/data/events';
 import { RIVAL_BASE, RIVAL_PER_YEAR, RIVAL_JITTER } from '../src/data/ranking';
 import { banjirProtection, checkChoice, checkRepair, repair, resolveEvent } from '../src/sim/events';
+import { inspectionScore } from '../src/sim/inspection';
 import { score } from '../src/sim/ranking';
 import { place } from '../src/sim/rules';
 import { addBuilding, newGame } from '../src/sim/state';
@@ -233,5 +234,62 @@ describe('event cooldowns', () => {
       }
       for (let i = 1; i < floods.length; i++) expect(floods[i] - floods[i - 1], `seed ${seed}`).toBeGreaterThanOrEqual(9);
     }
+  });
+});
+
+describe('kecamatan inspection', () => {
+  const next = (s: GameState) => {
+    s.pendingEvent = null;
+    return tick(s);
+  };
+  const warn = () => {
+    const s = newGame(5);
+    s.month = 11;
+    const fx = tick(s);
+    return { s, fx };
+  };
+
+  it('warns in year 2 with a free first choice, then visits two months later', () => {
+    const { s, fx } = warn();
+    expect(fx.some((f) => f.kind === 'event' && f.eventId === 'kecamatan')).toBe(true);
+    expect(s.inspection?.visitAt).toBe(14);
+    resolveEvent(s, [], 0);
+    expect(next(s)).not.toContainEqual(expect.objectContaining({ title: expect.stringContaining('Kecamatan') }));
+    const out = next(s);
+    expect(out.some((f) => f.kind === 'notice' && f.title.startsWith('Kecamatan'))).toBe(true);
+    expect(s.inspection?.warnAt).toBe(24);
+  });
+
+  it('cat ulang inflates the score for one visit only', () => {
+    const { s } = warn();
+    const before = inspectionScore(s).total;
+    s.res.rupiah = 10_000_000;
+    expect(resolveEvent(s, [], 1).ok).toBe(true);
+    const after = inspectionScore(s);
+    expect(after.total).toBe(before + 20);
+    expect(after.real).toBe(before);
+    next(s);
+    next(s);
+    expect(s.inspection?.prep).toBe(0);
+  });
+
+  it('a good score pays Orang Dalam and a bad one costs a little Sabar without trapping the player', () => {
+    const good = warn().s;
+    good.res.sabar = 100;
+    good.inspection!.prep = 100;
+    const od = good.res.orangDalam;
+    good.pendingEvent = null;
+    next(good);
+    next(good);
+    expect(good.res.orangDalam).toBeGreaterThan(od);
+    const bad = warn().s;
+    bad.res.sabar = 40;
+    bad.pendingEvent = null;
+    bad.buildings.push(...Array.from({ length: 6 }, (_, i) => ({ ...bad.buildings[0], uid: 900 + i, def: 'parkir', x: i, y: 0 })));
+    const sabar = bad.res.sabar;
+    next(bad);
+    next(bad);
+    expect(bad.res.sabar).toBeLessThan(sabar);
+    expect(bad.res.sabar).toBeGreaterThan(0);
   });
 });
