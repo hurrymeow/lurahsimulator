@@ -21,7 +21,7 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   if (req.mode === 'navigate') {
-    event.respondWith(fetch(req).catch(() => caches.match('./', { cacheName: CACHE })));
+    event.respondWith(fetch(req, { cache: 'no-cache' }).catch(() => caches.match('./', { cacheName: CACHE })));
     return;
   }
   event.respondWith(caches.match(req, { cacheName: CACHE }).then((hit) => hit || fetch(req)));
