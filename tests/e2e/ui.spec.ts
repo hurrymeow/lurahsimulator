@@ -130,15 +130,16 @@ test.describe('how to play', () => {
 });
 
 test.describe('events, ranking, settings', () => {
-  test('quarterly report card is legible, pauses the game and dismisses on tap', async ({ page }) => {
+  test('half-year report card is legible, pauses the game and dismisses on tap', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     await seed(page);
-    const title = (n: number) => ({ id: `Laporan triwulan ${n}`, en: `Quarter ${n} report` })[lang()];
+    const title = (n: number) => ({ id: `Laporan semester ${n}`, en: `Half-year ${n} report` })[lang()];
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.s.month = 14;
       app.s.quarter = undefined;
+      app.runTick();
       app.runTick();
       app.runTick();
       app.runTick();
