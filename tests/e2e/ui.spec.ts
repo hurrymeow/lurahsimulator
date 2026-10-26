@@ -971,10 +971,17 @@ test.describe('RW stage', () => {
 
     await page.locator('#menu-btn').click();
     await page.locator('#act-build').click();
-    for (const name of ['Balai RW', 'Posyandu', 'Portal', 'Pasar Kaget', 'Gapura']) {
-      await expect(page.locator('.sheet').getByText(name, { exact: true }).first()).toBeVisible();
+    // Build is split into tabs, so walk them until every RW building has shown up.
+    const seen = new Set<string>();
+    const tabs = await page.locator('.sheet .tabs .tab').count();
+    for (let i = 0; i < tabs; i++) {
+      await page.locator('.sheet .tabs .tab').nth(i).click();
+      for (const name of ['Balai RW', 'Posyandu', 'Portal', 'Pasar Kaget', 'Gapura']) {
+        if (await page.locator('.sheet .card-title strong', { hasText: new RegExp(`^${name}$`) }).count()) seen.add(name);
+      }
+      if (i === tabs - 1 || seen.size === 5) await expectLegible(page, `RW build menu tab ${i}`);
     }
-    await expectLegible(page, 'RW build menu');
+    expect([...seen].sort()).toEqual(['Balai RW', 'Gapura', 'Pasar Kaget', 'Portal', 'Posyandu']);
     await page.locator('.sheet-head .btn').click();
 
     await page.locator('#menu-btn').click();
