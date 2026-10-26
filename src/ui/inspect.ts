@@ -47,6 +47,10 @@ export function inspect(app: App, uid: number): void {
     const bits = Object.entries(d.perMonth).map(([k, v]) => `${t(`res.${k}` as Key)} +${Math.round(v * levelMult(b.level) * 100) / 100}`);
     lines.push(h('p', { class: 'meta' }, t('insp.perMonth', { bits: bits.join(' · ') })));
   }
+  const popBits: string[] = [];
+  if (d.housing) popBits.push(t('insp.houses', { n: d.housing }));
+  if (d.attract) popBits.push(t('insp.attracts', { n: Math.round(d.attract * levelMult(b.level) * 10) / 10 }));
+  if (popBits.length) lines.push(h('p', { class: 'meta' }, popBits.join(' · ')));
   const pm = pathMult(s, b);
   if (pm > 1 && b.status === 'active') lines.push(h('p', { class: 'meta' }, t('insp.pathBonus', { pct: Math.round((pm - 1) * 100) })));
   for (const extra of inspectExtras) lines.push(...extra(app, b));

@@ -12,8 +12,7 @@ export const ID_DATA: Record<string, string> = {
   'building.alfamart.blurb': 'Pemasukan besar. Memunculkan tukang parkir. Benci Indomaret.',
   'building.kantorRT.blurb': 'Cap surat. Lama-lama menghasilkan Orang Dalam. Tiap level menambah 2 meja PNS.',
   'building.kantorRT.block': 'Kantor RT lebih awet dari Pak RT mana pun.',
-  'building.rumah.blurb': 'Menampung 3 warga. Muncul sendiri saat orang pindah masuk.',
-  'building.rumah.block': 'Warga tinggal di sini. Mengusir mereka butuh lebih banyak Kesabaran dari yang kamu punya.',
+  'building.rumah.blurb': 'Menampung 3 warga dan menarik 1 lagi. Langsung jadi, tanpa izin.',
   'building.parkir.blurb': 'Muncul di samping setiap toko baru. Setor retribusi kecil ke kas, menguras Kesabaran. Bisa ditingkatkan, tak bisa dicopot.',
   'building.parkir.block': 'Tak ada yang ingat mempekerjakannya. Tak ada yang bisa memecatnya.',
 

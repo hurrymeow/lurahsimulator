@@ -35,6 +35,7 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
     debtFree: 0,
     rw: { kaderDecay: 0 },
     lastNovelty: 0,
+    lastArrival: 0,
     stats: { earned: 0, spent: 0, arrived: 0, left: 0 },
   };
   setGrid('rt');
@@ -44,7 +45,7 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
   addBuilding(s, 'rumah', cx - 1, cy + 1, 'active');
   addBuilding(s, 'rumah', cx + 1, cy + 1, 'active');
   for (let i = 0; i < START_RESIDENTS; i++) addResident(s);
-  s.unlocked = ['warung', 'posRonda', 'selokan', 'kantorRT'];
+  s.unlocked = ['rumah', 'warung', 'posRonda', 'selokan', 'jalan', 'kantorRT'];
   return s;
 }
 
