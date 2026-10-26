@@ -10,7 +10,7 @@
 | - | Legibility fix (font, wrapping, tap targets) and Playwright E2E scan at 320/360/390px | #4 | live |
 | - | How to play page (modelled on mainpecah) | #5 | live |
 | 4 | Events, yearly ranking, Indonesia Emas bar, juice, accessibility settings, balance fixes | #6 | live |
-| - | Walking residents, ojol riders, waving tukang parkir, dust, coins, fanfare pulse, day and night | #10 | live |
+| - | Walking residents, ojol riders, waving tukang parkir, dust, coins, fanfare pulse, day and night | #11 | live |
 
 ## What works
 
