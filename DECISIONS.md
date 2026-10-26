@@ -1,5 +1,7 @@
 # Decisions
 
+> **Frozen.** Do not edit. New entries go in `decisions/<pr-or-slug>.md`, one file per PR. Read all with `node scripts/logs.mjs decisions`.
+
 One line per decision, with the reason. Newest at the bottom.
 
 ## Needs Hari's review
@@ -106,3 +108,4 @@ One line per decision, with the reason. Newest at the bottom.
 - **Desa is a path, not a stage (my call):** `StageId` stays `rt | rw | kelurahan`. At promotion the player picks a path, and Desa content is gated `path: 'desa'`. Both paths share one star ladder and one goal list, which keeps `GameState.stage.stars` as it is. Path-only buildings open from `PATH_UNLOCKS`.
 - **New numbers live in `rules.ts`:** Stempel refill, Dana per build, Anggaran per year, audit and Kunjungan values. The balance autoplayer tunes them there. Building costs are guesses scaled between RT (Rp 0,5 to 5jt) and the Kelurahan (Rp 2 to 20jt), and need a playtest.
 - **Sprite filenames:** `art-higher.ts` imports only the `Painter` type from `iso.ts`, so there is no import cycle. `aspalUlang`, `sawahIrigasi`, `embung` and `taman` are flat ground art. They are not in `FLAT` (people.ts) or `FLAT_AO` (map.ts) yet, because those are renderer files owned by the map threads.
+- **SK accept waits for `playable` (coordinator):** a stage in `STAGES` is not enough, because accepting into RW without map growth would leave goals reading 0. The map thread sets `playable: true` on the RW stage when it hooks `acceptSK`.
