@@ -446,7 +446,7 @@ export class MapView {
     this.night = this.effects ? darkness(this.clock) : 0;
     this.lights = [];
     this.crowd.bubbles = this.effects && !this.frozen;
-    this.crowd.update(s, now, this.motion && !this.frozen);
+    this.crowd.update(s, now, this.motion && !this.frozen, darkness(this.clock));
     this.crowd.begin();
     const drawOne = (b: Building): void => {
       if (!this.onScreen(b.x, b.y) || b.uid === this.hidden) return;

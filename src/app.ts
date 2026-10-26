@@ -413,7 +413,7 @@ export class App {
     const icon = text ? h('span', { class: 'chip-text' }, id === 'emas' ? 'Emas' : t('res.pop')) : h('img', { src: iconURL(RES_META[id].icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
     const title = id === 'pop' ? t('res.warga') : id === 'emas' ? t('stats.emasTitle') : RES_META[id].label();
     const body = id === 'pop'
-      ? `${t('exp.pop.what')} ${t('pop.line', { pop: population(this.s), housing: housing(this.s), attract: attractTarget(this.s) })}`
+      ? `${t('exp.pop.what')} ${t('pop.line', { pop: population(this.s), housing: housing(this.s), attract: attractTarget(this.s) })}${population(this.s) >= housing(this.s) ? ` ${t('pop.full')}` : ''}`
       : t(`exp.${id}.what` as Key);
     this.modalQueue.push({ title, body, tone: 'info', extra: h('div', { class: 'exp', style: `--c:${colour}` }, icon, row('up'), row('down'), row('edge')) });
     this.showModal();
@@ -432,6 +432,7 @@ export class App {
     set('orangDalam', `${Math.floor(r.orangDalam)}`, t('res.orangDalam'));
     set('viral', `${Math.round(r.viral)}`, t('res.viral'));
     set('pop', `${population(this.s)}/${housing(this.s)}`, t('page.resourcesLabel'));
+    document.getElementById('chip-pop')?.classList.toggle('full', population(this.s) >= housing(this.s));
     document.getElementById('chip-rupiah')!.classList.toggle('negative', r.rupiah < 0);
     this.flashChanges();
     const emas = document.getElementById('emas-value');

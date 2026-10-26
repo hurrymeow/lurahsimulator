@@ -227,7 +227,8 @@ export const EN = {
   'sim.levelUp': '{name} is now Lv {n}',
   'res.pensiun': 'Pensiun {n}%',
   'res.fake': 'Fake Virality pumped: {n}',
-  'res.slots': 'Job slots: {summary}. Employed residents add 0.2 Popularitas a month. Tap a job to change it. Your pick sticks.',
+  'res.hint': 'Tap a resident to change their job.',
+  'pop.full': 'Rumah full. Build another house so more people can move in.',
   'res.current': '{label} (current)',
 
   // wacana

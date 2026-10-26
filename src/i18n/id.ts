@@ -220,7 +220,8 @@ export const ID: Record<Key, string> = {
   'sim.levelUp': '{name} naik ke Lv {n}',
   'res.pensiun': 'Pensiun {n}%',
   'res.fake': 'Viral palsu terkumpul: {n}',
-  'res.slots': 'Slot kerja: {summary}. Warga bekerja menambah 0,2 Popularitas per bulan. Ketuk pekerjaan untuk mengubahnya. Pilihanmu tetap.',
+  'res.hint': 'Ketuk warga untuk ganti kerja.',
+  'pop.full': 'Rumah penuh. Bangun rumah lagi supaya warga baru bisa pindah.',
   'res.current': '{label} (sekarang)',
 
   'wac.intro': 'Umumkan kebijakan untuk dapat dukungan. Dukungan memberi Popularitas tiap bulan dan turun 20% per bulan. Tiap wacana punya biaya samping, dan diulang makin mahal dan makin lemah. Tidak ada yang dibangun.',

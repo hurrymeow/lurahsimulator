@@ -4,7 +4,7 @@ import { WACANA } from '../data/wacana';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { bookCombos, comboMemberNames } from '../sim/combos';
-import { checkAssign, assign, levelOf, liveJobs, slots, used } from '../sim/jobs';
+import { checkAssign, assign, levelOf, liveJobs } from '../sim/jobs';
 import { checkRepair, repair, repairCost } from '../sim/events';
 import { checkRestart, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
 import { announce, checkAnnounce, wacanaCost } from '../sim/wacana';
@@ -25,8 +25,7 @@ export function openResidents(app: App): void {
       ),
     ),
   );
-  const summary = liveJobs(s).map((j) => `${jName(j)} ${used(s, j.id)}/${slots(s, j.id)}`).join(' · ');
-  openSheet(t('menu.warga'), [h('p', { class: 'meta' }, t('res.slots', { summary })), ...rows]);
+  openSheet(t('menu.warga'), [h('p', { class: 'meta' }, t('res.hint')), ...rows]);
 }
 
 function openResident(app: App, id: number): void {
