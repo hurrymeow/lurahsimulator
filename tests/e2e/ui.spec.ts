@@ -137,10 +137,8 @@ test.describe('events, ranking, settings', () => {
     const title = (n: number) => ({ id: `Laporan semester ${n}`, en: `Half-year ${n} report` })[lang()];
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
-      app.s.month = 14;
+      app.s.month = 16;
       app.s.quarter = undefined;
-      app.runTick();
-      app.runTick();
       app.runTick();
       app.runTick();
     });
