@@ -49,6 +49,8 @@ export interface StageDef {
   id: StageId;
   /** Title shown in the Menu header, one per star count (0 to 3 stars). */
   titles: [string, string, string, string];
+  /** Set true once the map and engine can run this stage. The SK cannot be accepted into a stage that is not playable. */
+  playable?: boolean;
   /** The stage the SK at 3 stars promotes to. */
   next?: StageId;
   stars: [StarDef, StarDef, StarDef];

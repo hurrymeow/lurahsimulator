@@ -685,6 +685,6 @@ test.describe('stars', () => {
     await expect(page.locator('#sk-reoffer')).toBeVisible();
     await expectLegible(page, 'declined SK');
     await page.locator('#sk-reoffer').click();
-    await expect(page.locator('#sk-accept')).toBeEnabled();
+    await expect(page.locator('#sk-accept')).toBeDisabled();
   });
 });

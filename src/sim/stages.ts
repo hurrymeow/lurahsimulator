@@ -122,10 +122,10 @@ export function stageSystem(s: GameState, fx: Fx): void {
   s.lastNovelty = s.month;
 }
 
-/** The SK can only be accepted once the next stage exists in the data. */
+/** The SK can only be accepted once the next stage is marked playable in the data. */
 export const canPromote = (s: GameState): boolean => {
   const next = currentStage(s).next;
-  return s.stage.stars[s.stage.current] === 3 && !!next && STAGES.some((d) => d.id === next);
+  return s.stage.stars[s.stage.current] === 3 && !!next && STAGES.some((d) => d.id === next && d.playable === true);
 };
 
 /** Accepting the SK raises the stage and grows the map (see promote in grow.ts). */
