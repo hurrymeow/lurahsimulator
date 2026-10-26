@@ -146,6 +146,7 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#modal .card.report-card')).toBeVisible();
     await expect(page.locator('#modal .card h2')).toHaveText(title(1));
     await expect(page.locator('#modal .report-grade')).toBeVisible();
+    await expect(page.locator('#modal .outcome-mod', { hasText: '☆' })).toBeVisible();
     await expect(page.locator('#modal .outcome-chip').first()).toBeVisible();
     await expectLegible(page, 'report card');
     const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month);
