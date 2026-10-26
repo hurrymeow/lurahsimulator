@@ -3,8 +3,8 @@ import { def } from '../sim/content';
 import { GRID_H, GRID_W, type Building, type GameState, type ResourceId } from '../sim/types';
 import { drawTint, darkness, Fx } from './fx';
 import { iso, TH, TOP, TW, type Art } from './iso';
-import { buildWorld, decoAt, HORIZON, SEA, SKY, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W } from './scenery';
 import { Crowd } from './people';
+import { buildWorld, decoAt, HORIZON, SEA, SKY, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W } from './scenery';
 import { ICONS, ROOF_COLOURS, sprite } from './sprites';
 
 export const RES_COLOUR: Record<ResourceId, string> = {

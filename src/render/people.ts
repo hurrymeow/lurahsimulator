@@ -81,6 +81,25 @@ export class Crowd {
 
   private walkable = (x: number, y: number) => !this.blocked[y * GRID_W + x];
 
+  /** Inside the grid: no building. Outside it, only ojol riders use the ring road one tile out. */
+  private free(x: number, y: number, ojol: boolean): boolean {
+    if (x >= 0 && y >= 0 && x < GRID_W && y < GRID_H) return this.walkable(x, y);
+    return ojol && x >= -1 && y >= -1 && x <= GRID_W && y <= GRID_H;
+  }
+
+  /** findPath over the grid plus its ring road, shifted so the ring sits at 0. */
+  private route(from: Pt, to: Pt, ojol: boolean): Pt[] | null {
+    const path = findPath(GRID_W + 2, GRID_H + 2, (x, y) => this.free(x - 1, y - 1, ojol), { x: from.x + 1, y: from.y + 1 }, { x: to.x + 1, y: to.y + 1 });
+    return path && path.map((t) => ({ x: t.x - 1, y: t.y - 1 }));
+  }
+
+  private ring(): Pt {
+    const k = Math.floor(Math.random() * 2 * (GRID_W + GRID_H + 2));
+    if (k < GRID_W + 1) return { x: k, y: k % 2 ? -1 : GRID_H };
+    const j = k - GRID_W - 1;
+    return { x: j % 2 ? -1 : GRID_W, y: Math.min(GRID_H, (j >> 1) - 1) };
+  }
+
   /** Matches walkers to residents and moves them. With motion off they stand still. */
   update(s: GameState, now: number, motion: boolean): void {
     const dt = Math.min(100, this.last ? now - this.last : 0);
@@ -132,7 +151,7 @@ export class Crowd {
     const tx = Math.floor(p.fx);
     const ty = Math.floor(p.fy);
     // A new building went up under this walker: step out to its door.
-    if (!this.walkable(tx, ty)) {
+    if (!this.free(tx, ty, true)) {
       const out = this.pick(doorsOf(GRID_W, GRID_H, this.walkable, { x: tx, y: ty })) ?? this.randomFree();
       if (out) Object.assign(p, { fx: out.x + 0.5, fy: out.y + 0.5, path: [] });
       return;
@@ -149,7 +168,7 @@ export class Crowd {
       return;
     }
     const next = p.path[0];
-    if (!this.walkable(next.x, next.y)) {
+    if (!this.free(next.x, next.y, p.kind === 'ojol')) {
       p.path = [];
       return;
     }
@@ -171,19 +190,19 @@ export class Crowd {
     }
   }
 
-  /** Walkers go to a building's door. Ojol riders zip to any far-off free tile. */
+  /** Walkers go to a building's door. Ojol riders zip to a far-off free tile or round the ring road. */
   private plan(p: Walker, from: Pt, sites: Pt[]): Pt[] | null {
     for (let i = 0; i < 4; i++) {
       let to: Pt | undefined;
       if (p.kind === 'ojol') {
-        to = this.randomFree();
+        to = Math.random() < 0.5 ? this.ring() : this.randomFree();
         if (to && Math.abs(to.x - from.x) + Math.abs(to.y - from.y) < 4) continue;
       } else {
         const site = this.pick(sites);
         to = site && this.pick(doorsOf(GRID_W, GRID_H, this.walkable, site));
       }
       if (!to) continue;
-      const path = findPath(GRID_W, GRID_H, this.walkable, from, to);
+      const path = this.route(from, to, p.kind === 'ojol');
       if (path && path.length) return path;
     }
     return null;
