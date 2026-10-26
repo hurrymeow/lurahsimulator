@@ -1,6 +1,9 @@
 import { RW_COMBOS } from '../data/higher/rw';
+import { promote } from './grow';
 import { STAGES } from '../data/stages';
-import { t, type Key } from '../i18n';
+import { bName, t, tr, type Key } from '../i18n';
+import { def } from './content';
+import { gain, type Fx } from './gain';
 import { population } from './state';
 import type { GameState, Goal, StageDef, StageId, Stars } from './types';
 
@@ -84,3 +87,47 @@ export function nextStarChecklist(s: GameState, id: StageId = s.stage.current): 
 }
 
 export const starsEarnable = (s: GameState, id: StageId = s.stage.current): boolean => nextStarChecklist(s, id)?.every((l) => l.done) ?? false;
+
+/** Stage title for a star count, for example "RT Rintisan" at 1 star. */
+export const stageTitle = (id: StageId, stars: number): string => tr(`stage.${id}.title${stars}`, stageDef(id).titles[stars]);
+
+/** Monthly system: earns the next star when its checklist is done. At most one star a month, so each gets its fanfare. */
+export function stageSystem(s: GameState, fx: Fx): void {
+  const id = s.stage.current;
+  const have = s.stage.stars[id];
+  if (have === 3 || !starsEarnable(s, id)) return;
+  const star = stageDef(id).stars[have];
+  const stars = (have + 1) as Stars;
+  s.stage.stars[id] = stars;
+  for (const unlock of star.unlocks) if (!s.unlocked.includes(unlock)) s.unlocked.push(unlock);
+  for (const [res, v] of Object.entries(star.reward ?? {})) gain(s, fx, res as 'sabar', v as number);
+  const opens = star.unlocks.map((u) => bName(def(u))).join(', ');
+  fx.push({ kind: 'notice', title: t('sim.starTitle', { stars, title: stageTitle(id, stars) }), body: opens ? t('sim.starBody', { list: opens }) : t('sim.starBodyNone'), tone: 'good', fanfare: true });
+  if (stars === 3 && stageDef(id).next) {
+    s.stage.sk = 'offered';
+    fx.push({ kind: 'notice', title: t('sim.skTitle'), body: t('sim.skBody'), tone: 'good', fanfare: true });
+  }
+  s.lastNovelty = s.month;
+}
+
+/** The SK can only be accepted once the next stage exists in the data. */
+export const canPromote = (s: GameState): boolean => {
+  const next = currentStage(s).next;
+  return s.stage.stars[s.stage.current] === 3 && !!next && STAGES.some((d) => d.id === next);
+};
+
+/** Accepting the SK raises the stage and grows the map (see promote in grow.ts). */
+export function acceptSK(s: GameState, fx: Fx = []): boolean {
+  if (!canPromote(s)) return false;
+  promote(s, fx);
+  delete s.stage.sk;
+  return true;
+}
+
+export function declineSK(s: GameState): void {
+  if (s.stage.stars[s.stage.current] === 3) s.stage.sk = 'declined';
+}
+
+export function reofferSK(s: GameState): void {
+  if (s.stage.sk === 'declined') s.stage.sk = 'offered';
+}

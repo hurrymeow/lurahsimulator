@@ -4,6 +4,7 @@ import { iconURL } from '../render/sprites';
 import { h } from './dom';
 import { glyphURL } from './glyphs';
 import { openSheet } from './sheet';
+import { stageHeader } from './stage';
 
 const GROUPS: { id: MenuGroup; title: () => string }[] = [
   { id: 'kampung', title: () => t('menu.kampung') },
@@ -27,5 +28,5 @@ export function openMenu(app: App, extra: Node[] = []): void {
     if (!tiles.length) return null;
     return h('section', { class: 'menu-group', 'aria-label': g.title() }, h('h3', {}, g.title()), h('div', { class: 'tile-grid' }, ...tiles));
   }).filter((n): n is HTMLElement => n !== null);
-  openSheet(t('page.menu'), body);
+  openSheet(t('page.menu'), [stageHeader(app), ...body]);
 }
