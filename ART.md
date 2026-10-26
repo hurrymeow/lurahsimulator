@@ -8,13 +8,15 @@ change and effect. [DESIGN.md](DESIGN.md) still rules on UI, legibility and acce
 A warm, lamp-lit diorama of a kampung: a party game's bold outlines and cheeky faces, painted in
 a storybook palette, lit like an HD-2D village.
 
-Three references, each for one thing:
+Each reference is used for one thing:
 
 | Reference | What we take | What we leave |
 | --- | --- | --- |
 | Bishi Bashi Special | Bold outlines, flat cel shading, cheeky faces (the sun), bouncy timing | Wonky, hand-wobbled shapes. They clutter a busy map. |
 | Warm isometric illustration (kitchen diorama) | Terracotta, mustard, teal, cream and olive. Dark brown ink, not black. Cosy clutter on the edges. | Paper grain and noisy texture |
-| Octopath Traveler (HD-2D) | Golden key light, god rays, deep vignette, tilt-shift blur, dust motes, contact shadows | Photoreal bloom, heavy blur over playable tiles |
+| Octopath Traveler (HD-2D) | Golden key light, god rays, deep vignette, tilt-shift blur, dust motes, contact shadows, blue sky with soft clouds, terraced land | Photoreal bloom, heavy blur over playable tiles |
+| Stylised autumn arena (3D top-down) | Painted ground clumps, scattered fallen leaves, soft value steps on the floor | 3D shapes and perspective |
+| Pokemon HGSS / DPPt overworld | Coloured outlines (a dark shade of each fill, never black), small character detail, light rims and foam on terrain edges, rain | Its top-down camera and tile grid |
 
 No third-party art or names. Everything is drawn in code.
 
@@ -36,7 +38,7 @@ No third-party art or names. Everything is drawn in code.
 - Trees are sturdy: trunks at least 4 art pixels wide, crowns made of 2 or 3 overlapping clumps
   or at least 3-pixel-thick fronds (`Painter.leaf`). No 1-pixel stems.
 
-## Ink
+## Outlines
 
 - Outlines are coloured, never a flat ink and never pure black. Every sprite gets a 1-pixel
   outline round its silhouette, and each outline pixel is a 0.45x shade of the fill it touches
@@ -130,8 +132,8 @@ Layers, from the ground up (`src/render/map.ts`, `src/render/atmosphere.ts`):
 
 1. **Ambient occlusion.**
    - Baked: walls darken in their bottom two rows (0.78x, 0.9x).
-   - On the map: a soft brown contact shadow pools under every standing building (not selokan
-     or parkir).
+   - On the map: a soft brown contact shadow pools under every standing building (not selokan,
+     parkir or jalan).
    - Sprites also cast a flat ink shadow at 35% to the right.
 2. **Sun halo.** A warm radial glow behind the sun, like light blooming through haze.
 3. **Warm grade.** A gradient that is golden from the top left and warm dark toward the bottom
@@ -147,12 +149,14 @@ Layers, from the ground up (`src/render/map.ts`, `src/render/atmosphere.ts`):
 6. **Dust motes and leaves.** 28 soft warm motes drift up and to the right by day. At night they
    become blinking green-yellow fireflies. Ten outlined leaves tumble down on the breeze.
 7. **Night tint, then lit windows.** Lit windows draw above the tint.
-8. **Tilt-shift.** The top 20% of the map gets a 1.5px backdrop blur that fades out downward
+8. **Weather.** Rain streaks, ground ripples and the shower's cool dim draw above the night tint,
+   so rain still shows after dark. Shore splashes draw here too (`src/render/weather.ts`).
+9. **Tilt-shift.** The top 20% of the map gets a 1.5px backdrop blur that fades out downward
    (`#dof` in `style.css`). Never blur the tiles players tap.
 
 Badges, pops and the ghost outline draw above every lighting layer so text stays readable.
 
-Effects off (or reduce motion) turns off layers 3 to 8. Ambient occlusion and the halo stay, so
+Effects off (or reduce motion) turns off layers 3 to 9. Ambient occlusion and the halo stay, so
 the map still has depth.
 
 ## Motion
@@ -182,7 +186,8 @@ faceless, so the map stays readable.
 2. Build it from `box` and `roof` with palette keys, and paint details per face through the
    `paint` callback.
 3. Keep it inside the tile's footprint and under the 40-pixel headroom.
-4. Let the ink pass run, unless it is a flat decal or lattice (`p.bare = true`).
+4. Let the outline pass run, unless it is a flat decal or lattice (`p.bare = true`). Flat decals
+   that tile, like selokan and jalan, draw their own edges so neighbours join up.
 5. Check it at 4x on grass next to the existing sprites, then in game at day and night.
 6. If it is flat (people walk over it), add it to `FLAT` in `people.ts` and `FLAT_AO` in `map.ts`.
 
@@ -190,7 +195,9 @@ faceless, so the map stays readable.
 
 - [ ] Straight isometric lines; round only where nature is round.
 - [ ] 1px coloured outline (a dark shade of the fill it borders), no pure black anywhere.
-- [ ] Two-tone cel shading lit from the top left, no noise.
+- [ ] Two-tone cel shading lit from the top left. Texture in flat painted steps, not noise.
+- [ ] Terrain borders use a coloured dark edge and a soft bright rim, not a black line.
+- [ ] The screen edges stay the darkest part of the view (the vignette).
 - [ ] Colours from the palette, warm first.
 - [ ] Reads at 2x on a 320px-wide phone, by day and at night.
 - [ ] Animation is whole-pixel and respects reduce motion and effects.
