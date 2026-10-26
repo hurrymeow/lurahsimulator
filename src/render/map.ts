@@ -19,6 +19,11 @@ export const RES_COLOUR: Record<ResourceId, string> = {
 /** Flat pieces cast no contact shadow. */
 const FLAT_AO = new Set(['selokan', 'parkir', 'jalan', 'aspalUlang', 'sawahIrigasi', 'embung', 'taman']);
 
+/** Ground pieces first, then the standing ones, each keeping its back-to-front order. Walkers join only the second group. */
+export function groundFirst<T extends { def: string }>(sorted: T[]): { ground: T[]; standing: T[] } {
+  return { ground: sorted.filter((b) => FLAT_AO.has(b.def)), standing: sorted.filter((b) => !FLAT_AO.has(b.def)) };
+}
+
 let aoCache: HTMLCanvasElement | null = null;
 
 /** A soft dark oval, squashed to the ground plane, for ambient occlusion under buildings. */
@@ -398,16 +403,14 @@ export class MapView {
     this.lights = [];
     this.crowd.update(s, now, this.motion);
     this.crowd.begin();
-    for (const b of sorted) {
-      decoUntil(b.x + b.y, b.x);
-      this.crowd.drawUntil(ctx, b.x + b.y + 1, this.project, sc, now, this.motion);
-      if (!this.onScreen(b.x, b.y)) continue;
+    const drawOne = (b: Building): void => {
+      if (!this.onScreen(b.x, b.y)) return;
       const d = def(b.def);
       const art = iso(d.sprite, this.variant(b));
       if (ai.has(b.uid)) {
         this.art(ctx, art, b.x, b.y);
         tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, art));
-        continue;
+        return;
       }
       if (b.status === 'permit') {
         ctx.globalAlpha = 0.35;
@@ -438,6 +441,14 @@ export class MapView {
         this.idle(ctx, b, now);
       }
       tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' || b.status === 'mangkrak' ? iso('scaffold') : art));
+    };
+    // Flat pieces are ground: paths, fields and ponds draw first, so no walker or building ever hides under them.
+    const { ground, standing } = groundFirst(sorted);
+    for (const b of ground) drawOne(b);
+    for (const b of standing) {
+      decoUntil(b.x + b.y, b.x);
+      this.crowd.drawUntil(ctx, b.x + b.y + 1, this.project, sc, now, this.motion);
+      drawOne(b);
     }
 
     decoUntil(Infinity, 0);
