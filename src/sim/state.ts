@@ -1,6 +1,6 @@
 import { NAMES, TITLES } from '../data/names';
 import { EMAS } from '../data/ranking';
-import { BASE_ATTRACT, LEVEL_BONUS, SPRAWL_FREE, SPRAWL_STEP, START, START_RESIDENTS } from './balance';
+import { BASE_ATTRACT, DECOR_CAP, LEVEL_BONUS, SPRAWL_FREE, SPRAWL_STEP, START, START_RESIDENTS } from './balance';
 import { def } from './content';
 import { pick } from './rng';
 import { lotAt } from './area';
@@ -46,7 +46,7 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
   addBuilding(s, 'rumah', cx - 1, cy + 1, 'active');
   addBuilding(s, 'rumah', cx + 1, cy + 1, 'active');
   for (let i = 0; i < START_RESIDENTS; i++) addResident(s);
-  s.unlocked = ['rumah', 'warung', 'posRonda', 'selokan', 'jalan', 'kantorRT'];
+  s.unlocked = ['rumah', 'warung', 'posRonda', 'biopori', 'jalan', 'kantorRT'];
   return s;
 }
 
@@ -113,6 +113,18 @@ export function emptyTiles(s: GameState): { x: number; y: number }[] {
   // Residents only settle inside the player's own RT, never on a seam lot or in a neighbour.
   for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (!taken.has(y * GRID_W + x) && lotAt(x, y) === 'rt') out.push({ x, y });
   return out;
+}
+
+/** Income multiplier from decorations standing near a working income building. Capped, and never on a decoration or path itself. */
+export function decorMult(s: GameState, b: Building): number {
+  const d = def(b.def);
+  if (!d.income || d.boost || d.pathIncome) return 1;
+  let bonus = 0;
+  for (const o of s.buildings) {
+    const od = def(o.def);
+    if (od.boost && isWorking(o) && Math.abs(o.x - b.x) <= od.boost.radius && Math.abs(o.y - b.y) <= od.boost.radius) bonus += od.boost.bonus;
+  }
+  return 1 + Math.min(DECOR_CAP, bonus);
 }
 
 /** Income multiplier for a working building beside a path (4-way, once however many paths touch it). */

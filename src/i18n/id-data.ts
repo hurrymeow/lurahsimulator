@@ -1,12 +1,13 @@
 // Bahasa Indonesia for the data files, keyed by `<kind>.<id>.<field>`.
 // A missing key falls back to the English text in the data file.
+import { ID_CONTENT } from './id-content';
 import { ID_EVENTS_MORE } from './events-id';
 
-export const ID_DATA: Record<string, string> = {
+const BASE: Record<string, string> = {
   ...ID_EVENTS_MORE,
   'building.warung.blurb': 'Jual kopi sachet dan gosip. Pemasukan stabil, menarik warga.',
   'building.posRonda.blurb': 'Pos jaga malam. +2 Popularitas per bulan. Belum ada yang pernah lihat orang jaga.',
-  'building.selokan.blurb': 'Saluran air. Bangunan termurah, izin terlama. Tiap level meredam kerusakan banjir.',
+  'building.biopori.blurb': 'Lubang resapan yang menyerap air hujan. Murah dan cepat. Tiap level meredam kerusakan banjir.',
   'building.jalan.name': 'Jalan Setapak',
   'building.jalan.blurb': 'Jalan setapak gratis. Bangunan di sampingnya untung 10% lebih banyak, dan warga lebih suka lewat sini. Memakan satu petak. Bisa dibongkar kapan saja.',
   'building.wifi.name': 'Menara Wifi',
@@ -34,7 +35,7 @@ export const ID_DATA: Record<string, string> = {
   'combo.panjatPinang.story': 'Hadiahnya disimpan di pos ronda. Tak ada yang menghitungnya, sebelum maupun sesudah.',
   'combo.panjatPinang.effect': 'Hadiah 17 Agustus +50%.',
   'combo.kaliBersih.name': 'Kali Bersih',
-  'combo.kaliBersih.hint': 'Yang masuk bank tidak menyumbat selokan.',
+  'combo.kaliBersih.hint': 'Yang masuk bank tidak menyumbat lubang resapan.',
   'combo.kaliBersih.story': 'Plastik ditimbang, air mengalir. Kali ini sudah lama tidak sebersih ini.',
   'combo.kaliBersih.effect': 'Kerusakan banjir 20% lebih rendah. Batas 80% tetap.',
   'stage.rt.title0': 'Pak RT',
@@ -87,7 +88,7 @@ export const ID_DATA: Record<string, string> = {
   'event.agustusan.c2.label': 'Cari sponsor · 1 Orang Dalam',
   'event.agustusan.c2.result': 'Seorang "sponsor" muncul.',
   'event.banjir.name': 'Banjir',
-  'event.banjir.body': 'Hujan deras tiga hari. Level selokan menentukan seberapa banyak kampung terapung. Tiap level selokan memangkas kerusakan 20%.',
+  'event.banjir.body': 'Hujan deras tiga hari. Level biopori menentukan seberapa banyak kampung terapung. Tiap level biopori memangkas kerusakan 20%.',
   'event.banjir.c0.label': 'Cek kerusakan',
   'event.cabai.name': 'Harga Cabai Naik',
   'event.cabai.body': 'Cabai rawit dengan harga yang tak bisa dijelaskan siapa pun. Semua warung terdampak.',
@@ -100,11 +101,13 @@ export const ID_DATA: Record<string, string> = {
   'event.cabai.c2.result': 'Satu truk cabai tiba.',
   'event.cabai.c2.mod': 'Operasi pasar',
   'event.kecamatan.name': 'Inspeksi Kecamatan',
-  'event.kecamatan.body': 'Petugas Kecamatan datang dalam 2 bulan untuk menilai kampung: selokan, Popularitas, proyek mangkrak dan parkir liar. Nilai bagus memberi Orang Dalam. Nilai buruk mengurangi Popularitas. Cat baru juga dihitung.',
+  'event.kecamatan.body': 'Petugas Kecamatan datang dalam 2 bulan untuk menilai kampung: drainase, Popularitas, proyek mangkrak dan parkir liar. Nilai bagus memberi Orang Dalam. Nilai buruk mengurangi Popularitas. Cat baru juga dihitung.',
   'event.kecamatan.c0.label': 'Biasa saja',
   'event.kecamatan.c0.result': 'Petugas akan melihat kampung apa adanya.',
   'event.kecamatan.c1.label': 'Cat ulang pagar · Rp 750.000',
-  'event.kecamatan.c1.result': 'Semua pagar dicat ulang. Selokan tidak.',
+  'event.kecamatan.c1.result': 'Semua pagar dicat ulang. Drainase tidak.',
   'event.kecamatan.c2.label': 'Nasi kotak untuk rombongan · 1 Orang Dalam',
   'event.kecamatan.c2.result': 'Rombongan pulang kenyang dan murah hati.',
 };
+
+export const ID_DATA: Record<string, string> = { ...BASE, ...ID_CONTENT };

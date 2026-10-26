@@ -17,7 +17,7 @@ export const RES_COLOUR: Record<ResourceId, string> = {
 };
 
 /** Flat pieces cast no contact shadow. */
-const FLAT_AO = new Set(['selokan', 'parkir', 'jalan', 'aspalUlang', 'sawahIrigasi', 'embung', 'taman']);
+const FLAT_AO = new Set(['selokan', 'biopori', 'kolamIkan', 'kebunSayur', 'sawah', 'kolamLele', 'parkir', 'jalan', 'aspalUlang', 'sawahIrigasi', 'embung', 'taman']);
 
 /** Ground pieces first, then the standing ones, each keeping its back-to-front order. Walkers join only the second group. */
 export function groundFirst<T extends { def: string }>(sorted: T[]): { ground: T[]; standing: T[] } {

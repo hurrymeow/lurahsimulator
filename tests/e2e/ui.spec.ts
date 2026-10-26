@@ -73,7 +73,7 @@ async function seed(page: Page): Promise<void> {
     const add = (def: string, x: number, y: number, status = 'active', level = 1) =>
       s.buildings.push({ uid: s.nextUid++, def, x, y, level, status, timer: 2, invested: 3_000_000, placedAt: 0 });
     add('warung', 2, 3); add('posRonda', 3, 3); add('wifi', 4, 3);
-    add('indomaret', 2, 5, 'mangkrak'); add('alfamart', 3, 5, 'permit'); add('selokan', 5, 5, 'building'); add('warung', 6, 7, 'damaged');
+    add('indomaret', 2, 5, 'mangkrak'); add('alfamart', 3, 5, 'permit'); add('biopori', 5, 5, 'building'); add('warung', 6, 7, 'damaged');
     s.ranking.push({ year: 1, us: 90, them: 80, won: true }, { year: 2, us: 100, them: 130, won: false });
     add('parkir', 1, 3);
     for (let i = 0; i < 6; i++) app.s.residents.push({ id: s.nextResidentId++, name: 'Mbak Rizki Putri', job: 'none', pensiun: 0, fake: 0, arrived: 0 });
@@ -95,7 +95,7 @@ test.describe('tips', () => {
       a.s.lastEvent = { banjir: 0 };
       a.refresh();
     });
-    await expect(page.locator('#modal .card h2')).toHaveText({ id: 'Banjir menguji selokanmu.', en: 'Banjir tests your selokan.' }[lang()]);
+    await expect(page.locator('#modal .card h2')).toHaveText({ id: 'Banjir menguji biopori-mu.', en: 'Banjir tests your biopori.' }[lang()]);
     await expectLegible(page, 'tip');
     await page.waitForTimeout(1500);
     await expect(page.locator('#modal')).toBeVisible();
@@ -655,7 +655,7 @@ test.describe('walkers and effects', () => {
     // Nobody stands inside a building.
     const inside = await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
-      const solid = app.s.buildings.filter((b: any) => !['selokan', 'parkir'].includes(b.def));
+      const solid = app.s.buildings.filter((b: any) => !['biopori', 'parkir'].includes(b.def));
       return app.view.crowd.people.filter((p: any) => solid.some((b: any) => b.x === Math.floor(p.fx) && b.y === Math.floor(p.fy))).length;
     });
     expect(inside).toBe(0);
@@ -736,7 +736,7 @@ test.describe('walkers and effects', () => {
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       const s = app.s;
-      const defs = ['rumah', 'warung', 'posRonda', 'wifi', 'indomaret', 'alfamart', 'selokan'];
+      const defs = ['rumah', 'warung', 'posRonda', 'wifi', 'indomaret', 'alfamart', 'biopori'];
       let n = 0;
       const { w, h } = app.rt;
       for (let y = 0; y < h; y++)
@@ -753,7 +753,7 @@ test.describe('walkers and effects', () => {
       app.promote();
       app.promote();
       const s = app.s;
-      const defs = ['rumah', 'warung', 'posRonda', 'wifi', 'indomaret', 'alfamart', 'selokan'];
+      const defs = ['rumah', 'warung', 'posRonda', 'wifi', 'indomaret', 'alfamart', 'biopori'];
       let n = 0;
       const { w, h } = app.rt;
       for (let y = 0; y < h * 4; y++)

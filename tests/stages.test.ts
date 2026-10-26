@@ -135,11 +135,11 @@ describe('late-RT content', () => {
 
   it('Kali Bersih cuts banjir damage by 20% and the 80% cap holds', () => {
     const s = newGame(1);
-    add(s, 'selokan', 0, 0);
+    add(s, 'biopori', 0, 0);
     add(s, 'bankSampah', 1, 0);
     expect(activeCombos(s).map((a) => a.combo.id)).toContain('kaliBersih');
     expect(banjirProtection(s)).toBeCloseTo(0.4);
-    for (let i = 0; i < 6; i++) add(s, 'selokan', i, 5);
+    for (let i = 0; i < 6; i++) add(s, 'biopori', i, 5);
     expect(banjirProtection(s)).toBe(0.8);
   });
 

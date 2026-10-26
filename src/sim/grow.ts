@@ -21,9 +21,9 @@ const TRAITS: RtTrait[] = ['rajin', 'hobi', 'jarang'];
 
 /** What each trait builds next, in order. It repeats once the list runs out. */
 const WANTS: Record<RtTrait, string[]> = {
-  rajin: ['warung', 'indomaret', 'alfamart', 'warung', 'selokan'],
-  hobi: ['posRonda', 'wifi', 'warung', 'posRonda', 'selokan'],
-  jarang: ['warung', 'posRonda', 'wifi', 'selokan', 'indomaret'],
+  rajin: ['warung', 'indomaret', 'alfamart', 'warung', 'biopori'],
+  hobi: ['posRonda', 'wifi', 'warung', 'posRonda', 'biopori'],
+  jarang: ['warung', 'posRonda', 'wifi', 'biopori', 'indomaret'],
 };
 
 export const neighbourAt = (s: GameState, x: number, y: number): Building | undefined => {
