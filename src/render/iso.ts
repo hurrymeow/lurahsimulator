@@ -1,4 +1,6 @@
 // Isometric pixel art, rasterised in code at 1 art pixel per canvas pixel. No external art.
+// Party-game look: flat cel shading, a warm storybook palette and a bold ink outline round every shape and
+// along every face edge. Geometry stays straight and isometric so the map never gets busy.
 import { PALETTE } from './sprites';
 
 /** Art-pixel size of one ground diamond. The view scales these up by a whole number. */
@@ -6,6 +8,9 @@ export const TW = 32;
 export const TH = 16;
 /** Headroom above a tile's top corner, so tall buildings fit in the art canvas. */
 export const TOP = 40;
+
+/** Outline colour for every sprite, a dark warm brown rather than flat black. */
+export const INK = '#2a1810';
 
 export interface Art {
   canvas: HTMLCanvasElement;
@@ -26,15 +31,22 @@ function shade(c: string, f: number): string {
   return `#${((ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).padStart(6, '0')}`;
 }
 
-const FACE_SHADE: Record<Face, number> = { L: 1, R: 0.78, T: 1.12 };
+/** Two-tone cel shading: lit left face, shaded right face, bright top. */
+const FACE_SHADE: Record<Face, number> = { L: 1, R: 0.72, T: 1.18 };
 
 class Painter {
   readonly w = TW;
   readonly h = TOP + TH;
   readonly data: Uint8ClampedArray;
-  top = 0;
+  /** Which shape or face painted each pixel. Ink lines go where two of them meet. */
+  readonly ids: Uint16Array;
+  /** Id stamped by set(). Bumped per face, roof plane and clump. */
+  id = 1;
+  /** Skip the ink pass, for specks too small to outline. */
+  bare = false;
   constructor() {
     this.data = new Uint8ClampedArray(this.w * this.h * 4);
+    this.ids = new Uint16Array(this.w * this.h);
   }
 
   set(x: number, y: number, c: string | null, alpha = 255): void {
@@ -42,11 +54,12 @@ class Painter {
     const n = parseInt(hex(c).slice(1), 16);
     const k = (y * this.w + x) * 4;
     this.data.set([(n >> 16) & 255, (n >> 8) & 255, n & 255, alpha], k);
-    this.top = Math.max(this.top, TOP + TH / 2 - y);
+    this.ids[k / 4] = alpha === 255 ? this.id : 0;
   }
 
   /** Ground-level paint. a runs along the tile's x axis, b along its y axis, both 0..1. */
   ground(paint: (a: number, b: number) => string | null): void {
+    this.id++;
     const cy = TOP + TH / 2;
     for (let y = TOP; y < TOP + TH; y++)
       for (let x = 0; x < TW; x++) {
@@ -63,6 +76,8 @@ class Painter {
     const hh = TH / 2 - inset;
     const cx = TW / 2;
     const cy = TOP + TH / 2 - z;
+    const base = (this.id += 3);
+    const FACE_ID: Record<Face, number> = { L: base - 2, R: base - 1, T: base };
     for (let x = Math.floor(cx - hw); x < Math.ceil(cx + hw); x++) {
       const px = x + 0.5;
       const left = px < cx;
@@ -77,7 +92,10 @@ class Painter {
         const j = face === 'T' ? 0 : Math.floor(yb - py);
         const p = paint(face, u, j, i);
         if (p === null) continue;
-        this.set(x, y, p === undefined ? shade(colour, FACE_SHADE[face]) : shade(p, FACE_SHADE[face]));
+        this.id = FACE_ID[face];
+        // Baked ambient occlusion: walls darken toward the ground they stand on.
+        const ao = face !== 'T' && z === 0 ? (j === 0 ? 0.78 : j === 1 ? 0.9 : 1) : 1;
+        this.set(x, y, shade(p === undefined ? colour : p, FACE_SHADE[face] * ao));
       }
     }
   }
@@ -99,10 +117,12 @@ class Painter {
       [L, F, 1, 1],
       [F, R, 0.75, 1],
     ];
-    for (const [p, q, f] of tris)
+    for (const [p, q, f] of tris) {
+      this.id++;
       for (let y = Math.floor(apex[1]); y <= Math.ceil(F[1]); y++)
         for (let x = Math.floor(L[0]); x < Math.ceil(R[0]); x++)
           if (inTri(x + 0.5, y + 0.5, p, q, apex)) this.set(x, y, shade(paint(x, y) ?? colour, f));
+    }
   }
 
   shadow(inset: number): void {
@@ -112,11 +132,12 @@ class Painter {
     const cy = TOP + TH / 2;
     for (let y = TOP; y < TOP + TH; y++)
       for (let x = 0; x < TW; x++)
-        if (Math.abs(x + 0.5 - cx) / hw + Math.abs(y + 0.5 - cy) / hh <= 1) this.set(x, y, '#000000', 70);
+        if (Math.abs(x + 0.5 - cx) / hw + Math.abs(y + 0.5 - cy) / hh <= 1) this.set(x, y, INK, 90);
   }
 
-  /** A round leafy clump centred r art pixels above the ground centre, lit from the top left. */
+  /** A round leafy clump centred r art pixels above the ground centre, cel-lit from the top left. */
   blob(dx: number, up: number, r: number, colour: string): void {
+    this.id++;
     const cx = TW / 2 + dx;
     const cy = TOP + TH / 2 - up;
     for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++)
@@ -125,19 +146,64 @@ class Painter {
         const ey = (y + 0.5 - cy) / (r * 0.85);
         const d = ex * ex + ey * ey;
         if (d > 1) continue;
-        const lit = ex + ey < -0.5 ? 1.25 : ex + ey > 0.6 ? 0.75 : 1;
-        this.set(x, y, shade(colour, (x * 7 + y * 3) % 11 === 0 ? lit * 0.85 : lit));
+        this.set(x, y, shade(colour, ex + ey < -0.7 ? 1.3 : ex + ey > 0.5 ? 0.72 : 1));
       }
   }
 
+  /** A straight, square-brushed stroke w pixels thick, in art pixels from the ground centre (up is negative). */
+  stroke(x0: number, y0: number, x1: number, y1: number, w: number, colour: string, id = true): void {
+    if (id) this.id++;
+    const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2));
+    const ox = TW / 2 - Math.floor(w / 2);
+    const oy = TOP + TH / 2 - Math.floor(w / 2);
+    for (let k = 0; k <= steps; k++) {
+      const x = Math.round(x0 + ((x1 - x0) * k) / steps);
+      const y = Math.round(y0 + ((y1 - y0) * k) / steps);
+      for (let dy = 0; dy < w; dy++) for (let dx = 0; dx < w; dx++) this.set(ox + x + dx, oy + y + dy, colour);
+    }
+  }
+
+  /** A frond or leaf: a thick stroke out and down, shaded on its underside. */
+  leaf(x0: number, y0: number, x1: number, y1: number, colour: string): void {
+    this.stroke(x0, y0, x1, y1, 3, colour);
+    this.stroke(x0, y0 + 1, x1, y1 + 1, 2, shade(colour, 0.72), false);
+  }
+
+  /**
+   * Ink pass: a 1px outline round the silhouette, and a line wherever two faces or shapes meet.
+   * Windows and stripes share their face's id, so they stay clean.
+   */
+  private ink(): void {
+    const { w, h, data, ids } = this;
+    const solid = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && ids[y * w + x] > 0;
+    const edge: number[] = [];
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const k = y * w + x;
+        if (!ids[k]) {
+          if (solid(x - 1, y) || solid(x + 1, y) || solid(x, y - 1) || solid(x, y + 1)) edge.push(k);
+        } else if ((solid(x + 1, y) && ids[k + 1] !== ids[k]) || (solid(x, y + 1) && ids[k + w] !== ids[k])) edge.push(k);
+      }
+    const n = parseInt(INK.slice(1), 16);
+    for (const k of edge) {
+      data.set([(n >> 16) & 255, (n >> 8) & 255, n & 255, 255], k * 4);
+      ids[k] = 65535;
+    }
+  }
+
   finish(): Art {
+    if (!this.bare) this.ink();
     const c = document.createElement('canvas');
     c.width = this.w;
     c.height = this.h;
     c.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(this.data), this.w, this.h), 0, 0);
     const alpha = new Uint8ClampedArray(this.w * this.h);
-    for (let k = 0; k < alpha.length; k++) alpha[k] = this.data[k * 4 + 3];
-    return { canvas: c, alpha, height: this.top };
+    let top = 0;
+    for (let k = 0; k < alpha.length; k++) {
+      alpha[k] = this.data[k * 4 + 3];
+      if (alpha[k] === 255 && !top) top = TOP + TH / 2 - Math.floor(k / this.w);
+    }
+    return { canvas: c, alpha, height: top };
   }
 }
 
@@ -216,13 +282,17 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
     p.roof(4, 7, 6, 'N', (x, y) => ((x + y) % 4 === 0 ? 'n' : undefined));
   },
   // Variant 'y' runs the channel along the tile's y axis, so a column of selokan joins up.
-  selokan: (p, v) =>
+  // Bare, with its own ink banks, so neighbouring channels join without an outline between them.
+  selokan: (p, v) => {
+    p.bare = true;
     p.ground((a0, b0) => {
       const [a, b] = v === 'y' ? [b0, a0] : [a0, b0];
-      if (b < 0.28 || b > 0.72) return null;
-      if (b < 0.36 || b > 0.64) return 's';
-      return Math.floor(a * 10 + b * 3) % 3 === 0 ? 'l' : 'b';
-    }),
+      if (b < 0.26 || b > 0.74) return null;
+      if (b < 0.31 || b > 0.69) return INK;
+      if (b < 0.38 || b > 0.62) return 's';
+      return Math.floor(a * 6) % 3 === 0 && Math.abs(b - 0.5) < 0.05 ? 'w' : 'l';
+    });
+  },
   wifi: (p) => {
     p.shadow(6);
     p.box(5, 3, 'S');
@@ -242,12 +312,16 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
     p.box(7, 4, 'o', (face, _u, j) => (face !== 'T' && j === 2 ? 'y' : undefined), 4);
     p.box(7, 3, 't', undefined, 8);
   },
-  scaffold: (p) =>
-    p.box(2, 13, 'S', (face, _u, j, i) => {
+  // Bamboo poles lashed with rope. Bare, so the ink pass does not turn the lattice into a black net.
+  scaffold: (p) => {
+    p.bare = true;
+    p.box(2, 13, 'a', (face, _u, j, i) => {
       if (face === 'T') return null;
-      if (j === 12 && i % 3 === 0) return 'y';
-      return i % 6 === 0 || j % 4 === 0 || (i + j) % 6 === 0 ? undefined : null;
-    }),
+      if (i % 6 === 0 && j % 4 === 0) return 'N';
+      if (i % 6 === 0) return 'a';
+      return j % 4 === 0 ? 'n' : null;
+    });
+  },
   // Scenery. These never go in the tap list, so the tile under them stays buildable.
   bush: (p) => {
     p.shadow(5);
@@ -255,46 +329,54 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
     p.blob(3, 2, 3.5, 'g');
   },
   flowers: (p) => {
-    // Three small clumps: a stem pixel with a petal on top.
-    for (const [dx, dy, c] of [[-6, 0, 'y'], [-3, 3, 'p'], [5, 1, 'w'], [2, -2, 'y']] as const) {
-      p.set(TW / 2 + dx, TOP + TH / 2 + dy, 'G');
-      p.set(TW / 2 + dx, TOP + TH / 2 + dy - 1, c);
+    // A few chunky blooms: four petals round a yellow heart, each outlined on its own.
+    for (const [dx, dy, c] of [[-6, 0, 'r'], [5, 2, 'w'], [1, -3, 'p']] as const) {
+      p.id++;
+      const x = TW / 2 + dx;
+      const y = TOP + TH / 2 + dy;
+      for (const [ox, oy] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) p.set(x + ox, y + oy, c);
+      p.set(x, y, 'y');
     }
   },
   rumput: (p) => {
-    for (const [dx, dy] of [[-4, 1], [-3, 0], [-2, 1], [3, -1], [4, -2], [5, -1]]) p.set(TW / 2 + dx, TOP + TH / 2 + dy, '#577a3c');
+    p.bare = true;
+    for (const [dx, dy] of [[-4, 1], [-3, 0], [-2, 1], [3, -1], [4, -2], [5, -1]]) p.set(TW / 2 + dx, TOP + TH / 2 + dy, '#3f6a2a');
   },
+  // Trees have thick trunks and heavy, clumped crowns, so they read as solid at a glance.
   pisang: (p) => {
-    p.shadow(5);
-    p.box(7, 9, 'G');
-    for (const [dx, up, r] of [[-5, 12, 4], [5, 13, 4], [0, 15, 4], [-2, 10, 3], [3, 10, 3]]) p.blob(dx, up, r, 'g');
+    p.shadow(4);
+    p.box(6, 10, 'G', (face, _u, j) => (face !== 'T' && j % 4 === 3 ? 'g' : undefined));
+    // Broad paddle leaves fanning up and out, then a top shoot.
+    p.leaf(0, -10, -11, -16, 'g');
+    p.leaf(0, -10, 11, -15, 'g');
+    p.leaf(0, -12, -8, -22, 'g');
+    p.leaf(0, -12, 8, -23, 'g');
+    p.leaf(0, -12, 1, -26, 'g');
+    p.blob(3, 9, 2.5, 'y');
   },
   kelapa: (p) => {
     p.shadow(5);
-    // A slightly leaning trunk, then fronds that droop on both sides.
-    for (let k = 0; k < 26; k++) {
-      const x = TW / 2 + Math.round(Math.sin(k / 9) * 2);
-      p.set(x, TOP + TH / 2 - k, k % 3 ? 'n' : 'N');
-      p.set(x + 1, TOP + TH / 2 - k, 'N');
+    // A thick trunk leaning in two straight segments, banded like a real palm.
+    const top = [3, -28];
+    p.stroke(-1, -1, 1, -14, 4, 'n');
+    p.stroke(1, -14, top[0], top[1], 4, 'n', false);
+    for (let k = 3; k < 28; k += 4) p.stroke(k < 14 ? -1 + (2 * k) / 14 : 1 + (2 * (k - 14)) / 14, -k, k < 14 ? -1 + (2 * k) / 14 : 1 + (2 * (k - 14)) / 14, -k, 4, 'N', false);
+    // Six heavy fronds, each drooping in two straight steps.
+    const [tx, ty] = top;
+    for (const [dx, dy, ex, ey] of [[-7, -3, -13, 3], [7, -3, 13, 2], [-6, -6, -11, -8], [6, -6, 11, -9], [-3, -7, -6, -12], [3, -7, 7, -12]]) {
+      p.leaf(tx, ty, tx + dx, ty + dy, 'g');
+      p.leaf(tx + dx, ty + dy, tx + ex, ty + ey, 'g');
     }
-    const tx = TW / 2 + Math.round(Math.sin(26 / 9) * 2);
-    const ty = TOP + TH / 2 - 26;
-    for (let k = 1; k <= 9; k++) {
-      const droop = Math.round((k * k) / 12);
-      for (const dir of [-1, 1]) {
-        p.set(tx + dir * k, ty + droop, 'G');
-        p.set(tx + dir * k, ty + droop - 1, 'g');
-        p.set(tx + Math.round(dir * k * 0.5), ty - Math.round(k * 0.6) + Math.round(droop / 2), 'g');
-      }
-    }
-    p.set(tx, ty + 1, 'n');
-    p.set(tx + 1, ty + 1, 'N');
+    p.blob(tx - 1, -ty - 1, 2, 'n');
+    p.blob(tx + 2, -ty - 2, 2, 'n');
   },
   pohon: (p) => {
-    p.shadow(4);
-    p.box(7, 8, 'N');
-    p.blob(0, 16, 8, 'G');
-    p.blob(-3, 19, 4, 'g');
+    p.shadow(3);
+    p.box(6, 9, 'N', (face, _u, j) => (face !== 'T' && j === 5 ? 'n' : undefined));
+    // Three overlapping clumps make one full crown.
+    p.blob(-6, 17, 7, 'G');
+    p.blob(6, 18, 7, 'G');
+    p.blob(0, 24, 9, 'g');
   },
 };
 

@@ -1,8 +1,10 @@
 // Placeholder pixel sprites, drawn from text maps at runtime. No external art.
+// Warm storybook palette (terracotta, mustard, teal, cream, olive) kept punchy enough for a party
+// game, read against a dark brown ink.
 export const PALETTE: Record<string, string> = {
-  k: '#1b1b1f', w: '#f4f4f5', r: '#dc2626', R: '#991b1b', y: '#facc15', b: '#2563eb', B: '#1e3a8a',
-  g: '#22c55e', G: '#15803d', o: '#ea580c', n: '#92400e', N: '#5b2b0b', s: '#9ca3af', S: '#4b5563',
-  c: '#67e8f9', p: '#f472b6', t: '#d6b38a', a: '#fbbf24', l: '#60a5fa',
+  k: '#2a1810', w: '#f6ecd4', r: '#df4a2c', R: '#a8321f', y: '#f4b935', b: '#3d72b4', B: '#27427c',
+  g: '#86b84c', G: '#527f34', o: '#e57d2e', n: '#a8652f', N: '#603620', s: '#bdb4a3', S: '#6d635a',
+  c: '#93d8cb', p: '#e57a9c', t: '#eac58f', a: '#f2b43a', l: '#82bfdc',
 };
 
 export const SPRITES: Record<string, string[]> = {

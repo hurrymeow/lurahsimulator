@@ -1,10 +1,13 @@
 // The land around the kampung: a ring road, sawah, kebun, a beach and sea in front, and the two
 // mountains with the sun between them from every kid's "pemandangan" drawing. Decorative only.
 import { GRID_H, GRID_W } from '../sim/types';
-import { iso, TH, TOP, TW } from './iso';
+import { INK, TH, TOP, TW } from './iso';
 
-export const SKY = '#9fd3ee';
-export const SEA = '#2f6fae';
+// Flat colour fields with ink lines where land types meet, a sunburst sky and a grinning sun.
+export const SKY = '#f3d9a8';
+/** The second band of the sunburst. */
+const RAY = '#f7e5bd';
+export const SEA = '#3f8f8c';
 
 /** World extent in tiles, beyond the buildable grid. */
 const XMIN = -12;
@@ -23,6 +26,14 @@ export const WORLD_OY = HEAD - (XMIN + YMIN) * (TH / 2);
 const FAR = -12;
 /** Art row of the horizon inside the world canvas. */
 export const HORIZON = WORLD_OY + (FAR * TH) / 2;
+
+/** The sun sits in the valley between the two mountains, which stand on the horizon. */
+const M1 = WORLD_OX + (-8 * TW) / 2;
+const M2 = WORLD_OX + (4 * TW) / 2;
+export const SUN_X = (M1 + M2) / 2;
+export const SUN_Y = HORIZON - 70;
+/** Sun art is this many art pixels square, centred on SUN_X, SUN_Y. */
+export const SUN_SIZE = 44;
 
 type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea';
 
@@ -47,39 +58,41 @@ function terrain(tx: number, ty: number): Terrain {
 const hex = (c: string) => parseInt(c.slice(1), 16);
 
 function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx: number, ty: number): string {
-  const n = hash(x, y);
   switch (t) {
     case 'grass':
-      return n < 0.03 ? '#577a3c' : (tx + ty) % 2 ? '#3d5f2b' : '#43672f';
+      return (tx + ty) % 2 ? '#7a9a45' : '#82a34b';
     case 'road':
-      return n < 0.08 ? '#9a7348' : '#b48c5c';
+      return '#d08a52';
     case 'sawah':
-      // Pematang bunds round each plot, then rows of rice with water glinting between them.
-      if (a < 0.07 || b < 0.07) return '#7a6a3a';
-      // Some plots are ripe and turn gold.
-      if (Math.floor(a * 8) % 2) return (tx * 3 + ty) % 5 === 0 ? '#c9b94a' : '#6fae2e';
-      return n < 0.03 ? '#a5d8f0' : (tx * 3 + ty) % 5 === 0 ? '#a89a3c' : '#5a9128';
+      // Pematang bunds round each plot, then straight rows of rice. Some plots are ripe and gold.
+      if (a < 0.07 || b < 0.07) return '#8a5a32';
+      if ((tx * 3 + ty) % 5 === 0) return Math.floor(a * 8) % 2 ? '#e8b440' : '#d39a32';
+      return Math.floor(a * 8) % 2 ? '#9cc155' : '#86ab45';
     case 'kebun':
-      return n < 0.05 ? '#2f4a22' : '#3a5a2a';
+      return '#5f8a3c';
     case 'hutan':
-      return n < 0.1 ? '#22381b' : '#2a4421';
+      return '#4a7334';
     case 'beach':
-      return n < 0.06 ? '#cdb57a' : '#e8d39a';
+      return '#efd49a';
     case 'sea':
-      return (Math.floor(x / 3) + y) % 9 === 0 && n < 0.5 ? '#5b9bd5' : SEA;
+      // Short straight wave dashes.
+      return (x + 2 * y) % 24 < 4 && y % 6 === 0 ? '#7fc4b8' : SEA;
   }
 }
 
-/** One mountain: a ridge down the middle, lit on the left, with a pale peak. */
+/** One mountain: two flat-lit faces split by a straight ridge, a zigzag snow cap and an ink edge. */
 function mountain(img: ImageData, cx: number, baseY: number, hw: number, h: number): void {
   const peak = baseY - h;
   for (let y = Math.max(0, Math.floor(peak)); y < Math.min(WORLD_H, baseY); y++) {
     const span = (hw * (y - peak)) / h;
     for (let x = Math.max(0, Math.floor(cx - span)); x < Math.min(WORLD_W, Math.ceil(cx + span)); x++) {
-      const n = hash(x, y);
-      const ridge = cx + Math.sin((y - peak) / 9) * 3;
-      const top = y - peak < h * 0.18 + n * 4;
-      const c = top ? (x < ridge ? '#d8e6ec' : '#aac2cc') : x < ridge ? (n < 0.08 ? '#4f8a76' : '#5c9a82') : n < 0.08 ? '#3a6b5c' : '#447a68';
+      const edge = x - (cx - span) < 2 || cx + span - x < 2 || Math.abs(x + 0.5 - cx) < 1;
+      // Snow line: a straight-edged zigzag across the peak.
+      const zig = Math.abs(((x - cx) % 16 + 16) % 16 - 8);
+      const snow = y - peak < h * 0.2 + zig;
+      const snowEdge = !snow && y - peak < h * 0.2 + zig + 2;
+      // Aerial perspective: the far mountains fade toward the sky colour, ink included.
+      const c = edge || snowEdge ? '#6a5a4c' : snow ? (x < cx ? '#fbf3e0' : '#e0d3bd') : x < cx ? '#8fae94' : '#6f9083';
       put(img, x, y, c);
     }
   }
@@ -98,10 +111,20 @@ export function buildWorld(): HTMLCanvasElement {
   const ctx = c.getContext('2d')!;
   const img = ctx.createImageData(WORLD_W, WORLD_H);
 
-  // Sky above the horizon, sea everywhere else the land does not reach.
-  for (let y = 0; y < WORLD_H; y++) for (let x = 0; x < WORLD_W; x++) put(img, x, y, y < HORIZON ? SKY : SEA);
+  const base = HORIZON + 30;
+  const sx = SUN_X;
+  const sy = SUN_Y;
 
-  // Ground tiles.
+  // Sunburst sky above the horizon: straight rays fanning out from the sun. Sea elsewhere.
+  for (let y = 0; y < WORLD_H; y++)
+    for (let x = 0; x < WORLD_W; x++) {
+      if (y >= HORIZON) put(img, x, y, SEA);
+      else put(img, x, y, Math.floor(((Math.atan2(y - sy, x - sx) / Math.PI + 1) * 16)) % 2 ? RAY : SKY);
+    }
+
+  // Ground tiles. Each pixel remembers its terrain, so ink lines can follow every border.
+  const land = new Uint8Array(WORLD_W * WORLD_H);
+  const KINDS: Terrain[] = ['grass', 'road', 'sawah', 'kebun', 'hutan', 'beach', 'sea'];
   for (let y = HORIZON; y < WORLD_H; y++)
     for (let x = 0; x < WORLD_W; x++) {
       const rx = (x + 0.5 - WORLD_OX) / (TW / 2);
@@ -111,36 +134,109 @@ export function buildWorld(): HTMLCanvasElement {
       const tx = Math.floor(a);
       const ty = Math.floor(b);
       if (tx < XMIN || ty < YMIN || tx >= XMAX || ty >= YMAX || tx + ty < FAR) continue;
-      put(img, x, y, groundColour(terrain(tx, ty), a - tx, b - ty, x, y, tx, ty));
+      const t = terrain(tx, ty);
+      land[y * WORLD_W + x] = KINDS.indexOf(t) + 1;
+      put(img, x, y, groundColour(t, a - tx, b - ty, x, y, tx, ty));
+    }
+  // Ink where two land types meet, and along the horizon. Sea meeting the open sea stays clean.
+  for (let y = HORIZON; y < WORLD_H - 1; y++)
+    for (let x = 0; x < WORLD_W - 1; x++) {
+      const k = y * WORLD_W + x;
+      const here = land[k] || 7;
+      const right = land[k + 1] || 7;
+      const down = land[k + WORLD_W] || 7;
+      const up = y > 0 ? land[k - WORLD_W] : 0;
+      if (here !== right || here !== down || (land[k] && y === HORIZON) || (land[k] && !up && y > HORIZON)) put(img, x, y, INK);
     }
 
-  // The sun sits in the valley between the two mountains, which stand on the horizon.
-  const m1 = WORLD_OX + (-8 * TW) / 2;
-  const m2 = WORLD_OX + (4 * TW) / 2;
-  const base = HORIZON + 30;
-  const sx = (m1 + m2) / 2;
-  const sy = HORIZON - 70;
-  for (let y = sy - 16; y <= sy + 16; y++)
-    for (let x = sx - 16; x <= sx + 16; x++) if ((x - sx) ** 2 + (y - sy) ** 2 <= 256) put(img, x, y, (x - sx + 5) ** 2 + (y - sy + 5) ** 2 < 40 ? '#fde68a' : '#facc15');
-  for (const [cx, cy, w] of [[sx - 150, sy - 40, 22], [sx + 120, sy - 60, 16]])
-    for (let k = 0; k < 3; k++)
-      for (let x = cx + k * 5 - w / 2; x < cx + w / 2 - k * 5; x++) for (let y = cy - k * 3; y < cy - k * 3 + 3; y++) put(img, Math.round(x), Math.round(y), '#f4f4f5');
-  mountain(img, m1, base, 130, 165);
-  mountain(img, m2, base, 120, 150);
+  // Stepped clouds: three stacked bars, each outlined.
+  for (const [cx, cy, w] of [[sx - 150, sy - 40, 30], [sx + 120, sy - 60, 22]]) {
+    const bars = [[cx - w / 2, cy, w], [cx - w / 2 + 5, cy - 4, w - 12], [cx - w / 2 + 10, cy - 8, w - 22]];
+    for (const [bx, by, bw] of bars)
+      for (let x = Math.round(bx) - 1; x <= Math.round(bx + bw); x++) for (let y = by - 1; y <= by + 4; y++) put(img, x, y, INK);
+    for (const [bx, by, bw] of bars)
+      for (let x = Math.round(bx); x < Math.round(bx + bw); x++) for (let y = by; y < by + 4; y++) put(img, x, y, y === by + 3 ? '#e6d7bb' : '#fbf6ea');
+  }
+  mountain(img, M1, base, 130, 165);
+  mountain(img, M2, base, 120, 150);
   ctx.putImageData(img, 0, 0);
 
-  // Trees in front of the foothills, drawn in depth order so nearer trees overlap farther ones.
+  return c;
+}
+
+export interface Tree {
+  name: string;
+  /** Tile, for a per-tree bounce phase. */
+  tx: number;
+  ty: number;
+  /** Art position of the tree art's top-left corner inside the world canvas. */
+  x: number;
+  y: number;
+}
+
+let trees: Tree[] | null = null;
+
+/** Trees on the land round the kampung, back to front so nearer trees overlap farther ones. Drawn per frame so they can bounce. */
+export function worldTrees(): Tree[] {
+  if (trees) return trees;
+  trees = [];
   for (let d = FAR + 3; d < XMAX + YMAX; d++)
     for (let tx = XMIN; tx < XMAX; tx++) {
       const ty = d - tx;
       if (ty < YMIN || ty >= YMAX) continue;
       const t = terrain(tx, ty);
       const n = hash(tx * 5 + 1, ty * 3 + 2);
-      const tree = t === 'hutan' ? (n < 0.75 ? 'pohon' : 'kelapa') : t === 'kebun' ? (n < 0.35 ? 'kelapa' : n < 0.6 ? 'pisang' : n < 0.8 ? 'pohon' : null) : t === 'beach' && n < 0.25 ? 'kelapa' : null;
-      if (!tree) continue;
-      const art = iso(tree);
-      ctx.drawImage(art.canvas, WORLD_OX + ((tx - ty) * TW) / 2 - TW / 2, WORLD_OY + ((tx + ty) * TH) / 2 - TOP);
+      const name = t === 'hutan' ? (n < 0.75 ? 'pohon' : 'kelapa') : t === 'kebun' ? (n < 0.35 ? 'kelapa' : n < 0.6 ? 'pisang' : n < 0.8 ? 'pohon' : null) : t === 'beach' && n < 0.25 ? 'kelapa' : null;
+      if (name) trees.push({ name, tx, ty, x: WORLD_OX + ((tx - ty) * TW) / 2 - TW / 2, y: WORLD_OY + ((tx + ty) * TH) / 2 - TOP });
     }
+  return trees;
+}
+
+const suns = new Map<boolean, HTMLCanvasElement>();
+
+/** The sun's face: big shiny eyes (or happy closed arcs mid-blink), rosy cheeks and an open smile. */
+export function sunArt(blink: boolean): HTMLCanvasElement {
+  const hit = suns.get(blink);
+  if (hit) return hit;
+  const c = document.createElement('canvas');
+  c.width = c.height = SUN_SIZE;
+  const ctx = c.getContext('2d')!;
+  const px = (x: number, y: number, col: string) => {
+    ctx.fillStyle = col;
+    ctx.fillRect(SUN_SIZE / 2 + x, SUN_SIZE / 2 + y, 1, 1);
+  };
+  const R = 18;
+  for (let y = -R; y < R; y++)
+    for (let x = -R; x < R; x++) {
+      const d = (x + 0.5) ** 2 + (y + 0.5) ** 2;
+      if (d > R * R) continue;
+      const shine = (x + 10) ** 2 + (y + 10) ** 2 < 16;
+      px(x, y, d > (R - 2) ** 2 ? INK : shine ? '#fbe08a' : '#f4b935');
+    }
+  for (const [x, y] of [[-12, -12], [-11, -12], [-12, -11]]) px(x, y, '#fffaf0');
+  // Rosy cheeks.
+  for (const cx of [-13, 9])
+    for (let y = 1; y <= 3; y++) for (let x = cx; x < cx + 4; x++) if (!((y === 1 || y === 3) && (x === cx || x === cx + 3))) px(x, y, '#f07f86');
+  for (const ex of [-8, 4]) {
+    if (blink) {
+      // Happy closed eyes: a little upside-down V.
+      for (const [x, y] of [[-1, -2], [0, -3], [1, -4], [2, -4], [3, -3], [4, -2]]) px(ex + x, y, INK);
+    } else {
+      // Tall oval eyes with a sparkle.
+      for (let y = -7; y <= -1; y++) for (let x = 0; x < 4; x++) if (!((y === -7 || y === -1) && (x === 0 || x === 3))) px(ex + x, y, INK);
+      px(ex + 1, -6, '#fffaf0');
+      px(ex + 1, -5, '#fffaf0');
+      px(ex + 2, -2, '#5b4a6b');
+    }
+  }
+  // An open smile with a pink tongue.
+  for (let y = 2; y <= 7; y++)
+    for (let x = -5; x <= 4; x++) {
+      const d = (x + 0.5) ** 2 + (y - 1.5) ** 2;
+      if (d > 30) continue;
+      px(x, y, d > 18 || y === 2 ? INK : y >= 5 ? '#e57a9c' : '#8a2a1e');
+    }
+  suns.set(blink, c);
   return c;
 }
 

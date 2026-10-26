@@ -27,14 +27,14 @@ export interface Walker {
 }
 
 const SHIRTS: Record<Kind, string> = {
-  none: '#f4f4f5',
-  pns: '#c8b27a',
-  ojol: '#22c55e',
-  influencer: '#f472b6',
-  buzzer: '#f97316',
+  none: '#f6ecd4',
+  pns: '#c9a86a',
+  ojol: '#4fae3e',
+  influencer: '#e57a9c',
+  buzzer: '#e57d2e',
 };
-/** Unemployed residents wear one of these, so the crowd is not all white. */
-const CASUAL = ['#f4f4f5', '#60a5fa', '#dc2626', '#67e8f9', '#fbbf24'];
+/** Unemployed residents wear one of these, so the crowd is not all cream. */
+const CASUAL = ['#f6ecd4', '#5a9bd0', '#df4a2c', '#5fb3a6', '#f4b935'];
 
 // Art-pixel frames. f skin, h hair, s shirt, d trousers, k shoes, p phone, G helmet, m bike, w tyre, x spoke.
 const WALK: string[][] = [
@@ -46,24 +46,31 @@ const OJOL: string[][] = [
   ['....GGG....', '....Gff....', '....sss....', '...ssss.m..', '...ssssfm..', '.mmmddmmmm.', 'mmmmmmmmmmm', '.wxw...wxw.', '..w.....w..'],
   ['....GGG....', '....Gff....', '....sss....', '...ssss.m..', '...ssssfm..', '.mmmddmmmm.', 'mmmmmmmmmmm', '.www...www.', '..x.....x..'],
 ];
-const INK: Record<string, string> = { f: '#e0ac69', h: '#1b1b1f', d: '#374151', k: '#0b0b0c', p: '#f4f4f5', G: '#15803d', m: '#dc2626', w: '#0b0b0c', x: '#9ca3af' };
+const INK: Record<string, string> = { f: '#e7b07a', h: '#2a1810', d: '#4a4060', k: '#2a1810', p: '#f6ecd4', G: '#4fae3e', m: '#df4a2c', w: '#2a1810', x: '#bdb4a3' };
+/** Outline round each figure, matching the buildings. */
+const OUTLINE = '#2a1810';
 
 const cache = new Map<string, HTMLCanvasElement>();
 
-/** A frame rasterised once at art resolution, mirrored when facing left. */
+/** A frame rasterised once at art resolution with a 1px outline, mirrored when facing left. */
 function frame(rows: string[], shirt: string, face: 1 | -1): HTMLCanvasElement {
   const key = `${rows.join('/')}:${shirt}:${face}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const c = document.createElement('canvas');
-  c.width = rows[0].length;
-  c.height = rows.length;
+  c.width = rows[0].length + 2;
+  c.height = rows.length + 2;
   const ctx = c.getContext('2d')!;
+  const on = (x: number, y: number) => rows[y]?.[x] !== undefined && rows[y][x] !== '.';
+  const px = (x: number, y: number) => ctx.fillRect(face === 1 ? x + 1 : c.width - 2 - x, y + 1, 1, 1);
+  ctx.fillStyle = OUTLINE;
+  for (let y = -1; y <= rows.length; y++)
+    for (let x = -1; x <= rows[0].length; x++) if (!on(x, y) && (on(x - 1, y) || on(x + 1, y) || on(x, y - 1) || on(x, y + 1))) px(x, y);
   rows.forEach((row, y) =>
     [...row].forEach((ch, x) => {
       if (ch === '.') return;
       ctx.fillStyle = ch === 's' ? shirt : INK[ch];
-      ctx.fillRect(face === 1 ? x : c.width - 1 - x, y, 1, 1);
+      px(x, y);
     }),
   );
   cache.set(key, c);
@@ -231,14 +238,15 @@ export class Crowd {
     const bob = !moving && motion && Math.floor((now + p.id * 377) / 600) % 2 ? 1 : 0;
     const w = img.width * s;
     const h = img.height * s;
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillStyle = 'rgba(42, 24, 16, 0.35)';
     ctx.fillRect(Math.round(g.x - w / 2), Math.round(g.y - s), w, 2 * s);
     if (moving && p.kind === 'ojol') {
       // Speed lines behind the bike.
-      ctx.fillStyle = 'rgba(244, 244, 245, 0.5)';
+      ctx.fillStyle = 'rgba(246, 236, 212, 0.7)';
       for (let i = 0; i < 2; i++) ctx.fillRect(Math.round(g.x - p.face * (w / 2 + (3 + i * 2) * s)) - (p.face === 1 ? 2 * s : 0), Math.round(g.y - (4 + i * 2) * s), 2 * s, s);
     }
-    ctx.drawImage(img, Math.round(g.x - w / 2), Math.round(g.y - h + s - bob * s), w, h);
+    // The frame's outline adds a pixel all round, so the feet sit one art pixel above the bottom.
+    ctx.drawImage(img, Math.round(g.x - w / 2), Math.round(g.y - h + 2 * s - bob * s), w, h);
   }
 
   /** Walkers within reach of a tile, so the tukang parkir knows to wave harder. */
