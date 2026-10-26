@@ -5,6 +5,7 @@ import type { App } from '../app';
 import { rupiah } from '../format';
 import { comboMemberNames } from '../sim/combos';
 import { checkAssign, assign, slots, used } from '../sim/jobs';
+import { checkRepair, repair, repairCost } from '../sim/events';
 import { checkRestart, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
 import { announce, checkAnnounce, wacanaCost } from '../sim/wacana';
 import type { Building, JobId } from '../sim/types';
@@ -109,4 +110,21 @@ export function parkirExtras(app: App, b: Building): Node[] {
   if (b.def !== 'parkir') return [];
   const owner = app.s.buildings.find((o) => o.uid === b.owner);
   return [h('p', { class: 'meta' }, `Guards the ${owner ? 'shop' : 'old shop'} nobody asked him to guard. Level ${b.level}: more retribusi, more Sabar lost.`)];
+}
+
+export function damagedExtras(app: App, b: Building): Node[] {
+  if (b.status !== 'damaged') return [];
+  const s = app.s;
+  const cost = repairCost(s, b);
+  return [
+    h('p', { class: 'meta' }, cost === 0 ? 'Viral is high enough that the kelurahan fixes it for free.' : `Repair costs ${rupiah(cost)}. Free once Viral reaches ${VIRAL_REPAIR_AT} (have ${Math.floor(s.res.viral)}).`),
+    actionButton(cost === 0 ? 'Repair · free (viral)' : `Repair · ${rupiah(cost)}`, checkRepair(s, b), () => {
+      repair(s, b);
+      app.view.burst(b.x, b.y);
+      app.haptic(15);
+      app.save();
+      app.refresh();
+      app.inspect(b.uid);
+    }, true),
+  ];
 }

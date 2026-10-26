@@ -2,6 +2,8 @@ import { rupiah } from '../format';
 import { def } from './content';
 import { gain, type Fx } from './gain';
 import { chance } from './rng';
+import { EMAS } from '../data/ranking';
+import { addEmas } from './ranking';
 import { addBuilding, buildCost, emptyTiles } from './state';
 import type { Building, CheckResult, GameState } from './types';
 
@@ -17,6 +19,7 @@ export function onBuildingFinished(s: GameState, fx: Fx, b: Building): 'ok' | 'm
   if (d.mangkrakChance && !b.restarted && s.month >= MANGKRAK_FROM_MONTH && chance(s, d.mangkrakChance)) {
     b.status = 'mangkrak';
     b.timer = 0;
+    addEmas(s, EMAS.perMangkrak);
     fx.push({
       kind: 'notice',
       title: `${d.name} mangkrak at ${MANGKRAK_AT}`,
@@ -71,6 +74,7 @@ export function restart(s: GameState, b: Building): CheckResult {
   b.status = 'building';
   b.timer = 1;
   b.restarted = true;
+  addEmas(s, EMAS.perRestart);
   return check;
 }
 

@@ -14,7 +14,8 @@ async function dismissModals(page: Page): Promise<void> {
   if (await page.locator('#howto').isVisible()) await page.locator('#howtoGo').click();
   for (let i = 0; i < 12; i++) {
     if (!(await page.locator('#modal').isVisible())) return;
-    await page.locator('#modal').click();
+    if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click();
+    else await page.locator('#modal').click();
     await page.waitForTimeout(60);
   }
 }
@@ -34,7 +35,8 @@ async function seed(page: Page): Promise<void> {
     const add = (def: string, x: number, y: number, status = 'active', level = 1) =>
       s.buildings.push({ uid: s.nextUid++, def, x, y, level, status, timer: 2, invested: 3_000_000, placedAt: 0 });
     add('warung', 2, 3); add('posRonda', 3, 3); add('wifi', 4, 3);
-    add('indomaret', 2, 5, 'mangkrak'); add('alfamart', 3, 5, 'permit'); add('selokan', 5, 5, 'building');
+    add('indomaret', 2, 5, 'mangkrak'); add('alfamart', 3, 5, 'permit'); add('selokan', 5, 5, 'building'); add('warung', 6, 7, 'damaged');
+    s.ranking.push({ year: 1, us: 90, them: 80, won: true }, { year: 2, us: 100, them: 130, won: false });
     add('parkir', 1, 3);
     for (let i = 0; i < 6; i++) app.s.residents.push({ id: s.nextResidentId++, name: 'Mbak Rizki Putri', job: 'none', pensiun: 0, fake: 0, arrived: 0 });
     app.runTick();
@@ -62,6 +64,115 @@ test.describe('how to play', () => {
     await page.locator('#howtoGo').click();
     const after = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.speed);
     expect(after).toBe(1);
+  });
+});
+
+test.describe('events, ranking, settings', () => {
+  for (const id of ['agustusan', 'banjir', 'cabai']) {
+    for (const broke of [false, true]) {
+      test(`event ${id}${broke ? ' while broke' : ''} is legible and has a free choice`, async ({ page }) => {
+        await start(page);
+        await dismissModals(page);
+        await page.evaluate(([eventId, poor]) => {
+          const app = (window as unknown as { pakrt: any }).pakrt;
+          if (poor) { app.s.res.rupiah = 0; app.s.res.orangDalam = 0; }
+          app.s.pendingEvent = eventId;
+          app.showEvent();
+        }, [id, broke] as const);
+        await expect(page.locator('#modal .card.event')).toBeVisible();
+        await expectLegible(page, `event ${id}`);
+        // The game is paused until a choice is made, and the first choice always works.
+        const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month);
+        await page.waitForTimeout(300);
+        expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month)).toBe(before);
+        await page.locator('#modal .card.event .btn').first().click();
+        await expect(page.locator('#modal')).toBeHidden();
+        expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.pendingEvent)).toBeNull();
+        await expectLegible(page, `after event ${id}`);
+      });
+    }
+  }
+
+  test('a pending event comes back after a reload', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.pendingEvent = 'cabai';
+      app.save();
+    });
+    await page.reload();
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await expect(page.locator('#modal .card.event')).toBeVisible();
+  });
+
+  test('stats sheet shows the ranking history and Indonesia Emas', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    await page.locator('#hud').click();
+    await expect(page.locator('#sheet')).toContainText('Kampung Sebelah');
+    await expect(page.locator('#sheet')).toContainText('Indonesia Emas 2045');
+    await expectLegible(page, 'stats with ranking');
+    await expect(page.locator('#emas-value')).toHaveText(/^\d+\.\d{2}%$/);
+  });
+
+  test('every setting flips, saves, and leaves the game readable', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#settings-btn').click();
+    const toggles = page.locator('#sheet .toggle');
+    expect(await toggles.count()).toBe(5);
+    for (let i = 0; i < 5; i++) {
+      const t = toggles.nth(i);
+      const before = await t.getAttribute('aria-checked');
+      await t.click();
+      expect(await t.getAttribute('aria-checked')).not.toBe(before);
+      await expect(t).toContainText(/On|Off/);
+    }
+    await expectLegible(page, 'settings toggled');
+    await page.locator('.sheet-head .btn').click();
+    await expectLegible(page, 'game with every setting flipped');
+    await page.reload();
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.locator('#settings-btn').click();
+    const saved = await page.locator('#sheet .toggle').evaluateAll((els) => els.map((e) => e.getAttribute('aria-checked')));
+    expect(saved.length).toBe(5);
+  });
+
+  test('large text and high contrast stay legible on busy panels', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.settings.largeText = true;
+      app.settings.highContrast = true;
+      app.applySettings();
+    });
+    await expectLegible(page, 'large text main');
+    for (const id of ['build', 'warga', 'wacana', 'combo']) {
+      await page.locator(`#act-${id}`).click();
+      await expectLegible(page, `large text ${id}`);
+      await page.locator('.sheet-head .btn').click();
+    }
+  });
+
+  test('with effects off the game still plays and shows numbers', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.settings.effects = false;
+      app.applySettings();
+    });
+    for (let i = 0; i < 12; i++) {
+      await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
+      await dismissModals(page);
+      if (await page.locator('#modal .card.event .btn').first().isVisible()) await page.locator('#modal .card.event .btn').first().click();
+    }
+    await expectLegible(page, 'effects off');
+    expect(await page.locator('#map.shake').count()).toBe(0);
   });
 });
 

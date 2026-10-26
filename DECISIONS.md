@@ -43,3 +43,10 @@ One line per decision, with the reason. Newest at the bottom.
 - **Map panning:** tiles have a 32px minimum, so a small phone pans the map by dragging instead of shrinking tiles to 20px.
 - **E2E tests:** Playwright at 320, 360 and 390px portrait, with a legibility scanner. Runs in CI on every PR. Canvas text is not covered by the scanner.
 - **Tutorial (Hari's ask, modelled on mainpecah):** one full-screen How to play page. Illustrated cards, one bold sentence plus one short sentence each, a single Got it button. Shown on first launch (flag in localStorage), reopenable from the ? button at the top. Pauses the game while open. Replaces the old welcome message.
+- **Events:** 17 Agustus every August (year 1 included), banjir 30% a month from Nov to Feb, harga cabai 7% a month from month 4. At most one event a month. Events pause the game until a choice is made, and the first choice is always free.
+- **Banjir:** each working selokan level cuts damage 20%, capped at 80%. Flooded buildings stop earning until repaired. Repair is 25% of build cost, free at 30 Viral. Year 1 floods break at most one building.
+- **Ranking:** score = 8 per resident + 5 per working building + 10 per combo + 0.5 per Sabar + 20 per Emas point. Kampung Sebelah = 55 + 26 per year, plus or minus 8. Win: +10 Sabar, +1 Orang Dalam. Lose: -5 Sabar. No other penalty.
+- **Indonesia Emas 2045:** starts at 0.01%. +0.02% a year, +0.03% per ranking win, +0.001% per wacana, +0.005% per project restart, -0.004% per frozen project. A decade of active play stays under 1%.
+- **Effects off:** number pops stay (they carry the information) but stop rising. Chip flashes, spawn pops and screen shake are skipped. Reduce motion implies effects off. It defaults to your phone setting.
+- **High contrast and large text:** added as settings. Both are covered by the E2E scan.
+- **Flash style:** resource chips flash with a coloured inset border, not a background fill. A background fill dropped contrast below 4.5:1 mid-animation and the scanner caught it.

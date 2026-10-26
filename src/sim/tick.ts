@@ -4,8 +4,11 @@ import {
 } from './balance';
 import { comboIncomeMult, comboSystem } from './combos';
 import { def, placeableDefs } from './content';
+import { EMAS } from '../data/ranking';
+import { eventSystem } from './events';
 import { jobsSystem } from './jobs';
 import { mangkrakSystem, onBuildingFinished } from './projects';
+import { addEmas, yearlyRanking } from './ranking';
 import { wacanaSystem } from './wacana';
 import { chance, pick, randInt } from './rng';
 import { requirementGaps } from './rules';
@@ -142,6 +145,8 @@ export function decay(s: GameState): void {
 
 export function yearEnd(s: GameState, fx: Fx): void {
   s.inflation *= 1 + INFLATION_PER_YEAR;
+  addEmas(s, EMAS.perYear);
+  yearlyRanking(s, fx, s.month / 12);
   fx.push({ kind: 'notice', title: `Year ${s.month / 12 + 1} begins`, body: `Prices up ${Math.round(INFLATION_PER_YEAR * 100)}%. Inflation, not greed.`, tone: 'info' });
 }
 
@@ -156,6 +161,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   safetyNet,
   residentsMove,
   checkUnlocks,
+  eventSystem,
 ];
 
 /** One month. Pure apart from mutating the state it is given. */
