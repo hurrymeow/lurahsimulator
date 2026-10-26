@@ -15,10 +15,10 @@ const NIGHT_ABOVE = 0.5;
 /** Chance an idle worker leaves the RT for the day, each time they pick a trip. */
 const COMMUTE_CHANCE = 0.5;
 /** Chance a walker says something on reaching a door, and how long the bubble stays. */
-const SAY_CHANCE = 0.55;
-const SAY_MS = 2600;
+const SAY_CHANCE = 0.12;
+const SAY_MS = 1800;
 /** Buildings with lines in en.ts as `say.<def>.<n>`. Others stay quiet. */
-const LINES: Record<string, number> = { rumah: 2, warung: 3, posRonda: 2, wifi: 2, indomaret: 2, alfamart: 2, kantorRT: 2, kosan: 2, lapangan: 2, bankSampah: 2 };
+const LINES: Record<string, number> = { rumah: 6, warung: 7, posRonda: 6, wifi: 6, indomaret: 6, alfamart: 6, kantorRT: 6, kosan: 6, lapangan: 6, bankSampah: 6 };
 const VIP_ID = -1;
 const WALK_SPEED = 0.9;
 const OJOL_SPEED = 2.8;
@@ -158,6 +158,7 @@ export class Crowd {
   private onPath: Uint8Array = new Uint8Array(GRID_W * GRID_H);
   private last = 0;
   private night = 0;
+  private lastLine = '';
   /** Speech bubbles show only with effects and motion on. */
   bubbles = true;
 
@@ -322,8 +323,12 @@ export class Crowd {
   /** At the door: sometimes say something about the place. Cosmetic only. */
   private greet(p: Walker, now: number): void {
     const n = LINES[p.dest ?? ''];
-    if (n && p.kind !== 'ojol' && Math.random() < SAY_CHANCE) {
-      p.say = t(`say.${p.dest}.${Math.floor(Math.random() * n)}` as Key);
+    // One bubble on the map at a time, and never the line just heard.
+    if (n && p.kind !== 'ojol' && Math.random() < SAY_CHANCE && !this.people.some((o) => o.say)) {
+      let i = Math.floor(Math.random() * n);
+      if (`${p.dest}.${i}` === this.lastLine) i = (i + 1) % n;
+      this.lastLine = `${p.dest}.${i}`;
+      p.say = t(`say.${p.dest}.${i}` as Key);
       p.sayUntil = now + SAY_MS;
     }
     p.dest = undefined;
@@ -395,24 +400,24 @@ export class Crowd {
 
   /** A small speech bubble above a walker's head. */
   private bubble(ctx: CanvasRenderingContext2D, text: string, cx: number, bottom: number): void {
-    ctx.font = '700 13px "Atkinson Hyperlegible", system-ui, sans-serif';
+    ctx.font = '700 11px "Atkinson Hyperlegible", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const w = ctx.measureText(text).width + 12;
+    const w = ctx.measureText(text).width + 10;
     const x = Math.round(cx - w / 2);
-    const y = Math.round(bottom - 24);
+    const y = Math.round(bottom - 22);
     ctx.fillStyle = '#fbf6ea';
-    ctx.fillRect(x, y, w, 20);
+    ctx.fillRect(x, y, w, 18);
     ctx.fillStyle = '#2a1810';
     ctx.fillRect(x, y, w, 1);
-    ctx.fillRect(x, y + 19, w, 1);
-    ctx.fillRect(x, y, 1, 20);
-    ctx.fillRect(x + w - 1, y, 1, 20);
-    ctx.fillRect(Math.round(cx) - 2, y + 20, 4, 3);
+    ctx.fillRect(x, y + 17, w, 1);
+    ctx.fillRect(x, y, 1, 18);
+    ctx.fillRect(x + w - 1, y, 1, 18);
+    ctx.fillRect(Math.round(cx) - 2, y + 18, 4, 3);
     ctx.fillStyle = '#fbf6ea';
-    ctx.fillRect(Math.round(cx) - 1, y + 19, 2, 2);
+    ctx.fillRect(Math.round(cx) - 1, y + 17, 2, 2);
     ctx.fillStyle = '#2a1810';
-    ctx.fillText(text, cx, y + 11);
+    ctx.fillText(text, cx, y + 10);
   }
 
   /** Walkers within reach of a tile, so the tukang parkir knows to wave harder. */
