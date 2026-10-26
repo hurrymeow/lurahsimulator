@@ -132,6 +132,7 @@ export class App {
     for (const f of fx) {
       if (f.kind === 'pop') continue;
       else if (f.kind === 'job') this.view.pop(f.x, f.y, 'viral', 0, t('sim.jobPick', { name: f.name, job: jName(jobDef(f.job)!) }));
+      else if (f.kind === 'level') this.view.pop(f.x, f.y, 'viral', 0, t('sim.levelUp', { name: f.name, n: f.level }));
       else if (f.kind === 'built') {
         const b = this.s.buildings.find((o) => o.uid === f.uid);
         if (b) {

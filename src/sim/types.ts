@@ -140,6 +140,8 @@ export interface Resident {
   arrived: number;
   /** Player picked this job (or none) by hand, so residents stop choosing for themselves. */
   manual?: boolean;
+  /** Months spent employed. Level comes from this (see levelFor in data/jobs.ts). Absent in older saves. */
+  xp?: number;
 }
 
 export interface WacanaState {
@@ -235,6 +237,7 @@ export type SimEffect =
   | { kind: 'pop'; x: number; y: number; res: ResourceId; amount: number }
   | { kind: 'notice'; title: string; body: string; tone: 'good' | 'bad' | 'info'; fanfare?: boolean; x?: number; y?: number }
   | { kind: 'job'; x: number; y: number; name: string; job: Exclude<JobId, 'none'> }
+  | { kind: 'level'; x: number; y: number; name: string; level: number }
   | { kind: 'event'; eventId: string }
   | { kind: 'built'; uid: number }
   | { kind: 'report'; report: QuarterReport };

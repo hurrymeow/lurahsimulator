@@ -165,6 +165,10 @@ export const EN = {
 
   // residents, jobs
   'res.noJob': 'No job',
+  'res.level': 'Lv {n}',
+  'res.levelNext': 'Lv {n}. {left} more months of work to level up.',
+  'res.levelMax': 'Lv {n}, the top level.',
+  'sim.levelUp': '{name} is now Lv {n}',
   'res.pensiun': 'Pensiun {n}%',
   'res.fake': 'Fake Viral pumped: {n}',
   'res.slots': 'Job slots: {summary}. Employed residents add 0.2 Sabar a month. Tap a job to change it. Your pick sticks.',
