@@ -28,7 +28,10 @@ Follow these every session. If a change breaks one, fix the change.
 
 - Mobile-first, portrait, touch controls.
 - Touch targets at least 48px, with 8px gaps.
-- Primary actions in the bottom third. Settings at the top.
+- Primary actions in the bottom third.
+- Main screen: a slim resource bar at the top, the map, and one bottom row: pause, speed, date, Menu.
+- Every panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game.
+- New panels register an `ActionButton` with a `group` instead of adding a button to the main screen.
 - Clean modern pixel UI. No cluttered Windows-XP-style panels.
 
 ## Feedback

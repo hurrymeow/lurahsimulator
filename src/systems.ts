@@ -7,7 +7,7 @@ export function registerSystems(app: App): void {
   app.actions.push(
     { id: 'warga', label: 'Warga', open: openResidents },
     { id: 'wacana', label: 'Wacana', open: openWacana },
-    { id: 'combo', label: 'Combo', open: openBukuCombo },
+    { id: 'combo', label: 'Buku Combo', group: 'records', open: openBukuCombo },
   );
   inspectExtras.push(mangkrakExtras, parkirExtras, damagedExtras);
 }
