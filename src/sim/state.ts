@@ -4,6 +4,7 @@ import { BASE_ATTRACT, LEVEL_BONUS, START, START_RESIDENTS } from './balance';
 import { def } from './content';
 import { pick } from './rng';
 import { lotAt } from './area';
+import { refreshAccess } from './access';
 import { GRID_H, GRID_W, setGrid, type Building, type BuildingDef, type GameState, type Resident, type StageState } from './types';
 
 export const SAVE_VERSION = 2;
@@ -37,6 +38,7 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
     lastNovelty: 0,
     lastArrival: 0,
     stats: { earned: 0, spent: 0, arrived: 0, left: 0 },
+    roadsLaid: true,
   };
   setGrid('rt');
   const cx = Math.floor(GRID_W / 2);
@@ -44,6 +46,10 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
   addBuilding(s, 'kantorRT', cx, cy, 'active');
   addBuilding(s, 'rumah', cx - 1, cy + 1, 'active');
   addBuilding(s, 'rumah', cx + 1, cy + 1, 'active');
+  // One path tile under the kantor links all three, so the first houses work from day one.
+  addBuilding(s, 'jalan', cx, cy + 1, 'active');
+  addBuilding(s, 'jalan', cx, cy + 2, 'active');
+  refreshAccess(s);
   for (let i = 0; i < START_RESIDENTS; i++) addResident(s);
   s.unlocked = ['rumah', 'warung', 'posRonda', 'selokan', 'jalan', 'kantorRT'];
   return s;
@@ -67,14 +73,14 @@ export const buildingAt = (s: GameState, x: number, y: number) => s.buildings.fi
 export const byUid = (s: GameState, uid: number) => s.buildings.find((b) => b.uid === uid);
 export const population = (s: GameState) => s.residents.length;
 export const levelMult = (level: number) => 1 + LEVEL_BONUS * (level - 1);
-export const isWorking = (b: Building) => b.status === 'active';
+export const isWorking = (b: Building) => b.status === 'active' && !b.noRoad;
 
 export function count(s: GameState, id: string, activeOnly = false): number {
   return s.buildings.filter((b) => b.def === id && (!activeOnly || isWorking(b))).length;
 }
 
 export function housing(s: GameState): number {
-  return s.buildings.reduce((n, b) => n + (def(b.def).housing ?? 0), 0);
+  return s.buildings.reduce((n, b) => n + (b.noRoad ? 0 : (def(b.def).housing ?? 0)), 0);
 }
 
 export function attractTarget(s: GameState): number {

@@ -3,6 +3,7 @@ import {
   ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
   NOVELTY_GAP, QUEUE_SABAR_DRAIN, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
 } from './balance';
+import { accessSystem, connectedRoad, hasRoadBeside } from './access';
 import { comboIncomeMult, comboSystem } from './combos';
 import { def, placeableDefs } from './content';
 import { EMAS } from '../data/ranking';
@@ -103,8 +104,12 @@ export function safetyNet(s: GameState, fx: Fx): void {
 function spawnRumah(s: GameState): Building | null {
   const empty = emptyTiles(s);
   if (!empty.length) return null;
-  const near = empty.filter((t) => neighbours(s, t).some((b) => b.def !== 'rumah' || chance(s, 0.5)));
-  const spot = pick(s, near.length ? near : empty);
+  // A perantau builds beside a road when there is one, so his house works at once.
+  const conn = connectedRoad(s);
+  const onRoad = empty.filter((e) => hasRoadBeside(conn, { def: 'rumah', ...e }));
+  const pool = onRoad.length ? onRoad : empty;
+  const near = pool.filter((t) => neighbours(s, t).some((b) => b.def !== 'rumah' || chance(s, 0.5)));
+  const spot = pick(s, near.length ? near : pool);
   return addBuilding(s, 'rumah', spot.x, spot.y, 'active');
 }
 
@@ -175,7 +180,9 @@ export function yearEnd(s: GameState, fx: Fx): void {
 
 /** Ordered list of monthly systems. Later milestones insert their systems here. */
 export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
+  accessSystem,
   advanceConstruction,
+  accessSystem,
   collectIncome,
   comboSystem,
   rwSystem,

@@ -149,10 +149,10 @@ test.describe('population and houses', () => {
 
     const box = (await page.locator('#map').boundingBox())!;
     const at = await page.evaluate(() => {
-      // The map opens centred on the Kantor RT, so the tile above it is always on screen.
+      // The map opens centred on the Kantor RT. The tile below-left of it touches the starting path, so the house works.
       const app = (window as unknown as { pakrt: any }).pakrt;
       const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
-      return app.view.tileCentre(k.x, k.y - 1);
+      return app.view.tileCentre(k.x - 1, k.y + 2);
     });
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('#place-ok')).toBeEnabled();
@@ -598,8 +598,11 @@ test.describe('text is legible and never cut off', () => {
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       const s = app.s;
-      for (const [d, x] of [['warung', 0], ['posRonda', 1], ['wifi', 2]] as const)
-        s.buildings.push({ uid: s.nextUid++, def: d, x, y: 0, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      // A road row hangs off the starting path, so the three shops below it have road access.
+      const k = s.buildings.find((b: any) => b.def === 'kantorRT');
+      const add = (d: string, x: number, y: number) => s.buildings.push({ uid: s.nextUid++, def: d, x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      for (let i = 0; i < 4; i++) add('jalan', k.x + i, k.y + 3);
+      (['warung', 'posRonda', 'wifi'] as const).forEach((d, i) => add(d, k.x + i, k.y + 4));
       app.runTick();
     });
     await expect(page.locator('#modal .fanfare')).toBeVisible();
@@ -654,10 +657,32 @@ test.describe('walkers and effects', () => {
     // Nobody stands inside a building.
     const inside = await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
-      const solid = app.s.buildings.filter((b: any) => !['selokan', 'parkir'].includes(b.def));
+      const solid = app.s.buildings.filter((b: any) => !['selokan', 'parkir', 'jalan'].includes(b.def));
       return app.view.crowd.people.filter((p: any) => solid.some((b: any) => b.x === Math.floor(p.fx) && b.y === Math.floor(p.fy))).length;
     });
     expect(inside).toBe(0);
+  });
+
+  test('walkers stay on paths, and a building with no path is marked and idle', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.s.buildings.push({ uid: app.s.nextUid++, def: 'warung', x: 0, y: 0, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      app.runTick();
+    });
+    await page.waitForTimeout(4000);
+    const r = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const road = new Set(app.s.buildings.filter((b: any) => b.def === 'jalan').map((b: any) => `${b.x},${b.y}`));
+      const off = app.view.crowd.people.filter((p: any) => p.kind !== 'ojol' && !road.has(`${Math.floor(p.fx)},${Math.floor(p.fy)}`)).length;
+      const w = app.s.buildings.find((b: any) => b.def === 'warung');
+      return { off, noRoad: !!w.noRoad, walkers: app.view.crowd.people.length };
+    });
+    expect(r.walkers).toBeGreaterThan(0);
+    expect(r.off).toBe(0);
+    expect(r.noRoad).toBe(true);
   });
 
   test('reduce motion keeps walkers still and effects off skips particles', async ({ page }) => {

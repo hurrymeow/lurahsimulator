@@ -24,7 +24,7 @@ function play(seed: number, years: number, smart: boolean, starMonths: number[] 
         if (checkPlace(s, def, x, y).ok) place(s, def, x, y);
       };
       want('posRonda', k.x + 1, k.y, 2_400_000);
-      want('warung', k.x, k.y + 1, 3_000_000);
+      want('warung', k.x + 1, k.y - 1, 3_000_000);
       want('wifi', k.x, k.y - 1, 5_000_000);
       // A bed for the next arrivals, up to what the top goals need.
       if (population(s) < 42 && housing(s) < attractTarget(s) + 3) {

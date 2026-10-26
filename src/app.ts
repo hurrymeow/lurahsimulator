@@ -1,3 +1,4 @@
+import { connectedRoad, FLAT, hasRoadBeside } from './sim/access';
 import { eBody, eLabel, eName, bName, jName, getLang, initialLang, setLang, t, type Key, type Lang } from './i18n';
 import { jobDef } from './data/jobs';
 import { dateLabel, rupiah, rupiahHud } from './format';
@@ -601,7 +602,8 @@ export class App {
     g.ok = check.ok;
     btn.disabled = !check.ok;
     const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
-    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', {}, d.pathIncome ? t('build.instant') : instant ? t('build.noPermit') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
+    const noRoad = check.ok && !FLAT.has(d.id) && !d.id.startsWith('kantor') && (d.scope ?? 'rt') === 'rt' && !hasRoadBeside(connectedRoad(this.s), { def: d.id, x: g.x, y: g.y });
+    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', noRoad ? { class: 'warn' } : {}, noRoad ? t('build.noRoad') : d.pathIncome ? t('build.instant') : instant ? t('build.noPermit') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
   }
 
   // ---------- language ----------
