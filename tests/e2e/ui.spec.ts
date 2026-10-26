@@ -725,11 +725,13 @@ test.describe('growing map', () => {
     });
     await dismissModals(page);
     // Bring the second RT into view, then tap its first tile.
-    const at = await page.evaluate(() => {
+    const at = await page.evaluate(async () => {
       const v = (window as unknown as { pakrt: any }).pakrt.view;
       const { w, h } = (window as unknown as { pakrt: any }).pakrt.rt;
       const c = v.project(w + w / 2, h / 2);
       v.panBy(v.viewW / 2 - c.x, v.viewH / 2 - c.y);
+      // Tap picking reads the last drawn frame, so let one draw after the pan.
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       const p = v.project(w + w / 2, h / 2);
       return { x: p.x, y: p.y };
     });
