@@ -1,5 +1,5 @@
 import { eModLabel, eOutcome, eResult, t } from '../i18n';
-import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR_SABAR, EVENTS, POPUP_CHANCE, POPUP_GAP, REPAIR_FRACTION, eventDef, type EventChoice, type EventDef, type EventOutcome as OutcomeDef } from '../data/events';
+import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR_SABAR, EVENTS, POPUP_CHANCE, MIN_REPEAT_GAP, POPUP_GAP, REPAIR_FRACTION, eventDef, type EventChoice, type EventDef, type EventOutcome as OutcomeDef } from '../data/events';
 import { STAGE_EVENTS } from '../data/higher';
 import { rupiah } from '../format';
 import { activeCombos } from './combos';
@@ -62,7 +62,8 @@ function eligible(s: GameState, e: EventDef): boolean {
   if (w.months && !w.months.includes(s.month % 12)) return false;
   if (w.needs && !s.buildings.some((b) => b.def === w.needs && b.status === 'active')) return false;
   const last = s.lastEvent?.[e.id];
-  return !(w.cooldown && last !== undefined && s.month - last < w.cooldown);
+  const gap = w.chance < 1 ? Math.max(w.cooldown ?? 0, MIN_REPEAT_GAP) : (w.cooldown ?? 0);
+  return !(gap && last !== undefined && s.month - last < gap);
 }
 
 function raise(s: GameState, fx: Fx, e: EventDef): void {

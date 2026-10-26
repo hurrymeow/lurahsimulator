@@ -61,6 +61,15 @@ export function restartCost(s: GameState, b: Building): number {
   return s.res.viral >= VIRAL_REPAIR_AT ? base : base * 2;
 }
 
+/** Calling in a favour restarts a frozen project for this many Orang Inside, no money. */
+export const RESTART_ODN = 2;
+
+export function checkRestartODn(s: GameState, b: Building): CheckResult {
+  if (b.status !== 'mangkrak') return { ok: false, missing: [t('sim.notFrozen')] };
+  if (s.res.orangDalam >= RESTART_ODN) return { ok: true };
+  return { ok: false, missing: [t('sim.needODn', { n: RESTART_ODN, have: Math.floor(s.res.orangDalam) })] };
+}
+
 export function checkRestart(s: GameState, b: Building): CheckResult {
   if (b.status !== 'mangkrak') return { ok: false, missing: [t('sim.notFrozen')] };
   const cost = restartCost(s, b);
@@ -68,13 +77,16 @@ export function checkRestart(s: GameState, b: Building): CheckResult {
   return { ok: false, missing: [t('sim.restartGap', { amt: rupiah(cost - s.res.rupiah), cost: rupiah(cost) })] };
 }
 
-export function restart(s: GameState, b: Building): CheckResult {
-  const check = checkRestart(s, b);
+export function restart(s: GameState, b: Building, withODn = false): CheckResult {
+  const check = withODn ? checkRestartODn(s, b) : checkRestart(s, b);
   if (!check.ok) return check;
-  const cost = restartCost(s, b);
-  s.res.rupiah -= cost;
-  s.stats.spent += cost;
-  b.invested += cost;
+  if (withODn) s.res.orangDalam -= RESTART_ODN;
+  else {
+    const cost = restartCost(s, b);
+    s.res.rupiah -= cost;
+    s.stats.spent += cost;
+    b.invested += cost;
+  }
   b.status = 'building';
   b.timer = 1;
   b.restarted = true;

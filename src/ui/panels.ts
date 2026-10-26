@@ -6,8 +6,9 @@ import { rupiah } from '../format';
 import { bookCombos, comboConditions, comboStatus, comboStatusText } from '../sim/combos';
 import { checkAssign, assign, levelOf, liveJobs, slots, used } from '../sim/jobs';
 import { checkRepair, repair, repairCost } from '../sim/events';
-import { checkRestart, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
+import { checkRestart, checkRestartODn, RESTART_ODN, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
 import { announce, checkAnnounce, wacanaCost } from '../sim/wacana';
+import { iconURL } from '../render/sprites';
 import type { Building, JobId } from '../sim/types';
 import { actionButton } from './inspect';
 import { h } from './dom';
@@ -110,6 +111,13 @@ export function mangkrakExtras(app: App, b: Building): Node[] {
       app.refresh();
       app.inspect(b.uid);
     }, true),
+    actionButton([t('insp.restartODn', { n: RESTART_ODN }), ' ', h('img', { src: iconURL('orangDalam'), alt: t('res.orangDalam'), width: 18, height: 18, class: 'inline-icon' })], checkRestartODn(s, b), () => {
+      restart(s, b, true);
+      app.tap(15);
+      app.save();
+      app.refresh();
+      app.inspect(b.uid);
+    }),
   ];
 }
 

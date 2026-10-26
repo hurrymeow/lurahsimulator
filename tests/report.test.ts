@@ -17,25 +17,26 @@ function run(months: number, seed = 7): { reports: QuarterReport[]; s: ReturnTyp
   return { reports: out, s };
 }
 
-describe('half-year report', () => {
-  it('lands every 6 months and never before', () => {
+describe('yearly report', () => {
+  it('lands every 12 months and never before', () => {
     const s = newGame(1);
-    for (let i = 0; i < 5; i++) expect(reports(tick(s))).toHaveLength(0);
+    for (let i = 0; i < 11; i++) { s.pendingEvent = null; expect(reports(tick(s))).toHaveLength(0); }
+    s.pendingEvent = null;
     expect(reports(tick(s))).toHaveLength(1);
-    const { reports: all } = run(24);
-    expect(all.map((r) => r.month)).toEqual([6, 12, 18, 24]);
+    const { reports: all } = run(48);
+    expect(all.map((r) => r.month)).toEqual([12, 24, 36, 48]);
     expect(all.map((r) => r.n)).toEqual([1, 2, 3, 4]);
   });
 
-  it('first report has nothing to compare, later ones compare with the half-year before', () => {
-    const { reports: all } = run(18);
+  it('first report has nothing to compare, later ones compare with the year before', () => {
+    const { reports: all } = run(36);
     expect(all[0].prevIncome).toBeNull();
     expect(all[1].prevIncome).toBe(all[0].income);
     expect(all[2].prevIncome).toBe(all[1].income);
   });
 
-  it('income counts only the half-year, so it is not the running total', () => {
-    const { reports: all, s } = run(18);
+  it('income counts only the year, so it is not the running total', () => {
+    const { reports: all, s } = run(36);
     expect(all.reduce((n, r) => n + r.income, 0)).toBeLessThanOrEqual(Math.round(s.stats.earned));
     expect(all[2].income).toBeLessThan(s.stats.earned);
   });
@@ -50,7 +51,7 @@ describe('half-year report', () => {
     const s = newGame(2);
     s.buildings.push({ uid: 99, def: 'warung', x: 1, y: 1, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
     let r: QuarterReport | undefined;
-    for (let i = 0; i < 6; i++) r = reports(tick(s))[0] ?? r;
+    for (let i = 0; i < 12; i++) { s.pendingEvent = null; r = reports(tick(s))[0] ?? r; }
     expect(r!.bestDef).toBe('warung');
   });
 
@@ -59,8 +60,9 @@ describe('half-year report', () => {
     s.res.sabar = 50;
     let before = 0;
     let r: QuarterReport | undefined;
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 12; i++) {
       before = s.res.sabar;
+      s.pendingEvent = null;
       r = reports(tick(s))[0] ?? r;
     }
     expect(r).toBeDefined();
@@ -77,7 +79,7 @@ describe('half-year report', () => {
       s.pendingEvent = null;
       out.push(...reports(tick(s)));
     }
-    expect(out.map((r) => r.month)).toEqual([6, 12]);
+    expect(out.map((r) => r.month)).toEqual([12]);
   });
 });
 

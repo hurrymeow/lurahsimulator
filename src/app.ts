@@ -14,7 +14,7 @@ import { promote } from './sim/grow';
 import { RT_H, RT_W } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
-import { attractTarget, buildCost, buildingAt, byUid, footprintOf, newGame, population, housing } from './sim/state';
+import { attractTarget, buildCost, buildingAt, byUid, footprintOf, newGame, population, housing, year } from './sim/state';
 import { tick } from './sim/tick';
 import type { GameState, ResourceId, SimEffect } from './sim/types';
 import { audio } from './audio';
@@ -28,6 +28,8 @@ import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
 import { autoPaused, simRunning, type PauseInputs } from './ui/autopause';
 
 export const MONTH_MS = 8000;
+/** First year the 4x speed is allowed. */
+export const FAST_FROM_YEAR = 10;
 export const SPEEDS = [0, 1, 2, 4] as const;
 export type Speed = (typeof SPEEDS)[number];
 export const SAVE_KEY = 'pakrt.save';
@@ -234,7 +236,6 @@ export class App {
     );
     el.onclick = null;
     el.hidden = false;
-    this.shake();
   }
 
   private chooseEvent(i: number): void {
@@ -269,15 +270,6 @@ export class App {
       rows.push(h('div', { class: 'outcome-mod' }, t('event.mod', { label: out.modifier.label, mult, n: out.modifier.months })));
     }
     return h('div', { class: 'outcome-list' }, ...rows);
-  }
-
-  /** A short screen shake for bad news. Skipped when effects are off. */
-  shake(): void {
-    if (!this.view.effects) return;
-    const stage = document.getElementById('map')!;
-    stage.classList.remove('shake');
-    void stage.offsetWidth;
-    stage.classList.add('shake');
   }
 
   /** The player accepts the SK: the stage rises and the map grows. */
@@ -498,11 +490,18 @@ export class App {
   // Two buttons: pause/play, and one that cycles 1x, 2x, 4x.
   private bindSpeed(): void {
     document.getElementById('pause-btn')!.addEventListener('click', () => this.setSpeed(this.speed ? 0 : this.pace));
-    document.getElementById('speed-btn')!.addEventListener('click', () => this.setSpeed(this.pace === 1 ? 2 : this.pace === 2 ? 4 : 1));
+    document.getElementById('speed-btn')!.addEventListener('click', () => this.setSpeed(this.nextPace()));
     this.setSpeed(this.speed);
   }
 
+  /** 4x unlocks in year 10, so early months can't be rushed past. */
+  private nextPace(): Speed {
+    if (this.pace === 1) return 2;
+    return this.pace === 2 && year(this.s) >= FAST_FROM_YEAR ? 4 : 1;
+  }
+
   setSpeed(sp: Speed): void {
+    if (sp === 4 && year(this.s) < FAST_FROM_YEAR) sp = 2;
     this.speed = sp;
     if (sp) this.pace = sp;
     const pause = document.getElementById('pause-btn')!;
