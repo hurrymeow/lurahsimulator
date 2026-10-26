@@ -197,6 +197,8 @@ html.no-effects #dof { display: none; }
 .outcome-name { flex: 1; color: var(--text); }
 .outcome-value { font-weight: 700; font-size: 18px; color: var(--c); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .outcome-chip.negative .outcome-value { color: var(--danger); }
+.report-grade { font-family: var(--font-pixel); font-size: 24px; color: #facc15; text-align: center; }
+.modal .card.report-card { max-height: 90dvh; overflow-y: auto; }
 .outcome-mod { padding: 8px 12px; border: 1px dashed var(--line); border-radius: 10px; color: var(--text); }
 .tap-hint { color: var(--muted); margin-bottom: 0; }
 @keyframes pop-in { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }

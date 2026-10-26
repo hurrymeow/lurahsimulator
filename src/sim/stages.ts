@@ -1,3 +1,4 @@
+import { RW_COMBOS } from '../data/higher/rw';
 import { STAGES } from '../data/stages';
 import { bName, t, tr, type Key } from '../i18n';
 import { def } from './content';
@@ -19,6 +20,8 @@ export interface GoalProgress {
   need: number;
 }
 
+const pending = (): number => 0;
+
 /** One check per goal kind. The mapped type makes a missing kind a compile error. */
 const GOAL_CHECKS: { [K in Goal['kind']]: (s: GameState, g: Extract<Goal, { kind: K }>) => number } = {
   residents: (s) => population(s),
@@ -30,6 +33,17 @@ const GOAL_CHECKS: { [K in Goal['kind']]: (s: GameState, g: Extract<Goal, { kind
     return n;
   },
   sabar: (s) => Math.floor(s.res.sabar),
+  rwCombos: (s) => s.discovered.filter((id) => RW_COMBOS.some((c) => c.id === id)).length,
+  // These read state the stage engine adds (AI RTs, Stempel, Anggaran, Tim Audit). Until it
+  // lands the stages are unreachable, so they count nothing.
+  fundedRts: pending,
+  stempelClear: pending,
+  rtsAtStars: pending,
+  rwsAtStars: pending,
+  tierWins: pending,
+  noDebtMonths: pending,
+  serapanMonths: pending,
+  cleanAudits: pending,
 };
 
 const GOAL_KEYS: Record<Goal['kind'], Key> = {
@@ -38,6 +52,15 @@ const GOAL_KEYS: Record<Goal['kind'], Key> = {
   rankWins: 'stage.goal.rankWins',
   winStreak: 'stage.goal.winStreak',
   sabar: 'stage.goal.sabar',
+  rwCombos: 'stage.goal.rwCombos',
+  fundedRts: 'stage.goal.fundedRts',
+  stempelClear: 'stage.goal.stempelClear',
+  rtsAtStars: 'stage.goal.rtsAtStars',
+  rwsAtStars: 'stage.goal.rwsAtStars',
+  tierWins: 'stage.goal.tierWins',
+  noDebtMonths: 'stage.goal.noDebtMonths',
+  serapanMonths: 'stage.goal.serapanMonths',
+  cleanAudits: 'stage.goal.cleanAudits',
 };
 
 export function goalProgress(s: GameState, g: Goal): GoalProgress {
@@ -58,7 +81,7 @@ export function nextStarChecklist(s: GameState, id: StageId = s.stage.current): 
   if (stars === 3) return null;
   return stageDef(id).stars[stars].goals.map((goal) => {
     const { have, need } = goalProgress(s, goal);
-    return { goal, done: have >= need, text: t(GOAL_KEYS[goal.kind], { n: need, have }) };
+    return { goal, done: have >= need, text: t(GOAL_KEYS[goal.kind], { ...goal, n: need, have }) };
   });
 }
 

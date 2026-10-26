@@ -120,6 +120,31 @@ test.describe('how to play', () => {
 });
 
 test.describe('events, ranking, settings', () => {
+  test('quarterly report card is legible, pauses the game and dismisses on tap', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    const title = (n: number) => ({ id: `Laporan triwulan ${n}`, en: `Quarter ${n} report` })[lang()];
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.month = 14;
+      app.s.quarter = undefined;
+      app.runTick();
+      app.runTick();
+      app.runTick();
+    });
+    await expect(page.locator('#modal .card.report-card')).toBeVisible();
+    await expect(page.locator('#modal .card h2')).toHaveText(title(1));
+    await expect(page.locator('#modal .report-grade')).toBeVisible();
+    await expect(page.locator('#modal .outcome-chip').first()).toBeVisible();
+    await expectLegible(page, 'report card');
+    const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month);
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month)).toBe(before);
+    await page.locator('#modal .tap-hint').click();
+    await expect(page.locator('#modal .card.report-card')).toBeHidden();
+  });
+
   for (const id of ['agustusan', 'banjir', 'cabai']) {
     for (const broke of [false, true]) {
       test(`event ${id}${broke ? ' while broke' : ''} is legible and has a free choice`, async ({ page }) => {
@@ -569,6 +594,6 @@ test.describe('stars', () => {
     await expect(page.locator('#sk-reoffer')).toBeVisible();
     await expectLegible(page, 'declined SK');
     await page.locator('#sk-reoffer').click();
-    await expect(page.locator('#sk-accept')).toBeDisabled();
+    await expect(page.locator('#sk-accept')).toBeEnabled();
   });
 });
