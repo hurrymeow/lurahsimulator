@@ -540,6 +540,82 @@ test.describe('walkers and effects', () => {
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.fx.count)).toBe(0);
   });
 
+  test('a dense Kelurahan map keeps the frame rate', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    // 6x CPU throttle stands in for a mid-range phone.
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 6 });
+    const fps = (busy: boolean) =>
+      page.evaluate(
+        (busy) =>
+          new Promise<number>((done) => {
+            const app = (window as unknown as { pakrt: any }).pakrt;
+            app.speed = 0;
+            app.settings.effects = busy;
+            app.applySettings();
+            let n = 0;
+            const t0 = performance.now();
+            const f = (now: number) => {
+              n++;
+              if (n % 20 === 0) app.handleFx([{ kind: 'pop', x: 4, y: 6, res: 'rupiah', amount: 900000 }]);
+              if (now - t0 < 1500) requestAnimationFrame(f);
+              else done((n * 1000) / (now - t0));
+            };
+            requestAnimationFrame(f);
+          }),
+        busy,
+      );
+    const best = async (busy: boolean) => {
+      let top = 0;
+      for (let i = 0; i < 3; i++) top = Math.max(top, await fps(busy));
+      return top;
+    };
+    // A packed RT first, for scale.
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const s = app.s;
+      const defs = ['rumah', 'warung', 'posRonda', 'wifi', 'indomaret', 'alfamart', 'selokan'];
+      let n = 0;
+      const { w, h } = app.rt;
+      for (let y = 0; y < h; y++)
+        for (let x = 0; x < w; x++)
+          if (!((x + y) % 2) && !s.buildings.some((o: any) => o.x === x && o.y === y))
+            s.buildings.push({ uid: s.nextUid++, def: defs[n++ % defs.length], x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      for (let i = 0; i < 16; i++) s.residents.push({ id: 900 + i, name: 'Mas Joko', job: i % 3 ? 'none' : 'ojol', pensiun: 0, fake: 0, arrived: 0 });
+      s.month = 2;
+    });
+    const small = await best(false);
+    // Then the whole Kelurahan, 16 times the tiles, with the same density.
+    const size = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.promote();
+      app.promote();
+      const s = app.s;
+      const defs = ['rumah', 'warung', 'posRonda', 'wifi', 'indomaret', 'alfamart', 'selokan'];
+      let n = 0;
+      const { w, h } = app.rt;
+      for (let y = 0; y < h * 4; y++)
+        for (let x = 0; x < w * 4; x++) {
+          if ((x + y) % 2) continue;
+          const b = { uid: s.nextUid++, def: defs[n++ % defs.length], x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 };
+          const hit = s.neighbours.find((nb: any) => Math.floor(x / w) === nb.cx && Math.floor(y / h) === nb.cy);
+          if (hit) hit.buildings.push(b);
+          else if (!s.buildings.some((o: any) => o.x === x && o.y === y)) s.buildings.push(b);
+        }
+      return { count: s.buildings.length + s.neighbours.reduce((t: number, nb: any) => t + nb.buildings.length, 0), cells: s.neighbours.length };
+    });
+    expect(size.cells).toBe(15);
+    expect(size.count).toBeGreaterThan(1500);
+    const big = await best(false);
+    const bigBusy = await best(true);
+    console.log(`RT ${small.toFixed(0)} fps, Kelurahan ${big.toFixed(0)} fps, Kelurahan with effects ${bigBusy.toFixed(0)} fps`);
+    // Only what is on screen costs anything, so 16 times the map must not cost half the frames.
+    expect(big, `RT ${small.toFixed(0)} fps, Kelurahan ${big.toFixed(0)} fps`).toBeGreaterThan(small * 0.5);
+    // The effects overhead is fixed, and the RT test above holds it to 80%. Here it only has to stay in the same league.
+    expect(bigBusy, `Kelurahan ${big.toFixed(0)} fps, with effects ${bigBusy.toFixed(0)} fps`).toBeGreaterThan(big * 0.6);
+  });
+
   test('walkers, particles and night keep the frame rate', async ({ page }) => {
     await start(page);
     await dismissModals(page);
@@ -623,6 +699,57 @@ test.describe('stars', () => {
     await expectLegible(page, 'declined SK');
     await page.locator('#sk-reoffer').click();
     await expect(page.locator('#sk-accept')).toBeDisabled();
+  });
+});
+
+test.describe('growing map', () => {
+  test('after promotion the map is bigger, neighbours show in the Menu, and funding one works', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.promote();
+      app.s.res.rupiah = 50_000_000;
+      app.refresh();
+    });
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-neighbours').click();
+    await expect(page.locator('.sheet .action')).toHaveCount(3);
+    await expectLegible(page, 'neighbours panel');
+    const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.funded));
+    await page.locator('.sheet .action .btn').first().click();
+    const after = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.funded));
+    expect(after[0]).toBe(before[0] + 1);
+    await expectLegible(page, 'neighbours panel after funding');
+  });
+
+  test('a tap on an AI RT opens the Neighbours panel instead of a build menu', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.promote();
+    });
+    await dismissModals(page);
+    // Bring the second RT into view, then tap its first tile.
+    const at = await page.evaluate(async () => {
+      const v = (window as unknown as { pakrt: any }).pakrt.view;
+      const { w, h } = (window as unknown as { pakrt: any }).pakrt.rt;
+      const c = v.project(w + w / 2, h / 2);
+      v.panBy(v.viewW / 2 - c.x, v.viewH / 2 - c.y);
+      // Tap picking reads the last drawn frame, so let one draw after the pan.
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const p = v.project(w + w / 2, h / 2);
+      return { x: p.x, y: p.y };
+    });
+    const box = (await page.locator('#map').boundingBox())!;
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    await expect(page.locator('.sheet')).toBeVisible();
+    await expect(page.locator('.sheet .action')).toHaveCount(3);
   });
 });
 

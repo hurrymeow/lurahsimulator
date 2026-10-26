@@ -3,7 +3,8 @@ import { EMAS } from '../data/ranking';
 import { BASE_ATTRACT, LEVEL_BONUS, START, START_RESIDENTS } from './balance';
 import { def } from './content';
 import { pick } from './rng';
-import { GRID_H, GRID_W, type Building, type BuildingDef, type GameState, type Resident, type StageState } from './types';
+import { lotAt } from './area';
+import { GRID_H, GRID_W, setGrid, type Building, type BuildingDef, type GameState, type Resident, type StageState } from './types';
 
 export const SAVE_VERSION = 2;
 
@@ -29,9 +30,13 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
     emas: EMAS.start,
     pendingEvent: null,
     stage: newStageState(),
+    neighbours: [],
+    stempel: { stock: 0, backlog: 0, clear: 0 },
+    debtFree: 0,
     lastNovelty: 0,
     stats: { earned: 0, spent: 0, arrived: 0, left: 0 },
   };
+  setGrid('rt');
   const cx = Math.floor(GRID_W / 2);
   const cy = Math.floor(GRID_H / 2);
   addBuilding(s, 'kantorRT', cx, cy, 'active');
@@ -96,7 +101,8 @@ export function neighbours(s: GameState, b: { x: number; y: number }, radius = 1
 export function emptyTiles(s: GameState): { x: number; y: number }[] {
   const taken = new Set(s.buildings.map((b) => b.y * GRID_W + b.x));
   const out: { x: number; y: number }[] = [];
-  for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (!taken.has(y * GRID_W + x)) out.push({ x, y });
+  // Residents only settle inside the player's own RT, never on a seam lot or in a neighbour.
+  for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (!taken.has(y * GRID_W + x) && lotAt(x, y) === 'rt') out.push({ x, y });
   return out;
 }
 

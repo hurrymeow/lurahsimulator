@@ -7,6 +7,10 @@ import { def } from './sim/content';
 import { eventDef } from './data/events';
 import { checkChoice, eventCost, resolveEvent } from './sim/events';
 import { checkPlace, place } from './sim/rules';
+import { lotAt } from './sim/area';
+import { promote } from './sim/grow';
+import { RT_H, RT_W } from './sim/types';
+import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
 import { buildCost, buildingAt, newGame, population, housing } from './sim/state';
 import { tick } from './sim/tick';
@@ -16,8 +20,8 @@ import { loadSettings, saveSettings, type Settings } from './settings';
 import { storage } from './storage';
 import { reportExtra } from './ui/report';
 import { h, missingList } from './ui/dom';
-import { RIVAL_NAME } from './data/ranking';
-import { score } from './sim/ranking';
+import { RIVAL_NAMES } from './data/ranking';
+import { areaScore } from './sim/ranking';
 import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
 
 export const MONTH_MS = 8000;
@@ -49,7 +53,7 @@ export const RES_META: Record<ResourceId, { label: () => string; icon: string }>
 
 /** Extension points for later systems: extra action buttons and fx handlers. */
 export type MenuGroup = 'kampung' | 'records' | 'game';
-export type ActionButton = { id: string; label: () => string; open: (app: App) => void; group?: MenuGroup; icon?: string };
+export type ActionButton = { id: string; label: () => string; open: (app: App) => void; group?: MenuGroup; icon?: string; show?: (app: App) => boolean };
 
 export class App {
   s: GameState;
@@ -65,6 +69,8 @@ export class App {
   placing: string | null = null;
   private storageOk: boolean;
   actions: ActionButton[] = [];
+  /** One RT's size in tiles. The map is 1, 2 or 4 of these across. */
+  readonly rt = { w: RT_W, h: RT_H };
   /** True while the home screen is up. The sim waits. */
   held = false;
   
@@ -76,6 +82,7 @@ export class App {
     setLang(initialLang(this.settings.lang));
     this.applyStaticText();
     this.view = new MapView(document.getElementById('map') as HTMLCanvasElement);
+    this.view.regrid();
     audio.init(this.settings);
     this.applySettings();
     this.buildHud();
@@ -253,12 +260,33 @@ export class App {
     stage.classList.add('shake');
   }
 
+  /** The player accepts the SK: the stage rises and the map grows. */
+  accept(): void {
+    const fx: SimEffect[] = [];
+    if (!acceptSK(this.s, fx)) return;
+    this.view.regrid();
+    this.handleFx(fx);
+    this.save();
+    this.refresh();
+  }
+
+  /** The stage rises: the map grows and the new cells fill with AI RTs. */
+  promote(): void {
+    const fx: SimEffect[] = [];
+    if (!promote(this.s, fx)) return;
+    this.view.regrid();
+    this.handleFx(fx);
+    this.save();
+    this.refresh();
+  }
+
   save(): void {
     if (this.storageOk) this.storageOk = storage.set(SAVE_KEY, serialize(this.s));
   }
 
   newGame(): void {
     this.s = newGame();
+    this.view.regrid();
     this.log = [];
     this.save();
     this.refresh();
@@ -420,6 +448,7 @@ export class App {
 
   openStats(): void {
     const s = this.s;
+    const RIVAL_NAME = RIVAL_NAMES[s.stage.current];
     const ranks = [...s.ranking].reverse().map((r) =>
       h('div', { class: `log-row tone-${r.won ? 'good' : 'bad'}` },
         h('strong', {}, r.won ? t('stats.won', { year: r.year }) : t('stats.lost', { year: r.year, rival: RIVAL_NAME })),
@@ -432,7 +461,7 @@ export class App {
       h('h3', {}, t('stats.emasTitle')),
       h('p', { class: 'meta' }, t('stats.emas', { n: s.emas.toFixed(2) })),
       h('h3', {}, t('stats.rankTitle', { rival: RIVAL_NAME })),
-      h('p', { class: 'meta' }, t('stats.score', { n: score(s) })),
+      h('p', { class: 'meta' }, t('stats.score', { n: areaScore(s) })),
       ...(ranks.length ? ranks : [h('p', { class: 'meta' }, t('stats.firstRank'))]),
     ]);
   }
@@ -488,6 +517,7 @@ export class App {
       }
       const b = buildingAt(this.s, tile.x, tile.y);
       if (b) this.inspect(b.uid);
+      else if (lotAt(tile.x, tile.y) === 'other') this.actions.find((a) => a.id === 'neighbours')?.open(this);
       else this.notice({ title: t('build.emptyTile'), body: t('build.emptyTileBody'), tone: 'info' });
     });
     document.getElementById('ticker')!.addEventListener('click', () => this.openLog());

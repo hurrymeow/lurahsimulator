@@ -1,6 +1,6 @@
 import { t } from '../i18n';
 import type { App } from '../app';
-import { acceptSK, canPromote, currentStage, declineSK, nextStarChecklist, reofferSK, stageTitle, starsOf } from '../sim/stages';
+import { canPromote, currentStage, declineSK, nextStarChecklist, reofferSK, stageTitle, starsOf } from '../sim/stages';
 import { h } from './dom';
 import { closeSheet, openSheet } from './sheet';
 
@@ -37,7 +37,7 @@ export function openStage(app: App): void {
     body.push(h('h3', {}, t('stage.skTitle')), h('p', {}, t('stage.skBody')));
     if (s.stage.sk === 'offered') {
       body.push(
-        h('button', { class: 'btn', id: 'sk-accept', disabled: !canPromote(s), onclick: () => (acceptSK(s), closeSheet(), app.refresh()) }, t('stage.accept')),
+        h('button', { class: 'btn', id: 'sk-accept', disabled: !canPromote(s), onclick: () => (closeSheet(), app.accept()) }, t('stage.accept')),
         h('button', { class: 'btn', id: 'sk-decline', onclick: () => (declineSK(s), openStage(app)) }, t('stage.decline')),
       );
       if (!canPromote(s) && next) body.push(h('p', { class: 'meta' }, t('stage.soon')));
