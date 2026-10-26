@@ -24,6 +24,8 @@ export interface EventDef {
     minMonth?: number;
     /** Chance each eligible month. 1 = always. */
     chance: number;
+    /** Months before the same event can come back. */
+    cooldown?: number;
   };
   /** The first choice must always be free so an event can never soft-lock. */
   choices: EventChoice[];
@@ -52,14 +54,14 @@ export const EVENTS: EventDef[] = [
     id: 'banjir',
     name: 'Banjir',
     body: 'Hujan deras for three days. Selokan level decides how much of the kampung floats. Each selokan level cuts the damage by 20%.',
-    when: { months: [10, 11, 0, 1], minMonth: 10, chance: 0.3 },
+    when: { months: [10, 11, 0, 1], minMonth: 10, chance: 0.3, cooldown: 9 },
     choices: [{ label: 'Check the damage', special: 'banjir', result: '' }],
   },
   {
     id: 'cabai',
     name: 'Harga Cabai Naik',
     body: 'Cabai rawit at a price nobody can explain. Every warung is affected.',
-    when: { minMonth: 4, chance: 0.07 },
+    when: { minMonth: 4, chance: 0.07, cooldown: 6 },
     choices: [
       {
         label: 'Let it ride',

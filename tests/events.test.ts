@@ -219,3 +219,18 @@ describe('free choices while in debt', () => {
     }
   });
 });
+
+describe('event cooldowns', () => {
+  it('banjir never comes twice within 9 months', () => {
+    for (let seed = 1; seed <= 15; seed++) {
+      const s = newGame(seed);
+      const floods: number[] = [];
+      for (let m = 0; m < 120; m++) {
+        const fx = tick(s);
+        if (fx.some((f) => f.kind === 'event' && f.eventId === 'banjir')) floods.push(s.month);
+        s.pendingEvent = null;
+      }
+      for (let i = 1; i < floods.length; i++) expect(floods[i] - floods[i - 1], `seed ${seed}`).toBeGreaterThanOrEqual(9);
+    }
+  });
+});

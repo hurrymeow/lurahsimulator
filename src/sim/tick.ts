@@ -1,6 +1,6 @@
 import {
   ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
-  NOVELTY_GAP, QUEUE_SABAR_DRAIN, SABAR_MAX, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
+  NOVELTY_GAP, QUEUE_SABAR_DRAIN, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
 } from './balance';
 import { comboIncomeMult, comboSystem } from './combos';
 import { def, placeableDefs } from './content';
@@ -137,6 +137,11 @@ export function checkUnlocks(s: GameState, fx: Fx): void {
   }
 }
 
+/** A calm village settles back toward a floor. Bad choices slow you down, they never trap you at zero. */
+export function sabarRegen(s: GameState, fx: Fx): void {
+  if (s.res.sabar < SABAR_REGEN_BELOW) gain(s, fx, 'sabar', Math.min(SABAR_REGEN, SABAR_REGEN_BELOW - s.res.sabar), s.buildings.find((b) => b.def === 'kantorRT'));
+}
+
 export function decay(s: GameState): void {
   s.res.viral *= 1 - VIRAL_DECAY;
   for (const m of s.modifiers) m.monthsLeft--;
@@ -158,6 +163,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   jobsSystem,
   wacanaSystem,
   mangkrakSystem,
+  sabarRegen,
   safetyNet,
   residentsMove,
   checkUnlocks,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { placeableDefs } from '../src/sim/content';
-import { resolveEvent } from '../src/sim/events';
+import { checkRepair, repair, resolveEvent } from '../src/sim/events';
+import { checkRestart, restart } from '../src/sim/projects';
 import { checkPlace, place, skipPermit, upgrade } from '../src/sim/rules';
 import { emptyTiles, newGame, population } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
@@ -15,10 +16,15 @@ function play(seed: number, years: number, smart: boolean): { s: GameState; minR
     if (smart) {
       for (const d of placeableDefs()) {
         const spot = emptyTiles(s).find((t) => t.y < 4);
-        if (spot && checkPlace(s, d.id, spot.x, spot.y).ok && s.res.rupiah > d.cost * 2.5) place(s, d.id, spot.x, spot.y);
+        // Sensible player: keep a cash buffer and do not stack buildings that only cost upkeep.
+        const have = s.buildings.filter((b) => b.def === d.id).length;
+        const worthIt = d.income > d.upkeep || have === 0;
+        if (spot && worthIt && have < 4 && checkPlace(s, d.id, spot.x, spot.y).ok && s.res.rupiah > d.cost * 3) place(s, d.id, spot.x, spot.y);
       }
       for (const b of s.buildings) {
         if (b.status === 'permit') skipPermit(s, b);
+        else if (b.status === 'damaged' && checkRepair(s, b).ok) repair(s, b);
+        else if (b.status === 'mangkrak' && checkRestart(s, b).ok) restart(s, b);
         else if (b.status === 'active' && b.level < 2 && s.res.rupiah > 12_000_000) upgrade(s, b);
       }
     }

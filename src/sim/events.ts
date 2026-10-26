@@ -32,8 +32,11 @@ export function eventSystem(s: GameState, fx: Fx): void {
     const w = e.when;
     if (w.minMonth !== undefined && s.month < w.minMonth) continue;
     if (w.months && !w.months.includes(m)) continue;
+    const last = s.lastEvent?.[e.id];
+    if (w.cooldown && last !== undefined && s.month - last < w.cooldown) continue;
     if (!chance(s, w.chance)) continue;
     s.pendingEvent = e.id;
+    (s.lastEvent ??= {})[e.id] = s.month;
     s.lastNovelty = s.month;
     fx.push({ kind: 'event', eventId: e.id });
     return;

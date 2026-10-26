@@ -12,6 +12,7 @@ export const MANGKRAK_AT = '80%';
 const MANGKRAK_FROM_MONTH = 12;
 export const VIRAL_REPAIR_AT = 30;
 export const MANGKRAK_SABAR = 1;
+export const MANGKRAK_SABAR_CAP = 3;
 
 /** Called when a building finishes construction. Maybe freezes it, maybe spawns a parkir. */
 export function onBuildingFinished(s: GameState, fx: Fx, b: Building): 'ok' | 'mangkrak' {
@@ -80,6 +81,8 @@ export function restart(s: GameState, b: Building): CheckResult {
 
 /** Frozen projects are an eyesore and cost Sabar every month. */
 export function mangkrakSystem(s: GameState, fx: Fx): void {
-  for (const b of s.buildings) if (b.status === 'mangkrak') gain(s, fx, 'sabar', -MANGKRAK_SABAR, b);
+  // Capped, so a pile of abandoned projects hurts but never snowballs.
+  const frozen = s.buildings.filter((b) => b.status === 'mangkrak').slice(0, MANGKRAK_SABAR_CAP);
+  for (const b of frozen) gain(s, fx, 'sabar', -MANGKRAK_SABAR, b);
 }
 

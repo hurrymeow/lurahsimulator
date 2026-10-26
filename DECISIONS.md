@@ -30,7 +30,7 @@ One line per decision, with the reason. Newest at the bottom.
 - **Combo geometry:** a combo works when every needed building is within its radius (1 tile, diagonals count) of the first listed building. A row of warung, pos ronda, wifi works.
 - **Third combo:** added Rapat Malam (Kantor RT + Pos Ronda, +Orang Dalam). Hari asked for two. It is one data entry, so delete it if unwanted.
 - **Rivalitas Abadi numbers:** both stores x1.4 income, -2 Sabar a month. Competition earns money and costs patience.
-- **Tukang parkir:** pays retribusi to the kas (+60rb) and drains 0.5 Sabar a month per level. Upgrading raises both. Never removable.
+- **Tukang parkir:** pays retribusi to the kas (+60rb) and drains 0.25 Sabar a month per level. Upgrading raises both. Never removable.
 - **PNS:** produce nothing. Only stat is Pensiun: fills over 10 years, then a Rp 1,5jt payout and the desk reopens. Employed residents of any job add +0.2 Sabar, so PNS still have a use.
 - **Buzzer:** +6 fake Viral and +60rb a month. Exposure chance rises with the fake Viral pumped. Exposure wipes that Viral, costs 8 Sabar and ends the job.
 - **Viral:** each point adds 0.5% to shop income and decays 10% a month.
@@ -50,3 +50,6 @@ One line per decision, with the reason. Newest at the bottom.
 - **Effects off:** number pops stay (they carry the information) but stop rising. Chip flashes, spawn pops and screen shake are skipped. Reduce motion implies effects off. It defaults to your phone setting.
 - **High contrast and large text:** added as settings. Both are covered by the E2E scan.
 - **Flash style:** resource chips flash with a coloured inset border, not a background fill. A background fill dropped contrast below 4.5:1 mid-animation and the scanner caught it.
+- **Balance autoplayer (found by tests):** a simple bot found two traps and I fixed both. A free event choice was blocked when the kas was negative (froze the game). Sabar could sink to 0 for good, because banjir came too often and parkir drain stacked per shop.
+- **Sabar floor:** below 30, Sabar recovers 4 a month by itself ("the kampung calms down"). Frozen-project drain is capped at 3 a month and parkir drain is 0.25 per level. Debt drains 1 Sabar a month, not 2.
+- **Event cooldowns:** banjir at least 9 months apart, cabai at least 6.
