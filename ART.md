@@ -104,12 +104,16 @@ Layers, from the ground up (`src/render/map.ts`, `src/render/atmosphere.ts`):
      or parkir).
    - Sprites also cast a flat ink shadow at 35% to the right.
 2. **Sun halo.** A warm radial glow behind the sun, like light blooming through haze.
-3. **Warm grade.** A `soft-light` gradient: golden from the top left, warm dark toward the
-   bottom right.
-4. **God rays.** Five soft diagonal shafts from the top left, blended with `screen`. They breathe
-   slowly, fade at dusk and vanish at night.
+3. **Warm grade.** A gradient that is golden from the top left and warm dark toward the bottom
+   right.
+4. **God rays.** Five soft diagonal shafts from the top left. They dim at dusk and vanish at night.
 5. **Vignette.** A deep warm-brown radial vignette, so the kampung reads as a diorama under a
    lamp. It deepens at night.
+
+   Layers 3 to 5 are baked into one cached canvas with plain alpha, and a night version holds just
+   the deeper vignette. A frame draws one full-screen blit. Never use per-frame blend modes such
+   as `soft-light` or `screen` over the whole view: they cost about 8 ms a frame and fail the
+   frame-rate test on slow machines.
 6. **Dust motes.** 28 soft warm motes drift up and to the right by day. At night they become
    blinking green-yellow fireflies.
 7. **Night tint, then lit windows.** Lit windows draw above the tint.
@@ -126,7 +130,7 @@ the map still has depth.
 - Ambient loops follow **reduce motion**: the sun bobs 2 art pixels and blinks every 3.2 s, with a
   quick double blink every third time. Trees bounce in a slow wave across the map, stretching at
   most 1 art pixel from the roots. Walkers stroll.
-- Particles, coins, rays, motes and night follow **effects**.
+- Particles, coins, lighting layers, motes and night follow **effects**.
 - Timing is bouncy, not floaty: short squashes (income, about 320 ms), quick pops (about 350 ms),
   slow ambience (sway periods of 2 s or more).
 - Motion is whole-pixel. A bounce stretches by one art pixel. It never slides sub-pixel.
