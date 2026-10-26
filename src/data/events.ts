@@ -54,7 +54,9 @@ export interface EventDef {
 }
 
 /** Random events raise a popup at most once in this many months. Scheduled ones (chance 1) ignore it. */
-export const POPUP_GAP = 5;
+export const POPUP_GAP = 8;
+/** A random event never repeats within this many months, whatever its own cooldown says. */
+export const MIN_REPEAT_GAP = 30;
 /** Chance a month with an eligible random event raises one, once the gap has passed. */
 export const POPUP_CHANCE = 0.4;
 
