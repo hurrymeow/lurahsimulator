@@ -62,7 +62,8 @@ Follow these every session. If a change breaks one, fix the change.
 
 - Body text uses Atkinson Hyperlegible. Pixelify Sans is for titles and primary buttons only. Pixelify draws 5 like S/8, so never use it for numbers.
 - No ellipsis and no clipped text. Text wraps. Panels scroll.
-- Map tiles are at least 32px. Smaller screens pan the map instead of shrinking it.
+- The map is isometric. Tile diamonds are at least 32px tall. Smaller screens pan the map instead of shrinking it.
+- A tap on a building's body picks that building, even where it overlaps the tile behind.
 - Disabled buttons stay readable: dashed border, muted text, no opacity fade.
 - `npm run e2e` runs Playwright at 320, 360 and 390px wide. It scans every visible DOM text for clipping, ellipsis, font under 16px, contrast under 4.5:1, off-screen text and touch targets under 48px.
 - Every new panel or message needs a scan in `tests/e2e/ui.spec.ts`. CI runs the suite on every PR.

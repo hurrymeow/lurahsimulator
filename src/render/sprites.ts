@@ -1,5 +1,5 @@
 // Placeholder pixel sprites, drawn from text maps at runtime. No external art.
-const PALETTE: Record<string, string> = {
+export const PALETTE: Record<string, string> = {
   k: '#1b1b1f', w: '#f4f4f5', r: '#dc2626', R: '#991b1b', y: '#facc15', b: '#2563eb', B: '#1e3a8a',
   g: '#22c55e', G: '#15803d', o: '#ea580c', n: '#92400e', N: '#5b2b0b', s: '#9ca3af', S: '#4b5563',
   c: '#67e8f9', p: '#f472b6', t: '#d6b38a', a: '#fbbf24', l: '#60a5fa',

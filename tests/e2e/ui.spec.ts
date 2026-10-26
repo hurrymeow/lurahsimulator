@@ -132,6 +132,21 @@ test.describe('text is legible and never cut off', () => {
     expect(tile).toBeGreaterThanOrEqual(32);
   });
 
+  test('tapping a tall building above its tile opens that building', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const box = (await page.locator('#map').boundingBox())!;
+    const at = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      const c = app.view.tileCentre(k.x, k.y);
+      // Aim at the roof, which overlaps the tile behind on screen.
+      return { x: c.x, y: c.y - app.view.tile * 1.2 };
+    });
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    await expect(page.locator('.sheet-head')).toContainText('Kantor RT');
+  });
+
   test('a combo fanfare message', async ({ page }) => {
     await start(page);
     await dismissModals(page);
