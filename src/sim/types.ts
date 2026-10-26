@@ -288,6 +288,8 @@ export interface GameState {
   pendingEvent: string | null;
   /** Month each event last fired, for cooldowns. Absent in older saves. */
   lastEvent?: Record<string, number>;
+  /** Ids of the last minor log lines shown, so the ticker does not repeat itself. Absent in older saves. */
+  recentLines?: string[];
   stage: StageState;
   /** AI-run RTs next to the player's. Empty at the RT stage. */
   neighbours: Neighbour[];
