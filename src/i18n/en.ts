@@ -3,7 +3,7 @@
 // are translated by key in id-data.ts.
 export const EN = {
   // static page
-  'page.hud': 'Resources. Tap for details.',
+  'page.hud': 'Resources. Tap one to learn what it does.',
   'page.emas': 'Indonesia Emas 2045 progress',
   'page.map': 'Kampung map',
   'page.updateReady': 'New version ready.',
@@ -121,7 +121,7 @@ export const EN = {
   'insp.left': ' · {n} mo left',
   'insp.money': 'Income {income} · upkeep {upkeep} a month',
   'insp.perMonth': '{bits} a month',
-  'insp.skip': 'Skip queue · 1 Orang Dalam',
+  'insp.skip': 'Skip queue · 1',
   'insp.maxLevel': 'Max level',
   'insp.upgrade': 'Upgrade · {cost}',
   'insp.demolishRefund': 'Demolish · refund {amt}',
@@ -258,6 +258,30 @@ export const EN = {
   'res.orangDalam': 'Orang Dalam',
   'res.viral': 'Viral',
   'res.warga': 'Warga',
+  'res.pop': 'Pop',
+  'exp.up': 'Raises',
+  'exp.down': 'Drains',
+  'exp.edge': 'At the extremes',
+  'exp.rupiah.what': 'Money. It pays for buildings, upgrades, repairs and event choices.',
+  'exp.rupiah.up': 'Shops, other buildings and resident dues pay in every month.',
+  'exp.rupiah.down': 'Building, upgrades, upkeep, repairs, Wacana and costly event choices.',
+  'exp.rupiah.edge': 'Below zero, the first year gets a bailout. After that Sabar drains every month.',
+  'exp.sabar.what': 'Patience. How calm your residents are.',
+  'exp.sabar.up': 'Wacana, jobs, some combos, and winning the yearly ranking.',
+  'exp.sabar.down': 'Permit queues, being broke, bad events and lost rankings.',
+  'exp.sabar.edge': 'Below 25 no one new moves in. Below 15 residents leave.',
+  'exp.orangDalam.what': 'Connections. One spends one to skip a permit queue.',
+  'exp.orangDalam.up': 'Kantor RT earns it slowly. Winning the ranking adds more.',
+  'exp.orangDalam.down': 'Skipping a queue, and some event choices.',
+  'exp.orangDalam.edge': 'At 0 you wait in the queue like everyone else.',
+  'exp.viral.what': 'Buzz. More Viral means more income from shops.',
+  'exp.viral.up': 'Influencers, some combos and some events.',
+  'exp.viral.down': 'It fades 10% a month. Exposed buzzers wipe out their fake Viral.',
+  'exp.viral.edge': 'Above 30, repairs on stalled projects get cheaper. At 0 shops earn the base rate.',
+  'exp.pop.what': 'Population: residents now, then houses available.',
+  'exp.pop.up': 'People move in while Sabar is 25 or more and a house is free.',
+  'exp.pop.down': 'Residents leave when Sabar drops below 15.',
+  'exp.pop.edge': 'When houses are full, a new rumah has to fit on the map first.',
 } as const;
 
 export type Key = keyof typeof EN;

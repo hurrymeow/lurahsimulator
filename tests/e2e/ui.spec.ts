@@ -192,7 +192,8 @@ test.describe('events, ranking, settings', () => {
     await start(page);
     await dismissModals(page);
     await seed(page);
-    await page.locator('#hud').click();
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-stats').click();
     await expect(page.locator('#sheet')).toContainText('Kampung Sebelah');
     await expect(page.locator('#sheet')).toContainText('Indonesia Emas 2045');
     await expectLegible(page, 'stats with ranking');
@@ -316,9 +317,24 @@ test.describe('slim HUD and one menu', () => {
     const ids = await page.evaluate(() =>
       [...document.querySelectorAll('button')].filter((b) => b.getClientRects().length && b.id !== 'ticker').map((b) => b.id),
     );
-    expect(ids).toEqual(['pause-btn', 'speed-btn', 'menu-btn']);
+    expect(ids).toEqual(['chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'pause-btn', 'speed-btn', 'menu-btn']);
     const hud = (await page.locator('#hud').boundingBox())!;
     expect(hud.height).toBeLessThanOrEqual(80);
+  });
+
+  test('tapping a resource chip explains it and the card dismisses on tap', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    for (const id of ['rupiah', 'sabar', 'orangDalam', 'viral', 'pop']) {
+      await page.locator(`#chip-${id}`).click();
+      await expect(page.locator('#modal .exp')).toBeVisible();
+      await expect(page.locator('#modal .exp-row')).toHaveCount(3);
+      await expectLegible(page, `${id} explain card`);
+      await page.locator('#modal').click();
+      await expect(page.locator('#modal')).toBeHidden();
+    }
+    await expect(page.locator('#chip-pop')).toContainText('Pop');
+    await expect(page.locator('#chip-sabar')).not.toContainText(/Sabar/);
   });
 
   test('pause toggles and speed cycles 1x, 2x, 4x', async ({ page }) => {
@@ -367,7 +383,8 @@ test.describe('text is legible and never cut off', () => {
       await page.locator('.sheet-head .btn').click();
     }
 
-    await page.locator('#hud').click();
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-stats').click();
     await expectLegible(page, 'Stats panel');
     await page.locator('.sheet-head .btn').click();
 
