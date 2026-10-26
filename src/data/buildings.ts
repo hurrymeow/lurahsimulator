@@ -1,5 +1,6 @@
 import type { BuildingDef } from '../sim/types';
 import { DECOR_BUILDINGS } from './decor';
+import { FARM_BUILDINGS } from './farm';
 
 // Add or tweak buildings here. The engine reads only these fields.
 // Every building must move at least one number.
@@ -203,7 +204,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
   {
     id: 'bankSampah',
     name: 'Bank Sampah',
-    blurb: 'Trades plastic for pocket money. Earns up to Rp 40rb a month and +0.5 Patience.',
+    blurb: 'Trades plastic for pocket money. Earns up to Rp 40rb a month and +0.5 Patience. Opens a pengepul job.',
     cost: 1_000_000,
     upkeep: 0,
     income: 40_000,
@@ -215,6 +216,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
     placeable: true,
     removable: true,
     requires: { stars: { stage: 'rt', n: 2 } },
+    jobSlots: { pengepul: 1 },
     sprite: 'bankSampah',
   },
   {
@@ -237,4 +239,4 @@ const CORE_BUILDINGS: BuildingDef[] = [
 ];
 
 /** Every RT building: the core set, then each content wave in turn. */
-export const BUILDINGS: BuildingDef[] = [...CORE_BUILDINGS, ...DECOR_BUILDINGS];
+export const BUILDINGS: BuildingDef[] = [...CORE_BUILDINGS, ...FARM_BUILDINGS, ...DECOR_BUILDINGS];

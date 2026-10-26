@@ -92,4 +92,42 @@ export const CONTENT_ART: Record<string, (p: Painter) => void> = {
     p.box(7, 11, 'y', (face, _u, j) => (face !== 'T' && j > 7 ? 'a' : undefined), 7);
     p.blob(0, 22, 4, 'y');
   },
+
+  // Farm. Flat plots are bare and draw their own pematang edge so neighbouring plots join up.
+  kebunSayur: (p) => {
+    p.bare = true;
+    p.ground((a, b) => {
+      if (a < 0.05 || a > 0.95 || b < 0.05 || b > 0.95) return 'n';
+      const row = Math.floor(b * 5);
+      if (row % 2 === 0) return 'N';
+      return Math.floor(a * 6) % 2 ? 'g' : 'G';
+    });
+  },
+  // Water-filled paddies with green rice rows and a clay bund.
+  sawah: (p) => {
+    p.bare = true;
+    p.ground((a, b) => {
+      if (a < 0.06 || a > 0.94 || b < 0.06 || b > 0.94) return 'n';
+      if (a < 0.1 || a > 0.9 || b < 0.1 || b > 0.9) return 't';
+      const row = Math.floor(b * 6) % 2;
+      return row === 0 && Math.floor(a * 8) % 2 === 0 ? 'g' : row === 0 ? 'G' : 'l';
+    });
+  },
+  kandangAyam: (p) => {
+    p.shadow(4);
+    p.box(5, 6, 'n', (face, u, j) => (face === 'L' && within(u, 0.3, 0.7) && within(j, 1, 4) ? 'N' : undefined));
+    p.roof(5, 6, 4, 'y');
+    p.blob(7, 2, 2.2, 'w');
+    p.set(TW / 2 + 9, TOP + TH / 2 - 3, 'r');
+  },
+  kolamLele: (p) => {
+    p.bare = true;
+    p.ground((a, b) => {
+      if (a < 0.07 || a > 0.93 || b < 0.07 || b > 0.93) return 'B';
+      if (a < 0.12 || a > 0.88 || b < 0.12 || b > 0.88) return 'b';
+      if (within(a, 0.3, 0.45) && within(b, 0.38, 0.46)) return 'k';
+      if (within(a, 0.55, 0.7) && within(b, 0.55, 0.63)) return 'k';
+      return 'c';
+    });
+  },
 };

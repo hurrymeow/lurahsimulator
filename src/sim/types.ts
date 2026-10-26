@@ -107,7 +107,7 @@ export interface Neighbour {
   ranking: RankingResult[];
 }
 
-export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'kaderPosyandu' | 'calo';
+export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'petani' | 'peternak' | 'pengepul' | 'kaderPosyandu' | 'calo';
 
 export interface Requirement {
   population?: number;

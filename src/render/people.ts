@@ -9,7 +9,7 @@ export const MAX_WALKERS = 16;
 /** Ditches and parking lots are flat, so people walk over them. */
 /** Cost of a step on open ground, against 1 on a path. Above 1 makes walkers detour onto paths. */
 const WALK_OFF_PATH = 2.5;
-const FLAT = new Set(['selokan', 'biopori', 'kolamIkan', 'parkir', 'jalan', 'aspalUlang', 'sawahIrigasi', 'embung', 'taman']);
+const FLAT = new Set(['selokan', 'biopori', 'kolamIkan', 'kebunSayur', 'sawah', 'kolamLele', 'parkir', 'jalan', 'aspalUlang', 'sawahIrigasi', 'embung', 'taman']);
 const VIP_ID = -1;
 const WALK_SPEED = 0.9;
 const OJOL_SPEED = 2.8;
@@ -37,6 +37,9 @@ const SHIRTS: Record<Kind, string> = {
   ojol: '#4fae3e',
   influencer: '#e57a9c',
   buzzer: '#e57d2e',
+  petani: '#8a6a3a',
+  peternak: '#c9833a',
+  pengepul: '#3f8a9a',
   kaderPosyandu: '#e8a0b4',
   calo: '#6a5a8a',
 };
