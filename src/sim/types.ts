@@ -138,6 +138,39 @@ export interface RankingResult {
   won: boolean;
 }
 
+export type Grade = 'S' | 'A' | 'B' | 'C' | 'D';
+
+/** What the player sees every quarter. All numbers are changes over the 3 months. */
+export interface QuarterReport {
+  /** 1 for the first report, 2 for the next, and so on. */
+  n: number;
+  month: number;
+  income: number;
+  /** Null on the first report. */
+  prevIncome: number | null;
+  residents: number;
+  residentsDelta: number;
+  sabarDelta: number;
+  orangDalamDelta: number;
+  viralDelta: number;
+  /** Building def with the highest net income this quarter, if any earned. */
+  bestDef: string | null;
+  grade: Grade;
+  /** Reward for the grade, already added to the resources. */
+  bonus: Partial<Resources>;
+}
+
+/** Running totals for the quarter in progress. */
+export interface QuarterTrack {
+  count: number;
+  earned: number;
+  residents: number;
+  res: Resources;
+  prevIncome: number | null;
+  /** Net rupiah by building uid since the quarter began. */
+  net: Record<number, number>;
+}
+
 export interface GameState {
   version: number;
   seed: number;
@@ -165,6 +198,8 @@ export interface GameState {
   stage: StageState;
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
+  /** Quarterly report bookkeeping. Absent in older saves and on a fresh game. */
+  quarter?: QuarterTrack;
   stats: { earned: number; spent: number; arrived: number; left: number };
 }
 
@@ -172,7 +207,8 @@ export type SimEffect =
   | { kind: 'pop'; x: number; y: number; res: ResourceId; amount: number }
   | { kind: 'notice'; title: string; body: string; tone: 'good' | 'bad' | 'info'; fanfare?: boolean; x?: number; y?: number }
   | { kind: 'event'; eventId: string }
-  | { kind: 'built'; uid: number };
+  | { kind: 'built'; uid: number }
+  | { kind: 'report'; report: QuarterReport };
 
 export type CheckResult = { ok: true } | { ok: false; missing: string[] };
 
