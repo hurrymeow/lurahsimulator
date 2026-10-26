@@ -1,4 +1,5 @@
 import type { StageDef } from '../sim/types';
+import { HIGHER_STAGES } from './higher';
 
 // The star ladder. Numbers live in STAGES.md; tune them here.
 // stars[0] is what it takes to earn 1 star, stars[1] 2 stars, stars[2] 3 stars.
@@ -14,4 +15,5 @@ export const STAGES: StageDef[] = [
       { goals: [{ kind: 'residents', n: 40 }, { kind: 'winStreak', n: 2 }, { kind: 'combos', n: 3 }, { kind: 'sabar', n: 50 }], unlocks: [] },
     ],
   },
+  ...HIGHER_STAGES,
 ];

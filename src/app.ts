@@ -13,6 +13,7 @@ import type { GameState, ResourceId, SimEffect } from './sim/types';
 import { audio } from './audio';
 import { loadSettings, saveSettings, type Settings } from './settings';
 import { storage } from './storage';
+import { reportExtra } from './ui/report';
 import { h, missingList } from './ui/dom';
 import { RIVAL_NAME } from './data/ranking';
 import { score } from './sim/ranking';
@@ -31,6 +32,8 @@ interface Notice {
   tone: 'good' | 'bad' | 'info';
   /** Extra content under the body, such as the stat changes of an event. */
   extra?: Node;
+  /** Extra class on the card. */
+  cls?: string;
 }
 
 export const RES_META: Record<ResourceId, { label: () => string; icon: string }> = {
@@ -134,6 +137,11 @@ export class App {
         if (f.fanfare) this.view.pulse();
         if (f.fanfare) this.modal(f);
         else this.notice(f);
+      } else if (f.kind === 'report') {
+        const r = reportExtra(f.report);
+        this.view.pulse();
+        audio.play('fanfare');
+        this.modal({ title: r.title, body: r.body, tone: 'info', extra: r.extra, cls: 'report-card' });
       } else if (f.kind === 'event') {
         this.haptic(25);
         audio.play('event');
@@ -301,7 +309,7 @@ export class App {
       return;
     }
     el.replaceChildren(
-      h('div', { class: `card ${n.fanfare ? 'fanfare' : ''}`, role: 'dialog', 'aria-live': 'polite' },
+      h('div', { class: `card ${n.fanfare ? 'fanfare' : ''} ${n.cls ?? ''}`, role: 'dialog', 'aria-live': 'polite' },
         n.fanfare ? h('div', { class: 'fanfare-tag' }, t('modal.new')) : null,
         h('h2', {}, n.title),
         h('p', {}, n.body),
