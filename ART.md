@@ -12,7 +12,7 @@ Three references, each for one thing:
 
 | Reference | What we take | What we leave |
 | --- | --- | --- |
-| Bishi Bashi Special | Bold ink outlines, flat cel shading, cheeky faces (the sun), bouncy timing | Wonky, hand-wobbled shapes. They clutter a busy map. |
+| Bishi Bashi Special | Bold outlines, flat cel shading, cheeky faces (the sun), bouncy timing | Wonky, hand-wobbled shapes. They clutter a busy map. |
 | Warm isometric illustration (kitchen diorama) | Terracotta, mustard, teal, cream and olive. Dark brown ink, not black. Cosy clutter on the edges. | Paper grain and noisy texture |
 | Octopath Traveler (HD-2D) | Golden key light, god rays, deep vignette, tilt-shift blur, dust motes, contact shadows | Photoreal bloom, heavy blur over playable tiles |
 
@@ -38,11 +38,16 @@ No third-party art or names. Everything is drawn in code.
 
 ## Ink
 
-- Ink colour: `#2a1810`, a dark warm brown (`INK` in `iso.ts`). Never pure black.
-- Every sprite gets a 1-pixel ink outline round its silhouette. `Painter.finish` does this.
-- Ink also runs wherever two faces, roof planes or clumps meet, so each form reads as one
-  clean shape. Details painted inside a face (windows, stripes, doors) share the face's id and
-  get no ink.
+- Outlines are coloured, never a flat ink and never pure black. Every sprite gets a 1-pixel
+  outline round its silhouette, and each outline pixel is a 0.45x shade of the fill it touches
+  (the fill below first, then the sides, then above). A red roof gets a deep red edge, a bush a
+  dark green one. `Painter.finish` does this.
+- A line also runs wherever two faces, roof planes or clumps meet, in a 0.55x shade of the pixel's
+  own colour, so each form reads as one clean shape. Details painted inside a face (windows,
+  stripes, doors) share the face's id and get no line.
+- `INK` (`#2a1810`, a dark warm brown) is left for small dark features only: eyes, the sun's
+  face, contact shadows.
+- The sun's rim is a deep amber, `#8a4f12`. Selokan banks are a dark warm grey, `#4a4a44`.
 - Set `p.bare = true` to skip the ink pass for flat or lattice art: selokan (it draws its own
   banks so neighbours join up), grass tufts, bamboo scaffolding.
 - Terrain borders are coloured, not inked. The higher ground takes a dark edge in its own
@@ -184,7 +189,7 @@ faceless, so the map stays readable.
 ## Checklist before merging art
 
 - [ ] Straight isometric lines; round only where nature is round.
-- [ ] 1px `#2a1810` outline, no pure black anywhere.
+- [ ] 1px coloured outline (a dark shade of the fill it borders), no pure black anywhere.
 - [ ] Two-tone cel shading lit from the top left, no noise.
 - [ ] Colours from the palette, warm first.
 - [ ] Reads at 2x on a 320px-wide phone, by day and at night.

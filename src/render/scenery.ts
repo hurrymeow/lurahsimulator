@@ -363,7 +363,8 @@ export function sunArt(blink: boolean): HTMLCanvasElement {
       const d = (x + 0.5) ** 2 + (y + 0.5) ** 2;
       if (d > R * R) continue;
       const shine = (x + 10) ** 2 + (y + 10) ** 2 < 16;
-      px(x, y, d > (R - 2) ** 2 ? INK : shine ? '#fbe08a' : '#f4b935');
+      // Rimmed in a deep amber, matching the coloured outlines everywhere else.
+      px(x, y, d > (R - 2) ** 2 ? '#8a4f12' : shine ? '#fbe08a' : '#f4b935');
     }
   for (const [x, y] of [[-12, -12], [-11, -12], [-12, -11]]) px(x, y, '#fffaf0');
   // Rosy cheeks.

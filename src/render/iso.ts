@@ -183,7 +183,8 @@ export class Painter {
   }
 
   /**
-   * Ink pass: a 1px outline round the silhouette, and a line wherever two faces or shapes meet.
+   * Ink pass: a 1px outline round the silhouette, and a line wherever two faces or shapes meet,
+   * each tinted from the colour it borders rather than a flat ink.
    * Windows and stripes share their face's id, so they stay clean.
    */
   private ink(): void {
@@ -197,11 +198,24 @@ export class Painter {
           if (solid(x - 1, y) || solid(x + 1, y) || solid(x, y - 1) || solid(x, y + 1)) edge.push(k);
         } else if ((solid(x + 1, y) && ids[k + 1] !== ids[k]) || (solid(x, y + 1) && ids[k + w] !== ids[k])) edge.push(k);
       }
-    const n = parseInt(INK.slice(1), 16);
-    for (const k of edge) {
-      data.set([(n >> 16) & 255, (n >> 8) & 255, n & 255, 255], k * 4);
+    // Coloured outlines: a silhouette pixel takes a 0.45x shade of the fill it touches (below
+    // first, then the sides, then above). A face-edge pixel takes a 0.55x shade of its own colour.
+    const ink = new Uint8ClampedArray(edge.length * 3);
+    edge.forEach((k, e) => {
+      const x = k % w;
+      const y = (k - x) / w;
+      let from = k;
+      let f = 0.55;
+      if (!ids[k]) {
+        f = 0.45;
+        from = [[x, y + 1], [x - 1, y], [x + 1, y], [x, y - 1]].map(([a, b]) => (solid(a, b) ? b * w + a : -1)).find((j) => j >= 0) ?? k;
+      }
+      for (let c = 0; c < 3; c++) ink[e * 3 + c] = data[from * 4 + c] * f;
+    });
+    edge.forEach((k, e) => {
+      data.set([ink[e * 3], ink[e * 3 + 1], ink[e * 3 + 2], 255], k * 4);
       ids[k] = 65535;
-    }
+    });
   }
 
   finish(): Art {
@@ -308,7 +322,7 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
     p.ground((a0, b0) => {
       const [a, b] = v === 'y' ? [b0, a0] : [a0, b0];
       if (b < 0.26 || b > 0.74) return null;
-      if (b < 0.31 || b > 0.69) return INK;
+      if (b < 0.31 || b > 0.69) return '#4a4a44';
       if (b < 0.38 || b > 0.62) return 's';
       return Math.floor(a * 6) % 3 === 0 && Math.abs(b - 0.5) < 0.05 ? 'w' : 'l';
     });
