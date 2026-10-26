@@ -7,6 +7,17 @@ export function rupiah(n: number): string {
   return `${sign}Rp ${digits}`;
 }
 
+/** Rupiah for the slim top bar, next to the money icon: 850rb, 4,85jt, 1,23M */
+export function rupiahHud(n: number): string {
+  const a = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  const fmt = (v: number) => (v >= 100 ? Math.floor(v).toString() : (Math.floor(v * 100 + 1e-6) / 100).toString().replace('.', ','));
+  if (a >= 1e9) return `${sign}${fmt(a / 1e9)}M`;
+  if (a >= 1e6) return `${sign}${fmt(a / 1e6)}jt`;
+  if (a >= 1e3) return `${sign}${Math.floor(a / 1e3)}rb`;
+  return `${sign}${Math.round(a)}`;
+}
+
 /** Compact Rupiah for number pops: 150rb, 1,2jt, 3,4M */
 export function rupiahShort(n: number): string {
   const a = Math.abs(n);

@@ -47,52 +47,35 @@ html, body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-#topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--gap);
-  padding: var(--gap) 12px;
-  border-bottom: 1px solid var(--surface-2);
-}
-
-.title { margin: 0; font-family: var(--font-pixel); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .sheet h2, .modal .card h2, .btn-primary { font-family: var(--font-pixel); }
 .chip-value, .cost { font-variant-numeric: tabular-nums; }
-.top-actions { display: flex; gap: var(--gap); align-items: center; }
 
 #stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
 #map { display: block; width: 100%; height: 100%; touch-action: none; image-rendering: pixelated; }
 
+/* Slim resource bar: one row of icon + value. Tap for details. */
 #hud {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: var(--gap);
-  padding: var(--gap) 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 6px;
+  min-height: var(--touch);
+  padding: 6px 8px;
+  background: var(--surface);
   cursor: pointer;
 }
-.chip {
-  grid-column: span 2;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 4px 8px;
-  border-radius: var(--radius);
-  background: var(--surface);
-  border: 1px solid var(--surface-2);
-  border-left: 4px solid var(--c);
-  min-width: 0;
-}
-#chip-rupiah { grid-column: span 4; }
+#hud:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.chip { display: flex; align-items: center; gap: 4px; min-width: 0; padding: 2px; border-radius: 6px; }
 .chip img { image-rendering: pixelated; flex: none; }
 .chip-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.chip-value { font-weight: 700; color: var(--c); font-size: 16px; }
+.chip-value { font-weight: 700; color: var(--c); font-size: 16px; white-space: nowrap; }
 .chip.negative .chip-value { color: var(--danger); }
 .chip.negative .chip-value::before { content: '▼ '; }
 
 .ticker {
-  margin: 0 12px var(--gap);
+  margin: var(--gap) 12px;
   min-height: var(--touch);
   padding: 8px 12px;
   text-align: left;
@@ -121,11 +104,11 @@ html, body {
   border-top: 1px solid var(--surface-2);
 }
 .row { display: flex; gap: var(--gap); align-items: center; }
-#actions .btn { flex: 1; padding: 0 4px; }
-.segmented { display: flex; gap: 4px; }
-.seg { min-width: 48px; padding: 0 8px; }
-.seg[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); font-weight: 700; }
-.date-wrap { flex: 1; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+#speed-btn { min-width: 56px; padding: 0 8px; font-weight: 700; font-variant-numeric: tabular-nums; }
+#pause-btn { font-size: 18px; }
+#pause-btn[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
+#menu-btn { padding: 0 20px; }
+.date-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
 .month-track { width: 100%; max-width: 140px; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
 #month-progress { height: 100%; width: 0; background: var(--muted); }
 .place-info { flex: 1; min-width: 0; font-size: 16px; display: flex; flex-direction: column; }
@@ -290,7 +273,7 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
 #howtoGo { width: 100%; }
 
 /* M4: Emas bar, toggles, events, juice */
-.emas { display: flex; align-items: center; gap: 8px; margin: 0 12px 8px; }
+.emas { display: flex; align-items: center; gap: 8px; margin: 0; padding: 0 12px 6px; background: var(--surface); border-bottom: 1px solid var(--surface-2); }
 .emas-label { font-size: 16px; color: var(--muted); white-space: nowrap; }
 .emas-track { flex: 1; height: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; min-width: 24px; }
 #emas-fill { height: 100%; background: #facc15; }
@@ -310,3 +293,28 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
 @keyframes shake { 0%, 100% { transform: none; } 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
 html.high-contrast { --muted: #d4d4d8; --line: #71717a; --surface: #111113; }
 html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; }
+/* Menu: one sheet, panels sorted into groups of big tiles. */
+.menu-group { margin-bottom: 12px; }
+.menu-group h3 { margin: 0 0 8px; font-size: 16px; color: var(--muted); font-weight: 700; }
+.tile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 88px;
+  padding: 10px 4px;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.tile:active { transform: translateY(1px); }
+.tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tile img { image-rendering: pixelated; }

@@ -8,9 +8,11 @@ import { setupInstall } from './pwa/install';
 import { setupUpdates } from './pwa/update';
 import { openBuild } from './ui/build';
 import { h } from './ui/dom';
+import { glyphURL } from './ui/glyphs';
 import { inspect } from './ui/inspect';
 import { hasSeenHowto, showHowto } from './ui/howto';
 import { openSettings } from './ui/settings';
+import { openMenu } from './ui/menu';
 import { closeSheet } from './ui/sheet';
 import { registerSystems } from './systems';
 
@@ -20,15 +22,25 @@ const app = new App();
 app.inspect = (uid) => inspect(app, uid);
 app.actions.push({ id: 'build', label: 'Build', open: openBuild });
 registerSystems(app);
+app.actions.push(
+  { id: 'log', label: 'Log', group: 'records', open: (a) => a.openLog() },
+  { id: 'stats', label: 'Kas & ranking', group: 'records', open: (a) => a.openStats() },
+  { id: 'howto', label: 'How to play', group: 'game', open: (a) => { closeSheet(); showHowto(a); } },
+  { id: 'settings', label: 'Settings', group: 'game', open: openSettings },
+);
 
-$('actions').replaceChildren(...app.actions.map((a) => h('button', { class: `btn ${a.id === 'build' ? 'btn-primary' : ''}`, id: `act-${a.id}`, onclick: () => a.open(app) }, a.label)));
+// Lives in the Menu's Game group. Hidden until the browser offers an install.
+const installBtn = h('button', { class: 'tile', id: 'install-btn', hidden: true }, h('img', { src: glyphURL('install')!, alt: '', width: 32, height: 32, class: 'pixel' }), h('span', {}, 'Install app'));
+
+$('menu-btn').addEventListener('click', () => openMenu(app, [installBtn]));
+$('hud').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') app.openStats();
+});
 $('place-cancel').addEventListener('click', () => app.stopPlacing());
 $('place-ok').addEventListener('click', () => app.confirmPlace());
-$('help-btn').addEventListener('click', () => showHowto(app));
-$('settings-btn').addEventListener('click', () => openSettings(app));
 $('scrim').addEventListener('click', closeSheet);
 
-setupInstall($<HTMLButtonElement>('install-btn'), (text) => app.modal({ title: 'Install Pak RT', body: text, tone: 'info' }));
+setupInstall(installBtn, (text) => app.modal({ title: 'Install Pak RT', body: text, tone: 'info' }));
 setupUpdates($('update-banner'), $<HTMLButtonElement>('update-btn'));
 app.refresh();
 if (!hasSeenHowto()) showHowto(app);

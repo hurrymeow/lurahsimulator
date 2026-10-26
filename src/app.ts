@@ -1,4 +1,4 @@
-import { dateLabel, rupiah } from './format';
+import { dateLabel, rupiah, rupiahHud } from './format';
 import { MapView, RES_COLOUR } from './render/map';
 import { iconURL } from './render/sprites';
 import { def } from './sim/content';
@@ -35,13 +35,16 @@ export const RES_META: Record<ResourceId, { label: string; icon: string }> = {
 };
 
 /** Extension points for later systems: extra action buttons and fx handlers. */
-export type ActionButton = { id: string; label: string; open: (app: App) => void };
+export type MenuGroup = 'kampung' | 'records' | 'game';
+export type ActionButton = { id: string; label: string; open: (app: App) => void; group?: MenuGroup; icon?: string };
 
 export class App {
   s: GameState;
   settings: Settings;
   view: MapView;
   speed: Speed = 1;
+  /** Speed to resume at after a pause. */
+  private pace: Exclude<Speed, 0> = 1;
   private acc = 0;
   private last = performance.now();
   private modalQueue: (Notice & { fanfare?: boolean })[] = [];
@@ -245,13 +248,13 @@ export class App {
     const hud = document.getElementById('hud')!;
     const chips = (Object.keys(RES_META) as ResourceId[]).map((id) =>
       h('div', { class: 'chip', id: `chip-${id}`, style: `--c:${RES_COLOUR[id]}` },
-        h('img', { src: iconURL(RES_META[id].icon), alt: '', width: 20, height: 20 }),
+        h('img', { src: iconURL(RES_META[id].icon), alt: '', width: 18, height: 18 }),
         h('span', { class: 'chip-label' }, RES_META[id].label),
         h('span', { class: 'chip-value' }, ''),
       ),
     );
     const pop = h('div', { class: 'chip', id: 'chip-pop', style: '--c:#f4f4f5' },
-      h('img', { src: iconURL('people'), alt: '', width: 20, height: 20 }),
+      h('img', { src: iconURL('people'), alt: '', width: 18, height: 18 }),
       h('span', { class: 'chip-label' }, 'Warga'),
       h('span', { class: 'chip-value' }, ''),
     );
@@ -268,7 +271,7 @@ export class App {
       chip.querySelector('.chip-value')!.textContent = v;
       chip.setAttribute('aria-label', `${label} ${v}`);
     };
-    set('rupiah', rupiah(r.rupiah), 'Rupiah');
+    set('rupiah', rupiahHud(r.rupiah), `Rupiah ${rupiah(r.rupiah)},`);
     set('sabar', `${Math.round(r.sabar)}`, 'Sabar');
     set('orangDalam', `${Math.floor(r.orangDalam)}`, 'Orang Dalam');
     set('viral', `${Math.round(r.viral)}`, 'Viral');
@@ -304,7 +307,7 @@ export class App {
     this.lastRes = now;
   }
 
-  private openStats(): void {
+  openStats(): void {
     const s = this.s;
     const ranks = [...s.ranking].reverse().map((r) =>
       h('div', { class: `log-row tone-${r.won ? 'good' : 'bad'}` },
@@ -324,20 +327,23 @@ export class App {
   }
 
   // ---------- speed ----------
+  // Two buttons: pause/play, and one that cycles 1x, 2x, 4x.
   private bindSpeed(): void {
-    const wrap = document.getElementById('speed')!;
-    const labels: Record<Speed, string> = { 0: '❚❚', 1: '1x', 2: '2x', 4: '4x' };
-    wrap.replaceChildren(
-      ...SPEEDS.map((sp) =>
-        h('button', { class: 'btn seg', 'data-speed': sp, 'aria-label': sp === 0 ? 'Pause' : `Speed ${sp}x`, onclick: () => this.setSpeed(sp) }, labels[sp]),
-      ),
-    );
+    document.getElementById('pause-btn')!.addEventListener('click', () => this.setSpeed(this.speed ? 0 : this.pace));
+    document.getElementById('speed-btn')!.addEventListener('click', () => this.setSpeed(this.pace === 1 ? 2 : this.pace === 2 ? 4 : 1));
     this.setSpeed(this.speed);
   }
 
   setSpeed(sp: Speed): void {
     this.speed = sp;
-    document.querySelectorAll<HTMLButtonElement>('#speed .seg').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.speed) === sp)));
+    if (sp) this.pace = sp;
+    const pause = document.getElementById('pause-btn')!;
+    pause.textContent = sp ? '❚❚' : '▶';
+    pause.setAttribute('aria-label', sp ? 'Pause' : 'Play');
+    pause.setAttribute('aria-pressed', String(!sp));
+    const speed = document.getElementById('speed-btn')!;
+    speed.textContent = `${this.pace}x`;
+    speed.setAttribute('aria-label', `Speed ${this.pace}x. Tap to change.`);
   }
 
   // ---------- map input ----------
@@ -371,14 +377,14 @@ export class App {
       }
       const b = buildingAt(this.s, t.x, t.y);
       if (b) this.inspect(b.uid);
-      else this.notice({ title: 'Empty tile', body: 'Tap Build to put something here.', tone: 'info' });
+      else this.notice({ title: 'Empty tile', body: 'Open Menu, then Build, to put something here.', tone: 'info' });
     });
     document.getElementById('ticker')!.addEventListener('click', () => this.openLog());
   }
 
   inspect: (uid: number) => void = () => {};
 
-  private openLog(): void {
+  openLog(): void {
     openSheet('Kampung log', this.log.length ? this.log.map((n) => h('div', { class: `log-row tone-${n.tone}` }, h('strong', {}, n.title), h('p', {}, n.body))) : [h('p', {}, 'Nothing yet.')]);
   }
 
@@ -388,7 +394,7 @@ export class App {
     this.placing = id;
     this.view.ghost = null;
     this.view.selected = null;
-    document.getElementById('actions')!.hidden = true;
+    document.getElementById('mainbar')!.hidden = true;
     document.getElementById('placebar')!.hidden = false;
     this.updatePlacing();
   }
@@ -396,7 +402,7 @@ export class App {
   stopPlacing(): void {
     this.placing = null;
     this.view.ghost = null;
-    document.getElementById('actions')!.hidden = false;
+    document.getElementById('mainbar')!.hidden = false;
     document.getElementById('placebar')!.hidden = true;
   }
 
