@@ -55,6 +55,6 @@ One line per decision, with the reason. Newest at the bottom.
 - **Event cooldowns:** banjir at least 9 months apart, cabai at least 6.
 - **Slim HUD and one Menu (Hari feedback, Dungeon Village as reference):** the title bar, two-row resource chips, four speed buttons and four panel buttons were cut. Top is one row of resource icons and values. Bottom is pause, a 1x/2x/4x cycle button, the date and a Menu button. Menu is one sheet with big tiles in three groups. Own pixel glyphs, no Kairosoft names or art.
 - **Settings moved into the Menu:** replaces the old "settings at the top" rule. A gear in the top bar was one button too many next to five resources at 320px.
-- **Compact Rupiah in the top bar:** shows Rp 4,85jt, rounded down so it never shows money you lack. The full figure is in Kas & ranking and the screen-reader label.
+- **Compact Rupiah in the top bar:** shows 4,85jt next to the money icon, rounded down so it never shows money you lack. The full figure is in Kas & ranking and the screen-reader label.
 - **Ticker stays in the layout, not over the map:** an overlay hid the top row of tiles from taps on small phones.
 - **Build is two taps (Menu, Build):** matches the reference layout. Revisit if play-testing says building feels slow.
