@@ -318,3 +318,6 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .tile:active { transform: translateY(1px); }
 .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tile img { image-rendering: pixelated; }
+
+.slider-row { display: flex; justify-content: space-between; gap: var(--gap); }
+.slider { width: 100%; min-height: 44px; accent-color: var(--accent); }

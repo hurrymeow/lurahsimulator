@@ -9,6 +9,7 @@ import { deserialize, serialize } from './sim/save';
 import { buildCost, buildingAt, newGame, population, housing } from './sim/state';
 import { tick } from './sim/tick';
 import type { GameState, ResourceId, SimEffect } from './sim/types';
+import { audio } from './audio';
 import { loadSettings, saveSettings, type Settings } from './settings';
 import { storage } from './storage';
 import { h, missingList } from './ui/dom';
@@ -59,6 +60,7 @@ export class App {
     this.storageOk = storage.set('pakrt.probe', '1');
     this.settings = loadSettings();
     this.view = new MapView(document.getElementById('map') as HTMLCanvasElement);
+    audio.init(this.settings);
     this.applySettings();
     this.buildHud();
     this.bindMap();
@@ -118,11 +120,13 @@ export class App {
           this.view.spawn(b.uid);
         }
         this.haptic(20);
+        audio.play('build');
       } else if (f.kind === 'notice') {
         if (f.fanfare) this.modal(f);
         else this.notice(f);
       } else if (f.kind === 'event') {
         this.haptic(25);
+        audio.play('event');
         this.showEventSoon = true;
       }
     }
@@ -204,6 +208,12 @@ export class App {
     }
   }
 
+  /** Haptic plus a UI click for button presses. */
+  tap(ms = 15): void {
+    this.haptic(ms);
+    audio.play('tap');
+  }
+
   notice(n: Notice): void {
     this.log.unshift(n);
     this.log.length = Math.min(this.log.length, 40);
@@ -236,7 +246,10 @@ export class App {
       ),
     );
     el.hidden = false;
-    if (n.fanfare) this.haptic([30, 40, 30]);
+    if (n.fanfare) {
+      this.haptic([30, 40, 30]);
+      audio.play('fanfare');
+    }
     el.onclick = () => {
       this.modalQueue.shift();
       this.showModal();
@@ -414,6 +427,7 @@ export class App {
       this.view.burst(g.x, g.y);
       this.view.pop(g.x, g.y, 'rupiah', -buildCost(this.s, def(this.placing)));
       this.haptic(15);
+      audio.play('build');
       this.stopPlacing();
       this.save();
       this.refresh();
@@ -443,6 +457,7 @@ export class App {
     document.documentElement.classList.toggle('reduce-motion', this.settings.reduceMotion);
     document.documentElement.classList.toggle('high-contrast', this.settings.highContrast);
     this.view.effects = this.settings.effects && !this.settings.reduceMotion;
+    audio.set(this.settings);
     saveSettings(this.settings);
   }
 }
