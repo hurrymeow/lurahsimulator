@@ -226,6 +226,8 @@ export interface GameState {
   stage: StageState;
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
+  /** Kecamatan inspections. Absent in older saves. */
+  inspection?: { warnAt: number; visitAt?: number; prep: number };
   /** Quarterly report bookkeeping. Absent in older saves and on a fresh game. */
   quarter?: QuarterTrack;
   stats: { earned: number; spent: number; arrived: number; left: number };

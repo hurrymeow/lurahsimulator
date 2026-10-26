@@ -156,7 +156,7 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#modal .card.report-card')).toBeHidden();
   });
 
-  for (const id of ['agustusan', 'banjir', 'cabai']) {
+  for (const id of ['agustusan', 'banjir', 'cabai', 'kecamatan']) {
     for (const broke of [false, true]) {
       test(`event ${id}${broke ? ' while broke' : ''} is legible and has a free choice`, async ({ page }) => {
         await start(page);
@@ -176,7 +176,7 @@ test.describe('events, ranking, settings', () => {
         await page.locator('#modal .card.event .btn').first().click();
         // The outcome is a tap-to-dismiss popup with the stat changes.
         await expect(page.locator('#modal .card h2')).toHaveText({ id: 'Hasil kejadian', en: 'Event result' }[lang()]);
-        if (id !== 'banjir') await expect(page.locator('#modal .outcome-chip, #modal .outcome-mod').first()).toBeVisible();
+        if (id !== 'banjir' && id !== 'kecamatan') await expect(page.locator('#modal .outcome-chip, #modal .outcome-mod').first()).toBeVisible();
         await expectLegible(page, `outcome ${id}`);
         await page.locator('#modal .tap-hint').click();
         await expect(page.locator('#modal')).toBeHidden();

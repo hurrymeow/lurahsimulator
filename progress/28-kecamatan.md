@@ -1,0 +1,1 @@
+- Kecamatan inspections (#28): warning event, 0-100 score, Orang Dalam reward or small Sabar cost, paint and nasi kotak inflation, inspector walker sprite. EN and ID, unit and E2E tests.

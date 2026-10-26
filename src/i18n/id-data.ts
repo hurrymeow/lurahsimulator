@@ -92,4 +92,12 @@ export const ID_DATA: Record<string, string> = {
   'event.cabai.c2.label': 'Operasi pasar · 1 Orang Dalam',
   'event.cabai.c2.result': 'Satu truk cabai tiba.',
   'event.cabai.c2.mod': 'Operasi pasar',
+  'event.kecamatan.name': 'Kecamatan Datang',
+  'event.kecamatan.body': 'Petugas Kecamatan datang dalam 2 bulan untuk menilai kampung: selokan, Sabar, proyek mangkrak dan parkir liar. Nilai bagus memberi Orang Dalam. Nilai buruk mengurangi Sabar. Cat baru juga dihitung.',
+  'event.kecamatan.c0.label': 'Biasa saja',
+  'event.kecamatan.c0.result': 'Petugas akan melihat kampung apa adanya.',
+  'event.kecamatan.c1.label': 'Cat ulang pagar · Rp 750.000',
+  'event.kecamatan.c1.result': 'Semua pagar dicat ulang. Selokan tidak.',
+  'event.kecamatan.c2.label': 'Nasi kotak untuk rombongan · 1 Orang Dalam',
+  'event.kecamatan.c2.result': 'Rombongan pulang kenyang dan murah hati.',
 };
