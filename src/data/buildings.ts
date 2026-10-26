@@ -77,7 +77,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
   {
     id: 'jalan',
     name: 'Jalan Setapak',
-    blurb: 'Free footpath. Buildings beside it earn 10% more income, and walkers prefer it. Takes up a tile. Remove it any time.',
+    blurb: 'Free footpath. Every building needs a path to the Kantor RT or it sits idle. Buildings beside it earn 10% more income, and residents walk only on paths. Takes up a tile. Remove it any time.',
     cost: 0,
     upkeep: 0,
     income: 0,

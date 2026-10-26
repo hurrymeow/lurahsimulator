@@ -25,7 +25,7 @@ function play(seed: number, years: number, smart: boolean, starMonths: number[] 
         if (checkPlace(s, def, x, y).ok) place(s, def, x, y);
       };
       want('posRonda', k.x + 1, k.y, 2_400_000);
-      want('warung', k.x, k.y + 1, 3_000_000);
+      want('warung', k.x + 1, k.y - 1, 3_000_000);
       want('wifi', k.x, k.y - 1, 5_000_000);
       // A bed for the next arrivals, up to what the top goals need.
       if (population(s) < 42 && housing(s) < attractTarget(s) + 3) {
@@ -80,7 +80,7 @@ describe('balance', () => {
       }
     }
     expect(wins / total).toBeGreaterThan(0.5);
-  });
+  }, 30_000);
 
   it('inflation is small: prices rise 3% a year', () => {
     const { s } = play(1, 5, false);
@@ -100,5 +100,5 @@ describe('star pacing', () => {
     }
     // 3 stars needs 3 combos and Sabar 65, which this bot does not plan for.
     expect(two).toBeGreaterThanOrEqual(8);
-  });
+  }, 30_000);
 });

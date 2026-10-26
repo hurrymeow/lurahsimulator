@@ -5,6 +5,7 @@ import { GRID_H, GRID_W, RT_H, RT_W, type Building, type GameState, type Resourc
 import { Atmosphere } from './atmosphere';
 import { drawTint, darkness, dusk, Fx } from './fx';
 import { iso, TH, TOP, TW, type Art } from './iso';
+import { t } from '../i18n';
 import { Crowd } from './people';
 import { Weather } from './weather';
 import { buildWorld, decoAt, farRoofs, layoutWorld, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
@@ -416,6 +417,7 @@ export class MapView {
     };
     this.night = this.effects ? darkness(this.clock) : 0;
     this.lights = [];
+    this.crowd.bubbles = this.effects && !this.frozen;
     this.crowd.update(s, now, this.motion && !this.frozen);
     this.crowd.begin();
     const drawOne = (b: Building): void => {
@@ -447,6 +449,10 @@ export class MapView {
       } else if (b.status === 'damaged') {
         ctx.filter = 'sepia(1) brightness(0.6)';
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n));
+        ctx.filter = 'none';
+      } else if (b.noRoad) {
+        ctx.filter = 'grayscale(1) brightness(0.75)';
+        this.hits.push(this.art(ctx, art, b.x, b.y));
         ctx.filter = 'none';
       } else {
         const born = this.spawned.get(b.uid);
@@ -483,7 +489,7 @@ export class MapView {
     // Badges sit above every building so a taller neighbour in front never hides them.
     for (const b of sorted) {
       if (!tops.has(b.y * GRID_W + b.x)) continue;
-      const label = b.status === 'permit' || b.status === 'building' ? `${b.timer}` : b.status === 'mangkrak' ? '80%' : b.status === 'damaged' ? '!' : null;
+      const label = b.status === 'permit' || b.status === 'building' ? `${b.timer}` : b.status === 'mangkrak' ? '80%' : b.status === 'damaged' ? '!' : b.noRoad ? t('map.noRoad') : null;
       if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label);
     }
 

@@ -1,3 +1,4 @@
+import { layRoads } from './access';
 import { hasDef } from './content';
 import { SAVE_VERSION, newStageState } from './state';
 import { OLD_GRID_H, OLD_GRID_W, RT_H, RT_W, setGrid, type GameState } from './types';
@@ -24,6 +25,7 @@ export function deserialize(raw: string | null): GameState | null {
     s.rw ??= { kaderDecay: 0 };
     s.kel ??= { budget: 0, spentBase: 0, serapanRun: 0, cleanAudits: 0 };
     setGrid(s.stage.current);
+    if (!s.roadsLaid) layRoads(s);
     return s;
   } catch {
     return null;
