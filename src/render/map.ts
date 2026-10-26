@@ -105,6 +105,13 @@ export class MapView {
     this.pops.push({ x, y, text, res, born: performance.now(), dy: stack * 22 });
   }
 
+  private spawned = new Map<number, number>();
+
+  /** A finished building pops in with a short scale-up. */
+  spawn(uid: number): void {
+    if (this.effects) this.spawned.set(uid, performance.now());
+  }
+
   burst(x: number, y: number): void {
     if (this.effects) this.bursts.push({ x, y, born: performance.now() });
   }
@@ -176,7 +183,11 @@ export class MapView {
         ctx.filter = 'none';
         this.badge(ctx, x, y, '!');
       } else {
-        ctx.drawImage(sprite(d.sprite, recolor), x, y, t, t);
+        const born = this.spawned.get(b.uid);
+        const k = born === undefined ? 1 : Math.min(1, (now - born) / 350);
+        if (k >= 1) this.spawned.delete(b.uid);
+        const sc = 0.6 + 0.4 * (1 - (1 - k) ** 3);
+        ctx.drawImage(sprite(d.sprite, recolor), x + (t * (1 - sc)) / 2, y + t * (1 - sc), t * sc, t * sc);
         if (b.level > 1) this.levelPips(ctx, x, y, b.level);
       }
       if (this.selected === b.uid) {

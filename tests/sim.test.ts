@@ -8,7 +8,10 @@ import type { GameState } from '../src/sim/types';
 
 const run = (s: GameState, months: number) => {
   const fx = [];
-  for (let i = 0; i < months; i++) fx.push(...tick(s));
+  for (let i = 0; i < months; i++) {
+    fx.push(...tick(s));
+    s.pendingEvent = null;
+  }
   return fx;
 };
 
@@ -140,7 +143,8 @@ describe('monthly tick', () => {
     let last = 0;
     for (let m = 1; m <= 48; m++) {
       const fx = tick(s);
-      if (fx.some((f) => f.kind === 'notice' && f.tone === 'good')) last = m;
+      s.pendingEvent = null;
+      if (fx.some((f) => f.kind === 'event' || (f.kind === 'notice' && f.tone === 'good'))) last = m;
       expect(m - last).toBeLessThanOrEqual(8);
     }
   });

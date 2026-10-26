@@ -2,6 +2,8 @@ import { rupiah } from '../format';
 import { def } from './content';
 import { gain, type Fx } from './gain';
 import { chance } from './rng';
+import { EMAS } from '../data/ranking';
+import { addEmas } from './ranking';
 import { addBuilding, buildCost, emptyTiles } from './state';
 import type { Building, CheckResult, GameState } from './types';
 
@@ -10,6 +12,7 @@ export const MANGKRAK_AT = '80%';
 const MANGKRAK_FROM_MONTH = 12;
 export const VIRAL_REPAIR_AT = 30;
 export const MANGKRAK_SABAR = 1;
+export const MANGKRAK_SABAR_CAP = 3;
 
 /** Called when a building finishes construction. Maybe freezes it, maybe spawns a parkir. */
 export function onBuildingFinished(s: GameState, fx: Fx, b: Building): 'ok' | 'mangkrak' {
@@ -17,6 +20,7 @@ export function onBuildingFinished(s: GameState, fx: Fx, b: Building): 'ok' | 'm
   if (d.mangkrakChance && !b.restarted && s.month >= MANGKRAK_FROM_MONTH && chance(s, d.mangkrakChance)) {
     b.status = 'mangkrak';
     b.timer = 0;
+    addEmas(s, EMAS.perMangkrak);
     fx.push({
       kind: 'notice',
       title: `${d.name} mangkrak at ${MANGKRAK_AT}`,
@@ -71,11 +75,14 @@ export function restart(s: GameState, b: Building): CheckResult {
   b.status = 'building';
   b.timer = 1;
   b.restarted = true;
+  addEmas(s, EMAS.perRestart);
   return check;
 }
 
 /** Frozen projects are an eyesore and cost Sabar every month. */
 export function mangkrakSystem(s: GameState, fx: Fx): void {
-  for (const b of s.buildings) if (b.status === 'mangkrak') gain(s, fx, 'sabar', -MANGKRAK_SABAR, b);
+  // Capped, so a pile of abandoned projects hurts but never snowballs.
+  const frozen = s.buildings.filter((b) => b.status === 'mangkrak').slice(0, MANGKRAK_SABAR_CAP);
+  for (const b of frozen) gain(s, fx, 'sabar', -MANGKRAK_SABAR, b);
 }
 

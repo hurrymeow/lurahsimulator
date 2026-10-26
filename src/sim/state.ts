@@ -1,4 +1,5 @@
 import { NAMES, TITLES } from '../data/names';
+import { EMAS } from '../data/ranking';
 import { BASE_ATTRACT, LEVEL_BONUS, START, START_RESIDENTS } from './balance';
 import { def } from './content';
 import { pick } from './rng';
@@ -23,7 +24,7 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
     wacana: [],
     modifiers: [],
     ranking: [],
-    emas: 0.01,
+    emas: EMAS.start,
     pendingEvent: null,
     lastNovelty: 0,
     stats: { earned: 0, spent: 0, arrived: 0, left: 0 },

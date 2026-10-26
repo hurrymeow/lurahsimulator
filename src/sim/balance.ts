@@ -10,7 +10,7 @@ export const ARRIVE_MIN_SABAR = 25;
 export const LEAVE_BELOW_SABAR = 15;
 export const MIN_RESIDENTS = 2;
 export const QUEUE_SABAR_DRAIN = 1;
-export const BROKE_SABAR_DRAIN = 2;
+export const BROKE_SABAR_DRAIN = 1;
 export const VIRAL_DECAY = 0.1;
 export const SABAR_MAX = 100;
 export const VIRAL_MAX = 100;
@@ -18,3 +18,6 @@ export const VIRAL_MAX = 100;
 export const NOVELTY_GAP = 8;
 /** Each Viral point adds this fraction to shop income. */
 export const VIRAL_INCOME = 0.005;
+/** Below this, the kampung slowly calms down on its own, so Sabar never gets stuck at zero. */
+export const SABAR_REGEN_BELOW = 30;
+export const SABAR_REGEN = 4;

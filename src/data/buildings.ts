@@ -150,7 +150,7 @@ export const BUILDINGS: BuildingDef[] = [
     upkeep: 0,
     income: 60_000,
     attract: 0,
-    perMonth: { sabar: -0.5 },
+    perMonth: { sabar: -0.25 },
     permitMonths: 0,
     buildMonths: 0,
     maxLevel: 3,

@@ -12,7 +12,10 @@ import type { GameState } from '../src/sim/types';
 
 const run = (s: GameState, n: number) => {
   const fx = [];
-  for (let i = 0; i < n; i++) fx.push(...tick(s));
+  for (let i = 0; i < n; i++) {
+    fx.push(...tick(s));
+    s.pendingEvent = null;
+  }
   return fx;
 };
 const add = (s: GameState, id: string, x: number, y: number) => addBuilding(s, id, x, y, 'active');
@@ -244,6 +247,7 @@ describe('proyek mangkrak', () => {
     expect(cheap).toBeLessThan(normal * 1.1);
     expect(restart(s, b).ok).toBe(true);
     chanceOf.mangkrakChance = 1;
+    s.pendingEvent = null;
     tick(s);
     expect(byUid(s, b.uid)!.status).toBe('active');
   });
