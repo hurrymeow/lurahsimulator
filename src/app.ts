@@ -60,7 +60,6 @@ export class App {
     new ResizeObserver(() => this.view.resize()).observe(document.getElementById('map')!);
     this.view.resize();
     if (!this.storageOk) this.notice({ title: 'Saving is off', body: 'This browser blocks storage. The game runs, but progress is lost when you close it.', tone: 'info' });
-    else if (!loaded) this.modal({ title: 'Selamat datang, Pak RT', body: 'Place buildings to attract residents. Every month the kas fills or empties. Tap Build to start.', tone: 'info' });
     requestAnimationFrame((t) => this.frame(t));
   }
 

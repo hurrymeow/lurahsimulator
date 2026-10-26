@@ -11,6 +11,7 @@ async function start(page: Page): Promise<void> {
 
 /** Taps through every queued message. */
 async function dismissModals(page: Page): Promise<void> {
+  if (await page.locator('#howto').isVisible()) await page.locator('#howtoGo').click();
   for (let i = 0; i < 12; i++) {
     if (!(await page.locator('#modal').isVisible())) return;
     await page.locator('#modal').click();
@@ -42,9 +43,32 @@ async function seed(page: Page): Promise<void> {
   await dismissModals(page);
 }
 
+test.describe('how to play', () => {
+  test('shows on first launch, is legible, pauses the game, and stays dismissed', async ({ page }) => {
+    await start(page);
+    await expect(page.locator('#howto')).toBeVisible();
+    await expectLegible(page, 'how to play');
+    await expect(page.locator('#howto .steps li').first()).toBeVisible();
+    await page.locator('#howtoGo').scrollIntoViewIfNeeded();
+    await page.locator('#howtoGo').click();
+    await expect(page.locator('#howto')).toBeHidden();
+    await page.reload();
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await expect(page.locator('#howto')).toBeHidden();
+    await page.locator('#help-btn').click();
+    await expect(page.locator('#howto')).toBeVisible();
+    const speed = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.speed);
+    expect(speed).toBe(0);
+    await page.locator('#howtoGo').click();
+    const after = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.speed);
+    expect(after).toBe(1);
+  });
+});
+
 test.describe('text is legible and never cut off', () => {
   test('first screen and welcome message', async ({ page }) => {
     await start(page);
+    await dismissModals(page);
     await expectLegible(page, 'welcome');
     await dismissModals(page);
     await expectLegible(page, 'main screen');
