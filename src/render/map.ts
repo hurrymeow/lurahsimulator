@@ -153,6 +153,13 @@ export class MapView {
     this.pops.push({ x, y, text, res, born: performance.now(), dy: stack * 22 });
   }
 
+  private spawned = new Map<number, number>();
+
+  /** A finished building pops in with a short scale-up. */
+  spawn(uid: number): void {
+    if (this.effects) this.spawned.set(uid, performance.now());
+  }
+
   burst(x: number, y: number): void {
     if (this.effects) this.bursts.push({ x, y, born: performance.now() });
   }
@@ -194,12 +201,19 @@ export class MapView {
   }
 
   /** Draws art for a tile. Returns where it landed, for tap picking. */
-  private art(ctx: CanvasRenderingContext2D, art: Art, x: number, y: number): Hit {
+  private art(ctx: CanvasRenderingContext2D, art: Art, x: number, y: number, grow = 1): Hit {
     const c = this.corner(x, y);
     const s = this.scale;
     const left = c.x - (TW * s) / 2;
     const top = c.y - TOP * s;
-    ctx.drawImage(art.canvas, left, top, art.canvas.width * s, art.canvas.height * s);
+    if (grow < 1) {
+      // Scale up from the tile's ground centre, so the building rises out of its plot.
+      const gx = c.x;
+      const gy = c.y + (TH * s) / 2;
+      const w = art.canvas.width * s * grow;
+      const h = art.canvas.height * s * grow;
+      ctx.drawImage(art.canvas, gx - w / 2, gy - (TOP + TH / 2) * s * grow, w, h);
+    } else ctx.drawImage(art.canvas, left, top, art.canvas.width * s, art.canvas.height * s);
     return { x, y, left, top, art };
   }
 
@@ -286,7 +300,10 @@ export class MapView {
         this.hits.push(this.art(ctx, art, b.x, b.y));
         ctx.filter = 'none';
       } else {
-        this.hits.push(this.art(ctx, art, b.x, b.y));
+        const born = this.spawned.get(b.uid);
+        const k = born === undefined ? 1 : Math.min(1, (now - born) / 350);
+        if (k >= 1) this.spawned.delete(b.uid);
+        this.hits.push(this.art(ctx, art, b.x, b.y, 0.6 + 0.4 * (1 - (1 - k) ** 3)));
         if (b.level > 1) this.levelPips(ctx, b.x, b.y, b.level);
       }
       tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' || b.status === 'mangkrak' ? iso('scaffold') : art));

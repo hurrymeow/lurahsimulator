@@ -2,6 +2,8 @@ import { dateLabel, rupiah } from './format';
 import { MapView, RES_COLOUR } from './render/map';
 import { iconURL } from './render/sprites';
 import { def } from './sim/content';
+import { eventDef } from './data/events';
+import { checkChoice, eventCost, resolveEvent } from './sim/events';
 import { checkPlace, place } from './sim/rules';
 import { deserialize, serialize } from './sim/save';
 import { buildCost, buildingAt, newGame, population, housing } from './sim/state';
@@ -10,6 +12,8 @@ import type { GameState, ResourceId, SimEffect } from './sim/types';
 import { loadSettings, saveSettings, type Settings } from './settings';
 import { storage } from './storage';
 import { h, missingList } from './ui/dom';
+import { RIVAL_NAME } from './data/ranking';
+import { score } from './sim/ranking';
 import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
 
 export const MONTH_MS = 8000;
@@ -45,8 +49,7 @@ export class App {
   placing: string | null = null;
   private storageOk: boolean;
   actions: ActionButton[] = [];
-  eventHandlers: ((app: App, eventId: string) => void)[] = [];
-
+  
   constructor() {
     const loaded = deserialize(storage.get(SAVE_KEY));
     this.s = loaded ?? newGame();
@@ -60,6 +63,7 @@ export class App {
     new ResizeObserver(() => this.view.resize()).observe(document.getElementById('map')!);
     this.view.resize();
     if (!this.storageOk) this.notice({ title: 'Saving is off', body: 'This browser blocks storage. The game runs, but progress is lost when you close it.', tone: 'info' });
+    if (this.s.pendingEvent) this.showEvent();
     requestAnimationFrame((t) => this.frame(t));
   }
 
@@ -106,15 +110,73 @@ export class App {
       if (f.kind === 'pop') continue;
       else if (f.kind === 'built') {
         const b = this.s.buildings.find((o) => o.uid === f.uid);
-        if (b) this.view.burst(b.x, b.y);
+        if (b) {
+          this.view.burst(b.x, b.y);
+          this.view.spawn(b.uid);
+        }
         this.haptic(20);
       } else if (f.kind === 'notice') {
         if (f.fanfare) this.modal(f);
         else this.notice(f);
       } else if (f.kind === 'event') {
-        for (const handler of this.eventHandlers) handler(this, f.eventId);
+        this.haptic(25);
+        this.showEventSoon = true;
       }
     }
+    if (this.showEventSoon) {
+      this.showEventSoon = false;
+      if (this.modalQueue.length === 0) this.showEvent();
+    }
+  }
+
+  private showEventSoon = false;
+
+  // ---------- events ----------
+  /** A pending event pauses the game until the player picks a choice. The first choice is always free. */
+  showEvent(): void {
+    const e = this.s.pendingEvent ? eventDef(this.s.pendingEvent) : undefined;
+    const el = document.getElementById('modal')!;
+    if (!e) return;
+    const choices = e.choices.map((c, i) => {
+      const check = checkChoice(this.s, c);
+      const cost = eventCost(this.s, c);
+      const label = c.label.replace(/ · Rp [\d.]+/, '').replace(/ · \d Orang Dalam/, '');
+      const price = [cost.rupiah ? rupiah(cost.rupiah) : '', cost.orangDalam ? `${cost.orangDalam} Orang Dalam` : ''].filter(Boolean).join(' + ');
+      return h('div', { class: 'action' },
+        h('button', { class: `btn ${i === 0 ? '' : 'btn-primary'}`, disabled: !check.ok, onclick: () => this.chooseEvent(i) }, price ? `${label} · ${price}` : label),
+        check.ok ? null : missingList(check.missing),
+      );
+    });
+    el.replaceChildren(
+      h('div', { class: 'card event', role: 'dialog', 'aria-live': 'polite' },
+        h('h2', {}, e.name),
+        h('p', {}, e.body),
+        ...choices,
+      ),
+    );
+    el.onclick = null;
+    el.hidden = false;
+    this.shake();
+  }
+
+  private chooseEvent(i: number): void {
+    const fx: SimEffect[] = [];
+    const out = resolveEvent(this.s, fx, i);
+    if (!out.ok) return;
+    document.getElementById('modal')!.hidden = true;
+    this.handleFx(fx);
+    this.notice({ title: 'Event result', body: out.text, tone: 'info' });
+    this.save();
+    this.refresh();
+  }
+
+  /** A short screen shake for bad news. Skipped when effects are off. */
+  shake(): void {
+    if (!this.view.effects) return;
+    const stage = document.getElementById('map')!;
+    stage.classList.remove('shake');
+    void stage.offsetWidth;
+    stage.classList.add('shake');
   }
 
   save(): void {
@@ -158,7 +220,8 @@ export class App {
     const n = this.modalQueue[0];
     const el = document.getElementById('modal')!;
     if (!n) {
-      el.hidden = true;
+      if (this.s.pendingEvent) this.showEvent();
+      else el.hidden = true;
       return;
     }
     el.replaceChildren(
@@ -211,17 +274,52 @@ export class App {
     set('viral', `${Math.round(r.viral)}`, 'Viral');
     set('pop', `${population(this.s)}/${housing(this.s)}`, 'Residents');
     document.getElementById('chip-rupiah')!.classList.toggle('negative', r.rupiah < 0);
+    this.flashChanges();
+    const emas = document.getElementById('emas-value');
+    if (emas) emas.textContent = `${this.s.emas.toFixed(2)}%`;
+    const emasBar = document.getElementById('emas-fill');
+    if (emasBar) emasBar.style.width = `${Math.max(0.5, this.s.emas)}%`;
     document.getElementById('date')!.textContent = dateLabel(this.s.month);
     this.updatePlacing();
     for (const fn of this.refreshers) fn(this);
   }
 
   refreshers: ((app: App) => void)[] = [];
+  private lastRes: Record<string, number> = {};
+
+  /** Chips flash briefly when a resource moves. Skipped when effects are off. */
+  private flashChanges(): void {
+    const now: Record<string, number> = { ...this.s.res, pop: population(this.s) };
+    if (this.view.effects) {
+      for (const [k, v] of Object.entries(now)) {
+        const was = this.lastRes[k];
+        if (was === undefined || Math.round(was) === Math.round(v)) continue;
+        const chip = document.getElementById(`chip-${k}`);
+        if (!chip) continue;
+        chip.classList.remove('flash-up', 'flash-down');
+        void chip.offsetWidth;
+        chip.classList.add(v > was ? 'flash-up' : 'flash-down');
+      }
+    }
+    this.lastRes = now;
+  }
 
   private openStats(): void {
-    openSheet('Kas & warga', [
-      h('p', {}, `Rupiah pays for buildings. Sabar below 25 stops new residents; below 15 people leave. Orang Dalam skips permit queues. Viral unlocks some repairs and decays 10% a month.`),
-      h('p', {}, `Earned ${rupiah(this.s.stats.earned)}. Spent ${rupiah(this.s.stats.spent)}. Arrived ${this.s.stats.arrived}. Left ${this.s.stats.left}.`),
+    const s = this.s;
+    const ranks = [...s.ranking].reverse().map((r) =>
+      h('div', { class: `log-row tone-${r.won ? 'good' : 'bad'}` },
+        h('strong', {}, `Year ${r.year}: ${r.won ? 'You won' : `${RIVAL_NAME} won`}`),
+        h('p', {}, `Us ${r.us}, them ${r.them}`),
+      ),
+    );
+    openSheet('Kas, warga, ranking', [
+      h('p', {}, 'Rupiah pays for buildings. Sabar below 25 stops new residents, below 15 people leave. Orang Dalam skips permit queues. Viral lifts shop income and decays 10% a month.'),
+      h('p', { class: 'meta' }, `Earned ${rupiah(s.stats.earned)}. Spent ${rupiah(s.stats.spent)}. Arrived ${s.stats.arrived}. Left ${s.stats.left}.`),
+      h('h3', {}, 'Indonesia Emas 2045'),
+      h('p', { class: 'meta' }, `${s.emas.toFixed(2)}% done. Wacana and winning the yearly ranking nudge it. Frozen projects pull it back.`),
+      h('h3', {}, `Ranking vs ${RIVAL_NAME}`),
+      h('p', { class: 'meta' }, `Your score now: ${score(s)}. Scored every year end from residents, working buildings, combos, Sabar and Emas.`),
+      ...(ranks.length ? ranks : [h('p', { class: 'meta' }, 'First ranking at the end of year 1.')]),
     ]);
   }
 
@@ -337,6 +435,7 @@ export class App {
   applySettings(): void {
     document.documentElement.classList.toggle('large-text', this.settings.largeText);
     document.documentElement.classList.toggle('reduce-motion', this.settings.reduceMotion);
+    document.documentElement.classList.toggle('high-contrast', this.settings.highContrast);
     this.view.effects = this.settings.effects && !this.settings.reduceMotion;
     saveSettings(this.settings);
   }

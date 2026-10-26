@@ -288,3 +288,25 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
 .pics { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; }
 .pic-text { font-size: 24px; font-weight: 700; color: var(--muted); padding: 0 4px; }
 #howtoGo { width: 100%; }
+
+/* M4: Emas bar, toggles, events, juice */
+.emas { display: flex; align-items: center; gap: 8px; margin: 0 12px 8px; }
+.emas-label { font-size: 16px; color: var(--muted); white-space: nowrap; }
+.emas-track { flex: 1; height: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; min-width: 24px; }
+#emas-fill { height: 100%; background: #facc15; }
+.emas-value { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.toggle { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+.toggle b { min-width: 3ch; text-align: right; }
+.toggle[aria-checked='true'] { border-color: var(--accent); }
+.toggle[aria-checked='true'] b::before { content: '✓ '; }
+.modal .card.event { text-align: left; max-height: 90dvh; overflow-y: auto; cursor: default; }
+.modal .card.event h2 { text-align: center; }
+.sheet h3 { margin: 16px 0 4px; font-size: 18px; }
+.chip.flash-up { animation: flash-up 0.7s ease-out; }
+.chip.flash-down { animation: flash-down 0.7s ease-out; }
+@keyframes flash-up { from { box-shadow: inset 0 0 0 3px var(--rupiah); } to { box-shadow: inset 0 0 0 0 transparent; } }
+@keyframes flash-down { from { box-shadow: inset 0 0 0 3px var(--danger); } to { box-shadow: inset 0 0 0 0 transparent; } }
+#map.shake { animation: shake 0.4s; }
+@keyframes shake { 0%, 100% { transform: none; } 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+html.high-contrast { --muted: #d4d4d8; --line: #71717a; --surface: #111113; }
+html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; }

@@ -119,6 +119,8 @@ export interface GameState {
   emas: number;
   /** Event waiting for a player choice. */
   pendingEvent: string | null;
+  /** Month each event last fired, for cooldowns. Absent in older saves. */
+  lastEvent?: Record<string, number>;
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
   stats: { earned: number; spent: number; arrived: number; left: number };

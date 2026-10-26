@@ -1,5 +1,7 @@
 import { WACANA, WACANA_COST, WACANA_DECAY, WACANA_POWER, WACANA_SABAR_PER_POWER } from '../data/wacana';
+import { EMAS } from '../data/ranking';
 import { rupiah } from '../format';
+import { addEmas } from './ranking';
 import { gain, type Fx } from './gain';
 import { price } from './state';
 import type { CheckResult, GameState } from './types';
@@ -21,6 +23,7 @@ export function announce(s: GameState, id: string): CheckResult {
   if (!w) s.wacana.push((w = { id, power: 0, times: 0, lastAnnounced: s.month }));
   w.power = WACANA_POWER;
   w.times++;
+  addEmas(s, EMAS.perWacana);
   w.lastAnnounced = s.month;
   return check;
 }
