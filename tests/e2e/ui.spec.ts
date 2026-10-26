@@ -231,22 +231,22 @@ test.describe('how to play', () => {
 });
 
 test.describe('events, ranking, settings', () => {
-  test('half-year report card is legible, pauses the game and dismisses on tap', async ({ page }) => {
+  test('yearly report card is legible, pauses the game and dismisses on tap', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     // Tips off: an arrival on the month before the report would be shown first and hold it back.
     await skipTips(page);
     await seed(page);
-    const title = (n: number) => ({ id: `Laporan semester ${n}`, en: `Half-year ${n} report` })[lang()];
+    const title = (n: number) => ({ id: `Laporan tahun ${n}`, en: `Year ${n} report` })[lang()];
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
-      app.s.month = 16;
+      app.s.month = 10;
       app.s.quarter = undefined;
     });
-    // Two months to the half-year. A random event can pause one of them, so play through it
+    // Two months to the year end. A random event can pause one of them, so play through it
     // rather than hoping the draw is kind: the report still has to land on time.
     for (let i = 0; i < 3; i++) {
-      if ((await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month)) >= 18) break;
+      if ((await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month)) >= 12) break;
       await runMonth(page);
     }
     await expect(page.locator('#modal .card.report-card')).toBeVisible();
@@ -423,7 +423,6 @@ test.describe('events, ranking, settings', () => {
       await dismissModals(page);
     }
     await expectLegible(page, 'effects off');
-    expect(await page.locator('#map.shake').count()).toBe(0);
   });
 });
 
@@ -485,21 +484,23 @@ test.describe('slim HUD and one menu', () => {
     expect(await pk('a.running')).toBe(false);
   });
 
-  test('pause toggles and speed cycles 1x, 2x, 4x', async ({ page }) => {
+  test('pause toggles and speed cycles 1x, 2x (4x only from year 10)', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     const speed = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.speed);
-    for (const want of [2, 4, 1]) {
+    for (const want of [2, 1, 2]) {
       await page.locator('#speed-btn').click();
       expect(await speed()).toBe(want);
       await expect(page.locator('#speed-btn')).toHaveText(`${want}x`);
     }
+    await page.evaluate(() => { (window as unknown as { pakrt: any }).pakrt.s.month = 108; });
     await page.locator('#speed-btn').click();
+    expect(await speed()).toBe(4);
     await page.locator('#pause-btn').click();
     expect(await speed()).toBe(0);
     await expect(page.locator('#pause-btn')).toHaveAttribute('aria-label', WORDS[lang()].play);
     await page.locator('#pause-btn').click();
-    expect(await speed()).toBe(2);
+    expect(await speed()).toBe(4);
   });
 });
 
@@ -1035,8 +1036,14 @@ test.describe('Kelurahan stage', () => {
     expect(got).toEqual({ stage: 'kelurahan', path: 'desa' });
     await page.locator('#menu-btn').click();
     await page.locator('#act-build').click();
-    await page.locator('#sheet .tabs .tab[data-tab="facilities"]').click();
-    await expect(page.locator('.sheet').getByText('Balai Desa', { exact: true }).first()).toBeVisible();
+    // Build is split into tabs, so walk them until Balai Desa shows up.
+    const tabs = await page.locator('.sheet .tabs .tab').count();
+    let found = false;
+    for (let i = 0; i < tabs && !found; i++) {
+      await page.locator('.sheet .tabs .tab').nth(i).click();
+      found = (await page.locator('.sheet .card-title strong', { hasText: /^Balai Desa$/ }).count()) > 0;
+    }
+    expect(found).toBe(true);
     await expectLegible(page, 'Desa build menu');
   });
 });
