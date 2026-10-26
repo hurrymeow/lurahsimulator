@@ -62,7 +62,7 @@ Follow these every session. If a change breaks one, fix the change.
 
 - Background `#0b0b0c`, surface `#18181b`, text `#f4f4f5`, muted `#a1a1aa`.
 - UI chrome stays monochrome. Colour is reserved for game meaning (resources, map).
-- Icons: white pixel glyph on near-black. Theme-color `#0b0b0c`.
+- Icons: exception to Mono Dark. Full-colour ART.md palette pixel glyph (house, sun, tree) on near-black. Hari lifted the monochrome rule for the icon only (2026-10-26). Theme-color stays `#0b0b0c`.
 
 ## Legibility and testing
 
