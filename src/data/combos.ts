@@ -14,6 +14,10 @@ export interface ComboDef {
   incomeMult?: Record<string, number>;
   /** Resource change per month, once per combo. */
   perMonth?: Partial<Record<ResourceId, number>>;
+  /** Extra share of banjir damage this combo absorbs. The overall cap still applies. */
+  banjirProtect?: number;
+  /** Multiplier on the 17 Agustus prize while this combo stands. */
+  agustusMult?: number;
   /** Plain-language effect line. */
   effect: string;
 }
@@ -51,5 +55,36 @@ export const COMBOS: ComboDef[] = [
     story: 'Decisions are made at the pos ronda at 11pm. Minutes are never taken.',
     perMonth: { orangDalam: 0.4 },
     effect: '+0.4 Orang Dalam a month.',
+  },
+  {
+    id: 'anakKos',
+    name: 'Anak Kos',
+    needs: ['kosan', 'warung', 'wifi'],
+    radius: 1,
+    hint: 'Students who live on mie instan and signal.',
+    story: 'Midnight kopi, wifi voucher, and a rent that is always three days late.',
+    incomeMult: { warung: 1.3 },
+    perMonth: { viral: 1 },
+    effect: 'Warung income x1.3. +1 Viral a month.',
+  },
+  {
+    id: 'panjatPinang',
+    name: 'Panjat Pinang',
+    needs: ['lapangan', 'posRonda'],
+    radius: 1,
+    hint: 'A field, a greasy pole and the night watch for a referee.',
+    story: 'The pos ronda holds the prizes. Nobody counts them before or after.',
+    agustusMult: 1.5,
+    effect: '17 Agustus prize +50%.',
+  },
+  {
+    id: 'kaliBersih',
+    name: 'Kali Bersih',
+    needs: ['bankSampah', 'selokan'],
+    radius: 1,
+    hint: 'What goes in the bank stays out of the drain.',
+    story: 'The plastic is weighed and the water runs. The kali has not looked this good in years.',
+    banjirProtect: 0.2,
+    effect: 'Banjir damage 20% lower. The 80% cap stays.',
   },
 ];
