@@ -13,6 +13,19 @@ interface Mote {
 }
 
 const MOTES = 28;
+const LEAVES = 10;
+const LEAF_COLOURS = ['#e57d2e', '#f4b935', '#df4a2c', '#c9a14a'];
+const LEAF_EDGES = ['#7a3e14', '#7d5a14', '#6e2212', '#5e4a20'];
+
+interface Leaf {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  phase: number;
+  colour: string;
+  edge: string;
+}
 
 function layer(w: number, h: number, dpr: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const c = document.createElement('canvas');
@@ -33,6 +46,7 @@ export class Atmosphere {
   private glow: HTMLCanvasElement | null = null;
   private motes: Mote[] = [];
   private tints = new Map<string, HTMLCanvasElement>();
+  private leaves: Leaf[] = [];
   private last = 0;
 
   /** Rebuilds the cached layers when the view changes size. */
@@ -91,6 +105,15 @@ export class Atmosphere {
     this.glow = glow;
     this.tints.clear();
 
+    this.leaves = Array.from({ length: LEAVES }, (_, i) => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: 10 + Math.random() * 14,
+      vy: 14 + Math.random() * 12,
+      phase: Math.random() * Math.PI * 2,
+      colour: LEAF_COLOURS[i % LEAF_COLOURS.length],
+      edge: LEAF_EDGES[i % LEAF_EDGES.length],
+    }));
     this.motes = Array.from({ length: MOTES }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
@@ -137,6 +160,27 @@ export class Atmosphere {
       const s = fireflies ? m.size * 0.8 : m.size;
       ctx.globalAlpha = (fireflies ? 0.9 : 0.35) * twinkle;
       ctx.drawImage(this.tinted(fireflies ? '#d9f25a' : '#ffe2a0'), m.x - s / 2, m.y - s / 2, s, s);
+    }
+    // Leaves tumble down and across on the breeze, flipping between a flat and an edge-on shape.
+    ctx.globalAlpha = 1 - night * 0.6;
+    for (const l of this.leaves) {
+      if (motion) {
+        l.x += (l.vx + Math.sin(t * 1.3 + l.phase) * 18) * dt;
+        l.y += l.vy * dt;
+        if (l.y > h + 8) {
+          l.y = -8;
+          l.x = Math.random() * w - w * 0.2;
+        }
+        if (l.x > w + 8) l.x = -8;
+      }
+      const flat = Math.sin(t * 4 + l.phase) > 0;
+      const x = Math.round(l.x / 2) * 2;
+      const y = Math.round(l.y / 2) * 2;
+      // Outlined in a dark shade of its own colour, like the walkers.
+      ctx.fillStyle = l.edge;
+      ctx.fillRect(x - 2, y - 2, flat ? 10 : 6, flat ? 6 : 8);
+      ctx.fillStyle = l.colour;
+      ctx.fillRect(x, y, flat ? 6 : 2, flat ? 2 : 4);
     }
     ctx.restore();
   }
