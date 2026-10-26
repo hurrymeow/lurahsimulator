@@ -11,12 +11,15 @@
 | - | How to play page (modelled on mainpecah) | #5 | live |
 | - | Paced tutorial: basics on first launch, contextual tips afterwards | PR open | - |
 | 4 | Events, yearly ranking, Indonesia Emas bar, juice, accessibility settings, balance fixes | #6 | live |
+| - | Walking residents, ojol riders, waving tukang parkir, dust, coins, fanfare pulse, day and night | #11 | live |
 
 ## What works
 
 - Tile map with generated pixel sprites. Place, upgrade, demolish, skip permit queue with Orang Dalam.
 - Monthly tick with number pops, residents arriving (new rumah appear on the map), and pause/1x/2x/4x speed.
 - Combos: Tongkrongan, Rivalitas Abadi, Rapat Malam. Hidden until first discovered, then logged in Buku Combo.
+- Up to 16 residents walk between building doors in job colours. Ojol riders zip round the ring road. The tukang parkir waves.
+- Juice: construction dust, warung steam, wifi blink, income squash, coins into the money chip, fanfare pulse, a 32 s day and night cycle with lit windows.
 - Tukang parkir liar, jobs (PNS, ojol, influencer, buzzer), wacana, proyek mangkrak, Viral.
 - Events: 17 Agustus, banjir (selokan-scaled), harga cabai. Yearly ranking vs Kampung Sebelah. Indonesia Emas 2045 bar.
 - Settings: effects, haptics, large text, reduce motion, high contrast. Saves to localStorage and runs without it.
