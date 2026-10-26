@@ -35,11 +35,10 @@ export const GRADE_BONUS = {
 
 /** AI-run RTs. */
 export const NEIGHBOUR = {
-  /** Rp the player pays to fund one RT, before inflation. */
-  fundCost: 500_000,
-  /** Months of building one funding buys, and the most it can bank. */
-  fundMonths: 3,
-  fundMax: 6,
+  /** Rp one Dana pays an RT, before inflation. Each Dana is one build. Matches RW.danaPerBuild. */
+  fundCost: 1_000_000,
+  /** Builds one RT can have banked at once. */
+  fundMax: 3,
   /** Months between builds. Rajin builds faster. */
   buildEvery: 3,
   buildEveryRajin: 2,
@@ -50,4 +49,19 @@ export const NEIGHBOUR = {
   sabarPerSocial: 5,
   sabarMax: 80,
   startPop: 2,
+};
+
+/** Stempel, the RW's permit stamps. */
+export const STEMPEL = {
+  /** Stamps a month with no Balai RW, and what each Balai RW adds. */
+  base: 3,
+  perBalai: 1,
+  /** Stamps in hand never pile up past this. */
+  stockMax: 6,
+  /** Backlog limit the RW's first star counts against. */
+  clearUnder: 5,
+  /** Sabar lost a month for each letter still waiting. */
+  sabarPerLetter: 0.5,
+  /** Letters a build sends. Jarang Muncul sends double. */
+  perBuild: 1,
 };

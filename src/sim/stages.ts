@@ -1,4 +1,5 @@
 import { RW_COMBOS } from '../data/higher/rw';
+import { rwOf } from './area';
 import { promote } from './grow';
 import { STAGES } from '../data/stages';
 import { bName, t, tr, type Key } from '../i18n';
@@ -23,6 +24,17 @@ export interface GoalProgress {
 
 const pending = (): number => 0;
 
+/** Stars of every RW on a Kelurahan map. Yours is the one you earned. An AI RW is as good as its weakest RT. */
+function rwStars(s: GameState): number[] {
+  const out = new Map<string, number>([['0,0', s.stage.stars.rw]]);
+  for (const n of s.neighbours) {
+    const { rx, ry } = rwOf(n.cx, n.cy);
+    const key = `${rx},${ry}`;
+    if (key !== '0,0') out.set(key, Math.min(out.get(key) ?? 3, n.stars));
+  }
+  return [...out.values()];
+}
+
 /** One check per goal kind. The mapped type makes a missing kind a compile error. */
 const GOAL_CHECKS: { [K in Goal['kind']]: (s: GameState, g: Extract<Goal, { kind: K }>) => number } = {
   residents: (s) => population(s),
@@ -37,12 +49,12 @@ const GOAL_CHECKS: { [K in Goal['kind']]: (s: GameState, g: Extract<Goal, { kind
   rwCombos: (s) => s.discovered.filter((id) => RW_COMBOS.some((c) => c.id === id)).length,
   // These read state the stage engine adds (AI RTs, Stempel, Anggaran, Tim Audit). Until it
   // lands the stages are unreachable, so they count nothing.
-  fundedRts: pending,
-  stempelClear: pending,
-  rtsAtStars: pending,
-  rwsAtStars: pending,
-  tierWins: pending,
-  noDebtMonths: pending,
+  fundedRts: (s) => s.neighbours.filter((n) => n.everFunded).length,
+  stempelClear: (s) => s.stempel.clear,
+  rtsAtStars: (s, g) => [s.stage.stars.rt, ...s.neighbours.map((n) => n.stars)].filter((x) => x >= g.stars).length,
+  rwsAtStars: (s, g) => rwStars(s).filter((x) => x >= g.stars).length,
+  tierWins: (s, g) => s.ranking.filter((r) => r.won && (r.tier ?? 'rt') === g.tier).length,
+  noDebtMonths: (s) => s.debtFree,
   serapanMonths: pending,
   cleanAudits: pending,
 };

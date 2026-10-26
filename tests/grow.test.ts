@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { lotAt } from '../src/sim/area';
+import { nextStarChecklist } from '../src/sim/stages';
 import { checkFund, fundNeighbour, promote } from '../src/sim/grow';
 import { checkPlace } from '../src/sim/rules';
 import { areaScore } from '../src/sim/ranking';
@@ -108,10 +109,14 @@ describe('AI neighbours', () => {
     for (let i = 0; i < 12; i++) step(s);
     expect(n.buildings).toHaveLength(start);
     expect(fundNeighbour(s, n)).toBeNull();
-    expect(n.funded).toBe(3);
+    expect(n.funded).toBe(1);
     for (let i = 0; i < 6; i++) step(s);
     expect(n.buildings.length).toBeGreaterThan(start);
     expect(n.funded).toBe(0);
+    // One Dana pays for one build, so it stalls again.
+    const after = n.buildings.length;
+    for (let i = 0; i < 12; i++) step(s);
+    expect(n.buildings).toHaveLength(after);
   });
 
   it('build only inside their own cell, off the seams', () => {
@@ -175,9 +180,8 @@ describe('AI neighbours', () => {
     s.res.rupiah = 0;
     expect(checkFund(s, s.neighbours[0])).toContain('Need');
     s.res.rupiah = 1e9;
-    fundNeighbour(s, s.neighbours[0]);
-    fundNeighbour(s, s.neighbours[0]);
-    expect(fundNeighbour(s, s.neighbours[0])).toContain('most months');
+    for (let i = 0; i < 3; i++) fundNeighbour(s, s.neighbours[0]);
+    expect(fundNeighbour(s, s.neighbours[0])).toContain('Already funded');
   });
 });
 
@@ -199,5 +203,81 @@ describe('save', () => {
     const back = deserialize(JSON.stringify(raw))!;
     expect(back.neighbours).toEqual([]);
     expect([GRID_W, GRID_H]).toEqual([RT_W, RT_H]);
+  });
+});
+
+describe('RW goals and Stempel', () => {
+  const line = (s: ReturnType<typeof newGame>, kind: string) => nextStarChecklist(s, s.stage.current)!.find((l) => l.goal.kind === kind)!;
+
+  it('counts RTs funded at least once', () => {
+    const s = grown();
+    s.stage.current = 'rw';
+    s.res.rupiah = 1e9;
+    expect(line(s, 'fundedRts').done).toBe(false);
+    s.neighbours.forEach((n) => fundNeighbour(s, n));
+    expect(line(s, 'fundedRts').done).toBe(true);
+  });
+
+  it('piles letters up when builds outrun the stamps, and costs Sabar', () => {
+    const s = grown('kelurahan');
+    s.stage.current = 'kelurahan';
+    s.stempel.backlog = 9;
+    s.res.sabar = 60;
+    step(s);
+    // 3 stamps clear 3 letters, 6 wait and drain half a Sabar each.
+    expect(s.stempel.backlog).toBe(6);
+    expect(s.stempel.clear).toBe(0);
+    expect(s.res.sabar).toBeLessThan(60);
+  });
+
+  it('counts clear months in a row, and a Balai RW adds a stamp', () => {
+    const s = grown();
+    s.stage.current = 'rw';
+    for (let i = 0; i < 3; i++) step(s);
+    expect(s.stempel.clear).toBe(3);
+    s.stempel.backlog = 20;
+    s.stempel.stock = 0;
+    s.buildings.push({ uid: 999, def: 'balaiRW', x: 2, y: 2, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+    step(s);
+    expect(s.stempel.backlog).toBe(16);
+    expect(s.stempel.clear).toBe(0);
+  });
+
+  it('sends twice the letters for Jarang Muncul', () => {
+    const s = grown();
+    s.res.rupiah = 1e9;
+    s.neighbours.forEach((n, i) => { n.trait = i ? 'rajin' : 'jarang'; n.pop = 0; });
+    s.neighbours[0].lastBuild = -10;
+    fundNeighbour(s, s.neighbours[0]);
+    s.stempel.stock = 0;
+    step(s);
+    expect(s.stempel.backlog).toBe(Math.max(0, 2 - 3));
+    expect(s.neighbours[0].buildings.length).toBeGreaterThan(2);
+  });
+
+  it('counts RTs and RWs at a star, and ranking wins by tier', () => {
+    const s = grown();
+    s.stage.current = 'rw';
+    s.stage.stars.rt = 3;
+    s.stage.stars.rw = 1;
+    s.neighbours.forEach((n) => (n.stars = 1));
+    expect(line(s, 'rtsAtStars').goal).toMatchObject({ n: 4, stars: 1 });
+    expect(line(s, 'rtsAtStars').done).toBe(true);
+    s.ranking.push({ tier: 'rt', year: 1, us: 9, them: 1, won: true });
+    expect(line(s, 'tierWins').done).toBe(false);
+    s.ranking.push({ tier: 'rw', year: 2, us: 9, them: 1, won: true });
+    expect(line(s, 'tierWins').done).toBe(true);
+  });
+
+  it('counts months out of debt', () => {
+    const s = grown();
+    s.stage.current = 'rw';
+    s.month = 30;
+    s.res.rupiah = 5e7;
+    for (let i = 0; i < 3; i++) step(s);
+    expect(s.debtFree).toBe(3);
+    s.res.rupiah = -9e9;
+    step(s);
+    expect(s.debtFree).toBe(0);
   });
 });

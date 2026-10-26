@@ -56,10 +56,21 @@ export interface StageDef {
 
 export interface StageState {
   current: StageId;
+  /** Chosen at the Kelurahan promotion. */
+  path?: 'kelurahan' | 'desa';
   /** Stars per stage. They only ever go up. */
   stars: Record<StageId, Stars>;
   /** The SK at 3 stars. Absent until it arrives. Declining keeps the player in the stage. */
   sk?: 'offered' | 'declined';
+}
+
+export interface Stempel {
+  /** Stamps in hand. */
+  stock: number;
+  /** Surat Pengantar waiting for a stamp. */
+  backlog: number;
+  /** Months in a row with the backlog under the star goal's limit. */
+  clear: number;
 }
 
 export type RtTrait = 'rajin' | 'hobi' | 'jarang';
@@ -73,8 +84,10 @@ export interface Neighbour {
   buildings: Building[];
   pop: number;
   stars: Stars;
-  /** Months of funding left. It builds only while this is above 0. */
+  /** Builds paid for and not yet done. It builds only while this is above 0. */
   funded: number;
+  /** Funded at least once, for the RW's first star. */
+  everFunded: boolean;
   lastBuild: number;
   /** Builds attempted, for Hobi Wacana's skipped turns. */
   turns: number;
@@ -178,6 +191,8 @@ export interface Modifier {
 }
 
 export interface RankingResult {
+  /** Which rival it beat or lost to. Absent in old saves, which means the RT's. */
+  tier?: StageId;
   year: number;
   us: number;
   them: number;
@@ -244,6 +259,10 @@ export interface GameState {
   stage: StageState;
   /** AI-run RTs next to the player's. Empty at the RT stage. */
   neighbours: Neighbour[];
+  /** Stempel for the RW's Surat Pengantar. Unused before the RW stage. */
+  stempel: Stempel;
+  /** Months in a row with the kas at or above zero. */
+  debtFree: number;
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
   /** Quarterly report bookkeeping. Absent in older saves and on a fresh game. */

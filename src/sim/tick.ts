@@ -7,7 +7,7 @@ import { comboIncomeMult, comboSystem } from './combos';
 import { def, placeableDefs } from './content';
 import { EMAS } from '../data/ranking';
 import { eventSystem } from './events';
-import { iuranFromNeighbours, neighboursSystem, neighboursYearEnd } from './grow';
+import { debtSystem, iuranFromNeighbours, neighboursSystem, neighboursYearEnd, stempelSystem } from './grow';
 import { jobsSystem } from './jobs';
 import { mangkrakSystem, onBuildingFinished } from './projects';
 import { addEmas, yearlyRanking } from './ranking';
@@ -168,11 +168,13 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   collectIncome,
   comboSystem,
   neighboursSystem,
+  stempelSystem,
   jobsSystem,
   wacanaSystem,
   mangkrakSystem,
   sabarRegen,
   safetyNet,
+  debtSystem,
   residentsMove,
   stageSystem,
   checkUnlocks,

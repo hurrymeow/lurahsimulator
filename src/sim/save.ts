@@ -18,6 +18,8 @@ export function deserialize(raw: string | null): GameState | null {
     // Saves from before stages: start at 0 stars. The first tick catches the stars up.
     s.stage ??= newStageState();
     s.neighbours ??= [];
+    s.stempel ??= { stock: 0, backlog: 0, clear: 0 };
+    s.debtFree ??= 0;
     setGrid(s.stage.current);
     return s;
   } catch {

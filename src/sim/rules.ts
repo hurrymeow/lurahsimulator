@@ -2,11 +2,20 @@ import { bBlock, bName, t } from '../i18n';
 import { rupiah } from '../format';
 import { REFUND } from './balance';
 import { lotAt } from './area';
-import { def, hasDef } from './content';
+import { def, gateOf, hasDef } from './content';
 import { neighbourAt } from './grow';
 import { stageTitle } from './stages';
 import { addBuilding, buildCost, buildingAt, count, inBounds, population, upgradeCost, year } from './state';
 import type { Building, BuildingDef, CheckResult, GameState } from './types';
+
+const ORDER = ['rt', 'rw', 'kelurahan'] as const;
+
+/** A later stage's content opens once the player stands in that stage with enough stars. A path is picked at the Kelurahan promotion. */
+export function gateOpen(s: GameState, g: { stage: 'rw' | 'kelurahan'; stars: number; path?: string }): boolean {
+  if (ORDER.indexOf(s.stage.current) < ORDER.indexOf(g.stage)) return false;
+  if (g.path && s.stage.path !== g.path) return false;
+  return s.stage.stars[g.stage] >= g.stars;
+}
 
 const result = (missing: string[]): CheckResult => (missing.length ? { ok: false, missing } : { ok: true });
 
@@ -21,6 +30,8 @@ export function requirementGaps(s: GameState, d: BuildingDef, opts: { ignoreLimi
   if (r?.population && population(s) < r.population) missing.push(t('sim.needPop', { n: r.population, have: population(s) }));
   if (r?.stars && s.stage.stars[r.stars.stage] < r.stars.n) missing.push(t('sim.needStars', { title: stageTitle(r.stars.stage, r.stars.n), n: r.stars.n }));
   for (const id of r?.buildings ?? []) if (count(s, id, true) === 0) missing.push(t('sim.needBuilding', { name: bName(def(id)) }));
+  const gate = gateOf(d);
+  if (gate && !gateOpen(s, gate)) missing.push(t('sim.needStars', { title: stageTitle(gate.stage, gate.stars), n: gate.stars }));
   if (r?.year && year(s) < r.year) missing.push(t('sim.unlocksYear', { n: r.year }));
   if (!opts.ignoreLimit && d.maxCount && count(s, d.id) >= d.maxCount) missing.push(t('sim.limit', { n: d.maxCount }));
   return missing;

@@ -27,7 +27,7 @@ export function yearlyRanking(s: GameState, fx: Fx, year: number): void {
   const us = areaScore(s);
   const them = Math.round((RIVAL_BASE + RIVAL_PER_YEAR * year + randInt(s, -RIVAL_JITTER, RIVAL_JITTER)) * RIVAL_SCALE[stage]);
   const won = us > them;
-  s.ranking.push({ year, us, them, won });
+  s.ranking.push({ tier: stage, year, us, them, won });
   const hq = s.buildings.find((b) => b.def === 'kantorRT');
   if (won) {
     gain(s, fx, 'sabar', WIN.sabar, hq);

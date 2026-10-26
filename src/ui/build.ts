@@ -2,7 +2,8 @@ import { bBlurb, bName, t } from '../i18n';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { isoURL } from '../render/iso';
-import { placeableDefs } from '../sim/content';
+import { gateOf, placeableDefs } from '../sim/content';
+import { gateOpen } from '../sim/rules';
 import { requirementGaps } from '../sim/rules';
 import { buildCost } from '../sim/state';
 import { h, missingList } from './dom';
@@ -14,7 +15,8 @@ function spriteImg(name: string, size = 40): HTMLImageElement {
 
 export function openBuild(app: App): void {
   const s = app.s;
-  const cards = placeableDefs().map((d) => {
+  // A later stage's buildings stay out of sight until the player is in that stage.
+  const cards = placeableDefs().filter((d) => { const g = gateOf(d); return !g || s.stage.current === g.stage || gateOpen(s, g); }).map((d) => {
     const cost = buildCost(s, d);
     const missing = requirementGaps(s, d);
     if (s.res.rupiah < cost) missing.push(t('build.needMore', { amt: rupiah(cost - s.res.rupiah) }));

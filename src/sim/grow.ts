@@ -1,7 +1,7 @@
 // The growing map: promotion, and the AI-run RTs that fill the new space.
 import { t } from '../i18n';
 import { RIVAL_BASE, RIVAL_PER_YEAR } from '../data/ranking';
-import { IURAN, NEIGHBOUR } from './balance';
+import { IURAN, NEIGHBOUR, STEMPEL } from './balance';
 import { viewOf } from './neighbourView';
 import { cellOf, isSeam, neighbourCells } from './area';
 import { activeCombos } from './combos';
@@ -45,7 +45,7 @@ function freeTiles(n: Neighbour): { x: number; y: number }[] {
 }
 
 function newNeighbour(s: GameState, cx: number, cy: number): Neighbour {
-  const n: Neighbour = { cx, cy, trait: pick(s, TRAITS), buildings: [], pop: NEIGHBOUR.startPop, stars: 0, funded: 0, lastBuild: s.month, turns: 0, discovered: [], ranking: [] };
+  const n: Neighbour = { cx, cy, trait: pick(s, TRAITS), buildings: [], pop: NEIGHBOUR.startPop, stars: 0, funded: 0, everFunded: false, lastBuild: s.month, turns: 0, discovered: [], ranking: [] };
   const mx = cx * RT_W + Math.floor(RT_W / 2);
   const my = cy * RT_H + Math.floor(RT_H / 2);
   addTo(s, n, 'kantorRT', mx, my);
@@ -53,7 +53,7 @@ function newNeighbour(s: GameState, cx: number, cy: number): Neighbour {
   return n;
 }
 
-/** Months of funding the player can still add to an RT, and what it costs now. */
+/** What one Dana costs now. */
 export const fundCost = (s: GameState) => price(s, NEIGHBOUR.fundCost);
 
 export function checkFund(s: GameState, n: Neighbour): string | null {
@@ -62,13 +62,14 @@ export function checkFund(s: GameState, n: Neighbour): string | null {
   return null;
 }
 
-/** Dana for one RT: it builds for the next few months. */
+/** Dana for one RT: it pays for one more build. */
 export function fundNeighbour(s: GameState, n: Neighbour): string | null {
   const why = checkFund(s, n);
   if (why) return why;
   s.res.rupiah -= fundCost(s);
   s.stats.spent += fundCost(s);
-  n.funded = Math.min(NEIGHBOUR.fundMax, n.funded + NEIGHBOUR.fundMonths);
+  n.funded = Math.min(NEIGHBOUR.fundMax, n.funded + 1);
+  n.everFunded = true;
   return null;
 }
 
@@ -92,13 +93,17 @@ function build(s: GameState, n: Neighbour): void {
 export function neighboursSystem(s: GameState, fx: Fx): void {
   for (const n of s.neighbours) {
     if (n.funded > 0) {
-      n.funded--;
       const every = n.trait === 'rajin' ? NEIGHBOUR.buildEveryRajin : NEIGHBOUR.buildEvery;
       if (s.month - n.lastBuild >= every) {
         n.lastBuild = s.month;
         n.turns++;
         // Hobi Wacana holds a wacana instead of building every third turn.
-        if (!(n.trait === 'hobi' && n.turns % 3 === 0)) build(s, n);
+        if (!(n.trait === 'hobi' && n.turns % 3 === 0)) {
+          build(s, n);
+          n.funded--;
+          // Every build needs a Surat Pengantar stamped by the RW. Jarang Muncul sends twice as many.
+          s.stempel.backlog += STEMPEL.perBuild * (n.trait === 'jarang' ? 2 : 1);
+        }
       }
       const v = viewOf(s, n);
       if (n.pop < housing(v)) n.pop++;
@@ -112,6 +117,24 @@ export function neighboursSystem(s: GameState, fx: Fx): void {
       fx.push({ kind: 'notice', title: t('grow.rtStar', { cell: cellName(n), n: n.stars }), body: t('grow.rtStarBody'), tone: 'info', x: n.cx * RT_W + 4, y: n.cy * RT_H + 6 });
     }
   }
+}
+
+/** Stamps refill, letters get stamped, and every letter left waiting costs Sabar. */
+export function stempelSystem(s: GameState, fx: Fx): void {
+  if (s.stage.current === 'rt') return;
+  const st = s.stempel;
+  const balai = s.buildings.filter((b) => b.def === 'balaiRW' && b.status === 'active').length;
+  st.stock = Math.min(STEMPEL.stockMax, st.stock + STEMPEL.base + balai * STEMPEL.perBalai);
+  const used = Math.min(st.stock, st.backlog);
+  st.stock -= used;
+  st.backlog -= used;
+  if (st.backlog) gain(s, fx, 'sabar', -st.backlog * STEMPEL.sabarPerLetter, s.buildings.find((b) => b.def === 'kantorRT'));
+  st.clear = st.backlog < STEMPEL.clearUnder ? st.clear + 1 : 0;
+}
+
+/** Counts months in a row with no RT in debt. AI RTs run on the player's Dana, so only the kas can go negative. */
+export function debtSystem(s: GameState): void {
+  s.debtFree = s.res.rupiah >= 0 ? s.debtFree + 1 : 0;
 }
 
 /** Kas RW: every RT in the area pays iuran into the player's kas. */
