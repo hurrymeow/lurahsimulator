@@ -16,3 +16,14 @@ One line per decision, with the reason. Newest at the bottom.
 - **Base path:** `./` so the build works on Pages and any other host.
 - **Deploy:** one CI workflow. PRs run typecheck, test, build. Pushes to `main` also deploy to Pages.
 - **Toolchain:** Vite 8, Vitest 5, TypeScript 5.9. Skipped TypeScript 7 to avoid native-port surprises.
+- **Rumah (houses):** added an auto-spawning `rumah` building. Residents need somewhere to live, and growth must show on the map.
+- **Start state:** kampung starts with a Kantor RT, two rumah and four residents. An empty map gives nothing to look at in minute one.
+- **Month length:** 8 seconds at 1x, so a year is about 100 seconds. Gives a resident, unlock or event roughly every minute.
+- **Pacing director:** if 8 months pass with nothing new, a bonus perantau moves in. Enforces the 1-2 minute novelty rule.
+- **Permits:** every build waits in a permit queue that drains 1 Sabar a month. Orang Dalam skips it. This is the core bureaucracy joke.
+- **Year 1 safety net:** upkeep can never push the kas below zero in year 1. After that, a negative kas drains Sabar instead of blocking play.
+- **Pause while reading:** the sim pauses while a sheet or message is open. Mobile players read in short bursts.
+- **Speed control:** shipped pause/1x/2x/4x in M2 instead of M4. Needed to play-test the tick.
+- **UI split:** map on canvas, menus in DOM. DOM text gets real font rendering, contrast and screen-reader labels.
+- **Content as TS data:** buildings, combos, jobs and events are typed TS objects in `src/data/`. Typos fail the typecheck instead of the game.
+- **Saves:** stored as versioned JSON. An unknown version or building starts a fresh game instead of crashing.
