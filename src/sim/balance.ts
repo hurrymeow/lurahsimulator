@@ -21,8 +21,8 @@ export const VIRAL_INCOME = 0.005;
 /** Below this, the kampung slowly calms down on its own, so Sabar never gets stuck at zero. */
 export const SABAR_REGEN_BELOW = 30;
 export const SABAR_REGEN = 4;
-/** A report card lands every this many months. */
-export const QUARTER_MONTHS = 3;
+/** A report card lands every this many months (half-year). */
+export const QUARTER_MONTHS = 6;
 /** Grade rewards. A bad grade costs nothing, it only misses the bonus. */
 export const GRADE_BONUS = {
   S: { sabar: 5, orangDalam: 1 },

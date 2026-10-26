@@ -34,6 +34,32 @@ async function dismissModals(page: Page): Promise<void> {
   }
 }
 
+/**
+ * Switches tips off through the product's own Skip tips button, before any are seen.
+ * A test that is not about tips needs this: a tip can land on the month before a message
+ * under test and be shown first, queueing that message behind it.
+ */
+async function skipTips(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const app = (window as unknown as { pakrt: any }).pakrt;
+    // An arrival is the Sabar tip's trigger, and the one this fresh game can hit for certain.
+    app.s.stats.arrived = 1;
+    app.refresh();
+  });
+  await page.locator('#modal .tip-skip').click();
+  await expect(page.locator('#modal')).toBeHidden();
+}
+
+/** Runs one month, clearing a random event if it pauses the clock on the way. */
+async function runMonth(page: Page): Promise<void> {
+  await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
+  const event = page.locator('#modal .card.event');
+  if (!(await event.isVisible())) return;
+  // The first choice is always free, so an event can never soft-lock the test.
+  await event.locator('.btn').first().click();
+  await page.locator('#modal .tap-hint').click();
+}
+
 async function expectLegible(page: Page, where: string): Promise<void> {
   const problems = await scanLegibility(page);
   expect(problems, `${where}\n${problems.map((p) => `${p.rule}: "${p.text}" (${p.detail})`).join('\n')}`).toEqual([]);
@@ -207,19 +233,24 @@ test.describe('how to play', () => {
 });
 
 test.describe('events, ranking, settings', () => {
-  test('quarterly report card is legible, pauses the game and dismisses on tap', async ({ page }) => {
+  test('half-year report card is legible, pauses the game and dismisses on tap', async ({ page }) => {
     await start(page);
     await dismissModals(page);
+    // Tips off: an arrival on the month before the report would be shown first and hold it back.
+    await skipTips(page);
     await seed(page);
-    const title = (n: number) => ({ id: `Laporan triwulan ${n}`, en: `Quarter ${n} report` })[lang()];
+    const title = (n: number) => ({ id: `Laporan semester ${n}`, en: `Half-year ${n} report` })[lang()];
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
-      app.s.month = 14;
+      app.s.month = 16;
       app.s.quarter = undefined;
-      app.runTick();
-      app.runTick();
-      app.runTick();
     });
+    // Two months to the half-year. A random event can pause one of them, so play through it
+    // rather than hoping the draw is kind: the report still has to land on time.
+    for (let i = 0; i < 3; i++) {
+      if ((await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month)) >= 18) break;
+      await runMonth(page);
+    }
     await expect(page.locator('#modal .card.report-card')).toBeVisible();
     await expect(page.locator('#modal .card h2')).toHaveText(title(1));
     await expect(page.locator('#modal .report-grade')).toBeVisible();
