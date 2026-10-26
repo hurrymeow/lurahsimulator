@@ -71,6 +71,8 @@ export interface Resident {
   /** Buzzer only: fake Viral this resident has pumped and not yet paid back. */
   fake: number;
   arrived: number;
+  /** Player picked this job (or none) by hand, so residents stop choosing for themselves. */
+  manual?: boolean;
 }
 
 export interface WacanaState {
@@ -129,6 +131,7 @@ export interface GameState {
 export type SimEffect =
   | { kind: 'pop'; x: number; y: number; res: ResourceId; amount: number }
   | { kind: 'notice'; title: string; body: string; tone: 'good' | 'bad' | 'info'; fanfare?: boolean; x?: number; y?: number }
+  | { kind: 'job'; x: number; y: number; name: string; job: Exclude<JobId, 'none'> }
   | { kind: 'event'; eventId: string }
   | { kind: 'built'; uid: number };
 

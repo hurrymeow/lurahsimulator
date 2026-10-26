@@ -73,8 +73,8 @@ export const EN = {
   'how.3.body': 'People move in while Sabar is above 25. Below 15 they leave. Houses appear on the map as the kampung grows.',
   'how.4.head': 'Put buildings side by side.',
   'how.4.body': 'Hidden combos reveal themselves the first time they work, and log themselves in Menu, Buku Combo.',
-  'how.5.head': 'Give residents jobs.',
-  'how.5.body': 'Open Menu, then Warga. Ojol earn Rupiah. Influencers make Viral. Buzzers make fake Viral that collapses later.',
+  'how.5.head': 'Residents find their own jobs.',
+  'how.5.body': 'Residents pick their own jobs when a slot opens. To change one, open Menu, then Warga. Ojol earn Rupiah. Influencers make Viral. Buzzers make fake Viral that collapses later.',
   'how.6.head': 'Wacana buys Sabar, nothing else.',
   'how.6.body': 'Announce a policy and Sabar rises for a few months, then fades. It builds nothing. Announce it again.',
   'how.7.head': 'Expect trouble.',
@@ -125,7 +125,7 @@ export const EN = {
   'res.noJob': 'No job',
   'res.pensiun': 'Pensiun {n}%',
   'res.fake': 'Fake Viral pumped: {n}',
-  'res.slots': 'Job slots: {summary}. Employed residents add 0.2 Sabar a month.',
+  'res.slots': 'Job slots: {summary}. Employed residents add 0.2 Sabar a month. Tap a job to change it. Your pick sticks.',
   'res.current': '{label} (current)',
 
   // wacana
@@ -198,6 +198,7 @@ export const EN = {
   'sim.mangkrakBody': 'The funds ran out at {at}. Restart costs double, or normal price once Viral reaches {viral}. It drains {sabar} Sabar a month.',
   'sim.parkirTitle': 'A tukang parkir appeared',
   'sim.parkirBody': 'Beside the new {name}. He pays retribusi to the kas and costs Sabar. Cannot be removed, only upgraded.',
+  'sim.jobPick': '{name}: {job}',
   'sim.noSlots': 'No {job} slots. Needs a working {where}',
   'sim.slotsTaken': 'All {n} {job} slots taken. Upgrade the {where} for more',
   'sim.or': ' or ',

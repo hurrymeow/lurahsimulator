@@ -1,4 +1,5 @@
-import { eBody, eLabel, eName, bName, getLang, initialLang, setLang, t, type Key, type Lang } from './i18n';
+import { eBody, eLabel, eName, bName, jName, getLang, initialLang, setLang, t, type Key, type Lang } from './i18n';
+import { jobDef } from './data/jobs';
 import { dateLabel, rupiah, rupiahHud } from './format';
 import { MapView, RES_COLOUR } from './render/map';
 import { iconURL } from './render/sprites';
@@ -122,6 +123,7 @@ export class App {
     this.flyCoins([...pops.values()].filter((p) => p.res === 'rupiah' && p.amount > 0));
     for (const f of fx) {
       if (f.kind === 'pop') continue;
+      else if (f.kind === 'job') this.view.pop(f.x, f.y, 'viral', 0, t('sim.jobPick', { name: f.name, job: jName(jobDef(f.job)!) }));
       else if (f.kind === 'built') {
         const b = this.s.buildings.find((o) => o.uid === f.uid);
         if (b) {
