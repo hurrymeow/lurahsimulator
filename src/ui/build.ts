@@ -5,12 +5,21 @@ import { isoURL } from '../render/iso';
 import { gateOf, placeableDefs } from '../sim/content';
 import { gateOpen } from '../sim/rules';
 import { requirementGaps } from '../sim/rules';
-import { buildCost } from '../sim/state';
+import { attractTarget, buildCost, housing, population } from '../sim/state';
+import { nextStarChecklist } from '../sim/stages';
 import { h, missingList } from './dom';
 import { openSheet } from './sheet';
 
 function spriteImg(name: string, size = 40): HTMLImageElement {
   return h('img', { src: isoURL(name), alt: '', width: size, height: size, class: 'pixel' });
+}
+
+/** "Houses 3 · Attracts 1", so the population effect is visible before buying. */
+function populationBits(d: { housing?: number; attract?: number }): string[] {
+  const bits: string[] = [];
+  if (d.housing) bits.push(t('build.houses', { n: d.housing }));
+  if (d.attract) bits.push(t('build.attracts', { n: d.attract }));
+  return bits;
 }
 
 export function openBuild(app: App): void {
@@ -21,16 +30,24 @@ export function openBuild(app: App): void {
     const missing = requirementGaps(s, d);
     if (s.res.rupiah < cost) missing.push(t('build.needMore', { amt: rupiah(cost - s.res.rupiah) }));
     const ok = missing.length === 0;
+    const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
+    const meta = [instant ? t('build.noPermit') : t('build.permit', { permit: d.permitMonths, build: d.buildMonths }), ...populationBits(d)];
     return h('button', { class: `card-btn ${ok ? '' : 'locked'}`, 'aria-disabled': String(!ok), onclick: () => (ok ? app.startPlacing(d.id) : undefined) },
       spriteImg(d.sprite),
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, bName(d)), h('span', { class: 'cost' }, rupiah(cost))),
         h('p', {}, bBlurb(d)),
-        ok ? h('p', { class: 'meta' }, d.pathIncome ? t('build.instant') : t('build.permit', { permit: d.permitMonths, build: d.buildMonths })) : missingList(missing),
+        ok ? h('p', { class: 'meta' }, meta.join(' · ')) : missingList(missing),
       ),
     );
   });
-  openSheet(t('build.title'), cards);
+  // The two population levers, and what the next star wants, right where the player acts.
+  const goal = nextStarChecklist(s)?.find((l) => !l.done);
+  const head: Node[] = [
+    h('p', { class: 'meta' }, t('pop.line', { pop: population(s), housing: housing(s), attract: attractTarget(s) })),
+  ];
+  if (goal) head.push(h('p', { class: 'meta' }, t('stage.next', { goal: goal.text })));
+  openSheet(t('build.title'), [...head, ...cards]);
 }
 
 export { spriteImg };

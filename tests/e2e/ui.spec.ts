@@ -131,6 +131,83 @@ test.describe('tips', () => {
   });
 });
 
+test.describe('population and houses', () => {
+  test('the Build screen names both levers, and a house placed by hand fills up', async ({ page }) => {
+    const POP_LINE = { en: /want to live here/, id: /ingin tinggal di sini/ }[lang()];
+    const HOUSES = { en: 'Houses 3', id: 'Menampung 3' }[lang()];
+    const ATTRACTS = { en: 'Attracts 1', id: 'Menarik 1' }[lang()];
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-build').click();
+    await expect(page.locator('#sheet')).toContainText(POP_LINE);
+    const rumah = page.locator('#sheet .card-btn', { hasText: HOUSES }).first();
+    await expect(rumah).toBeVisible();
+    await expect(rumah).toContainText(ATTRACTS);
+    await expectLegible(page, 'Build with population numbers');
+    await rumah.click();
+
+    const box = (await page.locator('#map').boundingBox())!;
+    const at = await page.evaluate(() => {
+      // The map opens centred on the Kantor RT, so the tile above it is always on screen.
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      return app.view.tileCentre(k.x, k.y - 1);
+    });
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    await expect(page.locator('#place-ok')).toBeEnabled();
+    await page.locator('#place-ok').click();
+
+    const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.residents.length);
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.runTick();
+      a.runTick();
+    });
+    const after = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.residents.length);
+    expect(after, 'a new house brings residents in').toBeGreaterThan(before);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'rumah').length)).toBe(3);
+  });
+
+  test('the tip fires when growth stalls and explains both levers once', async ({ page }) => {
+    const TIP = { en: 'Room and a reason.', id: 'Tempat dan alasan.' }[lang()];
+    await start(page);
+    await page.locator('#howtoGo').click();
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.runTick();
+      a.runTick();
+    });
+    // "Fill the houses" comes first; tap through tips until this one is up.
+    for (let i = 0; i < 8; i++) {
+      if (!(await page.locator('#modal').isVisible())) {
+        await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+        await page.waitForTimeout(50);
+        continue;
+      }
+      if ((await page.locator('#modal .card h2').textContent()) === TIP) break;
+      await page.locator('#modal .tap-hint').click();
+      await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+      await page.waitForTimeout(50);
+    }
+    await expect(page.locator('#modal .card h2')).toHaveText(TIP);
+    await expect(page.locator('#modal .pics')).toBeVisible();
+    await expectLegible(page, 'houses tip');
+    await page.locator('#modal .tap-hint').click();
+    await expect(page.locator('#modal')).toBeHidden();
+  });
+
+  test('the Pop chip shows the live numbers', async ({ page }) => {
+    const POP_LINE = { en: /want to live here/, id: /ingin tinggal di sini/ }[lang()];
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#chip-pop').click();
+    await expect(page.locator('#modal .exp')).toBeVisible();
+    await expect(page.locator('#modal .card p').first()).toContainText(POP_LINE);
+    await expectLegible(page, 'pop explain card');
+  });
+});
+
 test.describe('how to play', () => {
   test('shows on first launch, is legible, pauses the game, and stays dismissed', async ({ page }) => {
     await start(page);

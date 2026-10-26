@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { def } from '../src/sim/content';
-import { checkPlace, demolish, place, skipPermit, upgrade } from '../src/sim/rules';
+import { checkDemolish, checkPlace, demolish, place, skipPermit, upgrade } from '../src/sim/rules';
 import { deserialize, serialize } from '../src/sim/save';
-import { buildCost, byUid, count, emptyTiles, newGame, population } from '../src/sim/state';
+import { attractTarget, buildCost, byUid, count, emptyTiles, housing, newGame, population } from '../src/sim/state';
 import { assign, autoPick } from '../src/sim/jobs';
 import { tick } from '../src/sim/tick';
 import type { GameState } from '../src/sim/types';
@@ -90,6 +90,15 @@ describe('placing buildings', () => {
     expect(k.ok).toBe(false);
   });
 
+  it('refuses to demolish housing residents still live in', () => {
+    const s = newGame(19);
+    const house = s.buildings.find((b) => b.def === 'rumah')!;
+    expect(checkDemolish(s, house).ok).toBe(false);
+    // With fewer residents, the spare house can go.
+    s.residents = s.residents.slice(0, 2);
+    expect(checkDemolish(s, house).ok).toBe(true);
+  });
+
   it('upgrades only working buildings', () => {
     const s = newGame(8);
     const r = place(s, 'warung', 0, 0);
@@ -121,12 +130,42 @@ describe('monthly tick', () => {
     }
   });
 
-  it('brings residents in and builds rumah for them on the map', () => {
+  it('moves residents in only while a rumah has a free bed', () => {
     const s = newGame(11);
-    for (let i = 0; i < 3; i++) place(s, 'posRonda', i, 0);
-    run(s, 8);
-    expect(population(s)).toBeGreaterThan(4);
-    expect(count(s, 'rumah')).toBeGreaterThan(2);
+    // The two starting houses fill up, and nothing new appears for free.
+    run(s, 2);
+    expect(population(s)).toBe(housing(s));
+    expect(count(s, 'rumah')).toBe(2);
+    const before = population(s);
+    run(s, 4);
+    expect(count(s, 'rumah')).toBe(2);
+    expect(population(s)).toBe(before);
+    // A house built by hand gives the next residents somewhere to live.
+    const spot = emptyTiles(s)[0];
+    expect(place(s, 'rumah', spot.x, spot.y).ok).toBe(true);
+    run(s, 2);
+    expect(population(s)).toBeGreaterThan(before);
+  });
+
+  it('the perantau after a quiet stretch brings his own house', () => {
+    const s = newGame(18);
+    run(s, 2);
+    const houses = count(s, 'rumah');
+    const pop = population(s);
+    s.lastArrival = s.month - 8;
+    tick(s);
+    expect(count(s, 'rumah')).toBe(houses + 1);
+    expect(population(s)).toBe(pop + 1);
+  });
+
+  it('stops at what the kampung attracts even with empty beds', () => {
+    const s = newGame(21);
+    s.res.rupiah = 50_000_000;
+    for (const spot of emptyTiles(s).slice(0, 6)) place(s, 'rumah', spot.x, spot.y);
+    run(s, 10);
+    expect(housing(s)).toBe(24);
+    expect(attractTarget(s)).toBe(14);
+    expect(population(s)).toBe(14);
   });
 
   it('lets residents leave at low Sabar but never below two', () => {

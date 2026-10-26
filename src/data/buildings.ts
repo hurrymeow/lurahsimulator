@@ -4,6 +4,25 @@ import type { BuildingDef } from '../sim/types';
 // Every building must move at least one number.
 export const BUILDINGS: BuildingDef[] = [
   {
+    // The population lever. Listed first so a new player finds it before the shops.
+    // One house, one more resident: `attract` 1 keeps houses from outrunning what the
+    // kampung pulls in, so amenities still matter once the beds are full.
+    id: 'rumah',
+    name: 'Rumah',
+    blurb: 'Houses 3 residents and attracts 1 more. Built at once, no permit.',
+    cost: 800_000,
+    upkeep: 0,
+    income: 0,
+    attract: 1,
+    housing: 3,
+    permitMonths: 0,
+    buildMonths: 0,
+    maxLevel: 1,
+    placeable: true,
+    removable: true,
+    sprite: 'rumah',
+  },
+  {
     id: 'warung',
     name: 'Warung',
     blurb: 'Sells kopi sachet and gossip. Steady income, pulls residents.',
@@ -194,23 +213,6 @@ export const BUILDINGS: BuildingDef[] = [
     removable: true,
     requires: { stars: { stage: 'rt', n: 2 } },
     sprite: 'bankSampah',
-  },
-  {
-    id: 'rumah',
-    name: 'Rumah',
-    blurb: 'Houses 3 residents. Appears on its own when people move in.',
-    cost: 0,
-    upkeep: 0,
-    income: 0,
-    attract: 0,
-    housing: 3,
-    permitMonths: 0,
-    buildMonths: 0,
-    maxLevel: 1,
-    placeable: false,
-    removable: false,
-    removeBlockedReason: 'Residents live here. Evicting them costs more Patience than you have.',
-    sprite: 'rumah',
   },
   {
     id: 'parkir',

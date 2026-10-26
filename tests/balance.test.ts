@@ -3,20 +3,37 @@ import { placeableDefs } from '../src/sim/content';
 import { checkRepair, repair, resolveEvent } from '../src/sim/events';
 import { checkRestart, restart } from '../src/sim/projects';
 import { checkPlace, place, skipPermit, upgrade } from '../src/sim/rules';
-import { emptyTiles, newGame, population } from '../src/sim/state';
+import { attractTarget, emptyTiles, housing, newGame, population } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
 import type { GameState } from '../src/sim/types';
 
-/** A simple autoplayer: builds what it can afford, always takes the free event choice. */
+/**
+ * A simple autoplayer: builds the two early combos, keeps a bed ahead of demand,
+ * and buys what it can afford. It never plans combos beyond the two it is told to.
+ */
 function play(seed: number, years: number, smart: boolean, starMonths: number[] = []): { s: GameState; minRupiahY1: number } {
   const s = newGame(seed);
   let minRupiahY1 = Infinity;
   for (let m = 0; m < years * 12; m++) {
     if (s.pendingEvent) resolveEvent(s, [], 0);
     if (smart) {
-      // The bot packs a 9x4 corner (the old map width) so combo members stay in range, and does not plan paths.
-      for (const d of placeableDefs().filter((p) => !p.pathIncome)) {
-        const spot = emptyTiles(s).find((t) => t.y < 4 && t.x < 9);
+      // Rapat Malam (office + hut) and Tongkrongan (hut + warung + wifi), by hand.
+      const k = s.buildings.find((b) => b.def === 'kantorRT')!;
+      const want = (def: string, x: number, y: number, min: number) => {
+        if (s.buildings.some((b) => b.def === def) || s.res.rupiah < min) return;
+        if (checkPlace(s, def, x, y).ok) place(s, def, x, y);
+      };
+      want('posRonda', k.x + 1, k.y, 2_400_000);
+      want('warung', k.x, k.y + 1, 3_000_000);
+      want('wifi', k.x, k.y - 1, 5_000_000);
+      // A bed for the next arrivals, up to what the top goals need.
+      if (population(s) < 42 && housing(s) < attractTarget(s) + 3) {
+        const spot = emptyTiles(s)[0];
+        if (spot && s.res.rupiah > 2_000_000 && checkPlace(s, 'rumah', spot.x, spot.y).ok) place(s, 'rumah', spot.x, spot.y);
+      }
+      // The bot packs the middle of the map so leftover combo members stay in range.
+      for (const d of placeableDefs().filter((p) => !p.pathIncome && !p.housing)) {
+        const spot = emptyTiles(s).find((t) => t.y < 9);
         // Sensible player: keep a cash buffer and do not stack buildings that only cost upkeep.
         const have = s.buildings.filter((b) => b.def === d.id).length;
         const worthIt = d.income > d.upkeep || have === 0;

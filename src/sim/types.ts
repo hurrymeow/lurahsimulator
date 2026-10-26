@@ -285,6 +285,8 @@ export interface GameState {
   rw: RwState;
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
+  /** Month a resident last moved in. Drives the perantau safety valve. */
+  lastArrival?: number;
   /** Kecamatan inspections. Absent in older saves. */
   inspection?: { warnAt: number; visitAt?: number; prep: number };
   /** Quarterly report bookkeeping. Absent in older saves and on a fresh game. */

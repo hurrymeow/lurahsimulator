@@ -6,7 +6,7 @@ import { def, gateOf, hasDef } from './content';
 import { gateOpen } from './gate';
 import { neighbourAt } from './grow';
 import { stageTitle } from './stages';
-import { addBuilding, buildCost, buildingAt, count, inBounds, population, upgradeCost, year } from './state';
+import { addBuilding, buildCost, buildingAt, count, housing, inBounds, population, upgradeCost, year } from './state';
 import type { Building, BuildingDef, CheckResult, GameState } from './types';
 
 export { gateOpen };
@@ -85,7 +85,8 @@ export function upgrade(s: GameState, b: Building): CheckResult {
 export function checkDemolish(s: GameState, b: Building): CheckResult {
   const d = def(b.def);
   if (!d.removable) return { ok: false, missing: [bBlock(d) ?? t('sim.cannotRemove', { name: bName(d) })] };
-  void s;
+  // Housing cannot be removed from under the people living in it.
+  if (d.housing && housing(s) - d.housing < population(s)) return { ok: false, missing: [t('sim.houseFull')] };
   return { ok: true };
 }
 

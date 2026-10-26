@@ -108,10 +108,16 @@ function spawnRumah(s: GameState): Building | null {
   return addBuilding(s, 'rumah', spot.x, spot.y, 'active');
 }
 
-function arrive(s: GameState, fx: Fx, reason: string): boolean {
-  if (population(s) + 1 > housing(s) && !spawnRumah(s)) return false;
+/**
+ * A resident moves in only when a bed is free. Houses are built by the player, so a full
+ * kampung stops growing until a Rumah goes up. The exception is the perantau who brings his
+ * own house, which keeps a neglected kampung from stalling completely.
+ */
+function arrive(s: GameState, fx: Fx, reason: string, ownHouse = false): boolean {
+  if (population(s) + 1 > housing(s) && !(ownHouse && spawnRumah(s))) return false;
   const r = addResident(s);
   s.stats.arrived++;
+  s.lastArrival = s.month;
   const home = s.buildings.filter((b) => b.def === 'rumah').at(-1);
   fx.push({ kind: 'notice', title: t('sim.movedIn', { name: r.name }), body: reason, tone: 'good', x: home?.x, y: home?.y });
   novelty(s);
@@ -126,12 +132,14 @@ export function residentsMove(s: GameState, fx: Fx): void {
     fx.push({ kind: 'notice', title: t('sim.movedOut', { name: r.name }), body: t('sim.movedOutBody', { n: LEAVE_BELOW_SABAR }), tone: 'bad' });
     return;
   }
+  let arrived = 0;
   if (population(s) < target && s.res.sabar >= ARRIVE_MIN_SABAR) {
     const n = Math.min(2, target - population(s));
-    for (let i = 0; i < n; i++) arrive(s, fx, t('sim.arriveWarung'));
-  } else if (s.month - s.lastNovelty >= NOVELTY_GAP) {
-    arrive(s, fx, t('sim.arrivePerantau'));
+    for (let i = 0; i < n; i++) if (arrive(s, fx, t('sim.arriveWarung'))) arrived++;
   }
+  // Nothing new for a while: a perantau turns up with his own house. Pacing safety valve,
+  // not the normal way to grow the map.
+  if (arrived === 0 && s.month - (s.lastArrival ?? 0) >= NOVELTY_GAP) arrive(s, fx, t('sim.arrivePerantau'), true);
 }
 
 export function checkUnlocks(s: GameState, fx: Fx): void {

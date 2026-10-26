@@ -12,7 +12,7 @@ import { promote } from './sim/grow';
 import { RT_H, RT_W } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
-import { buildCost, buildingAt, newGame, population, housing } from './sim/state';
+import { attractTarget, buildCost, buildingAt, newGame, population, housing } from './sim/state';
 import { tick } from './sim/tick';
 import type { GameState, ResourceId, SimEffect } from './sim/types';
 import { audio } from './audio';
@@ -403,7 +403,10 @@ export class App {
       h('p', { class: `exp-row exp-${kind}` }, h('strong', {}, `${{ up: '▲', down: '▼', edge: '■' }[kind]} ${t(`exp.${kind}`)}`), ` ${t(`exp.${id}.${kind}` as Key)}`);
     const icon = id === 'pop' ? h('span', { class: 'chip-text' }, t('res.pop')) : h('img', { src: iconURL(RES_META[id].icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
     const title = id === 'pop' ? t('res.warga') : RES_META[id].label();
-    this.modalQueue.push({ title, body: t(`exp.${id}.what` as Key), tone: 'info', extra: h('div', { class: 'exp', style: `--c:${id === 'pop' ? '#f4f4f5' : RES_COLOUR[id]}` }, icon, row('up'), row('down'), row('edge')) });
+    const body = id === 'pop'
+      ? `${t('exp.pop.what')} ${t('pop.line', { pop: population(this.s), housing: housing(this.s), attract: attractTarget(this.s) })}`
+      : t(`exp.${id}.what` as Key);
+    this.modalQueue.push({ title, body, tone: 'info', extra: h('div', { class: 'exp', style: `--c:${id === 'pop' ? '#f4f4f5' : RES_COLOUR[id]}` }, icon, row('up'), row('down'), row('edge')) });
     this.showModal();
   }
 
@@ -597,7 +600,8 @@ export class App {
     const check = checkPlace(this.s, this.placing, g.x, g.y);
     g.ok = check.ok;
     btn.disabled = !check.ok;
-    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', {}, d.pathIncome ? t('build.instant') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
+    const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
+    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', {}, d.pathIncome ? t('build.instant') : instant ? t('build.noPermit') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
   }
 
   // ---------- language ----------
