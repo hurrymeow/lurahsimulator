@@ -156,7 +156,7 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#modal .card.report-card')).toBeHidden();
   });
 
-  for (const id of ['agustusan', 'banjir', 'cabai', 'kecamatan']) {
+  for (const id of ['agustusan', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga']) {
     for (const broke of [false, true]) {
       test(`event ${id}${broke ? ' while broke' : ''} is legible and has a free choice`, async ({ page }) => {
         await start(page);
@@ -698,7 +698,7 @@ test.describe('stars', () => {
     await expect(page.locator('#sk-reoffer')).toBeVisible();
     await expectLegible(page, 'declined SK');
     await page.locator('#sk-reoffer').click();
-    await expect(page.locator('#sk-accept')).toBeDisabled();
+    await expect(page.locator('#sk-accept')).toBeEnabled();
   });
 });
 
@@ -750,6 +750,57 @@ test.describe('growing map', () => {
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('.sheet')).toBeVisible();
     await expect(page.locator('.sheet .action')).toHaveCount(3);
+  });
+});
+
+test.describe('RW stage', () => {
+  test('the SK opens a playable RW, and its panels list the RW content legibly', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.s.stage.stars.rt = 3;
+      app.s.stage.sk = 'offered';
+      app.refresh();
+    });
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#stage-btn').click();
+    await page.locator('#sk-accept').click();
+    await dismissModals(page);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.stage.current)).toBe('rw');
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.stage.stars.rw = 2;
+      app.s.res.rupiah = 80_000_000;
+      app.s.residents.slice(0, 3).forEach((r: any) => (r.manual = true));
+      const add = (def: string, x: number, y: number) => app.s.buildings.push({ uid: app.s.nextUid++, def, x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      add('balaiRW', 12, 0); add('posyandu', 13, 0); add('portal', 12, 1); add('pasarKaget', 13, 1); add('gapura', 12, 2);
+      app.refresh();
+    });
+    await dismissModals(page);
+
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-build').click();
+    for (const name of ['Balai RW', 'Posyandu', 'Portal', 'Pasar Kaget', 'Gapura']) {
+      await expect(page.locator('.sheet').getByText(name, { exact: true }).first()).toBeVisible();
+    }
+    await expectLegible(page, 'RW build menu');
+    await page.locator('.sheet-head .btn').click();
+
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-combo').click();
+    await expect(page.locator('.sheet').getByText(lang() === 'en' ? /A health post and a barrier/ : /Pos kesehatan dan palang/).first()).toBeVisible();
+    await expectLegible(page, 'RW Buku Combo');
+    await page.locator('.sheet-head .btn').click();
+
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-warga').click();
+    await page.locator('.sheet .card-btn').first().click();
+    await expect(page.locator('.sheet').getByText('Kader Posyandu').first()).toBeVisible();
+    await expectLegible(page, 'RW job picker');
   });
 });
 

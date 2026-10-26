@@ -1,11 +1,10 @@
 import { cEffect, cHint, cName, cStory, jBlurb, jName, t, wLine, wName } from '../i18n';
-import { COMBOS } from '../data/combos';
-import { JOBS, jobDef } from '../data/jobs';
+import { jobDef } from '../data/jobs';
 import { WACANA } from '../data/wacana';
 import type { App } from '../app';
 import { rupiah } from '../format';
-import { comboMemberNames } from '../sim/combos';
-import { checkAssign, assign, slots, used } from '../sim/jobs';
+import { bookCombos, comboMemberNames } from '../sim/combos';
+import { checkAssign, assign, liveJobs, slots, used } from '../sim/jobs';
 import { checkRepair, repair, repairCost } from '../sim/events';
 import { checkRestart, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
 import { announce, checkAnnounce, wacanaCost } from '../sim/wacana';
@@ -26,14 +25,14 @@ export function openResidents(app: App): void {
       ),
     ),
   );
-  const summary = JOBS.map((j) => `${jName(j)} ${used(s, j.id)}/${slots(s, j.id)}`).join(' · ');
+  const summary = liveJobs(s).map((j) => `${jName(j)} ${used(s, j.id)}/${slots(s, j.id)}`).join(' · ');
   openSheet(t('menu.warga'), [h('p', { class: 'meta' }, t('res.slots', { summary })), ...rows]);
 }
 
 function openResident(app: App, id: number): void {
   const r = app.s.residents.find((x) => x.id === id);
   if (!r) return openResidents(app);
-  const choices = (['none', ...JOBS.map((j) => j.id)] as JobId[]).map((job) => {
+  const choices = (['none', ...liveJobs(app.s).map((j) => j.id)] as JobId[]).map((job) => {
     const check = checkAssign(app.s, r, job);
     const label = job === 'none' ? t('res.noJob') : jName(jobDef(job)!);
     return h('div', { class: 'action' },
@@ -74,19 +73,20 @@ export function openWacana(app: App): void {
 // ---------- Buku Combo ----------
 export function openBukuCombo(app: App): void {
   const s = app.s;
-  const found = COMBOS.filter((c) => s.discovered.includes(c.id)).length;
-  const rows = COMBOS.map((c) => {
+  const combos = bookCombos(s);
+  const found = combos.filter((c) => s.discovered.includes(c.id)).length;
+  const rows = combos.map((c) => {
     const known = s.discovered.includes(c.id);
     return h('div', { class: `card-btn static ${known ? '' : 'locked'}` },
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, known ? cName(c) : '???'), h('span', { class: 'meta' }, known ? t('combo.discovered') : t('combo.hidden'))),
         h('p', {}, known ? cStory(c) : cHint(c)),
-        known ? h('p', { class: 'meta' }, t('combo.needs', { names: comboMemberNames(c).join(' + '), r: c.radius > 1 ? t('combo.tileN', { n: c.radius }) : t('combo.tile1') })) : null,
+        known ? h('p', { class: 'meta' }, t('combo.needs', { names: comboMemberNames(c).join(' + '), r: c.radius >= 99 ? t('combo.anywhere') : c.radius > 1 ? t('combo.tileN', { n: c.radius }) : t('combo.tile1') })) : null,
         known ? h('p', {}, cEffect(c)) : null,
       ),
     );
   });
-  openSheet(t('menu.combo'), [h('p', { class: 'meta' }, t('combo.count', { found, total: COMBOS.length })), ...rows]);
+  openSheet(t('menu.combo'), [h('p', { class: 'meta' }, t('combo.count', { found, total: combos.length })), ...rows]);
 }
 
 // ---------- Inspector extras ----------

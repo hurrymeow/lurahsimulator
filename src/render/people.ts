@@ -37,6 +37,8 @@ const SHIRTS: Record<Kind, string> = {
   ojol: '#4fae3e',
   influencer: '#e57a9c',
   buzzer: '#e57d2e',
+  kaderPosyandu: '#e8a0b4',
+  calo: '#6a5a8a',
 };
 /** Unemployed residents wear one of these, so the crowd is not all cream. */
 const CASUAL = ['#f6ecd4', '#5a9bd0', '#df4a2c', '#5fb3a6', '#f4b935'];

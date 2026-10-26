@@ -7,6 +7,7 @@ import { cellOf, isSeam, neighbourCells } from './area';
 import { activeCombos } from './combos';
 import type { Fx } from './gain';
 import { gain } from './gain';
+import { letterMult } from './rw';
 import { pick } from './rng';
 import { score } from './ranking';
 import { stageDef, goalProgress } from './stages';
@@ -78,14 +79,19 @@ function build(s: GameState, n: Neighbour): void {
   const free = freeTiles(n);
   if (!free.length) return;
   let id: string;
-  if (n.pop >= housing(v)) id = 'rumah';
+  // Houses and shops take turns, or a full RT would only ever add houses and never find a combo.
+  if (n.pop >= housing(v) && n.buildings.at(-1)?.def !== 'rumah') id = 'rumah';
   else {
     const list = WANTS[n.trait];
     id = list[n.buildings.filter((b) => b.def !== 'rumah' && b.def !== 'kantorRT').length % list.length];
   }
   // Settle next to what is already there, like the player's kampung does.
   const near = free.filter((f) => n.buildings.some((b) => Math.abs(b.x - f.x) <= 1 && Math.abs(b.y - f.y) <= 1));
-  const spot = pick(s, near.length ? near : free);
+  // Shops go where they have the most different neighbours, which is how combos happen. Ties are drawn.
+  const mix = (f: { x: number; y: number }) => new Set(n.buildings.filter((b) => b.def !== 'rumah' && Math.abs(b.x - f.x) <= 1 && Math.abs(b.y - f.y) <= 1).map((b) => b.def)).size;
+  const pool = near.length ? near : free;
+  const best = id === 'rumah' ? 0 : Math.max(...pool.map(mix));
+  const spot = pick(s, id === 'rumah' ? pool : pool.filter((f) => mix(f) === best));
   addTo(s, n, id, spot.x, spot.y);
 }
 
@@ -102,7 +108,7 @@ export function neighboursSystem(s: GameState, fx: Fx): void {
           build(s, n);
           n.funded--;
           // Every build needs a Surat Pengantar stamped by the RW. Jarang Muncul sends twice as many.
-          s.stempel.backlog += STEMPEL.perBuild * (n.trait === 'jarang' ? 2 : 1);
+          s.stempel.backlog += STEMPEL.perBuild * (n.trait === 'jarang' ? 2 : 1) * letterMult(s);
         }
       }
       const v = viewOf(s, n);
@@ -163,6 +169,8 @@ export function promote(s: GameState, fx: Fx): boolean {
   s.stage.current = next;
   setGrid(next);
   for (const c of neighbourCells()) if (!s.neighbours.some((n) => n.cx === c.cx && n.cy === c.cy)) s.neighbours.push(newNeighbour(s, c.cx, c.cy));
+  // Grup Chat Warga needs two RTs that think alike, so the draw never leaves every trait different.
+  if (s.neighbours.length > 1 && new Set(s.neighbours.map((n) => n.trait)).size === s.neighbours.length) s.neighbours[s.neighbours.length - 1].trait = s.neighbours[0].trait;
   s.lastNovelty = s.month;
   fx.push({ kind: 'notice', title: t('grow.promoted'), body: t('grow.promotedBody'), tone: 'good', fanfare: true });
   return true;

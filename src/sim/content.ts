@@ -12,6 +12,12 @@ const byId = new Map(ALL.map((b) => [b.id, b]));
 /** The gate of a building that belongs to a later stage, if it has one. */
 export const gateOf = (d: BuildingDef) => (d as Partial<StageBuildingDef>).gate;
 
+/** The RW and Kelurahan effects a building carries, if any. */
+export const stageFx = (d: BuildingDef) => (d as Partial<StageBuildingDef>).fx;
+
+/** Every building def, for lookups that cross stages. */
+export const allDefs = (): BuildingDef[] => ALL;
+
 export function def(id: string): BuildingDef {
   const d = byId.get(id);
   if (!d) throw new Error(`Unknown building ${id}`);

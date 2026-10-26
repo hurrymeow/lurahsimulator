@@ -1,14 +1,18 @@
 import { bName, jName, t } from '../i18n';
 import {
-  BUZZER_EXPOSE_BASE, BUZZER_EXPOSE_PER_FAKE, BUZZER_EXPOSE_SABAR, BUZZER_FAKE_PER_MONTH, EMPLOYED_SABAR,
-  JOBS, PENSIUN_MONTHS, PENSIUN_PAYOUT, jobDef,
+  ALL_JOBS, BUZZER_EXPOSE_BASE, BUZZER_EXPOSE_PER_FAKE, BUZZER_EXPOSE_SABAR, BUZZER_FAKE_PER_MONTH, EMPLOYED_SABAR,
+  PENSIUN_MONTHS, PENSIUN_PAYOUT, jobDef, type JobDef,
 } from '../data/jobs';
-import { BUILDINGS } from '../data/buildings';
-import { def } from './content';
+import { allDefs, def } from './content';
 import { gain, type Fx } from './gain';
+import { gateOpen } from './gate';
 import { chance } from './rng';
+import { caloMonth, kaderOutput, ojolMult } from './rw';
 import { isWorking } from './state';
 import type { Building, CheckResult, GameState, JobId, Resident, ResourceId } from './types';
+
+/** Jobs the player can see: the RT's, plus later-stage ones whose gate is open. */
+export const liveJobs = (s: GameState): JobDef[] => ALL_JOBS.filter((j) => !j.gate || gateOpen(s, j.gate));
 
 export function slots(s: GameState, job: JobId): number {
   return s.buildings.reduce((n, b) => n + (isWorking(b) ? (def(b.def).jobSlots?.[job] ?? 0) * b.level : 0), 0);
@@ -25,7 +29,7 @@ export function checkAssign(s: GameState, r: Resident, job: JobId): CheckResult 
   if (job === 'none' || r.job === job) return { ok: true };
   const total = slots(s, job);
   if (used(s, job) < total) return { ok: true };
-  const where = BUILDINGS.filter((b) => b.jobSlots?.[job]).map((b) => bName(b)).join(t('sim.or'));
+  const where = allDefs().filter((b) => b.jobSlots?.[job]).map((b) => bName(b)).join(t('sim.or'));
   return { ok: false, missing: [total === 0 ? t('sim.noSlots', { job: jName(jobDef(job)!), where }) : t('sim.slotsTaken', { n: total, job: jName(jobDef(job)!), where })] };
 }
 
@@ -41,7 +45,7 @@ export function assign(s: GameState, r: Resident, job: JobId, manual = false): C
 
 /** Jobs with an open slot, each with its appeal as the odds of being picked. */
 export function openJobs(s: GameState): { job: Exclude<JobId, 'none'>; appeal: number }[] {
-  return JOBS.filter((j) => j.appeal > 0 && used(s, j.id) < slots(s, j.id)).map((j) => ({ job: j.id, appeal: j.appeal }));
+  return liveJobs(s).filter((j) => j.appeal > 0 && used(s, j.id) < slots(s, j.id)).map((j) => ({ job: j.id, appeal: j.appeal }));
 }
 
 /**
@@ -73,7 +77,7 @@ function autoAssign(s: GameState, fx: Fx): void {
 
 /** Residents whose building went away lose the job instead of keeping a ghost slot. */
 function trimOverflow(s: GameState): void {
-  for (const j of JOBS) {
+  for (const j of ALL_JOBS) {
     const over = used(s, j.id) - slots(s, j.id);
     if (over <= 0) continue;
     for (const r of s.residents.filter((x) => x.job === j.id).slice(-over)) assign(s, r, 'none');
@@ -89,7 +93,18 @@ export function jobsSystem(s: GameState, fx: Fx): void {
     if (!j) continue;
     employed++;
     const site = jobSite(s, j.id);
-    for (const [res, v] of Object.entries(j.perMonth) as [ResourceId, number][]) gain(s, fx, res, v * s.inflation ** (res === 'rupiah' ? 1 : 0), site);
+    // A Calo's Orang Dalam comes with the deal, so it is paid by caloMonth and not here.
+    if (!j.stage?.converts) {
+      for (const [res, v] of Object.entries(j.perMonth) as [ResourceId, number][]) {
+        const mult = r.job === 'ojol' && res === 'rupiah' ? ojolMult(s) : r.job === 'kaderPosyandu' ? kaderOutput(s) : 1;
+        gain(s, fx, res, v * mult * s.inflation ** (res === 'rupiah' ? 1 : 0), site);
+      }
+    }
+
+    if (j.stage?.converts && caloMonth(s, fx, r.name, site, { converts: j.stage.converts, scandal: j.stage.scandal })) {
+      r.job = 'none';
+      r.manual = true;
+    }
 
     if (r.job === 'pns') {
       r.pensiun = Math.min(100, r.pensiun + 100 / PENSIUN_MONTHS);
