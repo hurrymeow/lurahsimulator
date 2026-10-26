@@ -51,6 +51,17 @@ describe('RW stage is playable', () => {
     expect(s.neighbours).toHaveLength(3);
   });
 
+  it('lets RW 3★ pick the Desa path', () => {
+    const s = newGame(1);
+    s.stage.current = 'rw';
+    setGrid('rw');
+    s.stage.stars.rw = 3;
+    s.stage.sk = 'offered';
+    expect(acceptSK(s, [], 'desa')).toBe(true);
+    expect(s.stage.current).toBe('kelurahan');
+    expect(s.stage.path).toBe('desa');
+  });
+
   it('gives the Desa path its own titles', () => {
     expect(stageTitle('kelurahan', 1, 'desa')).toBe('Desa Rintisan');
     expect(stageTitle('kelurahan', 1)).not.toBe('Desa Rintisan');

@@ -100,5 +100,6 @@ export function kelSystem(s: GameState, fx: Fx): void {
       fx.push({ kind: 'notice', title: t('sim.panenTitle'), body: t('sim.panenBody', { amt: price(s, PANEN_BONUS) }), tone: 'good', x: a.members[0].x, y: a.members[0].y });
     }
   }
-  k.serapanRun = serapan(s) >= SERAPAN_TARGET ? k.serapanRun + 1 : 0;
+  // The month a fresh budget lands has nothing spent against it yet, so it neither counts nor breaks the run.
+  if (s.month % 12 !== 0) k.serapanRun = serapan(s) >= SERAPAN_TARGET ? k.serapanRun + 1 : 0;
 }
