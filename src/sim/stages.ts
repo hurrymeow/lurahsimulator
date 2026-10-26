@@ -22,8 +22,6 @@ export interface GoalProgress {
   need: number;
 }
 
-const pending = (): number => 0;
-
 /** Stars of every RW on a Kelurahan map. Yours is the one you earned. An AI RW is as good as its weakest RT. */
 function rwStars(s: GameState): number[] {
   const out = new Map<string, number>([['0,0', s.stage.stars.rw]]);
@@ -47,16 +45,14 @@ const GOAL_CHECKS: { [K in Goal['kind']]: (s: GameState, g: Extract<Goal, { kind
   },
   sabar: (s) => Math.floor(s.res.sabar),
   rwCombos: (s) => s.discovered.filter((id) => RW_COMBOS.some((c) => c.id === id)).length,
-  // These read state the stage engine adds (AI RTs, Stempel, Anggaran, Tim Audit). Until it
-  // lands the stages are unreachable, so they count nothing.
   fundedRts: (s) => s.neighbours.filter((n) => n.everFunded).length,
   stempelClear: (s) => s.stempel.clear,
   rtsAtStars: (s, g) => [s.stage.stars.rt, ...s.neighbours.map((n) => n.stars)].filter((x) => x >= g.stars).length,
   rwsAtStars: (s, g) => rwStars(s).filter((x) => x >= g.stars).length,
   tierWins: (s, g) => s.ranking.filter((r) => r.won && (r.tier ?? 'rt') === g.tier).length,
   noDebtMonths: (s) => s.debtFree,
-  serapanMonths: pending,
-  cleanAudits: pending,
+  serapanMonths: (s) => s.kel.serapanRun,
+  cleanAudits: (s) => s.kel.cleanAudits,
 };
 
 const GOAL_KEYS: Record<Goal['kind'], Key> = {
