@@ -4,7 +4,7 @@ import { GRID_H, GRID_W, type Building, type GameState, type ResourceId } from '
 import { drawTint, darkness, Fx } from './fx';
 import { iso, TH, TOP, TW, type Art } from './iso';
 import { Crowd } from './people';
-import { buildWorld, decoAt, HORIZON, SEA, SKY, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W } from './scenery';
+import { buildWorld, decoAt, HORIZON, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
 import { ICONS, ROOF_COLOURS, sprite } from './sprites';
 
 export const RES_COLOUR: Record<ResourceId, string> = {
@@ -263,6 +263,7 @@ export class MapView {
     ctx.fillStyle = SKY;
     ctx.fillRect(0, 0, this.viewW, Math.max(0, wy + HORIZON * sc));
     ctx.drawImage(this.drawWorld(), wx, wy, WORLD_W * sc, WORLD_H * sc);
+    this.drawBackdrop(ctx, wx, wy, now);
 
     const sel = s.buildings.find((b) => b.uid === this.selected);
     if (sel) {
@@ -415,6 +416,36 @@ export class MapView {
   /** Fanfare-tier glow around the map edge. */
   pulse(): void {
     if (this.effects) this.fx.pulse(performance.now());
+  }
+
+  /**
+   * The sun bobs and blinks, and the trees round the kampung bounce in a slow wave. Both are
+   * ambient life, so they hold still with reduce motion.
+   */
+  private drawBackdrop(ctx: CanvasRenderingContext2D, wx: number, wy: number, now: number): void {
+    const s = this.scale;
+    const t = this.motion ? now : 0;
+    // Blink for 150 ms every 3.2 s, with a quick double blink every third time.
+    const beat = t % 9600;
+    const blink = this.motion && [0, 3200, 3450, 6400].some((at) => beat >= at && beat < at + 150);
+    const bob = Math.round(Math.sin(t / 450) * 2);
+    const sun = sunArt(blink);
+    ctx.drawImage(sun, wx + (SUN_X - SUN_SIZE / 2) * s, wy + (SUN_Y - SUN_SIZE / 2 + bob) * s, SUN_SIZE * s, SUN_SIZE * s);
+
+    // Ground anchor row in tree art: the stretch grows upward from the roots.
+    const anchor = TOP + TH / 2;
+    for (const tree of worldTrees()) {
+      const art = iso(tree.name);
+      const left = wx + tree.x * s;
+      const top = wy + tree.y * s;
+      const w = art.canvas.width * s;
+      const h = art.canvas.height * s;
+      if (left > this.viewW || left + w < 0 || top > this.viewH || top + h < 0) continue;
+      // One art pixel of stretch and squash, so pixels stay whole.
+      const dh = Math.round(Math.sin(t / 700 + (tree.tx * 0.9 + tree.ty * 0.4)) * 1.4);
+      const f = (anchor + dh) / anchor;
+      ctx.drawImage(art.canvas, left, top + anchor * s * (1 - f), w, h * f);
+    }
   }
 
   /** Lit windows, skipping any hidden behind a building drawn in front of them. */
