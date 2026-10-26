@@ -1035,6 +1035,7 @@ test.describe('Kelurahan stage', () => {
     expect(got).toEqual({ stage: 'kelurahan', path: 'desa' });
     await page.locator('#menu-btn').click();
     await page.locator('#act-build').click();
+    await page.locator('#sheet .tabs .tab[data-tab="facilities"]').click();
     await expect(page.locator('.sheet').getByText('Balai Desa', { exact: true }).first()).toBeVisible();
     await expectLegible(page, 'Desa build menu');
   });
@@ -1184,9 +1185,9 @@ test.describe('build mode', () => {
       }, [dx, dy]);
       await page.mouse.click(box.x + at.x, box.y + at.y);
     };
-    await tap(-2, -3);
+    await tap(-2, 3);
     await expect(page.locator('#place-float')).toBeHidden();
-    await tap(2, -3);
+    await tap(2, 3);
     await expect(page.locator('#place-ok')).toHaveText(lang() === 'en' ? 'Yes' : 'Ya');
     await expect(page.locator('#place-ok')).toBeEnabled();
     await expectLegible(page, 'path preview');
