@@ -1,3 +1,4 @@
+import { bBlurb, bName, t } from '../i18n';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { isoURL } from '../render/iso';
@@ -16,18 +17,18 @@ export function openBuild(app: App): void {
   const cards = placeableDefs().map((d) => {
     const cost = buildCost(s, d);
     const missing = requirementGaps(s, d);
-    if (s.res.rupiah < cost) missing.push(`Need ${rupiah(cost - s.res.rupiah)} more`);
+    if (s.res.rupiah < cost) missing.push(t('build.needMore', { amt: rupiah(cost - s.res.rupiah) }));
     const ok = missing.length === 0;
     return h('button', { class: `card-btn ${ok ? '' : 'locked'}`, 'aria-disabled': String(!ok), onclick: () => (ok ? app.startPlacing(d.id) : undefined) },
       spriteImg(d.sprite),
       h('div', { class: 'card-text' },
-        h('div', { class: 'card-title' }, h('strong', {}, d.name), h('span', { class: 'cost' }, rupiah(cost))),
-        h('p', {}, d.blurb),
-        ok ? h('p', { class: 'meta' }, `Permit ${d.permitMonths} mo · build ${d.buildMonths} mo`) : missingList(missing),
+        h('div', { class: 'card-title' }, h('strong', {}, bName(d)), h('span', { class: 'cost' }, rupiah(cost))),
+        h('p', {}, bBlurb(d)),
+        ok ? h('p', { class: 'meta' }, t('build.permit', { permit: d.permitMonths, build: d.buildMonths })) : missingList(missing),
       ),
     );
   });
-  openSheet('Build', cards);
+  openSheet(t('build.title'), cards);
 }
 
 export { spriteImg };

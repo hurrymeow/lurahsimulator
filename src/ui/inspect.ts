@@ -1,3 +1,4 @@
+import { bBlurb, bName, t, type Key } from '../i18n';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { def } from '../sim/content';
@@ -9,14 +10,6 @@ import type { Building, CheckResult } from '../sim/types';
 import { spriteImg } from './build';
 import { h, missingList } from './dom';
 import { closeSheet, openSheet } from './sheet';
-
-const STATUS: Record<Building['status'], string> = {
-  permit: 'Waiting for permit',
-  building: 'Under construction',
-  active: 'Working',
-  mangkrak: 'Mangkrak at 80%',
-  damaged: 'Damaged',
-};
 
 /** Extra rows and buttons later systems add to the inspector. */
 export type InspectExtra = (app: App, b: Building) => Node[];
@@ -42,27 +35,27 @@ export function inspect(app: App, uid: number): void {
   };
   const lines: Node[] = [
     h('div', { class: 'inspect-head' }, spriteImg(d.sprite), h('div', {},
-      h('p', { class: 'meta' }, `${STATUS[b.status]}${b.timer > 0 && (b.status === 'permit' || b.status === 'building') ? ` · ${b.timer} mo left` : ''} · Level ${b.level}/${d.maxLevel}`),
-      h('p', {}, d.blurb),
+      h('p', { class: 'meta' }, t('insp.status', { status: t(`status.${b.status}`), left: b.timer > 0 && (b.status === 'permit' || b.status === 'building') ? t('insp.left', { n: b.timer }) : '', level: b.level, max: d.maxLevel })),
+      h('p', {}, bBlurb(d)),
     )),
   ];
   const income = buildingIncome(s, b);
   const upkeep = buildingUpkeep(s, b);
-  if (income || upkeep) lines.push(h('p', { class: 'meta' }, `Income ${rupiah(income)} · upkeep ${rupiah(upkeep)} a month`));
+  if (income || upkeep) lines.push(h('p', { class: 'meta' }, t('insp.money', { income: rupiah(income), upkeep: rupiah(upkeep) })));
   if (d.perMonth) {
-    const bits = Object.entries(d.perMonth).map(([k, v]) => `${k === 'orangDalam' ? 'Orang Dalam' : k[0].toUpperCase() + k.slice(1)} +${Math.round(v * levelMult(b.level) * 100) / 100}`);
-    lines.push(h('p', { class: 'meta' }, `${bits.join(' · ')} a month`));
+    const bits = Object.entries(d.perMonth).map(([k, v]) => `${t(`res.${k}` as Key)} +${Math.round(v * levelMult(b.level) * 100) / 100}`);
+    lines.push(h('p', { class: 'meta' }, t('insp.perMonth', { bits: bits.join(' · ') })));
   }
   for (const extra of inspectExtras) lines.push(...extra(app, b));
   if (b.status === 'permit') {
-    lines.push(actionButton('Skip queue · 1 Orang Dalam', checkSkipPermit(s, b), () => {
+    lines.push(actionButton(t('insp.skip'), checkSkipPermit(s, b), () => {
       skipPermit(s, b);
       app.tap(15);
       done();
     }, true));
   }
   if (d.maxLevel > 1) {
-    lines.push(actionButton(b.level >= d.maxLevel ? 'Max level' : `Upgrade · ${rupiah(upgradeCost(s, b))}`, checkUpgrade(s, b), () => {
+    lines.push(actionButton(b.level >= d.maxLevel ? t('insp.maxLevel') : t('insp.upgrade', { cost: rupiah(upgradeCost(s, b)) }), checkUpgrade(s, b), () => {
       upgrade(s, b);
       app.view.burst(b.x, b.y);
       app.tap(15);
@@ -70,13 +63,13 @@ export function inspect(app: App, uid: number): void {
     }, b.status === 'active'));
   }
   const dem = checkDemolish(s, b);
-  lines.push(actionButton(dem.ok ? `Demolish · refund ${rupiah(Math.round((b.invested * REFUND) / 1000) * 1000)}` : "Demolish", dem, () => {
+  lines.push(actionButton(dem.ok ? t('insp.demolishRefund', { amt: rupiah(Math.round((b.invested * REFUND) / 1000) * 1000) }) : t('insp.demolish'), dem, () => {
     demolish(s, b);
     app.save();
     app.refresh();
     closeSheet();
   }));
-  openSheet(d.name, lines, () => {
+  openSheet(bName(d), lines, () => {
     app.view.selected = null;
   });
 }

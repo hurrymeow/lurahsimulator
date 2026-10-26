@@ -1,3 +1,4 @@
+import { bName, cEffect, cName, cStory, t } from '../i18n';
 import { COMBOS, type ComboDef } from '../data/combos';
 import { def } from './content';
 import { gain, type Fx } from './gain';
@@ -48,8 +49,8 @@ export function comboSystem(s: GameState, fx: Fx): void {
     for (const m of a.members) fx.push({ kind: 'built', uid: m.uid });
     fx.push({
       kind: 'notice',
-      title: `Combo: ${a.combo.name}`,
-      body: `${a.combo.story} ${a.combo.effect} Logged in Buku Combo.`,
+      title: t('combo.notice', { name: cName(a.combo) }),
+      body: t('combo.noticeBody', { story: cStory(a.combo), effect: cEffect(a.combo) }),
       tone: 'good',
       fanfare: true,
       x: centre.x,
@@ -58,4 +59,4 @@ export function comboSystem(s: GameState, fx: Fx): void {
   }
 }
 
-export const comboMemberNames = (c: ComboDef) => c.needs.map((id) => def(id).name);
+export const comboMemberNames = (c: ComboDef) => c.needs.map((id) => bName(def(id)));

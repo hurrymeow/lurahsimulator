@@ -321,3 +321,6 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 
 .slider-row { display: flex; justify-content: space-between; gap: var(--gap); }
 .slider { width: 100%; min-height: 44px; accent-color: var(--accent); }
+
+.lang-row .row { flex-wrap: wrap; }
+.lang-row .row .btn { flex: 1 1 140px; }

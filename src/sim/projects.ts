@@ -1,3 +1,4 @@
+import { bName, t } from '../i18n';
 import { rupiah } from '../format';
 import { def } from './content';
 import { gain, type Fx } from './gain';
@@ -23,8 +24,8 @@ export function onBuildingFinished(s: GameState, fx: Fx, b: Building): 'ok' | 'm
     addEmas(s, EMAS.perMangkrak);
     fx.push({
       kind: 'notice',
-      title: `${d.name} mangkrak at ${MANGKRAK_AT}`,
-      body: `The funds ran out at ${MANGKRAK_AT}. Restart costs double, or normal price once Viral reaches ${VIRAL_REPAIR_AT}. It drains ${MANGKRAK_SABAR} Sabar a month.`,
+      title: t('sim.mangkrakTitle', { name: bName(d), at: MANGKRAK_AT }),
+      body: t('sim.mangkrakBody', { at: MANGKRAK_AT, viral: VIRAL_REPAIR_AT, sabar: MANGKRAK_SABAR }),
       tone: 'bad',
       x: b.x,
       y: b.y,
@@ -45,8 +46,8 @@ function spawnParkir(s: GameState, fx: Fx, shop: Building): void {
   fx.push({ kind: 'built', uid: p.uid });
   fx.push({
     kind: 'notice',
-    title: 'A tukang parkir appeared',
-    body: `Beside the new ${def(shop.def).name}. He pays retribusi to the kas and costs Sabar. Cannot be removed, only upgraded.`,
+    title: t('sim.parkirTitle'),
+    body: t('sim.parkirBody', { name: bName(def(shop.def)) }),
     tone: 'bad',
     x: p.x,
     y: p.y,
@@ -59,10 +60,10 @@ export function restartCost(s: GameState, b: Building): number {
 }
 
 export function checkRestart(s: GameState, b: Building): CheckResult {
-  if (b.status !== 'mangkrak') return { ok: false, missing: ['Not frozen'] };
+  if (b.status !== 'mangkrak') return { ok: false, missing: [t('sim.notFrozen')] };
   const cost = restartCost(s, b);
   if (s.res.rupiah >= cost) return { ok: true };
-  return { ok: false, missing: [`Need ${rupiah(cost - s.res.rupiah)} more (restart costs ${rupiah(cost)})`] };
+  return { ok: false, missing: [t('sim.restartGap', { amt: rupiah(cost - s.res.rupiah), cost: rupiah(cost) })] };
 }
 
 export function restart(s: GameState, b: Building): CheckResult {

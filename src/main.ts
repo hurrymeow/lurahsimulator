@@ -1,3 +1,4 @@
+import { t } from './i18n';
 import '@fontsource/pixelify-sans/latin-400.css';
 import '@fontsource/pixelify-sans/latin-700.css';
 import '@fontsource/atkinson-hyperlegible/latin-400.css';
@@ -20,17 +21,17 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 
 const app = new App();
 app.inspect = (uid) => inspect(app, uid);
-app.actions.push({ id: 'build', label: 'Build', open: openBuild });
+app.actions.push({ id: 'build', label: () => t('menu.build'), open: openBuild });
 registerSystems(app);
 app.actions.push(
-  { id: 'log', label: 'Log', group: 'records', open: (a) => a.openLog() },
-  { id: 'stats', label: 'Kas & ranking', group: 'records', open: (a) => a.openStats() },
-  { id: 'howto', label: 'How to play', group: 'game', open: (a) => { closeSheet(); showHowto(a); } },
-  { id: 'settings', label: 'Settings', group: 'game', open: openSettings },
+  { id: 'log', label: () => t('menu.log'), group: 'records', open: (a) => a.openLog() },
+  { id: 'stats', label: () => t('menu.stats'), group: 'records', open: (a) => a.openStats() },
+  { id: 'howto', label: () => t('menu.howto'), group: 'game', open: (a) => { closeSheet(); showHowto(a); } },
+  { id: 'settings', label: () => t('menu.settings'), group: 'game', open: openSettings },
 );
 
 // Lives in the Menu's Game group. Hidden until the browser offers an install.
-const installBtn = h('button', { class: 'tile', id: 'install-btn', hidden: true }, h('img', { src: glyphURL('install')!, alt: '', width: 32, height: 32, class: 'pixel' }), h('span', {}, 'Install app'));
+const installBtn = h('button', { class: 'tile', id: 'install-btn', hidden: true }, h('img', { src: glyphURL('install')!, alt: '', width: 32, height: 32, class: 'pixel' }), h('span', { id: 'install-label' }, t('menu.install')));
 
 $('menu-btn').addEventListener('click', () => openMenu(app, [installBtn]));
 $('hud').addEventListener('keydown', (e) => {
@@ -40,7 +41,7 @@ $('place-cancel').addEventListener('click', () => app.stopPlacing());
 $('place-ok').addEventListener('click', () => app.confirmPlace());
 $('scrim').addEventListener('click', closeSheet);
 
-setupInstall(installBtn, (text) => app.modal({ title: 'Install Pak RT', body: text, tone: 'info' }));
+setupInstall(installBtn, (text) => app.modal({ title: t('install.title'), body: text, tone: 'info' }));
 setupUpdates($('update-banner'), $<HTMLButtonElement>('update-btn'));
 app.refresh();
 if (!hasSeenHowto()) showHowto(app);

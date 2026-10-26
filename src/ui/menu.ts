@@ -1,13 +1,14 @@
+import { t } from '../i18n';
 import type { App, ActionButton, MenuGroup } from '../app';
 import { iconURL } from '../render/sprites';
 import { h } from './dom';
 import { glyphURL } from './glyphs';
 import { openSheet } from './sheet';
 
-const GROUPS: { id: MenuGroup; title: string }[] = [
-  { id: 'kampung', title: 'Kampung' },
-  { id: 'records', title: 'Records' },
-  { id: 'game', title: 'Game' },
+const GROUPS: { id: MenuGroup; title: () => string }[] = [
+  { id: 'kampung', title: () => t('menu.kampung') },
+  { id: 'records', title: () => t('menu.records') },
+  { id: 'game', title: () => t('menu.game') },
 ];
 
 function tileIcon(a: ActionButton): HTMLImageElement {
@@ -20,11 +21,11 @@ export function openMenu(app: App, extra: Node[] = []): void {
   const body = GROUPS.map((g) => {
     const items = app.actions.filter((a) => (a.group ?? 'kampung') === g.id);
     const tiles: Node[] = items.map((a) =>
-      h('button', { class: 'tile', id: `act-${a.id}`, onclick: () => a.open(app) }, tileIcon(a), h('span', {}, a.label)),
+      h('button', { class: 'tile', id: `act-${a.id}`, onclick: () => a.open(app) }, tileIcon(a), h('span', {}, a.label())),
     );
     if (g.id === 'game') tiles.push(...extra);
     if (!tiles.length) return null;
-    return h('section', { class: 'menu-group', 'aria-label': g.title }, h('h3', {}, g.title), h('div', { class: 'tile-grid' }, ...tiles));
+    return h('section', { class: 'menu-group', 'aria-label': g.title() }, h('h3', {}, g.title()), h('div', { class: 'tile-grid' }, ...tiles));
   }).filter((n): n is HTMLElement => n !== null);
-  openSheet('Menu', body);
+  openSheet(t('page.menu'), body);
 }

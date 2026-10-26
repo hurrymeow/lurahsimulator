@@ -1,3 +1,4 @@
+import { bBlurb, bName, t } from '../i18n';
 import {
   ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
   NOVELTY_GAP, QUEUE_SABAR_DRAIN, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
@@ -62,7 +63,7 @@ export function advanceConstruction(s: GameState, fx: Fx): void {
     } else if (b.timer <= 0) {
       b.status = 'active';
       fx.push({ kind: 'built', uid: b.uid });
-      if (onBuildingFinished(s, fx, b) === 'ok') fx.push({ kind: 'notice', title: `${def(b.def).name} is open`, body: def(b.def).blurb, tone: 'good', x: b.x, y: b.y });
+      if (onBuildingFinished(s, fx, b) === 'ok') fx.push({ kind: 'notice', title: t('sim.openTitle', { name: bName(def(b.def)) }), body: bBlurb(def(b.def)), tone: 'good', x: b.x, y: b.y });
       novelty(s);
     }
   }
@@ -85,7 +86,7 @@ export function collectIncome(s: GameState, fx: Fx): void {
 export function safetyNet(s: GameState, fx: Fx): void {
   if (s.res.rupiah >= 0) return;
   if (s.month < 12) {
-    fx.push({ kind: 'notice', title: 'Dana talangan', body: `The kelurahan covered ${-Math.round(s.res.rupiah)} of upkeep. Only in year 1.`, tone: 'info' });
+    fx.push({ kind: 'notice', title: t('sim.danaTitle'), body: t('sim.danaBody', { amt: -Math.round(s.res.rupiah) }), tone: 'info' });
     s.res.rupiah = 0;
   } else {
     gain(s, fx, 'sabar', -BROKE_SABAR_DRAIN);
@@ -105,7 +106,7 @@ function arrive(s: GameState, fx: Fx, reason: string): boolean {
   const r = addResident(s);
   s.stats.arrived++;
   const home = s.buildings.filter((b) => b.def === 'rumah').at(-1);
-  fx.push({ kind: 'notice', title: `${r.name} moved in`, body: reason, tone: 'good', x: home?.x, y: home?.y });
+  fx.push({ kind: 'notice', title: t('sim.movedIn', { name: r.name }), body: reason, tone: 'good', x: home?.x, y: home?.y });
   novelty(s);
   return true;
 }
@@ -115,24 +116,24 @@ export function residentsMove(s: GameState, fx: Fx): void {
   if (s.res.sabar < LEAVE_BELOW_SABAR && population(s) > MIN_RESIDENTS) {
     const r = s.residents.splice(randInt(s, 0, s.residents.length - 1), 1)[0];
     s.stats.left++;
-    fx.push({ kind: 'notice', title: `${r.name} moved out`, body: `Sabar is below ${LEAVE_BELOW_SABAR}. Raise it to stop people leaving.`, tone: 'bad' });
+    fx.push({ kind: 'notice', title: t('sim.movedOut', { name: r.name }), body: t('sim.movedOutBody', { n: LEAVE_BELOW_SABAR }), tone: 'bad' });
     return;
   }
   if (population(s) < target && s.res.sabar >= ARRIVE_MIN_SABAR) {
     const n = Math.min(2, target - population(s));
-    for (let i = 0; i < n; i++) arrive(s, fx, 'Heard the kampung has a warung and decent wifi rumours.');
+    for (let i = 0; i < n; i++) arrive(s, fx, t('sim.arriveWarung'));
   } else if (s.month - s.lastNovelty >= NOVELTY_GAP) {
-    arrive(s, fx, 'A perantau looking for a cheap kos. Pacing bonus resident.');
+    arrive(s, fx, t('sim.arrivePerantau'));
   }
 }
 
 export function checkUnlocks(s: GameState, fx: Fx): void {
   for (const d of placeableDefs()) {
     if (s.unlocked.includes(d.id)) continue;
-    const gaps = requirementGaps(s, d).filter((g) => !g.startsWith('Limit'));
+    const gaps = requirementGaps(s, d, { ignoreLimit: true });
     if (gaps.length) continue;
     s.unlocked.push(d.id);
-    fx.push({ kind: 'notice', title: `Unlocked: ${d.name}`, body: d.blurb, tone: 'good', fanfare: true });
+    fx.push({ kind: 'notice', title: t('sim.unlockedTitle', { name: bName(d) }), body: bBlurb(d), tone: 'good', fanfare: true });
     novelty(s);
   }
 }
@@ -152,7 +153,7 @@ export function yearEnd(s: GameState, fx: Fx): void {
   s.inflation *= 1 + INFLATION_PER_YEAR;
   addEmas(s, EMAS.perYear);
   yearlyRanking(s, fx, s.month / 12);
-  fx.push({ kind: 'notice', title: `Year ${s.month / 12 + 1} begins`, body: `Prices up ${Math.round(INFLATION_PER_YEAR * 100)}%. Inflation, not greed.`, tone: 'info' });
+  fx.push({ kind: 'notice', title: t('sim.yearTitle', { n: s.month / 12 + 1 }), body: t('sim.yearBody', { pct: Math.round(INFLATION_PER_YEAR * 100) }), tone: 'info' });
 }
 
 /** Ordered list of monthly systems. Later milestones insert their systems here. */

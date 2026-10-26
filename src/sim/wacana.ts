@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { WACANA, WACANA_COST, WACANA_DECAY, WACANA_POWER, WACANA_SABAR_PER_POWER } from '../data/wacana';
 import { EMAS } from '../data/ranking';
 import { rupiah } from '../format';
@@ -10,8 +11,8 @@ export const wacanaCost = (s: GameState) => price(s, WACANA_COST);
 
 export function checkAnnounce(s: GameState, id: string): CheckResult {
   const cost = wacanaCost(s);
-  if (!WACANA.some((w) => w.id === id)) return { ok: false, missing: ['Unknown wacana'] };
-  return s.res.rupiah >= cost ? { ok: true } : { ok: false, missing: [`Need ${rupiah(cost - s.res.rupiah)} more for konsumsi rapat (costs ${rupiah(cost)})`] };
+  if (!WACANA.some((w) => w.id === id)) return { ok: false, missing: [t('sim.unknownWacana')] };
+  return s.res.rupiah >= cost ? { ok: true } : { ok: false, missing: [t('sim.konsumsi', { amt: rupiah(cost - s.res.rupiah), cost: rupiah(cost) })] };
 }
 
 export function announce(s: GameState, id: string): CheckResult {
