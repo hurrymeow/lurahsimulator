@@ -32,6 +32,7 @@ export interface Ghost {
   sprite: string;
 }
 
+const MIN_TILE = 32;
 const POP_MS = 1200;
 const BURST_MS = 600;
 
@@ -53,10 +54,37 @@ export class MapView {
     const { clientWidth: w, clientHeight: h } = this.canvas;
     this.canvas.width = Math.round(w * dpr);
     this.canvas.height = Math.round(h * dpr);
-    this.tile = Math.max(16, Math.floor(Math.min(w / GRID_W, h / GRID_H)));
-    this.ox = Math.floor((w - this.tile * GRID_W) / 2);
-    this.oy = Math.floor((h - this.tile * GRID_H) / 2);
+    // Tiles stay at least 32px so they are easy to hit. A smaller screen pans instead of shrinking.
+    this.tile = Math.max(MIN_TILE, Math.floor(Math.min(w / GRID_W, h / GRID_H)));
+    this.viewW = w;
+    this.viewH = h;
+    this.clampPan();
     this.grass = null;
+  }
+
+  private viewW = 0;
+  private viewH = 0;
+  private panX = 0;
+  private panY = 0;
+
+  private clampPan(): void {
+    const gw = this.tile * GRID_W;
+    const gh = this.tile * GRID_H;
+    this.panX = gw <= this.viewW ? 0 : Math.max(this.viewW - gw, Math.min(0, this.panX));
+    this.panY = gh <= this.viewH ? 0 : Math.max(this.viewH - gh, Math.min(0, this.panY));
+    this.ox = Math.floor(gw <= this.viewW ? (this.viewW - gw) / 2 : this.panX);
+    this.oy = Math.floor(gh <= this.viewH ? (this.viewH - gh) / 2 : this.panY);
+  }
+
+  panBy(dx: number, dy: number): void {
+    this.panX += dx;
+    this.panY += dy;
+    this.clampPan();
+  }
+
+  /** True when the grid is bigger than the view, so dragging pans. */
+  get scrolls(): boolean {
+    return this.tile * GRID_W > this.viewW || this.tile * GRID_H > this.viewH;
   }
 
   tileAt(px: number, py: number): { x: number; y: number } | null {
@@ -182,21 +210,26 @@ export class MapView {
     }
 
     this.pops = this.pops.filter((p) => now - p.born < POP_MS);
-    ctx.font = '700 16px "Pixelify Sans", monospace';
+    ctx.font = '700 16px "Atkinson Hyperlegible", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    // Pops on neighbouring tiles are wider than a tile, so nudge each one up until it clears the others.
+    const placed: { x: number; y: number; w: number }[] = [];
     for (const p of this.pops) {
       const age = now - p.born;
       if (age < 0) continue;
       const k = age / POP_MS;
       const c = this.tileCentre(p.x, p.y);
       const rise = this.effects ? k * t * 0.8 : 0;
+      const w = ctx.measureText(p.text).width + 20;
+      let lift = p.dy;
+      while (placed.some((o) => Math.abs(o.x - c.x) < (o.w + w) / 2 && Math.abs(o.y - (c.y - t * 0.4 - lift)) < 22)) lift += 22;
+      placed.push({ x: c.x, y: c.y - t * 0.4 - lift, w });
+      const py = c.y - t * 0.4 - rise - lift;
       ctx.globalAlpha = this.effects ? Math.min(1, 2 - 2 * k) : 1;
-      const w = ctx.measureText(p.text).width + 14;
-      const py = c.y - t * 0.4 - rise - p.dy;
-      ctx.fillStyle = 'rgba(11, 11, 12, 0.8)';
+      ctx.fillStyle = 'rgba(11, 11, 12, 0.85)';
       ctx.fillRect(c.x - w / 2 - 2, py - 10, w + 4, 20);
-      ctx.drawImage(sprite(p.res, undefined, ICONS), c.x - w / 2, py - 5, 10, 10);
+      ctx.drawImage(sprite(p.res, undefined, ICONS), c.x - w / 2 + 2, py - 5, 10, 10);
       ctx.fillStyle = RES_COLOUR[p.res];
       ctx.fillText(p.text, c.x + 6, py + 1);
       ctx.globalAlpha = 1;
@@ -204,7 +237,7 @@ export class MapView {
   }
 
   private badge(ctx: CanvasRenderingContext2D, x: number, y: number, text: string): void {
-    ctx.font = '700 16px "Pixelify Sans", monospace';
+    ctx.font = '700 16px "Atkinson Hyperlegible", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const w = Math.max(20, ctx.measureText(text).width + 8);
