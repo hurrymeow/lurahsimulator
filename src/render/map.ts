@@ -89,6 +89,8 @@ interface Hit {
   left: number;
   top: number;
   art: Art;
+  /** Whole-number scale of the art, for a footprint wider than one tile. */
+  k: number;
 }
 
 /** Diamonds are at least 32px tall, so the tap area matches a 32px square. */
@@ -218,8 +220,8 @@ export class MapView {
     if (buildings)
       for (let k = this.hits.length - 1; k >= 0; k--) {
         const h = this.hits[k];
-        const ax = Math.floor((px - h.left) / this.scale);
-        const ay = Math.floor((py - h.top) / this.scale);
+        const ax = Math.floor((px - h.left) / (this.scale * h.k));
+        const ay = Math.floor((py - h.top) / (this.scale * h.k));
         if (ax >= 0 && ay >= 0 && ax < h.art.canvas.width && ay < h.art.canvas.height && h.art.alpha[ay * h.art.canvas.width + ax] > 0) return { x: h.x, y: h.y };
       }
     const a = (px - this.ox) / ((TW * this.scale) / 2);
@@ -284,7 +286,7 @@ export class MapView {
       const h = art.canvas.height * k * grow * (1 - squash);
       ctx.drawImage(art.canvas, gx - w / 2, gy - (TOP + TH / 2) * k * grow * (1 - squash), w, h);
     } else ctx.drawImage(art.canvas, left, top, art.canvas.width * k, art.canvas.height * k);
-    return { x, y, left, top, art };
+    return { x, y, left, top, art, k: n };
   }
 
   /** Flat 2D sprite standing on the tile centre, used for the permit sign. */
