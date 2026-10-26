@@ -8,3 +8,4 @@ Every joke is a mechanic that moves a number.
 - Art direction: [ART.md](ART.md)
 - Decisions log: [DECISIONS.md](DECISIONS.md)
 - Progress: [PROGRESS.md](PROGRESS.md)
+- Stage progression: [STAGES.md](STAGES.md)

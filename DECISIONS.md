@@ -85,3 +85,8 @@ One line per decision, with the reason. Newest at the bottom.
 - Outcome chips and event/skip-queue costs drop the resource name for the icon. "Need X" messages keep names because they say exactly what is missing.
 - Stats panel is no longer on the HUD tap. It stays under Menu, Records.
 - No new art made. Existing icons reused, so the artist's sprites apply once they land on main.
+- **Stage progression (Hari):** RT, RW, then Kelurahan or Desa first. Kecamatan and above wait for a playtest. Full spec in [STAGES.md](STAGES.md).
+- **One growing map (Hari picked over compressed blocks):** promotion pulls the scenery edge back and shows the neighbours. The player's own RT stays fully playable, so the walkers and kampung scale survive. RW = 2x2 RTs, Kelurahan = 2x2 RWs (my call, Hari delegated it).
+- **Kelurahan footprints (my call):** Kelurahan buildings take 2x2 tiles at half zoom, so they tap like one RT tile today. The tap rule becomes "tappable diamonds ≥32px". The 36x52 map must pass the CI frame-rate test before it is built.
+- **Stars (Hari):** 0★ to 3★ per stage, 3★ sends a declinable SK. Stars gate unlocks and never drop, so bad play only slows you.
+- **No elections:** the player is promoted by SK, never elected. Superiors stay faceless. This keeps higher stages out of real politics.
