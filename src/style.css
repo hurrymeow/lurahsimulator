@@ -394,7 +394,7 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .checklist { list-style: none; margin: 0 0 12px; padding: 0; }
 .checklist li { padding: 8px 0; font-size: 16px; border-bottom: 1px solid var(--line); }
 .combo-list { list-style: none; margin: 6px 0 0; padding: 0; text-decoration: none; }
-.combo-list li { border: 0; padding: 4px 0; font-size: 14px; }
+.combo-list li { border: 0; padding: 4px 0; font-size: 16px; }
 .combo-list li.active strong { color: var(--accent, inherit); }
 .checklist li.done { color: var(--muted); text-decoration: line-through; }
 

@@ -859,8 +859,8 @@ test.describe('stars', () => {
     await expect(head).toContainText('☆☆☆');
     await expectLegible(page, 'menu stage header');
     await head.click();
-    await expect(page.locator('.checklist li')).toHaveCount(2);
-    await expect(page.locator('.checklist li').first()).toContainText(/\d/);
+    await expect(page.locator('.checklist > li')).toHaveCount(2);
+    await expect(page.locator('.checklist > li').first()).toContainText(/\d/);
     await expectLegible(page, 'star checklist');
   });
 
