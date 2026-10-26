@@ -688,3 +688,51 @@ test.describe('stars', () => {
     await expect(page.locator('#sk-accept')).toBeDisabled();
   });
 });
+
+test.describe('growing map', () => {
+  test('after promotion the map is bigger, neighbours show in the Menu, and funding one works', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.promote();
+      app.s.res.rupiah = 50_000_000;
+      app.refresh();
+    });
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-neighbours').click();
+    await expect(page.locator('.sheet .action')).toHaveCount(3);
+    await expectLegible(page, 'neighbours panel');
+    const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.funded));
+    await page.locator('.sheet .action .btn').first().click();
+    const after = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.funded));
+    expect(after[0]).toBe(before[0] + 1);
+    await expectLegible(page, 'neighbours panel after funding');
+  });
+
+  test('a tap on an AI RT opens the Neighbours panel instead of a build menu', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.promote();
+    });
+    await dismissModals(page);
+    // Bring the second RT into view, then tap its first tile.
+    const at = await page.evaluate(() => {
+      const v = (window as unknown as { pakrt: any }).pakrt.view;
+      const c = v.project(9 + 4.5, 6.5);
+      v.panBy(v.viewW / 2 - c.x, v.viewH / 2 - c.y);
+      const p = v.project(9 + 4.5, 6.5);
+      return { x: p.x, y: p.y };
+    });
+    const box = (await page.locator('#map').boundingBox())!;
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    await expect(page.locator('.sheet')).toBeVisible();
+    await expect(page.locator('.sheet .action')).toHaveCount(3);
+  });
+});
