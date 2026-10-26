@@ -17,7 +17,25 @@ export type Goal =
   | { kind: 'rankWins'; n: number }
   /** Ranking wins in a row, counting back from the latest year. */
   | { kind: 'winStreak'; n: number }
-  | { kind: 'sabar'; n: number };
+  | { kind: 'sabar'; n: number }
+  // RW and Kelurahan kinds. Their checks wait for the stage engine (see GOAL_CHECKS).
+  /** Neighbouring RTs funded at least once. */
+  | { kind: 'fundedRts'; n: number }
+  /** Months in a row with the Stempel backlog under `under`. */
+  | { kind: 'stempelClear'; n: number; under: number }
+  /** RTs holding at least `stars`. AI RTs count. */
+  | { kind: 'rtsAtStars'; n: number; stars: Stars }
+  /** RWs holding at least `stars`. AI RWs count. */
+  | { kind: 'rwsAtStars'; n: number; stars: Stars }
+  /** Combos found that belong to the RW stage. */
+  | { kind: 'rwCombos'; n: number }
+  /** Ranking wins against the rival of this tier: RW Sebelah, or the Piala Kelurahan. */
+  | { kind: 'tierWins'; n: number; tier: 'rw' | 'kelurahan' }
+  /** Months in a row with no RT in debt. */
+  | { kind: 'noDebtMonths'; n: number }
+  /** Months in a row with serapan at or above `pct` percent. */
+  | { kind: 'serapanMonths'; n: number; pct: number }
+  | { kind: 'cleanAudits'; n: number };
 
 /** What it takes to earn star number `index + 1`, and what that star gives. */
 export interface StarDef {

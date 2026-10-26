@@ -29,6 +29,15 @@ export const EN = {
   'stage.goal.rankWins': '{n} ranking wins (have {have})',
   'stage.goal.winStreak': '{n} ranking wins in a row (have {have})',
   'stage.goal.sabar': 'Sabar of at least {n} (have {have})',
+  'stage.goal.rwCombos': '{n} RW combos found (have {have})',
+  'stage.goal.fundedRts': 'Fund {n} neighbouring RTs once (have {have})',
+  'stage.goal.stempelClear': 'Stempel backlog under {under} for {n} months (have {have})',
+  'stage.goal.rtsAtStars': '{n} RTs at {stars}★ or above (have {have})',
+  'stage.goal.rwsAtStars': '{n} RWs at {stars}★ or above (have {have})',
+  'stage.goal.tierWins': '{n} wins in the area ranking (have {have})',
+  'stage.goal.noDebtMonths': 'No RT in debt for {n} months (have {have})',
+  'stage.goal.serapanMonths': 'Serapan of at least {pct}% for {n} months (have {have})',
+  'stage.goal.cleanAudits': '{n} clean Tim Audit (have {have})',
 
   // menu
   'menu.kampung': 'Kampung',
