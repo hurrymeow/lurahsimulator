@@ -367,7 +367,7 @@ export class App {
       down = null;
       if (wasDrag) return;
       const rect = canvas.getBoundingClientRect();
-      const t = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top);
+      const t = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top, !this.placing);
       if (!t) return;
       if (this.placing) {
         const ok = checkPlace(this.s, this.placing, t.x, t.y).ok;

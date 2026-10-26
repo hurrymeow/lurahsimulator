@@ -1,6 +1,6 @@
 import type { App } from '../app';
 import { rupiah } from '../format';
-import { sprite } from '../render/sprites';
+import { isoURL } from '../render/iso';
 import { placeableDefs } from '../sim/content';
 import { requirementGaps } from '../sim/rules';
 import { buildCost } from '../sim/state';
@@ -8,14 +8,7 @@ import { h, missingList } from './dom';
 import { openSheet } from './sheet';
 
 function spriteImg(name: string, size = 40): HTMLImageElement {
-  const src = sprite(name);
-  const c = document.createElement('canvas');
-  c.width = src.width * 4;
-  c.height = src.height * 4;
-  const ctx = c.getContext('2d')!;
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(src, 0, 0, c.width, c.height);
-  return h('img', { src: c.toDataURL(), alt: '', width: size, height: size, class: 'pixel' });
+  return h('img', { src: isoURL(name), alt: '', width: size, height: size, class: 'pixel' });
 }
 
 export function openBuild(app: App): void {

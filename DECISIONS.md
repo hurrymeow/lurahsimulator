@@ -58,3 +58,4 @@ One line per decision, with the reason. Newest at the bottom.
 - **Compact Rupiah in the top bar:** shows 4,85jt next to the money icon, rounded down so it never shows money you lack. The full figure is in Kas & ranking and the screen-reader label.
 - **Ticker stays in the layout, not over the map:** an overlay hid the top row of tiles from taps on small phones.
 - **Build is two taps (Menu, Build):** matches the reference layout. Revisit if play-testing says building feels slow.
+- **Isometric map (Hari: "not feeling the visual"):** 2:1 diamond tiles with box buildings, hipped limasan roofs and a dirt edge. Art is rasterised in code at 32x16 art pixels per tile and scaled by a whole number, so pixels stay crisp. Tiles are 64x32 on a phone; the map pans sideways in portrait. Build menu thumbnails use the same art.

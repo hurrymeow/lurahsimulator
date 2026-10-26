@@ -123,7 +123,7 @@ html, body {
 .action { display: flex; flex-direction: column; gap: 4px; margin: 12px 0; }
 .action .btn { width: 100%; }
 .btn-danger { border-color: var(--danger); color: var(--danger); }
-.pixel { image-rendering: pixelated; flex: none; }
+.pixel { image-rendering: pixelated; flex: none; object-fit: contain; }
 
 .card-btn {
   display: flex;
