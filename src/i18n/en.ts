@@ -319,6 +319,8 @@ export const EN = {
   'inspect.bad.body': 'A "pembinaan" is scheduled. -4 Patience. Better drainage next time.',
   'inspect.painted': 'Passed on paint. The drainage was not checked, and the form says "Baik". Rewards paid.',
   'sim.unlockedTitle': 'Unlocked: {name}',
+  'sim.unlockedManyTitle': '{n} buildings unlocked',
+  'sim.unlockedManyBody': 'Open Build to see {names}.',
   'sim.danaTitle': 'Dana talangan',
   'sim.danaBody': 'The kelurahan covered {amt} of upkeep. Only in year 1.',
   'sim.movedIn': '{name} moved in',

@@ -144,15 +144,18 @@ export function residentsMove(s: GameState, fx: Fx): void {
   if (arrived === 0 && s.month - (s.lastArrival ?? 0) >= NOVELTY_GAP) arrive(s, fx, t('sim.arrivePerantau'), true);
 }
 
+/** One notice per month, however many buildings opened: a star can unlock a dozen and they must not queue a dozen pop-ups. */
 export function checkUnlocks(s: GameState, fx: Fx): void {
-  for (const d of placeableDefs()) {
-    if (s.unlocked.includes(d.id)) continue;
-    const gaps = requirementGaps(s, d, { ignoreLimit: true });
-    if (gaps.length) continue;
-    s.unlocked.push(d.id);
+  const opened = placeableDefs().filter((d) => !s.unlocked.includes(d.id) && requirementGaps(s, d, { ignoreLimit: true }).length === 0);
+  if (!opened.length) return;
+  for (const d of opened) s.unlocked.push(d.id);
+  novelty(s);
+  if (opened.length === 1) {
+    const d = opened[0];
     fx.push({ kind: 'notice', title: t('sim.unlockedTitle', { name: bName(d) }), body: bBlurb(d), tone: 'good', fanfare: true });
-    novelty(s);
+    return;
   }
+  fx.push({ kind: 'notice', title: t('sim.unlockedManyTitle', { n: opened.length }), body: t('sim.unlockedManyBody', { names: opened.map(bName).join(', ') }), tone: 'good', fanfare: true });
 }
 
 /** A calm village settles back toward a floor. Bad choices slow you down, they never trap you at zero. */

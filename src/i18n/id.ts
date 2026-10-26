@@ -308,6 +308,8 @@ export const ID: Record<Key, string> = {
   'inspect.bad.body': 'Akan ada "pembinaan". -4 Kesabaran. Perbaiki drainase lain kali.',
   'inspect.painted': 'Lulus karena cat. Drainase tidak diperiksa, dan formulir bertuliskan "Baik". Hadiah dibayar.',
   'sim.unlockedTitle': 'Terbuka: {name}',
+  'sim.unlockedManyTitle': '{n} bangunan terbuka',
+  'sim.unlockedManyBody': 'Buka Bangun untuk melihat {names}.',
   'sim.danaTitle': 'Dana talangan',
   'sim.danaBody': 'Kelurahan menutup {amt} biaya operasional. Hanya di tahun 1.',
   'sim.movedIn': '{name} pindah masuk',

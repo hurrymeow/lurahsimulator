@@ -4,7 +4,7 @@ import { DECOR_CAP } from '../src/sim/balance';
 import { checkPlace, place } from '../src/sim/rules';
 import { deserialize, serialize } from '../src/sim/save';
 import { addBuilding, newGame } from '../src/sim/state';
-import { buildingIncome } from '../src/sim/tick';
+import { buildingIncome, checkUnlocks, type Fx } from '../src/sim/tick';
 import { score } from '../src/sim/ranking';
 
 describe('biopori replaces selokan', () => {
@@ -71,5 +71,20 @@ describe('Orang Dalam cost', () => {
     s.res.orangDalam = 2.5;
     expect(place(s, 'patungIkon', 3, 3).ok).toBe(true);
     expect(s.res.orangDalam).toBeCloseTo(0.5);
+  });
+});
+
+describe('unlock notices', () => {
+  it('batches several unlocks in one month into one notice', () => {
+    const s = newGame(6);
+    s.stage.stars.rt = 2;
+    const fx: Fx = [];
+    checkUnlocks(s, fx);
+    const notices = fx.filter((f) => f.kind === 'notice');
+    expect(notices).toHaveLength(1);
+    expect(s.unlocked.length).toBeGreaterThan(6);
+    const again: Fx = [];
+    checkUnlocks(s, again);
+    expect(again).toHaveLength(0);
   });
 });
