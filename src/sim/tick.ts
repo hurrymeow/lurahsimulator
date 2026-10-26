@@ -1,7 +1,7 @@
 import { bBlurb, bName, t } from '../i18n';
 import {
   ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
-  NOVELTY_GAP, QUEUE_SABAR_DRAIN, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
+  NOVELTY_GAP, QUEUE_SABAR_DRAIN, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, TUKANG_MAX, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
 } from './balance';
 import { comboIncomeMult, comboSystem } from './combos';
 import { def, placeableDefs } from './content';
@@ -9,7 +9,7 @@ import { EMAS } from '../data/ranking';
 import { eventSystem } from './events';
 import { debtSystem, iuranFromNeighbours, neighboursSystem, neighboursYearEnd, stempelSystem } from './grow';
 import { inspectionSystem } from './inspection';
-import { jobsSystem } from './jobs';
+import { jobsSystem, used } from './jobs';
 import { mangkrakSystem, onBuildingFinished } from './projects';
 import { addEmas, yearlyRanking } from './ranking';
 import { rwSystem, rwYearEnd, burstMult } from './rw';
@@ -56,9 +56,11 @@ function novelty(s: GameState): void {
 }
 
 export function advanceConstruction(s: GameState, fx: Fx): void {
+  // Each tukang on the crew gives every site an extra month of progress one month in four.
+  const crew = Math.min(TUKANG_MAX, used(s, 'tukang'));
   for (const b of s.buildings) {
     if (b.status !== 'permit' && b.status !== 'building') continue;
-    b.timer--;
+    b.timer -= b.status === 'building' && (s.month + b.uid) % 4 < crew ? 2 : 1;
     if (b.status === 'permit') {
       gain(s, fx, 'sabar', -QUEUE_SABAR_DRAIN, b);
       if (b.timer <= 0) {

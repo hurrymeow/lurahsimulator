@@ -24,6 +24,10 @@ export const JOBS: JobDef[] = [
   { id: 'petani', appeal: 60, name: 'Petani', blurb: 'Works the fields. Steady rupiah and a calmer mind. Needs a kebun or sawah.', perMonth: { rupiah: 70_000, sabar: 0.1 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
   { id: 'peternak', appeal: 40, name: 'Peternak', blurb: 'Tends the lele and the ayam. Cheap protein pays a little and settles the neighbours.', perMonth: { rupiah: 50_000, sabar: 0.2 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
   { id: 'pengepul', appeal: 40, name: 'Pengepul', blurb: 'Weighs plastic at the Bank Sampah. Pays a little and keeps the street tidy.', perMonth: { rupiah: 40_000, sabar: 0.2 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
+  { id: 'guru', appeal: 25, name: 'Guru PAUD', blurb: 'Teaches the little ones and calms the parents. Raises Patience, paid from the kas.', perMonth: { sabar: 0.6, rupiah: -30_000 }, perLevel: { resources: ['sabar'], boost: 0.2 } },
+  { id: 'satpam', appeal: 25, name: 'Satpam', blurb: 'Watches the gate so the pos ronda does not have to. Raises Patience, paid from the kas.', perMonth: { sabar: 1, rupiah: -20_000 }, perLevel: { resources: ['sabar'], boost: 0.15 } },
+  { id: 'tukang', appeal: 30, name: 'Tukang', blurb: 'Builds things. Each tukang on the crew speeds up every construction site by a quarter. Pays a little.', perMonth: { rupiah: 50_000 }, perLevel: { resources: ['rupiah'], boost: 0.15 } },
+  { id: 'panitia', appeal: 15, name: 'Panitia', blurb: 'Sits on committees. Makes Orang Inside, and the konsumsi comes out of the kas.', perMonth: { orangDalam: 0.12, rupiah: -40_000 }, perLevel: { resources: ['orangDalam'], boost: 0.25 } },
   { id: 'buzzer', appeal: 0, name: 'Buzzer', blurb: 'Pays well and makes fake Virality fast. Gets exposed sooner or later.', perMonth: { rupiah: 60_000, viral: 6 }, perLevel: { resources: ['viral'], boost: 0.25 } },
 ];
 

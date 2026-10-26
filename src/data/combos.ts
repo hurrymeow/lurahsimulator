@@ -1,4 +1,5 @@
 import type { ResourceId } from '../sim/types';
+import { MORE_COMBOS } from './combos-more';
 
 export interface ComboDef {
   id: string;
@@ -23,7 +24,7 @@ export interface ComboDef {
 }
 
 // Add a combo by adding an object here. Nothing else to touch.
-export const COMBOS: ComboDef[] = [
+const CORE_COMBOS: ComboDef[] = [
   {
     id: 'tongkrongan',
     name: 'Tongkrongan',
@@ -88,3 +89,6 @@ export const COMBOS: ComboDef[] = [
     effect: 'Banjir damage 20% lower. The 80% cap stays.',
   },
 ];
+
+/** Every RT combo: the core set, then the playtest wave. */
+export const COMBOS: ComboDef[] = [...CORE_COMBOS, ...MORE_COMBOS];

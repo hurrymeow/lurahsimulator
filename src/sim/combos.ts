@@ -12,6 +12,7 @@ export interface ActiveCombo {
   members: Building[];
 }
 
+const ORDER = ['rt', 'rw', 'kelurahan'];
 const near = (a: Building, b: Building, r: number) => Math.abs(a.x - b.x) <= r && Math.abs(a.y - b.y) <= r;
 
 /** Combos that can fire now: the RT ones, plus later-stage ones whose gate is open. */
@@ -23,8 +24,31 @@ export const bookCombos = (s: GameState): ComboDef[] => [...COMBOS, ...STAGE_COM
 /** Two AI RTs in the area share a trait. */
 const sameTraitNeighbours = (s: GameState): boolean => s.neighbours.some((n, i) => s.neighbours.some((o, j) => j > i && o.trait === n.trait));
 
-/** Finds every working combo. One instance per anchor building. */
+/**
+ * Finds every working combo. One instance per anchor building.
+ * Income reads this once per building, so the answer is kept until the layout, the stage or the
+ * neighbours change. The key is cheap to build compared with the search it saves.
+ */
+const cache = new WeakMap<GameState, { key: number; out: ActiveCombo[] }>();
+
+/** A number that changes whenever a building moves, appears, or changes status, or the stage or neighbours change. */
+function layoutKey(s: GameState): number {
+  let h = ORDER.indexOf(s.stage.current) * 31 + s.stage.stars.rt * 7 + s.stage.stars.rw * 11 + s.stage.stars.kelurahan * 13 + (s.stage.path?.length ?? 0);
+  for (const n of s.neighbours) h = (Math.imul(h, 31) + n.trait.charCodeAt(0)) | 0;
+  for (const b of s.buildings) h = (Math.imul(h, 31) + b.uid * 977 + b.x * 61 + b.y * 17 + b.status.charCodeAt(0)) | 0;
+  return h;
+}
+
 export function activeCombos(s: GameState): ActiveCombo[] {
+  const key = layoutKey(s);
+  const hit = cache.get(s);
+  if (hit?.key === key) return hit.out;
+  const out = findCombos(s);
+  cache.set(s, { key, out });
+  return out;
+}
+
+function findCombos(s: GameState): ActiveCombo[] {
   const working = s.buildings.filter(isWorking);
   const out: ActiveCombo[] = [];
   for (const combo of liveCombos(s)) {

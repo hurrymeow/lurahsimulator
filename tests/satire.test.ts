@@ -110,7 +110,7 @@ describe('jobs', () => {
     expect(slots(s, 'ojol')).toBe(0);
     const c = checkAssign(s, r, 'ojol');
     expect(c.ok).toBe(false);
-    if (!c.ok) expect(c.missing[0]).toBe('No Ojol slots. Needs a working Wifi Tower');
+    if (!c.ok) expect(c.missing[0]).toBe('No Ojol slots. Needs a working Wifi Tower or Bengkel Motor');
     add(s, 'wifi', 0, 0);
     expect(slots(s, 'ojol')).toBe(3);
     expect(assign(s, r, 'ojol').ok).toBe(true);

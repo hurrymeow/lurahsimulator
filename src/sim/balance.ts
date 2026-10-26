@@ -70,3 +70,6 @@ export const STEMPEL = {
 
 /** Most extra income decorations can add to one building, however many stand nearby. */
 export const DECOR_CAP = 0.6;
+
+/** Most tukang that speed up construction. Each one adds a quarter more progress a month. */
+export const TUKANG_MAX = 3;

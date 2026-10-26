@@ -3,7 +3,7 @@ import { FARM_BUILDINGS } from '../src/data/farm';
 import { JOBS } from '../src/data/jobs';
 import { assign, checkAssign, slots } from '../src/sim/jobs';
 import { addBuilding, addResident, newGame } from '../src/sim/state';
-import { buildingIncome, tick } from '../src/sim/tick';
+import { tick } from '../src/sim/tick';
 
 describe('farm', () => {
   it('every farm earns and opens a farm job', () => {

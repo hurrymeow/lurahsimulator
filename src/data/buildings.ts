@@ -1,6 +1,7 @@
 import type { BuildingDef } from '../sim/types';
 import { DECOR_BUILDINGS } from './decor';
 import { FARM_BUILDINGS } from './farm';
+import { SHOP_BUILDINGS } from './shops';
 
 // Add or tweak buildings here. The engine reads only these fields.
 // Every building must move at least one number.
@@ -239,4 +240,4 @@ const CORE_BUILDINGS: BuildingDef[] = [
 ];
 
 /** Every RT building: the core set, then each content wave in turn. */
-export const BUILDINGS: BuildingDef[] = [...CORE_BUILDINGS, ...FARM_BUILDINGS, ...DECOR_BUILDINGS];
+export const BUILDINGS: BuildingDef[] = [...CORE_BUILDINGS, ...SHOP_BUILDINGS, ...FARM_BUILDINGS, ...DECOR_BUILDINGS];

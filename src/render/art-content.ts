@@ -12,6 +12,21 @@ const TOP = 40;
 /** Centre of the ground diamond in art pixels, plus an offset. */
 const at = (dx: number, dy: number): [number, number] => [TW / 2 + dx, TOP + TH / 2 + dy];
 
+/** A shopfront: a walled box with a hipped roof, a door, and a coloured band of awning above a window. */
+const shopfront = (wall: string, roof: string, awning: string, opts: { height?: number; rise?: number; inset?: number; door?: string } = {}) => (p: Painter): void => {
+  const { height = 8, rise = 5, inset = 3, door = 'N' } = opts;
+  p.shadow(inset);
+  p.box(inset, height, wall, (face, u, j, i) => {
+    if (face === 'T') return undefined;
+    if (face === 'L' && within(u, 0.62, 0.84) && j < height - 3) return door;
+    if (face === 'L' && within(u, 0.14, 0.56) && within(j, 2, height - 3)) return 'l';
+    if (face === 'R' && within(u, 0.2, 0.8) && within(j, 2, height - 3) && i % 5 >= 1) return 'l';
+    if (j >= height - 2) return i % 4 < 2 ? awning : 'w';
+    return undefined;
+  });
+  p.roof(inset, height, rise, roof);
+};
+
 export const CONTENT_ART: Record<string, (p: Painter) => void> = {
   // A round infiltration hole with a stone rim and a sprout. Bare, so the rim is drawn here.
   biopori: (p) => {
@@ -129,5 +144,86 @@ export const CONTENT_ART: Record<string, (p: Painter) => void> = {
       if (within(a, 0.55, 0.7) && within(b, 0.55, 0.63)) return 'k';
       return 'c';
     });
+  },
+
+  // Shops and facilities share the shopfront shape and differ in colour and one sign detail.
+  warteg: shopfront('t', 'G', 'g'),
+  warkop: shopfront('N', 'r', 'y'),
+  tokoKelontong: shopfront('y', 'o', 'r', { height: 9, rise: 5 }),
+  fotokopi: (p) => {
+    shopfront('w', 'B', 'b')(p);
+    p.blob(-7, 14, 2, 'a');
+  },
+  barbershop: (p) => {
+    shopfront('c', 'R', 'w')(p);
+    // The barber pole: red and white bands on a short post.
+    for (let k = 0; k < 8; k++) p.set(TW / 2 + 10, TOP + TH / 2 - 2 - k, k % 4 < 2 ? 'r' : 'w');
+    p.set(TW / 2 + 10, TOP + TH / 2 - 10, 'b');
+  },
+  bengkel: (p) => {
+    shopfront('S', 'b', 'o', { height: 9, rise: 4, door: 'k' })(p);
+    p.box(9, 4, 'k', undefined, 0);
+  },
+  apotek: (p) => {
+    shopfront('w', 'g', 'g')(p);
+    // A red cross over the door.
+    const x = TW / 2 - 5;
+    const y = TOP + TH / 2 - 11;
+    for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]]) p.set(x + dx, y + dy, 'r');
+  },
+  koperasi: (p) => {
+    shopfront('w', 'b', 'a', { height: 10, rise: 6, inset: 2 })(p);
+    p.blob(0, 18, 2.2, 'a');
+  },
+  posSatpam: (p) => {
+    p.shadow(5);
+    p.box(5, 8, 'b', (face, u, j) => (face === 'L' && within(u, 0.2, 0.8) && within(j, 3, 6) ? 'l' : undefined));
+    p.roof(5, 8, 3, 'B');
+    // A red and white barrier arm across the front.
+    p.stroke(-4, 2, 12, 6, 2, 'w');
+    for (const k of [0, 4, 8, 12]) p.stroke(-4 + k, 2 + k / 4, -3 + k, 2 + k / 4, 2, 'r', false);
+  },
+  paud: (p) => {
+    shopfront('p', 'y', 'c', { height: 8, rise: 5 })(p);
+    p.blob(-8, 13, 2, 'r');
+    p.blob(8, 13, 2, 'b');
+  },
+  balaiWarga: (p) => {
+    p.shadow(1);
+    p.box(1, 9, 't', (face, u, j, i) => {
+      if (face === 'T') return undefined;
+      if (face === 'L' && within(u, 0.4, 0.62) && j < 6) return 'N';
+      if (i % 6 < 2 && j > 0 && j < 8) return 'w';
+      if (j >= 8) return 'R';
+      return undefined;
+    });
+    p.roof(1, 9, 8, 'R');
+  },
+  gudangMaterial: (p) => {
+    p.shadow(2);
+    p.box(2, 8, 'S', (face, u, j) => {
+      if (face === 'L' && within(u, 0.2, 0.8) && j < 6) return j === 5 ? 'N' : 'n';
+      return undefined;
+    });
+    p.roof(2, 8, 4, 'n');
+    p.box(10, 3, 'a', undefined, 8);
+  },
+  kontrakan: (p) => {
+    p.shadow(1);
+    p.box(1, 9, 'a', (face, u, j, i) => {
+      if (face === 'T') return undefined;
+      if (face === 'L' && (within(u, 0.12, 0.3) || within(u, 0.42, 0.6) || within(u, 0.72, 0.9)) && within(j, 2, 7)) return j < 5 ? 'N' : 'l';
+      if (face === 'R' && i % 6 >= 2 && within(j, 3, 7)) return 'l';
+      return undefined;
+    });
+    p.roof(1, 9, 6, 'R');
+  },
+  gerobakBakso: (p) => {
+    p.shadow(8);
+    p.box(7, 5, 'r', (face, u, j) => (face === 'L' && within(u, 0.2, 0.8) && j === 3 ? 'y' : undefined), 3);
+    p.box(9, 2, 'w', undefined, 8);
+    p.stroke(-6, -3, -12, -4, 2, 'n');
+    p.blob(-4, 2, 2, 'k');
+    p.blob(5, 2, 2, 'k');
   },
 };
