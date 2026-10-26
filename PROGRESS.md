@@ -9,6 +9,7 @@
 | 3 | Satire mechanics: combos, Buku Combo, tukang parkir, jobs, wacana, proyek mangkrak | #3 | live |
 | - | Legibility fix (font, wrapping, tap targets) and Playwright E2E scan at 320/360/390px | #4 | live |
 | - | How to play page (modelled on mainpecah) | #5 | live |
+| - | Paced tutorial: basics on first launch, contextual tips afterwards | PR open | - |
 | 4 | Events, yearly ranking, Indonesia Emas bar, juice, accessibility settings, balance fixes | #6 | live |
 
 ## What works

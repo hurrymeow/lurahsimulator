@@ -45,12 +45,57 @@ async function seed(page: Page): Promise<void> {
   await dismissModals(page);
 }
 
+test.describe('tips', () => {
+  test('a mechanic is taught once, on tap, and Skip tips silences the rest', async ({ page }) => {
+    await start(page);
+    await page.locator('#howtoGo').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    // Banjir has fired: its tip waits for a tap, with no timer.
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.s.lastEvent = { banjir: 0 };
+      a.refresh();
+    });
+    await expect(page.locator('#modal .card h2')).toHaveText('Banjir tests your selokan.');
+    await expectLegible(page, 'tip');
+    await page.waitForTimeout(1500);
+    await expect(page.locator('#modal')).toBeVisible();
+    await page.locator('#modal .tap-hint').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    // Seen once, never again, even after a reload.
+    await page.reload();
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.s.lastEvent = { banjir: 0 };
+      a.s.month = 9;
+      a.refresh();
+    });
+    // One tip at a time: tap through whatever is due, then Skip tips on the next.
+    for (let i = 0; i < 6; i++) {
+      await expect(page.locator('#modal')).toBeVisible();
+      if ((await page.locator('#modal .card h2').textContent()) === 'Every year you are ranked.') break;
+      await page.locator('#modal .tap-hint').click();
+      await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+    }
+    await expect(page.locator('#modal .card h2')).toHaveText('Every year you are ranked.');
+    await page.locator('#modal .tip-skip').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.s.stats.arrived = 1;
+      a.refresh();
+    });
+    await expect(page.locator('#modal')).toBeHidden();
+  });
+});
+
 test.describe('how to play', () => {
   test('shows on first launch, is legible, pauses the game, and stays dismissed', async ({ page }) => {
     await start(page);
     await expect(page.locator('#howto')).toBeVisible();
     await expectLegible(page, 'how to play');
-    await expect(page.locator('#howto .steps li').first()).toBeVisible();
+    await expect(page.locator('#howto .steps li')).toHaveCount(2);
     await page.locator('#howtoGo').scrollIntoViewIfNeeded();
     await page.locator('#howtoGo').click();
     await expect(page.locator('#howto')).toBeHidden();
@@ -60,6 +105,7 @@ test.describe('how to play', () => {
     await page.locator('#menu-btn').click();
     await page.locator('#act-howto').click();
     await expect(page.locator('#howto')).toBeVisible();
+    expect(await page.locator('#howto .steps li').count()).toBeGreaterThan(5);
     const speed = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.speed);
     expect(speed).toBe(0);
     await page.locator('#howtoGo').click();
