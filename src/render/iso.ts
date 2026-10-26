@@ -93,7 +93,9 @@ class Painter {
         const p = paint(face, u, j, i);
         if (p === null) continue;
         this.id = FACE_ID[face];
-        this.set(x, y, p === undefined ? shade(colour, FACE_SHADE[face]) : shade(p, FACE_SHADE[face]));
+        // Baked ambient occlusion: walls darken toward the ground they stand on.
+        const ao = face !== 'T' && z === 0 ? (j === 0 ? 0.78 : j === 1 ? 0.9 : 1) : 1;
+        this.set(x, y, shade(p === undefined ? colour : p, FACE_SHADE[face] * ao));
       }
     }
   }

@@ -91,7 +91,8 @@ function mountain(img: ImageData, cx: number, baseY: number, hw: number, h: numb
       const zig = Math.abs(((x - cx) % 16 + 16) % 16 - 8);
       const snow = y - peak < h * 0.2 + zig;
       const snowEdge = !snow && y - peak < h * 0.2 + zig + 2;
-      const c = edge || snowEdge ? INK : snow ? (x < cx ? '#fbf3e0' : '#d9cdb8') : x < cx ? '#5c9a86' : '#3f7468';
+      // Aerial perspective: the far mountains fade toward the sky colour, ink included.
+      const c = edge || snowEdge ? '#6a5a4c' : snow ? (x < cx ? '#fbf3e0' : '#e0d3bd') : x < cx ? '#8fae94' : '#6f9083';
       put(img, x, y, c);
     }
   }

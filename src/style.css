@@ -55,6 +55,18 @@ html, body {
 
 #stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
 #map { display: block; width: 100%; height: 100%; touch-action: none; image-rendering: pixelated; }
+/* Tilt-shift depth of field: the far edge of the diorama softens, like a miniature in a lens. */
+#dof {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 20%;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(1.5px);
+  backdrop-filter: blur(1.5px);
+  -webkit-mask-image: linear-gradient(#000, transparent);
+  mask-image: linear-gradient(#000, transparent);
+}
+html.no-effects #dof { display: none; }
 
 /* Slim resource bar: one row of icon + value. Tap for details. */
 #hud {

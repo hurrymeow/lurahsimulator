@@ -540,6 +540,7 @@ export class App {
     document.documentElement.classList.toggle('reduce-motion', this.settings.reduceMotion);
     document.documentElement.classList.toggle('high-contrast', this.settings.highContrast);
     this.view.effects = this.settings.effects && !this.settings.reduceMotion;
+    document.documentElement.classList.toggle('no-effects', !this.view.effects);
     this.view.motion = !this.settings.reduceMotion;
     if (!this.view.effects) this.view.fx.clear();
     audio.set(this.settings);

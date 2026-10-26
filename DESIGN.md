@@ -33,6 +33,7 @@ Follow these every session. If a change breaks one, fix the change.
 - Every panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game.
 - New panels register an `ActionButton` with a `group` instead of adding a button to the main screen.
 - Clean modern pixel UI. No cluttered Windows-XP-style panels.
+- Map art follows [ART.md](ART.md): palette, ink, shading, lighting and motion rules.
 
 ## Feedback
 

@@ -1,7 +1,8 @@
 import { rupiahShort } from '../format';
 import { def } from '../sim/content';
 import { GRID_H, GRID_W, type Building, type GameState, type ResourceId } from '../sim/types';
-import { drawTint, darkness, Fx } from './fx';
+import { Atmosphere } from './atmosphere';
+import { drawTint, darkness, dusk, Fx } from './fx';
 import { iso, TH, TOP, TW, type Art } from './iso';
 import { Crowd } from './people';
 import { buildWorld, decoAt, HORIZON, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
@@ -13,6 +14,43 @@ export const RES_COLOUR: Record<ResourceId, string> = {
   orangDalam: '#fbbf24',
   viral: '#f472b6',
 };
+
+/** Flat pieces cast no contact shadow. */
+const FLAT_AO = new Set(['selokan', 'parkir']);
+
+let aoCache: HTMLCanvasElement | null = null;
+
+/** A soft dark oval, squashed to the ground plane, for ambient occlusion under buildings. */
+function contactShadow(): HTMLCanvasElement {
+  if (aoCache) return aoCache;
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 64;
+  const ctx = c.getContext('2d')!;
+  ctx.scale(1, 0.5);
+  const g = ctx.createRadialGradient(64, 64, 8, 64, 64, 64);
+  g.addColorStop(0, 'rgba(26, 14, 8, 0.62)');
+  g.addColorStop(0.5, 'rgba(26, 14, 8, 0.38)');
+  g.addColorStop(1, 'rgba(26, 14, 8, 0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  return (aoCache = c);
+}
+
+let haloCache: HTMLCanvasElement | null = null;
+
+function sunHalo(): HTMLCanvasElement {
+  if (haloCache) return haloCache;
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const ctx = c.getContext('2d')!;
+  const g = ctx.createRadialGradient(64, 64, 16, 64, 64, 64);
+  g.addColorStop(0, 'rgba(255, 236, 170, 0.75)');
+  g.addColorStop(1, 'rgba(255, 236, 170, 0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  return (haloCache = c);
+}
 
 interface Pop {
   x: number;
@@ -74,6 +112,7 @@ export class MapView {
   clock = 0;
   readonly crowd = new Crowd();
   readonly fx = new Fx();
+  private readonly air = new Atmosphere();
   /** Income squash per tile key, by start time. */
   private bounces = new Map<number, number>();
   /** Night level this frame, 0 to 1. */
@@ -266,6 +305,15 @@ export class MapView {
     this.drawBackdrop(ctx, wx, wy, now);
 
     const sel = s.buildings.find((b) => b.uid === this.selected);
+    // Ambient occlusion: a soft contact shadow pooled round the foot of every standing building.
+    const ao = contactShadow();
+    for (const b of s.buildings) {
+      if (FLAT_AO.has(b.def)) continue;
+      const c = this.tileCentre(b.x, b.y);
+      const w = TW * 1.5 * sc;
+      ctx.drawImage(ao, c.x - w / 2, c.y - w / 4, w, w / 2);
+    }
+
     if (sel) {
       this.diamond(ctx, sel.x, sel.y);
       ctx.fillStyle = 'rgba(244, 244, 245, 0.25)';
@@ -340,6 +388,7 @@ export class MapView {
       return this.project(fx, fy).y - (tops.get(k) ?? this.project(fx, fy).y);
     });
     if (this.effects) {
+      this.air.draw(ctx, this.viewW, this.viewH, now, this.night, dusk(this.clock), this.motion);
       drawTint(ctx, this.viewW, this.viewH, this.clock);
       this.drawLights(ctx);
     }
@@ -430,6 +479,10 @@ export class MapView {
     const blink = this.motion && [0, 3200, 3450, 6400].some((at) => beat >= at && beat < at + 150);
     const bob = Math.round(Math.sin(t / 450) * 2);
     const sun = sunArt(blink);
+    // A warm halo round the sun, like light blooming through haze.
+    const halo = sunHalo();
+    const hr = SUN_SIZE * 2.4 * s;
+    ctx.drawImage(halo, wx + SUN_X * s - hr / 2, wy + (SUN_Y + bob) * s - hr / 2, hr, hr);
     ctx.drawImage(sun, wx + (SUN_X - SUN_SIZE / 2) * s, wy + (SUN_Y - SUN_SIZE / 2 + bob) * s, SUN_SIZE * s, SUN_SIZE * s);
 
     // Ground anchor row in tree art: the stretch grows upward from the roots.
