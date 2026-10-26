@@ -39,7 +39,7 @@ export class Weather {
   rain(now: number, ms = 20000): void {
     this.rainFrom = now;
     this.rainTo = now + ms;
-    this.next = this.rainTo + 60000;
+    this.next = Math.max(this.rainTo, now) + 60000;
   }
 
   /** Rain strength, 0 to 1, easing in and out at either end of a shower. */

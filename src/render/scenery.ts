@@ -265,14 +265,6 @@ export function buildWorld(): HTMLCanvasElement {
     for (let c = 0; c < 3; c++) img.data[i + c] = Math.min(255, Math.round(img.data[i + c] * f));
   }
 
-  // Stepped clouds: three stacked bars, each outlined.
-  for (const [cx, cy, w] of [[sx - 150, sy - 40, 30], [sx + 120, sy - 60, 22]]) {
-    const bars = [[cx - w / 2, cy, w], [cx - w / 2 + 5, cy - 4, w - 12], [cx - w / 2 + 10, cy - 8, w - 22]];
-    for (const [bx, by, bw] of bars)
-      for (let x = Math.round(bx) - 1; x <= Math.round(bx + bw); x++) for (let y = by - 1; y <= by + 4; y++) put(img, x, y, INK);
-    for (const [bx, by, bw] of bars)
-      for (let x = Math.round(bx); x < Math.round(bx + bw); x++) for (let y = by; y < by + 4; y++) put(img, x, y, y === by + 3 ? '#e6d7bb' : '#fbf6ea');
-  }
   mountain(img, M1, base, 130, 165);
   mountain(img, M2, base, 120, 150);
 
