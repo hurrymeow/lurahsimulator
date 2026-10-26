@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { def } from '../src/sim/content';
 import { checkDemolish, checkPlace, demolish, place, skipPermit, upgrade } from '../src/sim/rules';
 import { deserialize, serialize } from '../src/sim/save';
-import { attractTarget, buildCost, byUid, count, emptyTiles, housing, newGame, population } from '../src/sim/state';
+import { attractTarget, buildCost, byUid, count, emptyTiles, housing, newGame, population, upgradeCost } from '../src/sim/state';
 import { assign, autoPick } from '../src/sim/jobs';
 import { tick } from '../src/sim/tick';
 import type { GameState } from '../src/sim/types';
@@ -107,6 +107,17 @@ describe('placing buildings', () => {
     run(s, 2);
     expect(upgrade(s, b).ok).toBe(true);
     expect(b.level).toBe(2);
+  });
+
+  it('makes an upgrade cheaper than a second building', () => {
+    const s = newGame(20);
+    const r = place(s, 'warung', 0, 0);
+    const b = byUid(s, r.uid!)!;
+    // Half the base price per level: 750k, then 1.5M, against 1.5M for another warung.
+    expect(upgradeCost(s, b)).toBe(750_000);
+    b.level = 2;
+    expect(upgradeCost(s, b)).toBe(1_500_000);
+    expect(upgradeCost(s, b)).toBe(buildCost(s, def('warung')));
   });
 });
 

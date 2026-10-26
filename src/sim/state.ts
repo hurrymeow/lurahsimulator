@@ -1,6 +1,6 @@
 import { NAMES, TITLES } from '../data/names';
 import { EMAS } from '../data/ranking';
-import { BASE_ATTRACT, LEVEL_BONUS, START, START_RESIDENTS } from './balance';
+import { BASE_ATTRACT, LEVEL_BONUS, START, START_RESIDENTS, UPGRADE_COST_PER_LEVEL } from './balance';
 import { def } from './content';
 import { pick } from './rng';
 import { lotAt } from './area';
@@ -93,7 +93,7 @@ export function buildCost(s: GameState, d: BuildingDef): number {
 }
 
 export function upgradeCost(s: GameState, b: Building): number {
-  return price(s, def(b.def).cost * b.level);
+  return price(s, def(b.def).cost * UPGRADE_COST_PER_LEVEL * b.level);
 }
 
 export function neighbours(s: GameState, b: { x: number; y: number }, radius = 1): Building[] {

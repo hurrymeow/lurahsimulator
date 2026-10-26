@@ -4,6 +4,8 @@ export const START_RESIDENTS = 4;
 export const IURAN = 25_000;
 export const INFLATION_PER_YEAR = 0.03;
 export const LEVEL_BONUS = 0.6;
+/** An upgrade to level n+1 costs base price x this x n. Below 1, upgrading beats building again. */
+export const UPGRADE_COST_PER_LEVEL = 0.5;
 export const REFUND = 0.5;
 export const BASE_ATTRACT = 4;
 export const ARRIVE_MIN_SABAR = 25;
