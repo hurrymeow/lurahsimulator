@@ -1,7 +1,7 @@
 import { NAMES, TITLES } from '../data/names';
 import { EMAS } from '../data/ranking';
 import { BASE_ATTRACT, DECOR_CAP, LEVEL_BONUS, SPRAWL_FREE, SPRAWL_STEP, START, START_RESIDENTS } from './balance';
-import { def, hasDef } from './content';
+import { def, footprintFor } from './content';
 import { pick } from './rng';
 import { lotAt } from './area';
 import { GRID_H, GRID_W, setGrid, type Building, type BuildingDef, type GameState, type Resident, type StageState } from './types';
@@ -65,7 +65,7 @@ export function addResident(s: GameState): Resident {
 export const year = (s: GameState) => Math.floor(s.month / 12) + 1;
 export const inBounds = (x: number, y: number) => x >= 0 && y >= 0 && x < GRID_W && y < GRID_H;
 /** Tiles on each side of a building's footprint. */
-export const footprintOf = (id: string) => (hasDef(id) ? def(id).footprint ?? 1 : 1);
+export const footprintOf = footprintFor;
 
 /** True when the tile is one of the building's footprint tiles. */
 export function covers(b: { def: string; x: number; y: number }, x: number, y: number): boolean {
@@ -83,7 +83,18 @@ export function tilesOf(b: { def: string; x: number; y: number }): { x: number; 
   return out;
 }
 
-export const buildingAt = (s: GameState, x: number, y: number) => s.buildings.find((b) => covers(b, x, y));
+export function buildingAt(s: GameState, x: number, y: number): Building | undefined {
+  // Hot: runs for every tile probe. A plain loop, and the footprint is only looked up for a building up and to the left.
+  const all = s.buildings;
+  for (let i = 0; i < all.length; i++) {
+    const b = all[i];
+    const dx = x - b.x;
+    const dy = y - b.y;
+    if (dx < 0 || dy < 0) continue;
+    if ((dx === 0 && dy === 0) || (dx < footprintOf(b.def) && dy < footprintOf(b.def))) return b;
+  }
+  return undefined;
+}
 export const byUid = (s: GameState, uid: number) => s.buildings.find((b) => b.uid === uid);
 export const population = (s: GameState) => s.residents.length;
 export const levelMult = (level: number) => 1 + LEVEL_BONUS * (level - 1);
@@ -136,14 +147,15 @@ export function neighbours(s: GameState, b: { x: number; y: number; def?: string
 }
 
 export function emptyTiles(s: GameState): { x: number; y: number }[] {
-  const taken = new Set<number>();
+  const taken = new Uint8Array(GRID_W * GRID_H);
   for (const b of s.buildings) {
     const n = footprintOf(b.def);
-    for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) taken.add((b.y + dy) * GRID_W + b.x + dx);
+    if (n === 1) taken[b.y * GRID_W + b.x] = 1;
+    else for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) taken[(b.y + dy) * GRID_W + b.x + dx] = 1;
   }
   const out: { x: number; y: number }[] = [];
   // Residents only settle inside the player's own RT, never on a seam lot or in a neighbour.
-  for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (!taken.has(y * GRID_W + x) && lotAt(x, y) === 'rt') out.push({ x, y });
+  for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (!taken[y * GRID_W + x] && lotAt(x, y) === 'rt') out.push({ x, y });
   return out;
 }
 
@@ -164,11 +176,15 @@ export function pathMult(s: GameState, b: Building): number {
   if (!def(b.def).income || def(b.def).pathIncome) return 1;
   let bonus = 0;
   const n = footprintOf(b.def);
-  const edge: [number, number][] = [];
-  for (let i = 0; i < n; i++) edge.push([b.x + i, b.y - 1], [b.x + i, b.y + n], [b.x - 1, b.y + i], [b.x + n, b.y + i]);
-  for (const [x, y] of edge) {
+  const look = (x: number, y: number) => {
     const o = buildingAt(s, x, y);
     if (o && isWorking(o)) bonus = Math.max(bonus, def(o.def).pathIncome ?? 0);
+  };
+  for (let i = 0; i < n; i++) {
+    look(b.x + i, b.y - 1);
+    look(b.x + i, b.y + n);
+    look(b.x - 1, b.y + i);
+    look(b.x + n, b.y + i);
   }
   return 1 + bonus;
 }

@@ -6,7 +6,7 @@ import { def, gateOf, hasDef } from './content';
 import { gateOpen } from './gate';
 import { neighbourAt } from './grow';
 import { stageTitle } from './stages';
-import { addBuilding, buildCost, buildingAt, count, housing, inBounds, population, tilesOf, upgradeCost, year } from './state';
+import { addBuilding, buildCost, buildingAt, count, housing, inBounds, footprintOf, population, tilesOf, upgradeCost, year } from './state';
 import type { Building, BuildingDef, CheckResult, GameState } from './types';
 
 export { gateOpen };
@@ -38,7 +38,7 @@ export function checkPlace(s: GameState, id: string, x: number, y: number): Chec
   const missing: string[] = [];
   if (!d.placeable) missing.push(t('sim.cannotPlace', { name: bName(d) }));
   missing.push(...requirementGaps(s, d));
-  const tiles = tilesOf({ def: id, x, y });
+  const tiles = footprintOf(id) === 1 ? [{ x, y }] : tilesOf({ def: id, x, y });
   const off = tiles.find((p) => !inBounds(p.x, p.y));
   const hit = off ? undefined : tiles.map((p) => buildingAt(s, p.x, p.y) ?? neighbourAt(s, p.x, p.y)).find(Boolean);
   const lots = off ? [] : tiles.map((p) => lotAt(p.x, p.y));
