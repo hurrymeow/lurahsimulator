@@ -1,12 +1,13 @@
 import type { App } from '../app';
 import type { Settings } from '../settings';
 import { h } from './dom';
+import { audio } from '../audio';
 import { closeSheet, openSheet } from './sheet';
 
 /** Settings rows added by later systems. */
 export const settingsExtras: ((app: App) => Node[])[] = [];
 
-const TOGGLES: { key: keyof Settings; label: string; help: string }[] = [
+const TOGGLES: { key: 'effects' | 'haptics' | 'largeText' | 'reduceMotion' | 'highContrast'; label: string; help: string }[] = [
   { key: 'effects', label: 'Effects', help: 'Number pops rise, buildings pop in, chips flash, screen shakes on bad news. Off keeps the numbers, drops the motion.' },
   { key: 'haptics', label: 'Haptics', help: 'Short vibrations on build, unlock and events. Phones only.' },
   { key: 'largeText', label: 'Large text', help: 'Bigger text in panels and buttons.' },
@@ -30,6 +31,24 @@ function toggleRow(app: App, t: (typeof TOGGLES)[number]): Node {
   return h('div', { class: 'action' }, btn, h('p', { class: 'meta' }, t.help));
 }
 
+const SLIDERS: { key: 'musicVol' | 'sfxVol'; label: string; help: string }[] = [
+  { key: 'musicVol', label: 'Music volume', help: 'Background tune. 0 turns it off.' },
+  { key: 'sfxVol', label: 'Sound effects volume', help: 'Clicks, building and event sounds. 0 turns them off.' },
+];
+
+function sliderRow(app: App, v: (typeof SLIDERS)[number]): Node {
+  const out = h('b', {}, `${app.settings[v.key]}%`);
+  const input = h('input', { type: 'range', min: '0', max: '100', step: '10', value: String(app.settings[v.key]), 'aria-label': v.label, class: 'slider' }) as HTMLInputElement;
+  input.addEventListener('input', () => {
+    app.settings[v.key] = Number(input.value);
+    out.textContent = `${input.value}%`;
+    app.applySettings();
+    if (v.key === 'sfxVol') audio.preview();
+    else audio.start();
+  });
+  return h('div', { class: 'action' }, h('label', { class: 'slider-row' }, h('span', {}, v.label), out), input, h('p', { class: 'meta' }, v.help));
+}
+
 export function openSettings(app: App): void {
   let armed = false;
   const reset = h('button', { class: 'btn' }, 'New game');
@@ -44,6 +63,7 @@ export function openSettings(app: App): void {
     closeSheet();
   });
   openSheet('Settings', [
+    ...SLIDERS.map((v) => sliderRow(app, v)),
     ...TOGGLES.map((t) => toggleRow(app, t)),
     ...settingsExtras.flatMap((fn) => fn(app)),
     h('div', { class: 'action' }, reset),

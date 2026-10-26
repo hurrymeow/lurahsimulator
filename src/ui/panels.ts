@@ -59,7 +59,7 @@ export function openWacana(app: App): void {
         actionButton(`Announce · ${rupiah(wacanaCost(s))}`, check, () => {
           announce(s, w.id);
           app.view.pop(s.buildings.find((b) => b.def === 'kantorRT')!.x, s.buildings.find((b) => b.def === 'kantorRT')!.y, 'rupiah', -wacanaCost(s));
-          app.haptic(10);
+          app.tap(10);
           app.save();
           app.refresh();
           openWacana(app);
@@ -98,7 +98,7 @@ export function mangkrakExtras(app: App, b: Building): Node[] {
     h('p', { class: 'meta' }, cheap ? `Viral is high enough. Restart at normal price: ${rupiah(cost)}.` : `Restart costs double: ${rupiah(cost)}. Reach ${VIRAL_REPAIR_AT} Viral (have ${Math.floor(s.res.viral)}) for the normal price.`),
     actionButton(`Restart · ${rupiah(cost)}`, checkRestart(s, b), () => {
       restart(s, b);
-      app.haptic(15);
+      app.tap(15);
       app.save();
       app.refresh();
       app.inspect(b.uid);
@@ -121,7 +121,7 @@ export function damagedExtras(app: App, b: Building): Node[] {
     actionButton(cost === 0 ? 'Repair · free (viral)' : `Repair · ${rupiah(cost)}`, checkRepair(s, b), () => {
       repair(s, b);
       app.view.burst(b.x, b.y);
-      app.haptic(15);
+      app.tap(15);
       app.save();
       app.refresh();
       app.inspect(b.uid);

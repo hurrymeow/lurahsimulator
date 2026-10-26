@@ -57,7 +57,7 @@ export function inspect(app: App, uid: number): void {
   if (b.status === 'permit') {
     lines.push(actionButton('Skip queue · 1 Orang Dalam', checkSkipPermit(s, b), () => {
       skipPermit(s, b);
-      app.haptic(15);
+      app.tap(15);
       done();
     }, true));
   }
@@ -65,7 +65,7 @@ export function inspect(app: App, uid: number): void {
     lines.push(actionButton(b.level >= d.maxLevel ? 'Max level' : `Upgrade · ${rupiah(upgradeCost(s, b))}`, checkUpgrade(s, b), () => {
       upgrade(s, b);
       app.view.burst(b.x, b.y);
-      app.haptic(15);
+      app.tap(15);
       done();
     }, b.status === 'active'));
   }

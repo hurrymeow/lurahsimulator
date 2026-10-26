@@ -143,6 +143,26 @@ test.describe('events, ranking, settings', () => {
     expect(saved.length).toBe(5);
   });
 
+  test('volume sliders start audio on first tap and persist', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    const music = page.locator('#sheet input[aria-label="Music volume"]');
+    const sfx = page.locator('#sheet input[aria-label="Sound effects volume"]');
+    await expect(music).toHaveValue('50');
+    await expect(sfx).toHaveValue('100');
+    await music.fill('20');
+    await sfx.fill('0');
+    await expectLegible(page, 'settings with volume sliders');
+    await page.reload();
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    await expect(page.locator('#sheet input[aria-label="Music volume"]')).toHaveValue('20');
+    await expect(page.locator('#sheet input[aria-label="Sound effects volume"]')).toHaveValue('0');
+  });
+
   test('large text and high contrast stay legible on busy panels', async ({ page }) => {
     await start(page);
     await dismissModals(page);
