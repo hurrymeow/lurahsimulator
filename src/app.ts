@@ -128,6 +128,7 @@ export class App {
     if (badge) badge.hidden = this.held || !autoPaused(this.pauseInputs());
     const bar = document.getElementById('month-progress');
     if (bar) bar.style.width = `${(this.acc / MONTH_MS) * 100}%`;
+    this.view.frozen = !this.running;
     this.view.clock = this.s.month + this.acc / MONTH_MS;
     this.view.draw(this.s);
     requestAnimationFrame((t) => this.frame(t));
