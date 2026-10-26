@@ -15,9 +15,9 @@ export interface JobDef {
 // Slots come from buildings (see jobSlots in data/buildings.ts).
 export const JOBS: JobDef[] = [
   { id: 'pns', appeal: 20, name: 'PNS', blurb: 'Produces nothing. Only stat: Pensiun, which fills for 10 years then costs the kas a payout.', perMonth: {}, perLevel: { resources: [], boost: 0 } },
-  { id: 'ojol', appeal: 90, name: 'Ojol', blurb: 'Komisi to the kas, paid for in Sabar by hujan and macet.', perMonth: { rupiah: 90_000, sabar: -0.3 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
-  { id: 'influencer', appeal: 50, name: 'Influencer', blurb: 'Makes real Viral. It decays 10% a month, so keep posting.', perMonth: { viral: 3 }, perLevel: { resources: ['viral'], boost: 0.25 } },
-  { id: 'buzzer', appeal: 0, name: 'Buzzer', blurb: 'Pays well and makes fake Viral fast. Gets exposed sooner or later.', perMonth: { rupiah: 60_000, viral: 6 }, perLevel: { resources: ['viral'], boost: 0.25 } },
+  { id: 'ojol', appeal: 90, name: 'Ojol', blurb: 'Komisi to the kas, paid for in Patience by hujan and macet.', perMonth: { rupiah: 90_000, sabar: -0.3 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
+  { id: 'influencer', appeal: 50, name: 'Influencer', blurb: 'Makes real Virality. It decays 10% a month, so keep posting.', perMonth: { viral: 3 }, perLevel: { resources: ['viral'], boost: 0.25 } },
+  { id: 'buzzer', appeal: 0, name: 'Buzzer', blurb: 'Pays well and makes fake Virality fast. Gets exposed sooner or later.', perMonth: { rupiah: 60_000, viral: 6 }, perLevel: { resources: ['viral'], boost: 0.25 } },
 ];
 
 export const jobDef = (id: JobId): JobDef | undefined => JOBS.find((j) => j.id === id);

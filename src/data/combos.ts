@@ -33,7 +33,7 @@ export const COMBOS: ComboDef[] = [
     story: 'Nobody is on ronda. Everyone is on wifi. The kopi sachet sells itself.',
     incomeMult: { warung: 1.5 },
     perMonth: { sabar: 1, viral: 1 },
-    effect: 'Warung income x1.5. +1 Sabar and +1 Viral a month.',
+    effect: 'Warung income x1.5. +1 Patience and +1 Virality a month.',
   },
   {
     id: 'rivalitas',
@@ -44,7 +44,7 @@ export const COMBOS: ComboDef[] = [
     story: 'Promo war. Diskon every day. The queue for the diskon is the real product.',
     incomeMult: { indomaret: 1.4, alfamart: 1.4 },
     perMonth: { sabar: -2 },
-    effect: 'Both stores income x1.4. -2 Sabar a month from diskon queues.',
+    effect: 'Both stores income x1.4. -2 Patience a month from diskon queues.',
   },
   {
     id: 'rapatMalam',
@@ -54,7 +54,7 @@ export const COMBOS: ComboDef[] = [
     hint: 'The office and the hut share a late-night secret.',
     story: 'Decisions are made at the pos ronda at 11pm. Minutes are never taken.',
     perMonth: { orangDalam: 0.4 },
-    effect: '+0.4 Orang Dalam a month.',
+    effect: '+0.4 Orang Inside a month.',
   },
   {
     id: 'anakKos',
@@ -65,7 +65,7 @@ export const COMBOS: ComboDef[] = [
     story: 'Midnight kopi, wifi voucher, and a rent that is always three days late.',
     incomeMult: { warung: 1.3 },
     perMonth: { viral: 1 },
-    effect: 'Warung income x1.3. +1 Viral a month.',
+    effect: 'Warung income x1.3. +1 Virality a month.',
   },
   {
     id: 'panjatPinang',
