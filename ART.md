@@ -50,7 +50,11 @@ No third-party art or names. Everything is drawn in code.
 
 ## Shading
 
-- Flat, two-tone cel shading. No dithering, no speckle noise.
+- Flat, two-tone cel shading on every form. No dithering.
+- Texture lives inside the cel tones, in a few flat painted steps, never as random noise:
+  - Roofs: tile courses every third row (lip 0.86x, crest 1.06x) with staggered joints.
+  - Plain walls and trunks: a faint plank or bark line every third row (0.93x).
+  - Leaf clumps: small bright sprigs on the lit side and dark gaps in the shade.
 - Light comes from the top left. The left face is the base colour, the right face is 0.72x and
   the top is 1.18x (`FACE_SHADE`).
 - Leaf clumps: a lit cap in the top left (1.3x), base, and a shaded rim in the bottom right (0.72x).
@@ -79,19 +83,26 @@ Scenery colours:
 
 | Area | Colours |
 | --- | --- |
-| Grass checker | `#7a9a45`, `#82a34b` |
-| Road | `#d08a52` |
+| Grass | Clumps in `#6c8b3a`, `#78993f`, `#84a748`, `#92b553`, blade tips `#a8c768`, faint tile checker |
+| Road | Packed dirt `#b87444` to `#d99a62`, pebbles `#efb878` |
+| Fallen leaves | `#e57d2e`, `#f4b935`, `#df4a2c`, `#c9a14a`, scattered on grass, road and kebun |
+| Cliff | Strata `#8a5a32`, `#9a6236`, `#7a4c2a`, grass lip `#5f8a3c`, foot `#5e3a22` |
 | Sawah | `#9cc155` / `#86ab45` rows, ripe `#e8b440` / `#d39a32`, bunds `#8a5a32` |
 | Kebun, hutan | `#5f8a3c`, `#4a7334` |
-| Beach, sea | `#efd49a`, `#3f8f8c` with `#7fc4b8` wave dashes |
-| Sky sunburst | `#f3d9a8` and `#f7e5bd`, 32 rays from the sun |
-| Mountains | Hazed toward the sky: `#8fae94` lit, `#6f9083` shade, ink `#6a5a4c` |
+| Beach, sea | Sand `#e6c486` to `#f3daa2` with ripples, sea `#367f80` to `#4a9b96` with `#8fd0c2` wave dashes |
+| Sky | Deep blue `#3f6fae` down to warm haze `#f3d9a8` at the horizon, banded in steps, 32 lighter rays |
+| Clouds | Stacked slabs, `#f3efe6` lit, `#c9c3dc` underside, no ink |
+| Mountains | Hazed toward the sky: `#93b0ac` lit, `#6f8d90` shade, straight strata, forested feet, ink `#5a6a74` |
+| Tree line | Straight-sided pines on the horizon, `#6e9580` lit, `#57806c` shade |
 
 Rules:
 
 - Warm first. Cool colours (teal, blue) are accents, never the main field.
 - Saturated, but not neon. If a colour glows on the dark UI, pull it toward cream or brown.
 - Far things fade toward the sky colour (aerial perspective), ink included.
+- Ground texture uses clumps squashed 2:1, so they lie flat on the isometric plane.
+- The kampung is a raised block: where land meets the beach or the world's edge, a 7-pixel
+  dirt cliff drops away. That gives the diorama its depth.
 - UI chrome stays Mono Dark. Colour belongs to the map and to resource meaning.
 
 ## Lighting and atmosphere
@@ -114,8 +125,8 @@ Layers, from the ground up (`src/render/map.ts`, `src/render/atmosphere.ts`):
    the deeper vignette. A frame draws one full-screen blit. Never use per-frame blend modes such
    as `soft-light` or `screen` over the whole view: they cost about 8 ms a frame and fail the
    frame-rate test on slow machines.
-6. **Dust motes.** 28 soft warm motes drift up and to the right by day. At night they become
-   blinking green-yellow fireflies.
+6. **Dust motes and leaves.** 28 soft warm motes drift up and to the right by day. At night they
+   become blinking green-yellow fireflies. Ten outlined leaves tumble down on the breeze.
 7. **Night tint, then lit windows.** Lit windows draw above the tint.
 8. **Tilt-shift.** The top 20% of the map gets a 1.5px backdrop blur that fades out downward
    (`#dof` in `style.css`). Never blur the tiles players tap.

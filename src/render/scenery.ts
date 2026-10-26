@@ -3,10 +3,11 @@
 import { GRID_H, GRID_W } from '../sim/types';
 import { INK, TH, TOP, TW } from './iso';
 
-// Flat colour fields with ink lines where land types meet, a sunburst sky and a grinning sun.
-export const SKY = '#f3d9a8';
-/** The second band of the sunburst. */
-const RAY = '#f7e5bd';
+// Painterly ground (clumped grass, dirt with pebbles, fallen leaves) with ink lines where land
+// types meet, a raised kampung that drops to the beach in a cliff, a deep blue sunburst sky with
+// soft clouds, and a grinning sun.
+/** Top of the sky, also the fill past the world's top edge. */
+export const SKY = '#3f6fae';
 export const SEA = '#3f8f8c';
 
 /** World extent in tiles, beyond the buildable grid. */
@@ -57,26 +58,66 @@ function terrain(tx: number, ty: number): Terrain {
 
 const hex = (c: string) => parseInt(c.slice(1), 16);
 
+/** Smooth value noise, 0 to 1, on a grid of the given cell size. */
+function vnoise(x: number, y: number, cell: number): number {
+  const gx = x / cell;
+  const gy = y / cell;
+  const x0 = Math.floor(gx);
+  const y0 = Math.floor(gy);
+  const fx = gx - x0;
+  const fy = gy - y0;
+  const sx = fx * fx * (3 - 2 * fx);
+  const sy = fy * fy * (3 - 2 * fy);
+  const top = hash(x0, y0) + (hash(x0 + 1, y0) - hash(x0, y0)) * sx;
+  const bot = hash(x0, y0 + 1) + (hash(x0 + 1, y0 + 1) - hash(x0, y0 + 1)) * sx;
+  return top + (bot - top) * sy;
+}
+
+/** Clumpy texture, squashed 2:1 so clumps lie flat on the isometric ground. */
+function clumps(x: number, y: number): number {
+  return vnoise(x, y * 2, 9) * 0.65 + vnoise(x + 71, y * 2 + 13, 3.5) * 0.35;
+}
+
+/** Picks one of a few tones from a 0..1 value, so texture stays in flat painted steps. */
+const tone = (v: number, tones: string[]) => tones[Math.max(0, Math.min(tones.length - 1, Math.floor(v * tones.length)))];
+
+const GRASS = ['#6c8b3a', '#78993f', '#84a748', '#92b553'];
+const KEBUN = ['#4f7733', '#5a843a', '#669142'];
+const HUTAN = ['#3c6229', '#466e30', '#517a37'];
+const DIRT = ['#b87444', '#c4804b', '#d08a52', '#d99a62'];
+const SAND = ['#e6c486', '#edd093', '#f3daa2'];
+
 function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx: number, ty: number): string {
+  const n = clumps(x, y);
+  const speck = hash(x * 7 + 3, y * 13 + 1);
   switch (t) {
     case 'grass':
-      return (tx + ty) % 2 ? '#7a9a45' : '#82a34b';
+      // Painted clumps with bright blade tips. A faint tile checker stays so plots still read.
+      if (speck < 0.035) return '#a8c768';
+      if (speck > 0.975) return '#5a7a30';
+      return tone(n * 0.9 + ((tx + ty) % 2 ? 0 : 0.1), GRASS);
     case 'road':
-      return '#d08a52';
+      // Packed dirt in worn patches, with pebbles that catch the light on top.
+      if (speck < 0.02) return '#efb878';
+      if (speck > 0.985) return '#9a5e34';
+      return tone(n, DIRT);
     case 'sawah':
       // Pematang bunds round each plot, then straight rows of rice. Some plots are ripe and gold.
-      if (a < 0.07 || b < 0.07) return '#8a5a32';
-      if ((tx * 3 + ty) % 5 === 0) return Math.floor(a * 8) % 2 ? '#e8b440' : '#d39a32';
-      return Math.floor(a * 8) % 2 ? '#9cc155' : '#86ab45';
+      if (a < 0.07 || b < 0.07) return n > 0.5 ? '#8a5a32' : '#7d5130';
+      if ((tx * 3 + ty) % 5 === 0) return Math.floor(a * 8) % 2 ? (n > 0.6 ? '#f0c050' : '#e8b440') : '#d39a32';
+      return Math.floor(a * 8) % 2 ? (n > 0.6 ? '#a8cb5e' : '#9cc155') : n < 0.3 ? '#7a9e3f' : '#86ab45';
     case 'kebun':
-      return '#5f8a3c';
+      return speck < 0.03 ? '#7aa04a' : tone(n, KEBUN);
     case 'hutan':
-      return '#4a7334';
+      return speck < 0.03 ? '#628a40' : tone(n, HUTAN);
     case 'beach':
-      return '#efd49a';
+      // Sand with wind ripples along the shore.
+      if ((x + 2 * y + Math.floor(n * 6)) % 11 === 0) return '#dcb778';
+      return tone(n, SAND);
     case 'sea':
-      // Short straight wave dashes.
-      return (x + 2 * y) % 24 < 4 && y % 6 === 0 ? '#7fc4b8' : SEA;
+      // Shimmering bands and short straight wave dashes.
+      if ((x + 2 * y) % 24 < 4 && y % 6 === 0) return '#8fd0c2';
+      return n > 0.62 ? '#4a9b96' : n < 0.3 ? '#367f80' : SEA;
   }
 }
 
@@ -91,8 +132,21 @@ function mountain(img: ImageData, cx: number, baseY: number, hw: number, h: numb
       const zig = Math.abs(((x - cx) % 16 + 16) % 16 - 8);
       const snow = y - peak < h * 0.2 + zig;
       const snowEdge = !snow && y - peak < h * 0.2 + zig + 2;
+      // Rock strata run parallel to each slope, and forest darkens the lower flanks.
+      const along = x < cx ? x + (y - peak) * (hw / h) : x - (y - peak) * (hw / h);
+      const strata = Math.floor(along) % 12 === 0;
+      const forest = y - peak > h * 0.62 + Math.abs(((x % 14) + 14) % 14 - 7);
+      const lit = x < cx;
       // Aerial perspective: the far mountains fade toward the sky colour, ink included.
-      const c = edge || snowEdge ? '#6a5a4c' : snow ? (x < cx ? '#fbf3e0' : '#e0d3bd') : x < cx ? '#8fae94' : '#6f9083';
+      const c = edge || snowEdge
+        ? '#5a6a74'
+        : snow
+          ? lit ? '#f4f1ea' : '#cfd6dc'
+          : forest
+            ? lit ? '#6f9a7c' : '#577f69'
+            : strata
+              ? lit ? '#7f9fa0' : '#5f7d84'
+              : lit ? '#93b0ac' : '#6f8d90';
       put(img, x, y, c);
     }
   }
@@ -115,11 +169,24 @@ export function buildWorld(): HTMLCanvasElement {
   const sx = SUN_X;
   const sy = SUN_Y;
 
-  // Sunburst sky above the horizon: straight rays fanning out from the sun. Sea elsewhere.
+  // Deep blue sky that warms toward the horizon haze over the last 190 rows, the part the view
+  // can reach, with lighter sunburst rays from the sun.
+  const SKY_STOPS: [number, number[]][] = [[0, [63, 111, 174]], [0.55, [126, 176, 214]], [0.85, [214, 214, 196]], [1, [243, 217, 168]]];
+  const skyAt = (k: number, ray: boolean): string => {
+    let i = 0;
+    while (i < SKY_STOPS.length - 2 && k > SKY_STOPS[i + 1][0]) i++;
+    const [k0, c0] = SKY_STOPS[i];
+    const [k1, c1] = SKY_STOPS[i + 1];
+    const f = Math.min(1, Math.max(0, (k - k0) / (k1 - k0)));
+    // Banded in eight steps per stop, so the gradient stays a painted, pixel-art ramp.
+    const q = Math.round(f * 8) / 8;
+    const ch = (j: number) => Math.round(c0[j] + (c1[j] - c0[j]) * q + (ray ? 14 : 0));
+    return `#${[0, 1, 2].map((j) => Math.min(255, ch(j)).toString(16).padStart(2, '0')).join('')}`;
+  };
   for (let y = 0; y < WORLD_H; y++)
     for (let x = 0; x < WORLD_W; x++) {
-      if (y >= HORIZON) put(img, x, y, SEA);
-      else put(img, x, y, Math.floor(((Math.atan2(y - sy, x - sx) / Math.PI + 1) * 16)) % 2 ? RAY : SKY);
+      if (y >= HORIZON) put(img, x, y, groundColour('sea', 0, 0, x, y, 0, 0));
+      else put(img, x, y, skyAt(Math.max(0, 1 - (HORIZON - y) / 190), Math.floor(((Math.atan2(y - sy, x - sx) / Math.PI + 1) * 16)) % 2 === 1));
     }
 
   // Ground tiles. Each pixel remembers its terrain, so ink lines can follow every border.
@@ -138,6 +205,24 @@ export function buildWorld(): HTMLCanvasElement {
       land[y * WORLD_W + x] = KINDS.indexOf(t) + 1;
       put(img, x, y, groundColour(t, a - tx, b - ty, x, y, tx, ty));
     }
+  // The kampung stands on raised land: where it meets the beach, or the world's front edge, a dirt
+  // cliff drops in strata with a grassy lip, like a diorama block. Kind 8, so the ink pass outlines it.
+  const LOW = new Set([6, 7]);
+  const CLIFF = 7;
+  for (let x = 0; x < WORLD_W; x++)
+    for (let y = HORIZON; y < WORLD_H - 1; y++) {
+      const k = y * WORLD_W + x;
+      // Only real land casts a cliff, never cliff already drawn, so faces do not stack.
+      if (!land[k] || land[k] === 8 || LOW.has(land[k]) || !(LOW.has(land[k + WORLD_W]) || !land[k + WORLD_W])) continue;
+      for (let d = 1; d <= CLIFF && y + d < WORLD_H; d++) {
+        const kk = k + d * WORLD_W;
+        if (land[kk] !== 6 && land[kk] !== 7 && land[kk] !== 0) break;
+        land[kk] = 8;
+        const band = d === 1 ? '#5f8a3c' : d % 3 === 0 ? '#7a4c2a' : vnoise(x, y + d, 4) > 0.5 ? '#9a6236' : '#8a5a32';
+        put(img, x, y + d, d === CLIFF ? '#5e3a22' : band);
+      }
+    }
+
   // Ink where two land types meet, and along the horizon. Sea meeting the open sea stays clean.
   for (let y = HORIZON; y < WORLD_H - 1; y++)
     for (let x = 0; x < WORLD_W - 1; x++) {
@@ -159,6 +244,50 @@ export function buildWorld(): HTMLCanvasElement {
   }
   mountain(img, M1, base, 130, 165);
   mountain(img, M2, base, 120, 150);
+
+  // Soft blocky clouds drifting in front of the peaks: stacked slabs, lit on top and shaded lilac
+  // underneath, no ink.
+  for (const [cx, cy, w] of [[sx - 70, sy - 38, 44], [sx + 72, sy - 82, 48], [sx - 28, sy - 118, 34], [sx + 190, sy - 50, 52], [sx - 200, sy - 90, 56], [sx + 300, sy - 110, 44], [sx - 330, sy - 40, 48]]) {
+    const slabs = [[-w / 2, 0, w, 7], [-w / 2 + w * 0.15, -6, w * 0.6, 7], [-w / 2 + w * 0.35, -11, w * 0.35, 6], [-w / 2 + w * 0.55, -3, w * 0.4, 6]];
+    for (const [ox, oy, sw, sh] of slabs)
+      for (let y = 0; y < sh; y++)
+        for (let x = 0; x < sw; x++) {
+          const px = Math.round(cx + ox + x);
+          const py = Math.round(cy + oy + y);
+          if (px < 0 || py < 0 || px >= WORLD_W || py >= HORIZON) continue;
+          put(img, px, py, y >= sh - 2 ? '#c9c3dc' : y === 0 || x === 0 ? '#ffffff' : '#f3efe6');
+        }
+  }
+
+  // A hazy pine tree line along the horizon, in front of the mountains' feet: straight-sided
+  // triangles, lit on the left.
+  for (let x0 = -4; x0 < WORLD_W; x0 += 5 + Math.floor(hash(x0, 7) * 4)) {
+    const h = 8 + Math.floor(hash(x0, 3) * 9);
+    const half = Math.ceil(h / 3);
+    for (let y = 0; y < h; y++) {
+      const span = Math.floor((half * y) / h);
+      for (let dx = -span; dx <= span; dx++) {
+        const px = x0 + dx;
+        const py = HORIZON - h + y;
+        if (px < 0 || px >= WORLD_W || py < 0) continue;
+        put(img, px, py, dx < 0 ? '#6e9580' : '#57806c');
+      }
+    }
+  }
+
+  // Fallen leaves scattered over the grass, road and gardens, like an afternoon after a breeze.
+  const LEAVES = ['#e57d2e', '#f4b935', '#df4a2c', '#c9a14a'];
+  for (let y = HORIZON + 1; y < WORLD_H - 1; y++)
+    for (let x = 0; x < WORLD_W - 2; x++) {
+      const kind = land[y * WORLD_W + x];
+      if (kind !== 1 && kind !== 2 && kind !== 4) continue;
+      const r = hash(x * 31 + 7, y * 17 + 11);
+      if (r > (kind === 4 ? 0.006 : 0.0035)) continue;
+      const c = LEAVES[Math.floor(hash(x, y * 3) * LEAVES.length)];
+      put(img, x, y, c);
+      put(img, x + 1, y, c);
+      if (r < 0.0012) put(img, x + 1, y - 1, c);
+    }
   ctx.putImageData(img, 0, 0);
 
   return c;

@@ -96,7 +96,9 @@ export class Painter {
         this.id = FACE_ID[face];
         // Baked ambient occlusion: walls darken toward the ground they stand on.
         const ao = face !== 'T' && z === 0 ? (j === 0 ? 0.78 : j === 1 ? 0.9 : 1) : 1;
-        this.set(x, y, shade(p === undefined ? colour : p, FACE_SHADE[face] * ao));
+        // Plain walls get faint plank or course lines, so they read as built, not flat.
+        const grain = p === undefined && face !== 'T' && j % 3 === 2 ? 0.93 : 1;
+        this.set(x, y, shade(p === undefined ? colour : p, FACE_SHADE[face] * ao * grain));
       }
     }
   }
@@ -122,7 +124,13 @@ export class Painter {
       this.id++;
       for (let y = Math.floor(apex[1]); y <= Math.ceil(F[1]); y++)
         for (let x = Math.floor(L[0]); x < Math.ceil(R[0]); x++)
-          if (inTri(x + 0.5, y + 0.5, p, q, apex)) this.set(x, y, shade(paint(x, y) ?? colour, f));
+          if (inTri(x + 0.5, y + 0.5, p, q, apex)) {
+            // Tile courses every third row, with staggered joints, darker under each lip.
+            const row = Math.floor(y - apex[1]);
+            const course = row % 3 === 2 ? 0.86 : row % 3 === 0 ? 1.06 : 1;
+            const joint = row % 3 !== 2 && (x + (Math.floor(row / 3) % 2) * 2) % 4 === 0 ? 0.93 : 1;
+            this.set(x, y, shade(paint(x, y) ?? colour, f * course * joint));
+          }
     }
   }
 
@@ -147,7 +155,11 @@ export class Painter {
         const ey = (y + 0.5 - cy) / (r * 0.85);
         const d = ex * ex + ey * ey;
         if (d > 1) continue;
-        this.set(x, y, shade(colour, ex + ey < -0.7 ? 1.3 : ex + ey > 0.5 ? 0.72 : 1));
+        // Cel light, then small leaf clusters: bright sprigs on the lit side, dark gaps in the shade.
+        const light = ex + ey < -0.7 ? 1.3 : ex + ey > 0.5 ? 0.72 : 1;
+        const n = speck(x, y);
+        const leaf = n < 0.12 && ex + ey < 0.2 ? 1.14 : n > 0.9 && ex + ey > -0.4 ? 0.84 : 1;
+        this.set(x, y, shade(colour, light * leaf));
       }
   }
 
@@ -206,6 +218,13 @@ export class Painter {
     }
     return { canvas: c, alpha, height: top };
   }
+}
+
+/** Stable per-pixel noise for sprite texture. */
+function speck(x: number, y: number): number {
+  let h = Math.imul(x * 73856093 ^ y * 19349663, 0x5bd1e995);
+  h ^= h >>> 15;
+  return (h >>> 0) / 4294967296;
 }
 
 function inTri(x: number, y: number, a: number[], b: number[], c: number[]): boolean {
@@ -380,9 +399,15 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
       p.set(x, y, 'y');
     }
   },
+  // Tall grass tufts: a few straight blades fanning out, dark at the root and bright at the tip.
   rumput: (p) => {
     p.bare = true;
-    for (const [dx, dy] of [[-4, 1], [-3, 0], [-2, 1], [3, -1], [4, -2], [5, -1]]) p.set(TW / 2 + dx, TOP + TH / 2 + dy, '#3f6a2a');
+    for (const [cx, cy] of [[-4, 1], [4, -1]])
+      for (const [lean, h] of [[-2, 4], [-1, 5], [0, 6], [1, 5], [2, 3]])
+        for (let k = 0; k < h; k++) {
+          const x = TW / 2 + cx + Math.round((lean * k) / h);
+          p.set(x, TOP + TH / 2 + cy - k, k < 2 ? '#3f6a2a' : k < h - 1 ? '#5f8a3c' : '#9cc155');
+        }
   },
   // Trees have thick trunks and heavy, clumped crowns, so they read as solid at a glance.
   pisang: (p) => {
