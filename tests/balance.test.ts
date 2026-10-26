@@ -8,14 +8,15 @@ import { tick } from '../src/sim/tick';
 import type { GameState } from '../src/sim/types';
 
 /** A simple autoplayer: builds what it can afford, always takes the free event choice. */
-function play(seed: number, years: number, smart: boolean): { s: GameState; minRupiahY1: number } {
+function play(seed: number, years: number, smart: boolean, starMonths: number[] = []): { s: GameState; minRupiahY1: number } {
   const s = newGame(seed);
   let minRupiahY1 = Infinity;
   for (let m = 0; m < years * 12; m++) {
     if (s.pendingEvent) resolveEvent(s, [], 0);
     if (smart) {
-      for (const d of placeableDefs()) {
-        const spot = emptyTiles(s).find((t) => t.y < 4);
+      // The bot packs a 9x4 corner (the old map width) so combo members stay in range, and does not plan paths.
+      for (const d of placeableDefs().filter((p) => !p.pathIncome)) {
+        const spot = emptyTiles(s).find((t) => t.y < 4 && t.x < 9);
         // Sensible player: keep a cash buffer and do not stack buildings that only cost upkeep.
         const have = s.buildings.filter((b) => b.def === d.id).length;
         const worthIt = d.income > d.upkeep || have === 0;
@@ -29,6 +30,7 @@ function play(seed: number, years: number, smart: boolean): { s: GameState; minR
       }
     }
     tick(s);
+    while (starMonths.length < s.stage.stars.rt) starMonths.push(s.month);
     if (s.month <= 12) minRupiahY1 = Math.min(minRupiahY1, s.res.rupiah);
   }
   return { s, minRupiahY1 };
@@ -63,5 +65,20 @@ describe('balance', () => {
   it('inflation is small: prices rise 3% a year', () => {
     const { s } = play(1, 5, false);
     expect(s.inflation).toBeCloseTo(1.03 ** 5, 5);
+  });
+});
+
+describe('star pacing', () => {
+  it('a simple builder earns 1 star within 3 years and 2 stars within 4, and never gets stuck', () => {
+    let two = 0;
+    for (let seed = 1; seed <= 10; seed++) {
+      const m: number[] = [];
+      const { s } = play(seed, 8, true, m);
+      expect(m[0], `1 star, seed ${seed}`).toBeLessThanOrEqual(36);
+      if (m[1] !== undefined && m[1] <= 48) two++;
+      expect(population(s), `population, seed ${seed}`).toBeGreaterThan(20);
+    }
+    // 3 stars needs 3 combos and Sabar 50, which this bot does not plan for.
+    expect(two).toBeGreaterThanOrEqual(8);
   });
 });

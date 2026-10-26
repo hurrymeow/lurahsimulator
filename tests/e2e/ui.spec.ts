@@ -120,6 +120,31 @@ test.describe('how to play', () => {
 });
 
 test.describe('events, ranking, settings', () => {
+  test('quarterly report card is legible, pauses the game and dismisses on tap', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    const title = (n: number) => ({ id: `Laporan triwulan ${n}`, en: `Quarter ${n} report` })[lang()];
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.month = 14;
+      app.s.quarter = undefined;
+      app.runTick();
+      app.runTick();
+      app.runTick();
+    });
+    await expect(page.locator('#modal .card.report-card')).toBeVisible();
+    await expect(page.locator('#modal .card h2')).toHaveText(title(1));
+    await expect(page.locator('#modal .report-grade')).toBeVisible();
+    await expect(page.locator('#modal .outcome-chip').first()).toBeVisible();
+    await expectLegible(page, 'report card');
+    const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month);
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month)).toBe(before);
+    await page.locator('#modal .tap-hint').click();
+    await expect(page.locator('#modal .card.report-card')).toBeHidden();
+  });
+
   for (const id of ['agustusan', 'banjir', 'cabai']) {
     for (const broke of [false, true]) {
       test(`event ${id}${broke ? ' while broke' : ''} is legible and has a free choice`, async ({ page }) => {
@@ -167,7 +192,8 @@ test.describe('events, ranking, settings', () => {
     await start(page);
     await dismissModals(page);
     await seed(page);
-    await page.locator('#hud').click();
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-stats').click();
     await expect(page.locator('#sheet')).toContainText('Kampung Sebelah');
     await expect(page.locator('#sheet')).toContainText('Indonesia Emas 2045');
     await expectLegible(page, 'stats with ranking');
@@ -291,9 +317,24 @@ test.describe('slim HUD and one menu', () => {
     const ids = await page.evaluate(() =>
       [...document.querySelectorAll('button')].filter((b) => b.getClientRects().length && b.id !== 'ticker').map((b) => b.id),
     );
-    expect(ids).toEqual(['pause-btn', 'speed-btn', 'menu-btn']);
+    expect(ids).toEqual(['chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'pause-btn', 'speed-btn', 'menu-btn']);
     const hud = (await page.locator('#hud').boundingBox())!;
     expect(hud.height).toBeLessThanOrEqual(80);
+  });
+
+  test('tapping a resource chip explains it and the card dismisses on tap', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    for (const id of ['rupiah', 'sabar', 'orangDalam', 'viral', 'pop']) {
+      await page.locator(`#chip-${id}`).click();
+      await expect(page.locator('#modal .exp')).toBeVisible();
+      await expect(page.locator('#modal .exp-row')).toHaveCount(3);
+      await expectLegible(page, `${id} explain card`);
+      await page.locator('#modal').click();
+      await expect(page.locator('#modal')).toBeHidden();
+    }
+    await expect(page.locator('#chip-pop')).toContainText('Pop');
+    await expect(page.locator('#chip-sabar')).not.toContainText(/Sabar/);
   });
 
   test('pause toggles and speed cycles 1x, 2x, 4x', async ({ page }) => {
@@ -342,7 +383,8 @@ test.describe('text is legible and never cut off', () => {
       await page.locator('.sheet-head .btn').click();
     }
 
-    await page.locator('#hud').click();
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-stats').click();
     await expectLegible(page, 'Stats panel');
     await page.locator('.sheet-head .btn').click();
 
@@ -530,5 +572,45 @@ test.describe('walkers and effects', () => {
     }
     // Compared with the same map with effects off, so a slow CI machine does not fail it.
     expect(busy, `effects off ${plain.toFixed(0)} fps, busy ${busy.toFixed(0)} fps`).toBeGreaterThan(plain * 0.8);
+  });
+});
+
+test.describe('stars', () => {
+  test('Menu header shows the stage title and stars, and a tap lists what is missing', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    const head = page.locator('#stage-btn');
+    await expect(head).toBeVisible();
+    await expect(head).toContainText('☆☆☆');
+    await expectLegible(page, 'menu stage header');
+    await head.click();
+    await expect(page.locator('.checklist li')).toHaveCount(2);
+    await expect(page.locator('.checklist li').first()).toContainText(/\d/);
+    await expectLegible(page, 'star checklist');
+  });
+
+  test('earning a star plays a message, then the SK at 3 stars can be declined and asked for again', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const s = (window as unknown as { pakrt: any }).pakrt.s;
+      s.stage.stars.rt = 2;
+      s.res.sabar = 90;
+      s.discovered.push('a', 'b', 'c');
+      s.ranking = [{ year: 1, us: 1, them: 0, won: true }, { year: 2, us: 1, them: 0, won: true }];
+      const r = s.residents[0];
+      for (let i = 0; i < 40; i++) s.residents.push({ ...r, id: 500 + i });
+      (window as unknown as { pakrt: any }).pakrt.runTick();
+    });
+    await expect(page.locator('#modal .card.fanfare').first()).toContainText('3★');
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#stage-btn').click();
+    await page.locator('#sk-decline').click();
+    await expect(page.locator('#sk-reoffer')).toBeVisible();
+    await expectLegible(page, 'declined SK');
+    await page.locator('#sk-reoffer').click();
+    await expect(page.locator('#sk-accept')).toBeEnabled();
   });
 });

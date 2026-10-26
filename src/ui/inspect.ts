@@ -1,5 +1,6 @@
 import { bBlurb, bName, t, type Key } from '../i18n';
 import type { App } from '../app';
+import { iconURL } from '../render/sprites';
 import { rupiah } from '../format';
 import { def } from '../sim/content';
 import { checkDemolish, checkSkipPermit, checkUpgrade, demolish, skipPermit, upgrade } from '../sim/rules';
@@ -15,9 +16,9 @@ import { closeSheet, openSheet } from './sheet';
 export type InspectExtra = (app: App, b: Building) => Node[];
 export const inspectExtras: InspectExtra[] = [];
 
-export function actionButton(label: string, check: CheckResult, run: () => void, primary = false): Node {
+export function actionButton(label: string | (string | Node)[], check: CheckResult, run: () => void, primary = false): Node {
   return h('div', { class: 'action' },
-    h('button', { class: `btn ${primary ? 'btn-primary' : ''}`, disabled: !check.ok, onclick: run }, label),
+    h('button', { class: `btn ${primary ? 'btn-primary' : ''}`, disabled: !check.ok, onclick: run }, ...(typeof label === 'string' ? [label] : label)),
     check.ok ? null : missingList(check.missing),
   );
 }
@@ -50,7 +51,7 @@ export function inspect(app: App, uid: number): void {
   if (pm > 1 && b.status === 'active') lines.push(h('p', { class: 'meta' }, t('insp.pathBonus', { pct: Math.round((pm - 1) * 100) })));
   for (const extra of inspectExtras) lines.push(...extra(app, b));
   if (b.status === 'permit') {
-    lines.push(actionButton(t('insp.skip'), checkSkipPermit(s, b), () => {
+    lines.push(actionButton([t('insp.skip'), ' ', h('img', { src: iconURL('orangDalam'), alt: t('res.orangDalam'), width: 18, height: 18, class: 'inline-icon' })], checkSkipPermit(s, b), () => {
       skipPermit(s, b);
       app.tap(15);
       done();

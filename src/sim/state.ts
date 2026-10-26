@@ -3,9 +3,11 @@ import { EMAS } from '../data/ranking';
 import { BASE_ATTRACT, LEVEL_BONUS, START, START_RESIDENTS } from './balance';
 import { def } from './content';
 import { pick } from './rng';
-import { GRID_H, GRID_W, type Building, type BuildingDef, type GameState, type Resident } from './types';
+import { GRID_H, GRID_W, type Building, type BuildingDef, type GameState, type Resident, type StageState } from './types';
 
 export const SAVE_VERSION = 2;
+
+export const newStageState = (): StageState => ({ current: 'rt', stars: { rt: 0, rw: 0, kelurahan: 0 } });
 
 export function newGame(seed = Date.now() % 2147483647): GameState {
   const s: GameState = {
@@ -26,6 +28,7 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
     ranking: [],
     emas: EMAS.start,
     pendingEvent: null,
+    stage: newStageState(),
     lastNovelty: 0,
     stats: { earned: 0, spent: 0, arrived: 0, left: 0 },
   };
