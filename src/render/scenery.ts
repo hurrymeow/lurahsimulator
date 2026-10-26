@@ -124,7 +124,8 @@ function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx
 /** One mountain: two flat-lit faces split by a straight ridge, a zigzag snow cap and an ink edge. */
 function mountain(img: ImageData, cx: number, baseY: number, hw: number, h: number): void {
   const peak = baseY - h;
-  for (let y = Math.max(0, Math.floor(peak)); y < Math.min(WORLD_H, baseY); y++) {
+  // The mountains stand on the horizon: nothing of them is drawn over the land in front.
+  for (let y = Math.max(0, Math.floor(peak)); y < Math.min(WORLD_H, baseY, HORIZON); y++) {
     const span = (hw * (y - peak)) / h;
     for (let x = Math.max(0, Math.floor(cx - span)); x < Math.min(WORLD_W, Math.ceil(cx + span)); x++) {
       const edge = x - (cx - span) < 2 || cx + span - x < 2 || Math.abs(x + 0.5 - cx) < 1;
@@ -223,16 +224,46 @@ export function buildWorld(): HTMLCanvasElement {
       }
     }
 
-  // Ink where two land types meet, and along the horizon. Sea meeting the open sea stays clean.
+  // Borders between land types, coloured instead of inked. The higher ground (garden over grass
+  // over road over cliff over beach over sea) takes a dark edge in its own colour. The lower side
+  // gets a bright rim that eases back to its base colour over three pixels, so each transition
+  // reads clearly without hard black lines. Sea meets sand with a line of foam.
+  const RANK = [2, 7, 5, 6, 8, 9, 3, 2, 4];
+  const rank = (k: number) => RANK[land[k] || 7];
+  const edits: [number, number, number][] = [];
+  const NEAR: [number, number, number][] = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [2, 0, 2], [-2, 0, 2], [0, 2, 2], [0, -2, 2], [3, 0, 3], [-3, 0, 3]];
   for (let y = HORIZON; y < WORLD_H - 1; y++)
-    for (let x = 0; x < WORLD_W - 1; x++) {
+    for (let x = 1; x < WORLD_W - 1; x++) {
       const k = y * WORLD_W + x;
-      const here = land[k] || 7;
-      const right = land[k + 1] || 7;
-      const down = land[k + WORLD_W] || 7;
-      const up = y > 0 ? land[k - WORLD_W] : 0;
-      if (here !== right || here !== down || (land[k] && y === HORIZON) || (land[k] && !up && y > HORIZON)) put(img, x, y, INK);
+      if (!land[k]) continue;
+      const r = rank(k);
+      // The horizon and the world's back edge get the dark edge too.
+      let dark = y === HORIZON || (y > HORIZON && !land[k - WORLD_W] && land[k] !== 7);
+      let rim = 0;
+      for (const [dx, dy, d] of NEAR) {
+        const yy = y + dy;
+        const xx = x + dx;
+        if (yy < HORIZON || yy >= WORLD_H || xx < 0 || xx >= WORLD_W) continue;
+        const o = rank(yy * WORLD_W + xx);
+        if (o === r) continue;
+        if (d === 1 && o < r) dark = true;
+        else if (o > r && (rim === 0 || d < rim)) rim = d;
+      }
+      if (dark) edits.push([x, y, 0]);
+      else if (rim) edits.push([x, y, rim]);
     }
+  for (const [x, y, d] of edits) {
+    const i = (y * WORLD_W + x) * 4;
+    const kind = land[y * WORLD_W + x];
+    if (kind === 7 && d > 0) {
+      // Surf: foam on the sand line, then lighter shallows.
+      const foam = d === 1 ? [236, 246, 238] : d === 2 ? [169, 220, 210] : [118, 190, 180];
+      img.data.set(foam, i);
+      continue;
+    }
+    const f = d === 0 ? 0.6 : d === 1 ? 1.2 : d === 2 ? 1.11 : 1.05;
+    for (let c = 0; c < 3; c++) img.data[i + c] = Math.min(255, Math.round(img.data[i + c] * f));
+  }
 
   // Stepped clouds: three stacked bars, each outlined.
   for (const [cx, cy, w] of [[sx - 150, sy - 40, 30], [sx + 120, sy - 60, 22]]) {
@@ -373,4 +404,23 @@ export function sunArt(blink: boolean): HTMLCanvasElement {
 export function decoAt(x: number, y: number): string | null {
   const n = hash(x * 11 + 3, y * 17 + 5);
   return n < 0.12 ? 'flowers' : n < 0.22 ? 'bush' : n < 0.45 ? 'rumput' : null;
+}
+
+let shore: { x: number; y: number }[] | null = null;
+
+/** Points along the beach where it meets the sea, in world art pixels, for breaking-wave splashes. */
+export function shorePoints(): { x: number; y: number }[] {
+  if (shore) return shore;
+  shore = [];
+  const at = (a: number, b: number) => ({ x: WORLD_OX + ((a - b) * TW) / 2, y: WORLD_OY + ((a + b) * TH) / 2 });
+  for (let tx = XMIN; tx < XMAX; tx++)
+    for (let ty = YMIN; ty < YMAX; ty++) {
+      if (terrain(tx, ty) !== 'beach') continue;
+      // The shared edge with a sea tile in front (screen down-right or down-left), sampled at three points.
+      for (const t of [0.2, 0.5, 0.8]) {
+        if (tx + 1 >= XMAX || terrain(tx + 1, ty) === 'sea') shore.push(at(tx + 1, ty + t));
+        if (ty + 1 >= YMAX || terrain(tx, ty + 1) === 'sea') shore.push(at(tx + t, ty + 1));
+      }
+    }
+  return shore;
 }

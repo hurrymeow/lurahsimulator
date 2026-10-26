@@ -15,6 +15,7 @@ interface Mote {
 const MOTES = 28;
 const LEAVES = 10;
 const LEAF_COLOURS = ['#e57d2e', '#f4b935', '#df4a2c', '#c9a14a'];
+const LEAF_EDGES = ['#7a3e14', '#7d5a14', '#6e2212', '#5e4a20'];
 
 interface Leaf {
   x: number;
@@ -23,6 +24,7 @@ interface Leaf {
   vy: number;
   phase: number;
   colour: string;
+  edge: string;
 }
 
 function layer(w: number, h: number, dpr: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
@@ -110,6 +112,7 @@ export class Atmosphere {
       vy: 14 + Math.random() * 12,
       phase: Math.random() * Math.PI * 2,
       colour: LEAF_COLOURS[i % LEAF_COLOURS.length],
+      edge: LEAF_EDGES[i % LEAF_EDGES.length],
     }));
     this.motes = Array.from({ length: MOTES }, () => ({
       x: Math.random() * w,
@@ -173,7 +176,8 @@ export class Atmosphere {
       const flat = Math.sin(t * 4 + l.phase) > 0;
       const x = Math.round(l.x / 2) * 2;
       const y = Math.round(l.y / 2) * 2;
-      ctx.fillStyle = '#2a1810';
+      // Outlined in a dark shade of its own colour, like the walkers.
+      ctx.fillStyle = l.edge;
       ctx.fillRect(x - 2, y - 2, flat ? 10 : 6, flat ? 6 : 8);
       ctx.fillStyle = l.colour;
       ctx.fillRect(x, y, flat ? 6 : 2, flat ? 2 : 4);

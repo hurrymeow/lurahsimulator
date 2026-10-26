@@ -45,8 +45,22 @@ No third-party art or names. Everything is drawn in code.
   get no ink.
 - Set `p.bare = true` to skip the ink pass for flat or lattice art: selokan (it draws its own
   banks so neighbours join up), grass tufts, bamboo scaffolding.
-- Terrain gets an ink line wherever two land types meet, and along the horizon.
-- Walkers get the same 1-pixel outline.
+- Terrain borders are coloured, not inked. The higher ground takes a dark edge in its own
+  colour (0.6x). The lower side gets a bright rim that eases back to its base colour over three
+  pixels (1.2x, 1.11x, 1.05x). Sea meeting sand gets foam, then lighter shallows. Rank, high to
+  low: hutan, kebun, grass, sawah, road, cliff, beach, sea.
+- Walkers and falling leaves get a coloured 1-pixel outline: each outline pixel is a 0.45x shade
+  of the fill it touches (the fill below first, then the sides, then above). Eyes, shoes and
+  tyres are already dark and keep their own colour.
+
+## Characters
+
+- Walkers are 7x10 art pixels and ojol riders 11x9. Keep that scale.
+- Walkers have two-tone hair with a shine (one of five hair colours per resident), dark eyes, a
+  shaded chin, a collar, a shirt with a shaded right side, a belt, trousers shaded on one leg,
+  and shoes. Ojol riders have a helmet with a shine and visor, a bike with shaded ends and a
+  headlight.
+- Shirt colour still carries the job. Shading is derived from it, never a new hue.
 
 ## Shading
 
@@ -141,7 +155,11 @@ the map still has depth.
 - Ambient loops follow **reduce motion**: the sun bobs 2 art pixels and blinks every 3.2 s, with a
   quick double blink every third time. Trees bounce in a slow wave across the map, stretching at
   most 1 art pixel from the roots. Walkers stroll.
-- Particles, coins, lighting layers, motes and night follow **effects**.
+- Particles, coins, lighting layers, motes, weather and night follow **effects**.
+- Weather: a rain shower comes every 60 to 150 s (the first after 25 to 60 s), lasts 15 to 30 s
+  and eases in and out over 3 s. It brings up to 80 slanted pixel streaks, ripples on the
+  ground and a cool 18% dim. Waves splash on the visible shore all the time, with a foam ring
+  and spray, and more often in the rain.
 - Timing is bouncy, not floaty: short squashes (income, about 320 ms), quick pops (about 350 ms),
   slow ambience (sway periods of 2 s or more).
 - Motion is whole-pixel. A bounce stretches by one art pixel. It never slides sub-pixel.
