@@ -1,0 +1,61 @@
+import { COMBOS, type ComboDef } from '../data/combos';
+import { def } from './content';
+import { gain, type Fx } from './gain';
+import { isWorking } from './state';
+import type { Building, GameState } from './types';
+
+export interface ActiveCombo {
+  combo: ComboDef;
+  members: Building[];
+}
+
+const near = (a: Building, b: Building, r: number) => Math.abs(a.x - b.x) <= r && Math.abs(a.y - b.y) <= r;
+
+/** Finds every working combo. One instance per anchor building. */
+export function activeCombos(s: GameState): ActiveCombo[] {
+  const working = s.buildings.filter(isWorking);
+  const out: ActiveCombo[] = [];
+  for (const combo of COMBOS) {
+    const [anchorId, ...rest] = combo.needs;
+    for (const anchor of working.filter((b) => b.def === anchorId)) {
+      const members = [anchor];
+      for (const id of rest) {
+        const hit = working.find((b) => b.def === id && near(anchor, b, combo.radius) && !members.includes(b));
+        if (!hit) break;
+        members.push(hit);
+      }
+      if (members.length === combo.needs.length) out.push({ combo, members });
+    }
+  }
+  return out;
+}
+
+/** Income multiplier a building gets from the combos it belongs to. */
+export function comboIncomeMult(s: GameState, b: Building): number {
+  let m = 1;
+  for (const a of activeCombos(s)) if (a.members.includes(b)) m *= a.combo.incomeMult?.[b.def] ?? 1;
+  return m;
+}
+
+/** Monthly system: applies combo effects and announces first discoveries. */
+export function comboSystem(s: GameState, fx: Fx): void {
+  for (const a of activeCombos(s)) {
+    const centre = a.members[0];
+    for (const [res, v] of Object.entries(a.combo.perMonth ?? {})) gain(s, fx, res as 'sabar', v as number, centre);
+    if (s.discovered.includes(a.combo.id)) continue;
+    s.discovered.push(a.combo.id);
+    s.lastNovelty = s.month;
+    for (const m of a.members) fx.push({ kind: 'built', uid: m.uid });
+    fx.push({
+      kind: 'notice',
+      title: `Combo: ${a.combo.name}`,
+      body: `${a.combo.story} ${a.combo.effect} Logged in Buku Combo.`,
+      tone: 'good',
+      fanfare: true,
+      x: centre.x,
+      y: centre.y,
+    });
+  }
+}
+
+export const comboMemberNames = (c: ComboDef) => c.needs.map((id) => def(id).name);

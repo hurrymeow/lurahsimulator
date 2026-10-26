@@ -262,3 +262,8 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+.card-btn.slim { padding: 8px 12px; min-height: var(--touch); align-items: center; }
+.card-btn.static { cursor: default; }
+.meter { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; margin: 8px 0; border: 1px solid var(--line); }
+.meter > div { height: 100%; background: var(--sabar); }

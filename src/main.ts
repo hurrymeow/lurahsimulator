@@ -27,3 +27,6 @@ $('scrim').addEventListener('click', closeSheet);
 setupInstall($<HTMLButtonElement>('install-btn'), (text) => app.modal({ title: 'Install Pak RT', body: text, tone: 'info' }));
 setupUpdates($('update-banner'), $<HTMLButtonElement>('update-btn'));
 app.refresh();
+
+// ?debug exposes the app for play-testing from the console.
+if (new URLSearchParams(location.search).has('debug')) (window as unknown as { pakrt: App }).pakrt = app;

@@ -1,19 +1,26 @@
 import {
   ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
-  NOVELTY_GAP, QUEUE_SABAR_DRAIN, SABAR_MAX, VIRAL_DECAY, VIRAL_MAX,
+  NOVELTY_GAP, QUEUE_SABAR_DRAIN, SABAR_MAX, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
 } from './balance';
+import { comboIncomeMult, comboSystem } from './combos';
 import { def, placeableDefs } from './content';
+import { jobsSystem } from './jobs';
+import { mangkrakSystem, onBuildingFinished } from './projects';
+import { wacanaSystem } from './wacana';
 import { chance, pick, randInt } from './rng';
 import { requirementGaps } from './rules';
 import { addBuilding, addResident, attractTarget, emptyTiles, housing, isWorking, levelMult, neighbours, population } from './state';
-import type { Building, GameState, ResourceId, SimEffect } from './types';
+import { gain, type Fx } from './gain';
+import type { Building, GameState, ResourceId } from './types';
 
-export type Fx = SimEffect[];
+export { gain };
+export type { Fx };
 
 /** Multiplier on a building's income from timed modifiers. Systems added later extend this. */
 export function incomeMult(s: GameState, b: Building): number {
-  let m = 1;
+  let m = comboIncomeMult(s, b);
   for (const mod of s.modifiers) if (mod.target === '*' || mod.target === b.def) m *= mod.incomeMult;
+  if (def(b.def).shop) m *= 1 + s.res.viral * VIRAL_INCOME;
   return m;
 }
 
@@ -27,13 +34,6 @@ export function buildingUpkeep(s: GameState, b: Building): number {
   const d = def(b.def);
   if (b.status === 'mangkrak') return 0;
   return Math.round(d.upkeep * levelMult(b.level) * s.inflation);
-}
-
-export function gain(s: GameState, fx: Fx, res: ResourceId, amount: number, at?: { x: number; y: number }): void {
-  if (!amount) return;
-  s.res[res] += amount;
-  if (res === 'rupiah' && amount > 0) s.stats.earned += amount;
-  if (at && Math.abs(amount) >= (res === 'rupiah' ? 1 : 0.5)) fx.push({ kind: 'pop', x: at.x, y: at.y, res, amount });
 }
 
 function clampResources(s: GameState): void {
@@ -59,7 +59,7 @@ export function advanceConstruction(s: GameState, fx: Fx): void {
     } else if (b.timer <= 0) {
       b.status = 'active';
       fx.push({ kind: 'built', uid: b.uid });
-      fx.push({ kind: 'notice', title: `${def(b.def).name} is open`, body: def(b.def).blurb, tone: 'good', x: b.x, y: b.y });
+      if (onBuildingFinished(s, fx, b) === 'ok') fx.push({ kind: 'notice', title: `${def(b.def).name} is open`, body: def(b.def).blurb, tone: 'good', x: b.x, y: b.y });
       novelty(s);
     }
   }
@@ -149,6 +149,10 @@ export function yearEnd(s: GameState, fx: Fx): void {
 export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   advanceConstruction,
   collectIncome,
+  comboSystem,
+  jobsSystem,
+  wacanaSystem,
+  mangkrakSystem,
   safetyNet,
   residentsMove,
   checkUnlocks,

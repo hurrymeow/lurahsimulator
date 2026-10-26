@@ -27,3 +27,14 @@ One line per decision, with the reason. Newest at the bottom.
 - **UI split:** map on canvas, menus in DOM. DOM text gets real font rendering, contrast and screen-reader labels.
 - **Content as TS data:** buildings, combos, jobs and events are typed TS objects in `src/data/`. Typos fail the typecheck instead of the game.
 - **Saves:** stored as versioned JSON. An unknown version or building starts a fresh game instead of crashing.
+- **Combo geometry:** a combo works when every needed building is within its radius (1 tile, diagonals count) of the first listed building. A row of warung, pos ronda, wifi works.
+- **Third combo:** added Rapat Malam (Kantor RT + Pos Ronda, +Orang Dalam). Hari asked for two. It is one data entry, so delete it if unwanted.
+- **Rivalitas Abadi numbers:** both stores x1.4 income, -2 Sabar a month. Competition earns money and costs patience.
+- **Tukang parkir:** pays retribusi to the kas (+60rb) and drains 0.5 Sabar a month per level. Upgrading raises both. Never removable.
+- **PNS:** produce nothing. Only stat is Pensiun: fills over 10 years, then a Rp 1,5jt payout and the desk reopens. Employed residents of any job add +0.2 Sabar, so PNS still have a use.
+- **Buzzer:** +6 fake Viral and +60rb a month. Exposure chance rises with the fake Viral pumped. Exposure wipes that Viral, costs 8 Sabar and ends the job.
+- **Viral:** each point adds 0.5% to shop income and decays 10% a month.
+- **Wacana:** costs Rp 100rb (konsumsi rapat). Gives approval that converts to Sabar and decays 20% a month. It builds nothing.
+- **Proyek mangkrak:** wifi 25%, Indomaret and Alfamart 20% chance to freeze at 80%. Never in year 1. A restarted project never freezes again, so it cannot soft-lock. Costs 1 Sabar a month while frozen.
+- **Viral repair path:** a frozen project restarts at normal price once Viral reaches 30, else at double. Viral is the only discount.
+- **Debug hook:** `?debug` in the URL exposes `window.pakrt` for play-testing.
