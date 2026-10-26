@@ -158,6 +158,10 @@ export const ID: Record<Key, string> = {
   'insp.repairBtn': 'Perbaiki · {cost}',
 
   'res.noJob': 'Tanpa kerja',
+  'res.level': 'Lv {n}',
+  'res.levelNext': 'Lv {n}. {left} bulan kerja lagi untuk naik level.',
+  'res.levelMax': 'Lv {n}, level tertinggi.',
+  'sim.levelUp': '{name} naik ke Lv {n}',
   'res.pensiun': 'Pensiun {n}%',
   'res.fake': 'Viral palsu terkumpul: {n}',
   'res.slots': 'Slot kerja: {summary}. Warga bekerja menambah 0,2 Sabar per bulan. Ketuk pekerjaan untuk mengubahnya. Pilihanmu tetap.',

@@ -1,7 +1,7 @@
 import { bName, jName, t } from '../i18n';
 import {
   BUZZER_EXPOSE_BASE, BUZZER_EXPOSE_PER_FAKE, BUZZER_EXPOSE_SABAR, BUZZER_FAKE_PER_MONTH, EMPLOYED_SABAR,
-  JOBS, PENSIUN_MONTHS, PENSIUN_PAYOUT, jobDef,
+  BUZZER_FAKE_PER_LEVEL, JOBS, PENSIUN_MONTHS, PENSIUN_PAYOUT, PNS_PAYOUT_PER_LEVEL, jobDef, levelFor, levelMult,
 } from '../data/jobs';
 import { BUILDINGS } from '../data/buildings';
 import { def } from './content';
@@ -20,6 +20,8 @@ export const used = (s: GameState, job: JobId) => s.residents.filter((r) => r.jo
 export function jobSite(s: GameState, job: JobId): Building | undefined {
   return s.buildings.find((b) => isWorking(b) && def(b.def).jobSlots?.[job]);
 }
+
+export const levelOf = (r: Resident): number => levelFor(r.xp ?? 0);
 
 export function checkAssign(s: GameState, r: Resident, job: JobId): CheckResult {
   if (job === 'none' || r.job === job) return { ok: true };
@@ -89,12 +91,19 @@ export function jobsSystem(s: GameState, fx: Fx): void {
     if (!j) continue;
     employed++;
     const site = jobSite(s, j.id);
-    for (const [res, v] of Object.entries(j.perMonth) as [ResourceId, number][]) gain(s, fx, res, v * s.inflation ** (res === 'rupiah' ? 1 : 0), site);
+    const before = levelOf(r);
+    r.xp = (r.xp ?? 0) + 1;
+    const level = levelOf(r);
+    if (level > before) fx.push({ kind: 'level', x: site?.x ?? 0, y: site?.y ?? 0, name: r.name, level });
+    for (const [res, v] of Object.entries(j.perMonth) as [ResourceId, number][]) {
+      const mult = j.perLevel.resources.includes(res) ? levelMult(j.perLevel.boost, level) : 1;
+      gain(s, fx, res, v * mult * s.inflation ** (res === 'rupiah' ? 1 : 0), site);
+    }
 
     if (r.job === 'pns') {
       r.pensiun = Math.min(100, r.pensiun + 100 / PENSIUN_MONTHS);
       if (r.pensiun >= 100) {
-        const payout = Math.round(PENSIUN_PAYOUT * s.inflation);
+        const payout = Math.round(PENSIUN_PAYOUT * levelMult(PNS_PAYOUT_PER_LEVEL, level) * s.inflation);
         gain(s, fx, 'rupiah', -payout, site);
         fx.push({ kind: 'notice', title: t('sim.pensiunTitle', { name: r.name }), body: t('sim.pensiunBody', { amt: payout }), tone: 'info', x: site?.x, y: site?.y });
         r.job = 'none';
@@ -104,7 +113,7 @@ export function jobsSystem(s: GameState, fx: Fx): void {
     }
 
     if (r.job === 'buzzer') {
-      r.fake += BUZZER_FAKE_PER_MONTH;
+      r.fake += BUZZER_FAKE_PER_MONTH * levelMult(BUZZER_FAKE_PER_LEVEL, level);
       if (chance(s, BUZZER_EXPOSE_BASE + r.fake * BUZZER_EXPOSE_PER_FAKE)) {
         gain(s, fx, 'viral', -r.fake, site);
         gain(s, fx, 'sabar', -BUZZER_EXPOSE_SABAR, site);
