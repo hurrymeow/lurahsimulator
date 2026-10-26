@@ -1135,10 +1135,10 @@ test.describe('build mode', () => {
     expect(await tabs.count()).toBeGreaterThan(2);
     await expect(page.locator('#sheet .tabs .tab[aria-pressed="true"]')).toHaveCount(1);
     await expectLegible(page, 'build tabs');
-    await page.locator('#sheet .tabs .tab[data-tab="paths"]').click();
+    await page.locator('#sheet .tabs .tab[data-tab="decoration"]').click();
     await expect(page.locator('#sheet .card-btn').first()).toBeVisible();
-    await expect(page.locator('#sheet .tabs .tab[data-tab="paths"]')).toHaveAttribute('aria-pressed', 'true');
-    await expectLegible(page, 'paths tab');
+    await expect(page.locator('#sheet .tabs .tab[data-tab="decoration"]')).toHaveAttribute('aria-pressed', 'true');
+    await expectLegible(page, 'decor tab');
   });
 
   test('Place and Cancel sit right under the chosen tile', async ({ page }) => {
