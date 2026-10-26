@@ -126,6 +126,8 @@ export class MapView {
   effects = true;
   /** Walkers and idle loops move. Off with reduce motion. */
   motion = true;
+  /** Game time is held (manual or auto pause). Walkers stand still; weather and idle loops go on. */
+  frozen = false;
   /** Game time in months, fractional, for day and night. */
   clock = 0;
   readonly crowd = new Crowd();
@@ -401,7 +403,7 @@ export class MapView {
     };
     this.night = this.effects ? darkness(this.clock) : 0;
     this.lights = [];
-    this.crowd.update(s, now, this.motion);
+    this.crowd.update(s, now, this.motion && !this.frozen);
     this.crowd.begin();
     const drawOne = (b: Building): void => {
       if (!this.onScreen(b.x, b.y)) return;
@@ -447,12 +449,12 @@ export class MapView {
     for (const b of ground) drawOne(b);
     for (const b of standing) {
       decoUntil(b.x + b.y, b.x);
-      this.crowd.drawUntil(ctx, b.x + b.y + 1, this.project, sc, now, this.motion);
+      this.crowd.drawUntil(ctx, b.x + b.y + 1, this.project, sc, now, this.motion && !this.frozen);
       drawOne(b);
     }
 
     decoUntil(Infinity, 0);
-    this.crowd.drawUntil(ctx, Infinity, this.project, sc, now, this.motion);
+    this.crowd.drawUntil(ctx, Infinity, this.project, sc, now, this.motion && !this.frozen);
     this.fx.drawPuffs(ctx, this.project, sc, now, (fx, fy) => {
       const k = Math.floor(fy) * GRID_W + Math.floor(fx);
       return this.project(fx, fy).y - (tops.get(k) ?? this.project(fx, fy).y);
