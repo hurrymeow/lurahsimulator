@@ -128,6 +128,7 @@ export class App {
     if (badge) badge.hidden = this.held || !autoPaused(this.pauseInputs());
     const bar = document.getElementById('month-progress');
     if (bar) bar.style.width = `${(this.acc / MONTH_MS) * 100}%`;
+    this.view.frozen = !this.running;
     this.view.clock = this.s.month + this.acc / MONTH_MS;
     this.view.draw(this.s);
     requestAnimationFrame((t) => this.frame(t));
@@ -277,9 +278,9 @@ export class App {
   }
 
   /** The player accepts the SK: the stage rises and the map grows. */
-  accept(): void {
+  accept(path?: 'kelurahan' | 'desa'): void {
     const fx: SimEffect[] = [];
-    if (!acceptSK(this.s, fx)) return;
+    if (!acceptSK(this.s, fx, path)) return;
     this.view.regrid();
     this.handleFx(fx);
     this.save();

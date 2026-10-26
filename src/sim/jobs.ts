@@ -113,6 +113,12 @@ export function jobsSystem(s: GameState, fx: Fx): void {
       r.manual = true;
     }
 
+    // After enough years an Honorer may be made PNS, if a desk is free.
+    if (r.job === 'honorer' && j.stage?.promote && (r.xp ?? 0) >= j.stage.promote.afterYears * 12 && chance(s, j.stage.promote.chancePerYear / 12) && used(s, 'pns') < slots(s, 'pns')) {
+      assign(s, r, 'pns');
+      fx.push({ kind: 'notice', title: t('sim.honorerTitle', { name: r.name }), body: t('sim.honorerBody'), tone: 'good', x: site?.x, y: site?.y });
+    }
+
     if (r.job === 'pns') {
       r.pensiun = Math.min(100, r.pensiun + 100 / PENSIUN_MONTHS);
       if (r.pensiun >= 100) {
