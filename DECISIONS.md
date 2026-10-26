@@ -1,5 +1,7 @@
 # Decisions
 
+> **Frozen.** Do not edit. New entries go in `decisions/<pr-or-slug>.md`, one file per PR. Read all with `node scripts/logs.mjs decisions`.
+
 One line per decision, with the reason. Newest at the bottom.
 
 ## Needs Hari's review
