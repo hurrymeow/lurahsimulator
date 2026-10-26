@@ -1,4 +1,4 @@
-import { cEffect, cHint, cName, cStory, jBlurb, jName, t, wLine, wName } from '../i18n';
+import { cEffect, cHint, cName, cStory, jBlurb, jName, t, wLine, wName, wTrade } from '../i18n';
 import { LEVEL_MONTHS, jobDef } from '../data/jobs';
 import { WACANA } from '../data/wacana';
 import type { App } from '../app';
@@ -56,11 +56,13 @@ export function openWacana(app: App): void {
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, wName(w)), h('span', { class: 'meta' }, state ? t('wac.approval', { n: Math.round(state.power * 10) }) : t('wac.none'))),
         h('p', {}, wLine(w)),
+        h('p', { class: 'meta' }, wTrade(w)),
         state?.times ? h('p', { class: 'meta' }, t('wac.times', { n: state.times })) : null,
         h('div', { class: 'meter', 'aria-hidden': 'true' }, h('div', { style: `width:${Math.min(100, (state?.power ?? 0) * 10)}%` })),
-        actionButton(t('wac.announce', { cost: rupiah(wacanaCost(s)) }), check, () => {
+        actionButton(t('wac.announce', { cost: rupiah(wacanaCost(s, w.id)) }), check, () => {
+          const paid = wacanaCost(s, w.id);
           announce(s, w.id);
-          app.view.pop(s.buildings.find((b) => b.def === 'kantorRT')!.x, s.buildings.find((b) => b.def === 'kantorRT')!.y, 'rupiah', -wacanaCost(s));
+          app.view.pop(s.buildings.find((b) => b.def === 'kantorRT')!.x, s.buildings.find((b) => b.def === 'kantorRT')!.y, 'rupiah', -paid);
           app.tap(10);
           app.save();
           app.refresh();

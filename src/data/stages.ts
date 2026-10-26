@@ -11,8 +11,8 @@ export const STAGES: StageDef[] = [
     next: 'rw',
     stars: [
       { goals: [{ kind: 'residents', n: 10 }, { kind: 'combos', n: 1 }], unlocks: ['indomaret', 'alfamart', 'kosan'], reward: { orangDalam: 1 } },
-      { goals: [{ kind: 'residents', n: 25 }, { kind: 'rankWins', n: 1 }, { kind: 'combos', n: 2 }], unlocks: ['lapangan', 'bankSampah'] },
-      { goals: [{ kind: 'residents', n: 40 }, { kind: 'winStreak', n: 2 }, { kind: 'combos', n: 3 }, { kind: 'sabar', n: 50 }], unlocks: [] },
+      { goals: [{ kind: 'residents', n: 25 }, { kind: 'rankWins', n: 1 }, { kind: 'combos', n: 2 }, { kind: 'sabar', n: 50 }], unlocks: ['lapangan', 'bankSampah'] },
+      { goals: [{ kind: 'residents', n: 40 }, { kind: 'winStreak', n: 2 }, { kind: 'combos', n: 3 }, { kind: 'sabar', n: 65 }], unlocks: [] },
     ],
   },
   ...HIGHER_STAGES,

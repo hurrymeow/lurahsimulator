@@ -9,7 +9,7 @@ export const BUILDINGS: BuildingDef[] = [
     // kampung pulls in, so amenities still matter once the beds are full.
     id: 'rumah',
     name: 'Rumah',
-    blurb: 'Houses 3 residents and attracts 1 more. Built at once, no permit.',
+    blurb: 'Houses 3 residents and brings new ones. Built at once, no permit.',
     cost: 800_000,
     upkeep: 0,
     income: 0,
@@ -41,7 +41,7 @@ export const BUILDINGS: BuildingDef[] = [
   {
     id: 'posRonda',
     name: 'Pos Ronda',
-    blurb: 'Night watch hut. +2 Patience a month. Nobody has seen anyone on watch.',
+    blurb: 'Night watch hut. +2 Popularitas a month. Nobody has seen anyone on watch.',
     cost: 800_000,
     upkeep: 50_000,
     income: 0,
@@ -164,7 +164,7 @@ export const BUILDINGS: BuildingDef[] = [
   {
     id: 'kosan',
     name: 'Kos-kosan',
-    blurb: 'Houses 6 and pays rent. The noise costs 1 Patience a month.',
+    blurb: 'Houses 6 and pays rent. The noise costs 1 Popularitas a month.',
     cost: 4_000_000,
     upkeep: 80_000,
     income: 200_000,
@@ -200,7 +200,7 @@ export const BUILDINGS: BuildingDef[] = [
   {
     id: 'bankSampah',
     name: 'Bank Sampah',
-    blurb: 'Trades plastic for pocket money. Earns up to Rp 40rb a month and +0.5 Patience.',
+    blurb: 'Trades plastic for pocket money. Earns up to Rp 40rb a month and +0.5 Popularitas.',
     cost: 1_000_000,
     upkeep: 0,
     income: 40_000,
@@ -217,7 +217,7 @@ export const BUILDINGS: BuildingDef[] = [
   {
     id: 'parkir',
     name: 'Tukang Parkir Liar',
-    blurb: 'Appears beside every new shop. Pays small retribusi to the kas, costs Patience. Upgrade it, you cannot remove it.',
+    blurb: 'Appears beside every new shop. Pays small retribusi to the kas, costs Popularitas. Upgrade it, you cannot remove it.',
     cost: 300_000,
     upkeep: 0,
     income: 60_000,

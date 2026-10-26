@@ -86,7 +86,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatan',
     name: 'Kecamatan Inspection',
-    body: 'A Kecamatan inspector visits in 2 months to score the kampung: selokan, Patience, abandoned projects and parkir liar. A good score earns Orang Inside. A bad one costs Patience. Fresh paint counts too.',
+    body: 'A Kecamatan inspector visits in 2 months to score the kampung: selokan, Popularitas, abandoned projects and parkir liar. A good score earns Orang Inside. A bad one costs Popularitas. Fresh paint counts too.',
     // Raised by the inspection system on its own schedule, never at random.
     when: { chance: 0 },
     choices: [

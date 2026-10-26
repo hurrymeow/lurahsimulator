@@ -29,7 +29,7 @@ describe('string tables', () => {
     for (const c of COMBOS) ['hint', 'story', 'effect'].forEach((f) => expected.add(`combo.${c.id}.${f}`));
     for (const j of JOBS) expected.add(`job.${j.id}.blurb`);
     for (const st of STAGES) st.titles.forEach((_, i) => expected.add(`stage.${st.id}.title${i}`));
-    for (const w of WACANA) expected.add(`wacana.${w.id}.line`);
+    for (const w of WACANA) { expected.add(`wacana.${w.id}.line`); expected.add(`wacana.${w.id}.trade`); }
     for (const e of EVENTS) {
       expected.add(`event.${e.id}.name`);
       expected.add(`event.${e.id}.body`);

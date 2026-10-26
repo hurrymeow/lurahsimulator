@@ -1,0 +1,9 @@
+# Popularitas, policy trade-offs, money sinks, Emas card (playtest feedback)
+
+- **Rename.** Patience / Kesabaran is now Popularitas in EN and ID. Display text only. The resource id stays `sabar`, so saves are untouched.
+- **Building text.** "Attracts 1/2/3" is now "Attracts new residents" on build cards and the inspector. The numbers still drive the rule and the town-level line (`N want to live here`) stays.
+- **Policies.** Each wacana now buys Popularitas and charges something else every month while it lasts (rupiah, Orang Dalam, or gives Virality). Repeats cost +25% each (cap 5x) and land 12% softer (floor 40%). Popularitas per policy dropped from 0.15 to 0.1 per approval point. Still builds nothing, so the satire stands.
+- **Popularitas was pinned at 100** by year 4 in the autoplayer. Jobs now give 0.08 (was 0.2) per employed resident. Every resident also costs 0.1 a month ("expectations"). 0.07 left it pinned and 0.12 collapsed it, so the band is narrow and tuned on the bot. A player who never uses policies sits around 90, one who does has room to push.
+- **Stars.** 2★ now also needs Popularitas 50 and 3★ needs 65 (was 50). Bot pacing is unchanged: 1★ month 5, 2★ about month 28, 3★ about month 47. The existing pacing test still passes.
+- **Money.** Sprawl: each building past the 8th makes the next build and upgrade 5% dearer. Setoran: 12% of building income goes up the chain every month. The autoplayer ended year 8 with 190M, down from 440M. It is still rich once it has built every capped type, so late-game money needs more things to buy. That is for the building-content and Orang Dalam threads.
+- **Emas.** Tapping the Emas bar opens a card with what raises it. Each policy now adds 0.004% (was 0.001%), so policies are a visible driver next to year ends and ranking wins.

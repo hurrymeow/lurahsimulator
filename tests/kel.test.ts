@@ -112,7 +112,7 @@ describe('Tim Audit', () => {
     return resolveEvent(s, [], choice);
   };
 
-  it('clean when no wacana lacks a receipt, and costs 2 Patience for each that does', () => {
+  it('clean when no wacana lacks a receipt, and costs 2 Popularitas for each that does', () => {
     const s = kel(1);
     expect(wacanaNoReceipt(s)).toBe(0);
     audit(s, 0);

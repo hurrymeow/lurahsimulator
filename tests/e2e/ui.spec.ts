@@ -133,7 +133,7 @@ test.describe('population and houses', () => {
   test('the Build screen names both levers, and a house placed by hand fills up', async ({ page }) => {
     const POP_LINE = { en: /want to live here/, id: /ingin tinggal di sini/ }[lang()];
     const HOUSES = { en: 'Houses 3', id: 'Menampung 3' }[lang()];
-    const ATTRACTS = { en: 'Attracts 1', id: 'Menarik 1' }[lang()];
+    const ATTRACTS = { en: 'Attracts new residents', id: 'Menarik warga baru' }[lang()];
     await start(page);
     await dismissModals(page);
     await page.locator('#menu-btn').click();
