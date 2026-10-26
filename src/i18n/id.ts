@@ -77,6 +77,12 @@ export const ID: Record<Key, string> = {
   'how.7.body': 'Proyek besar bisa mangkrak di 80%. Setiap toko baru dapat tukang parkir yang tak bisa dicopot. Viral membuat perbaikan lebih murah.',
   'how.8.head': 'Waktu jalan sendiri.',
   'how.8.body': 'Satu bulan sekitar 8 detik. Jeda, atau ketuk 1x untuk mempercepat, di bawah. Game menunggu saat kamu membaca.',
+  'how.9.head': 'Banjir menguji selokanmu.',
+  'how.9.body': 'Tiap level selokan mengurangi kerusakan banjir 20%. Bangun sebelum musim hujan, bukan sesudahnya.',
+  'how.10.head': 'Tiap tahun kamu diperingkat.',
+  'how.10.body': 'Kampungmu dinilai melawan Kampung Sebelah. Menang memberi Sabar, Orang Dalam, dan kemajuan Indonesia Emas.',
+  'how.later': 'Sisanya muncul sebagai tips singkat saat pertama kali penting. Panduan lengkap tetap di Menu, Cara main.',
+  'tip.skip': 'Lewati tips',
 
   'build.title': 'Bangun',
   'build.needMore': 'Kurang {amt}',

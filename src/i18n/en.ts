@@ -81,6 +81,12 @@ export const EN = {
   'how.7.body': 'Big projects can freeze at 80%. Every new shop gets a tukang parkir you cannot remove. Viral makes repairs cheaper.',
   'how.8.head': 'Time runs by itself.',
   'how.8.body': 'One month is about 8 seconds. Pause, or tap 1x to speed up, at the bottom. The game waits while you read.',
+  'how.9.head': 'Banjir tests your selokan.',
+  'how.9.body': 'Each selokan level cuts flood damage by 20%. Build them before the rainy months, not after.',
+  'how.10.head': 'Every year you are ranked.',
+  'how.10.body': 'Your kampung is scored against Kampung Sebelah. Win to gain Sabar, Orang Dalam and Indonesia Emas progress.',
+  'how.later': 'Everything else shows up as a short tip the first time it matters. The full guide stays in Menu, How to play.',
+  'tip.skip': 'Skip tips',
 
   // build + inspect
   'build.title': 'Build',

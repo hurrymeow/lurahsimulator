@@ -12,6 +12,7 @@ import { h } from './ui/dom';
 import { glyphURL } from './ui/glyphs';
 import { inspect } from './ui/inspect';
 import { hasSeenHowto, showHowto } from './ui/howto';
+import { setupTips } from './ui/tips';
 import { openSettings } from './ui/settings';
 import { openMenu } from './ui/menu';
 import { closeSheet } from './ui/sheet';
@@ -44,7 +45,8 @@ $('scrim').addEventListener('click', closeSheet);
 setupInstall(installBtn, (text) => app.modal({ title: t('install.title'), body: text, tone: 'info' }));
 setupUpdates($('update-banner'), $<HTMLButtonElement>('update-btn'));
 app.refresh();
-if (!hasSeenHowto()) showHowto(app);
+if (!hasSeenHowto()) showHowto(app, true);
+setupTips(app);
 
 // ?debug exposes the app for play-testing from the console.
 if (new URLSearchParams(location.search).has('debug')) (window as unknown as { pakrt: App }).pakrt = app;
