@@ -82,7 +82,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'banjir',
     name: 'Banjir',
-    body: 'Hujan deras for three days. Biopori level decides how much of the kampung floats. Each biopori level cuts the damage by 20%.',
+    body: 'Heavy rain for three days. Biopori level decides how much of the kampung floats. Each biopori level cuts the damage by 20%.',
     when: { months: [10, 11, 0, 1], minMonth: 10, chance: 0.3, cooldown: 9 },
     choices: [{ label: 'Check the damage', special: 'banjir', result: '' }],
   },

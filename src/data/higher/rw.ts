@@ -199,7 +199,7 @@ export const RW_EVENTS: StageEventDef[] = [
     choices: [
       { label: 'Send a representative', res: { sabar: -2 }, result: 'Three people came. Two were children.' },
       {
-        label: 'Join in · Rp 300.000 snacks',
+        label: 'Join in with snacks · Rp 300.000',
         cost: { rupiah: 300_000 },
         res: { sabar: 6 },
         modifier: { label: 'Kerja bakti', target: 'biopori', incomeMult: 1.2, months: 6 },

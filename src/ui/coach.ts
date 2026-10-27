@@ -61,17 +61,23 @@ export function setupCoach(app: App): void {
     const h = bar.offsetHeight;
     let up = false;
     if (inSheet && r) {
-      let top = r.bottom + 12;
+      const top = r.bottom + 12;
       if (top + h > innerHeight - 8) {
-        top = r.top - h - 12;
-        up = false;
-      } else up = true;
-      bar.style.top = `${Math.max(8, top)}px`;
-      bar.style.bottom = 'auto';
+        // No room under the target. Above it would sit on the sheet's own text and tabs, so go above the sheet.
+        bar.style.top = 'auto';
+        bar.style.bottom = `${innerHeight - document.getElementById('sheet')!.getBoundingClientRect().top + 8}px`;
+      } else {
+        up = true;
+        bar.style.top = `${top}px`;
+        bar.style.bottom = 'auto';
+      }
     } else {
       const floor = ['placebar', 'bottombar'].map((id) => document.getElementById(id)).find(visible)!;
       bar.style.top = 'auto';
       bar.style.bottom = `${innerHeight - floor.getBoundingClientRect().top + 12}px`;
+      // A small phone can leave the target right where the note lands. Then the note goes above the target.
+      const b = bar.getBoundingClientRect();
+      if (r && r.top < b.bottom && r.bottom > b.top && r.left < b.right && r.right > b.left) bar.style.bottom = `${innerHeight - r.top + 12}px`;
     }
     const b = bar.getBoundingClientRect();
     const pointsDown = !!r && !inSheet && r.top >= b.bottom - 2;

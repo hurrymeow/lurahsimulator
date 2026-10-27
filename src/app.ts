@@ -220,10 +220,11 @@ export class App {
       const check = checkChoice(this.s, c);
       const cost = eventCost(this.s, c);
       const label = eLabel(e, i, c).replace(/ · Rp [\d.]+/, '').replace(/ · \d Orang (Inside|Dalam)/, '');
+      // One unbreakable run: a price never splits from its icon across lines.
       const od = cost.orangDalam ? [`${cost.orangDalam} `, h('img', { src: iconURL('orangDalam'), alt: t('res.orangDalam'), width: 18, height: 18, class: 'inline-icon' })] : [];
       const price: Node[] = [...(cost.rupiah ? [document.createTextNode(rupiah(cost.rupiah))] : []), ...(cost.rupiah && od.length ? [document.createTextNode(' + ')] : []), ...od.map((x) => (x instanceof Node ? x : document.createTextNode(x)))];
       return h('div', { class: 'action' },
-        h('button', { class: `btn ${i === 0 ? '' : 'btn-primary'}`, disabled: !check.ok, onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i); } }, label, ...(price.length ? [' · ', ...price] : [])),
+        h('button', { class: `btn ${i === 0 ? '' : 'btn-primary'}`, disabled: !check.ok, onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i); } }, label, ...(price.length ? [' · ', h('span', { class: 'price' }, ...price)] : [])),
         check.ok ? null : missingList(check.missing),
       );
     });
@@ -264,6 +265,7 @@ export class App {
         const amt = id === 'rupiah' ? rupiah(Math.abs(v)) : String(Math.round(Math.abs(v) * 10) / 10);
         return h('div', { class: `outcome-chip ${v < 0 ? 'negative' : 'positive'}`, style: `--c:${RES_COLOUR[id]}`, role: 'text', 'aria-label': `${RES_META[id].label()} ${v < 0 ? '-' : '+'}${amt}` },
           h('img', { src: iconURL(RES_META[id].icon), alt: '', width: 24, height: 24 }),
+          h('span', { class: 'outcome-name' }, RES_META[id].label()),
           h('span', { class: 'outcome-value' }, `${v < 0 ? '▼ -' : '▲ +'}${amt}`),
         );
       });

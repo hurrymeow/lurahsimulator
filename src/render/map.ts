@@ -9,6 +9,7 @@ import { iso, TH, TOP, TW, type Art } from './iso';
 import { t } from '../i18n';
 import { Crowd } from './people';
 import { Weather } from './weather';
+import { placeBadge, type BadgeBox } from './badge';
 import { buildWorld, decoAt, farRoofs, layoutWorld, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
 import { ICONS, ROOF_COLOURS, ROOF_SHAPES, WALL_COLOURS, sprite } from './sprites';
 
@@ -549,10 +550,11 @@ export class MapView {
     }
 
     // Badges sit above every building so a taller neighbour in front never hides them.
+    const badges: BadgeBox[] = [];
     for (const b of sorted) {
       if (!tops.has(b.y * GRID_W + b.x)) continue;
       const label = b.status === 'permit' || b.status === 'building' ? `${b.timer}` : b.status === 'mangkrak' ? '80%' : b.status === 'damaged' ? '!' : b.noRoad ? t('map.noRoad') : null;
-      if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label);
+      if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label, badges);
     }
     // Speech bubbles go last of all, above buildings, window lights, weather and badges.
     this.crowd.drawBubbles(ctx);
@@ -722,11 +724,12 @@ export class MapView {
     }
   }
 
-  private badge(ctx: CanvasRenderingContext2D, cx: number, cy: number, text: string): void {
+  private badge(ctx: CanvasRenderingContext2D, cx: number, cy0: number, text: string, placed: BadgeBox[]): void {
     ctx.font = '700 16px "Atkinson Hyperlegible", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const w = Math.max(20, ctx.measureText(text).width + 8);
+    const cy = placeBadge(placed, cx, cy0, w);
     ctx.fillStyle = '#0b0b0c';
     ctx.fillRect(cx - w / 2, cy - 10, w, 20);
     ctx.strokeStyle = '#f4f4f5';

@@ -66,7 +66,7 @@ export const ID_HIGHER_DATA: Record<string, string> = {
   'event.kerjaBakti.body': 'Minggu pagi, jam 7. Pengeras suara lebih keras dari sekop. Kehadiran adalah Popularitas.',
   'event.kerjaBakti.c0.label': 'Kirim perwakilan',
   'event.kerjaBakti.c0.result': 'Yang datang tiga orang. Dua di antaranya anak-anak.',
-  'event.kerjaBakti.c1.label': 'Ikut turun · Rp 300.000 camilan',
+  'event.kerjaBakti.c1.label': 'Ikut turun bawa camilan · Rp 300.000',
   'event.kerjaBakti.c1.result': 'Semua datang demi gorengan. Biopori menyerap 20% lebih baik selama 6 bulan.',
   'event.kerjaBakti.c1.mod': 'Kerja bakti',
   'event.musimPindahan.name': 'Musim Pindahan',

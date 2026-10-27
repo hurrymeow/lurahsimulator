@@ -69,6 +69,19 @@ async function expectCentred(page: Page, where: string): Promise<void> {
   if (!m.full) expect(m.off, `${where} is vertically centred`).toBeLessThan(3);
 }
 
+/** The coach note must never sit on top of anything it is not pointing at, or on the target itself. */
+async function expectCoachClear(page: Page, selectors: string[], where: string): Promise<void> {
+  const note = (await page.locator('#coach').boundingBox())!;
+  for (const sel of selectors) {
+    for (const el of await page.locator(sel).all()) {
+      const b = await el.boundingBox();
+      if (!b) continue;
+      const overlap = b.x < note.x + note.width && b.x + b.width > note.x && b.y < note.y + note.height && b.y + b.height > note.y;
+      expect(overlap, `${where}: the note covers ${sel}`).toBe(false);
+    }
+  }
+}
+
 async function expectLegible(page: Page, where: string): Promise<void> {
   const problems = await scanLegibility(page);
   expect(problems, `${where}\n${problems.map((p) => `${p.rule}: "${p.text}" (${p.detail})`).join('\n')}`).toEqual([]);
@@ -117,6 +130,7 @@ test.describe('opener', () => {
     await page.locator('#act-build').click();
     const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
     await expect(rumah).toHaveClass(/coach-pulse/);
+    await expectCoachClear(page, ['#sheet .tabs', '#sheet > p', '#sheet .card-btn.coach-pulse'], 'Pick step');
     await expectLegible(page, 'opener, Pick step');
     await rumah.click();
     await expect(page.locator('#coach')).toBeVisible();
@@ -128,6 +142,7 @@ test.describe('opener', () => {
     });
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('#place-ok')).toHaveClass(/coach-pulse/);
+    await expectCoachClear(page, ['#place-ok', '#place-cancel'], 'Place step');
     await page.locator('#place-ok').click();
     await expect(page.locator('#coach-skip')).toHaveText(lang() === 'en' ? 'Got it' : 'Paham');
     await page.locator('#coach-skip').click();
@@ -338,6 +353,38 @@ test.describe('events, ranking, settings', () => {
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month)).toBe(before);
     await page.locator('#modal .tap-hint').click();
     await expect(page.locator('#modal .card.report-card')).toBeHidden();
+  });
+
+  test('every event shows prices in one piece, and every result row names its resource', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await skipTips(page);
+    await seed(page);
+    const ids = ['agustusan', 'banjir', 'cabai', 'kecamatan', 'partTime', 'cctv', 'kkn', 'startupPilot', 'hajatan', 'pasarMalam', 'sisaAnggaran', 'magang', 'pungli', 'pangkalanOjol', 'lesGratis', 'padam', 'rapatWarga', 'hibah', 'lombaKampung', 'truckSampah', 'lubangViral', 'sembako', 'pbb', 'festivalKuliner'];
+    for (const id of ids) {
+      await page.evaluate((i) => {
+        const app = (window as unknown as { pakrt: any }).pakrt;
+        app.speed = 0;
+        app.s.res.rupiah = 1e9;
+        app.s.res.orangDalam = 50;
+        app.s.pendingEvent = i;
+        app.showEvent();
+      }, id);
+      const card = page.locator('#modal .card.event');
+      await expect(card).toBeVisible();
+      for (const price of await card.locator('.price').all()) {
+        // A price on two lines would split the number from its word.
+        expect(await price.evaluate((el) => el.getClientRects().length), `${id} price wraps`).toBe(1);
+      }
+      await expectLegible(page, `event ${id}`);
+      await card.locator('.btn').last().click();
+      for (const chip of await page.locator('#modal .outcome-chip').all()) {
+        expect((await chip.locator('.outcome-name').textContent())?.trim(), `${id} result row has no word`).toBeTruthy();
+      }
+      await expectLegible(page, `result of ${id}`);
+      await page.locator('#modal .tap-hint').click();
+      await expect(page.locator('#modal')).toBeHidden();
+    }
   });
 
   test('an event right after a tip is centred, not left at the bottom', async ({ page }) => {
@@ -1560,5 +1607,47 @@ test.describe('path decay, level art and menu icons', () => {
       expect(await img.getAttribute('width')).toBe('44');
     }
     await expectLegible(page, 'menu with icon plates');
+  });
+});
+
+test.describe('sheets keep their place', () => {
+  test('the Build tab row does not jump when switching tabs', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await skipTips(page);
+    await seed(page);
+    await page.evaluate(() => ((window as unknown as { pakrt: any }).pakrt.speed = 0));
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-build').click();
+    const tabs = page.locator('.sheet .tabs .tab');
+    const n = await tabs.count();
+    expect(n).toBeGreaterThan(1);
+    let top: number | undefined;
+    for (let i = 0; i < n; i++) {
+      await tabs.nth(i).click();
+      const y = (await tabs.first().boundingBox())!.y;
+      top ??= y;
+      expect(Math.abs(y - top), `tab ${i} moved the tab row`).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('the SK choices stack at the same width', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await skipTips(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.s.stage.stars.rt = 3;
+      app.s.stage.sk = 'offered';
+      app.refresh();
+    });
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#stage-btn').click();
+    const widths = await page.locator('.sheet > .btn').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)));
+    expect(widths.length).toBeGreaterThan(1);
+    expect(new Set(widths).size, `button widths ${widths}`).toBe(1);
+    await expectLegible(page, 'stage sheet');
   });
 });
