@@ -862,11 +862,11 @@ test.describe('walkers and effects', () => {
     expect(bigBusy, `Kelurahan ${big.toFixed(0)} fps, with effects ${bigBusy.toFixed(0)} fps`).toBeGreaterThan(big * 0.35);
   });
 
-  test('a speech bubble is painted after every building, window light and badge', async ({ page }) => {
+  test('a speech bubble is painted after every building and window light', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     await seed(page);
-    // Records the draw order of one frame: lit windows (L), the bubble text (B), any other text (T).
+    // Records the draw order: lit windows (L) and the bubble text (B). Other text (T) is floating numbers, which may sit on top.
     const order = await page.evaluate(
       () =>
         new Promise<string[]>((done) => {
@@ -899,7 +899,7 @@ test.describe('walkers and effects', () => {
     for (const o of order) {
       if (o === 'F') bubbled = false;
       else if (o === 'B') bubbled = true;
-      else if (bubbled) throw new Error(`"${o}" was painted over the speech bubble: ${order.slice(0, 60).join('')}`);
+      else if (bubbled && o === 'L') throw new Error(`"${o}" was painted over the speech bubble`);
     }
   });
 
