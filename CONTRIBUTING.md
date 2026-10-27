@@ -8,6 +8,7 @@ This page is the short version. The rules live in the files linked below. Read t
 | File | Covers |
 | --- | --- |
 | [DESIGN.md](DESIGN.md) | Satire, pacing, UI layout, legibility, accessibility, tech |
+| [UI-RUBRIC.md](UI-RUBRIC.md) | Measurable UI and UX rules a PR is checked against |
 | [ART.md](ART.md) | Look, palette, outlines, shading, adding a sprite, art checklist |
 | [STAGES.md](STAGES.md) | RT, RW, Kelurahan and what each stage unlocks |
 | [decisions/](decisions/) | Why things are the way they are. Skim it before changing behaviour. |
