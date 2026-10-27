@@ -52,7 +52,8 @@ The artist's restyle is the reference ([ART.md](ART.md) has the full rules). New
 
 - Warm storybook palette: terracotta, mustard, teal, cream, olive. Keys live in `PALETTE`.
 - 1px dark-brown ink (`#2a1810`) round every silhouette and face edge. Never pure black.
-- Flat two-tone cel shading, light from the top left. No dithering or noise.
+- Flat two-tone cel shading, light from the top left. No dithering or noise on sprites or near ground. Distant scenery (haze, hill edge, volcanoes, clouds) blends through an ordered dither (ART.md).
+- The land behind the kampung rolls into lit hills with a tile grid; twin volcanoes and drifting clouds stand behind them (ART.md).
 - Straight isometric lines on a 32x16 tile, scaled by whole numbers only.
 - Flat ground art (selokan, jalan) sets `bare` and draws its own edges so neighbours join.
 - Never overwrite the artist's sprites. Add new ones beside them.

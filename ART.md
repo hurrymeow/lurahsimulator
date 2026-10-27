@@ -125,19 +125,23 @@ Scenery colours:
 | Kebun, hutan | `#5f8a3c`, `#4a7334` |
 | Beach, sea | Sand `#e6c486` to `#f3daa2` with ripples, sea `#367f80` to `#4a9b96` with `#8fd0c2` wave dashes |
 | Sky | Deep blue `#3f6fae` down to warm haze `#f3d9a8` at the horizon, banded in steps, 32 lighter rays |
-| Clouds | Stacked slabs, `#f3efe6` lit, `#c9c3dc` underside, no ink |
-| Mountains | Hazed toward the sky: `#93b0ac` lit, `#6f8d90` shade, straight strata, forested feet, ink `#5a6a74` |
-| Tree line | Straight-sided pines on the horizon, `#6e9580` lit, `#57806c` shade |
+| Clouds | Long thin streaks that taper at both ends: `#fbf8f2` top to `#c9c2d8` underside, no ink. Drawn per frame (`clouds()`): they slide slowly to and fro and twitch a pixel now and then |
+| Mountains | Twin low, broad volcanoes: concave slopes, blunt crater top, `#f1f0ec` lit to `#7689ad` shade with no ridge line, faint ravines, feet melting into haze `#d6dee2`. No ink |
+| Tree line | Soft rounded canopy in the horizon haze, `#88a894` / `#71927f` |
+| Hills | Lit triangle facets over corner heights (`cornerHeight`), a soft grid line on each tile edge (0.86 to 0.88 shade) |
+| Haze | `#ced6c4`. Far land, the hill silhouette and the mountains' feet fade into it through a 4x4 ordered dither |
 
 Rules:
 
 - Warm first. Cool colours (teal, blue) are accents, never the main field.
 - Saturated, but not neon. If a colour glows on the dark UI, pull it toward cream or brown.
 - Far things fade toward the sky colour (aerial perspective), ink included.
+- Distance is the one place for dithering: haze, the hill silhouette, mountains and clouds blend
+  through a 4x4 ordered (Bayer) dither in a few flat steps. Sprites and near ground never dither.
 - Ground texture uses clumps squashed 2:1, so they lie flat on the isometric plane.
 - The kampung is a raised block: where land meets the beach or the world's edge, a 7-pixel
   dirt cliff drops away. That gives the diorama its depth.
-- UI chrome stays Mono Dark. Colour belongs to the map and to resource meaning.
+- UI chrome follows the console frame in DESIGN.md. Colour belongs to the map and to resource meaning.
 
 ## Lighting and atmosphere
 
@@ -223,9 +227,16 @@ faceless, so the map stays readable.
 
 ## Terraced hills and icons
 
-- Toward the mountains the land rises into terraces: kebun teh on the left, sawah terasering on the
-  right. Each terrace is a band of a smooth height field. Its riser is a lit rim over a dark line,
+- Behind the ring road the land rolls into real hills: each tile is two flat-lit triangles over its
+  corner heights, drawn back to front, with a soft grid line along every tile edge, like an old
+  train-and-city builder's map. The kampung, the ring road, the front sawah and the coast stay flat,
+  so plots, taps and the beach cliff never change.
+- Toward the mountains the hills carry terraces: kebun teh on the left, sawah terasering on the
+  right. Each terrace is a band of the real hill height. Its riser is a lit rim over a dark line,
   steps alternate light and dark, and slopes facing the top left are lit.
+- Trees stand on the hill surface. Palms and pisang keep to the low kebun by the ring road, shade
+  trees gather in groves on hilltops, and steep faces stay bare so the hills read. Far tree clumps
+  and three tiny hamlets sit in the haze along the hilltops.
 - Menu icons sit on a cream bevelled plate, like the tool panel of an old isometric city builder.
   Panels about the kampung show a tiny scene drawn with the map's own sprites. Abstract ones show
   their glyph in dark ink with a brick-red accent.
