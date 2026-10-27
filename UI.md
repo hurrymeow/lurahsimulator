@@ -34,12 +34,22 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 
 | Rules | Check |
 | --- | --- |
-| 1, 4, 5 | `npm run e2e` legibility scan, 3 widths, 2 languages |
+| 1, 4, 5 | `npm run e2e` legibility scan, 4 widths, 2 languages |
 | 7, 8 | Word count over `src/i18n/en.ts` and the event data. Not automated. |
 | 2, 3, 6, 9, 10, 11 | Review against the audit crawl screenshots |
 | 12 | Timed run. Not automated. |
+| Layout drift | Screenshot baselines (`tests/e2e/visual.spec.ts`): home, HUD, Build sheet, event popup, tip card. 412px, 2 languages. |
 
 Every new panel or message needs a scan in `tests/e2e/ui.spec.ts`. CI runs the suite on every PR. The audit crawl scripts are in the project files, not in the repo.
+
+## Screenshot baselines
+
+A baseline diff means a screen changed. Decide whether the change was meant.
+
+- Intended change: run Actions > Update baselines on your branch. It redraws the PNGs in CI's own Playwright image and commits them.
+- Attach the before and after of each changed screen to the PR.
+- Never refresh baselines to make CI pass. An unexpected diff is a bug to fix.
+- Do not draw baselines on your own machine. Fonts and rendering differ from CI.
 
 ## Status, 2026-10-27
 
