@@ -1,4 +1,4 @@
-# Pejabat Sim
+# Pak Pejabat
 
 A satirical kampung management sim, shipped as a PWA. You play Pak RT.
 
