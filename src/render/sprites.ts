@@ -206,12 +206,13 @@ export const SPRITES: Record<string, string[]> = {
   ],
 };
 
+/** 8x8 HUD icons. Each is the shape people already know from their phone: coin, heart, key, flame, person. */
 export const ICONS: Record<string, string[]> = {
-  rupiah: ['........', 'gggggggg', 'gGwwwwGg', 'gwGGGGwg', 'gwGGGGwg', 'gGwwwwGg', 'gggggggg', '........'],
-  sabar: ['........', '.ll..ll.', 'llllllll', 'llllllll', '.llllll.', '..llll..', '...ll...', '........'],
-  orangDalam: ['..NNNN..', '..NgGN..', 'NNNgGNNN', 'NRwwwwRN', 'NwRwwRwN', 'NwwRRwwN', 'NNNNNNNN', '........'],
-  viral: ['BBBB.p.p', 'BccB.ppp', 'BccB..p.', 'BccB....', 'BccB....', 'BccB....', 'BBBB....', '........'],
-  people: ['........', '..ww....', '..ww.ww.', '.wwwwww.', '.ww.ww..', '.ww.ww..', '.ww.ww..', '........'],
+  rupiah: ['..oooo..', '.oyyyyo.', 'oywyyyyo', 'oywaayyo', 'oyyaaayo', 'oyyyyyyo', '.oyyyyo.', '..oooo..'],
+  sabar: ['.rr..rr.', 'rwrrrrrr', 'rrrrrrrR', 'rrrrrrrR', '.rrrrrR.', '..rrrR..', '...rR...', '........'],
+  orangDalam: ['........', '.yyy....', 'y...y...', 'y...yyyy', 'y...y.y.', '.yyy..y.', '........', '........'],
+  viral: ['...r....', '...rr...', '..rorr..', '.rooorr.', '.royyor.', '.royyor.', '..ryyr..', '...rr...'],
+  people: ['..wwww..', '.wwwwww.', '.wwwwww.', '..wwww..', '........', '.wwwwws.', 'wwwwwwws', 'wwwwwwws'],
 };
 
 const cache = new Map<string, HTMLCanvasElement>();
