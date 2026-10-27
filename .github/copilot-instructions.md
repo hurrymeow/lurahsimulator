@@ -1,0 +1,1 @@
+Read and follow [AGENTS.md](AGENTS.md) before any work. It lists the docs to read and the Conformance protocol: if a change conflicts with a doc, stop and ask the human to choose 1) change the code to match the doc, or 2) update the doc in the same PR with a decisions/ note. Never diverge silently.
