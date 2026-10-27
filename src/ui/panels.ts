@@ -1,9 +1,9 @@
-import { cEffect, cHint, cName, cStory, jBlurb, jName, t, wLine, wName, wTrade } from '../i18n';
+import { cEffect, cName, cStory, jBlurb, jName, t, wLine, wName, wTrade } from '../i18n';
 import { LEVEL_MONTHS, jobDef } from '../data/jobs';
 import { WACANA } from '../data/wacana';
 import type { App } from '../app';
 import { rupiah } from '../format';
-import { bookCombos, comboMemberNames } from '../sim/combos';
+import { bookCombos, comboConditions, comboStatus, comboStatusText } from '../sim/combos';
 import { checkAssign, assign, levelOf, liveJobs } from '../sim/jobs';
 import { PATH_DECAY } from '../sim/balance';
 import { checkRepairPath, isPath, neglect, repairPath, repairPathCost, stretchOf, type RepairWay } from '../sim/decay';
@@ -89,12 +89,14 @@ export function openBukuCombo(app: App): void {
   const found = combos.filter((c) => s.discovered.includes(c.id)).length;
   const rows = combos.map((c) => {
     const known = s.discovered.includes(c.id);
-    return h('div', { class: `card-btn static ${known ? '' : 'locked'}` },
+    const st = comboStatus(s, c);
+    return h('div', { class: `card-btn static ${st.state === 'active' ? '' : 'locked'}` },
       h('div', { class: 'card-text' },
-        h('div', { class: 'card-title' }, h('strong', {}, known ? cName(c) : '???'), h('span', { class: 'meta' }, known ? t('combo.discovered') : t('combo.hidden'))),
-        h('p', {}, known ? cStory(c) : cHint(c)),
-        known ? h('p', { class: 'meta' }, t('combo.needs', { names: comboMemberNames(c).join(' + '), r: c.radius >= 99 ? t('combo.anywhere') : c.radius > 1 ? t('combo.tileN', { n: c.radius }) : t('combo.tile1') })) : null,
-        known ? h('p', {}, cEffect(c)) : null,
+        h('div', { class: 'card-title' }, h('strong', {}, cName(c)), h('span', { class: 'meta' }, known ? t('combo.discovered') : t('combo.hidden'))),
+        h('p', {}, comboConditions(c)),
+        h('p', {}, cEffect(c)),
+        h('p', { class: 'meta' }, comboStatusText(st)),
+        known ? h('p', { class: 'meta' }, cStory(c)) : null,
       ),
     );
   });

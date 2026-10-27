@@ -329,6 +329,13 @@ export const ID: Record<Key, string> = {
   'combo.tile1': '1 petak',
   'combo.anywhere': 'seluruh RW',
   'combo.tileN': '{n} petak',
+  'combo.state.active': 'Aktif di kampung',
+  'combo.state.found': 'Pernah ditemukan, sedang tidak jalan',
+  'combo.state.todo': 'Belum ada di kampung',
+  'combo.missing': 'Kurang: {names}',
+  'combo.placeClose': 'Taruh berdekatan.',
+  'combo.ruleTrait': 'Juga butuh dua RT tetangga dengan sifat sama.',
+  'combo.ruleJob': 'Juga butuh warga yang bekerja sebagai {job}.',
   'combo.notice': 'Combo: {name}',
   'combo.noticeBody': '{story} {effect} Tercatat di Buku Combo.',
 

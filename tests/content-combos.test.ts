@@ -3,7 +3,7 @@ import { COMBOS } from '../src/data/combos';
 import { MORE_COMBOS } from '../src/data/combos-more';
 import { BUILDINGS } from '../src/data/buildings';
 import { STAGE_COMBOS } from '../src/data/higher';
-import { activeCombos, comboIncomeMult } from '../src/sim/combos';
+import { activeCombos, comboConditions, comboIncomeMult, comboStatus } from '../src/sim/combos';
 import { addBuilding, newGame } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
 
@@ -37,5 +37,19 @@ describe('playtest combos', () => {
     expect(activeCombos(s).some((a) => a.combo.id === 'kafeTaman')).toBe(false);
     addBuilding(s, 'warkop', 5, 6, 'active');
     expect(activeCombos(s).some((a) => a.combo.id === 'kafeTaman')).toBe(true);
+  });
+});
+
+describe('combo status and conditions', () => {
+  const pecel = COMBOS.find((c) => c.id === 'pecelLele')!;
+  it('lists what is missing, then active once the buildings stand together', () => {
+    const s = newGame(1);
+    addBuilding(s, 'kolamLele', 5, 5, 'active');
+    expect(comboStatus(s, pecel)).toEqual({ state: 'todo', missing: ['Warteg'] });
+    addBuilding(s, 'warteg', 6, 5, 'active');
+    expect(comboStatus(s, pecel).state).toBe('active');
+  });
+  it('writes every combo as plain text with its building names', () => {
+    for (const c of COMBOS) expect(comboConditions(c).length, c.id).toBeGreaterThan(10);
   });
 });

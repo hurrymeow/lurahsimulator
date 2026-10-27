@@ -338,6 +338,13 @@ export const EN = {
   'combo.tile1': '1 tile',
   'combo.anywhere': 'the whole RW',
   'combo.tileN': '{n} tiles',
+  'combo.state.active': 'Active in town',
+  'combo.state.found': 'Found, but not working now',
+  'combo.state.todo': 'Not in town yet',
+  'combo.missing': 'Missing: {names}',
+  'combo.placeClose': 'Place them close together.',
+  'combo.ruleTrait': 'Also needs two neighbouring RTs with the same trait.',
+  'combo.ruleJob': 'Also needs a resident working as {job}.',
   'combo.notice': 'Combo: {name}',
   'combo.noticeBody': '{story} {effect} Logged in Combo Book.',
 

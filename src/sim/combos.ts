@@ -2,10 +2,12 @@ import { bName, cEffect, cName, cStory, t } from '../i18n';
 import { COMBOS, type ComboDef } from '../data/combos';
 import { STAGE_COMBOS, type StageComboDef } from '../data/higher';
 import { def } from './content';
+import { jobDef } from '../data/jobs';
+import { jName } from '../i18n';
 import { gateOpen } from './gate';
 import { gain, type Fx } from './gain';
 import { isWorking } from './state';
-import type { Building, GameState } from './types';
+import type { Building, GameState, JobId } from './types';
 
 export interface ActiveCombo {
   combo: ComboDef;
@@ -101,3 +103,44 @@ export function comboSystem(s: GameState, fx: Fx): void {
 }
 
 export const comboMemberNames = (c: ComboDef) => c.needs.map((id) => bName(def(id)));
+
+export interface ComboStatus {
+  /** active: working in town now. found: seen before but not working now. todo: never seen. */
+  state: 'active' | 'found' | 'todo';
+  /** Names of what is not in town yet: buildings that are not working, or the job. Empty when all are there. */
+  missing: string[];
+}
+
+/** Where a combo stands in this town, for the Buku Combo and the star checklist. */
+export function comboStatus(s: GameState, c: ComboDef): ComboStatus {
+  if (activeCombos(s).some((a) => a.combo.id === c.id)) return { state: 'active', missing: [] };
+  const working = s.buildings.filter(isWorking);
+  const pool = [...working];
+  const missing: string[] = [];
+  for (const id of c.needs) {
+    const i = pool.findIndex((b) => b.def === id);
+    if (i >= 0) pool.splice(i, 1);
+    else missing.push(bName(def(id)));
+  }
+  const job = (c as Partial<StageComboDef>).needsJob;
+  if (job && !s.residents.some((r) => r.job === job)) {
+    const jd = jobDef(job as JobId);
+    missing.push(jd ? jName(jd) : job);
+  }
+  return { state: s.discovered.includes(c.id) ? 'found' : 'todo', missing };
+}
+
+/** One plain line: which buildings, how close, and any extra rule. */
+export function comboConditions(c: ComboDef): string {
+  const sc = c as Partial<StageComboDef>;
+  const names = comboMemberNames(c).join(' + ');
+  const r = c.radius >= 99 ? t('combo.anywhere') : c.radius > 1 ? t('combo.tileN', { n: c.radius }) : t('combo.tile1');
+  const extra = [sc.rule === 'sameTraitNeighbours' ? t('combo.ruleTrait') : '', sc.needsJob ? t('combo.ruleJob', { job: jobDef(sc.needsJob as JobId) ? jName(jobDef(sc.needsJob as JobId)!) : sc.needsJob }) : ''].filter(Boolean).join(' ');
+  return [t('combo.needs', { names, r }), extra].filter(Boolean).join(' ');
+}
+
+/** Status line, for example "Active in town" or "Not in town yet. Missing: Wifi". */
+export function comboStatusText(st: ComboStatus): string {
+  const base = t(`combo.state.${st.state}` as 'combo.state.active');
+  return st.missing.length ? `${base}. ${t('combo.missing', { names: st.missing.join(', ') })}` : st.state === 'active' ? base : `${base}. ${t('combo.placeClose')}`;
+}
