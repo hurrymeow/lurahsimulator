@@ -365,6 +365,7 @@ export class Crowd {
 
   /** Call once per frame before drawUntil. Sorts back to front. */
   begin(): void {
+    this.pending = [];
     this.order = this.people.filter((p) => !p.away).sort((a, b) => a.fx + a.fy - (b.fx + b.fy));
     this.cursor = 0;
   }
@@ -395,7 +396,16 @@ export class Crowd {
     }
     // The frame's outline adds a pixel all round, so the feet sit one art pixel above the bottom.
     ctx.drawImage(img, Math.round(g.x - w / 2), Math.round(g.y - h + 2 * s - bob * s), w, h);
-    if (p.say && this.bubbles && motion) this.bubble(ctx, p.say, g.x, g.y - h - 2 * s);
+    // Queued, not drawn: a bubble must sit above every building, light and weather layer.
+    if (p.say && this.bubbles && motion) this.pending.push({ text: p.say, x: g.x, bottom: g.y - h - 2 * s });
+  }
+
+  private pending: { text: string; x: number; bottom: number }[] = [];
+
+  /** Draws the queued speech bubbles. Called last, so nothing paints over them. */
+  drawBubbles(ctx: CanvasRenderingContext2D): void {
+    for (const b of this.pending) this.bubble(ctx, b.text, b.x, b.bottom);
+    this.pending = [];
   }
 
   /** A small speech bubble above a walker's head. */

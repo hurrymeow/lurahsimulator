@@ -862,6 +862,68 @@ test.describe('walkers and effects', () => {
     expect(bigBusy, `Kelurahan ${big.toFixed(0)} fps, with effects ${bigBusy.toFixed(0)} fps`).toBeGreaterThan(big * 0.35);
   });
 
+  test('a speech bubble is painted after every building, window light and badge', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    // Records the draw order of one frame: lit windows (L), the bubble text (B), any other text (T).
+    const order = await page.evaluate(
+      () =>
+        new Promise<string[]>((done) => {
+          const app = (window as unknown as { pakrt: any }).pakrt;
+          app.settings.effects = true;
+          app.applySettings();
+          app.s.month = 2;
+          app.acc = 4800;
+          const walker = app.view.crowd.people.find((p: any) => !p.away);
+          const log: string[] = [];
+          const proto = CanvasRenderingContext2D.prototype as any;
+          const { fillRect, fillText, setTransform } = proto;
+          proto.setTransform = function (...a: unknown[]) { log.push('F'); return setTransform.apply(this, a); };
+          proto.fillRect = function (...a: unknown[]) { if (this.fillStyle === '#fde68a') log.push('L'); return fillRect.apply(this, a); };
+          proto.fillText = function (text: string, ...a: unknown[]) { log.push(text === 'Layer check' ? 'B' : 'T'); return fillText.call(this, text, ...a); };
+          let n = 0;
+          const f = () => {
+            walker.say = 'Layer check';
+            walker.sayUntil = performance.now() + 5000;
+            if (++n < 20) return requestAnimationFrame(f);
+            Object.assign(proto, { fillRect, fillText, setTransform });
+            done(log);
+          };
+          requestAnimationFrame(f);
+        }),
+    );
+    expect(order.filter((o) => o === 'B').length, 'a bubble was drawn').toBeGreaterThan(0);
+    expect(order.filter((o) => o === 'L').length, 'lit windows were drawn').toBeGreaterThan(0);
+    let bubbled = false;
+    for (const o of order) {
+      if (o === 'F') bubbled = false;
+      else if (o === 'B') bubbled = true;
+      else if (bubbled) throw new Error(`"${o}" was painted over the speech bubble: ${order.slice(0, 60).join('')}`);
+    }
+  });
+
+  test('every overlay is on top at its own centre', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const onTop = (sel: string) =>
+      page.evaluate((sel) => {
+        const el = document.querySelector(sel) as HTMLElement | null;
+        if (!el) return 'missing';
+        const r = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return hit && el.contains(hit) ? 'ok' : `covered by ${hit?.id || hit?.className || hit?.tagName}`;
+      }, sel);
+    await page.locator('#menu-btn').click();
+    expect(await onTop('#sheet')).toBe('ok');
+    await page.getByRole('button', { name: WORDS[lang()].close }).click();
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.explain('rupiah'));
+    expect(await onTop('#modal .card')).toBe('ok');
+    await page.locator('#modal').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    for (const sel of ['#hud', '#bottombar', '#menu-btn']) expect(await onTop(sel), sel).toBe('ok');
+  });
+
   test('walkers, particles and night keep the frame rate', async ({ page }) => {
     await start(page);
     await dismissModals(page);

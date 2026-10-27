@@ -521,6 +521,8 @@ export class MapView {
       const label = b.status === 'permit' || b.status === 'building' ? `${b.timer}` : b.status === 'mangkrak' ? '80%' : b.status === 'damaged' ? '!' : b.noRoad ? t('map.noRoad') : null;
       if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label);
     }
+    // Speech bubbles go last of all, above buildings, window lights, weather and badges.
+    this.crowd.drawBubbles(ctx);
 
     if (this.ghost) {
       const g = this.ghost;
