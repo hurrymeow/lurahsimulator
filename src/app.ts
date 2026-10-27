@@ -518,19 +518,86 @@ export class App {
   private bindMap(): void {
     const canvas = document.getElementById('map') as HTMLCanvasElement;
     let down: { x: number; y: number; lastX: number; lastY: number; moved: boolean } | null = null;
+    // Every finger on the map. Two make a pinch: spreading them zooms in a whole step at a time.
+    const fingers = new Map<number, { x: number; y: number }>();
+    let pinch: { dist: number; midX: number; midY: number } | null = null;
+    const local = (x: number, y: number) => {
+      const r = canvas.getBoundingClientRect();
+      return { x: x - r.left, y: y - r.top };
+    };
+    const pinchNow = () => {
+      const [a, b] = [...fingers.values()];
+      return { dist: Math.hypot(a.x - b.x, a.y - b.y), midX: (a.x + b.x) / 2, midY: (a.y + b.y) / 2 };
+    };
     canvas.addEventListener('pointerdown', (e) => {
       canvas.setPointerCapture(e.pointerId);
-      down = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, moved: false };
+      fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (fingers.size === 2) {
+        pinch = pinchNow();
+        // A pinch is never a tap.
+        if (down) down.moved = true;
+        return;
+      }
+      if (fingers.size === 1) down = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, moved: false };
     });
     canvas.addEventListener('pointermove', (e) => {
+      if (fingers.has(e.pointerId)) fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && fingers.size === 2) {
+        const now = pinchNow();
+        // The pair drags the map like one finger does.
+        this.view.panBy(now.midX - pinch.midX, now.midY - pinch.midY);
+        pinch.midX = now.midX;
+        pinch.midY = now.midY;
+        // Whole-number zoom keeps pixels crisp, so a step fires each time the fingers spread or close by a quarter.
+        const k = now.dist / pinch.dist;
+        if (k > 1.25 || k < 0.8) {
+          const at = local(now.midX, now.midY);
+          this.view.zoomBy(k > 1 ? 1 : -1, at.x, at.y);
+          pinch.dist = now.dist;
+        }
+        return;
+      }
       if (!down) return;
       if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) down.moved = true;
       if (down.moved) this.view.panBy(e.clientX - down.lastX, e.clientY - down.lastY);
       down.lastX = e.clientX;
       down.lastY = e.clientY;
     });
-    canvas.addEventListener('pointercancel', () => (down = null));
+    const lift = (e: PointerEvent) => {
+      fingers.delete(e.pointerId);
+      if (fingers.size < 2) pinch = null;
+      // One finger left after a pinch carries on panning from where it is, not from where the drag began.
+      const rest = fingers.size === 1 ? [...fingers.values()][0] : null;
+      if (rest && down) Object.assign(down, { lastX: rest.x, lastY: rest.y, moved: true });
+    };
+    canvas.addEventListener('pointercancel', (e) => {
+      lift(e);
+      down = null;
+    });
+    // Mouse wheel and trackpad pinch (a wheel event with ctrlKey). A notch (50 to 120px, by screen scaling) is one step.
+    let wheel = 0;
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      wheel += e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY * (e.ctrlKey ? 4 : 1);
+      if (Math.abs(wheel) < 50) return;
+      const at = local(e.clientX, e.clientY);
+      this.view.zoomBy(wheel < 0 ? 1 : -1, at.x, at.y);
+      wheel = 0;
+    }, { passive: false });
+    // + and - zoom from the keyboard, around the middle of the map.
+    document.addEventListener('keydown', (e) => {
+      if (sheetOpen() || (e.target as HTMLElement).closest?.('input, textarea, select')) return;
+      if (e.key === '+' || e.key === '=') this.view.zoomBy(1);
+      else if (e.key === '-' || e.key === '_') this.view.zoomBy(-1);
+    });
     canvas.addEventListener('pointerup', (e) => {
+      const was = fingers.size;
+      lift(e);
+      // The second finger of a pinch lifting: wait for the last one, and do not tap.
+      if (was > 1 || !down) {
+        if (fingers.size === 0) down = null;
+        return;
+      }
       const wasDrag = down?.moved;
       down = null;
       if (wasDrag) return;

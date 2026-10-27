@@ -1361,3 +1361,78 @@ test.describe('moving and turning', () => {
     expect(await pk<number>('a.s.res.rupiah')).toBe(cash);
   });
 });
+
+test.describe('zoom, big lots and the Warga list', () => {
+  test('after picking a job, the Warga list stays on that resident', async ({ page }) => {
+    await start(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      for (let i = 0; i < 30; i++) app.s.residents.push({ id: app.s.nextResidentId++, name: `Pak Budi ${i}`, job: 'none', pensiun: 0, fake: 0, arrived: 0 });
+    });
+    await dismissModals(page);
+    await page.evaluate(() => { const app = (window as any).pakrt; app.actions.find((a: any) => a.id === 'warga').open(app); });
+    const row = page.locator('#sheet [data-rid]').nth(25);
+    const id = await row.getAttribute('data-rid');
+    await row.scrollIntoViewIfNeeded();
+    await row.click();
+    // "No job" is always allowed, and picking it sends the player back to the list.
+    await page.locator('#sheet .action .btn').first().click();
+    const back = page.locator(`#sheet [data-rid="${id}"]`);
+    await expect(back).toBeInViewport();
+    await expect(back).toBeFocused();
+    expect(await page.locator('#sheet').evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  });
+
+  test('wheel and pinch zoom in and out in whole steps, and a pinch is not a tap', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const scale = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.scale as number);
+    const box = (await page.locator('#map').boundingBox())!;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    const s0 = await scale();
+    await page.mouse.move(cx, cy);
+    await page.mouse.wheel(0, -120);
+    await expect.poll(scale).toBe(s0 + 1);
+    await page.mouse.wheel(0, 120);
+    await page.mouse.wheel(0, 120);
+    await expect.poll(scale).toBe(s0 - 1);
+    const cdp = await page.context().newCDPSession(page);
+    const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', d: number) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: cx - d, y: cy, id: 1 }, { x: cx + d, y: cy, id: 2 }] });
+    const before = await scale();
+    await touch('touchStart', 20);
+    for (const d of [30, 40, 50, 60]) await touch('touchMove', d);
+    await touch('touchEnd', 0);
+    await expect.poll(scale).toBeGreaterThan(before);
+    await expect(page.locator('#modal')).toBeHidden();
+    await expect(page.locator('#sheet')).toBeHidden();
+    await expectLegible(page, 'zoomed map');
+  });
+
+  test('a 3x3 Lapangan opens from a tap on its middle at default and zoomed-in scale', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      app.s.buildings.push({ uid: 9001, def: 'lapangan', x: k.x - 4, y: k.y - 4, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      app.refresh();
+    });
+    for (const zoom of [0, 1]) {
+      if (zoom) await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.zoomBy(1));
+      await page.waitForTimeout(150);
+      // The middle tile of the field, not the building's own corner tile.
+      const at = await page.evaluate(() => {
+        const app = (window as unknown as { pakrt: any }).pakrt;
+        const b = app.s.buildings.find((o: any) => o.uid === 9001);
+        const c = app.view.tileCentre(b.x + 1, b.y + 1);
+        const r = document.getElementById('map')!.getBoundingClientRect();
+        return { x: r.left + c.x, y: r.top + c.y };
+      });
+      await page.mouse.click(at.x, at.y);
+      await expect(page.locator('#sheet')).toBeVisible();
+      await expect(page.locator('#sheet h2').first()).toContainText('Lapangan');
+      await page.locator('#sheet .sheet-head .btn-icon').click();
+    }
+  });
+});

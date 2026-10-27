@@ -102,6 +102,9 @@ interface Hit {
 
 /** Diamonds are at least 32px tall, so the tap area matches a 32px square. */
 const MIN_SCALE = 2;
+/** Zoom stays on whole-number scales so pixels stay crisp. 1 is an overview: tiles get small, but taps still land. */
+export const ZOOM_MIN = 1;
+export const ZOOM_MAX = 6;
 /** Grids at least this wide open at half size. */
 const HALF_ZOOM_GRID_W = 52;
 const POP_MS = 1200;
@@ -169,6 +172,8 @@ export class MapView {
   private panX = 0;
   private panY = 0;
   private centred = false;
+  /** Scale the player zoomed to. Null follows the screen size. */
+  private zoomed: number | null = null;
 
   /** The grid changed size: lay the world out again, redraw it and open on the player's RT. */
   regrid(): void {
@@ -176,6 +181,8 @@ export class MapView {
     measure();
     this.world = null;
     this.centred = false;
+    // A grown map opens at its own default size, half size for the Kelurahan.
+    this.zoomed = null;
     this.resize();
   }
 
@@ -186,7 +193,7 @@ export class MapView {
     this.canvas.height = Math.round(h * dpr);
     // Whole-number scale keeps pixels crisp. A small screen pans instead of shrinking tiles.
     // Kelurahan is 52 tiles wide, so it opens at half size. Its lots take 2x2 tiles and still tap like one RT tile.
-    this.scale = Math.max(GRID_W >= HALF_ZOOM_GRID_W ? MIN_SCALE / 2 : MIN_SCALE, Math.floor(Math.min(w / MAP_W, h / MAP_H)));
+    this.scale = this.zoomed ?? Math.max(GRID_W >= HALF_ZOOM_GRID_W ? MIN_SCALE / 2 : MIN_SCALE, Math.floor(Math.min(w / MAP_W, h / MAP_H)));
     this.tile = TH * this.scale;
     this.viewW = w;
     this.viewH = h;
@@ -208,6 +215,25 @@ export class MapView {
     const top = Math.floor(gh <= this.viewH ? (this.viewH - gh) / 2 : this.panY);
     this.ox = left + PAN_LEFT * this.scale;
     this.oy = top + PAN_TOP * this.scale;
+  }
+
+  /**
+   * Zooms by whole steps, keeping the ground under (cx, cy) in place: the mouse pointer, or the middle
+   * of a pinch. Returns false at either end of the range.
+   */
+  zoomBy(steps: number, cx = this.viewW / 2, cy = this.viewH / 2): boolean {
+    const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, this.scale + steps));
+    if (next === this.scale) return false;
+    // Art-pixel point under the anchor, measured from tile (0,0)'s top corner.
+    const ax = (cx - this.ox) / this.scale;
+    const ay = (cy - this.oy) / this.scale;
+    this.zoomed = next;
+    this.scale = next;
+    this.tile = TH * next;
+    this.panX = cx - ax * next - PAN_LEFT * next;
+    this.panY = cy - ay * next - PAN_TOP * next;
+    this.clampPan();
+    return true;
   }
 
   panBy(dx: number, dy: number): void {
