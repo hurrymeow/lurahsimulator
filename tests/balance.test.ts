@@ -12,11 +12,11 @@ import type { GameState } from '../src/sim/types';
  * A simple autoplayer: builds the two early combos, keeps a bed ahead of demand,
  * and buys what it can afford. It never plans combos beyond the two it is told to.
  */
-function play(seed: number, years: number, smart: boolean, starMonths: number[] = []): { s: GameState; minRupiahY1: number } {
+function play(seed: number, years: number, smart: boolean, starMonths: number[] = [], eventMonths: number[] = []): { s: GameState; minRupiahY1: number } {
   const s = newGame(seed);
   let minRupiahY1 = Infinity;
   for (let m = 0; m < years * 12; m++) {
-    if (s.pendingEvent) resolveEvent(s, [], 0);
+    if (s.pendingEvent) { eventMonths.push(s.month); resolveEvent(s, [], 0); }
     if (smart) {
       // Rapat Malam (office + hut) and Tongkrongan (hut + warung + wifi), by hand.
       const k = s.buildings.find((b) => b.def === 'kantorRT')!;
@@ -100,5 +100,20 @@ describe('star pacing', () => {
     }
     // 3 stars needs 3 combos and Sabar 65, which this bot does not plan for.
     expect(two).toBeGreaterThanOrEqual(8);
+  }, 30_000);
+});
+
+// PACING.md targets 4 and 6. A month is 8s at 1x, so 2 min is 15 months, 5 min is 37 and 10 min is 75.
+describe('pacing targets', () => {
+  it('stars come on time and popups never come within 3 months of each other', () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const stars: number[] = [];
+      const events: number[] = [];
+      play(seed, 7, true, stars, events);
+      expect(stars[0], `1 star, seed ${seed}`).toBeLessThanOrEqual(15);
+      expect(stars[1], `2 stars, seed ${seed}`).toBeLessThanOrEqual(37);
+      expect(stars[2], `3 stars, seed ${seed}`).toBeLessThanOrEqual(75);
+      events.forEach((m, i) => { if (i) expect(m - events[i - 1], `events at ${events[i - 1]} and ${m}, seed ${seed}`).toBeGreaterThanOrEqual(3); });
+    }
   }, 30_000);
 });
