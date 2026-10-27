@@ -52,10 +52,19 @@ No third-party art or names. Everything is drawn in code.
 - The sun's rim is a deep amber, `#8a4f12`. Selokan banks are a dark warm grey, `#4a4a44`.
 - Set `p.bare = true` to skip the ink pass for flat or lattice art: selokan (it draws its own
   banks so neighbours join up), grass tufts, bamboo scaffolding.
-- Big buildings (2x2, 3x3) keep the same 1px outline as a warung. Their sprite is painted on one
-  tile, then `Painter.upscale(n)` scales the fills and face ids, and the ink pass runs on the big
-  canvas. Bare art that paints its own border band (lapangan, sawah) keeps only the band's outer
-  pixel. Never stretch a finished, outlined sprite: its outline comes out n pixels thick.
+- Big buildings (2x2, 3x3) are drawn at their own size, not scaled up. `new Painter(n)` takes the
+  same one-tile coordinates and rasterises every edge, diagonal and outline natively, so a 3x3's
+  roofline is a smooth 1px 2:1 line like a warung's, never a scaled stair step. Paint callbacks get
+  one-tile rows and columns, so windows and courses keep their proportions. Never stretch a
+  finished sprite: its outline comes out n pixels thick and its diagonals scallop.
+- Borders that must stay thin take `px` from `ground()`: one canvas pixel in a or b. Write a kerb
+  or a bund as `e < 2 * px`, not as a fraction, so it is two pixels on any lot.
+- Edges of flat pieces: the ink pass's 1px coloured line, then a light kerb inside it where it
+  helps. A standalone flat piece (lapangan, taman, kolam, embung) also gets `dither`: a
+  half-transparent checker of its edge colour on the grass just outside, so it settles into the
+  ground. Pieces that tile (jalan, selokan, sawah) skip it, or they would bleed onto neighbours.
+- Fine 1px detail that must not be outlined (fences, chalk, lamps) goes in `p.overlay`, which runs
+  after the ink pass in native pixels.
 - Terrain borders are coloured, not inked. The higher ground takes a dark edge in its own
   colour (0.6x). The lower side gets a bright rim that eases back to its base colour over three
   pixels (1.2x, 1.11x, 1.05x). Sea meeting sand gets foam, then lighter shallows. Rank, high to
@@ -195,9 +204,22 @@ faceless, so the map stays readable.
   above 28px. A building that grows taller would hide the small ones behind it. `tests/art.test.ts`
   checks both.
 - Sprites with their own level art take `level` as the third argument and are listed in `LEVELLED`.
-  Every other sprite gets the upgrade kit in front of it: a bamboo pagar at level 2, a whitewashed
-  pagar tembok with potted plants and a lamp at level 3. Ground pieces skip the kit (`NO_KIT`).
+  Every other sprite gets the upgrade kit along its front edges: a tidy wooden plank fence at level
+  2, a clean stone wall with a light cap, potted plants and a lamp at level 3. It is drawn in native
+  1px lines after the ink pass, so it is as fine on a 3x3 as on one tile. Ground pieces skip it.
 - The inspector shows every level side by side, the current one framed.
+
+## Roofs and walls
+
+- Houses look like a perumahan built over the years, not one house copied. `roofShape` draws a
+  limasan hip, a pelana (gable) either way round, a mono-pitch shed, or a flat dak beton with a
+  parapet round a recessed deck. A rumah's variant picks roof colour, roof shape and wall colour.
+- Every house has a band of roster vents under the eave and small weep holes along its base.
+  Minimalis houses (shed, flat) get batu alam on the corners, and a flat roof carries a tandon.
+- Gable ends and a shed's side are wall, with a small vent near the peak.
+- Each shop type has its own roof, so a row of shops reads as a street.
+- No roof shape rises above the hipped roof of the same house. `tests/art.test.ts` checks it.
+- The bank sampah is a TPS: an open concrete bak heaped with bags, a green sign, no roof.
 
 ## Terraced hills and icons
 
@@ -214,7 +236,7 @@ faceless, so the map stays readable.
 2. Build it from `box` and `roof` with palette keys, and paint details per face through the
    `paint` callback.
 3. Keep it inside the tile's footprint and under the 40-pixel headroom. A 2x2 or 3x3 building is
-   still painted on one tile: `iso(name, variant, n)` makes the big art.
+   still written in one-tile coordinates: `iso(name, variant, n)` draws it natively at n.
 4. Let the outline pass run, unless it is a flat decal or lattice (`p.bare = true`). Flat decals
    that tile, like selokan and jalan, draw their own edges so neighbours join up.
 5. Check it at 4x on grass next to the existing sprites, then in game at day and night.

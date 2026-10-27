@@ -10,7 +10,7 @@ import { t } from '../i18n';
 import { Crowd } from './people';
 import { Weather } from './weather';
 import { buildWorld, decoAt, farRoofs, layoutWorld, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
-import { ICONS, ROOF_COLOURS, sprite } from './sprites';
+import { ICONS, ROOF_COLOURS, ROOF_SHAPES, WALL_COLOURS, sprite } from './sprites';
 
 export const RES_COLOUR: Record<ResourceId, string> = {
   rupiah: '#4ade80',
@@ -387,7 +387,8 @@ export class MapView {
   }
 
   private variant(b: Building): string | undefined {
-    if (b.def === 'rumah') return ROOF_COLOURS[b.uid % ROOF_COLOURS.length];
+    // Houses vary by roof colour, roof shape and wall colour, like a perumahan built over the years.
+    if (b.def === 'rumah') return ROOF_COLOURS[b.uid % ROOF_COLOURS.length] + ROOF_SHAPES[Math.floor(b.uid / 5) % ROOF_SHAPES.length] + WALL_COLOURS[Math.floor(b.uid / 2) % WALL_COLOURS.length];
     // A cracked path shows its age: a split at first, potholes once it has been left for months.
     if (b.def === 'jalan' && b.status === 'damaged') return this.clock - (b.crackedAt ?? this.clock) >= PATH_DECAY.potholeAfter ? 'rusak' : 'retak';
     if (b.def !== 'selokan') return undefined;

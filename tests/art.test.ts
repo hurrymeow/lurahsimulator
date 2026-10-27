@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { INK, Painter, paint, TOP, TH } from '../src/render/iso';
+import { INK, Painter, paint, TOP, TH, TW } from '../src/render/iso';
 import { allDefs } from '../src/sim/content';
 
 /** Opaque pixels in one row, left to right, as brightness. */
@@ -13,52 +13,56 @@ function row(p: Painter, data: Uint8ClampedArray, y: number): number[] {
 }
 
 const wall = (n: number) => (TOP + TH / 2 - 4) * n;
-const box = () => {
-  const p = new Painter();
+const box = (n = 1) => {
+  const p = new Painter(n);
   p.box(3, 8, 's');
   return p;
+};
+/** First opaque column in each row, from top to bottom, where the row has any. */
+const leftEdge = (p: Painter, data: Uint8ClampedArray) => {
+  const out: number[] = [];
+  for (let y = 0; y < p.h; y++)
+    for (let x = 0; x < p.w; x++)
+      if (data[(y * p.w + x) * 4 + 3] === 255) {
+        out.push(x);
+        break;
+      }
+  return out;
 };
 
 describe('big building art', () => {
   for (const n of [2, 3]) {
     it(`keeps a 1px outline on a ${n}x${n} sprite instead of scaling it to ${n}px`, () => {
-      const big = box().upscale(n);
+      const big = box(n);
       const r = row(big, big.pixels(), wall(n));
       expect(r.length).toBeGreaterThan(10 * n);
       // The outline pixel is dark, and the very next one is already wall.
       expect(r[0]).toBeLessThan(r[1] * 0.6);
       expect(r[r.length - 1]).toBeLessThan(r[r.length - 2] * 0.6);
     });
+
+    it(`draws a ${n}x${n} sprite's diagonals as smooth 2:1 lines, not scaled-up stair steps`, () => {
+      const big = box(n);
+      const edge = leftEdge(big, big.pixels());
+      // Down the roof's left slope the edge moves at most 2px a row, as on a one-tile sprite.
+      // A one-tile sprite scaled up would jump 2n px every n rows.
+      const steps = edge.slice(1).map((x, k) => Math.abs(x - edge[k]));
+      expect(Math.max(...steps.slice(0, 6 * n))).toBeLessThanOrEqual(2);
+    });
   }
 
-  it('a plain scale of a finished sprite would have doubled the outline', () => {
-    const small = box();
-    small.pixels();
-    const naive = small.upscale(2);
-    naive.bare = true;
-    // Bare thinning only looks at the silhouette band of bare art, and this one was inked first.
-    const r = row(naive, naive.data, wall(2));
-    expect(r[1]).toBe(r[0]);
-  });
-
-  it("thins a bare ground sprite's own border band to the width it has on one tile", () => {
-    const p = new Painter();
-    p.bare = true;
-    p.ground((a, b) => (a < 0.06 || a > 0.94 || b < 0.06 || b > 0.94 ? INK : 'g'));
-    const small = p.pixels();
-    const lead = (q: Painter, data: Uint8ClampedArray, y: number) => {
-      const r = row(q, data, y);
+  it('a ground border measured in pixels stays the same width on a big lot', () => {
+    const band = (n: number) => {
+      const p = new Painter(n);
+      p.bare = true;
+      p.ground((a, b, px) => (a < 1.5 * px || a > 1 - 1.5 * px || b < 1.5 * px || b > 1 - 1.5 * px ? INK : 'g'));
+      const r = row(p, p.pixels(), (TOP + TH / 4) * n + 1);
       let k = 0;
       while (k < r.length && r[k] === r[0]) k++;
       return k;
     };
-    // A row a quarter of the way down the diamond, on one tile and at the same spot on a 3x3.
-    const y = TOP + TH / 4;
-    const one = lead(p, small, y);
-    const big = p.upscale(3);
-    const three = lead(big, big.pixels(), y * 3 + 1);
-    expect(one).toBeGreaterThan(0);
-    expect(three).toBeLessThanOrEqual(one + 1);
+    expect(band(1)).toBeGreaterThan(0);
+    expect(band(3)).toBeLessThanOrEqual(band(1) + 1);
   });
 });
 
@@ -99,5 +103,32 @@ describe('level progressions', () => {
         }
       }
     }
+  });
+});
+
+describe('rumah roof shapes', () => {
+  const draw = (v: string) => {
+    const p = new Painter();
+    paint(p, 'rumah', v);
+    return p.pixels();
+  };
+  const top = (d: Uint8ClampedArray) => {
+    for (let k = 0; k < d.length / 4; k++) if (d[k * 4 + 3] === 255) return Math.floor(k / TW);
+    return 0;
+  };
+
+  it('every roof shape draws differently, and none is taller than the hipped house', () => {
+    const hip = draw('oht');
+    const seen = new Set<string>();
+    for (const shape of ['h', 'g', 'y', 's', 'f']) {
+      const d = draw(`o${shape}t`);
+      seen.add(d.join(','));
+      expect(top(d), shape).toBeGreaterThanOrEqual(top(hip));
+    }
+    expect(seen.size).toBe(5);
+  });
+
+  it('a one-letter variant still means a hipped roof in that colour, as old saves and icons use it', () => {
+    expect(draw('G').join(',')).toBe(draw('Ght').join(','));
   });
 });
