@@ -7,10 +7,9 @@ This page is the short version. The rules live in the files linked below. Read t
 
 | File | Covers |
 | --- | --- |
-| [DESIGN.md](DESIGN.md) | Satire, pacing, UI layout, legibility, accessibility, tech |
-| [UI-RUBRIC.md](UI-RUBRIC.md) | Measurable UI and UX rules a PR is checked against |
+| [GAME-DESIGN.md](GAME-DESIGN.md) | Pitch, stages and stars, pacing targets, economy, tone and politics, UI layout, accessibility, tech |
+| [UI.md](UI.md) | 12 measurable UI and UX rules a PR is checked against |
 | [ART.md](ART.md) | Look, palette, outlines, shading, adding a sprite, art checklist |
-| [STAGES.md](STAGES.md) | RT, RW, Kelurahan and what each stage unlocks |
 | [decisions/](decisions/) | Why things are the way they are. Skim it before changing behaviour. |
 
 Read the decision log with `node scripts/logs.mjs decisions`.
@@ -24,7 +23,7 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 
 - Mobile portrait first. Test at 320, 360 and 390px wide.
 - Style reference is Kairosoft's Dungeon Village. Own art and names only, no Kairosoft assets.
-- Main screen: the console frame (title bar, resource bar, the map with a rail and satellite view, one bottom row, quick tabs). See [DESIGN.md](DESIGN.md#touch-and-layout).
+- Main screen: the console frame (title bar, resource bar, the map with a rail and satellite view, one bottom row, quick tabs). See [GAME-DESIGN.md](GAME-DESIGN.md#touch-and-layout).
 - Settings > Theme switches the frame between Light (default) and Dark. Check new UI in both.
 - New panel? Register an `ActionButton` with a `group` in the Menu. Never add a main-screen button.
 - The frame's rail and tabs only point at Menu panels.

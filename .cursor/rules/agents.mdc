@@ -1,0 +1,5 @@
+---
+description: Project rules and conformance protocol
+alwaysApply: true
+---
+Read and follow AGENTS.md in the repo root before any work. It holds the docs to read and the Conformance protocol: if a change conflicts with a doc, stop and ask the human to choose 1) change the code or 2) update the doc.

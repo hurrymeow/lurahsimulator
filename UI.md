@@ -1,0 +1,49 @@
+# UI rules
+
+Twelve measurable UI and UX rules for Pak Pejabat. A PR that touches a screen, text or layout is checked against them. Approved by Hari, 2026-10-27.
+
+Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) section 6. Pacing targets live in section 3. This file holds only the numbers and limits.
+
+## Rules
+
+### Touch and layout
+
+1. **Tap targets are 48px or more, with 8px gaps.** Material says 48dp and 8dp ([Google](https://support.google.com/accessibility/android/answer/7101858)). Apple says 44pt ([Deque](https://dequeuniversity.com/rules/attest-ios/1.0/touch-target-size)). WCAG 2.2 AA says 24px ([W3C](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)). We use 48 because thumbs miss on 320px phones.
+2. **The main screen is the console frame and nothing else:** title bar, resource bar, the map with its rail and satellite view, one bottom row, quick tabs (GAME-DESIGN.md section 6). Everything else opens from Menu. The frame's rail, tabs and SYSTEM only open panels the Menu already has. On phones 640px tall or less only the rail stays.
+3. **The primary action sits in the bottom third.** Reason: thumb reach in portrait.
+
+### Legibility
+
+4. **Body text is 16px or more, contrast 4.5:1 or more.** Disabled buttons stay readable, never faded. Reason: glare and small screens.
+5. **Nothing clips, ellipsizes or leaves the screen** at 320, 360 and 390px, in English and Indonesian. Indonesian runs longer, so 320px in Indonesian is the stress case.
+6. **One icon, one meaning, a familiar shape,** always with a label or a number. Colour never carries meaning alone.
+
+### Text
+
+7. **A tutorial step is one idea in 20 words or fewer.** Teach one thing at a time ([GameAnalytics](https://gameanalytics.com/blog/tips-for-a-great-first-time-user-experience-ftue-in-f2p-games), [Supersonic](https://supersonic.com/learn/blog/optimizing-ftue/)). The sources give no word count, so 20 is a judgement call.
+8. **Event and pop-up bodies and building blurbs are 25 words or fewer.** Every pop-up uses one layout: title, body, labelled result rows, buttons at the bottom.
+9. **Every unmet requirement says what is missing.** A disabled button is never silent.
+
+### Tutorial and feedback
+
+10. **The tutorial never covers the control it points at.** Text advances on tap, never on a timer. Only the multi-step first-build tutorial has Skip. One-card tips say "Tap to continue" and nothing else.
+11. **Feedback follows a ladder.** Routine income gets a small number pop. A combo or unlock gets fanfare. The game works with effects, motion and sound off.
+12. **Every tap shows feedback within 100ms.** The first house is built within 30s of New Game (target 1 in GAME-DESIGN.md section 3).
+
+## How each rule is checked
+
+| Rules | Check |
+| --- | --- |
+| 1, 4, 5 | `npm run e2e` legibility scan, 3 widths, 2 languages |
+| 7, 8 | Word count over `src/i18n/en.ts` and the event data. Not automated. |
+| 2, 3, 6, 9, 10, 11 | Review against the audit crawl screenshots |
+| 12 | Timed run. Not automated. |
+
+Every new panel or message needs a scan in `tests/e2e/ui.spec.ts`. CI runs the suite on every PR. The audit crawl scripts are in the project files, not in the repo.
+
+## Status, 2026-10-27
+
+- Rules 1 to 6, 9 and 11 pass. The legibility scan found no hits on any screen.
+- Rules 7 and 8 failed at adoption. Ten strings and one blurb were trimmed in #90 and #91.
+- The Paused pill no longer floats over open sheets (#92).
+- Rule 12 is an estimate of about 25 to 35s to the first house, not a timed measurement.

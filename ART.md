@@ -1,7 +1,7 @@
 # Art direction
 
 How Pak Pejabat looks, and how to keep new art in that look. Follow this for every sprite, scenery
-change and effect. [DESIGN.md](DESIGN.md) still rules on UI, legibility and accessibility.
+change and effect. [GAME-DESIGN.md](GAME-DESIGN.md) still rules on UI, legibility and accessibility.
 
 ## The look in one line
 
@@ -141,7 +141,7 @@ Rules:
 - Ground texture uses clumps squashed 2:1, so they lie flat on the isometric plane.
 - The kampung is a raised block: where land meets the beach or the world's edge, a 7-pixel
   dirt cliff drops away. That gives the diorama its depth.
-- UI chrome follows the console frame and its Light or Dark theme (DESIGN.md). Colour belongs to the map and to resource meaning.
+- UI chrome follows the console frame and its Light or Dark theme (GAME-DESIGN.md section 6). Colour belongs to the map and to resource meaning.
 
 ## Lighting and atmosphere
 
