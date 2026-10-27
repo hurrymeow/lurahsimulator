@@ -38,7 +38,7 @@ Follow these every session. If a change breaks one, fix the change.
 - Every panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game.
 - The frame's controls are shortcuts only: each opens a panel the Menu already has. The Menu button stays, and a new panel registers an `ActionButton` with a `group` in the Menu, never only in the frame. Don't add other main-screen buttons.
 - The rail sits beside the map, never over it, so it never hides a tile. The satellite view hides while a building is being placed.
-- On short phones (640px tall or less) the title bar and the tab captions drop out, and the date goes back to the bottom row, so the map keeps its room.
+- On short phones (640px tall or less) only the rail stays: the title bar, quick tabs and satellite view drop out, and the date goes back to the bottom row, so the map stays as tall as it was before the frame. Every dropped shortcut is still in the Menu.
 - Sheets and modals keep their own dark look in both themes.
 - Clean pixel UI: 1px rules, square corners, a hard 2px drop shadow on buttons, dark green (`#2f6b45`) for the active tab and primary actions.
 - The dev-only `mockup.html` (also at `/mockup.html` on the live site) is the reference render, with a build palette the game doesn't have. It is not linked from the game.

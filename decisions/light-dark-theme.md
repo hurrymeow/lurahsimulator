@@ -11,3 +11,4 @@
 - Numbers left the pixel font (the money chip read "SJt"). The title-bar date uses the body font too.
 - Sheets and modals keep their dark look in both themes. Restyling them is a separate job with its own contrast checks.
 - The browser theme-color follows the theme. The PWA icon and manifest stay Mono Dark.
+- On phones 640px tall or less only the rail stays. With the title bar, tabs and satellite view the map got so short at 320x568 that the Place buttons and roof taps landed in the HUD.

@@ -104,13 +104,12 @@ html:not(.theme-dark) #chip-pop img { filter: brightness(0.18); }
   #cs-sat-map { width: 104px; height: 72px; }
 }
 
-/* Short phones keep the map roomy: no title bar (the date goes back to the bottom row, Settings
-   stays in the Menu) and one-line tabs. */
+/* Short phones keep the map as tall as it was before the frame: only the rail stays. The title
+   bar, quick tabs and satellite view drop out (the date goes back to the bottom row; Settings and
+   every tab stay in the Menu). */
 @media (max-height: 640px) {
-  .cs-title { display: none; }
+  .cs-title, .cs-tabs, .cs-sat { display: none !important; }
   #date { display: inline; }
-  .cs-tab { min-height: var(--touch); }
-  .cs-tab-small { display: none; }
 }
 
 /* Light theme: warning colours in ink-dark tones, so they keep their contrast on cream. */
