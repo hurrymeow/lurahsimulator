@@ -7,6 +7,8 @@ export interface Settings {
   largeText: boolean;
   reduceMotion: boolean;
   highContrast: boolean;
+  /** Cream console skin round the map. Off keeps the default dark HUD. */
+  console: boolean;
   /** 0..100, 0 = off. */
   sfxVol: number;
   musicVol: number;
@@ -17,7 +19,7 @@ const KEY = 'pakrt.settings';
 
 export function loadSettings(): Settings {
   const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const base: Settings = { effects: !reduce, haptics: true, largeText: false, reduceMotion: reduce, highContrast: false, sfxVol: 100, musicVol: 50, lang: DEFAULT_LANG };
+  const base: Settings = { effects: !reduce, haptics: true, largeText: false, reduceMotion: reduce, highContrast: false, console: false, sfxVol: 100, musicVol: 50, lang: DEFAULT_LANG };
   try {
     const merged = { ...base, ...(JSON.parse(storage.get(KEY) ?? '{}') as Partial<Settings>) };
     if (!isLang(merged.lang)) merged.lang = DEFAULT_LANG;

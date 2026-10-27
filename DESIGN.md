@@ -33,6 +33,17 @@ Follow these every session. If a change breaks one, fix the change.
 - Every panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game.
 - New panels register an `ActionButton` with a `group` instead of adding a button to the main screen.
 - Clean modern pixel UI. No cluttered Windows-XP-style panels.
+- The default look above is the dark HUD. Settings also offers **Console look**, off by default: a cream frame with 1px ink rules and dark green chips, after a 90s train-and-city builder (`src/ui/console.ts`, `src/ui/console.css`). It adds:
+  - a title bar: name, SYSTEM (opens Settings) and the date;
+  - a rail down the map's left edge: Build and Wacana;
+  - a satellite view in the map's top-right corner, which pans the map when tapped;
+  - a row of quick tabs: Log, Kas, Warga, Wacana.
+- Console look rules:
+  - Every console control is a shortcut to a panel the Menu already opens. The Menu button stays, and new panels still go in the Menu, never only in the frame.
+  - It restyles the main screen only. Sheets and modals keep the default look.
+  - The same legibility rules apply: text 16px or more, controls 48px or more, no clipped text, contrast checked by the e2e scan.
+  - On short phones (640px tall or less) it drops the title bar and the tab captions, so the map keeps its room.
+  - The dev-only `mockup.html` is the reference render of the full console screen with a build palette. It is not linked from the game.
 - Map art follows [ART.md](ART.md): palette, ink, shading, lighting and motion rules.
 
 ## Art style

@@ -511,8 +511,8 @@ test.describe('events, ranking, settings', () => {
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
     const toggles = page.locator('#sheet .toggle');
-    expect(await toggles.count()).toBe(5);
-    for (let i = 0; i < 5; i++) {
+    expect(await toggles.count()).toBe(6);
+    for (let i = 0; i < 6; i++) {
       const t = toggles.nth(i);
       const before = await t.getAttribute('aria-checked');
       await t.click();
@@ -527,7 +527,7 @@ test.describe('events, ranking, settings', () => {
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
     const saved = await page.locator('#sheet .toggle').evaluateAll((els) => els.map((e) => e.getAttribute('aria-checked')));
-    expect(saved.length).toBe(5);
+    expect(saved.length).toBe(6);
   });
 
   test('volume sliders start audio on first tap and persist', async ({ page }) => {
@@ -1700,5 +1700,45 @@ test.describe('sheets keep their place', () => {
     expect(widths.length).toBeGreaterThan(1);
     expect(new Set(widths).size, `button widths ${widths}`).toBe(1);
     await expectLegible(page, 'stage sheet');
+  });
+});
+
+test.describe('console skin', () => {
+  test('is off by default, turns on from Settings, and every frame control opens its panel', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await expect(page.locator('#cs-title')).toBeHidden();
+    await expect(page.locator('#cs-tabs')).toBeHidden();
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    // The console switch is the last toggle.
+    const sw = page.locator('#sheet .toggle').last();
+    await expect(sw).toHaveAttribute('aria-checked', 'false');
+    await sw.click();
+    await expect(sw).toHaveAttribute('aria-checked', 'true');
+    await page.locator('.sheet-head .btn').click();
+    // Short phones drop the title bar to keep the map roomy.
+    const tall = page.viewportSize()!.height > 640;
+    for (const id of [...(tall ? ['#cs-title'] : []), '#cs-rail', '#cs-sat', '#cs-tabs', '#map', '#menu-btn', '#pause-btn']) await expect(page.locator(id)).toBeVisible();
+    await expectLegible(page, 'console skin');
+    // The map keeps a usable size under the frame.
+    const map = (await page.locator('#map').boundingBox())!;
+    expect(map.height).toBeGreaterThan(200);
+    // Each control opens a sheet that the Menu also opens.
+    for (const id of [...(tall ? ['#cs-system'] : []), '#cs-rail-build', '#cs-rail-wacana', '#cs-tab-log', '#cs-tab-stats', '#cs-tab-warga', '#cs-tab-wacana']) {
+      await page.locator(id).click();
+      await expect(page.locator('#sheet')).toBeVisible();
+      await page.locator('.sheet-head .btn').click();
+      await expect(page.locator('#sheet')).toBeHidden();
+    }
+    // A tap on the satellite view pans the map.
+    const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox);
+    const sat = (await page.locator('#cs-sat-map').boundingBox())!;
+    await page.mouse.click(sat.x + 4, sat.y + 4);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox)).not.toBe(before);
+    // It stays on after a reload.
+    await page.reload();
+    await passHome(page);
+    await expect(page.locator('#cs-tabs')).toBeVisible();
   });
 });
