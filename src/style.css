@@ -349,6 +349,7 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
 .toggle b { min-width: 3ch; text-align: right; }
 .toggle[aria-checked='true'] { border-color: var(--accent); }
 .toggle[aria-checked='true'] b::before { content: '✓ '; }
+.modal .card.event .price { white-space: nowrap; }
 .modal .card.event { max-height: 90dvh; overflow-y: auto; cursor: default; }
 .sheet h3 { margin: 16px 0 4px; font-size: 18px; }
 .chip.flash-up { animation: flash-up 0.7s ease-out; }

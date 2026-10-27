@@ -340,6 +340,38 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#modal .card.report-card')).toBeHidden();
   });
 
+  test('every event shows prices in one piece, and every result row names its resource', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await skipTips(page);
+    await seed(page);
+    const ids = ['agustusan', 'banjir', 'cabai', 'kecamatan', 'partTime', 'cctv', 'kkn', 'startupPilot', 'hajatan', 'pasarMalam', 'sisaAnggaran', 'magang', 'pungli', 'pangkalanOjol', 'lesGratis', 'padam', 'rapatWarga', 'hibah', 'lombaKampung', 'truckSampah', 'lubangViral', 'sembako', 'pbb', 'festivalKuliner'];
+    for (const id of ids) {
+      await page.evaluate((i) => {
+        const app = (window as unknown as { pakrt: any }).pakrt;
+        app.speed = 0;
+        app.s.res.rupiah = 1e9;
+        app.s.res.orangDalam = 50;
+        app.s.pendingEvent = i;
+        app.showEvent();
+      }, id);
+      const card = page.locator('#modal .card.event');
+      await expect(card).toBeVisible();
+      for (const price of await card.locator('.price').all()) {
+        // A price on two lines would split the number from its word.
+        expect(await price.evaluate((el) => el.getClientRects().length), `${id} price wraps`).toBe(1);
+      }
+      await expectLegible(page, `event ${id}`);
+      await card.locator('.btn').last().click();
+      for (const chip of await page.locator('#modal .outcome-chip').all()) {
+        expect((await chip.locator('.outcome-name').textContent())?.trim(), `${id} result row has no word`).toBeTruthy();
+      }
+      await expectLegible(page, `result of ${id}`);
+      await page.locator('#modal .tap-hint').click();
+      await expect(page.locator('#modal')).toBeHidden();
+    }
+  });
+
   test('an event right after a tip is centred, not left at the bottom', async ({ page }) => {
     await start(page);
     await dismissModals(page);
