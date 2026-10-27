@@ -646,8 +646,9 @@ test.describe('text is legible and never cut off', () => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
       const c = app.view.tileCentre(k.x, k.y);
-      // Aim at the roof, which overlaps the tile behind on screen.
-      return { x: c.x, y: c.y - app.view.tile * 1.2 };
+      // Aim at the roof, which overlaps the tile behind on screen. A level-1 Kantor RT is a low house,
+      // so aim just under its ridge: still above the tile's own top corner.
+      return { x: c.x, y: c.y - app.view.tile * 0.9 };
     });
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('.sheet-head')).toContainText('Kantor RT');
