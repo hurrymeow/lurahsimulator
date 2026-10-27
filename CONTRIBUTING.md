@@ -8,7 +8,7 @@ This page is the short version. The rules live in the files linked below. Read t
 | File | Covers |
 | --- | --- |
 | [GAME-DESIGN.md](GAME-DESIGN.md) | Pitch, stages and stars, pacing targets, economy, tone and politics, UI layout, accessibility, tech |
-| [UI.md](UI.md) | Measurable UI and UX rules a PR is checked against |
+| [UI.md](UI.md) | 12 measurable UI and UX rules a PR is checked against |
 | [ART.md](ART.md) | Look, palette, outlines, shading, adding a sprite, art checklist |
 | [decisions/](decisions/) | Why things are the way they are. Skim it before changing behaviour. |
 
