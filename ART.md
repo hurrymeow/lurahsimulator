@@ -150,14 +150,24 @@ same look: flat fills, 1px rules, no gradients, no rounded corners.
 
 | Part | Look |
 | --- | --- |
-| Title bar | Slim strip. Name in the pixel font on the left, date in the body font on the right. Not a control. |
-| Status row | Goal on one bold line, a small ▾ when the next star can expand. A 1px rule, then the 2045 label, a thin track and the percentage. Under 360px wide the track drops out. |
+| Time row | 30px tall. Play/pause and speed as two equal 44x28 square buttons with a 1px rule; play is dark green while paused. The date centred in the body font. A 1px rule, then the 2045 label, a thin track and the percentage. Under 360px wide the track drops out. |
+| Money row | 30px tall. The five resources, a 16px icon and a bold number each, spread across the row. |
+| Goal pill | Over the map's top-left, opposite the satellite view. Cream fill, a 1px rule and a hard 2px drop shadow. One bold line, a small ▾ when the next star can expand. |
 | Satellite view | 88x60, a 1px rule and a hard 2px drop shadow. No label. |
 | Toast | Full map width, 8px from the map's bottom edge. A 4px muted bar on the left, a 1px rule and a hard 2px drop shadow. Fades over 0.4s after 3s; with reduce motion it just goes. |
-| Bottom row | 48px controls, square, no padding round them and no shadows. Menu is dark green. |
+| Month line | 4px across the full width, along the top edge of the bottom bar. Dark green fill on a darker cream track. |
+| Dock | Three equal buttons in a grid: Build, Warga, Menu. A 24px icon over a bold label, 52px tall, square, no shadows. Build and Warga use their menu icon plates; Menu is dark green with a three-bar icon. |
 
 - Light and Dark use the same parts at the same sizes. Only the colour tokens change (GAME-DESIGN.md section 6, Themes).
 - Numbers use the body font, never the pixel font.
+
+### Broken Jalan Setapak
+
+- The whole tile greys out (grayscale, a little darker), and cracks run across all of it: a long
+  split corner to corner and three branches, a dark line over a light lip. They are mirrored per
+  tile so neighbours do not repeat.
+- Over that, a red tint and an orange outline breathe slowly (steady with reduce motion), and the
+  badge is orange instead of black. Other damaged buildings keep their brown tint and black badge.
 
 ## Lighting and atmosphere
 

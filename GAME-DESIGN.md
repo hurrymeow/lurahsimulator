@@ -295,21 +295,22 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 ### Touch and layout
 
 - Mobile-first, portrait, touch controls. Every number (tap size, text size, contrast, word limits) lives in [UI.md](UI.md), not here.
-- Main screen is the console frame, after a 90s train-and-city builder (`src/ui/console.ts`, `src/ui/console.css`). It is kept simple so the map has room. Top to bottom:
-  - a slim title bar: the name and the date. It is a label, not a control;
-  - the resource bar;
-  - one status row: the current goal on one line ("Now: reach 6 residents"), and beside it a compact Indonesia Emas 2045 meter. Tap the goal to show the next star below it; tap the meter to learn what Emas is;
-  - the map, full width, with a small satellite view in its top-right corner that pans the map when tapped;
-  - one compact bottom row: pause, speed, month bar, Menu.
-- Every panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game.
-- No shortcut on the main screen duplicates a Menu panel: no rail, no quick tabs, no SYSTEM button. A new panel registers an `ActionButton` with a `group` in the Menu. Don't add main-screen buttons.
+- Main screen is the console frame, after a 90s train-and-city builder (`src/ui/console.ts`, `src/ui/console.css`). It is kept to two slim rows on top and one dock below, so the map has the room. Top to bottom:
+  - a time row: play/pause and speed (one size, side by side), the date, and the compact Indonesia Emas 2045 meter;
+  - a money row: the five resources;
+  - the map, full width. A goal pill floats over its top-left corner ("Now: reach 6 residents"; tap for the next star), and a small satellite view over its top-right corner pans the map when tapped;
+  - the month as a thin line along the top edge of the bottom bar;
+  - a dock of three equal buttons, icon over label: Build, Warga, Menu.
+- Why this arrangement: time controls sit with the date, as in most city builders, and change speed without leaving the map. The resources get a row to themselves, so big numbers have room. The goal floats over the map, as quests do in mobile builders, so neither row wraps. Build and Warga are the panels used many times a minute, so they get their own buttons; the rest stay one tap away in Menu.
+- Build and Warga live only in the dock (`ActionButton.dock`), so the Menu does not list them twice. Every other panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game. A new panel registers an `ActionButton` with a `group` in the Menu. Don't add other main-screen buttons.
 - Notices are toasts, not a band: the latest one floats over the bottom of the map for 3 seconds, then fades. Tap it to open the Log. Every notice also stays in the Log (Menu > Log), so a missed toast is never lost. Important messages still use the pause-and-tap modal.
 - The satellite view hides while a building is being placed.
 - Light and Dark share one layout: every size, gap and position is the same, and only colours change. An e2e test compares the boxes in both themes.
-- On short phones (640px tall or less) the title bar and the satellite view drop out, and the date goes back to the bottom row, so the map gets every pixel.
+- On short phones (640px tall or less) the satellite view drops out and the goal pill spans the map's width.
+- A broken Jalan Setapak shows as a whole tile greyed and cracked, with a pulsing red tint, an orange outline and an orange "!" badge, so it reads at a glance (ART.md).
 - Sheets and modals keep their own dark look in both themes (see Themes below).
-- Clean pixel UI: 1px rules, square corners, dark green (`#2f6b45`) for primary actions. The bottom row has no padding round its 48px controls and no drop shadows. No cluttered Windows-XP-style panels.
-- The rules in [UI.md](UI.md) apply to the frame unchanged.
+- Clean pixel UI: 1px rules, square corners, dark green (`#2f6b45`) for primary actions. No drop shadows in the bars. No cluttered Windows-XP-style panels.
+- The rules in [UI.md](UI.md) apply to the frame, with rule 1's exception for the slim top rows and the goal pill (28px controls).
 - The dev-only `mockup.html` (also at `/mockup.html` on the live site) is the reference render, with a build palette the game doesn't have. It is not linked from the game.
 - Map art follows [ART.md](ART.md): palette, ink, shading, lighting and motion rules.
 

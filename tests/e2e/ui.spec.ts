@@ -21,6 +21,16 @@ async function passHome(page: Page): Promise<void> {
   await expect(page.locator('#home')).toHaveCount(0);
 }
 
+/** Opens a panel the way a player does: Build and Warga from the bottom dock, the rest from Menu. */
+async function openPanel(page: Page, id: string): Promise<void> {
+  if (id === 'build' || id === 'warga') {
+    await page.locator(`#dock-${id}`).click();
+    return;
+  }
+  await page.locator('#menu-btn').click();
+  await page.locator(`#act-${id}`).click();
+}
+
 /** Taps through every queued message. */
 async function dismissModals(page: Page): Promise<void> {
   if (await page.locator('#howto').isVisible()) await page.locator('#howtoGo').click();
@@ -144,16 +154,15 @@ test.describe('opener', () => {
     await expect(page.locator('#goal')).toBeVisible();
     await expect(page.locator('#goal')).toContainText(/\d/);
     await expect(page.locator('#coach')).toBeVisible();
-    await expect(page.locator('#menu-btn')).toHaveClass(/coach-pulse/);
-    // The note sits right above the bottom bar, next to the Menu button it points at.
+    // The opener points straight at Build in the bottom dock.
+    await expect(page.locator('#dock-build')).toHaveClass(/coach-pulse/);
+    // The note sits right above the bottom bar, next to the Build button it points at.
     const note = (await page.locator('#coach').boundingBox())!;
-    const menuBox = (await page.locator('#menu-btn').boundingBox())!;
-    expect(menuBox.y - (note.y + note.height)).toBeLessThan(40);
-    expect(menuBox.y - (note.y + note.height)).toBeGreaterThanOrEqual(0);
-    await expectLegible(page, 'opener, Menu step');
-    await page.locator('#menu-btn').click();
-    await expect(page.locator('#act-build')).toHaveClass(/coach-pulse/);
-    await page.locator('#act-build').click();
+    const buildBox = (await page.locator('#dock-build').boundingBox())!;
+    expect(buildBox.y - (note.y + note.height)).toBeLessThan(40);
+    expect(buildBox.y - (note.y + note.height)).toBeGreaterThanOrEqual(0);
+    await expectLegible(page, 'opener, Build step');
+    await page.locator('#dock-build').click();
     const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
     await expect(rumah).toHaveClass(/coach-pulse/);
     await expectCoachClear(page, ['#sheet .tabs', '#sheet > p', '#sheet .card-btn.coach-pulse'], 'Pick step');
@@ -257,8 +266,7 @@ test.describe('population and houses', () => {
     const ATTRACTS = { en: 'Attracts new residents', id: 'Menarik warga baru' }[lang()];
     await start(page);
     await dismissModals(page);
-    await page.locator('#menu-btn').click();
-    await page.locator('#act-build').click();
+    await page.locator('#dock-build').click();
     await expect(page.locator('#sheet')).toContainText(POP_LINE);
     const rumah = page.locator('#sheet .card-btn', { hasText: HOUSES }).first();
     await expect(rumah).toBeVisible();
@@ -594,8 +602,7 @@ test.describe('events, ranking, settings', () => {
     await expectLegible(page, 'large text menu');
     await page.locator('.sheet-head .btn').click();
     for (const id of ['build', 'warga', 'wacana', 'combo']) {
-      await page.locator('#menu-btn').click();
-      await page.locator(`#act-${id}`).click();
+      await openPanel(page, id);
       await expectLegible(page, `large text ${id}`);
       await page.locator('.sheet-head .btn').click();
     }
@@ -626,8 +633,8 @@ test.describe('slim HUD and one menu', () => {
     const ids = await page.evaluate(() =>
       [...document.querySelectorAll('button')].filter((b) => b.getClientRects().length && b.id !== 'ticker').map((b) => b.id),
     );
-    // The frame adds no panel buttons: every panel opens from Menu. The goal line only expands the next star.
-    expect(ids).toEqual(['chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'goal-now', 'pause-btn', 'speed-btn', 'menu-btn']);
+    // Top: play, speed and the resources. The goal line only expands the next star. Bottom: the dock.
+    expect(ids).toEqual(['pause-btn', 'speed-btn', 'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'goal-now', 'dock-build', 'dock-warga', 'menu-btn']);
     const hud = (await page.locator('#hud').boundingBox())!;
     expect(hud.height).toBeLessThanOrEqual(80);
   });
@@ -719,8 +726,7 @@ test.describe('text is legible and never cut off', () => {
 
     const panels = [['build', 'Build'], ['warga', 'Residents'], ['wacana', 'Policies'], ['combo', 'Combo Book'], ['log', 'Log'], ['stats', 'Treasury & ranking'], ['settings', 'Settings']] as const;
     for (const [id, name] of panels) {
-      await page.locator('#menu-btn').click();
-      await page.locator(`#act-${id}`).click();
+      await openPanel(page, id);
       await expect(page.locator('#sheet')).toBeVisible();
       await expectLegible(page, `${name} panel`);
       await page.locator('.sheet-head .btn').click();
@@ -1316,8 +1322,7 @@ test.describe('RW stage', () => {
     });
     await dismissModals(page);
 
-    await page.locator('#menu-btn').click();
-    await page.locator('#act-build').click();
+    await page.locator('#dock-build').click();
     // Build is split into tabs, so walk them until every RW building has shown up.
     const seen = new Set<string>();
     const tabs = await page.locator('.sheet .tabs .tab').count();
@@ -1337,8 +1342,7 @@ test.describe('RW stage', () => {
     await expectLegible(page, 'RW Buku Combo');
     await page.locator('.sheet-head .btn').click();
 
-    await page.locator('#menu-btn').click();
-    await page.locator('#act-warga').click();
+    await page.locator('#dock-warga').click();
     await page.locator('.sheet .card-btn').first().click();
     await expect(page.locator('.sheet').getByText('Kader Posyandu').first()).toBeVisible();
     await expectLegible(page, 'RW job picker');
@@ -1380,8 +1384,7 @@ test.describe('Kelurahan stage', () => {
       return { stage: app.s.stage.current, path: app.s.stage.path };
     });
     expect(got).toEqual({ stage: 'kelurahan', path: 'desa' });
-    await page.locator('#menu-btn').click();
-    await page.locator('#act-build').click();
+    await page.locator('#dock-build').click();
     // Build is split into tabs, so walk them until Balai Desa shows up.
     const tabs = await page.locator('.sheet .tabs .tab').count();
     let found = false;
@@ -1484,8 +1487,7 @@ test.describe('build mode', () => {
   test('Build splits into category tabs that stay legible', async ({ page }) => {
     await start(page);
     await dismissModals(page);
-    await page.locator('#menu-btn').click();
-    await page.locator('#act-build').click();
+    await page.locator('#dock-build').click();
     const tabs = page.locator('#sheet .tabs .tab');
     expect(await tabs.count()).toBeGreaterThan(2);
     await expect(page.locator('#sheet .tabs .tab[aria-pressed="true"]')).toHaveCount(1);
@@ -1745,8 +1747,7 @@ test.describe('sheets keep their place', () => {
     await skipTips(page);
     await seed(page);
     await page.evaluate(() => ((window as unknown as { pakrt: any }).pakrt.speed = 0));
-    await page.locator('#menu-btn').click();
-    await page.locator('#act-build').click();
+    await page.locator('#dock-build').click();
     const tabs = page.locator('.sheet .tabs .tab');
     const n = await tabs.count();
     expect(n).toBeGreaterThan(1);
@@ -1781,35 +1782,55 @@ test.describe('sheets keep their place', () => {
 });
 
 test.describe('console frame and theme', () => {
-  test('frames the map in light by default with no extra buttons, switches to dark and back', async ({ page }) => {
+  test('two slim top rows, a goal pill, an equal dock, in light by default, then dark and back', async ({ page }) => {
     await start(page);
     await dismissModals(page);
-    // Short phones drop the title bar and the satellite view to give the map every pixel.
     const tall = page.viewportSize()!.height > 640;
-    for (const id of ['#cs-title', '#cs-sat']) await (tall ? expect(page.locator(id)).toBeVisible() : expect(page.locator(id)).toBeHidden());
-    for (const id of ['#map', '#menu-btn', '#pause-btn', '#speed-btn']) await expect(page.locator(id)).toBeVisible();
-    // No shortcut duplicates the Menu: no rail, no quick tabs, no SYSTEM button.
-    for (const id of ['#cs-rail', '#cs-tabs', '#cs-system']) await expect(page.locator(id)).toHaveCount(0);
+    // Row 1 is time (play, speed, date, 2045), row 2 is money (the resources).
+    const r1 = (await page.locator('#cs-row1').boundingBox())!;
+    const r2 = (await page.locator('#cs-row2').boundingBox())!;
+    for (const id of ['#pause-btn', '#speed-btn', '#cs-date', '#emas']) {
+      const b = (await page.locator(id).boundingBox())!;
+      expect(b.y >= r1.y - 1 && b.y + b.height <= r1.y + r1.height + 1, `${id} in the time row`).toBe(true);
+    }
+    expect((await page.locator('#hud').boundingBox())!.y).toBeGreaterThanOrEqual(r2.y - 1);
+    // Each top row stays one slim line, about half the old 48 to 60px rows.
+    expect(r1.height).toBeLessThanOrEqual(34);
+    expect(r2.height).toBeLessThanOrEqual(34);
+    // Play/pause and speed are one size, side by side.
+    const pb = (await page.locator('#pause-btn').boundingBox())!;
+    const sb = (await page.locator('#speed-btn').boundingBox())!;
+    expect(Math.round(pb.width)).toBe(Math.round(sb.width));
+    expect(Math.round(pb.height)).toBe(Math.round(sb.height));
+    expect(Math.round(pb.y)).toBe(Math.round(sb.y));
+    // The goal floats on the map, not in a row of its own.
+    const goal = (await page.locator('#goal').boundingBox())!;
+    const map = (await page.locator('#map').boundingBox())!;
+    expect(goal.y).toBeGreaterThanOrEqual(map.y);
+    await (tall ? expect(page.locator('#cs-sat')).toBeVisible() : expect(page.locator('#cs-sat')).toBeHidden());
+    // The dock: three equal buttons, Build, Warga and Menu.
+    const dock = await Promise.all(['#dock-build', '#dock-warga', '#menu-btn'].map(async (id) => (await page.locator(id).boundingBox())!));
+    for (const d of dock) {
+      expect(Math.abs(d.width - dock[0].width)).toBeLessThanOrEqual(1);
+      expect(Math.abs(d.height - dock[0].height)).toBeLessThanOrEqual(1);
+    }
+    // Build and Warga live in the dock only, so the Menu does not list them twice.
+    await page.locator('#menu-btn').click();
+    await expect(page.locator('#act-build')).toHaveCount(0);
+    await expect(page.locator('#act-warga')).toHaveCount(0);
+    await page.locator('.sheet-head .btn').click();
+    // No rail, quick tabs or SYSTEM button from earlier frames.
+    for (const id of ['#cs-rail', '#cs-tabs', '#cs-system', '#cs-title']) await expect(page.locator(id)).toHaveCount(0);
     const dark = () => page.evaluate(() => document.documentElement.classList.contains('theme-dark'));
     expect(await dark()).toBe(false);
     await expectLegible(page, 'console frame, light');
-    // The map spans the full width and most of the screen.
-    const map = (await page.locator('#map').boundingBox())!;
-    const vp = page.viewportSize()!;
-    expect(map.width).toBeGreaterThanOrEqual(vp.width - 2);
-    expect(map.height).toBeGreaterThan(vp.height * (tall ? 0.45 : 0.35));
-    // The bottom row stays one compact row of 48px controls.
-    const bar = (await page.locator('#bottombar').boundingBox())!;
-    expect(bar.height).toBeLessThanOrEqual(60);
+    expect(map.width).toBeGreaterThanOrEqual(page.viewportSize()!.width - 1);
     if (tall) {
-      // A small satellite view, and a tap on it pans the map.
       const sat = (await page.locator('#cs-sat-map').boundingBox())!;
-      expect(sat.width).toBeLessThanOrEqual(96);
       const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox);
       await page.mouse.click(sat.x + 4, sat.y + 4);
       expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox)).not.toBe(before);
     }
-    // Theme: Light and Dark buttons in Settings.
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
     await page.locator('#sheet [data-theme="dark"]').click();
@@ -1818,7 +1839,6 @@ test.describe('console frame and theme', () => {
     await expectLegible(page, 'settings, dark theme');
     await page.locator('.sheet-head .btn').click();
     await expectLegible(page, 'console frame, dark');
-    // The theme survives a reload, then goes back to light.
     await page.reload();
     await passHome(page);
     expect(await dark()).toBe(true);
@@ -1832,7 +1852,7 @@ test.describe('console frame and theme', () => {
     await start(page);
     await dismissModals(page);
     const boxes = () => page.evaluate(() =>
-      ['cs-title', 'hud', 'status', 'goal', 'emas', 'stage', 'map', 'cs-sat', 'bottombar', 'pause-btn', 'speed-btn', 'menu-btn'].map((id) => {
+      ['cs-row1', 'cs-row2', 'hud', 'goal', 'emas', 'stage', 'map', 'cs-sat', 'bottombar', 'pause-btn', 'speed-btn', 'dock-build', 'dock-warga', 'menu-btn'].map((id) => {
         const r = document.getElementById(id)!.getBoundingClientRect();
         return `${id} ${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)}`;
       }),
@@ -1866,12 +1886,11 @@ test.describe('console frame and theme', () => {
     await expect(page.locator('#sheet')).toContainText('Toast test');
   });
 
-  test('every panel the frame used to shortcut still opens from Menu', async ({ page }) => {
+  test('every panel opens: Build and Warga from the dock, the rest from Menu', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     for (const id of ['build', 'wacana', 'log', 'stats', 'warga', 'settings']) {
-      await page.locator('#menu-btn').click();
-      await page.locator(`#act-${id}`).click();
+      await openPanel(page, id);
       await expect(page.locator('#sheet')).toBeVisible();
       await page.locator('.sheet-head .btn').click();
       await expect(page.locator('#sheet')).toBeHidden();

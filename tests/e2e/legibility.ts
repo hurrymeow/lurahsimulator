@@ -60,7 +60,9 @@ export async function scanLegibility(page: Page): Promise<Problem[]> {
       const isButton = el.matches('button, [role="button"]');
       const r = el.getBoundingClientRect();
 
-      if (isButton && (r.height < 47.5 || r.width < 47.5)) {
+      // UI.md rule 1: 48px everywhere, except the two slim top rows and the goal pill, which allow 28px.
+      const min = el.closest('#cs-row1, #cs-row2, .cs-goal-float') ? 27.5 : 47.5;
+      if (isButton && (r.height < min || r.width < min)) {
         problems.push({ rule: 'touch-target', text: label(el), detail: `${Math.round(r.width)}x${Math.round(r.height)}px` });
       }
       if (!own.length) continue;

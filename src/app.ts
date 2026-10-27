@@ -59,7 +59,8 @@ export const RES_META: Record<ResourceId, { label: () => string; icon: string }>
 
 /** Extension points for later systems: extra action buttons and fx handlers. */
 export type MenuGroup = 'kampung' | 'records' | 'game';
-export type ActionButton = { id: string; label: () => string; open: (app: App) => void; group?: MenuGroup; icon?: string; show?: (app: App) => boolean };
+/** dock: the panel has its own button in the bottom dock, so the Menu does not list it again. */
+export type ActionButton = { id: string; label: () => string; open: (app: App) => void; group?: MenuGroup; icon?: string; show?: (app: App) => boolean; dock?: boolean };
 
 export class App {
   s: GameState;

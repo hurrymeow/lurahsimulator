@@ -23,12 +23,11 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 
 - Mobile portrait first. Test at 320, 360, 412 and 430px wide.
 - Style reference is Kairosoft's Dungeon Village. Own art and names only, no Kairosoft assets.
-- Main screen: the console frame (slim title bar, resource bar, one status row with the goal and the 2045 meter, the full-width map with a small satellite view, one bottom row). Notices are toasts over the map. See [GAME-DESIGN.md](GAME-DESIGN.md#touch-and-layout).
+- Main screen: the console frame (a time row and a money row on top, the full-width map with a goal pill and a small satellite view, a dock of Build, Warga and Menu). Notices are toasts over the map. See [GAME-DESIGN.md](GAME-DESIGN.md#touch-and-layout).
 - Settings > Theme switches the frame between Light (default) and Dark. Both share one layout; only colours change. Check new UI in both.
-- New panel? Register an `ActionButton` with a `group` in the Menu. Never add a main-screen button.
-- Nothing on the main screen duplicates a Menu panel.
+- New panel? Register an `ActionButton` with a `group` in the Menu. Never add a main-screen button. Build and Warga are the only docked panels, and the Menu does not list them twice.
 - Text never cuts off. No ellipsis, text wraps, panels scroll. Body font 16px or more.
-- Touch targets 48px or more.
+- Touch targets 48px or more, except the slim top rows and the goal pill (28px). See UI.md rule 1.
 - New panel or message needs a scan in `tests/e2e/ui.spec.ts`.
 
 ## Language

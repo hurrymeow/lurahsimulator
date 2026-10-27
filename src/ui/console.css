@@ -26,7 +26,7 @@ html.theme-dark.high-contrast { --cs-ink-2: #d4d4d8; --cs-line: #71717a; }
 html.high-contrast:not(.theme-dark) { --cs-ink-2: #3d3226; }
 
 body { background: var(--cs-cream); }
-:is(.cs, #hud, #status, #ticker, #bottombar) {
+:is(.cs, #hud, #ticker, #bottombar, #goal) {
   --bg: var(--cs-cream);
   --surface: var(--cs-cream);
   --surface-2: var(--cs-cream-3);
@@ -39,9 +39,6 @@ body { background: var(--cs-cream); }
 }
 #app { background: var(--cs-cream); }
 
-/* ---------- title bar: name | date. A label strip, not a control, so it stays slim. ---------- */
-.cs-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; padding: 0 10px; background: var(--cs-cream); border-bottom: 1px solid var(--cs-line); }
-.cs-name { font-family: var(--font-pixel); font-size: 16px; font-weight: 700; letter-spacing: 0.04em; }
 .cs-date { font-size: 16px; font-weight: 700; white-space: nowrap; }
 
 /* ---------- resource bar, goal, ticker and bottom row in the frame ---------- */
@@ -97,7 +94,6 @@ html:not(.theme-dark) #chip-pop img { filter: brightness(0.18); }
 #app.home-open #stage { position: fixed; inset: 0; border-bottom: 0; }
 
 @media (max-width: 359px) {
-  .cs-name { letter-spacing: 0; }
   /* The goal keeps its one line: the meter shows its label and number, without the track. */
   #emas .emas-track { display: none; }
   #emas { padding: 0 8px; }
@@ -116,12 +112,9 @@ html:not(.theme-dark) :is(#hud, #bottombar, #goal, #ticker) :is(.missing, .warn)
 #app.home-open { background: #0b0b0c; }
 
 /* The home screen hides the status row and the toast with the rest of the HUD. */
-#app.home-open :is(#status, #ticker) { visibility: hidden; }
+#app.home-open :is(#goal, #ticker) { visibility: hidden; }
 
-/* ---------- prototype: clock in the top bar, dock and month line in the bottom bar ---------- */
-.cs-title { min-height: var(--touch); padding: 0 8px 0 0; }
-.cs-clock { display: flex; align-self: stretch; }
-.cs-clock .btn { min-height: var(--touch); border: 0; border-right: 1px solid var(--cs-line); border-radius: 0; background: var(--cs-cream); color: var(--cs-ink); box-shadow: none; }
+/* ---------- bottom: the month line along the top edge, then the dock ---------- */
 .cs-clock #pause-btn[aria-pressed='true'] { background: var(--cs-green); color: var(--cs-on-green); }
 #bottombar { position: relative; padding: 8px 8px 6px; }
 .cs-month.month-track { position: absolute; top: 0; left: 0; right: 0; max-width: none; height: 4px; border-radius: 0; border: 0; background: var(--cs-cream-3); }
@@ -135,22 +128,22 @@ html:not(.theme-dark) :is(#hud, #bottombar, #goal, #ticker) :is(.missing, .warn)
 .cs-menu-icon { display: inline-flex; flex-direction: column; justify-content: center; gap: 4px; width: 24px; height: 24px; padding: 0 3px; }
 .cs-menu-icon i { display: block; height: 3px; background: currentColor; }
 
-/* ---------- top: two compact rows (prototype; ?top=a|b|c) ---------- */
+/* ---------- top: a time row (play, speed, date, 2045) and a money row (resources) ---------- */
 .cs-row { display: flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 6px; background: var(--cs-cream); border-bottom: 1px solid var(--cs-line); }
 .cs-row #hud { flex: 1; min-width: 0; min-height: 30px; padding: 0; border: 0; gap: 2px 4px; flex-wrap: nowrap; justify-content: space-between; background: none; }
 .cs-row .chip { min-height: 30px; min-width: 0; padding: 0 2px; gap: 3px; }
 .cs-row .chip img { width: 16px; height: 16px; }
 .cs-row .cs-clock { display: flex; gap: 4px; align-self: center; }
-.cs-row .cs-clock .btn { min-height: 26px; min-width: 34px; padding: 0 6px; border: 1px solid var(--cs-line); font-size: 15px; line-height: 1; }
+/* Play/pause and speed: one size, side by side. The top bar's controls are 28px tall (UI.md rule 1, top-bar exception). */
+#cs-row1 :is(#pause-btn, #speed-btn) { box-sizing: border-box; width: 44px; min-width: 44px; height: 28px; min-height: 28px; padding: 0; border: 1px solid var(--cs-line); border-radius: 0; box-shadow: none; background: var(--cs-cream); color: var(--cs-ink); font-size: 16px; line-height: 1; }
 .cs-row .cs-date { font-size: 16px; font-weight: 700; white-space: nowrap; }
 .cs-row #goal { flex: 1; min-width: 0; }
 .cs-row .goal-now { min-height: 30px; padding: 0; line-height: 1.2; }
 .cs-row #emas { min-height: 30px; padding: 0 0 0 6px; gap: 4px; }
 .cs-row #emas .emas-track { width: 32px; }
-html[data-top='a'] #cs-row2 .cs-date { padding: 0 6px; border-left: 1px solid var(--cs-line); }
-html[data-top='b'] #cs-row1 .cs-date { padding-left: 6px; border-left: 1px solid var(--cs-line); }
-html[data-top='c'] #cs-row1 .cs-date { flex: 1; text-align: center; }
-html[data-top='c'] #cs-row1 #emas { flex: none; border-left: 1px solid var(--cs-line); }
+/* The date gives way first on a narrow or large-text screen, so the 2045 meter never leaves it. */
+#cs-row1 .cs-date { flex: 1; min-width: 0; text-align: center; white-space: normal; line-height: 1.15; }
+#cs-row1 #emas { flex: none; border-left: 1px solid var(--cs-line); }
 #goal.cs-goal-float { position: absolute; top: 6px; left: 6px; right: 104px; z-index: 6; background: var(--cs-cream); border: 1px solid var(--cs-line); box-shadow: 2px 2px 0 var(--cs-shadow); }
 .cs-goal-float .goal-now { min-height: 30px; padding: 2px 8px; line-height: 1.2; }
 .cs-goal-float .goal-star { padding: 0 8px 6px; }

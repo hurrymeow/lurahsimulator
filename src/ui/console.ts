@@ -1,6 +1,7 @@
-// Console frame: the main screen after a 90s train-and-city builder. A slim title bar with the
-// name and the date, and a small satellite view that pans the map. Every panel lives in the Menu,
-// so the frame adds no buttons of its own. Settings picks a light or dark frame.
+// Console frame: the main screen after a 90s train-and-city builder. Two slim rows on top: time
+// (play, speed, date, the 2045 meter) and money (the five resources). The goal floats as a pill on
+// the map's top-left, opposite a small satellite view. At the bottom, the month as a thin line and
+// a dock of three equal buttons: Build, Warga and Menu. Settings picks a light or dark frame.
 import { t } from '../i18n';
 import type { App } from '../app';
 import { dateLabel } from '../format';
@@ -11,70 +12,46 @@ import { h } from './dom';
 import { menuIconURL } from './icons';
 import './console.css';
 
+/** Panels with their own dock button. The Menu stops listing them, so nothing appears twice. */
+const DOCK = ['build', 'warga'];
+
 export function setupConsole(app: App): void {
-  const root = document.getElementById('app')!;
   const stage = document.getElementById('stage')!;
   const map = document.getElementById('map') as HTMLCanvasElement;
 
-  // ---------- top bar: time controls beside the date, like a city builder's clock ----------
+  // ---------- top: a time row and a money row ----------
   const date = h('span', { class: 'cs-date', id: 'cs-date' });
   const clock = h('div', { class: 'cs-clock' }, document.getElementById('pause-btn')!, document.getElementById('speed-btn')!);
-  const title = h('header', { class: 'cs-title cs', id: 'cs-title' }, clock, date);
-  root.insertBefore(title, document.getElementById('hud'));
+  const row1 = h('div', { class: 'cs-row cs', id: 'cs-row1' }, clock, date, document.getElementById('emas')!);
+  const row2 = h('div', { class: 'cs-row cs', id: 'cs-row2' }, document.getElementById('hud')!);
+  const status = document.getElementById('status')!;
+  status.before(row1, row2);
+  // The goal floats as a pill over the map's top-left corner, opposite the satellite view.
+  const goal = document.getElementById('goal')!;
+  goal.classList.add('cs-goal-float');
+  stage.append(goal);
+  status.remove();
 
-  // ---------- bottom bar: a dock of the most used panels beside Menu, and the month as a thin line ----------
+  // ---------- bottom: the month as a thin line, and three equal dock buttons ----------
   const bar = document.getElementById('bottombar')!;
   const month = document.querySelector('.month-track')!;
   month.classList.add('cs-month');
   bar.prepend(month);
   const menuBtn = document.getElementById('menu-btn')!;
-  const DOCK: { id: string; label: () => string }[] = [
-    { id: 'build', label: () => t('menu.build') },
-    { id: 'warga', label: () => t('menu.warga') },
-  ];
-  const dock = DOCK.map((d) => {
-    const icon = menuIconURL(d.id);
-    const b = h('button', { class: 'btn cs-dock', id: `dock-${d.id}`, type: 'button', onclick: () => app.actions.find((a) => a.id === d.id)?.open(app) },
-      icon ? h('img', { src: icon, alt: '', width: 28, height: 28, class: 'pixel' }) : null,
+  const dock = DOCK.map((id) => {
+    const action = app.actions.find((a) => a.id === id)!;
+    action.dock = true;
+    const icon = menuIconURL(id);
+    const b = h('button', { class: 'btn cs-dock', id: `dock-${id}`, type: 'button', onclick: () => action.open(app) },
+      icon ? h('img', { src: icon, alt: '', width: 24, height: 24, class: 'pixel' }) : null,
       h('span', {}, ''),
     );
-    return { d, b };
+    menuBtn.before(b);
+    return { action, b };
   });
-  for (const { b } of dock) menuBtn.before(b);
   // Menu gets an icon too, so the three bottom buttons read as one set.
-  if (!menuBtn.querySelector('.cs-menu-icon')) {
-    const label = h('span', { 'data-i18n': 'page.menu' }, menuBtn.textContent ?? '');
-    menuBtn.removeAttribute('data-i18n');
-    menuBtn.replaceChildren(h('span', { class: 'cs-menu-icon', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), label);
-  }
-
-  // ---------- top: two compact rows. Prototype: ?top=a|b|c picks the arrangement. ----------
-  // a: clock + resources / goal + date + 2045
-  // b: resources + date / clock + goal + 2045
-  // c: clock + date + 2045 / resources, with the goal floating on the map
-  const layout = (['a', 'b', 'c'] as const).find((k) => new URLSearchParams(location.search).get('top') === k) ?? 'a';
-  document.documentElement.dataset.top = layout;
-  const hud = document.getElementById('hud')!;
-  const goal = document.getElementById('goal')!;
-  const emas = document.getElementById('emas')!;
-  const row1 = h('div', { class: 'cs-row cs', id: 'cs-row1' });
-  const row2 = h('div', { class: 'cs-row cs', id: 'cs-row2' });
-  if (layout === 'a') {
-    row1.append(clock, hud);
-    row2.append(goal, date, emas);
-  } else if (layout === 'b') {
-    row1.append(hud, date);
-    row2.append(clock, goal, emas);
-  } else {
-    row1.append(clock, date, emas);
-    row2.append(hud);
-    // The goal floats as a pill over the map's top-left corner, opposite the satellite view.
-    stage.append(goal);
-    goal.classList.add('cs-goal-float');
-  }
-  title.replaceWith(row1);
-  row1.after(row2);
-  document.getElementById('status')!.hidden = true;
+  menuBtn.replaceChildren(h('span', { class: 'cs-menu-icon', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), h('span', { 'data-i18n': 'page.menu' }, t('page.menu')));
+  menuBtn.removeAttribute('data-i18n');
 
   // ---------- satellite view ----------
   const sat = h('canvas', { width: 88, height: 60, id: 'cs-sat-map' }) as HTMLCanvasElement;
@@ -84,7 +61,7 @@ export function setupConsole(app: App): void {
   // The date follows the month; the satellite label follows the language.
   app.refreshers.push(() => {
     date.textContent = dateLabel(app.s.month);
-    for (const { d, b } of dock) b.lastElementChild!.textContent = d.label();
+    for (const { action, b } of dock) b.lastElementChild!.textContent = action.label();
     satBox.setAttribute('aria-label', t('cs.satHelp'));
     // Out of the way while a building is being placed.
     satBox.hidden = !document.getElementById('placebar')!.hidden;

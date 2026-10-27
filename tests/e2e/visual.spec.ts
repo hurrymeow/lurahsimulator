@@ -57,9 +57,8 @@ test.describe('visual baselines', () => {
   test('Build sheet', async ({ page }) => {
     await open(page);
     await play(page);
-    // Build opens from the Menu, like every other panel.
-    await page.locator('#menu-btn').click();
-    await page.locator('#act-build').click();
+    // Build has its own button in the bottom dock.
+    await page.locator('#dock-build').click();
     await settle(page);
     await expect(page).toHaveScreenshot(`build-${lang()}.png`, SHOT);
   });
