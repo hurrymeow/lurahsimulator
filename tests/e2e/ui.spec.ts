@@ -1564,6 +1564,9 @@ test.describe('zoom, big lots and the Warga list', () => {
       const at = await page.evaluate(() => {
         const app = (window as unknown as { pakrt: any }).pakrt;
         const b = app.s.buildings.find((o: any) => o.uid === 9001);
+        // Zoomed in, a short view can leave the field above the top edge. Nudge it just inside, no more.
+        const c0 = app.view.tileCentre(b.x + 1, b.y + 1);
+        if (c0.y < 40) app.view.panBy(0, 40 - c0.y);
         const c = app.view.tileCentre(b.x + 1, b.y + 1);
         const r = document.getElementById('map')!.getBoundingClientRect();
         return { x: r.left + c.x, y: r.top + c.y };
