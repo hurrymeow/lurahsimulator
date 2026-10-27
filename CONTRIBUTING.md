@@ -24,9 +24,10 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 
 - Mobile portrait first. Test at 320, 360 and 390px wide.
 - Style reference is Kairosoft's Dungeon Village. Own art and names only, no Kairosoft assets.
-- Main screen: slim resource bar, the map, one bottom row (pause, speed, date, **Menu**).
+- Main screen: the console frame (title bar, resource bar, the map with a rail and satellite view, one bottom row, quick tabs). See [DESIGN.md](DESIGN.md#touch-and-layout).
+- Settings > Theme switches the frame between Light (default) and Dark. Check new UI in both.
 - New panel? Register an `ActionButton` with a `group` in the Menu. Never add a main-screen button.
-- The optional Console look (Settings) adds shortcut tabs round the map. They only point at Menu panels. See [DESIGN.md](DESIGN.md#touch-and-layout).
+- The frame's rail and tabs only point at Menu panels.
 - Text never cuts off. No ellipsis, text wraps, panels scroll. Body font 16px or more.
 - Touch targets 48px or more.
 - New panel or message needs a scan in `tests/e2e/ui.spec.ts`.

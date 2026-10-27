@@ -1,6 +1,6 @@
-// Console skin: a cream frame round the map after a 90s train-and-city builder. A title bar with
+// Console frame: the main screen after a 90s train-and-city builder. A title bar with
 // SYSTEM and the date, a rail with Build and Wacana, a satellite view that pans the map, and a row
-// of quick tabs. Every control opens a panel the Menu already has. Off by default (Settings).
+// of quick tabs. Every control opens a panel the Menu already has. Settings picks a light or dark frame.
 import { t, type Key } from '../i18n';
 import type { App } from '../app';
 import { dateLabel } from '../format';
@@ -12,7 +12,6 @@ import { openSettings } from './settings';
 import './console.css';
 
 const open = (app: App, id: string) => app.actions.find((a) => a.id === id)?.open(app);
-const on = () => document.documentElement.classList.contains('skin-console');
 
 const TABS: { id: string; big: Key; small: Key }[] = [
   { id: 'log', big: 'cs.log', small: 'cs.logSub' },
@@ -106,10 +105,10 @@ export function setupConsole(app: App): void {
     g.lineWidth = 1;
     g.strokeRect(Math.round(a.x) + 0.5, Math.round(a.y) + 0.5, Math.round(b.x - a.x), Math.round(b.y - a.y));
   };
-  // A few times a second is plenty for a map overview, and nothing at all while the skin is off.
+  // A few times a second is plenty for a map overview.
   let frame = 0;
   const tick = () => {
-    if (on() && frame++ % 10 === 0) draw();
+    if (frame++ % 10 === 0) draw();
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);

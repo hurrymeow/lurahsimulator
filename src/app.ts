@@ -815,7 +815,9 @@ export class App {
     const w = float.offsetWidth;
     const hgt = float.offsetHeight;
     const room = float.parentElement!.clientHeight;
-    const x = Math.min(Math.max(a.x - w / 2, 4), float.parentElement!.clientWidth - w - 4);
+    // The anchor is in canvas pixels; the canvas sits right of the frame's rail.
+    const left = document.getElementById('map')!.offsetLeft;
+    const x = Math.min(Math.max(left + a.x - w / 2, left + 4), float.parentElement!.clientWidth - w - 4);
     const y = a.below + 8 + hgt > room ? Math.max(4, a.above - 8 - hgt) : a.below + 8;
     float.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
   }
@@ -842,7 +844,8 @@ export class App {
     document.documentElement.classList.toggle('large-text', this.settings.largeText);
     document.documentElement.classList.toggle('reduce-motion', this.settings.reduceMotion);
     document.documentElement.classList.toggle('high-contrast', this.settings.highContrast);
-    document.documentElement.classList.toggle('skin-console', this.settings.console);
+    document.documentElement.classList.toggle('theme-dark', this.settings.theme === 'dark');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', this.settings.theme === 'dark' ? '#0b0b0c' : '#f3eed6');
     this.view.effects = this.settings.effects && !this.settings.reduceMotion;
     document.documentElement.classList.toggle('no-effects', !this.view.effects);
     this.view.motion = !this.settings.reduceMotion;

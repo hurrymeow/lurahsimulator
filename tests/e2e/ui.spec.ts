@@ -511,8 +511,8 @@ test.describe('events, ranking, settings', () => {
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
     const toggles = page.locator('#sheet .toggle');
-    expect(await toggles.count()).toBe(6);
-    for (let i = 0; i < 6; i++) {
+    expect(await toggles.count()).toBe(5);
+    for (let i = 0; i < 5; i++) {
       const t = toggles.nth(i);
       const before = await t.getAttribute('aria-checked');
       await t.click();
@@ -527,7 +527,7 @@ test.describe('events, ranking, settings', () => {
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
     const saved = await page.locator('#sheet .toggle').evaluateAll((els) => els.map((e) => e.getAttribute('aria-checked')));
-    expect(saved.length).toBe(6);
+    expect(saved.length).toBe(5);
   });
 
   test('volume sliders start audio on first tap and persist', async ({ page }) => {
@@ -1703,27 +1703,30 @@ test.describe('sheets keep their place', () => {
   });
 });
 
-test.describe('console skin', () => {
-  test('is off by default, turns on from Settings, and every frame control opens its panel', async ({ page }) => {
+test.describe('console frame and theme', () => {
+  test('frames the map in light by default, switches to dark and back, and every frame control opens its panel', async ({ page }) => {
     await start(page);
     await dismissModals(page);
-    await expect(page.locator('#cs-title')).toBeHidden();
-    await expect(page.locator('#cs-tabs')).toBeHidden();
-    await page.locator('#menu-btn').click();
-    await page.locator('#act-settings').click();
-    // The console switch is the last toggle.
-    const sw = page.locator('#sheet .toggle').last();
-    await expect(sw).toHaveAttribute('aria-checked', 'false');
-    await sw.click();
-    await expect(sw).toHaveAttribute('aria-checked', 'true');
-    await page.locator('.sheet-head .btn').click();
     // Short phones drop the title bar to keep the map roomy.
     const tall = page.viewportSize()!.height > 640;
     for (const id of [...(tall ? ['#cs-title'] : []), '#cs-rail', '#cs-sat', '#cs-tabs', '#map', '#menu-btn', '#pause-btn']) await expect(page.locator(id)).toBeVisible();
-    await expectLegible(page, 'console skin');
-    // The map keeps a usable size under the frame.
+    const dark = () => page.evaluate(() => document.documentElement.classList.contains('theme-dark'));
+    expect(await dark()).toBe(false);
+    await expectLegible(page, 'console frame, light');
+    // The map keeps a usable size, and the rail sits beside it rather than over it.
     const map = (await page.locator('#map').boundingBox())!;
+    const rail = (await page.locator('#cs-rail').boundingBox())!;
     expect(map.height).toBeGreaterThan(200);
+    expect(map.x).toBeGreaterThanOrEqual(rail.x + rail.width - 1);
+    // Theme: Light and Dark buttons in Settings.
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    await page.locator('#sheet [data-theme="dark"]').click();
+    await expect(page.locator('#sheet [data-theme="dark"]')).toHaveAttribute('aria-pressed', 'true');
+    expect(await dark()).toBe(true);
+    await expectLegible(page, 'settings, dark theme');
+    await page.locator('.sheet-head .btn').click();
+    await expectLegible(page, 'console frame, dark');
     // Each control opens a sheet that the Menu also opens.
     for (const id of [...(tall ? ['#cs-system'] : []), '#cs-rail-build', '#cs-rail-wacana', '#cs-tab-log', '#cs-tab-stats', '#cs-tab-warga', '#cs-tab-wacana']) {
       await page.locator(id).click();
@@ -1736,9 +1739,14 @@ test.describe('console skin', () => {
     const sat = (await page.locator('#cs-sat-map').boundingBox())!;
     await page.mouse.click(sat.x + 4, sat.y + 4);
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox)).not.toBe(before);
-    // It stays on after a reload.
+    // The theme survives a reload, then goes back to light.
     await page.reload();
     await passHome(page);
+    expect(await dark()).toBe(true);
     await expect(page.locator('#cs-tabs')).toBeVisible();
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    await page.locator('#sheet [data-theme="light"]').click();
+    expect(await dark()).toBe(false);
   });
 });
