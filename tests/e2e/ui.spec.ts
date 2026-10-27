@@ -121,6 +121,7 @@ test.describe('opener', () => {
     await page.goto(`/?debug&coach&lang=${lang()}`);
     await passHome(page);
     await page.locator('#howtoGo').click();
+    await expect(page.locator('#coach')).toBeVisible();
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
     await expect(page.locator('#modal')).toBeHidden();
     await expect(page.locator('#coach')).toBeVisible();
