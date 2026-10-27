@@ -37,7 +37,7 @@ const cache = new WeakMap<GameState, { key: number; out: ActiveCombo[] }>();
 function layoutKey(s: GameState): number {
   let h = ORDER.indexOf(s.stage.current) * 31 + s.stage.stars.rt * 7 + s.stage.stars.rw * 11 + s.stage.stars.kelurahan * 13 + (s.stage.path?.length ?? 0);
   for (const n of s.neighbours) h = (Math.imul(h, 31) + n.trait.charCodeAt(0)) | 0;
-  for (const b of s.buildings) h = (Math.imul(h, 31) + b.uid * 977 + b.x * 61 + b.y * 17 + b.status.charCodeAt(0)) | 0;
+  for (const b of s.buildings) h = (Math.imul(h, 31) + b.uid * 977 + b.x * 61 + b.y * 17 + b.status.charCodeAt(0) + (b.noRoad ? 5 : 0)) | 0;
   return h;
 }
 
@@ -81,12 +81,11 @@ export function comboIncomeMult(s: GameState, b: Building): number {
   return m;
 }
 
-/** Monthly system: applies combo effects and announces first discoveries. */
-export function comboSystem(s: GameState, fx: Fx): void {
+/** Announces every working combo the player has not seen yet. Runs monthly and right after a move. */
+export function discoverCombos(s: GameState, fx: Fx): void {
   for (const a of activeCombos(s)) {
-    const centre = a.members[0];
-    for (const [res, v] of Object.entries(a.combo.perMonth ?? {})) gain(s, fx, res as 'sabar', v as number, centre);
     if (s.discovered.includes(a.combo.id)) continue;
+    const centre = a.members[0];
     s.discovered.push(a.combo.id);
     s.lastNovelty = s.month;
     for (const m of a.members) fx.push({ kind: 'built', uid: m.uid });
@@ -100,6 +99,15 @@ export function comboSystem(s: GameState, fx: Fx): void {
       y: centre.y,
     });
   }
+}
+
+/** Monthly system: applies combo effects and announces first discoveries. */
+export function comboSystem(s: GameState, fx: Fx): void {
+  for (const a of activeCombos(s)) {
+    const centre = a.members[0];
+    for (const [res, v] of Object.entries(a.combo.perMonth ?? {})) gain(s, fx, res as 'sabar', v as number, centre);
+  }
+  discoverCombos(s, fx);
 }
 
 export const comboMemberNames = (c: ComboDef) => c.needs.map((id) => bName(def(id)));
