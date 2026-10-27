@@ -615,19 +615,16 @@ test.describe('events, ranking, settings', () => {
 });
 
 test.describe('slim HUD and one menu', () => {
-  test('main screen has only pause, speed, Menu and the frame shortcuts', async ({ page }) => {
+  test('main screen has only pause, speed, Menu and the rail shortcuts', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     const ids = await page.evaluate(() =>
       [...document.querySelectorAll('button')].filter((b) => b.getClientRects().length && b.id !== 'ticker').map((b) => b.id),
     );
-    // Short phones keep only the rail: no title bar and no quick tabs.
-    const tall = page.viewportSize()!.height > 640;
+    // Only the rail stays beside the map: no title bar, no quick tabs, no satellite view.
     expect(ids).toEqual([
-      ...(tall ? ['cs-system'] : []),
       'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop',
       'cs-rail-wacana', 'cs-rail-build', 'pause-btn', 'speed-btn', 'menu-btn',
-      ...(tall ? ['cs-tab-log', 'cs-tab-stats', 'cs-tab-warga', 'cs-tab-wacana'] : []),
     ]);
     const hud = (await page.locator('#hud').boundingBox())!;
     expect(hud.height).toBeLessThanOrEqual(80);
@@ -1659,10 +1656,6 @@ test.describe('zoom, big lots and the Warga list', () => {
         const r = document.getElementById('map')!.getBoundingClientRect();
         const c0 = app.view.tileCentre(b.x + 1, b.y + 1);
         if (c0.y < 40) app.view.panBy(0, 40 - c0.y);
-        // Keep it clear of the frame's satellite view in the top-right corner.
-        const sat = document.getElementById('cs-sat')!.getBoundingClientRect();
-        const c1 = app.view.tileCentre(b.x + 1, b.y + 1);
-        if (sat.width && c1.y < sat.bottom - r.top + 16 && c1.x > sat.left - r.left - 24) app.view.panBy(sat.left - r.left - 24 - c1.x, 0);
         const c = app.view.tileCentre(b.x + 1, b.y + 1);
         return { x: r.left + c.x, y: r.top + c.y };
       });
@@ -1783,13 +1776,13 @@ test.describe('sheets keep their place', () => {
 });
 
 test.describe('console frame and theme', () => {
-  test('frames the map in light by default, switches to dark and back, and every frame control opens its panel', async ({ page }) => {
+  test('frames the map in light by default, switches to dark and back, and every rail control opens its panel', async ({ page }) => {
     await start(page);
     await dismissModals(page);
-    // Short phones keep only the rail, so the map stays as tall as it was before the frame.
-    const tall = page.viewportSize()!.height > 640;
-    for (const id of [...(tall ? ['#cs-title', '#cs-sat', '#cs-tabs'] : []), '#cs-rail', '#map', '#menu-btn', '#pause-btn']) await expect(page.locator(id)).toBeVisible();
-    if (!tall) for (const id of ['#cs-title', '#cs-sat', '#cs-tabs']) await expect(page.locator(id)).toBeHidden();
+    // Only the rail stays beside the map, so the map is as tall as it was before the frame.
+    for (const id of ['#cs-rail', '#map', '#menu-btn', '#pause-btn']) await expect(page.locator(id)).toBeVisible();
+    // The title bar, quick tabs and satellite view are gone for good, not just hidden.
+    for (const id of ['#cs-title', '#cs-sat', '#cs-tabs']) await expect(page.locator(id)).toHaveCount(0);
     const dark = () => page.evaluate(() => document.documentElement.classList.contains('theme-dark'));
     expect(await dark()).toBe(false);
     await expectLegible(page, 'console frame, light');
@@ -1808,18 +1801,11 @@ test.describe('console frame and theme', () => {
     await page.locator('.sheet-head .btn').click();
     await expectLegible(page, 'console frame, dark');
     // Each control opens a sheet that the Menu also opens.
-    for (const id of [...(tall ? ['#cs-system', '#cs-tab-log', '#cs-tab-stats', '#cs-tab-warga', '#cs-tab-wacana'] : []), '#cs-rail-build', '#cs-rail-wacana']) {
+    for (const id of ['#cs-rail-build', '#cs-rail-wacana']) {
       await page.locator(id).click();
       await expect(page.locator('#sheet')).toBeVisible();
       await page.locator('.sheet-head .btn').click();
       await expect(page.locator('#sheet')).toBeHidden();
-    }
-    // A tap on the satellite view pans the map.
-    if (tall) {
-      const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox);
-      const sat = (await page.locator('#cs-sat-map').boundingBox())!;
-      await page.mouse.click(sat.x + 4, sat.y + 4);
-      expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox)).not.toBe(before);
     }
     // The theme survives a reload, then goes back to light.
     await page.reload();

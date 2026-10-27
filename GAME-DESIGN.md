@@ -296,15 +296,13 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 
 - Mobile-first, portrait, touch controls. Every number (tap size, text size, contrast, word limits) lives in [UI.md](UI.md), not here.
 - Main screen is the console frame, after a 90s train-and-city builder (`src/ui/console.ts`, `src/ui/console.css`). Top to bottom:
-  - a title bar: name, SYSTEM (opens Settings) and the date;
   - the resource bar, the Indonesia Emas bar, the goal strip and the ticker;
-  - the map, with a rail beside its left edge (Build and Wacana) and a satellite view in its top-right corner that pans the map when tapped;
-  - one bottom row: pause, speed, month bar, Menu;
-  - a row of quick tabs: Log, Kas, Warga, Wacana.
+  - the map, with a rail beside its left edge (Build and Wacana);
+  - one bottom row: pause, speed, date and month bar, Menu.
 - Every panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game.
-- The frame's controls are shortcuts only: each opens a panel the Menu already has. The Menu button stays, and a new panel registers an `ActionButton` with a `group` in the Menu, never only in the frame. Don't add other main-screen buttons.
-- The rail sits beside the map, never over it, so it never hides a tile. The satellite view hides while a building is being placed.
-- On short phones (640px tall or less) only the rail stays: the title bar, quick tabs and satellite view drop out, and the date goes back to the bottom row, so the map stays as tall as it was before the frame. Every dropped shortcut is still in the Menu.
+- The rail's controls are shortcuts only: each opens a panel the Menu already has. The Menu button stays, and a new panel registers an `ActionButton` with a `group` in the Menu, never only in the frame. Don't add other main-screen buttons.
+- The rail sits beside the map, never over it, so it never hides a tile. Nothing else floats over the map.
+- The map takes all the height the frame leaves, on every phone. There is no title bar, quick-tab row or satellite view (removed in `decisions/bigger-map.md`). Settings, Log, Kas, Warga and Wacana are all in the Menu.
 - Sheets and modals keep their own dark look in both themes (see Themes below).
 - Clean pixel UI: 1px rules, square corners, a hard 2px drop shadow on buttons, dark green (`#2f6b45`) for the active tab and primary actions. No cluttered Windows-XP-style panels.
 - The rules in [UI.md](UI.md) apply to the frame unchanged.
