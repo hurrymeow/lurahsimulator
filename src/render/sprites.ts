@@ -255,3 +255,6 @@ export function iconURL(name: string, scale = 4): string {
 }
 
 export const ROOF_COLOURS = ['o', 'p', 'G', 'l', 'R'];
+/** Rumah roof shapes: hip, pelana either way, shed, flat dak. Keys of ROOF_KEYS in iso.ts. */
+export const ROOF_SHAPES = ['h', 'g', 's', 'y', 'f'];
+export const WALL_COLOURS = ['t', 'w', 's'];

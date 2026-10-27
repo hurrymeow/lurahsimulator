@@ -1,4 +1,4 @@
-import type { Painter } from './iso';
+import { dither, type Painter } from './iso';
 
 // Sprites for the RW and Kelurahan/Desa buildings. Same rules as ART.md: straight isometric
 // boxes, palette keys, the ink pass from Painter.finish. Registered in iso.ts.
@@ -128,6 +128,7 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
     p.box(7, 9, 'N');
     p.blob(-2, 15, 6, 'G');
     p.blob(3, 18, 5, 'g');
+    p.overlay.push(dither);
   },
   aspalUlang: (p) => {
     p.ground((a, b) => {
@@ -160,21 +161,24 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
     p.roof(2, 9, 5, 'G');
   },
   sawahIrigasi: (p) => {
-    p.ground((a, b) => {
-      if (a < 0.03 || a > 0.97 || b < 0.03 || b > 0.97) return null;
+    p.ground((a, b, px) => {
+      const e = Math.min(a, b, 1 - a, 1 - b);
+      if (e < 0.6 * px) return null;
       if (within(b, 0.47, 0.53)) return 'l';
-      if (a < 0.08 || a > 0.92 || within(b, 0.4, 0.47) || within(b, 0.53, 0.6)) return 'n';
+      if (e < 1.8 * px || within(b, 0.4, 0.47) || within(b, 0.53, 0.6)) return 'n';
       return Math.floor(a * 6) % 2 ? (b < 0.5 ? 'g' : 'a') : (b < 0.5 ? 'G' : 'y');
     });
   },
   embung: (p) => {
-    p.ground((a, b) => {
+    p.ground((a, b, px) => {
       const d = Math.max(Math.abs(a - 0.5), Math.abs(b - 0.5));
       if (d > 0.48) return null;
       if (d < 0.3) return Math.floor((a + b) * 10) % 4 === 0 ? 'c' : 'l';
-      if (d < 0.38) return 's';
+      // A stone lip two pixels wide round the water, at any size.
+      if (d < 0.3 + 2 * px) return 's';
       return Math.floor(a * 5 + b * 5) % 2 ? 'g' : 'G';
     });
+    p.overlay.push(dither);
   },
   desaWisata: (p) => {
     p.shadow(3);
