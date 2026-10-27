@@ -43,8 +43,9 @@ test.describe('visual baselines', () => {
   test('home', async ({ page }) => {
     await open(page);
     await settle(page);
-    // The map behind home still drifts (clouds, walkers), so it is masked here. The fill and edge checks cover it.
-    await expect(page).toHaveScreenshot(`home-${lang()}.png`, { ...SHOT, mask: [page.locator('#map')] });
+    // The map behind home still drifts (clouds, walkers), so it is hidden here. The fill and edge checks cover it.
+    await page.addStyleTag({ content: '#map { visibility: hidden; }' });
+    await expect(page).toHaveScreenshot(`home-${lang()}.png`, SHOT);
   });
 
   test('HUD at start', async ({ page }) => {

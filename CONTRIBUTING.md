@@ -62,6 +62,7 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 3. Open a PR. Enable auto-merge: `gh pr merge --auto --squash <n>`. It merges when the required `ci` check is green.
 4. After every push, check the PR for merge conflicts. A conflicted PR never starts CI and sends no alert. If it conflicts, merge main in and push.
 5. CI runs both languages at 320, 360, 412 and 430px. Don't cut that down.
+   Five screens also have screenshot baselines. Refresh them only for an intended visual change, and attach the before and after. See UI.md.
 6. Log decisions in `decisions/<pr-or-slug>.md` and shipped work in `progress/<pr-or-slug>.md`. One file per PR.
    Never edit `DECISIONS.md`, `PROGRESS.md` or another PR's file.
 7. After merge, confirm the live site changed: https://hurrymeow.github.io/lurahsimulator/. Merged is not deployed.

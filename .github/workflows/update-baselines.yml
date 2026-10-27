@@ -1,6 +1,7 @@
 # Redraws the screenshot baselines in CI's own Playwright image and commits them to the branch it ran on.
 # Run it by hand (Actions > Update baselines > Run workflow, pick the branch) only for an intended visual change.
 # Attach the before and after to the PR. See UI.md.
+# The push trigger below draws the first set. It is removed before merge.
 name: Update baselines
 
 on:
