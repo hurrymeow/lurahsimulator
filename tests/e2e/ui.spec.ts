@@ -340,6 +340,19 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#modal .card.report-card')).toBeHidden();
   });
 
+  test('an event right after a tip is centred, not left at the bottom', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.modal({ title: 'Tip', body: 'A tip', tone: 'info', tip: { pics: null, skip: () => {} } });
+      app.s.pendingEvent = 'agustusan';
+      app.showEvent();
+    });
+    await expect(page.locator('#modal .card.event')).toBeVisible();
+    await expectCentred(page, 'event after a tip');
+  });
+
   for (const id of ['agustusan', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga', 'partTime', 'padam', 'hibah']) {
     for (const broke of [false, true]) {
       test(`event ${id}${broke ? ' while broke' : ''} is legible and has a free choice`, async ({ page }) => {
