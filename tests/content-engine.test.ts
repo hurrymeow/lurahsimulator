@@ -75,8 +75,18 @@ describe('Orang Dalam cost', () => {
 });
 
 describe('unlock notices', () => {
+  it('stays quiet on the first month, when the opening menu is not a reward', () => {
+    const s = newGame(6);
+    s.month = 1;
+    const fx: Fx = [];
+    checkUnlocks(s, fx);
+    expect(fx).toHaveLength(0);
+    expect(s.unlocked.length).toBeGreaterThan(6);
+  });
+
   it('batches several unlocks in one month into one notice', () => {
     const s = newGame(6);
+    s.month = 5;
     s.stage.stars.rt = 2;
     const fx: Fx = [];
     checkUnlocks(s, fx);

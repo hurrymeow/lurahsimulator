@@ -181,7 +181,7 @@ html.no-effects #dof { display: none; }
   cursor: pointer;
 }
 .tabs { display: flex; flex-wrap: wrap; gap: var(--gap); margin: var(--gap) 0; }
-.tabs .tab { flex: 1 1 auto; }
+.tabs .tab { flex: 1 1 auto; padding: 0 6px; }
 .tabs .tab[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
 .card-btn.locked { border-style: dashed; cursor: default; }
 .card-btn.locked .pixel { filter: grayscale(1); }

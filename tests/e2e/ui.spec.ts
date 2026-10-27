@@ -117,6 +117,15 @@ test.describe('opener', () => {
     await expect(page.locator('#coach')).toBeHidden();
   });
 
+  test('the first month passes without a pop-up over the opener', async ({ page }) => {
+    await page.goto(`/?debug&coach&lang=${lang()}`);
+    await passHome(page);
+    await page.locator('#howtoGo').click();
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
+    await expect(page.locator('#modal')).toBeHidden();
+    await expect(page.locator('#coach')).toBeVisible();
+  });
+
   test('Skip ends the opener for good, even after a reload', async ({ page }) => {
     await page.goto(`/?debug&coach&lang=${lang()}`);
     await passHome(page);
@@ -1191,6 +1200,14 @@ test.describe('build mode', () => {
     expect(await tabs.count()).toBeGreaterThan(2);
     await expect(page.locator('#sheet .tabs .tab[aria-pressed="true"]')).toHaveCount(1);
     await expectLegible(page, 'build tabs');
+    // The four starting tabs share one row, so the first Rumah card stays on screen.
+    if ((await tabs.count()) <= 4) {
+      const tops = await tabs.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+      expect(new Set(tops).size, `tab tops ${tops}`).toBe(1);
+    }
+    // A card says "no permit" once: the blurb and the meta line must not both carry it.
+    const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
+    expect(((await rumah.innerText()).match(/no permit|tanpa izin/gi) ?? []).length).toBe(1);
     await page.locator('#sheet .tabs .tab[data-tab="decoration"]').click();
     await expect(page.locator('#sheet .card-btn').first()).toBeVisible();
     await expect(page.locator('#sheet .tabs .tab[data-tab="decoration"]')).toHaveAttribute('aria-pressed', 'true');

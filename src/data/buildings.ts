@@ -12,7 +12,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
     // kampung pulls in, so amenities still matter once the beds are full.
     id: 'rumah',
     name: 'Rumah',
-    blurb: 'Houses 3 residents and brings new ones. Built at once, no permit.',
+    blurb: 'Houses 3 residents and brings new ones.',
     cost: 800_000,
     upkeep: 0,
     income: 0,
