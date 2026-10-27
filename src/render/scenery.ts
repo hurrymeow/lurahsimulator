@@ -56,7 +56,7 @@ export function layoutWorld(): void {
   shore = null;
 }
 
-type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea';
+type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' | 'teh' | 'teras';
 
 function hash(x: number, y: number): number {
   let h = (x * 374761393 + y * 668265263) ^ 0x5bd1e995;
@@ -73,8 +73,19 @@ function terrain(tx: number, ty: number): Terrain {
   if (coast > 0.7) return 'sea';
   if (coast > -0.3) return 'beach';
   if (tx > GRID_W || ty > GRID_H) return 'sawah';
-  if (tx < -1 && ty < -1) return tx + ty < -9 ? 'hutan' : 'kebun';
+  // Toward the mountains the land rises into terraced hills: kebun teh on the left, sawah terasering
+  // on the right. Shade trees stand on them (see worldTrees), so no square patch of forest breaks the flow.
+  if (tx + ty < -5 && (tx < -1 || ty < -1)) return tx <= ty ? 'teh' : 'teras';
+  if (tx < -1 && ty < -1) return 'kebun';
   return tx < -1 ? 'kebun' : 'sawah';
+}
+
+/**
+ * Hill height under a world pixel, 0..1 and rising toward the back, smooth enough for contour lines
+ * to flow across tiles like the hills of an old city-builder map.
+ */
+function hill(x: number, y: number, tx: number, ty: number): number {
+  return vnoise(x, y * 2, 80) * 0.6 + vnoise(x + 300, y * 2 + 90, 30) * 0.15 + Math.min(1, -(tx + ty + 5) / 7) * 0.35;
 }
 
 const hex = (c: string) => parseInt(c.slice(1), 16);
@@ -107,6 +118,9 @@ const KEBUN = ['#4f7733', '#5a843a', '#669142'];
 const HUTAN = ['#3c6229', '#466e30', '#517a37'];
 const DIRT = ['#b87444', '#c4804b', '#d08a52', '#d99a62'];
 const SAND = ['#e6c486', '#edd093', '#f3daa2'];
+/** Tea rows on terraced hills, lit to shaded. */
+const TEH = ['#7aa84a', '#679a3f', '#578a37', '#4a7a30'];
+const TERAS = ['#a8cb5e', '#94bc53', '#86ab45'];
 
 function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx: number, ty: number): string {
   const n = clumps(x, y);
@@ -135,6 +149,27 @@ function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx
       // Sand with wind ripples along the shore.
       if ((x + 2 * y + Math.floor(n * 6)) % 11 === 0) return '#dcb778';
       return tone(n, SAND);
+    case 'teh':
+    case 'teras': {
+      // Terraces follow the hill's contours. Each step is a band; its riser is a lit rim over a dark
+      // line, steps alternate light and dark, and slopes facing the light (top left) are brighter.
+      const STEPS = 10;
+      const h = hill(x, y, tx, ty);
+      const band = Math.floor(h * STEPS);
+      if (Math.floor(hill(x, y + 1, tx, ty) * STEPS) !== band) return t === 'teh' ? '#3a5f27' : '#6f472a';
+      const rim = Math.floor(hill(x, y - 1, tx, ty) * STEPS) !== band;
+      const lit = hill(x - 2, y - 1, tx, ty) - hill(x + 2, y + 1, tx, ty);
+      const shadeK = Math.max(0, Math.min(2, (lit > 0.003 ? 0 : lit < -0.003 ? 2 : 1) + (band % 2)));
+      if (t === 'teh') {
+        if (rim) return '#a6cf63';
+        // Tea bushes in clumps along the step, picked paths showing between them.
+        return speck < 0.035 ? '#8a6a3e' : n > 0.62 ? TEH[Math.min(3, shadeK + 1)] : TEH[shadeK];
+      }
+      if (rim) return '#b9d97a';
+      // Some steps are freshly flooded for planting: still water with a glint.
+      if (band % 4 === 1) return (x + 2 * y) % 17 === 0 ? '#c9e6e2' : n > 0.55 ? '#9fd0cf' : '#8fc7c8';
+      return Math.floor(x / 2 + band) % 4 === 0 ? '#7a9e3f' : TERAS[shadeK];
+    }
     case 'sea':
       // Shimmering bands and short straight wave dashes.
       if ((x + 2 * y) % 24 < 4 && y % 6 === 0) return '#8fd0c2';
@@ -213,7 +248,9 @@ export function buildWorld(): HTMLCanvasElement {
 
   // Ground tiles. Each pixel remembers its terrain, so ink lines can follow every border.
   const land = new Uint8Array(WORLD_W * WORLD_H);
+  // Kind numbers: 1-7 in this order, 8 is the cliff, 9 and 10 the terraced hills.
   const KINDS: Terrain[] = ['grass', 'road', 'sawah', 'kebun', 'hutan', 'beach', 'sea'];
+  const kindOf = (t: Terrain) => (t === 'teh' ? 9 : t === 'teras' ? 10 : KINDS.indexOf(t) + 1);
   for (let y = HORIZON; y < WORLD_H; y++)
     for (let x = 0; x < WORLD_W; x++) {
       const rx = (x + 0.5 - WORLD_OX) / (TW / 2);
@@ -224,7 +261,7 @@ export function buildWorld(): HTMLCanvasElement {
       const ty = Math.floor(b);
       if (tx < XMIN || ty < YMIN || tx >= XMAX || ty >= YMAX || tx + ty < FAR) continue;
       const t = terrain(tx, ty);
-      land[y * WORLD_W + x] = KINDS.indexOf(t) + 1;
+      land[y * WORLD_W + x] = kindOf(t);
       put(img, x, y, groundColour(t, a - tx, b - ty, x, y, tx, ty));
     }
   // The kampung stands on raised land: where it meets the beach, or the world's front edge, a dirt
@@ -249,7 +286,7 @@ export function buildWorld(): HTMLCanvasElement {
   // over road over cliff over beach over sea) takes a dark edge in its own colour. The lower side
   // gets a bright rim that eases back to its base colour over three pixels, so each transition
   // reads clearly without hard black lines. Sea meets sand with a line of foam.
-  const RANK = [2, 7, 5, 6, 8, 9, 3, 2, 4];
+  const RANK = [2, 7, 5, 6, 8, 9, 3, 2, 4, 8, 6];
   const rank = (k: number) => RANK[land[k] || 7];
   const edits: [number, number, number][] = [];
   const NEAR: [number, number, number][] = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [2, 0, 2], [-2, 0, 2], [0, 2, 2], [0, -2, 2], [3, 0, 3], [-3, 0, 3]];
@@ -358,7 +395,7 @@ export function worldTrees(): Tree[] {
       if (ty < YMIN || ty >= YMAX) continue;
       const t = terrain(tx, ty);
       const n = hash(tx * 5 + 1, ty * 3 + 2);
-      const name = t === 'hutan' ? (n < 0.75 ? 'pohon' : 'kelapa') : t === 'kebun' ? (n < 0.35 ? 'kelapa' : n < 0.6 ? 'pisang' : n < 0.8 ? 'pohon' : null) : t === 'beach' && n < 0.25 ? 'kelapa' : null;
+      const name = t === 'hutan' ? (n < 0.75 ? 'pohon' : 'kelapa') : t === 'teh' && n < 0.07 ? 'pohon' : t === 'teras' && n < 0.04 ? 'kelapa' : t === 'kebun' ? (n < 0.35 ? 'kelapa' : n < 0.6 ? 'pisang' : n < 0.8 ? 'pohon' : null) : t === 'beach' && n < 0.25 ? 'kelapa' : null;
       if (name) trees.push({ name, tx, ty, x: WORLD_OX + ((tx - ty) * TW) / 2 - TW / 2, y: WORLD_OY + ((tx + ty) * TH) / 2 - TOP });
     }
   return trees;

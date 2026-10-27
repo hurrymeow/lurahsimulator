@@ -52,6 +52,10 @@ No third-party art or names. Everything is drawn in code.
 - The sun's rim is a deep amber, `#8a4f12`. Selokan banks are a dark warm grey, `#4a4a44`.
 - Set `p.bare = true` to skip the ink pass for flat or lattice art: selokan (it draws its own
   banks so neighbours join up), grass tufts, bamboo scaffolding.
+- Big buildings (2x2, 3x3) keep the same 1px outline as a warung. Their sprite is painted on one
+  tile, then `Painter.upscale(n)` scales the fills and face ids, and the ink pass runs on the big
+  canvas. Bare art that paints its own border band (lapangan, sawah) keeps only the band's outer
+  pixel. Never stretch a finished, outlined sprite: its outline comes out n pixels thick.
 - Terrain borders are coloured, not inked. The higher ground takes a dark edge in its own
   colour (0.6x). The lower side gets a bright rim that eases back to its base colour over three
   pixels (1.2x, 1.11x, 1.05x). Sea meeting sand gets foam, then lighter shallows. Rank, high to
@@ -180,12 +184,37 @@ sparkle, rosy cheeks (`#f07f86`), an open smile with a pink tongue. Blinks are h
 arcs (^ ^). Only give a face to things that earn the joke (the sun today). Buildings stay
 faceless, so the map stays readable.
 
+## Building levels
+
+- Every level looks different, like a building card in a mobile builder: level 1 is makeshift,
+  the top level is built to last. The silhouette and the materials change, not just the size.
+  Warung: tarp-roofed gerobak, zinc-roofed kiosk, whitewashed brick with a tile roof and an awning.
+  Pos ronda: bamboo balai-balai under rumbia, wooden hut, green-and-white siskamling post. Kantor RT:
+  a front room with a nameboard, the office with a flag, a pendopo under a joglo roof.
+- A level never grows more than one storey (8px) over level 1, and nothing but the wifi tower goes
+  above 28px. A building that grows taller would hide the small ones behind it. `tests/art.test.ts`
+  checks both.
+- Sprites with their own level art take `level` as the third argument and are listed in `LEVELLED`.
+  Every other sprite gets the upgrade kit in front of it: a bamboo pagar at level 2, a whitewashed
+  pagar tembok with potted plants and a lamp at level 3. Ground pieces skip the kit (`NO_KIT`).
+- The inspector shows every level side by side, the current one framed.
+
+## Terraced hills and icons
+
+- Toward the mountains the land rises into terraces: kebun teh on the left, sawah terasering on the
+  right. Each terrace is a band of a smooth height field. Its riser is a lit rim over a dark line,
+  steps alternate light and dark, and slopes facing the top left are lit.
+- Menu icons sit on a cream bevelled plate, like the tool panel of an old isometric city builder.
+  Panels about the kampung show a tiny scene drawn with the map's own sprites. Abstract ones show
+  their glyph in dark ink with a brick-red accent.
+
 ## Adding a sprite
 
 1. Add a function to `ART` in `src/render/iso.ts`. Start with `p.shadow(inset)`.
 2. Build it from `box` and `roof` with palette keys, and paint details per face through the
    `paint` callback.
-3. Keep it inside the tile's footprint and under the 40-pixel headroom.
+3. Keep it inside the tile's footprint and under the 40-pixel headroom. A 2x2 or 3x3 building is
+   still painted on one tile: `iso(name, variant, n)` makes the big art.
 4. Let the outline pass run, unless it is a flat decal or lattice (`p.bare = true`). Flat decals
    that tile, like selokan and jalan, draw their own edges so neighbours join up.
 5. Check it at 4x on grass next to the existing sprites, then in game at day and night.

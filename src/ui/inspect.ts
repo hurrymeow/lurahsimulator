@@ -35,11 +35,17 @@ export function inspect(app: App, uid: number): void {
     inspect(app, uid);
   };
   const lines: Node[] = [
-    h('div', { class: 'inspect-head' }, spriteImg(d.sprite), h('div', {},
+    h('div', { class: 'inspect-head' }, spriteImg(d.sprite, 40, b.level), h('div', {},
       h('p', { class: 'meta' }, t('insp.status', { status: t(`status.${b.status}`), left: b.timer > 0 && (b.status === 'permit' || b.status === 'building') ? t('insp.left', { n: b.timer }) : '', level: b.level, max: d.maxLevel })),
       h('p', {}, bBlurb(d)),
     )),
   ];
+  // Every level side by side, like a building card: what it looks like now and what the next upgrade brings.
+  if (d.maxLevel > 1)
+    lines.push(h('div', { class: 'level-strip', role: 'list', 'aria-label': t('insp.levels') },
+      ...Array.from({ length: d.maxLevel }, (_, k) => k + 1).map((lv) =>
+        h('figure', { class: `lv${lv === b.level ? ' current' : ''}`, role: 'listitem', 'aria-current': lv === b.level ? 'true' : undefined }, spriteImg(d.sprite, 48, lv), h('figcaption', {}, t('res.level', { n: lv })))),
+    ));
   const income = buildingIncome(s, b);
   const upkeep = buildingUpkeep(s, b);
   if (income || upkeep) lines.push(h('p', { class: 'meta' }, t('insp.money', { income: rupiah(income), upkeep: rupiah(upkeep) })));

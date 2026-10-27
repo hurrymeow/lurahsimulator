@@ -646,8 +646,9 @@ test.describe('text is legible and never cut off', () => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
       const c = app.view.tileCentre(k.x, k.y);
-      // Aim at the roof, which overlaps the tile behind on screen.
-      return { x: c.x, y: c.y - app.view.tile * 1.2 };
+      // Aim at the roof, which overlaps the tile behind on screen. A level-1 Kantor RT is a low house,
+      // so aim just under its ridge: still above the tile's own top corner.
+      return { x: c.x, y: c.y - app.view.tile * 0.9 };
     });
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('.sheet-head')).toContainText('Kantor RT');
@@ -1368,5 +1369,146 @@ test.describe('moving and turning', () => {
     const k = await pk<{ x: number; y: number }>("a.s.buildings.find((b) => b.def === 'kantorRT')");
     expect(await pk<number>(`a.s.buildings.find((b) => b.uid === ${uid}).y`)).toBe(k.y - 1);
     expect(await pk<number>('a.s.res.rupiah')).toBe(cash);
+  });
+});
+
+test.describe('zoom, big lots and the Warga list', () => {
+  test('after picking a job, the Warga list stays on that resident', async ({ page }) => {
+    await start(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      for (let i = 0; i < 30; i++) app.s.residents.push({ id: app.s.nextResidentId++, name: `Pak Budi ${i}`, job: 'none', pensiun: 0, fake: 0, arrived: 0 });
+    });
+    await dismissModals(page);
+    await page.evaluate(() => { const app = (window as any).pakrt; app.actions.find((a: any) => a.id === 'warga').open(app); });
+    const row = page.locator('#sheet [data-rid]').nth(25);
+    const id = await row.getAttribute('data-rid');
+    await row.scrollIntoViewIfNeeded();
+    await row.click();
+    // "No job" is always allowed, and picking it sends the player back to the list.
+    await page.locator('#sheet .action .btn').first().click();
+    const back = page.locator(`#sheet [data-rid="${id}"]`);
+    await expect(back).toBeInViewport();
+    await expect(back).toBeFocused();
+    expect(await page.locator('#sheet').evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  });
+
+  test('wheel and pinch zoom in and out in whole steps, and a pinch is not a tap', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const scale = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.scale as number);
+    const box = (await page.locator('#map').boundingBox())!;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    const s0 = await scale();
+    await page.mouse.move(cx, cy);
+    await page.mouse.wheel(0, -120);
+    await expect.poll(scale).toBe(s0 + 1);
+    await page.mouse.wheel(0, 120);
+    await page.mouse.wheel(0, 120);
+    await expect.poll(scale).toBe(s0 - 1);
+    const cdp = await page.context().newCDPSession(page);
+    const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', d: number) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: cx - d, y: cy, id: 1 }, { x: cx + d, y: cy, id: 2 }] });
+    const before = await scale();
+    await touch('touchStart', 20);
+    for (const d of [30, 40, 50, 60]) await touch('touchMove', d);
+    await touch('touchEnd', 0);
+    await expect.poll(scale).toBeGreaterThan(before);
+    await expect(page.locator('#modal')).toBeHidden();
+    await expect(page.locator('#sheet')).toBeHidden();
+    await expectLegible(page, 'zoomed map');
+  });
+
+  test('a 3x3 Lapangan opens from a tap on its middle at default and zoomed-in scale', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      app.s.buildings.push({ uid: 9001, def: 'lapangan', x: k.x - 4, y: k.y - 4, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      app.refresh();
+    });
+    for (const zoom of [0, 1]) {
+      if (zoom) await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.zoomBy(1));
+      await page.waitForTimeout(150);
+      // The middle tile of the field, not the building's own corner tile.
+      const at = await page.evaluate(() => {
+        const app = (window as unknown as { pakrt: any }).pakrt;
+        const b = app.s.buildings.find((o: any) => o.uid === 9001);
+        const c = app.view.tileCentre(b.x + 1, b.y + 1);
+        const r = document.getElementById('map')!.getBoundingClientRect();
+        return { x: r.left + c.x, y: r.top + c.y };
+      });
+      await page.mouse.click(at.x, at.y);
+      await expect(page.locator('#sheet')).toBeVisible();
+      await expect(page.locator('#sheet h2').first()).toContainText('Lapangan');
+      await page.locator('#sheet .sheet-head .btn-icon').click();
+    }
+  });
+});
+
+test.describe('path decay, level art and menu icons', () => {
+  test('a cracked path offers a tile fix, a stretch fix and a favour, and the favour fixes the stretch', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const uid = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const s = app.s;
+      s.month = 30;
+      s.res.orangDalam = 3;
+      const k = s.buildings.find((b: any) => b.def === 'kantorRT');
+      const ids: number[] = [];
+      for (let i = 0; i < 3; i++) {
+        const b = { uid: s.nextUid++, def: 'jalan', x: k.x - 3 + i, y: k.y - 3, level: 1, status: 'damaged', timer: 0, invested: 0, placedAt: 0, crackedAt: 20 };
+        s.buildings.push(b);
+        ids.push(b.uid);
+      }
+      app.refresh();
+      return ids[1];
+    });
+    // A tutorial tip can pop up over the map first. Clear it, then open the path.
+    await dismissModals(page);
+    await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.inspect(u), uid);
+    await dismissModals(page);
+    const sheet = page.locator('#sheet');
+    await expect(sheet).toBeVisible();
+    // Fix this tile, fix all 3 tiles, call a favour that fixes all 3.
+    await expect(sheet.locator('.action .btn', { hasText: /3 (tiles|petak)/ })).toHaveCount(2);
+    await expect(sheet.locator('.action .btn', { hasText: /Orang/ })).toHaveCount(1);
+    await expectLegible(page, 'cracked path inspector');
+    await sheet.locator('.action .btn', { hasText: /Orang/ }).click();
+    const left = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'jalan' && b.status === 'damaged').length);
+    expect(left).toBe(0);
+    expect(await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.s.buildings.find((b: any) => b.uid === u).status, uid)).toBe('active');
+  });
+
+  test('the inspector shows every level of a building and marks the current one', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const b = { uid: 9100, def: 'warung', x: 1, y: 1, level: 2, status: 'active', timer: 0, invested: 0, placedAt: 0 };
+      app.s.buildings.push(b);
+      app.inspect(b.uid);
+    });
+    const strip = page.locator('#sheet .level-strip');
+    await expect(strip.locator('.lv')).toHaveCount(3);
+    await expect(strip.locator('.lv.current')).toHaveCount(1);
+    await expect(strip.locator('.lv').nth(1)).toHaveClass(/current/);
+    for (const img of await strip.locator('img').all()) expect(await img.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)).toBe(true);
+    await expectLegible(page, 'level strip');
+  });
+
+  test('every menu tile has a drawn icon plate', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    const imgs = page.locator('#sheet .tile img');
+    expect(await imgs.count()).toBeGreaterThan(5);
+    for (const img of await imgs.all()) {
+      expect(await img.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth >= 44)).toBe(true);
+      expect(await img.getAttribute('width')).toBe('44');
+    }
+    await expectLegible(page, 'menu with icon plates');
   });
 });

@@ -3,7 +3,7 @@ const PAL: Record<string, string> = { w: '#f4f4f5', m: '#a1a1aa', y: '#e8b04a' }
 const SIZE = 12;
 export const GLYPH_PX = SIZE * 3;
 
-const GLYPHS: Record<string, string[]> = {
+export const GLYPHS: Record<string, string[]> = {
   build: ['............', '.....yy.....', '....yyyy....', '...yyyyyy...', '..yyyyyyyy..', '.yyyyyyyyyy.', '..wwwwwwww..', '..wwwmmwww..', '..wwwmmwww..', '..wwwmmwww..', '..wwwwwwww..', '............'],
   warga: ['............', '..www..mmm..', '.wwwww.mmm..', '.wwwww.mmm..', '..www...m...', '.wwwww.mmmm.', 'wwwwwwwmmmmm', 'wwwwwwwmmmmm', 'wwwwwwwmmmmm', 'wwwwwwwmmmmm', '............', '............'],
   neighbours: ['.....mm.....', '..wwwwwww...', '.wwwwwwwww..', '..wwwwwww...', '.....mm.....', '...wwwwwww..', '..wwwwwwwww.', '...wwwwwww..', '.....mm.....', '.....mm.....', '....mmmm....', '............'],
