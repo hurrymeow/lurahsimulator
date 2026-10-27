@@ -862,12 +862,43 @@ test.describe('home map preview', () => {
     expect(cam.panX).toBeLessThanOrEqual(0);
   };
 
+  /** Fails when a whole edge line of the map canvas is black or empty, where the map should reach. */
+  const edges = async (page: Page, where: string) => {
+    await page.waitForTimeout(150);
+    const dead = await page.evaluate(() => {
+      const src = document.getElementById('map') as HTMLCanvasElement;
+      const c = document.createElement('canvas');
+      c.width = src.width;
+      c.height = src.height;
+      const ctx = c.getContext('2d')!;
+      ctx.drawImage(src, 0, 0);
+      const { width: w, height: h } = c;
+      const lit = (x: number, y: number, dx: number, dy: number, n: number) => {
+        const d = ctx.getImageData(x, y, dx || 1, dy || 1).data;
+        for (let i = 0; i < n * 4; i += 4) if (d[i + 3] > 0 && d[i] + d[i + 1] + d[i + 2] > 24) return true;
+        return false;
+      };
+      const out: string[] = [];
+      if (!lit(0, 0, 1, h, h)) out.push('left');
+      if (!lit(w - 1, 0, 1, h, h)) out.push('right');
+      if (!lit(0, 0, w, 1, w)) out.push('top');
+      if (!lit(0, h - 1, w, 1, w)) out.push('bottom');
+      return out;
+    });
+    expect(dead, `${where}: black map edges`).toEqual([]);
+  };
+
   test('fills the screen on launch and after Start', async ({ page }) => {
     await page.goto(`/?debug&lang=${lang()}`);
     await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
     await fills(page);
+    await edges(page, 'home');
     await passHome(page);
     await fills(page, true);
+    await edges(page, 'in game');
+    await dismissModals(page);
+    await seed(page);
+    await edges(page, 'in game, seeded');
   });
 
   test('fills the screen in standalone display mode', async ({ page }) => {
