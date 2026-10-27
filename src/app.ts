@@ -7,6 +7,7 @@ import { iconURL } from './render/sprites';
 import { def } from './sim/content';
 import { eventDef } from './data/events';
 import { checkChoice, eventCost, resolveEvent } from './sim/events';
+import { discoverCombos } from './sim/combos';
 import { checkMove, checkPlace, moveBuilding, place } from './sim/rules';
 import { linePath, placeLine, type LineTile } from './sim/line';
 import { lotAt } from './sim/area';
@@ -763,6 +764,9 @@ export class App {
     const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
     if (mover) {
       if (!moveBuilding(this.s, mover, g.x, g.y).ok) return;
+      const fx: SimEffect[] = [];
+      discoverCombos(this.s, fx);
+      this.handleFx(fx);
       this.view.burst(g.x, g.y);
       this.haptic(15);
       audio.play('build');
