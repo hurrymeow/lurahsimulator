@@ -19,14 +19,13 @@ Builder rules stay in their own files: [UI-RUBRIC.md](UI-RUBRIC.md), [ART.md](AR
 - You are a village head. Build the kampung, keep the residents calm, and climb from Pak RT to Pak Lurah.
 - Every joke is a mechanic that moves a number. Flavour text alone gets cut.
 - The loop: build, residents arrive, money and Sabar (patience) move, events and combos fire, stars unlock more to build.
-- The player never runs for office. Promotion is a performance review and an SK, the promotion letter.
+- The player never runs for office. Promotion is a performance review and an SK, the promotion letter. See [section 5](#5-tone-and-politics-guardrails).
 - Bad choices slow you down. They never soft-lock the game.
 
 ### What the player sees
 
 - Something new at least every 30s of real time at 1x: a resident, event, unlock or combo. Targets are in [section 3](#3-pacing-targets).
 - Growth is visible on the map, not only in menus.
-- Early-game safety net: no debt spiral in year 1.
 
 ### Clarity
 
@@ -78,7 +77,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 - RW keeps today's 64x32 tiles. A pinch out gives a view-only overview, and a tap there zooms back in.
 - Kelurahan defaults to half-size tiles. Kelurahan buildings take a 2x2 footprint, so a lot still taps like one RT tile today.
 - This changes one rule in section 6: "tile diamonds ≥32px tall" becomes "tappable diamonds ≥32px tall".
-- **Gate:** before building the Kelurahan map, the 36x52 map must pass the existing CI frame-rate test.
+- **Gate:** before building the Kelurahan map, it must pass the existing CI frame-rate test. Passed, after a fix. See `decisions/growing-map-engine.md`.
 
 #### Carry-over
 
@@ -266,7 +265,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - **Stempel (RW):** refills 3 a month. Every Surat Pengantar needs one. Each unstamped letter drains 0.5 Sabar a month.
 - **Anggaran (Kelurahan):** a yearly budget arrives each January. Each unspent % cuts next year's budget by the same %. December brings a forced Serapan rush.
 - **Safety net:** no debt or soft-lock in year 1, and year-1 cash never below 0 for the idle and builder bots (targets 8 and 9).
-- **Tuning:** the balance autoplayer tunes star thresholds to hit the target times. The bot is a lower bound: a bot miss is a real miss, a bot pass is unproven.
+- **Tuning:** the balance autoplayer tunes star thresholds. How to read its results is in section 3.
 - **Time:** one month is 8s at 1x (`MONTH_MS`). Speeds are pause, 1x, 2x and 4x.
 - **Rule:** any change to a number a target depends on gets a note in `decisions/`.
 
@@ -277,12 +276,12 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - Satire targets systems and bureaucracy.
 - No real politicians, parties, ormas or officials.
 - No ethnic, regional or religious jokes.
-- Every joke is a mechanic that moves a number. Flavour text alone gets cut.
+- Every joke is a mechanic that moves a number (see section 1).
 - UI defaults to English, with Bahasa Indonesia as a Settings option. Players who saved a language keep it. Slang and proper names stay as they are in both languages (Sabar, Wacana, Warga, warung, ojol, Kampung Sebelah). Resource names are translated, see `decisions/resource-names.md`. Strings live in `src/i18n/`.
 
 ### Staying out of real politics
 
-- The player never runs for office. Promotion is a performance review and an SK. No votes, parties, coalitions or campaigns.
+- The player never runs for office. Promotion is a performance review and an SK, the promotion letter. No votes, parties, coalitions or campaigns.
 - Superiors stay faceless: Pusat, Tim Audit, Kelurahan Sebelah. No named places and no real agencies.
 - Satire targets how a system behaves, never who introduced it or when. Musrenbang and Dana Desa are fine. Flagship programs, the capital move and named slogans are out.
 - Swap test: if a joke would not work in any country's bureaucracy, or needs a headline to land, cut it. Example: "blusukan" is tied to one real person, so it is out.
@@ -368,7 +367,7 @@ The artist's restyle is the reference ([ART.md](ART.md) has the full rules). New
 ## 7. Build order
 
 1. RT stars and late-game content (Kos-kosan, Lapangan, Bank Sampah, 3 combos). Fixes the dead zone after 14 residents.
-2. Frame-rate spike for the 36x52 map.
+2. Frame-rate spike for the Kelurahan map (done).
 3. RW: map growth, AI RTs, Stempel, Dana, RW content.
 4. Kelurahan or Desa.
 5. Playtest, then decide on Kecamatan and above.
