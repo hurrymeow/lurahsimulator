@@ -6,5 +6,5 @@
 
 - After opening a PR, run `gh pr merge --auto --squash <n>` (or the `enable_pr_auto_merge` tool). It merges the moment the required `ci` check is green.
 - After every push, check the PR for merge conflicts. A conflicted PR never starts CI and sends no alert. If it conflicts, merge main in and push again.
-- CI runs both languages (en, id) at 320, 360 and 390px. Do not cut that down to save time.
+- CI runs both languages (en, id) at 320, 360, 412 and 430px. Do not cut that down to save time.
 - Log design decisions in a new file `decisions/<pr-or-slug>.md`, and shipped work in `progress/<pr-or-slug>.md`. Never edit `DECISIONS.md` or `PROGRESS.md` (frozen) or another PR's file. This stops merge conflicts between parallel PRs.
