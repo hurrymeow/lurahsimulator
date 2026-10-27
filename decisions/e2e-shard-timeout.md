@@ -14,4 +14,4 @@ The 7 to 14 min shards were `playwright install-deps` stalling on apt for about 
 Cause, round 1 (main run 40489019943, shard 3): another apt-get held the dpkg lock. The `timeout 180` retry from #100 killed npx but not apt-get, so the retry hit the same lock.
 Cause, round 2 (PR #101 run 40489990381, shards 1 and 2): the Ubuntu mirror stalled single package downloads for 60 to 120s each, so install-deps ran past 5 min.
 Fix: apt gets a 15s HTTP timeout with 5 retries and a 120s lock wait (`/etc/apt/apt.conf.d/99ci`). Each install step has `timeout-minutes: 5`. A real stall fails in 5 min and can be rerun.
-Not done: running e2e in the Playwright container image, which needs no apt. It is the sturdier fix if stalls continue.
+Final fix: e2e runs in `mcr.microsoft.com/playwright:v1.63.0-noble`, so there is no apt at all and the apt config step is gone. Bump the tag whenever @playwright/test changes.
