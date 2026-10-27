@@ -37,7 +37,7 @@ body { background: var(--cs-cream); }
   --on-accent: var(--cs-on-green);
   color: var(--cs-ink);
 }
-#app { border-inline: 1px solid var(--cs-line); background: var(--cs-cream); }
+#app { background: var(--cs-cream); }
 
 /* ---------- title bar: name | date. A label strip, not a control, so it stays slim. ---------- */
 .cs-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; padding: 0 10px; background: var(--cs-cream); border-bottom: 1px solid var(--cs-line); }

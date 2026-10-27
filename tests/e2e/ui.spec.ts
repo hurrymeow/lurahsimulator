@@ -847,12 +847,11 @@ test.describe('home update button', () => {
   });
 });
 test.describe('home map preview', () => {
-  /** The map box reaches the right edge, and the canvas and camera match its size. In game the rail takes the left strip. */
-  const fills = async (page: Page, inGame = false) => {
+  /** The map box spans the screen edge to edge, on the home screen and in game, and the canvas and camera match its size. */
+  const fills = async (page: Page, _inGame = false) => {
     const vw = page.viewportSize()!.width;
     const box = (await page.locator('#map').boundingBox())!;
-    if (inGame) expect(box.x, 'map left edge').toBeGreaterThan(1);
-    else expect(Math.abs(box.x), 'map left edge').toBeLessThanOrEqual(1);
+    expect(Math.abs(box.x), 'map left edge').toBeLessThanOrEqual(1);
     expect(Math.abs(box.x + box.width - vw), 'map right edge').toBeLessThanOrEqual(1);
     const cam = await page.evaluate(() => {
       const v = (window as unknown as { pakrt: any }).pakrt.view;
