@@ -1,5 +1,5 @@
-// Registers the service worker and shows the update banner when a new version is waiting.
-export function setupUpdates(banner: HTMLElement, button: HTMLButtonElement): void {
+// Registers the service worker and shows the update banner (and the home screen button) when a new version is waiting.
+export function setupUpdates(banner: HTMLElement, button: HTMLButtonElement, homeButton: HTMLButtonElement): void {
   if (!('serviceWorker' in navigator) || import.meta.env.DEV) return;
 
   let reloading = false;
@@ -11,10 +11,14 @@ export function setupUpdates(banner: HTMLElement, button: HTMLButtonElement): vo
 
   const show = (worker: ServiceWorker) => {
     banner.hidden = false;
-    button.onclick = () => {
+    homeButton.hidden = false;
+    const go = () => {
       button.disabled = true;
+      homeButton.disabled = true;
       worker.postMessage('SKIP_WAITING');
     };
+    button.onclick = go;
+    homeButton.onclick = go;
   };
 
   navigator.serviceWorker
