@@ -3,7 +3,7 @@ import type { App } from '../app';
 import { iconURL } from '../render/sprites';
 import { rupiah } from '../format';
 import { def } from '../sim/content';
-import { checkDemolish, checkSkipPermit, checkUpgrade, demolish, skipPermit, upgrade } from '../sim/rules';
+import { checkDemolish, checkSkipPermit, checkUpgrade, demolish, rotateBuilding, skipPermit, upgrade } from '../sim/rules';
 import { REFUND } from '../sim/balance';
 import { byUid, levelMult, pathMult, upgradeCost } from '../sim/state';
 import { buildingIncome, buildingUpkeep } from '../sim/tick';
@@ -47,7 +47,12 @@ export function inspect(app: App, uid: number): void {
     const bits = Object.entries(d.perMonth).map(([k, v]) => `${t(`res.${k}` as Key)} +${Math.round(v * levelMult(b.level) * 100) / 100}`);
     lines.push(h('p', { class: 'meta' }, t('insp.perMonth', { bits: bits.join(' · ') })));
   }
+  const popBits: string[] = [];
+  if (d.housing) popBits.push(t('insp.houses', { n: d.housing }));
+  if (d.attract) popBits.push(t('insp.attracts', { n: Math.round(d.attract * levelMult(b.level) * 10) / 10 }));
+  if (popBits.length) lines.push(h('p', { class: 'meta' }, popBits.join(' · ')));
   const pm = pathMult(s, b);
+  if (b.noRoad) lines.push(h('p', { class: 'meta warn' }, t('insp.noRoad')));
   if (pm > 1 && b.status === 'active') lines.push(h('p', { class: 'meta' }, t('insp.pathBonus', { pct: Math.round((pm - 1) * 100) })));
   for (const extra of inspectExtras) lines.push(...extra(app, b));
   if (b.status === 'permit') {
@@ -64,6 +69,17 @@ export function inspect(app: App, uid: number): void {
       app.tap(15);
       done();
     }, b.status === 'active'));
+  }
+  // Moving and turning a building cost nothing. Paths are tiles, so they just get demolished.
+  if (!d.pathIncome) {
+    lines.push(h('div', { class: 'row action-row' },
+      h('button', { class: 'btn', onclick: () => app.startMoving(uid) }, t('insp.move')),
+      h('button', { class: 'btn', onclick: () => {
+        rotateBuilding(b);
+        app.tap(15);
+        done();
+      } }, t('insp.rotate')),
+    ));
   }
   const dem = checkDemolish(s, b);
   lines.push(actionButton(dem.ok ? t('insp.demolishRefund', { amt: rupiah(Math.round((b.invested * REFUND) / 1000) * 1000) }) : t('insp.demolish'), dem, () => {

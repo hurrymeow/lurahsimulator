@@ -9,10 +9,12 @@ import { setupInstall } from './pwa/install';
 import { setupUpdates } from './pwa/update';
 import { openBuild } from './ui/build';
 import { h } from './ui/dom';
-import { glyphURL } from './ui/glyphs';
+import { GLYPH_PX, glyphURL } from './ui/glyphs';
 import { inspect } from './ui/inspect';
 import { showHome } from './ui/home';
 import { showHowto } from './ui/howto';
+import { setupCoach } from './ui/coach';
+import { setupGoal } from './ui/goal';
 import { setupTips } from './ui/tips';
 import { openSettings } from './ui/settings';
 import { openNeighbours } from './ui/neighbours';
@@ -35,19 +37,22 @@ app.actions.push(
 );
 
 // Lives in the Menu's Game group. Hidden until the browser offers an install.
-const installBtn = h('button', { class: 'tile', id: 'install-btn', hidden: true }, h('img', { src: glyphURL('install')!, alt: '', width: 32, height: 32, class: 'pixel' }), h('span', { id: 'install-label' }, t('menu.install')));
+const installBtn = h('button', { class: 'tile', id: 'install-btn', hidden: true }, h('img', { src: glyphURL('install')!, alt: '', width: GLYPH_PX, height: GLYPH_PX, class: 'pixel' }), h('span', { id: 'install-label' }, t('menu.install')));
 
 $('menu-btn').addEventListener('click', () => openMenu(app, [installBtn]));
 $('hud').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') app.openStats();
 });
 $('place-cancel').addEventListener('click', () => app.stopPlacing());
+$('place-exit').addEventListener('click', () => app.stopPlacing());
 $('place-ok').addEventListener('click', () => app.confirmPlace());
 $('scrim').addEventListener('click', closeSheet);
 
 setupInstall(installBtn, (text) => app.modal({ title: t('install.title'), body: text, tone: 'info' }));
 setupUpdates($('update-banner'), $<HTMLButtonElement>('update-btn'));
 app.refresh();
+setupGoal(app);
+setupCoach(app);
 setupTips(app);
 // Second install button on the home screen. Hidden when installed or not offered.
 const homeInstall = h('button', { class: 'btn home-install', id: 'home-install', hidden: true }, t('menu.install'));

@@ -85,6 +85,20 @@ export interface RwState {
   popReport?: { pct: number; until: number };
 }
 
+/** State only the Kelurahan or Desa stage uses. */
+export interface KelState {
+  /** The year's Anggaran. 0 until the first one arrives. */
+  budget: number;
+  /** stats.spent when this year's budget arrived. */
+  spentBase: number;
+  /** Months in a row with serapan at or above the target. */
+  serapanRun: number;
+  /** Tim Audit visits that found every receipt. */
+  cleanAudits: number;
+  /** Lomba Kelurahan: paint spending lifts the area score until this month. */
+  lomba?: { mult: number; until: number };
+}
+
 export type RtTrait = 'rajin' | 'hobi' | 'jarang';
 
 /** An AI-run RT. Its buildings sit apart from the player's so the player's income, combos and ranking never see them. */
@@ -107,7 +121,7 @@ export interface Neighbour {
   ranking: RankingResult[];
 }
 
-export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'kaderPosyandu' | 'calo';
+export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'petani' | 'peternak' | 'pengepul' | 'guru' | 'satpam' | 'tukang' | 'panitia' | 'kaderPosyandu' | 'calo' | 'honorer' | 'pendampingDesa';
 
 export interface Requirement {
   population?: number;
@@ -116,6 +130,8 @@ export interface Requirement {
   buildings?: string[];
   year?: number;
 }
+
+export type BuildCategory = 'housing' | 'shops' | 'facilities' | 'farm' | 'decoration' | 'paths';
 
 export interface BuildingDef {
   id: string;
@@ -149,10 +165,16 @@ export interface BuildingDef {
   sprite: string;
   /** Which lots it may stand on. RT buildings go inside an RT, RW buildings on RW seams. Defaults to 'rt'. */
   scope?: 'rt' | 'rw' | 'kel';
-  /** Tiles on each side: 2 takes a 2x2 lot. Shops, towers and fields are bigger than a warung. Defaults to 1. */
-  footprint?: 1 | 2;
+  /** Tiles on each side. A building covers footprint x footprint tiles from its top corner. Defaults to 1. */
+  footprint?: number;
+  /** Which Build tab it sits under. Defaults to 'facilities'. */
+  category?: BuildCategory;
   /** Free tile that never works on its own. Buildings beside it earn this fraction more income. Tune it here. */
   pathIncome?: number;
+  /** Decoration aura: each working one within `radius` tiles adds `bonus` (a fraction) to every income building's income. The total is capped by DECOR_CAP. */
+  boost?: { radius: number; bonus: number };
+  /** Orang Dalam spent when it is placed, on top of the rupiah. A shortcut through the paperwork. */
+  orangDalamCost?: number;
 }
 
 export type BuildingStatus = 'permit' | 'building' | 'active' | 'mangkrak' | 'damaged';
@@ -172,10 +194,12 @@ export interface Building {
   placedAt: number;
   /** Uid of the shop a tukang parkir belongs to. */
   owner?: number;
+  /** 1 draws the building mirrored. Free to turn, no effect on play. */
+  rot?: 0 | 1;
   /** A restarted project never freezes again. */
   restarted?: boolean;
-  /** Tiles on each side, when it differs from the def's footprint: an old save's building with no room to grow. */
-  size?: number;
+  /** No path links it to the Kantor RT, so it earns and attracts nothing. Set by refreshAccess. */
+  noRoad?: boolean;
 }
 
 export interface Resident {
@@ -253,6 +277,8 @@ export interface QuarterTrack {
 }
 
 export interface GameState {
+  /** True once old saves have had their paths laid. */
+  roadsLaid?: boolean;
   version: number;
   seed: number;
   rng: number;
@@ -276,6 +302,8 @@ export interface GameState {
   pendingEvent: string | null;
   /** Month each event last fired, for cooldowns. Absent in older saves. */
   lastEvent?: Record<string, number>;
+  /** Ids of the last minor log lines shown, so the ticker does not repeat itself. Absent in older saves. */
+  recentLines?: string[];
   stage: StageState;
   /** AI-run RTs next to the player's. Empty at the RT stage. */
   neighbours: Neighbour[];
@@ -285,8 +313,12 @@ export interface GameState {
   debtFree: number;
   /** RW stage state. Absent in older saves. */
   rw: RwState;
+  /** Kelurahan stage state. Absent in older saves. */
+  kel: KelState;
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
+  /** Month a resident last moved in. Drives the perantau safety valve. */
+  lastArrival?: number;
   /** Kecamatan inspections. Absent in older saves. */
   inspection?: { warnAt: number; visitAt?: number; prep: number };
   /** Quarterly report bookkeeping. Absent in older saves and on a fresh game. */

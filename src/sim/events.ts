@@ -1,19 +1,34 @@
-import { eModLabel, eResult, t } from '../i18n';
-import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR_SABAR, EVENTS, REPAIR_FRACTION, eventDef, type EventChoice } from '../data/events';
+import { eModLabel, eOutcome, eResult, t } from '../i18n';
+import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR_SABAR, EVENTS, POPUP_CHANCE, MIN_REPEAT_GAP, POPUP_GAP, REPAIR_FRACTION, eventDef, type EventChoice, type EventDef, type EventOutcome as OutcomeDef } from '../data/events';
 import { STAGE_EVENTS } from '../data/higher';
 import { rupiah } from '../format';
 import { activeCombos } from './combos';
-import { def } from './content';
+import { def, isCover } from './content';
 import { gateOpen } from './gate';
+import { banjirCut, wacanaNoReceipt } from './kel';
 import type { StageEventChoice } from '../data/higher';
 import { gain, type Fx } from './gain';
 import { VIRAL_REPAIR_AT } from './projects';
-import { chance } from './rng';
-import { price } from './state';
+import { IURAN } from './balance';
+import { chance, rand } from './rng';
+import { population, price } from './state';
+import { buildingIncome, buildingUpkeep } from './tick';
 import type { Building, CheckResult, GameState, Resources } from './types';
 
+/** What the kampung nets in a month: building income less upkeep, plus iuran. Prices that follow it never fall behind the economy. */
+export function monthlyNet(s: GameState): number {
+  return s.buildings.reduce((n, b) => n + buildingIncome(s, b) - buildingUpkeep(s, b), population(s) * IURAN);
+}
+
+/** Rupiah worth `months` of net income, floored at a small base so a poor kampung still sees a number. */
+export function incomeShare(s: GameState, months: number): number {
+  return Math.round((months * Math.max(monthlyNet(s), price(s, 500_000))) / 1000) * 1000;
+}
+
 export function eventCost(s: GameState, c: EventChoice): { rupiah: number; orangDalam: number } {
-  return { rupiah: c.cost?.rupiah ? price(s, c.cost.rupiah) : 0, orangDalam: c.cost?.orangDalam ?? 0 };
+  const base = c.cost?.rupiah ? price(s, c.cost.rupiah) : 0;
+  const scaled = c.cost?.incomeMonths ? incomeShare(s, c.cost.incomeMonths) : 0;
+  return { rupiah: Math.max(base, scaled), orangDalam: c.cost?.orangDalam ?? 0 };
 }
 
 export function checkChoice(s: GameState, c: EventChoice): CheckResult {
@@ -25,11 +40,11 @@ export function checkChoice(s: GameState, c: EventChoice): CheckResult {
 }
 
 export function banjirProtection(s: GameState): number {
-  const levels = s.buildings.filter((b) => b.def === 'selokan' && b.status === 'active').reduce((n, b) => n + b.level, 0);
+  const levels = s.buildings.filter((b) => b.def === 'biopori' && b.status === 'active').reduce((n, b) => n + b.level, 0);
   const combos = activeCombos(s).reduce((n, a) => n + (a.combo.banjirProtect ?? 0), 0);
-  // Kerja Bakti makes the selokan work harder for a while.
-  const boost = s.modifiers.filter((m) => m.target === 'selokan').reduce((m, x) => m * x.incomeMult, 1);
-  return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL * boost + combos);
+  // Kerja Bakti makes the biopori work harder for a while.
+  const boost = s.modifiers.filter((m) => m.target === 'biopori').reduce((m, x) => m * x.incomeMult, 1);
+  return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL * boost + combos + banjirCut(s));
 }
 
 /** Lapangan doubles the 17 Agustus prize. Panjat Pinang adds half again. */
@@ -39,25 +54,54 @@ export function agustusMult(s: GameState): number {
   return m;
 }
 
-/** Monthly system: maybe raise an event. At most one per month. */
+function eligible(s: GameState, e: EventDef): boolean {
+  const w = e.when;
+  if (w.chance <= 0) return false;
+  if (w.minMonth !== undefined && s.month < w.minMonth) return false;
+  if (w.minStars !== undefined && s.stage.stars.rt < w.minStars) return false;
+  if (w.months && !w.months.includes(s.month % 12)) return false;
+  if (w.needs && !s.buildings.some((b) => b.def === w.needs && b.status === 'active')) return false;
+  const last = s.lastEvent?.[e.id];
+  const gap = w.chance < 1 ? Math.max(w.cooldown ?? 0, MIN_REPEAT_GAP) : (w.cooldown ?? 0);
+  return !(gap && last !== undefined && s.month - last < gap);
+}
+
+function raise(s: GameState, fx: Fx, e: EventDef): void {
+  s.pendingEvent = e.id;
+  (s.lastEvent ??= {})[e.id] = s.month;
+  s.lastNovelty = s.month;
+  fx.push({ kind: 'event', eventId: e.id });
+}
+
+/** Months since the last random popup. Scheduled events (chance 1) and inspections do not count. */
+function sinceRandomPopup(s: GameState): number {
+  const times = Object.entries(s.lastEvent ?? {})
+    .filter(([id]) => {
+      const c = eventDef(id)?.when.chance ?? 0;
+      return c > 0 && c < 1;
+    })
+    .map(([, m]) => m);
+  return times.length ? s.month - Math.max(...times) : Infinity;
+}
+
+/**
+ * Monthly system: maybe raise an event. At most one per month.
+ * Scheduled events (chance 1) always come. Random ones share a pool: at most one popup every POPUP_GAP months,
+ * picked by weight, so a longer list adds variety and not more interruptions.
+ */
 export function eventSystem(s: GameState, fx: Fx): void {
   if (s.pendingEvent) return;
-  const m = s.month % 12;
-  for (const e of [...EVENTS, ...STAGE_EVENTS.filter((x) => gateOpen(s, x.gate))]) {
-    const w = e.when;
-    if (w.chance <= 0) continue;
-    if (w.minMonth !== undefined && s.month < w.minMonth) continue;
-    if (w.minStars !== undefined && s.stage.stars.rt < w.minStars) continue;
-    if (w.months && !w.months.includes(m)) continue;
-    const last = s.lastEvent?.[e.id];
-    if (w.cooldown && last !== undefined && s.month - last < w.cooldown) continue;
-    if (!chance(s, w.chance)) continue;
-    s.pendingEvent = e.id;
-    (s.lastEvent ??= {})[e.id] = s.month;
-    s.lastNovelty = s.month;
-    fx.push({ kind: 'event', eventId: e.id });
-    return;
+  const all = [...EVENTS, ...STAGE_EVENTS.filter((x) => gateOpen(s, x.gate))].filter((e) => eligible(s, e));
+  const scheduled = all.find((e) => e.when.chance >= 1);
+  if (scheduled) return raise(s, fx, scheduled);
+  const pool = all.filter((e) => e.when.chance < 1);
+  if (!pool.length || sinceRandomPopup(s) < POPUP_GAP || !chance(s, POPUP_CHANCE)) return;
+  let roll = rand(s) * pool.reduce((n, e) => n + e.when.chance, 0);
+  for (const e of pool) {
+    roll -= e.when.chance;
+    if (roll <= 0) return raise(s, fx, e);
   }
+  raise(s, fx, pool[pool.length - 1]);
 }
 
 export interface EventOutcome {
@@ -74,7 +118,7 @@ function floodDamage(s: GameState, fx: Fx): string {
   const protect = banjirProtection(s);
   const sabarHit = Math.round(BANJIR_SABAR * (1 - protect));
   gain(s, fx, 'sabar', -sabarHit);
-  const targets = s.buildings.filter((b) => b.status === 'active' && b.def !== 'rumah' && b.def !== 'parkir' && b.def !== 'selokan' && !def(b.def).pathIncome);
+  const targets = s.buildings.filter((b) => b.status === 'active' && b.def !== 'rumah' && b.def !== 'parkir' && b.def !== 'biopori' && !isCover(def(b.def)));
   let hit = 0;
   for (const b of targets) {
     if (s.month < 12 && hit >= 1) break;
@@ -89,6 +133,27 @@ function floodDamage(s: GameState, fx: Fx): string {
   return t(hit > 1 ? 'sim.floodN' : 'sim.flood1', { n: hit, pct, sabar: sabarHit, at: VIRAL_REPAIR_AT });
 }
 
+/** A signed rupiah change worth `months` of net income. */
+function payout(s: GameState, months: number): void {
+  const amt = incomeShare(s, months);
+  s.res.rupiah += amt;
+  if (amt > 0) s.stats.earned += amt;
+}
+
+function rollOutcome(s: GameState, list: OutcomeDef[]): OutcomeDef {
+  let roll = rand(s) * list.reduce((n, o) => n + o.weight, 0);
+  for (const o of list) {
+    roll -= o.weight;
+    if (roll <= 0) return o;
+  }
+  return list[list.length - 1];
+}
+
+function applyOutcome(s: GameState, o: OutcomeDef): void {
+  if (o.incomePct) payout(s, o.incomePct);
+  for (const [k, v] of Object.entries(o.res ?? {})) s.res[k as 'sabar'] += v as number;
+}
+
 export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutcome {
   const e = s.pendingEvent ? eventDef(s.pendingEvent) : undefined;
   const c = e?.choices[choiceIdx];
@@ -100,13 +165,25 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
   s.res.rupiah -= cost.rupiah;
   s.stats.spent += cost.rupiah;
   s.res.orangDalam -= cost.orangDalam;
+  if (c.incomePct) payout(s, c.incomePct);
+  // Advice: the outcome is rolled now and revealed in the result popup.
+  const rolled = c.outcomes ? rollOutcome(s, c.outcomes) : undefined;
+  if (rolled) applyOutcome(s, rolled);
   for (const [k, v] of Object.entries(c.res ?? {})) s.res[k as 'sabar'] += e.id === 'agustusan' && (v as number) > 0 ? Math.round((v as number) * agustusMult(s)) : (v as number);
   if (c.inspectPrep && s.inspection) s.inspection.prep += c.inspectPrep;
   const efx = (c as StageEventChoice).fx;
   if (efx?.letterMult) s.rw.letterMult = { mult: efx.letterMult, until: s.month + (efx.months ?? 1) };
+  if (efx?.lombaScoreMult) s.kel.lomba = { mult: efx.lombaScoreMult, until: s.month + (efx.months ?? 1) };
+  if (efx?.cleanAudit) s.kel.cleanAudits += efx.cleanAudit;
+  if (efx?.sabarPerWacanaNoReceipt) {
+    const bare = wacanaNoReceipt(s);
+    s.res.sabar -= bare * efx.sabarPerWacanaNoReceipt;
+    // Showing everything counts as clean only when nothing is missing.
+    if (!bare) s.kel.cleanAudits++;
+  }
   if (efx?.popReportPct) s.rw.popReport = { pct: efx.popReportPct, until: s.month + (efx.months ?? 1) };
   if (c.modifier) s.modifiers.push({ id: `${e.id}-${s.month}`, label: eModLabel(e, choiceIdx, c.modifier.label), target: c.modifier.target, incomeMult: c.modifier.incomeMult, monthsLeft: c.modifier.months });
-  const text = c.special === 'banjir' ? floodDamage(s, fx) : eResult(e, choiceIdx, c);
+  const text = c.special === 'banjir' ? floodDamage(s, fx) : rolled ? eOutcome(e, choiceIdx, c.outcomes!.indexOf(rolled), rolled) : eResult(e, choiceIdx, c);
   s.pendingEvent = null;
   const delta: Partial<Resources> = {};
   for (const k of Object.keys(before) as (keyof Resources)[]) if (s.res[k] !== before[k]) delta[k] = s.res[k] - before[k];

@@ -3,7 +3,7 @@ import { BUILDINGS } from '../src/data/buildings';
 import { activeCombos } from '../src/sim/combos';
 import { def } from '../src/sim/content';
 import { assign, checkAssign, slots } from '../src/sim/jobs';
-import { checkRestart, restart, restartCost } from '../src/sim/projects';
+import { checkRestart, checkRestartODn, RESTART_ODN, restart, restartCost } from '../src/sim/projects';
 import { checkDemolish, checkUpgrade, upgrade } from '../src/sim/rules';
 import { addBuilding, addResident, byUid, count, newGame } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
@@ -97,7 +97,7 @@ describe('tukang parkir liar', () => {
 
   it('spawns one per shop, not for non-shops', () => {
     const s = newGame(6);
-    for (const id of ['selokan', 'posRonda']) addBuilding(s, id, 0, id === 'selokan' ? 0 : 1, 'building').timer = 1;
+    for (const id of ['biopori', 'posRonda']) addBuilding(s, id, 0, id === 'biopori' ? 0 : 1, 'building').timer = 1;
     run(s, 1);
     expect(count(s, 'parkir')).toBe(0);
   });
@@ -110,7 +110,7 @@ describe('jobs', () => {
     expect(slots(s, 'ojol')).toBe(0);
     const c = checkAssign(s, r, 'ojol');
     expect(c.ok).toBe(false);
-    if (!c.ok) expect(c.missing[0]).toBe('No Ojol slots. Needs a working Wifi Tower');
+    if (!c.ok) expect(c.missing[0]).toBe('No Ojol slots. Needs a working Wifi Tower or Bengkel Motor');
     add(s, 'wifi', 0, 0);
     expect(slots(s, 'ojol')).toBe(3);
     expect(assign(s, r, 'ojol').ok).toBe(true);
@@ -253,12 +253,26 @@ describe('proyek mangkrak', () => {
     tick(s);
     expect(byUid(s, b.uid)!.status).toBe('active');
   });
+
+  it('restarts a frozen project for Orang Inside instead of money', () => {
+    const s = newGame(17);
+    s.month = 12;
+    const b = freeze(s);
+    s.res.orangDalam = 1;
+    expect(checkRestartODn(s, b).ok).toBe(false);
+    s.res.orangDalam = RESTART_ODN;
+    const cash = s.res.rupiah;
+    expect(restart(s, b, true).ok).toBe(true);
+    expect(s.res.orangDalam).toBe(0);
+    expect(s.res.rupiah).toBe(cash);
+    expect(byUid(s, b.uid)!.status).toBe('building');
+  });
 });
 
 describe('content rules', () => {
   it('every building moves at least one number', () => {
     for (const b of BUILDINGS) {
-      const moves = b.income || b.upkeep || b.perMonth || b.attract || b.housing || b.jobSlots || b.pathIncome;
+      const moves = b.income || b.upkeep || b.perMonth || b.attract || b.housing || b.jobSlots || b.pathIncome || b.boost;
       expect(Boolean(moves), b.id).toBe(true);
     }
   });

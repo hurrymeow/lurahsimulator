@@ -64,7 +64,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 ### 0★ Pak RT (start)
 
 - Open: warung, pos ronda, selokan, Kantor RT. Wifi at **8** residents.
-- **Goal for 1★:** **12** residents and **1** combo found.
+- **Goal for 1★:** **10** residents and **1** combo found.
 
 ### 1★ RT Rintisan
 

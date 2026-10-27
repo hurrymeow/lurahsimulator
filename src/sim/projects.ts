@@ -1,7 +1,7 @@
 import { bName, t } from '../i18n';
 import { rupiah } from '../format';
 import { def, stageFx } from './content';
-import { tileGap } from './footprint';
+import { studiBanding } from './kel';
 import { gain, type Fx } from './gain';
 import { chance } from './rng';
 import { EMAS } from '../data/ranking';
@@ -33,6 +33,7 @@ export function onBuildingFinished(s: GameState, fx: Fx, b: Building): 'ok' | 'm
     });
     return 'mangkrak';
   }
+  if (stageFx(d)?.randomWacana) studiBanding(s, fx, b);
   if (d.shop) for (let i = 0; i < (stageFx(d)?.spawns?.count ?? 1); i++) spawnParkir(s, fx, b);
   return 'ok';
 }
@@ -40,8 +41,8 @@ export function onBuildingFinished(s: GameState, fx: Fx, b: Building): 'ok' | 'm
 function spawnParkir(s: GameState, fx: Fx, shop: Building): void {
   const empty = emptyTiles(s);
   if (!empty.length) return;
-  const next = empty.filter((t) => tileGap(shop, t) <= 1);
-  const spot = (next.length ? next : empty).sort((a, b) => tileGap(shop, a) - tileGap(shop, b))[0];
+  const next = empty.filter((t) => Math.abs(t.x - shop.x) <= 1 && Math.abs(t.y - shop.y) <= 1);
+  const spot = (next.length ? next : empty).sort((a, b) => Math.abs(a.x - shop.x) + Math.abs(a.y - shop.y) - (Math.abs(b.x - shop.x) + Math.abs(b.y - shop.y)))[0];
   const p = addBuilding(s, 'parkir', spot.x, spot.y, 'active');
   p.owner = shop.uid;
   fx.push({ kind: 'built', uid: p.uid });
@@ -60,6 +61,15 @@ export function restartCost(s: GameState, b: Building): number {
   return s.res.viral >= VIRAL_REPAIR_AT ? base : base * 2;
 }
 
+/** Calling in a favour restarts a frozen project for this many Orang Inside, no money. */
+export const RESTART_ODN = 2;
+
+export function checkRestartODn(s: GameState, b: Building): CheckResult {
+  if (b.status !== 'mangkrak') return { ok: false, missing: [t('sim.notFrozen')] };
+  if (s.res.orangDalam >= RESTART_ODN) return { ok: true };
+  return { ok: false, missing: [t('sim.needODn', { n: RESTART_ODN, have: Math.floor(s.res.orangDalam) })] };
+}
+
 export function checkRestart(s: GameState, b: Building): CheckResult {
   if (b.status !== 'mangkrak') return { ok: false, missing: [t('sim.notFrozen')] };
   const cost = restartCost(s, b);
@@ -67,13 +77,16 @@ export function checkRestart(s: GameState, b: Building): CheckResult {
   return { ok: false, missing: [t('sim.restartGap', { amt: rupiah(cost - s.res.rupiah), cost: rupiah(cost) })] };
 }
 
-export function restart(s: GameState, b: Building): CheckResult {
-  const check = checkRestart(s, b);
+export function restart(s: GameState, b: Building, withODn = false): CheckResult {
+  const check = withODn ? checkRestartODn(s, b) : checkRestart(s, b);
   if (!check.ok) return check;
-  const cost = restartCost(s, b);
-  s.res.rupiah -= cost;
-  s.stats.spent += cost;
-  b.invested += cost;
+  if (withODn) s.res.orangDalam -= RESTART_ODN;
+  else {
+    const cost = restartCost(s, b);
+    s.res.rupiah -= cost;
+    s.stats.spent += cost;
+    b.invested += cost;
+  }
   b.status = 'building';
   b.timer = 1;
   b.restarted = true;

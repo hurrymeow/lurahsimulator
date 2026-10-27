@@ -1,24 +1,24 @@
-import { cEffect, cHint, cName, cStory, jBlurb, jName, t, wLine, wName } from '../i18n';
+import { cEffect, cHint, cName, cStory, jBlurb, jName, t, wLine, wName, wTrade } from '../i18n';
 import { LEVEL_MONTHS, jobDef } from '../data/jobs';
 import { WACANA } from '../data/wacana';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { bookCombos, comboMemberNames } from '../sim/combos';
-import { checkAssign, assign, levelOf, liveJobs, slots, used } from '../sim/jobs';
+import { checkAssign, assign, levelOf, liveJobs } from '../sim/jobs';
 import { checkRepair, repair, repairCost } from '../sim/events';
-import { checkRestart, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
+import { checkRestart, checkRestartODn, RESTART_ODN, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
 import { announce, checkAnnounce, wacanaCost } from '../sim/wacana';
+import { iconURL } from '../render/sprites';
 import type { Building, JobId } from '../sim/types';
 import { actionButton } from './inspect';
 import { h } from './dom';
 import { openSheet } from './sheet';
 
 // ---------- Warga ----------
-/** focus: the resident just edited. The list opens scrolled to their row instead of the top. */
-export function openResidents(app: App, focus?: number): void {
+export function openResidents(app: App): void {
   const s = app.s;
   const rows = s.residents.map((r) =>
-    h('button', { class: 'card-btn slim', 'data-rid': String(r.id), onclick: () => openResident(app, r.id) },
+    h('button', { class: 'card-btn slim', onclick: () => openResident(app, r.id) },
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, r.name), h('span', { class: 'meta' }, `${jobDef(r.job) ? jName(jobDef(r.job)!) : t('res.noJob')} · ${t('res.level', { n: levelOf(r) })}`)),
         r.job === 'pns' ? h('p', { class: 'meta' }, t('res.pensiun', { n: Math.round(r.pensiun) })) : null,
@@ -26,13 +26,7 @@ export function openResidents(app: App, focus?: number): void {
       ),
     ),
   );
-  const summary = liveJobs(s).map((j) => `${jName(j)} ${used(s, j.id)}/${slots(s, j.id)}`).join(' · ');
-  openSheet(t('menu.warga'), [h('p', { class: 'meta' }, t('res.slots', { summary })), ...rows]);
-  const row = focus === undefined ? null : document.querySelector<HTMLElement>(`#sheet [data-rid="${focus}"]`);
-  if (row) {
-    row.scrollIntoView({ block: 'center' });
-    row.focus({ preventScroll: true });
-  }
+  openSheet(t('menu.warga'), [h('p', { class: 'meta' }, t('res.hint')), ...rows]);
 }
 
 function openResident(app: App, id: number): void {
@@ -42,7 +36,7 @@ function openResident(app: App, id: number): void {
     const check = checkAssign(app.s, r, job);
     const label = job === 'none' ? t('res.noJob') : jName(jobDef(job)!);
     return h('div', { class: 'action' },
-      h('button', { class: `btn ${r.job === job ? 'btn-primary' : ''}`, disabled: !check.ok, 'aria-pressed': String(r.job === job), onclick: () => { assign(app.s, r, job, true); app.save(); app.refresh(); openResidents(app, r.id); } }, r.job === job ? t('res.current', { label }) : label),
+      h('button', { class: `btn ${r.job === job ? 'btn-primary' : ''}`, disabled: !check.ok, 'aria-pressed': String(r.job === job), onclick: () => { assign(app.s, r, job, true); app.save(); app.refresh(); openResidents(app); } }, r.job === job ? t('res.current', { label }) : label),
       job !== 'none' ? h('p', { class: 'meta' }, jBlurb(jobDef(job)!)) : null,
       check.ok ? null : h('ul', { class: 'missing' }, ...check.missing.map((m) => h('li', {}, m))),
     );
@@ -62,11 +56,13 @@ export function openWacana(app: App): void {
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, wName(w)), h('span', { class: 'meta' }, state ? t('wac.approval', { n: Math.round(state.power * 10) }) : t('wac.none'))),
         h('p', {}, wLine(w)),
+        h('p', { class: 'meta' }, wTrade(w)),
         state?.times ? h('p', { class: 'meta' }, t('wac.times', { n: state.times })) : null,
         h('div', { class: 'meter', 'aria-hidden': 'true' }, h('div', { style: `width:${Math.min(100, (state?.power ?? 0) * 10)}%` })),
-        actionButton(t('wac.announce', { cost: rupiah(wacanaCost(s)) }), check, () => {
+        actionButton(t('wac.announce', { cost: rupiah(wacanaCost(s, w.id)) }), check, () => {
+          const paid = wacanaCost(s, w.id);
           announce(s, w.id);
-          app.view.pop(s.buildings.find((b) => b.def === 'kantorRT')!.x, s.buildings.find((b) => b.def === 'kantorRT')!.y, 'rupiah', -wacanaCost(s));
+          app.view.pop(s.buildings.find((b) => b.def === 'kantorRT')!.x, s.buildings.find((b) => b.def === 'kantorRT')!.y, 'rupiah', -paid);
           app.tap(10);
           app.save();
           app.refresh();
@@ -112,6 +108,13 @@ export function mangkrakExtras(app: App, b: Building): Node[] {
       app.refresh();
       app.inspect(b.uid);
     }, true),
+    actionButton([t('insp.restartODn', { n: RESTART_ODN }), ' ', h('img', { src: iconURL('orangDalam'), alt: t('res.orangDalam'), width: 18, height: 18, class: 'inline-icon' })], checkRestartODn(s, b), () => {
+      restart(s, b, true);
+      app.tap(15);
+      app.save();
+      app.refresh();
+      app.inspect(b.uid);
+    }),
   ];
 }
 

@@ -1,4 +1,4 @@
-// Generates Kampung Story pixel icons with no dependencies. Run: npm run icons
+// Generates Pak Pejabat pixel icons with no dependencies. Run: npm run icons
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 

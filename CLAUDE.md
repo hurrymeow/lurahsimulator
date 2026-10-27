@@ -1,5 +1,7 @@
 # Working rules
 
+- Follow [CONTRIBUTING.md](CONTRIBUTING.md) for UI, i18n, art, tone, naming and workflow. It points to DESIGN.md, ART.md and STAGES.md.
+
 - After opening a PR, run `gh pr merge --auto --squash <n>` (or the `enable_pr_auto_merge` tool). It merges the moment the required `ci` check is green.
 - After every push, check the PR for merge conflicts. A conflicted PR never starts CI and sends no alert. If it conflicts, merge main in and push again.
 - CI runs both languages (en, id) at 320, 360 and 390px. Do not cut that down to save time.

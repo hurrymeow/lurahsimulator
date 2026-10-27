@@ -169,7 +169,7 @@ export function dusk(clock: number): number {
 
 /** Navy over the map at night, amber at dusk. Drawn under badges and pops so they stay readable. */
 export function drawTint(ctx: CanvasRenderingContext2D, w: number, h: number, clock: number): void {
-  const d = 0.42 * darkness(clock);
+  const d = 0.21 * darkness(clock);
   const a = 0.14 * dusk(clock);
   if (d + a <= 0.01) return;
   // One fill that mixes amber and navy by weight, so dusk costs no more than night.

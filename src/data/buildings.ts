@@ -1,9 +1,30 @@
-import type { BuildingDef } from '../sim/types';
+import type { BuildCategory, BuildingDef } from '../sim/types';
+import { DECOR_BUILDINGS } from './decor';
+import { FARM_BUILDINGS } from './farm';
+import { SHOP_BUILDINGS } from './shops';
 
 // Add or tweak buildings here. The engine reads only these fields.
-// footprint is tiles on a side (default 1). Sizes follow real lot sizes, see decisions/building-footprints.md.
 // Every building must move at least one number.
-export const BUILDINGS: BuildingDef[] = [
+const CORE_BUILDINGS: BuildingDef[] = [
+  {
+    // The population lever. Listed first so a new player finds it before the shops.
+    // One house, one more resident: `attract` 1 keeps houses from outrunning what the
+    // kampung pulls in, so amenities still matter once the beds are full.
+    id: 'rumah',
+    name: 'Rumah',
+    blurb: 'Houses 3 residents and brings new ones.',
+    cost: 800_000,
+    upkeep: 0,
+    income: 0,
+    attract: 1,
+    housing: 3,
+    permitMonths: 0,
+    buildMonths: 0,
+    maxLevel: 1,
+    placeable: true,
+    removable: true,
+    sprite: 'rumah',
+  },
   {
     id: 'warung',
     name: 'Warung',
@@ -23,7 +44,7 @@ export const BUILDINGS: BuildingDef[] = [
   {
     id: 'posRonda',
     name: 'Pos Ronda',
-    blurb: 'Night watch hut. +2 Sabar a month. Nobody has seen anyone on watch.',
+    blurb: 'Night watch hut. +2 Popularitas a month. Nobody has seen anyone on watch.',
     cost: 800_000,
     upkeep: 50_000,
     income: 0,
@@ -37,24 +58,26 @@ export const BUILDINGS: BuildingDef[] = [
     sprite: 'posRonda',
   },
   {
-    id: 'selokan',
-    name: 'Selokan',
-    blurb: 'Drain. Cheapest build, longest permit. Each level softens banjir damage.',
-    cost: 500_000,
-    upkeep: 20_000,
+    // Replaced the selokan: a drain is one long connected channel, which a single tile cannot be.
+    // A biopori is a lone infiltration hole, so it makes sense on a tile by itself.
+    id: 'biopori',
+    name: 'Biopori',
+    blurb: 'Infiltration hole that soaks up rain. Cheap and quick. Each level softens banjir damage.',
+    cost: 400_000,
+    upkeep: 10_000,
     income: 0,
     attract: 0,
-    permitMonths: 3,
+    permitMonths: 1,
     buildMonths: 1,
     maxLevel: 3,
     placeable: true,
     removable: true,
-    sprite: 'selokan',
+    sprite: 'biopori',
   },
   {
     id: 'jalan',
     name: 'Jalan Setapak',
-    blurb: 'Free footpath. Buildings beside it earn 10% more income, and walkers prefer it. Takes up a tile. Remove it any time.',
+    blurb: 'Free footpath. Every building needs a path to the Kantor RT or it sits idle. Buildings beside it earn 10% more income, and residents walk only on paths. Takes up a tile. Remove it any time.',
     cost: 0,
     upkeep: 0,
     income: 0,
@@ -84,7 +107,6 @@ export const BUILDINGS: BuildingDef[] = [
     mangkrakChance: 0.25,
     jobSlots: { ojol: 3, influencer: 2, buzzer: 2 },
     sprite: 'wifi',
-    footprint: 2, // A BTS site wants about 400 m² of land.
   },
   {
     id: 'indomaret',
@@ -104,7 +126,6 @@ export const BUILDINGS: BuildingDef[] = [
     requires: { stars: { stage: 'rt', n: 1 }, buildings: ['warung'] },
     mangkrakChance: 0.2,
     sprite: 'indomaret',
-    footprint: 2, // Minimarkets ask for 120-250 m², ten warungs.
   },
   {
     id: 'alfamart',
@@ -124,12 +145,11 @@ export const BUILDINGS: BuildingDef[] = [
     requires: { stars: { stage: 'rt', n: 1 }, buildings: ['warung'] },
     mangkrakChance: 0.2,
     sprite: 'alfamart',
-    footprint: 2,
   },
   {
     id: 'kantorRT',
     name: 'Kantor RT',
-    blurb: 'Stamps letters. Earns Orang Dalam over time. Each level adds 2 PNS desks.',
+    blurb: 'Stamps letters. Earns Orang Inside over time. Each level adds 2 PNS desks.',
     cost: 5_000_000,
     upkeep: 100_000,
     income: 0,
@@ -149,7 +169,7 @@ export const BUILDINGS: BuildingDef[] = [
   {
     id: 'kosan',
     name: 'Kos-kosan',
-    blurb: 'Houses 6 and pays rent. The noise costs 1 Sabar a month.',
+    blurb: 'Houses 6 and pays rent. The noise costs 1 Popularitas a month.',
     cost: 4_000_000,
     upkeep: 80_000,
     income: 200_000,
@@ -164,7 +184,6 @@ export const BUILDINGS: BuildingDef[] = [
     removable: true,
     requires: { stars: { stage: 'rt', n: 1 } },
     sprite: 'kosan',
-    footprint: 2, // A row of six rooms with a shared corridor.
   },
   {
     id: 'lapangan',
@@ -182,12 +201,11 @@ export const BUILDINGS: BuildingDef[] = [
     removable: true,
     requires: { stars: { stage: 'rt', n: 2 } },
     sprite: 'lapangan',
-    footprint: 2, // A badminton court alone is 13.4 x 6.1 m, before the upacara crowd.
   },
   {
     id: 'bankSampah',
     name: 'Bank Sampah',
-    blurb: 'Trades plastic for pocket money. Earns up to Rp 40rb a month and +0.5 Sabar.',
+    blurb: 'Trades plastic for pocket money. Earns up to Rp 40rb a month and +0.5 Popularitas. Opens a pengepul job.',
     cost: 1_000_000,
     upkeep: 0,
     income: 40_000,
@@ -199,29 +217,13 @@ export const BUILDINGS: BuildingDef[] = [
     placeable: true,
     removable: true,
     requires: { stars: { stage: 'rt', n: 2 } },
+    jobSlots: { pengepul: 1 },
     sprite: 'bankSampah',
-  },
-  {
-    id: 'rumah',
-    name: 'Rumah',
-    blurb: 'Houses 3 residents. Appears on its own when people move in.',
-    cost: 0,
-    upkeep: 0,
-    income: 0,
-    attract: 0,
-    housing: 3,
-    permitMonths: 0,
-    buildMonths: 0,
-    maxLevel: 1,
-    placeable: false,
-    removable: false,
-    removeBlockedReason: 'Residents live here. Evicting them costs more Sabar than you have.',
-    sprite: 'rumah',
   },
   {
     id: 'parkir',
     name: 'Tukang Parkir Liar',
-    blurb: 'Appears beside every new shop. Pays small retribusi to the kas, costs Sabar. Upgrade it, you cannot remove it.',
+    blurb: 'Appears beside every new shop. Pays small retribusi to the kas, costs Popularitas. Upgrade it, you cannot remove it.',
     cost: 300_000,
     upkeep: 0,
     income: 60_000,
@@ -236,3 +238,24 @@ export const BUILDINGS: BuildingDef[] = [
     sprite: 'parkir',
   },
 ];
+
+/** Build tab for every RT building. Anything not listed here is a facility. */
+const CATEGORY: Record<string, BuildCategory> = {
+  rumah: 'housing', kosan: 'housing', kontrakan: 'housing',
+  warung: 'shops', indomaret: 'shops', alfamart: 'shops', parkir: 'shops', gerobakBakso: 'shops', warteg: 'shops', warkop: 'shops', tokoKelontong: 'shops',
+  fotokopi: 'shops', barbershop: 'shops', bengkel: 'shops', apotek: 'shops', koperasi: 'shops',
+  kebunSayur: 'farm', sawah: 'farm', kandangAyam: 'farm', kolamLele: 'farm',
+  jalan: 'paths', biopori: 'paths',
+  potBunga: 'decoration', pohonRindang: 'decoration', bangku: 'decoration', lampuTaman: 'decoration', mural: 'decoration',
+  kolamIkan: 'decoration', tamanBermain: 'decoration', airMancur: 'decoration', patungIkon: 'decoration',
+};
+
+/** Tiles on each side for the buildings bigger than one tile. A lapangan should dwarf a house. */
+const FOOTPRINT: Record<string, number> = { lapangan: 3, sawah: 2, tamanBermain: 2, balaiWarga: 2, paud: 2, gudangMaterial: 2 };
+
+/** Every RT building: the core set, then each content wave in turn, with its Build tab and size. */
+export const BUILDINGS: BuildingDef[] = [...CORE_BUILDINGS, ...SHOP_BUILDINGS, ...FARM_BUILDINGS, ...DECOR_BUILDINGS].map((d) => ({
+  ...d,
+  category: d.category ?? CATEGORY[d.id] ?? 'facilities',
+  ...(FOOTPRINT[d.id] ? { footprint: FOOTPRINT[d.id] } : {}),
+}));

@@ -1,11 +1,26 @@
 import type { Resources } from '../sim/types';
+import { MORE_EVENTS } from './eventsMore';
 import { STAGE_EVENTS } from './higher';
+
+/** One possible result of an advice choice. The game rolls one by weight and reveals it in the result popup. */
+export interface EventOutcome {
+  weight: number;
+  res?: Partial<Resources>;
+  /** Rupiah as a fraction of one month's net income (-0.1 = lose 10%). Scales with the economy. */
+  incomePct?: number;
+  result: string;
+}
 
 export interface EventChoice {
   label: string;
-  cost?: { rupiah?: number; orangDalam?: number };
+  /** `incomeMonths` prices the choice as that many months of net income. The dearer of it and `rupiah` applies. */
+  cost?: { rupiah?: number; orangDalam?: number; incomeMonths?: number };
   /** Instant resource change. */
   res?: Partial<Resources>;
+  /** Rupiah as a fraction of one month's net income (+1.2 = a bonus worth 1.2 months). Scales with the economy. */
+  incomePct?: number;
+  /** Advice: roll one of these instead of the fixed result. Costs and `res` still apply first. */
+  outcomes?: EventOutcome[];
   /** Timed income multiplier. */
   modifier?: { label: string; target: string; incomeMult: number; months: number };
   /** Special handling in code, for effects that need the map. */
@@ -27,14 +42,23 @@ export interface EventDef {
     minMonth?: number;
     /** RT stars needed before it can happen. */
     minStars?: number;
-    /** Chance each eligible month. 1 = always. */
+    /** Weight among the random events that are eligible. 1 = always, on schedule. */
     chance: number;
+    /** Building that must be standing and working. */
+    needs?: string;
     /** Months before the same event can come back. */
     cooldown?: number;
   };
   /** The first choice must always be free so an event can never soft-lock. */
   choices: EventChoice[];
 }
+
+/** Random events raise a popup at most once in this many months. Scheduled ones (chance 1) ignore it. */
+export const POPUP_GAP = 8;
+/** A random event never repeats within this many months, whatever its own cooldown says. */
+export const MIN_REPEAT_GAP = 30;
+/** Chance a month with an eligible random event raises one, once the gap has passed. */
+export const POPUP_CHANCE = 0.4;
 
 // Rupiah costs here are base prices. The engine applies inflation.
 export const EVENTS: EventDef[] = [
@@ -52,13 +76,13 @@ export const EVENTS: EventDef[] = [
         modifier: { label: 'Lomba crowd', target: '*', incomeMult: 1.2, months: 2 },
         result: 'The kampung got a proper lomba.',
       },
-      { label: 'Ask a sponsor · 1 Orang Dalam', cost: { orangDalam: 1 }, res: { sabar: 10 }, result: 'A "sponsor" appeared.' },
+      { label: 'Ask a sponsor · 1 Orang Inside', cost: { orangDalam: 1 }, res: { sabar: 10 }, result: 'A "sponsor" appeared.' },
     ],
   },
   {
     id: 'banjir',
     name: 'Banjir',
-    body: 'Hujan deras for three days. Selokan level decides how much of the kampung floats. Each selokan level cuts the damage by 20%.',
+    body: 'Hujan deras for three days. Biopori level decides how much of the kampung floats. Each biopori level cuts the damage by 20%.',
     when: { months: [10, 11, 0, 1], minMonth: 10, chance: 0.3, cooldown: 9 },
     choices: [{ label: 'Check the damage', special: 'banjir', result: '' }],
   },
@@ -76,7 +100,7 @@ export const EVENTS: EventDef[] = [
       },
       { label: 'Subsidise · Rp 500.000', cost: { rupiah: 500_000 }, res: { sabar: 3 }, result: 'Sambal stays affordable.' },
       {
-        label: 'Operasi pasar · 1 Orang Dalam',
+        label: 'Operasi pasar · 1 Orang Inside',
         cost: { orangDalam: 1 },
         modifier: { label: 'Operasi pasar', target: 'warung', incomeMult: 0.9, months: 2 },
         result: 'A truck of cabai arrived.',
@@ -85,8 +109,8 @@ export const EVENTS: EventDef[] = [
   },
   {
     id: 'kecamatan',
-    name: 'Kecamatan Is Coming',
-    body: 'A Kecamatan inspector visits in 2 months to score the kampung: selokan, Sabar, abandoned projects and parkir liar. A good score earns Orang Dalam. A bad one costs Sabar. Fresh paint counts too.',
+    name: 'Kecamatan Inspection',
+    body: 'A Kecamatan inspector visits in 2 months to score the kampung: drainage, Popularitas, abandoned projects and parkir liar. A good score earns Orang Inside. A bad one costs Popularitas. Fresh paint counts too.',
     // Raised by the inspection system on its own schedule, never at random.
     when: { chance: 0 },
     choices: [
@@ -95,16 +119,17 @@ export const EVENTS: EventDef[] = [
         label: 'Cat ulang pagar · Rp 750.000',
         cost: { rupiah: 750_000 },
         inspectPrep: 20,
-        result: 'Every fence got fresh paint. The selokan did not.',
+        result: 'Every fence got fresh paint. The drainage did not.',
       },
       {
-        label: 'Nasi kotak for the rombongan · 1 Orang Dalam',
+        label: 'Nasi kotak for the rombongan · 1 Orang Inside',
         cost: { orangDalam: 1 },
         inspectPrep: 12,
         result: 'The rombongan will leave with full stomachs and generous scores.',
       },
     ],
   },
+  ...MORE_EVENTS,
 ];
 
 export const eventDef = (id: string): EventDef | undefined => EVENTS.find((e) => e.id === id) ?? STAGE_EVENTS.find((e) => e.id === id);
@@ -117,7 +142,7 @@ export const REPAIR_FRACTION = 0.25;
 
 /** Kecamatan inspections. The first warning lands in year 2, so year 1 stays safe. */
 export const INSPECTION = {
-  firstWarn: 12,
+  firstWarn: 15,
   /** Months between the warning and the visit. */
   lead: 2,
   /** Months from one visit to the next warning. */

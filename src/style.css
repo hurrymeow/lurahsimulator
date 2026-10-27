@@ -93,8 +93,21 @@ html.no-effects #dof { display: none; }
 .chip img { image-rendering: pixelated; flex: none; }
 .chip-value { font-weight: 700; color: var(--c); font-size: 16px; white-space: nowrap; }
 .chip.negative .chip-value { color: var(--danger); }
+.chip.full .chip-value { color: #fbbf24; }
+.chip.full .chip-value::after { content: '!'; }
+.chip.full { animation: hint 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .chip.full { animation: none; } }
 .chip.negative .chip-value::before { content: '▼ '; }
 
+.goal { padding: 4px 12px; font-size: 16px; line-height: 1.3; color: var(--text); background: var(--surface); border-bottom: 1px solid var(--surface-2); }
+.goal[hidden] { display: none; }
+.new-tag { margin-left: 8px; padding: 0 6px; font-size: 16px; font-weight: 700; color: #0b0b0c; background: #fbbf24; border-radius: 6px; }
+.new-dot { color: #fbbf24; }
+.coach { position: absolute; left: 12px; right: 12px; top: 44px; z-index: 6; display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; background: var(--surface); border: 2px solid #fbbf24; border-radius: var(--radius); }
+.coach[hidden] { display: none; }
+.coach-text { flex: 1; margin: 0; font-size: 16px; line-height: 1.3; }
+.coach-pulse { --c: #fbbf24; animation: hint 1.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .coach-pulse { animation: none; box-shadow: inset 0 0 0 3px #fbbf24; } }
 .ticker {
   margin: var(--gap) 12px;
   min-height: var(--touch);
@@ -129,12 +142,16 @@ html.no-effects #dof { display: none; }
 #speed-btn { min-width: 56px; padding: 0 8px; font-weight: 700; font-variant-numeric: tabular-nums; }
 #pause-btn { font-size: 18px; }
 #pause-btn[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
+#auto-pause { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 5; padding: 4px 12px; border-radius: 12px; background: var(--surface-2); color: var(--text); font-size: 16px; font-weight: 700; pointer-events: none; }
+#auto-pause[hidden] { display: none; }
 #menu-btn { padding: 0 20px; }
 .date-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
 .month-track { width: 100%; max-width: 140px; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
 #month-progress { height: 100%; width: 0; background: var(--muted); }
 .place-info { flex: 1; min-width: 0; font-size: 16px; display: flex; flex-direction: column; }
 .place-info .missing { margin: 4px 0 0; }
+.place-float { position: absolute; left: 0; top: 0; z-index: 4; display: flex; gap: var(--gap); padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.place-float[hidden] { display: none; }
 
 .scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 15; }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; gap: var(--gap); margin-bottom: 8px; }
@@ -144,6 +161,8 @@ html.no-effects #dof { display: none; }
 .missing li::before { content: '✕ '; }
 .action { display: flex; flex-direction: column; gap: 4px; margin: 12px 0; }
 .action .btn { width: 100%; }
+.action-row { margin: 12px 0; }
+.action-row .btn { flex: 1; }
 .btn-danger { border-color: var(--danger); color: var(--danger); }
 .pixel { image-rendering: pixelated; flex: none; object-fit: contain; }
 
@@ -161,6 +180,9 @@ html.no-effects #dof { display: none; }
   border-radius: var(--radius);
   cursor: pointer;
 }
+.tabs { display: flex; flex-wrap: wrap; gap: var(--gap); margin: var(--gap) 0; }
+.tabs .tab { flex: 1 1 auto; padding: 0 6px; }
+.tabs .tab[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
 .card-btn.locked { border-style: dashed; cursor: default; }
 .card-btn.locked .pixel { filter: grayscale(1); }
 .card-text { flex: 1; min-width: 0; }
@@ -305,7 +327,7 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
 #howtoGo { width: 100%; }
 
 /* M4: Emas bar, toggles, events, juice */
-.emas { display: flex; align-items: center; gap: 8px; margin: 0; padding: 0 12px 6px; background: var(--surface); border-bottom: 1px solid var(--surface-2); }
+.emas { cursor: pointer; min-height: 48px; display: flex; align-items: center; gap: 8px; margin: 0; padding: 0 12px 6px; background: var(--surface); border-bottom: 1px solid var(--surface-2); }
 .emas-label { font-size: 16px; color: var(--muted); white-space: nowrap; }
 .emas-track { flex: 1; height: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; min-width: 24px; }
 #emas-fill { height: 100%; background: #facc15; }
@@ -321,8 +343,6 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
 .chip.flash-down { animation: flash-down 0.7s ease-out; }
 @keyframes flash-up { from { box-shadow: inset 0 0 0 3px var(--rupiah); } to { box-shadow: inset 0 0 0 0 transparent; } }
 @keyframes flash-down { from { box-shadow: inset 0 0 0 3px var(--danger); } to { box-shadow: inset 0 0 0 0 transparent; } }
-#map.shake { animation: shake 0.4s; }
-@keyframes shake { 0%, 100% { transform: none; } 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
 html.high-contrast { --muted: #d4d4d8; --line: #71717a; --surface: #111113; }
 html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; }
 /* Menu: one sheet, panels sorted into groups of big tiles. */
@@ -387,7 +407,7 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .checklist li.done { color: var(--muted); text-decoration: line-through; }
 
 /* Home screen: the map shows through, the HUD hides, one Start button sits in the bottom third. */
-#app.home-open :is(#hud, #emas, #ticker, #bottombar, #update-banner) { visibility: hidden; }
+#app.home-open :is(#hud, #emas, #goal, #ticker, #bottombar, #update-banner) { visibility: hidden; }
 .home {
   position: fixed;
   inset: 0;
@@ -404,3 +424,4 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .home-actions .btn { width: 100%; min-height: 48px; }
 .home-start { font-size: 22px; }
 .home-warn { margin: 0; padding: 8px 12px; text-align: center; line-height: 1.4; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.warn { color: var(--danger); }

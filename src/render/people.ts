@@ -1,16 +1,24 @@
 // Residents walking between buildings, ojol riders, and the tukang parkir's wave. Purely visual:
 // nothing here touches the simulation.
+import { FLAT, ring, roadTiles } from '../sim/access';
 import { lotAt } from '../sim/area';
-import { tilesOf } from '../sim/footprint';
+import { t } from '../i18n';
+import type { Key } from '../i18n';
 import { GRID_H, GRID_W, type GameState, type JobId } from '../sim/types';
-import { doorsOf, findPath, type Pt } from './path';
+import { findPath, type Pt } from './path';
 
 /** More walkers than this cost frame time and crowd a 9x13 map. */
-export const MAX_WALKERS = 16;
-/** Ditches and parking lots are flat, so people walk over them. */
-/** Cost of a step on open ground, against 1 on a path. Above 1 makes walkers detour onto paths. */
-const WALK_OFF_PATH = 2.5;
-const FLAT = new Set(['selokan', 'parkir', 'jalan', 'aspalUlang', 'sawahIrigasi', 'embung', 'taman']);
+export const MAX_WALKERS = 10;
+/** Night level above which commuters head home, and below which they head out to work. */
+const DAY_BELOW = 0.2;
+const NIGHT_ABOVE = 0.5;
+/** Chance an idle worker leaves the RT for the day, each time they pick a trip. */
+const COMMUTE_CHANCE = 0.5;
+/** Chance a walker says something on reaching a door, and how long the bubble stays. */
+const SAY_CHANCE = 0.12;
+const SAY_MS = 1800;
+/** Buildings with lines in en.ts as `say.<def>.<n>`. Others stay quiet. */
+const LINES: Record<string, number> = { rumah: 6, warung: 7, posRonda: 6, wifi: 6, indomaret: 6, alfamart: 6, kantorRT: 6, kosan: 6, lapangan: 6, bankSampah: 6 };
 const VIP_ID = -1;
 const WALK_SPEED = 0.9;
 const OJOL_SPEED = 2.8;
@@ -29,6 +37,15 @@ export interface Walker {
   face: 1 | -1;
   /** Distance walked, drives the leg cycle. */
   stride: number;
+  /** Def of the building this trip is heading to. */
+  dest?: string;
+  /** Speech bubble text and the time it goes away. */
+  say?: string;
+  sayUntil?: number;
+  /** Heading out along the ring road to work. May step outside the grid. */
+  leaving?: boolean;
+  /** At work beyond the map: not drawn until evening. */
+  away?: boolean;
 }
 
 const SHIRTS: Record<Kind, string> = {
@@ -38,8 +55,17 @@ const SHIRTS: Record<Kind, string> = {
   ojol: '#4fae3e',
   influencer: '#e57a9c',
   buzzer: '#e57d2e',
+  petani: '#8a6a3a',
+  peternak: '#c9833a',
+  pengepul: '#3f8a9a',
+  guru: '#9a6ab4',
+  satpam: '#3a5a8a',
+  tukang: '#d4a02a',
+  panitia: '#7a8a5a',
   kaderPosyandu: '#e8a0b4',
   calo: '#6a5a8a',
+  honorer: '#b8a888',
+  pendampingDesa: '#7aa08a',
 };
 /** Unemployed residents wear one of these, so the crowd is not all cream. */
 const CASUAL = ['#f6ecd4', '#5a9bd0', '#df4a2c', '#5fb3a6', '#f4b935'];
@@ -116,19 +142,29 @@ function frame(rows: string[], shirt: string, hair: string, face: 1 | -1): HTMLC
 
 export type Project = (fx: number, fy: number) => { x: number; y: number };
 
+interface Site {
+  def: string;
+  /** Path tiles beside the building, where a walker stands. */
+  doors: Pt[];
+}
+
 export class Crowd {
   people: Walker[] = [];
   private order: Walker[] = [];
   private cursor = 0;
-  private blocked = new Uint8Array(GRID_W * GRID_H);
   /** Tiles that belong to another RT. Walkers stay in their own. Rebuilt when the map grows. */
   private foreign = new Uint8Array(0);
-  private onPath = new Uint8Array(GRID_W * GRID_H);
+  /** Walkable ground: active paths and seams. Nobody walks anywhere else. */
+  private onPath: Uint8Array = new Uint8Array(GRID_W * GRID_H);
   private last = 0;
+  private night = 0;
+  private lastLine = '';
+  /** Speech bubbles show only with effects and motion on. */
+  bubbles = true;
 
-  private walkable = (x: number, y: number) => !this.blocked[y * GRID_W + x];
+  private walkable = (x: number, y: number) => !!this.onPath[y * GRID_W + x];
 
-  /** Inside the grid: no building. Outside it, only ojol riders use the ring road one tile out. */
+  /** Inside the grid: a path. Outside it, only ojol riders use the ring road one tile out. */
   private free(x: number, y: number, ojol: boolean): boolean {
     if (x >= 0 && y >= 0 && x < GRID_W && y < GRID_H) return this.walkable(x, y);
     return ojol && x >= -1 && y >= -1 && x <= GRID_W && y <= GRID_H;
@@ -136,14 +172,8 @@ export class Crowd {
 
   /** findPath over the grid plus its ring road, shifted so the ring sits at 0. */
   private route(from: Pt, to: Pt, ojol: boolean): Pt[] | null {
-    const path = findPath(GRID_W + 2, GRID_H + 2, (x, y) => this.free(x - 1, y - 1, ojol), { x: from.x + 1, y: from.y + 1 }, { x: to.x + 1, y: to.y + 1}, (x, y) => this.stepCost(x - 1, y - 1));
+    const path = findPath(GRID_W + 2, GRID_H + 2, (x, y) => this.free(x - 1, y - 1, ojol), { x: from.x + 1, y: from.y + 1 }, { x: to.x + 1, y: to.y + 1 });
     return path && path.map((t) => ({ x: t.x - 1, y: t.y - 1 }));
-  }
-
-  /** Walkers prefer paths and the ring road over open ground. */
-  private stepCost(x: number, y: number): number {
-    if (x < 0 || y < 0 || x >= GRID_W || y >= GRID_H) return 1;
-    return this.onPath[y * GRID_W + x] ? 1 : WALK_OFF_PATH;
   }
 
   private ring(): Pt {
@@ -154,26 +184,27 @@ export class Crowd {
   }
 
   /** Matches walkers to residents and moves them. With motion off they stand still. */
-  update(s: GameState, now: number, motion: boolean): void {
+  update(s: GameState, now: number, motion: boolean, night = 0): void {
+    this.night = night;
     const dt = Math.min(100, this.last ? now - this.last : 0);
     this.last = now;
     if (this.foreign.length !== GRID_W * GRID_H) {
       this.foreign = new Uint8Array(GRID_W * GRID_H);
       for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (lotAt(x, y) === 'other') this.foreign[y * GRID_W + x] = 1;
-      this.blocked = new Uint8Array(GRID_W * GRID_H);
       this.onPath = new Uint8Array(GRID_W * GRID_H);
     }
-    this.blocked.set(this.foreign);
-    this.onPath.fill(0);
-    const sites: Pt[] = [];
-    const homes: Pt[] = [];
+    this.onPath = roadTiles(s);
+    for (let k = 0; k < this.foreign.length; k++) if (this.foreign[k]) this.onPath[k] = 0;
+    const sites: Site[] = [];
+    const homes: Site[] = [];
+    // Only buildings a path reaches are destinations, so nobody walks to a shop that cannot open.
     for (const b of s.buildings) {
-      if (b.def === 'jalan' && b.status === 'active') this.onPath[b.y * GRID_W + b.x] = 1;
-      if (FLAT.has(b.def)) continue;
-      for (const t of tilesOf(b)) this.blocked[t.y * GRID_W + t.x] = 1;
-      if (b.status !== 'active') continue;
-      sites.push(b);
-      if (b.def === 'rumah') homes.push(b);
+      if (FLAT.has(b.def) || b.status !== 'active' || b.noRoad) continue;
+      const doors = ring(b).filter(([x, y]) => x >= 0 && y >= 0 && x < GRID_W && y < GRID_H && this.walkable(x, y)).map(([x, y]) => ({ x, y }));
+      if (!doors.length) continue;
+      const site = { def: b.def, doors };
+      sites.push(site);
+      if (b.def === 'rumah') homes.push(site);
     }
 
     const residents = s.residents.slice(0, MAX_WALKERS);
@@ -187,20 +218,21 @@ export class Crowd {
       this.people.push({ id: VIP_ID, kind: 'vip', shirt: SHIRTS.vip, fx: Math.min(GRID_W - 0.5, Math.max(0.5, start.x + 0.5)), fy: Math.min(GRID_H - 0.5, Math.max(0.5, start.y + 0.5)), path: [], wait: 0, face: 1, stride: 0 });
     }
     const guest = this.people.find((o) => o.id === VIP_ID);
-    if (guest && motion) this.move(guest, dt, sites);
+    if (guest && motion) this.move(guest, dt, sites, now);
     for (const r of residents) {
       let p = this.people.find((o) => o.id === r.id);
       const kind: Kind = r.job;
       if (!p) {
         const home = homes[r.id % Math.max(1, homes.length)];
-        const start = (home && this.pick(doorsOf(GRID_W, GRID_H, this.walkable, home))) ?? this.randomFree();
+        const start = (home && this.pick(home.doors)) ?? this.randomFree();
         if (!start) continue;
         p = { id: r.id, kind, shirt: '', fx: start.x + 0.5, fy: start.y + 0.5, path: [], wait: 400 + Math.random() * 2500, face: Math.random() < 0.5 ? 1 : -1, stride: 0 };
         this.people.push(p);
       }
       p.kind = kind;
       p.shirt = kind === 'none' ? CASUAL[r.id % CASUAL.length] : SHIRTS[kind];
-      if (motion) this.move(p, dt, sites);
+      if (motion) this.move(p, dt, sites, now);
+      else if (p.away && this.night > NIGHT_ABOVE) p.away = false;
     }
   }
 
@@ -209,7 +241,7 @@ export class Crowd {
   }
 
   private randomFree(): Pt | undefined {
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
       const x = Math.floor(Math.random() * GRID_W);
       const y = Math.floor(Math.random() * GRID_H);
       if (this.walkable(x, y)) return { x, y };
@@ -217,15 +249,38 @@ export class Crowd {
     return undefined;
   }
 
-  private move(p: Walker, dt: number, sites: Pt[]): void {
+  /** Nearest path tile, for a walker whose own tile stopped being one. */
+  private nearestPath(x: number, y: number): Pt | undefined {
+    let best: Pt | undefined;
+    let d = Infinity;
+    for (let k = 0; k < this.onPath.length; k++) {
+      if (!this.onPath[k]) continue;
+      const px = k % GRID_W;
+      const py = (k - px) / GRID_W;
+      const m = Math.abs(px - x) + Math.abs(py - y);
+      if (m < d) [best, d] = [{ x: px, y: py }, m];
+    }
+    return best;
+  }
+
+  private move(p: Walker, dt: number, sites: Site[], now: number): void {
+    if (p.away) {
+      // Home again once evening comes: back in at a random edge tile of the ring road.
+      if (this.night > NIGHT_ABOVE) {
+        const back = this.ring();
+        Object.assign(p, { away: false, leaving: false, fx: back.x + 0.5, fy: back.y + 0.5, path: [], wait: 0 });
+      }
+      return;
+    }
     const tx = Math.floor(p.fx);
     const ty = Math.floor(p.fy);
-    // A new building went up under this walker: step out to its door.
+    // The path under this walker was removed: step to the nearest one.
     if (!this.free(tx, ty, true)) {
-      const out = this.pick(doorsOf(GRID_W, GRID_H, this.walkable, { x: tx, y: ty })) ?? this.randomFree();
+      const out = this.nearestPath(tx, ty);
       if (out) Object.assign(p, { fx: out.x + 0.5, fy: out.y + 0.5, path: [] });
       return;
     }
+    if (p.say && p.sayUntil !== undefined && now > p.sayUntil) p.say = undefined;
     if (p.path.length === 0) {
       p.wait -= dt;
       if (p.wait > 0) {
@@ -234,11 +289,12 @@ export class Crowd {
         return;
       }
       p.path = this.plan(p, { x: tx, y: ty }, sites) ?? [];
+      if (!p.path.length) p.dest = undefined;
       p.wait = p.kind === 'ojol' ? 300 + Math.random() * 600 : 1200 + Math.random() * 3000;
       return;
     }
     const next = p.path[0];
-    if (!this.free(next.x, next.y, p.kind === 'ojol')) {
+    if (!this.free(next.x, next.y, p.kind === 'ojol' || !!p.leaving)) {
       p.path = [];
       return;
     }
@@ -254,33 +310,63 @@ export class Crowd {
       p.fx = next.x + 0.5;
       p.fy = next.y + 0.5;
       p.path.shift();
+      if (!p.path.length && p.leaving && (next.x < 0 || next.y < 0 || next.x >= GRID_W || next.y >= GRID_H)) {
+        p.away = true;
+        p.leaving = false;
+      } else if (!p.path.length && p.dest) this.greet(p, now);
     } else {
       p.fx += (dx / dist) * step;
       p.fy += (dy / dist) * step;
     }
   }
 
+  /** At the door: sometimes say something about the place. Cosmetic only. */
+  private greet(p: Walker, now: number): void {
+    const n = LINES[p.dest ?? ''];
+    // One bubble on the map at a time, and never the line just heard.
+    if (n && p.kind !== 'ojol' && Math.random() < SAY_CHANCE && !this.people.some((o) => o.say)) {
+      let i = Math.floor(Math.random() * n);
+      if (`${p.dest}.${i}` === this.lastLine) i = (i + 1) % n;
+      this.lastLine = `${p.dest}.${i}`;
+      p.say = t(`say.${p.dest}.${i}` as Key);
+      p.sayUntil = now + SAY_MS;
+    }
+    p.dest = undefined;
+  }
+
   /** Walkers go to a building's door. Ojol riders zip to a far-off free tile or round the ring road. */
-  private plan(p: Walker, from: Pt, sites: Pt[]): Pt[] | null {
+  private plan(p: Walker, from: Pt, sites: Site[]): Pt[] | null {
     for (let i = 0; i < 4; i++) {
       let to: Pt | undefined;
       if (p.kind === 'ojol') {
         to = Math.random() < 0.5 ? this.ring() : this.randomFree();
         if (to && Math.abs(to.x - from.x) + Math.abs(to.y - from.y) < 4) continue;
+      } else if (this.commutes(p) && Math.random() < COMMUTE_CHANCE) {
+        // Off to work beyond the map, along the ring road.
+        to = this.ring();
+        p.leaving = true;
       } else {
         const site = this.pick(sites);
-        to = site && this.pick(doorsOf(GRID_W, GRID_H, this.walkable, site));
+        to = site && this.pick(site.doors);
+        if (to && site) p.dest = site.def;
       }
       if (!to) continue;
-      const path = this.route(from, to, p.kind === 'ojol');
+      const path = this.route(from, to, p.kind === 'ojol' || !!p.leaving);
       if (path && path.length) return path;
+      p.leaving = false;
     }
     return null;
   }
 
+  /** Workers with a job leave the RT in daylight. The unemployed and ojol riders stay. */
+  private commutes(p: Walker): boolean {
+    return this.night < DAY_BELOW && p.kind !== 'none' && p.kind !== 'ojol' && p.kind !== 'vip';
+  }
+
   /** Call once per frame before drawUntil. Sorts back to front. */
   begin(): void {
-    this.order = [...this.people].sort((a, b) => a.fx + a.fy - (b.fx + b.fy));
+    this.pending = [];
+    this.order = this.people.filter((p) => !p.away).sort((a, b) => a.fx + a.fy - (b.fx + b.fy));
     this.cursor = 0;
   }
 
@@ -310,6 +396,38 @@ export class Crowd {
     }
     // The frame's outline adds a pixel all round, so the feet sit one art pixel above the bottom.
     ctx.drawImage(img, Math.round(g.x - w / 2), Math.round(g.y - h + 2 * s - bob * s), w, h);
+    // Queued, not drawn: a bubble must sit above every building, light and weather layer.
+    if (p.say && this.bubbles && motion) this.pending.push({ text: p.say, x: g.x, bottom: g.y - h - 2 * s });
+  }
+
+  private pending: { text: string; x: number; bottom: number }[] = [];
+
+  /** Draws the queued speech bubbles. Called last, so nothing paints over them. */
+  drawBubbles(ctx: CanvasRenderingContext2D): void {
+    for (const b of this.pending) this.bubble(ctx, b.text, b.x, b.bottom);
+    this.pending = [];
+  }
+
+  /** A small speech bubble above a walker's head. */
+  private bubble(ctx: CanvasRenderingContext2D, text: string, cx: number, bottom: number): void {
+    ctx.font = '700 11px "Atkinson Hyperlegible", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const w = ctx.measureText(text).width + 10;
+    const x = Math.round(cx - w / 2);
+    const y = Math.round(bottom - 22);
+    ctx.fillStyle = '#fbf6ea';
+    ctx.fillRect(x, y, w, 18);
+    ctx.fillStyle = '#2a1810';
+    ctx.fillRect(x, y, w, 1);
+    ctx.fillRect(x, y + 17, w, 1);
+    ctx.fillRect(x, y, 1, 18);
+    ctx.fillRect(x + w - 1, y, 1, 18);
+    ctx.fillRect(Math.round(cx) - 2, y + 18, 4, 3);
+    ctx.fillStyle = '#fbf6ea';
+    ctx.fillRect(Math.round(cx) - 1, y + 17, 2, 2);
+    ctx.fillStyle = '#2a1810';
+    ctx.fillText(text, cx, y + 10);
   }
 
   /** Walkers within reach of a tile, so the tukang parkir knows to wave harder. */

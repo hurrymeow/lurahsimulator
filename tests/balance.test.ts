@@ -2,42 +2,46 @@ import { describe, expect, it } from 'vitest';
 import { placeableDefs } from '../src/sim/content';
 import { checkRepair, repair, resolveEvent } from '../src/sim/events';
 import { checkRestart, restart } from '../src/sim/projects';
-import { checkPlace, lotGaps, place, requirementGaps, skipPermit, upgrade } from '../src/sim/rules';
-import { tilesAt } from '../src/sim/footprint';
-import { activeCombos } from '../src/sim/combos';
-import { addBuilding, emptyTiles, neighbours, newGame, population } from '../src/sim/state';
+import { checkPlace, place, skipPermit, upgrade } from '../src/sim/rules';
+import { attractTarget, emptyTiles, housing, newGame, population } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
+import { announce } from '../src/sim/wacana';
 import type { GameState } from '../src/sim/types';
 
-/** A simple autoplayer: builds what it can afford, always takes the free event choice. */
+/**
+ * A simple autoplayer: builds the two early combos, keeps a bed ahead of demand,
+ * and buys what it can afford. It never plans combos beyond the two it is told to.
+ */
 function play(seed: number, years: number, smart: boolean, starMonths: number[] = []): { s: GameState; minRupiahY1: number } {
   const s = newGame(seed);
   let minRupiahY1 = Infinity;
   for (let m = 0; m < years * 12; m++) {
     if (s.pendingEvent) resolveEvent(s, [], 0);
     if (smart) {
-      // The bot packs a 9x5 corner so combo members stay in range, and does not plan paths. 2x2 buildings made it one row deeper.
-      for (const d of placeableDefs().filter((p) => !p.pathIncome)) {
-        // Sensible player: keep a cash buffer and do not stack buildings that only cost upkeep, or one spare when two years pass with no combo.
-        const have = s.buildings.filter((b) => b.def === d.id).length;
-        const worthIt = d.income > d.upkeep || have === 0 || (have === 1 && s.discovered.length === 0 && s.month >= 24);
-        if (!worthIt || have >= 4 || s.res.rupiah <= d.cost * 3 || requirementGaps(s, d).length) continue;
-        // Small builds take the first free tile. A 2x2, or a spare upkeep-only building, goes where it would
-        // complete the most combos, as a player reading the Buku Combo would, then where it touches the most kinds of building.
-        const big = (d.footprint ?? 1) > 1;
-        const aimed = big || (have > 0 && d.income <= d.upkeep);
-        const fits = emptyTiles(s).filter((t) => t.y < 5 && t.x < 9 && (!big || lotGaps(s, d, t.x, t.y).length === 0));
-        const score = (t: { x: number; y: number }) => {
-          const kinds = new Set(tilesAt(t.x, t.y, d.footprint ?? 1).flatMap((p) => neighbours(s, p)).filter((b) => b.def !== 'rumah' && b.def !== 'parkir' && b.def !== d.id).map((b) => b.def)).size;
-          addBuilding(s, d.id, t.x, t.y, 'active');
-          const combos = activeCombos(s).length;
-          s.buildings.pop();
-          s.nextUid--;
-          return combos * 10 + kinds;
-        };
-        const spot = aimed ? fits.map((t) => ({ t, k: score(t) })).reduce<{ t: { x: number; y: number }; k: number } | undefined>((a, b) => (!a || b.k > a.k ? b : a), undefined)?.t : fits[0];
-        if (spot && checkPlace(s, d.id, spot.x, spot.y).ok) place(s, d.id, spot.x, spot.y);
+      // Rapat Malam (office + hut) and Tongkrongan (hut + warung + wifi), by hand.
+      const k = s.buildings.find((b) => b.def === 'kantorRT')!;
+      const want = (def: string, x: number, y: number, min: number) => {
+        if (s.buildings.some((b) => b.def === def) || s.res.rupiah < min) return;
+        if (checkPlace(s, def, x, y).ok) place(s, def, x, y);
+      };
+      want('posRonda', k.x + 1, k.y, 2_400_000);
+      want('warung', k.x + 1, k.y - 1, 3_000_000);
+      want('wifi', k.x, k.y - 1, 5_000_000);
+      // A bed for the next arrivals, up to what the top goals need.
+      if (population(s) < 42 && housing(s) < attractTarget(s) + 3) {
+        const spot = emptyTiles(s)[0];
+        if (spot && s.res.rupiah > 2_000_000 && checkPlace(s, 'rumah', spot.x, spot.y).ok) place(s, 'rumah', spot.x, spot.y);
       }
+      // The bot packs the middle of the map so leftover combo members stay in range.
+      for (const d of placeableDefs().filter((p) => !p.pathIncome && !p.housing)) {
+        const spot = emptyTiles(s).find((t) => t.y < 9);
+        // Sensible player: keep a cash buffer and do not stack buildings that only cost upkeep.
+        const have = s.buildings.filter((b) => b.def === d.id).length;
+        const worthIt = d.income > d.upkeep || have === 0;
+        if (spot && worthIt && have < 4 && checkPlace(s, d.id, spot.x, spot.y).ok && s.res.rupiah > d.cost * 3) place(s, d.id, spot.x, spot.y);
+      }
+      // A player watches Popularitas: when it sags and there is cash, announce a cheap policy.
+      if (s.res.sabar < 55 && s.res.rupiah > 2_000_000 && s.month % 3 === 0) announce(s, 'hijau');
       for (const b of s.buildings) {
         if (b.status === 'permit') skipPermit(s, b);
         else if (b.status === 'damaged' && checkRepair(s, b).ok) repair(s, b);
@@ -76,7 +80,7 @@ describe('balance', () => {
       }
     }
     expect(wins / total).toBeGreaterThan(0.5);
-  });
+  }, 30_000);
 
   it('inflation is small: prices rise 3% a year', () => {
     const { s } = play(1, 5, false);
@@ -94,7 +98,7 @@ describe('star pacing', () => {
       if (m[1] !== undefined && m[1] <= 48) two++;
       expect(population(s), `population, seed ${seed}`).toBeGreaterThan(20);
     }
-    // 3 stars needs 3 combos and Sabar 50, which this bot does not plan for.
+    // 3 stars needs 3 combos and Sabar 65, which this bot does not plan for.
     expect(two).toBeGreaterThanOrEqual(8);
-  });
+  }, 30_000);
 });

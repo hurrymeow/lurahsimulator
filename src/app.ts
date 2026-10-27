@@ -1,3 +1,4 @@
+import { connectedRoad, FLAT, hasRoadBeside } from './sim/access';
 import { eBody, eLabel, eName, bName, jName, getLang, initialLang, setLang, t, type Key, type Lang } from './i18n';
 import { jobDef } from './data/jobs';
 import { dateLabel, rupiah, rupiahHud } from './format';
@@ -6,13 +7,14 @@ import { iconURL } from './render/sprites';
 import { def } from './sim/content';
 import { eventDef } from './data/events';
 import { checkChoice, eventCost, resolveEvent } from './sim/events';
-import { checkPlace, place } from './sim/rules';
+import { checkMove, checkPlace, moveBuilding, place } from './sim/rules';
+import { linePath, placeLine, type LineTile } from './sim/line';
 import { lotAt } from './sim/area';
 import { promote } from './sim/grow';
 import { RT_H, RT_W } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
-import { buildCost, buildingAt, newGame, population, housing } from './sim/state';
+import { attractTarget, buildCost, buildingAt, byUid, footprintOf, newGame, population, housing, year } from './sim/state';
 import { tick } from './sim/tick';
 import type { GameState, ResourceId, SimEffect } from './sim/types';
 import { audio } from './audio';
@@ -23,8 +25,11 @@ import { h, missingList } from './ui/dom';
 import { RIVAL_NAMES } from './data/ranking';
 import { areaScore } from './sim/ranking';
 import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
+import { autoPaused, simRunning, type PauseInputs } from './ui/autopause';
 
 export const MONTH_MS = 8000;
+/** First year the 4x speed is allowed. */
+export const FAST_FROM_YEAR = 10;
 export const SPEEDS = [0, 1, 2, 4] as const;
 export type Speed = (typeof SPEEDS)[number];
 export const SAVE_KEY = 'pakrt.save';
@@ -41,7 +46,7 @@ interface Notice {
   cls?: string;
 }
 
-type ExplainId = ResourceId | 'pop';
+type ExplainId = ResourceId | 'pop' | 'emas';
 const HINT_KEY = 'pakrt.hinted';
 
 export const RES_META: Record<ResourceId, { label: () => string; icon: string }> = {
@@ -96,8 +101,20 @@ export class App {
   }
 
   // ---------- loop ----------
+  private pauseInputs(): PauseInputs {
+    return {
+      speed: this.speed,
+      held: this.held,
+      sheetOpen: sheetOpen(),
+      modals: this.modalQueue.length,
+      pendingEvent: !!this.s.pendingEvent,
+      placing: !!this.placing,
+      howtoOpen: !document.getElementById('howto')!.hidden,
+    };
+  }
+
   get running(): boolean {
-    return this.speed > 0 && !this.held && !sheetOpen() && this.modalQueue.length === 0 && !this.s.pendingEvent;
+    return simRunning(this.pauseInputs());
   }
 
   private frame(now: number): void {
@@ -111,10 +128,14 @@ export class App {
         if (!this.running) break;
       }
     }
+    const badge = document.getElementById('auto-pause');
+    if (badge) badge.hidden = this.held || !autoPaused(this.pauseInputs());
     const bar = document.getElementById('month-progress');
     if (bar) bar.style.width = `${(this.acc / MONTH_MS) * 100}%`;
+    this.view.frozen = !this.running;
     this.view.clock = this.s.month + this.acc / MONTH_MS;
     this.view.draw(this.s);
+    this.positionPlace();
     requestAnimationFrame((t) => this.frame(t));
   }
 
@@ -198,7 +219,7 @@ export class App {
     const choices = e.choices.map((c, i) => {
       const check = checkChoice(this.s, c);
       const cost = eventCost(this.s, c);
-      const label = eLabel(e, i, c).replace(/ · Rp [\d.]+/, '').replace(/ · \d Orang Dalam/, '');
+      const label = eLabel(e, i, c).replace(/ · Rp [\d.]+/, '').replace(/ · \d Orang Inside/, '');
       const od = cost.orangDalam ? [`${cost.orangDalam} `, h('img', { src: iconURL('orangDalam'), alt: t('res.orangDalam'), width: 18, height: 18, class: 'inline-icon' })] : [];
       const price: Node[] = [...(cost.rupiah ? [document.createTextNode(rupiah(cost.rupiah))] : []), ...(cost.rupiah && od.length ? [document.createTextNode(' + ')] : []), ...od.map((x) => (x instanceof Node ? x : document.createTextNode(x)))];
       return h('div', { class: 'action' },
@@ -215,7 +236,6 @@ export class App {
     );
     el.onclick = null;
     el.hidden = false;
-    this.shake();
   }
 
   private chooseEvent(i: number): void {
@@ -252,19 +272,10 @@ export class App {
     return h('div', { class: 'outcome-list' }, ...rows);
   }
 
-  /** A short screen shake for bad news. Skipped when effects are off. */
-  shake(): void {
-    if (!this.view.effects) return;
-    const stage = document.getElementById('map')!;
-    stage.classList.remove('shake');
-    void stage.offsetWidth;
-    stage.classList.add('shake');
-  }
-
   /** The player accepts the SK: the stage rises and the map grows. */
-  accept(): void {
+  accept(path?: 'kelurahan' | 'desa'): void {
     const fx: SimEffect[] = [];
-    if (!acceptSK(this.s, fx)) return;
+    if (!acceptSK(this.s, fx, path)) return;
     this.view.regrid();
     this.handleFx(fx);
     this.save();
@@ -369,13 +380,16 @@ export class App {
   // ---------- HUD ----------
   private buildHud(): void {
     const hud = document.getElementById('hud')!;
-    const chip = (id: ExplainId, icon: Node, label: string) =>
+    const chip = (id: ResourceId | 'pop', icon: Node, label: string) =>
       h('button', { class: 'chip', type: 'button', id: `chip-${id}`, 'aria-label': label, style: `--c:${id === 'pop' ? '#f4f4f5' : RES_COLOUR[id]}`, onclick: () => this.explain(id) },
         icon,
         h('span', { class: 'chip-value' }, ''),
       );
     const img = (name: string) => h('img', { src: iconURL(name), alt: '', width: 18, height: 18 });
     const chips = (Object.keys(RES_META) as ResourceId[]).map((id) => chip(id, img(RES_META[id].icon), RES_META[id].label()));
+    const emasBar = document.getElementById('emas');
+    emasBar?.addEventListener('click', () => this.explain('emas'));
+    emasBar?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') this.explain('emas'); });
     hud.replaceChildren(...chips, chip('pop', h('span', { class: 'chip-text' }, t('res.pop')), t('res.pop')));
     this.refresh();
   }
@@ -386,9 +400,14 @@ export class App {
     this.tap();
     const row = (kind: 'up' | 'down' | 'edge') =>
       h('p', { class: `exp-row exp-${kind}` }, h('strong', {}, `${{ up: '▲', down: '▼', edge: '■' }[kind]} ${t(`exp.${kind}`)}`), ` ${t(`exp.${id}.${kind}` as Key)}`);
-    const icon = id === 'pop' ? h('span', { class: 'chip-text' }, t('res.pop')) : h('img', { src: iconURL(RES_META[id].icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
-    const title = id === 'pop' ? t('res.warga') : RES_META[id].label();
-    this.modalQueue.push({ title, body: t(`exp.${id}.what` as Key), tone: 'info', extra: h('div', { class: 'exp', style: `--c:${id === 'pop' ? '#f4f4f5' : RES_COLOUR[id]}` }, icon, row('up'), row('down'), row('edge')) });
+    const text = id === 'pop' || id === 'emas';
+    const colour = id === 'pop' ? '#f4f4f5' : id === 'emas' ? '#fbbf24' : RES_COLOUR[id];
+    const icon = text ? h('span', { class: 'chip-text' }, id === 'emas' ? 'Emas' : t('res.pop')) : h('img', { src: iconURL(RES_META[id].icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
+    const title = id === 'pop' ? t('res.warga') : id === 'emas' ? t('stats.emasTitle') : RES_META[id].label();
+    const body = id === 'pop'
+      ? `${t('exp.pop.what')} ${t('pop.line', { pop: population(this.s), housing: housing(this.s), attract: attractTarget(this.s) })}${population(this.s) >= housing(this.s) ? ` ${t('pop.full')}` : ''}`
+      : t(`exp.${id}.what` as Key);
+    this.modalQueue.push({ title, body, tone: 'info', extra: h('div', { class: 'exp', style: `--c:${colour}` }, icon, row('up'), row('down'), row('edge')) });
     this.showModal();
   }
 
@@ -405,6 +424,7 @@ export class App {
     set('orangDalam', `${Math.floor(r.orangDalam)}`, t('res.orangDalam'));
     set('viral', `${Math.round(r.viral)}`, t('res.viral'));
     set('pop', `${population(this.s)}/${housing(this.s)}`, t('page.resourcesLabel'));
+    document.getElementById('chip-pop')?.classList.toggle('full', population(this.s) >= housing(this.s));
     document.getElementById('chip-rupiah')!.classList.toggle('negative', r.rupiah < 0);
     this.flashChanges();
     const emas = document.getElementById('emas-value');
@@ -471,11 +491,18 @@ export class App {
   // Two buttons: pause/play, and one that cycles 1x, 2x, 4x.
   private bindSpeed(): void {
     document.getElementById('pause-btn')!.addEventListener('click', () => this.setSpeed(this.speed ? 0 : this.pace));
-    document.getElementById('speed-btn')!.addEventListener('click', () => this.setSpeed(this.pace === 1 ? 2 : this.pace === 2 ? 4 : 1));
+    document.getElementById('speed-btn')!.addEventListener('click', () => this.setSpeed(this.nextPace()));
     this.setSpeed(this.speed);
   }
 
+  /** 4x unlocks in year 10, so early months can't be rushed past. */
+  private nextPace(): Speed {
+    if (this.pace === 1) return 2;
+    return this.pace === 2 && year(this.s) >= FAST_FROM_YEAR ? 4 : 1;
+  }
+
   setSpeed(sp: Speed): void {
+    if (sp === 4 && year(this.s) < FAST_FROM_YEAR) sp = 2;
     this.speed = sp;
     if (sp) this.pace = sp;
     const pause = document.getElementById('pause-btn')!;
@@ -491,86 +518,19 @@ export class App {
   private bindMap(): void {
     const canvas = document.getElementById('map') as HTMLCanvasElement;
     let down: { x: number; y: number; lastX: number; lastY: number; moved: boolean } | null = null;
-    // Every finger on the map. Two make a pinch: spreading them zooms in a whole step at a time.
-    const fingers = new Map<number, { x: number; y: number }>();
-    let pinch: { dist: number; midX: number; midY: number } | null = null;
-    const local = (x: number, y: number) => {
-      const r = canvas.getBoundingClientRect();
-      return { x: x - r.left, y: y - r.top };
-    };
-    const pinchNow = () => {
-      const [a, b] = [...fingers.values()];
-      return { dist: Math.hypot(a.x - b.x, a.y - b.y), midX: (a.x + b.x) / 2, midY: (a.y + b.y) / 2 };
-    };
     canvas.addEventListener('pointerdown', (e) => {
       canvas.setPointerCapture(e.pointerId);
-      fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (fingers.size === 2) {
-        pinch = pinchNow();
-        // A pinch is never a tap.
-        if (down) down.moved = true;
-        return;
-      }
-      if (fingers.size === 1) down = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, moved: false };
+      down = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, moved: false };
     });
     canvas.addEventListener('pointermove', (e) => {
-      if (fingers.has(e.pointerId)) fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pinch && fingers.size === 2) {
-        const now = pinchNow();
-        // The pair drags the map like one finger does.
-        this.view.panBy(now.midX - pinch.midX, now.midY - pinch.midY);
-        pinch.midX = now.midX;
-        pinch.midY = now.midY;
-        // Whole-number zoom keeps pixels crisp, so a step fires each time the fingers spread or close by a quarter.
-        const k = now.dist / pinch.dist;
-        if (k > 1.25 || k < 0.8) {
-          const at = local(now.midX, now.midY);
-          this.view.zoomBy(k > 1 ? 1 : -1, at.x, at.y);
-          pinch.dist = now.dist;
-        }
-        return;
-      }
       if (!down) return;
       if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) down.moved = true;
       if (down.moved) this.view.panBy(e.clientX - down.lastX, e.clientY - down.lastY);
       down.lastX = e.clientX;
       down.lastY = e.clientY;
     });
-    const lift = (e: PointerEvent) => {
-      fingers.delete(e.pointerId);
-      if (fingers.size < 2) pinch = null;
-      // One finger left after a pinch carries on panning from where it is, not from where the drag began.
-      const rest = fingers.size === 1 ? [...fingers.values()][0] : null;
-      if (rest && down) Object.assign(down, { lastX: rest.x, lastY: rest.y, moved: true });
-    };
-    // + and - zoom from the keyboard, around the middle of the map.
-    document.addEventListener('keydown', (e) => {
-      if (sheetOpen() || (e.target as HTMLElement).closest?.('input, textarea, select')) return;
-      if (e.key === '+' || e.key === '=') this.view.zoomBy(1);
-      else if (e.key === '-' || e.key === '_') this.view.zoomBy(-1);
-    });
-    canvas.addEventListener('pointercancel', (e) => {
-      lift(e);
-      down = null;
-    });
-    // Mouse wheel and trackpad pinch (a wheel event with ctrlKey). A notch (50 to 120px, by screen scaling) is one step.
-    let wheel = 0;
-    canvas.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      wheel += e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY * (e.ctrlKey ? 4 : 1);
-      if (Math.abs(wheel) < 50) return;
-      const at = local(e.clientX, e.clientY);
-      this.view.zoomBy(wheel < 0 ? 1 : -1, at.x, at.y);
-      wheel = 0;
-    }, { passive: false });
+    canvas.addEventListener('pointercancel', () => (down = null));
     canvas.addEventListener('pointerup', (e) => {
-      const was = fingers.size;
-      lift(e);
-      // The second finger of a pinch lifting: wait for the last one, and do not tap.
-      if (was > 1 || !down) {
-        if (fingers.size === 0) down = null;
-        return;
-      }
       const wasDrag = down?.moved;
       down = null;
       if (wasDrag) return;
@@ -578,9 +538,7 @@ export class App {
       const tile = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top, !this.placing);
       if (!tile) return;
       if (this.placing) {
-        const ok = checkPlace(this.s, this.placing, tile.x, tile.y).ok;
-        this.view.ghost = { x: tile.x, y: tile.y, ok, sprite: def(this.placing).sprite, size: def(this.placing).footprint ?? 1 };
-        this.updatePlacing();
+        this.tapPlacing(tile);
         return;
       }
       const b = buildingAt(this.s, tile.x, tile.y);
@@ -598,9 +556,30 @@ export class App {
   }
 
   // ---------- placement ----------
+  /** First and last tile of a path being laid. */
+  private line: { a: { x: number; y: number }; b: { x: number; y: number } | null } | null = null;
+  private lineTiles: LineTile[] = [];
+
+  /** Uid of the building being moved, or null while placing something new. */
+  private moving: number | null = null;
+
+  /** Picks a placed building up. Moving is free, and the building keeps its level and timers. */
+  startMoving(uid: number): void {
+    const b = byUid(this.s, uid);
+    if (!b) return;
+    this.startPlacing(b.def);
+    this.moving = uid;
+    this.view.hidden = uid;
+    this.view.ghost = { x: b.x, y: b.y, ok: true, sprite: def(b.def).sprite, n: footprintOf(b.def), flip: b.rot === 1 };
+    this.updatePlacing();
+  }
+
   startPlacing(id: string): void {
     closeSheet();
+    this.moving = null;
+    this.view.hidden = null;
     this.placing = id;
+    this.line = null;
     this.view.ghost = null;
     this.view.selected = null;
     document.getElementById('mainbar')!.hidden = true;
@@ -610,26 +589,82 @@ export class App {
 
   stopPlacing(): void {
     this.placing = null;
+    this.moving = null;
+    this.view.hidden = null;
+    this.line = null;
     this.view.ghost = null;
     document.getElementById('mainbar')!.hidden = false;
     document.getElementById('placebar')!.hidden = true;
+    document.getElementById('place-float')!.hidden = true;
+  }
+
+  private tapPlacing(tile: { x: number; y: number }): void {
+    const id = this.placing!;
+    const d = def(id);
+    if (d.pathIncome) {
+      // Paths take two taps, a start and an end, then Yes.
+      if (!this.line || this.line.b) this.line = { a: tile, b: null };
+      else this.line.b = tile;
+      this.refreshLine();
+      this.updatePlacing();
+      return;
+    }
+    // The tapped tile is the middle of a big footprint, not its corner.
+    const n = footprintOf(id);
+    const gx = tile.x - Math.floor((n - 1) / 2);
+    const gy = tile.y - Math.floor((n - 1) / 2);
+    const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
+    const ok = mover ? checkMove(this.s, mover, gx, gy).ok : checkPlace(this.s, id, gx, gy).ok;
+    this.view.ghost = { x: gx, y: gy, ok, sprite: d.sprite, n, flip: mover?.rot === 1 };
+    this.updatePlacing();
+  }
+
+  private refreshLine(): void {
+    const l = this.line;
+    if (!l || !this.placing) return;
+    const end = l.b ?? l.a;
+    this.lineTiles = linePath(this.s, this.placing, l.a, end);
+    this.view.ghost = { x: end.x, y: end.y, ok: this.lineTiles.some((p) => p.ok && !p.have), sprite: def(this.placing).sprite, n: 1, tiles: this.lineTiles };
   }
 
   confirmPlace(): void {
     const g = this.view.ghost;
     if (!this.placing || !g) return;
+    const d = def(this.placing);
+    if (this.line) {
+      const n = placeLine(this.s, this.placing, this.lineTiles);
+      if (!n) return;
+      const last = this.lineTiles[this.lineTiles.length - 1];
+      this.view.burst(last.x, last.y);
+      this.haptic(15);
+      audio.play('build');
+      // Keep going: the next two taps start another path. Cancel leaves build mode.
+      this.line = null;
+      this.view.ghost = null;
+      this.updatePlacing();
+      this.save();
+      this.refresh();
+      return;
+    }
+    const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
+    if (mover) {
+      if (!moveBuilding(this.s, mover, g.x, g.y).ok) return;
+      this.view.burst(g.x, g.y);
+      this.haptic(15);
+      audio.play('build');
+      this.stopPlacing();
+      this.save();
+      this.refresh();
+      return;
+    }
     const r = place(this.s, this.placing, g.x, g.y);
     if (r.ok) {
       this.view.burst(g.x, g.y);
-      const cost = buildCost(this.s, def(this.placing));
+      const cost = buildCost(this.s, d);
       if (cost) this.view.pop(g.x, g.y, 'rupiah', -cost);
       this.haptic(15);
       audio.play('build');
-      // Paths are free, so keep painting them until the player taps Cancel.
-      if (def(this.placing).pathIncome) {
-        this.view.ghost = null;
-        this.updatePlacing();
-      } else this.stopPlacing();
+      this.stopPlacing();
       this.save();
       this.refresh();
     }
@@ -640,16 +675,53 @@ export class App {
     const d = def(this.placing);
     const info = document.getElementById('place-info')!;
     const btn = document.getElementById('place-ok') as HTMLButtonElement;
+    const float = document.getElementById('place-float')!;
     const g = this.view.ghost;
+    const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
+    const title = h('strong', {}, mover ? t('build.moveTitle', { name: bName(d) }) : `${bName(d)} · ${rupiah(buildCost(this.s, d))}`);
+    float.hidden = !g;
+    document.getElementById('place-exit')!.hidden = !!g;
+    if (this.line && g?.tiles) {
+      const fresh = this.lineTiles.filter((p) => p.ok && !p.have).length;
+      const blocked = this.lineTiles.filter((p) => !p.ok).length;
+      if (!this.line.b) {
+        info.replaceChildren(title, h('span', {}, t('build.lineEnd')));
+        float.hidden = true;
+        document.getElementById('place-exit')!.hidden = false;
+        btn.disabled = true;
+        return;
+      }
+      btn.disabled = fresh === 0;
+      btn.textContent = t('page.yes');
+      info.replaceChildren(title, h('span', {}, fresh ? t('build.lineGo', { n: fresh, cost: rupiah(buildCost(this.s, d) * fresh) }) : t('build.lineNone')), ...(blocked ? [h('span', { class: 'meta' }, t('build.lineBlocked', { n: blocked }))] : []));
+      return;
+    }
+    btn.textContent = t('page.place');
     if (!g) {
-      info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), h('span', {}, (d.footprint ?? 1) > 1 ? t('build.tapLot', { n: d.footprint! }) : t('build.tapTile')));
+      info.replaceChildren(title, h('span', {}, d.pathIncome ? t('build.lineStart') : t('build.tapTile')));
       btn.disabled = true;
       return;
     }
-    const check = checkPlace(this.s, this.placing, g.x, g.y);
+    const check = mover ? checkMove(this.s, mover, g.x, g.y) : checkPlace(this.s, this.placing, g.x, g.y);
     g.ok = check.ok;
     btn.disabled = !check.ok;
-    info.replaceChildren(h('strong', {}, `${bName(d)} · ${rupiah(buildCost(this.s, d))}`), check.ok ? h('span', {}, d.pathIncome ? t('build.instant') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
+    const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
+    const noRoad = check.ok && !FLAT.has(d.id) && !d.id.startsWith('kantor') && (d.scope ?? 'rt') === 'rt' && !hasRoadBeside(connectedRoad(this.s), { def: d.id, x: g.x, y: g.y });
+    info.replaceChildren(title, check.ok ? h('span', noRoad ? { class: 'warn' } : {}, noRoad ? t('build.noRoad') : mover ? t('build.moveFree') : instant ? t('build.noPermit') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
+  }
+
+  /** Keeps the Place and Cancel buttons just below the chosen tile, above it when the tile is near the bottom edge. */
+  private positionPlace(): void {
+    const float = document.getElementById('place-float');
+    if (!float || float.hidden) return;
+    const a = this.view.ghostAnchor();
+    if (!a) return;
+    const w = float.offsetWidth;
+    const hgt = float.offsetHeight;
+    const room = float.parentElement!.clientHeight;
+    const x = Math.min(Math.max(a.x - w / 2, 4), float.parentElement!.clientWidth - w - 4);
+    const y = a.below + 8 + hgt > room ? Math.max(4, a.above - 8 - hgt) : a.below + 8;
+    float.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
   }
 
   // ---------- language ----------

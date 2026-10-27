@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { eventDef } from '../src/data/events';
 import { activeCombos } from '../src/sim/combos';
 import { banjirProtection, resolveEvent } from '../src/sim/events';
-import { acceptSK, canPromote, nextStarChecklist } from '../src/sim/stages';
+import { acceptSK, canPromote, nextStarChecklist, stageTitle } from '../src/sim/stages';
 import { promote } from '../src/sim/grow';
 import { liveJobs, assign } from '../src/sim/jobs';
 import { onBuildingFinished } from '../src/sim/projects';
@@ -49,6 +49,22 @@ describe('RW stage is playable', () => {
     expect(acceptSK(s)).toBe(true);
     expect(s.stage.current).toBe('rw');
     expect(s.neighbours).toHaveLength(3);
+  });
+
+  it('lets RW 3★ pick the Desa path', () => {
+    const s = newGame(1);
+    s.stage.current = 'rw';
+    setGrid('rw');
+    s.stage.stars.rw = 3;
+    s.stage.sk = 'offered';
+    expect(acceptSK(s, [], 'desa')).toBe(true);
+    expect(s.stage.current).toBe('kelurahan');
+    expect(s.stage.path).toBe('desa');
+  });
+
+  it('gives the Desa path its own titles', () => {
+    expect(stageTitle('kelurahan', 1, 'desa')).toBe('Desa Rintisan');
+    expect(stageTitle('kelurahan', 1)).not.toBe('Desa Rintisan');
   });
 
   it('always draws two AI RTs of one trait, so Grup Chat Warga can be found', () => {
@@ -252,9 +268,9 @@ describe('RW events', () => {
     expect(areaScore(s)).toBe(honest);
   });
 
-  it('Kerja Bakti makes the selokan protect more against banjir', () => {
+  it('Kerja Bakti makes the biopori protect more against banjir', () => {
     const s = rw(0);
-    put(s, 'selokan', 3, 3);
+    put(s, 'biopori', 3, 3);
     const before = banjirProtection(s);
     choose(s, 'kerjaBakti', 1);
     expect(banjirProtection(s)).toBeGreaterThan(before);

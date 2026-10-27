@@ -1,22 +1,23 @@
 import { t } from '../i18n';
 import { LOSE, RIVAL_BASE, RIVAL_JITTER, RIVAL_NAMES, RIVAL_PER_YEAR, RIVAL_SCALE, SCORE, WIN } from '../data/ranking';
-import { def } from './content';
+import { def, isCover } from './content';
 import { gain, type Fx } from './gain';
 import { viewOf } from './neighbourView';
+import { lombaMult } from './kel';
 import { popReportBonus } from './rw';
 import { randInt } from './rng';
 import { isWorking, population } from './state';
 import type { GameState } from './types';
 
 export function score(s: GameState): number {
-  const working = s.buildings.filter((b) => isWorking(b) && b.def !== 'rumah' && b.def !== 'parkir' && !def(b.def).pathIncome).length;
+  const working = s.buildings.filter((b) => isWorking(b) && b.def !== 'rumah' && b.def !== 'parkir' && !isCover(def(b.def))).length;
   return Math.round(
     population(s) * SCORE.perResident + working * SCORE.perBuilding + s.discovered.length * SCORE.perCombo + s.res.sabar * SCORE.perSabar + s.emas * SCORE.perEmas,
   );
 }
 
 /** The score of the whole area being ranked: the player's RT plus every AI RT in it. */
-export const areaScore = (s: GameState): number => score(s) + popReportBonus(s, population(s)) + s.neighbours.reduce((sum, n) => sum + score(viewOf(s, n)), 0);
+export const areaScore = (s: GameState): number => Math.round((score(s) + popReportBonus(s, population(s)) + s.neighbours.reduce((sum, n) => sum + score(viewOf(s, n)), 0)) * lombaMult(s));
 
 export function addEmas(s: GameState, amount: number): void {
   s.emas = Math.max(0, s.emas + amount);

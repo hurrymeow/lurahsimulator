@@ -34,6 +34,7 @@ export const RW_STAGE: StageDef = {
 
 export const KELURAHAN_STAGE: StageDef = {
   id: 'kelurahan',
+  playable: true,
   titles: ['Pak Lurah', 'Kelurahan Rintisan', 'Kelurahan Berkembang', 'Lurah Teladan'],
   stars: [
     {
