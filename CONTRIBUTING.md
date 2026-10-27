@@ -26,6 +26,7 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 - Style reference is Kairosoft's Dungeon Village. Own art and names only, no Kairosoft assets.
 - Main screen: slim resource bar, the map, one bottom row (pause, speed, date, **Menu**).
 - New panel? Register an `ActionButton` with a `group` in the Menu. Never add a main-screen button.
+- The optional Console look (Settings) adds shortcut tabs round the map. They only point at Menu panels. See [DESIGN.md](DESIGN.md#touch-and-layout).
 - Text never cuts off. No ellipsis, text wraps, panels scroll. Body font 16px or more.
 - Touch targets 48px or more.
 - New panel or message needs a scan in `tests/e2e/ui.spec.ts`.

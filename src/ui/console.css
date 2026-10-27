@@ -1,0 +1,104 @@
+/* Console skin (Settings > Console look): a cream frame with 1px ink rules and dark green chips,
+   after a 90s train-and-city builder. Only the main screen changes; sheets and modals keep the
+   default look. Text stays 16px or more and every control 48px, like the rest of the game. */
+html:not(.skin-console) .cs { display: none !important; }
+
+html.skin-console {
+  --cs-cream: #f3eed6;
+  --cs-cream-2: #e6dfbf;
+  --cs-cream-3: #d8cfa8;
+  --cs-ink: #2a1810;
+  --cs-ink-2: #5e4e3a;
+  --cs-green: #2f6b45;
+  --cs-on-green: #f6f2dc;
+}
+html.skin-console body { background: var(--cs-cream); }
+html.skin-console :is(.cs, #hud, #emas, #goal, #ticker, #bottombar) {
+  --bg: var(--cs-cream);
+  --surface: var(--cs-cream);
+  --surface-2: var(--cs-cream-3);
+  --line: var(--cs-ink);
+  --text: var(--cs-ink);
+  --muted: var(--cs-ink-2);
+  --accent: var(--cs-green);
+  --on-accent: var(--cs-on-green);
+  color: var(--cs-ink);
+}
+html.skin-console #app { border-inline: 1px solid var(--cs-ink); background: var(--cs-cream); }
+
+/* ---------- title bar: name | SYSTEM | date ---------- */
+.cs-title { display: grid; grid-template-columns: auto 1fr auto; align-items: stretch; min-height: var(--touch); background: var(--cs-cream); border-bottom: 1px solid var(--cs-ink); }
+.cs-name, .cs-date { display: flex; align-items: center; padding: 0 10px; font-family: var(--font-pixel); font-size: 16px; }
+.cs-name { font-weight: 700; letter-spacing: 0.04em; border-right: 1px solid var(--cs-ink); }
+.cs-date { border-left: 1px solid var(--cs-ink); text-align: right; }
+.cs-system { min-height: var(--touch); border: 0; background: var(--cs-cream); color: var(--cs-ink); font-family: var(--font-pixel); font-size: 16px; font-weight: 700; letter-spacing: 0.12em; cursor: pointer; }
+.cs-system:active { background: var(--cs-cream-2); }
+
+/* ---------- resource bar, goal, ticker and bottom row in the frame ---------- */
+html.skin-console #hud { border-bottom: 1px solid var(--cs-ink); }
+html.skin-console .chip { border-radius: 0; }
+/* Ink-dark resource colours, so the numbers keep their contrast on cream. */
+html.skin-console #chip-rupiah { --c: #1d6b35 !important; }
+html.skin-console #chip-sabar { --c: #1f57a8 !important; }
+html.skin-console #chip-orangDalam { --c: #7a4f00 !important; }
+html.skin-console #chip-viral { --c: #a52a66 !important; }
+html.skin-console #chip-pop { --c: var(--cs-ink) !important; }
+html.skin-console .chip-value { color: var(--c); font-family: var(--font-pixel); font-weight: 700; }
+html.skin-console #emas, html.skin-console #goal { border-bottom: 1px solid var(--cs-ink); }
+html.skin-console #emas-fill { background: var(--cs-green); }
+html.skin-console #ticker { margin: 0; border-radius: 0; border: 0; border-left: 4px solid var(--cs-ink-2); border-bottom: 1px solid var(--cs-ink); background: var(--cs-cream-2); }
+html.skin-console #stage { border-bottom: 1px solid var(--cs-ink); }
+html.skin-console #bottombar { background: var(--cs-cream); border-top: 0; border-bottom: 1px solid var(--cs-ink); }
+html.skin-console #bottombar .btn { border-radius: 0; box-shadow: 2px 2px 0 rgba(42, 24, 16, 0.35); }
+html.skin-console #month-progress { background: var(--cs-green); }
+
+/* ---------- rail: two tabs down the map's left edge ---------- */
+.cs-rail { position: absolute; left: 0; top: 0; bottom: 0; z-index: 3; width: calc(var(--touch) + 1px); display: flex; flex-direction: column; background: var(--cs-cream); border-right: 1px solid var(--cs-ink); }
+.cs-rail-tab { flex: 1; min-height: 96px; border: 0; background: var(--cs-cream); color: var(--cs-ink); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.cs-rail-tab span { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-pixel); font-size: 16px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+#cs-rail-build { background: var(--cs-green); color: var(--cs-on-green); }
+.cs-rail-tab:active { filter: brightness(0.92); }
+.cs-rail-swap { text-align: center; font-size: 16px; padding: 2px 0; border-block: 1px solid var(--cs-ink); }
+html.skin-console #map { margin-left: 0; }
+
+/* ---------- satellite view in the map's top-right corner ---------- */
+.cs-sat { position: absolute; top: 8px; right: 8px; z-index: 3; margin: 0; display: flex; background: var(--cs-cream); color: var(--cs-ink); border: 1px solid var(--cs-ink); box-shadow: 2px 2px 0 rgba(42, 24, 16, 0.35); cursor: crosshair; }
+.cs-sat[hidden] { display: none; }
+.cs-sat-label { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-pixel); font-size: 16px; font-weight: 700; letter-spacing: 0.06em; padding: 2px; border-left: 1px solid var(--cs-ink); text-align: center; }
+#cs-sat-map { display: block; width: 128px; height: 88px; image-rendering: pixelated; }
+@media (max-width: 359px) { #cs-sat-map { width: 104px; height: 72px; } }
+
+/* ---------- quick tabs: big label over a one-word caption ---------- */
+.cs-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--cs-cream); border-bottom: 1px solid var(--cs-ink); }
+.cs-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; min-height: 56px; padding: 4px 2px; border: 0; border-right: 1px solid var(--cs-ink); background: var(--cs-cream); color: var(--cs-ink); text-align: center; cursor: pointer; }
+.cs-tab:last-child { border-right: 0; }
+.cs-tab:active { background: var(--cs-green); color: var(--cs-on-green); }
+.cs-tab-big { font-family: var(--font-pixel); font-size: 16px; font-weight: 700; line-height: 1.15; }
+.cs-tab-small { font-size: 16px; line-height: 1.15; color: var(--cs-ink-2); }
+.cs-tab:active .cs-tab-small { color: var(--cs-on-green); }
+
+/* The home screen hides the frame with the rest of the HUD. */
+#app.home-open .cs { visibility: hidden; }
+
+/* The title bar carries the date, so the bottom row keeps only the month bar. */
+html.skin-console #date { display: none; }
+html.skin-console .date-wrap { justify-content: center; }
+/* The white Warga icon in dark ink. */
+html.skin-console #chip-pop img { filter: brightness(0.18); }
+.cs-date { white-space: nowrap; }
+@media (max-width: 359px) {
+  .cs-name, .cs-date { padding: 0 6px; }
+  .cs-name { letter-spacing: 0; }
+  .cs-system { letter-spacing: 0.04em; }
+}
+
+/* Short phones keep the map roomy: no title bar (the date goes back to the bottom row, Settings
+   stays in the Menu) and one-line tabs. */
+@media (max-height: 640px) {
+  html.skin-console .cs-title { display: none; }
+  html.skin-console #date { display: inline; }
+  .cs-tab { min-height: var(--touch); }
+  .cs-tab-small { display: none; }
+}
+/* The rotated label can outgrow a small map: keep the map centred beside it. */
+.cs-sat { align-items: center; }

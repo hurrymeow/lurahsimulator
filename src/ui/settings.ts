@@ -7,13 +7,14 @@ import { closeSheet, openSheet } from './sheet';
 /** Settings rows added by later systems. */
 export const settingsExtras: ((app: App) => Node[])[] = [];
 
-type ToggleKey = 'effects' | 'haptics' | 'largeText' | 'reduceMotion' | 'highContrast';
+type ToggleKey = 'effects' | 'haptics' | 'largeText' | 'reduceMotion' | 'highContrast' | 'console';
 const TOGGLES: { key: ToggleKey; label: Key; help: Key }[] = [
   { key: 'effects', label: 'set.effects', help: 'set.effectsHelp' },
   { key: 'haptics', label: 'set.haptics', help: 'set.hapticsHelp' },
   { key: 'largeText', label: 'set.largeText', help: 'set.largeTextHelp' },
   { key: 'reduceMotion', label: 'set.reduceMotion', help: 'set.reduceMotionHelp' },
   { key: 'highContrast', label: 'set.highContrast', help: 'set.highContrastHelp' },
+  { key: 'console', label: 'set.console', help: 'set.consoleHelp' },
 ];
 
 function toggleRow(app: App, tg: (typeof TOGGLES)[number]): Node {

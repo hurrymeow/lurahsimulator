@@ -312,7 +312,7 @@ export class MapView {
   }
 
   /** The kampung and the land around it, drawn once at art resolution. */
-  private drawWorld(): HTMLCanvasElement {
+  drawWorld(): HTMLCanvasElement {
     return (this.world ??= buildWorld());
   }
 

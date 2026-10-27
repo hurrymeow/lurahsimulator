@@ -842,6 +842,7 @@ export class App {
     document.documentElement.classList.toggle('large-text', this.settings.largeText);
     document.documentElement.classList.toggle('reduce-motion', this.settings.reduceMotion);
     document.documentElement.classList.toggle('high-contrast', this.settings.highContrast);
+    document.documentElement.classList.toggle('skin-console', this.settings.console);
     this.view.effects = this.settings.effects && !this.settings.reduceMotion;
     document.documentElement.classList.toggle('no-effects', !this.view.effects);
     this.view.motion = !this.settings.reduceMotion;
