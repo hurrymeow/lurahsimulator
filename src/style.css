@@ -1,3 +1,5 @@
+@font-face { font-family: 'Pak Pixel'; font-weight: 400; font-display: swap; src: url('./fonts/pak-pixel-400.woff2') format('woff2'); }
+@font-face { font-family: 'Pak Pixel'; font-weight: 700; font-display: swap; src: url('./fonts/pak-pixel-700.woff2') format('woff2'); }
 /* Mono Dark tokens. UI chrome is monochrome; colour is reserved for game meaning. */
 :root {
   --bg: #0b0b0c;
@@ -17,7 +19,7 @@
   --gap: 8px;
   --radius: 10px;
   --font: 'Atkinson Hyperlegible', system-ui, sans-serif;
-  --font-pixel: 'Pixelify Sans', 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --font-pixel: 'Pak Pixel', 'Atkinson Hyperlegible', system-ui, sans-serif;
   color-scheme: dark;
 }
 

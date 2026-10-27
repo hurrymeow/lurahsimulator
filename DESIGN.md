@@ -77,7 +77,7 @@ The artist's restyle is the reference ([ART.md](ART.md) has the full rules). New
 
 ## Legibility and testing
 
-- Body text uses Atkinson Hyperlegible. Pixelify Sans is for titles and primary buttons only. Pixelify draws 5 like S/8, so never use it for numbers.
+- Body text uses Atkinson Hyperlegible. Pixelify Sans (patched as Pak Pixel by scripts/patch-pixel-font.py, so f is not a capital F) is for titles and primary buttons only. Pixelify draws 5 like S/8, so never use it for numbers.
 - No ellipsis and no clipped text. Text wraps. Panels scroll.
 - The map is isometric. Tile diamonds are at least 32px tall. Smaller screens pan the map instead of shrinking it.
 - A tap on a building's body picks that building, even where it overlaps the tile behind.
