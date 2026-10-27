@@ -515,11 +515,12 @@ export class MapView {
         ctx.filter = 'none';
         this.art(ctx, iso('scaffold', undefined, n), b.x, b.y, 1, 0, n, flip);
       } else if (b.status === 'damaged') {
-        // A cracked path has its own art, so it needs no tint.
-        ctx.filter = b.def === 'jalan' ? 'none' : 'sepia(1) brightness(0.6)';
+        // A broken path greys out as a whole tile; other buildings tint brown.
+        ctx.filter = b.def === 'jalan' ? 'grayscale(1) brightness(0.78) contrast(1.1)' : 'sepia(1) brightness(0.6)';
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.filter = 'none';
         if (b.def === 'jalan') {
+          this.cracks(ctx, b);
           // A broken path must read at a glance: a red tint and an orange edge that breathes slowly
           // (steady with reduce motion), so it stands out from the sandy paths round it.
           const pulse = this.motion ? 0.5 + 0.5 * Math.sin(now / 420) : 1;
@@ -750,6 +751,36 @@ export class MapView {
       const hand = up ? [3, -11] : [5, -10];
       px(hand[0], hand[1], '#d6b38a');
     }
+  }
+
+  /**
+   * Cracks across the whole tile, in art pixels from its centre: a long split corner to corner and
+   * two branches, mirrored per tile so neighbours do not repeat. Each crack is a dark line with a
+   * light lip below it, so it reads as cut into the ground.
+   */
+  private cracks(ctx: CanvasRenderingContext2D, b: Building): void {
+    const c = this.tileCentre(b.x, b.y);
+    const s = this.scale;
+    const m = b.uid % 2 ? -1 : 1;
+    const lines = [
+      [[-13, -1], [-8, 1], [-4, -1], [0, 1], [5, -1], [9, 1], [13, 0]],
+      [[-2, -6], [-1, -3], [1, -1]],
+      [[3, 1], [4, 3], [2, 5], [3, 6]],
+      [[-7, 0], [-8, 3], [-6, 4]],
+    ];
+    const path = (dy: number) => {
+      ctx.beginPath();
+      for (const line of lines)
+        line.forEach(([x, y], i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, Math.round(c.x + x * m * s), Math.round(c.y + (y + dy) * s)));
+    };
+    ctx.lineWidth = s;
+    ctx.lineJoin = 'miter';
+    path(1);
+    ctx.strokeStyle = 'rgba(244, 244, 245, 0.55)';
+    ctx.stroke();
+    path(0);
+    ctx.strokeStyle = 'rgba(24, 24, 27, 0.9)';
+    ctx.stroke();
   }
 
   /** warn: a repair is needed, so the badge is warning orange instead of black. */

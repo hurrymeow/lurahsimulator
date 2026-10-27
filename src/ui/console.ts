@@ -41,6 +41,40 @@ export function setupConsole(app: App): void {
     return { d, b };
   });
   for (const { b } of dock) menuBtn.before(b);
+  // Menu gets an icon too, so the three bottom buttons read as one set.
+  if (!menuBtn.querySelector('.cs-menu-icon')) {
+    const label = h('span', { 'data-i18n': 'page.menu' }, menuBtn.textContent ?? '');
+    menuBtn.removeAttribute('data-i18n');
+    menuBtn.replaceChildren(h('span', { class: 'cs-menu-icon', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), label);
+  }
+
+  // ---------- top: two compact rows. Prototype: ?top=a|b|c picks the arrangement. ----------
+  // a: clock + resources / goal + date + 2045
+  // b: resources + date / clock + goal + 2045
+  // c: clock + date + 2045 / resources, with the goal floating on the map
+  const layout = (['a', 'b', 'c'] as const).find((k) => new URLSearchParams(location.search).get('top') === k) ?? 'a';
+  document.documentElement.dataset.top = layout;
+  const hud = document.getElementById('hud')!;
+  const goal = document.getElementById('goal')!;
+  const emas = document.getElementById('emas')!;
+  const row1 = h('div', { class: 'cs-row cs', id: 'cs-row1' });
+  const row2 = h('div', { class: 'cs-row cs', id: 'cs-row2' });
+  if (layout === 'a') {
+    row1.append(clock, hud);
+    row2.append(goal, date, emas);
+  } else if (layout === 'b') {
+    row1.append(hud, date);
+    row2.append(clock, goal, emas);
+  } else {
+    row1.append(clock, date, emas);
+    row2.append(hud);
+    // The goal floats as a pill over the map's top-left corner, opposite the satellite view.
+    stage.append(goal);
+    goal.classList.add('cs-goal-float');
+  }
+  title.replaceWith(row1);
+  row1.after(row2);
+  document.getElementById('status')!.hidden = true;
 
   // ---------- satellite view ----------
   const sat = h('canvas', { width: 88, height: 60, id: 'cs-sat-map' }) as HTMLCanvasElement;
