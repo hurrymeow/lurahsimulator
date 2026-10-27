@@ -30,7 +30,6 @@ Pacing and balance live in PACING.md, not here.
 ## Score at adoption (2026-10-27)
 
 - Pass: 1, 2, 3, 6, 9, 11. Legibility scan found 0 hits on every screen.
-- Fail 7: `coach.done` is 28 words, `coach.menu` is 19.
-- Fail 8: one event body is 33 words (median 17). `wac.intro` 33 and `decay.crackBody` 32. Five How to play bodies run 26 to 28. About 9 strings in total.
-- Open: the "Paused" pill stays over the map under open sheets.
-- Unscored: rule 12 needs a timed run.
+- Rules 7 and 8 failed at adoption (10 strings, one building blurb). Trimmed in #90 and #91, all now within limit.
+- The "Paused" pill over the map under open sheets is fixed in #92. It shows only in build mode.
+- Rule 12 is an estimate, not a measurement: about 25 to 35s to the first house, taken from the pacing thread. A timed run is still to do.
