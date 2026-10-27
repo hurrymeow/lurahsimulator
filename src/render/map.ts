@@ -10,7 +10,7 @@ import { t } from '../i18n';
 import { Crowd } from './people';
 import { Weather } from './weather';
 import { placeBadge, type BadgeBox } from './badge';
-import { buildWorld, decoAt, farRoofs, layoutWorld, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
+import { buildWorld, clouds, decoAt, farRoofs, layoutWorld, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
 import { ICONS, ROOF_COLOURS, ROOF_SHAPES, WALL_COLOURS, sprite } from './sprites';
 
 export const RES_COLOUR: Record<ResourceId, string> = {
@@ -648,6 +648,17 @@ export class MapView {
     const hr = SUN_SIZE * 2.4 * s;
     ctx.drawImage(halo, wx + SUN_X * s - hr / 2, wy + (SUN_Y + bob) * s - hr / 2, hr, hr);
     ctx.drawImage(sun, wx + (SUN_X - SUN_SIZE / 2) * s, wy + (SUN_Y - SUN_SIZE / 2 + bob) * s, SUN_SIZE * s, SUN_SIZE * s);
+
+    // Clouds slide slowly to and fro, and now and then one twitches up a pixel and settles.
+    clouds().forEach((c, i) => {
+      const dx = Math.round(Math.sin(t / c.period * Math.PI * 2 + c.phase) * c.sway);
+      const tick = Math.floor(t / 650);
+      const twitch = this.motion && ((tick * 7 + i * 13) % 23 === 0) ? -1 : 0;
+      const left = wx + (c.x + dx) * s;
+      const top = wy + (c.y + twitch) * s;
+      if (left > this.viewW || left + c.art.width * s < 0 || top > this.viewH || top + c.art.height * s < 0) return;
+      ctx.drawImage(c.art, left, top, c.art.width * s, c.art.height * s);
+    });
 
     // Ground anchor row in tree art: the stretch grows upward from the roots.
     const anchor = TOP + TH / 2;
