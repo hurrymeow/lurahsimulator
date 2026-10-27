@@ -53,8 +53,8 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
-      # The runner's own apt job sometimes holds the dpkg lock. Wait for it instead of failing.
-      - run: echo 'DPkg::Lock::Timeout "180";' | sudo tee /etc/apt/apt.conf.d/99lock-timeout
+      # The Ubuntu mirror sometimes stalls a single package download for minutes. Drop the stalled connection and retry.
+      - run: printf 'DPkg::Lock::Timeout "120";\nAcquire::http::Timeout "15";\nAcquire::Retries "5";\n' | sudo tee /etc/apt/apt.conf.d/99ci
       - if: steps.pw-cache.outputs.cache-hit != 'true'
         timeout-minutes: 5
         run: npx playwright install --with-deps chromium
