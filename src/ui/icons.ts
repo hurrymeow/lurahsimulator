@@ -18,8 +18,6 @@ const INKS: Record<string, string> = { w: '#3b2a1c', m: '#8a7556', y: '#c8502d' 
 
 /** Sprites standing in each scene, with their offset from the plate's ground centre in art pixels. */
 const SCENES: Record<string, { name: string; level?: number; variant?: string; dx: number; dy: number }[]> = {
-  build: [{ name: 'jalan', dx: 0, dy: 0 }, { name: 'warung', level: 2, dx: 0, dy: 0 }, { name: 'scaffold', dx: 0, dy: 0 }],
-  warga: [{ name: 'rumah', variant: 'o', dx: -6, dy: -2 }, { name: 'rumah', variant: 'G', dx: 6, dy: 2 }],
   neighbours: [{ name: 'kantorRT', level: 1, dx: -7, dy: -3 }, { name: 'rumah', variant: 'p', dx: 7, dy: 3 }],
   wacana: [{ name: 'kantorRT', level: 2, dx: 0, dy: 0 }],
   combo: [{ name: 'posRonda', level: 2, dx: -6, dy: -2 }, { name: 'warung', level: 2, dx: 6, dy: 2 }],
