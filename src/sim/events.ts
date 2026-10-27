@@ -86,7 +86,7 @@ function sinceRandomPopup(s: GameState): number {
   return times.length ? s.month - Math.max(...times) : Infinity;
 }
 
-/** Months a random popup keeps clear of any other event, before and after (PACING.md target 6). */
+/** Months a random popup keeps clear of any other event, before and after (GAME-DESIGN.md target 6). */
 export const EVENT_CLEAR = 3;
 
 /** True when any event just fired or a scheduled one is due within EVENT_CLEAR - 1 months. */

@@ -6,7 +6,7 @@ import type { EventDef } from './events';
 const NOW = 6;
 
 export const MORE_EVENTS: EventDef[] = [
-  // ---------- the first popup: a light joke with one clear winner, on schedule at month 6 (PACING.md target 3) ----------
+  // ---------- the first popup: a light joke with one clear winner, on schedule at month 6 (GAME-DESIGN.md target 3) ----------
   {
     id: 'guntingPita',
     name: 'Gunting Pita',
