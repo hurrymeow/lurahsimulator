@@ -1,24 +1,14 @@
-// Console frame: the main screen after a 90s train-and-city builder. A title bar with
-// SYSTEM and the date, a rail with Build and Wacana, a satellite view that pans the map, and a row
-// of quick tabs. Every control opens a panel the Menu already has. Settings picks a light or dark frame.
-import { t, type Key } from '../i18n';
+// Console frame: the main screen after a 90s train-and-city builder. A slim title bar with the
+// name and the date, and a small satellite view that pans the map. Every panel lives in the Menu,
+// so the frame adds no buttons of its own. Settings picks a light or dark frame.
+import { t } from '../i18n';
 import type { App } from '../app';
 import { dateLabel } from '../format';
 import { TH, TW } from '../render/iso';
 import { WORLD_OX, WORLD_OY } from '../render/scenery';
 import { GRID_H, GRID_W } from '../sim/types';
 import { h } from './dom';
-import { openSettings } from './settings';
 import './console.css';
-
-const open = (app: App, id: string) => app.actions.find((a) => a.id === id)?.open(app);
-
-const TABS: { id: string; big: Key; small: Key }[] = [
-  { id: 'log', big: 'cs.log', small: 'cs.logSub' },
-  { id: 'stats', big: 'cs.kas', small: 'cs.kasSub' },
-  { id: 'warga', big: 'cs.warga', small: 'cs.wargaSub' },
-  { id: 'wacana', big: 'cs.wacana', small: 'cs.wacanaSub' },
-];
 
 export function setupConsole(app: App): void {
   const root = document.getElementById('app')!;
@@ -26,39 +16,19 @@ export function setupConsole(app: App): void {
   const map = document.getElementById('map') as HTMLCanvasElement;
 
   // ---------- title bar ----------
-  const system = h('button', { class: 'cs-system', id: 'cs-system', type: 'button', onclick: () => openSettings(app) });
   const date = h('span', { class: 'cs-date', id: 'cs-date' });
-  const title = h('header', { class: 'cs-title cs', id: 'cs-title' }, h('span', { class: 'cs-name' }, document.title.toUpperCase()), system, date);
+  const title = h('header', { class: 'cs-title cs', id: 'cs-title' }, h('span', { class: 'cs-name' }, document.title.toUpperCase()), date);
   root.insertBefore(title, document.getElementById('hud'));
 
-  // ---------- rail ----------
-  const railTab = (id: string) => h('button', { class: 'cs-rail-tab', id: `cs-rail-${id}`, type: 'button', onclick: () => open(app, id) }, h('span', {}, ''));
-  const build = railTab('build');
-  const policy = railTab('wacana');
-  stage.append(h('nav', { class: 'cs-rail cs', id: 'cs-rail' }, policy, h('span', { class: 'cs-rail-swap', 'aria-hidden': 'true' }, '⇕'), build));
-
   // ---------- satellite view ----------
-  const sat = h('canvas', { width: 128, height: 88, id: 'cs-sat-map' }) as HTMLCanvasElement;
-  const satLabel = h('span', { class: 'cs-sat-label', 'aria-hidden': 'true' });
-  const satBox = h('figure', { class: 'cs-sat cs', id: 'cs-sat', role: 'button', tabindex: '0' }, satLabel, sat);
+  const sat = h('canvas', { width: 88, height: 60, id: 'cs-sat-map' }) as HTMLCanvasElement;
+  const satBox = h('figure', { class: 'cs-sat cs', id: 'cs-sat', role: 'button', tabindex: '0' }, sat);
   stage.append(satBox);
 
-  // ---------- quick tabs ----------
-  const tabs = TABS.map((tb) => h('button', { class: 'cs-tab', id: `cs-tab-${tb.id}`, type: 'button', onclick: () => open(app, tb.id) }, h('span', { class: 'cs-tab-big' }, ''), h('span', { class: 'cs-tab-small' }, '')));
-  root.insertBefore(h('nav', { class: 'cs-tabs cs', id: 'cs-tabs' }, ...tabs), document.getElementById('howto'));
-
-  // Labels follow the language; the date follows the month.
+  // The date follows the month; the satellite label follows the language.
   app.refreshers.push(() => {
-    system.textContent = t('cs.system');
     date.textContent = dateLabel(app.s.month);
-    build.firstElementChild!.textContent = t('menu.build');
-    policy.firstElementChild!.textContent = t('menu.wacana');
-    satLabel.textContent = t('cs.sat');
     satBox.setAttribute('aria-label', t('cs.satHelp'));
-    TABS.forEach((tb, i) => {
-      tabs[i].firstElementChild!.textContent = t(tb.big);
-      tabs[i].lastElementChild!.textContent = t(tb.small);
-    });
     // Out of the way while a building is being placed.
     satBox.hidden = !document.getElementById('placebar')!.hidden;
   });

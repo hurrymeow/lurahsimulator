@@ -295,18 +295,17 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 ### Touch and layout
 
 - Mobile-first, portrait, touch controls. Every number (tap size, text size, contrast, word limits) lives in [UI.md](UI.md), not here.
-- Main screen is the console frame, after a 90s train-and-city builder (`src/ui/console.ts`, `src/ui/console.css`). Top to bottom:
-  - a title bar: name, SYSTEM (opens Settings) and the date;
+- Main screen is the console frame, after a 90s train-and-city builder (`src/ui/console.ts`, `src/ui/console.css`). It is kept simple so the map has room. Top to bottom:
+  - a slim title bar: the name and the date. It is a label, not a control;
   - the resource bar, the Indonesia Emas bar, the goal strip and the ticker;
-  - the map, with a rail beside its left edge (Build and Wacana) and a satellite view in its top-right corner that pans the map when tapped;
-  - one bottom row: pause, speed, month bar, Menu;
-  - a row of quick tabs: Log, Kas, Warga, Wacana.
+  - the map, full width, with a small satellite view in its top-right corner that pans the map when tapped;
+  - one compact bottom row: pause, speed, month bar, Menu.
 - Every panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game.
-- The frame's controls are shortcuts only: each opens a panel the Menu already has. The Menu button stays, and a new panel registers an `ActionButton` with a `group` in the Menu, never only in the frame. Don't add other main-screen buttons.
-- The rail sits beside the map, never over it, so it never hides a tile. The satellite view hides while a building is being placed.
-- On short phones (640px tall or less) only the rail stays: the title bar, quick tabs and satellite view drop out, and the date goes back to the bottom row, so the map stays as tall as it was before the frame. Every dropped shortcut is still in the Menu.
+- No shortcut on the main screen duplicates a Menu panel: no rail, no quick tabs, no SYSTEM button. A new panel registers an `ActionButton` with a `group` in the Menu. Don't add main-screen buttons.
+- The satellite view hides while a building is being placed.
+- On short phones (640px tall or less) the title bar and the satellite view drop out, and the date goes back to the bottom row, so the map gets every pixel.
 - Sheets and modals keep their own dark look in both themes (see Themes below).
-- Clean pixel UI: 1px rules, square corners, a hard 2px drop shadow on buttons, dark green (`#2f6b45`) for the active tab and primary actions. No cluttered Windows-XP-style panels.
+- Clean pixel UI: 1px rules, square corners, dark green (`#2f6b45`) for primary actions. The bottom row has no padding round its 48px controls and no drop shadows. No cluttered Windows-XP-style panels.
 - The rules in [UI.md](UI.md) apply to the frame unchanged.
 - The dev-only `mockup.html` (also at `/mockup.html` on the live site) is the reference render, with a build palette the game doesn't have. It is not linked from the game.
 - Map art follows [ART.md](ART.md): palette, ink, shading, lighting and motion rules.
@@ -349,7 +348,7 @@ Settings > Theme picks the frame's colours. Both themes share the same layout.
 
 - **Light** (default): cream `#f3eed6` surfaces, `#e6dfbf` for the ticker, ink `#2a1810` text and rules, muted `#5e4e3a`. Resource numbers and warnings use ink-dark tones on cream: Rupiah `#1d6b35`, Sabar `#1f57a8`, Orang Dalam `#7a4f00`, Viral `#a52a66`, full housing `#8a4b00`, missing and warning text `#9b1c1c`.
 - **Dark** (Mono Dark): background `#0b0b0c`, surface `#18181b`, text `#f4f4f5`, muted `#a1a1aa`, rules `#52525b`. Resource numbers keep their bright colours.
-- Both: dark green `#2f6b45` with cream text for the active tab and primary actions. High contrast brightens muted text and rules in either theme.
+- Both: dark green `#2f6b45` with cream text for primary actions. High contrast brightens muted text and rules in either theme.
 - The browser theme-color follows the theme: `#f3eed6` light, `#0b0b0c` dark. The home screen keeps its dark backdrop. The PWA icon and manifest stay Mono Dark.
 - UI chrome stays out of game colour: colour is for game meaning (resources, map).
 - Icons: full-colour ART.md palette pixel glyph (house, sun, tree) on near-black. Hari lifted the monochrome rule for the icon only (2026-10-26).

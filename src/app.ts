@@ -815,7 +815,7 @@ export class App {
     const w = float.offsetWidth;
     const hgt = float.offsetHeight;
     const room = float.parentElement!.clientHeight;
-    // The anchor is in canvas pixels; the canvas sits right of the frame's rail.
+    // The anchor is in canvas pixels, measured from the canvas's own left edge.
     const left = document.getElementById('map')!.offsetLeft;
     const x = Math.min(Math.max(left + a.x - w / 2, left + 4), float.parentElement!.clientWidth - w - 4);
     const y = a.below + 8 + hgt > room ? Math.max(4, a.above - 8 - hgt) : a.below + 8;
