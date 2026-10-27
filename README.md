@@ -1,4 +1,4 @@
-# Kampung Story
+# Pejabat Sim
 
 A satirical kampung management sim, shipped as a PWA. You play Pak RT.
 

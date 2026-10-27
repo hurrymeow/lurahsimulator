@@ -103,7 +103,7 @@ export const EN = {
   'set.languageHelp': 'Changes every label, message and the tutorial.',
   'set.newGame': 'New game',
   'set.newGameArmed': 'Tap again to wipe this kampung',
-  'set.satire': 'Kampung Story is satire about systems and bureaucracy. Any resemblance to your actual kelurahan is a coincidence you should report, then wait 3 months for a reply.',
+  'set.satire': 'Pejabat Sim is satire about systems and bureaucracy. Any resemblance to your actual kelurahan is a coincidence you should report, then wait 3 months for a reply.',
 
   // tutorial
   'how.title': 'How to play',
@@ -325,7 +325,7 @@ export const EN = {
   'modal.tap': 'Tap to continue',
   'event.result': 'Event result',
   'event.mod': '{label}: income x{mult} for {n} months',
-  'install.title': 'Install Kampung Story',
+  'install.title': 'Install Pejabat Sim',
   'install.ios': 'Tap Share, then "Add to Home Screen".',
 
   // sim messages
