@@ -58,6 +58,17 @@ async function runMonth(page: Page): Promise<void> {
   await page.locator('#modal .tap-hint').click();
 }
 
+/** The open pop-up card sits mid-screen with centred text, the same for an event as for its result. */
+async function expectCentred(page: Page, where: string): Promise<void> {
+  const m = await page.evaluate(() => {
+    const card = document.querySelector('#modal .card') as HTMLElement;
+    const r = card.getBoundingClientRect();
+    return { off: Math.abs(r.top + r.height / 2 - innerHeight / 2), full: r.height >= innerHeight * 0.85, align: getComputedStyle(card.querySelector('p')!).textAlign };
+  });
+  expect(m.align, `${where} text alignment`).toBe('center');
+  if (!m.full) expect(m.off, `${where} is vertically centred`).toBeLessThan(3);
+}
+
 async function expectLegible(page: Page, where: string): Promise<void> {
   const problems = await scanLegibility(page);
   expect(problems, `${where}\n${problems.map((p) => `${p.rule}: "${p.text}" (${p.detail})`).join('\n')}`).toEqual([]);
@@ -342,6 +353,9 @@ test.describe('events, ranking, settings', () => {
         }, [id, broke] as const);
         await expect(page.locator('#modal .card.event')).toBeVisible();
         await expectLegible(page, `event ${id}`);
+        await expectCentred(page, `event ${id}`);
+        // The cost shows once, as a number and icon, never also spelled out in the label.
+        for (const label of await page.locator('#modal .card.event .btn').allInnerTexts()) expect(label, `event ${id} choice`).not.toMatch(/Orang (Inside|Dalam)/);
         // The game is paused until a choice is made, and the first choice always works.
         const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month);
         await page.waitForTimeout(300);
@@ -351,6 +365,7 @@ test.describe('events, ranking, settings', () => {
         await expect(page.locator('#modal .card h2')).toHaveText({ id: 'Hasil kejadian', en: 'Event result' }[lang()]);
         if (id !== 'banjir' && id !== 'kecamatan') await expect(page.locator('#modal .outcome-chip, #modal .outcome-mod').first()).toBeVisible();
         await expectLegible(page, `outcome ${id}`);
+        await expectCentred(page, `outcome ${id}`);
         await page.locator('#modal .tap-hint').click();
         await expect(page.locator('#modal')).toBeHidden();
         expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.pendingEvent)).toBeNull();
