@@ -5,6 +5,7 @@ import { promote } from './grow';
 import { STAGES } from '../data/stages';
 import { bName, t, tr, type Key } from '../i18n';
 import { def } from './content';
+import { first } from './firsts';
 import { gain, type Fx } from './gain';
 import { population } from './state';
 import type { GameState, Goal, StageDef, StageId, Stars } from './types';
@@ -113,6 +114,7 @@ export function stageSystem(s: GameState, fx: Fx): void {
   for (const [res, v] of Object.entries(star.reward ?? {})) gain(s, fx, res as 'sabar', v as number);
   const opens = star.unlocks.map((u) => bName(def(u))).join(', ');
   fx.push({ kind: 'notice', title: t('sim.starTitle', { stars, title: stageTitle(id, stars, s.stage.path) }), body: opens ? t('sim.starBody', { list: opens }) : t('sim.starBodyNone'), tone: 'good', fanfare: true });
+  first(s, fx, 'star');
   if (stars === 3 && stageDef(id).next) {
     s.stage.sk = 'offered';
     fx.push({ kind: 'notice', title: t('sim.skTitle'), body: t('sim.skBody'), tone: 'good', fanfare: true });

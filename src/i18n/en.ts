@@ -336,6 +336,9 @@ export const EN = {
   'log.title': 'Kampung log',
   'noticeSaveOff': 'Saving is off',
   'noticeSaveOffBody': 'This browser blocks storage. The game runs, but progress is lost when you close it.',
+  'first.house': 'First house built!',
+  'first.resident': 'First resident moved in!',
+  'first.star': 'First star earned!',
   'modal.new': '★ New ★',
   // yearly report card
   'report.title': 'Year {n} report',

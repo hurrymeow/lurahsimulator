@@ -37,6 +37,7 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
     rw: { kaderDecay: 0 },
     kel: { budget: 0, spentBase: 0, serapanRun: 0, cleanAudits: 0 },
     lastNovelty: 0,
+    firsts: [],
     lastArrival: 0,
     stats: { earned: 0, spent: 0, arrived: 0, left: 0 },
     roadsLaid: true,

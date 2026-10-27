@@ -303,6 +303,22 @@ test.describe('population and houses', () => {
   });
 });
 
+test.describe('first wins', () => {
+  test('the first house, resident and star each get a legible label that never blocks taps', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    for (const what of ['house', 'resident', 'star'] as const) {
+      await page.evaluate((w) => (window as unknown as { pakrt: any }).pakrt.handleFx([{ kind: 'first', what: w }]), what);
+      const tag = page.locator('.first-burst');
+      await expect(tag).toBeVisible();
+      await page.waitForTimeout(500);
+      expect(await scanLegibility(page), `first ${what}`).toEqual([]);
+      expect(await tag.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe('none');
+      await tag.evaluate((el) => el.remove());
+    }
+  });
+});
+
 test.describe('how to play', () => {
   test('shows on first launch, is legible, pauses the game, and stays dismissed', async ({ page }) => {
     await start(page);

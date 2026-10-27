@@ -326,6 +326,9 @@ export const ID: Record<Key, string> = {
   'log.title': 'Catatan kampung',
   'noticeSaveOff': 'Penyimpanan mati',
   'noticeSaveOffBody': 'Peramban ini memblokir penyimpanan. Game tetap jalan, tapi progres hilang saat ditutup.',
+  'first.house': 'Rumah pertama jadi!',
+  'first.resident': 'Warga pertama pindah!',
+  'first.star': 'Bintang pertama!',
   'modal.new': '★ Baru ★',
   // yearly report card
   'report.title': 'Laporan tahun {n}',
