@@ -1,0 +1,15 @@
+# Docs catch up with the shipped scenery
+
+- GAME-DESIGN.md (once DESIGN.md) and ART.md now describe the hills, the dithered haze, the twin volcanoes and the drifting cloud streaks that shipped in the rolling-hills PR.
+- Dithering is allowed for distant scenery only (haze, hill edge, mountains, clouds). Sprites and near ground stay flat cel-shaded.
+
+# Console frame for everyone, with a Light or Dark theme
+
+- The console frame from the console-skin PR is now the main screen for every player, not an option. Settings > Theme picks Light (cream, the default) or Dark (Mono Dark) for it. The Console look switch is gone.
+- Light is the default because it is the frame's own look. Dark keeps the old palette for players who prefer it, and for night play.
+- The rail now sits beside the map, not over it, so it never hides a tile. The Place and Cancel buttons account for the offset.
+- Numbers left the pixel font (the money chip read "SJt"). The title-bar date uses the body font too.
+- Sheets and modals keep their dark look in both themes. Restyling them is a separate job with its own contrast checks.
+- The browser theme-color follows the theme. The PWA icon and manifest stay Mono Dark.
+- On phones 640px tall or less only the rail stays. With the title bar, tabs and satellite view the map got so short at 320x568 that the Place buttons and roof taps landed in the HUD.
+- Docs: main merged DESIGN.md into GAME-DESIGN.md and renamed UI-RUBRIC.md to UI.md while this PR was open. The same changes now live in GAME-DESIGN.md section 6 (Touch and layout, Art style, Tech, and Themes in place of Mono Dark), UI.md rule 2, CONTRIBUTING.md and ART.md. Per AGENTS.md this PR updates the docs; the person asked for it ("update the design guide").

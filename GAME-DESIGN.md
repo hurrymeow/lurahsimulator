@@ -295,21 +295,20 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 ### Touch and layout
 
 - Mobile-first, portrait, touch controls. Every number (tap size, text size, contrast, word limits) lives in [UI.md](UI.md), not here.
-- Main screen: a slim resource bar at the top, the map, and one bottom row: pause, speed, date, Menu.
-- Every panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game.
-- New panels register an `ActionButton` with a `group` instead of adding a button to the main screen.
-- Clean modern pixel UI. No cluttered Windows-XP-style panels.
-- The default look above is the dark HUD. Settings also offers **Console look**, off by default: a cream frame with 1px ink rules and dark green chips, after a 90s train-and-city builder (`src/ui/console.ts`, `src/ui/console.css`). It adds:
+- Main screen is the console frame, after a 90s train-and-city builder (`src/ui/console.ts`, `src/ui/console.css`). Top to bottom:
   - a title bar: name, SYSTEM (opens Settings) and the date;
-  - a rail down the map's left edge: Build and Wacana;
-  - a satellite view in the map's top-right corner, which pans the map when tapped;
+  - the resource bar, the Indonesia Emas bar, the goal strip and the ticker;
+  - the map, with a rail beside its left edge (Build and Wacana) and a satellite view in its top-right corner that pans the map when tapped;
+  - one bottom row: pause, speed, month bar, Menu;
   - a row of quick tabs: Log, Kas, Warga, Wacana.
-- Console look rules:
-  - Every console control is a shortcut to a panel the Menu already opens. The Menu button stays, and new panels still go in the Menu, never only in the frame.
-  - It restyles the main screen only. Sheets and modals keep the default look.
-  - The rules in [UI.md](UI.md) apply to it unchanged.
-  - On short phones (640px tall or less) it drops the title bar and the tab captions, so the map keeps its room.
-  - The dev-only `mockup.html` is the reference render of the full console screen with a build palette. It is not linked from the game.
+- Every panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game.
+- The frame's controls are shortcuts only: each opens a panel the Menu already has. The Menu button stays, and a new panel registers an `ActionButton` with a `group` in the Menu, never only in the frame. Don't add other main-screen buttons.
+- The rail sits beside the map, never over it, so it never hides a tile. The satellite view hides while a building is being placed.
+- On short phones (640px tall or less) only the rail stays: the title bar, quick tabs and satellite view drop out, and the date goes back to the bottom row, so the map stays as tall as it was before the frame. Every dropped shortcut is still in the Menu.
+- Sheets and modals keep their own dark look in both themes (see Themes below).
+- Clean pixel UI: 1px rules, square corners, a hard 2px drop shadow on buttons, dark green (`#2f6b45`) for the active tab and primary actions. No cluttered Windows-XP-style panels.
+- The rules in [UI.md](UI.md) apply to the frame unchanged.
+- The dev-only `mockup.html` (also at `/mockup.html` on the live site) is the reference render, with a build palette the game doesn't have. It is not linked from the game.
 - Map art follows [ART.md](ART.md): palette, ink, shading, lighting and motion rules.
 
 ### Art style
@@ -318,7 +317,8 @@ The artist's restyle is the reference ([ART.md](ART.md) has the full rules). New
 
 - Warm storybook palette: terracotta, mustard, teal, cream, olive. Keys live in `PALETTE`.
 - 1px dark-brown ink (`#2a1810`) round every silhouette and face edge. Never pure black.
-- Flat two-tone cel shading, light from the top left. No dithering or noise.
+- Flat two-tone cel shading, light from the top left. No dithering or noise on sprites or near ground. Distant scenery (haze, hill edge, volcanoes, clouds) blends through an ordered dither (ART.md).
+- The land behind the kampung rolls into lit hills with a tile grid; twin volcanoes and drifting clouds stand behind them (ART.md).
 - Straight isometric lines on a 32x16 tile, scaled by whole numbers only.
 - Flat ground art (selokan, jalan) sets `bare` and draws its own edges so neighbours join.
 - Never overwrite the artist's sprites. Add new ones beside them.
@@ -341,13 +341,19 @@ The artist's restyle is the reference ([ART.md](ART.md) has the full rules). New
 - Buildings, combos, jobs and events live in data files under `src/data/`.
 - Placeholder pixel sprites are generated in code. No third-party game assets or names.
 - Save to localStorage inside try/catch. The game runs without storage.
-- PWA ships an install button and an update banner. Icons and theme-color follow Mono Dark.
+- PWA ships an install button and an update banner. Icons and the manifest follow Mono Dark; the page theme-color follows the theme.
 
-### Mono Dark
+### Themes
 
-- Background `#0b0b0c`, surface `#18181b`, text `#f4f4f5`, muted `#a1a1aa`.
-- UI chrome stays monochrome. Colour is reserved for game meaning (resources, map).
-- Icons: exception to Mono Dark. Full-colour ART.md palette pixel glyph (house, sun, tree) on near-black. Hari lifted the monochrome rule for the icon only (2026-10-26). Theme-color stays `#0b0b0c`.
+Settings > Theme picks the frame's colours. Both themes share the same layout.
+
+- **Light** (default): cream `#f3eed6` surfaces, `#e6dfbf` for the ticker, ink `#2a1810` text and rules, muted `#5e4e3a`. Resource numbers and warnings use ink-dark tones on cream: Rupiah `#1d6b35`, Sabar `#1f57a8`, Orang Dalam `#7a4f00`, Viral `#a52a66`, full housing `#8a4b00`, missing and warning text `#9b1c1c`.
+- **Dark** (Mono Dark): background `#0b0b0c`, surface `#18181b`, text `#f4f4f5`, muted `#a1a1aa`, rules `#52525b`. Resource numbers keep their bright colours.
+- Both: dark green `#2f6b45` with cream text for the active tab and primary actions. High contrast brightens muted text and rules in either theme.
+- The browser theme-color follows the theme: `#f3eed6` light, `#0b0b0c` dark. The home screen keeps its dark backdrop. The PWA icon and manifest stay Mono Dark.
+- UI chrome stays out of game colour: colour is for game meaning (resources, map).
+- Icons: full-colour ART.md palette pixel glyph (house, sun, tree) on near-black. Hari lifted the monochrome rule for the icon only (2026-10-26).
+- Numbers never use the pixel font (its 5 reads as an S). The pixel font is for labels, titles and primary buttons.
 
 ### Legibility and testing
 

@@ -3,18 +3,18 @@ import type { App } from '../app';
 import { h } from './dom';
 import { audio } from '../audio';
 import { closeSheet, openSheet } from './sheet';
+import { THEMES } from '../settings';
 
 /** Settings rows added by later systems. */
 export const settingsExtras: ((app: App) => Node[])[] = [];
 
-type ToggleKey = 'effects' | 'haptics' | 'largeText' | 'reduceMotion' | 'highContrast' | 'console';
+type ToggleKey = 'effects' | 'haptics' | 'largeText' | 'reduceMotion' | 'highContrast';
 const TOGGLES: { key: ToggleKey; label: Key; help: Key }[] = [
   { key: 'effects', label: 'set.effects', help: 'set.effectsHelp' },
   { key: 'haptics', label: 'set.haptics', help: 'set.hapticsHelp' },
   { key: 'largeText', label: 'set.largeText', help: 'set.largeTextHelp' },
   { key: 'reduceMotion', label: 'set.reduceMotion', help: 'set.reduceMotionHelp' },
   { key: 'highContrast', label: 'set.highContrast', help: 'set.highContrastHelp' },
-  { key: 'console', label: 'set.console', help: 'set.consoleHelp' },
 ];
 
 function toggleRow(app: App, tg: (typeof TOGGLES)[number]): Node {
@@ -50,6 +50,23 @@ function languageRow(app: App): Node {
   return h('div', { class: 'action lang-row' }, h('strong', {}, t('set.language')), h('div', { class: 'row' }, ...btns), h('p', { class: 'meta' }, t('set.languageHelp')));
 }
 
+function themeRow(app: App): Node {
+  const btns = THEMES.map((th) =>
+    h('button', {
+      class: `btn ${app.settings.theme === th ? 'btn-primary' : ''}`,
+      'data-theme': th,
+      'aria-pressed': String(app.settings.theme === th),
+      onclick: () => {
+        if (app.settings.theme === th) return;
+        app.settings.theme = th;
+        app.applySettings();
+        openSettings(app);
+      },
+    }, t(th === 'light' ? 'set.themeLight' : 'set.themeDark')),
+  );
+  return h('div', { class: 'action lang-row' }, h('strong', {}, t('set.theme')), h('div', { class: 'row' }, ...btns), h('p', { class: 'meta' }, t('set.themeHelp')));
+}
+
 const SLIDERS: { key: 'musicVol' | 'sfxVol'; label: Key; help: Key }[] = [
   { key: 'musicVol', label: 'set.music', help: 'set.musicHelp' },
   { key: 'sfxVol', label: 'set.sfx', help: 'set.sfxHelp' },
@@ -83,6 +100,7 @@ export function openSettings(app: App): void {
   });
   openSheet(t('menu.settings'), [
     languageRow(app),
+    themeRow(app),
     ...SLIDERS.map((v) => sliderRow(app, v)),
     ...TOGGLES.map((tg) => toggleRow(app, tg)),
     ...settingsExtras.flatMap((fn) => fn(app)),

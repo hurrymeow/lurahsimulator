@@ -9,7 +9,7 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 ### Touch and layout
 
 1. **Tap targets are 48px or more, with 8px gaps.** Material says 48dp and 8dp ([Google](https://support.google.com/accessibility/android/answer/7101858)). Apple says 44pt ([Deque](https://dequeuniversity.com/rules/attest-ios/1.0/touch-target-size)). WCAG 2.2 AA says 24px ([W3C](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)). We use 48 because thumbs miss on 320px phones.
-2. **The main screen has four parts:** resource bar, map, one bottom row, nothing else. Everything else opens from Menu. The Console look (Settings, off by default) may add its frame, and every control in it only opens a panel the Menu already has.
+2. **The main screen is the console frame and nothing else:** title bar, resource bar, the map with its rail and satellite view, one bottom row, quick tabs (GAME-DESIGN.md section 6). Everything else opens from Menu. The frame's rail, tabs and SYSTEM only open panels the Menu already has. On phones 640px tall or less only the rail stays.
 3. **The primary action sits in the bottom third.** Reason: thumb reach in portrait.
 
 ### Legibility

@@ -511,8 +511,8 @@ test.describe('events, ranking, settings', () => {
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
     const toggles = page.locator('#sheet .toggle');
-    expect(await toggles.count()).toBe(6);
-    for (let i = 0; i < 6; i++) {
+    expect(await toggles.count()).toBe(5);
+    for (let i = 0; i < 5; i++) {
       const t = toggles.nth(i);
       const before = await t.getAttribute('aria-checked');
       await t.click();
@@ -527,7 +527,7 @@ test.describe('events, ranking, settings', () => {
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
     const saved = await page.locator('#sheet .toggle').evaluateAll((els) => els.map((e) => e.getAttribute('aria-checked')));
-    expect(saved.length).toBe(6);
+    expect(saved.length).toBe(5);
   });
 
   test('volume sliders start audio on first tap and persist', async ({ page }) => {
@@ -615,13 +615,20 @@ test.describe('events, ranking, settings', () => {
 });
 
 test.describe('slim HUD and one menu', () => {
-  test('main screen has only pause, speed and Menu buttons', async ({ page }) => {
+  test('main screen has only pause, speed, Menu and the frame shortcuts', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     const ids = await page.evaluate(() =>
       [...document.querySelectorAll('button')].filter((b) => b.getClientRects().length && b.id !== 'ticker').map((b) => b.id),
     );
-    expect(ids).toEqual(['chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'pause-btn', 'speed-btn', 'menu-btn']);
+    // Short phones keep only the rail: no title bar and no quick tabs.
+    const tall = page.viewportSize()!.height > 640;
+    expect(ids).toEqual([
+      ...(tall ? ['cs-system'] : []),
+      'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop',
+      'cs-rail-wacana', 'cs-rail-build', 'pause-btn', 'speed-btn', 'menu-btn',
+      ...(tall ? ['cs-tab-log', 'cs-tab-stats', 'cs-tab-warga', 'cs-tab-wacana'] : []),
+    ]);
     const hud = (await page.locator('#hud').boundingBox())!;
     expect(hud.height).toBeLessThanOrEqual(80);
   });
@@ -1467,6 +1474,8 @@ test.describe('build mode', () => {
     const roads = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'jalan').length);
     const had = await roads();
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('jalan'));
+    // The frame's rail narrows the map: pan right so both ends of the path are on screen.
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.panBy(56, 0));
     const box = (await page.locator('#map').boundingBox())!;
     const tap = async (dx: number, dy: number) => {
       const at = await page.evaluate(([x, y]) => {
@@ -1581,10 +1590,14 @@ test.describe('zoom, big lots and the Warga list', () => {
         const app = (window as unknown as { pakrt: any }).pakrt;
         const b = app.s.buildings.find((o: any) => o.uid === 9001);
         // Zoomed in, a short view can leave the field above the top edge. Nudge it just inside, no more.
+        const r = document.getElementById('map')!.getBoundingClientRect();
         const c0 = app.view.tileCentre(b.x + 1, b.y + 1);
         if (c0.y < 40) app.view.panBy(0, 40 - c0.y);
+        // Keep it clear of the frame's satellite view in the top-right corner.
+        const sat = document.getElementById('cs-sat')!.getBoundingClientRect();
+        const c1 = app.view.tileCentre(b.x + 1, b.y + 1);
+        if (sat.width && c1.y < sat.bottom - r.top + 16 && c1.x > sat.left - r.left - 24) app.view.panBy(sat.left - r.left - 24 - c1.x, 0);
         const c = app.view.tileCentre(b.x + 1, b.y + 1);
-        const r = document.getElementById('map')!.getBoundingClientRect();
         return { x: r.left + c.x, y: r.top + c.y };
       });
       await page.mouse.click(at.x, at.y);
@@ -1703,42 +1716,53 @@ test.describe('sheets keep their place', () => {
   });
 });
 
-test.describe('console skin', () => {
-  test('is off by default, turns on from Settings, and every frame control opens its panel', async ({ page }) => {
+test.describe('console frame and theme', () => {
+  test('frames the map in light by default, switches to dark and back, and every frame control opens its panel', async ({ page }) => {
     await start(page);
     await dismissModals(page);
-    await expect(page.locator('#cs-title')).toBeHidden();
-    await expect(page.locator('#cs-tabs')).toBeHidden();
+    // Short phones keep only the rail, so the map stays as tall as it was before the frame.
+    const tall = page.viewportSize()!.height > 640;
+    for (const id of [...(tall ? ['#cs-title', '#cs-sat', '#cs-tabs'] : []), '#cs-rail', '#map', '#menu-btn', '#pause-btn']) await expect(page.locator(id)).toBeVisible();
+    if (!tall) for (const id of ['#cs-title', '#cs-sat', '#cs-tabs']) await expect(page.locator(id)).toBeHidden();
+    const dark = () => page.evaluate(() => document.documentElement.classList.contains('theme-dark'));
+    expect(await dark()).toBe(false);
+    await expectLegible(page, 'console frame, light');
+    // The map keeps a usable size, and the rail sits beside it rather than over it.
+    const map = (await page.locator('#map').boundingBox())!;
+    const rail = (await page.locator('#cs-rail').boundingBox())!;
+    expect(map.height).toBeGreaterThan(200);
+    expect(map.x).toBeGreaterThanOrEqual(rail.x + rail.width - 1);
+    // Theme: Light and Dark buttons in Settings.
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
-    // The console switch is the last toggle.
-    const sw = page.locator('#sheet .toggle').last();
-    await expect(sw).toHaveAttribute('aria-checked', 'false');
-    await sw.click();
-    await expect(sw).toHaveAttribute('aria-checked', 'true');
+    await page.locator('#sheet [data-theme="dark"]').click();
+    await expect(page.locator('#sheet [data-theme="dark"]')).toHaveAttribute('aria-pressed', 'true');
+    expect(await dark()).toBe(true);
+    await expectLegible(page, 'settings, dark theme');
     await page.locator('.sheet-head .btn').click();
-    // Short phones drop the title bar to keep the map roomy.
-    const tall = page.viewportSize()!.height > 640;
-    for (const id of [...(tall ? ['#cs-title'] : []), '#cs-rail', '#cs-sat', '#cs-tabs', '#map', '#menu-btn', '#pause-btn']) await expect(page.locator(id)).toBeVisible();
-    await expectLegible(page, 'console skin');
-    // The map keeps a usable size under the frame.
-    const map = (await page.locator('#map').boundingBox())!;
-    expect(map.height).toBeGreaterThan(200);
+    await expectLegible(page, 'console frame, dark');
     // Each control opens a sheet that the Menu also opens.
-    for (const id of [...(tall ? ['#cs-system'] : []), '#cs-rail-build', '#cs-rail-wacana', '#cs-tab-log', '#cs-tab-stats', '#cs-tab-warga', '#cs-tab-wacana']) {
+    for (const id of [...(tall ? ['#cs-system', '#cs-tab-log', '#cs-tab-stats', '#cs-tab-warga', '#cs-tab-wacana'] : []), '#cs-rail-build', '#cs-rail-wacana']) {
       await page.locator(id).click();
       await expect(page.locator('#sheet')).toBeVisible();
       await page.locator('.sheet-head .btn').click();
       await expect(page.locator('#sheet')).toBeHidden();
     }
     // A tap on the satellite view pans the map.
-    const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox);
-    const sat = (await page.locator('#cs-sat-map').boundingBox())!;
-    await page.mouse.click(sat.x + 4, sat.y + 4);
-    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox)).not.toBe(before);
-    // It stays on after a reload.
+    if (tall) {
+      const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox);
+      const sat = (await page.locator('#cs-sat-map').boundingBox())!;
+      await page.mouse.click(sat.x + 4, sat.y + 4);
+      expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox)).not.toBe(before);
+    }
+    // The theme survives a reload, then goes back to light.
     await page.reload();
     await passHome(page);
-    await expect(page.locator('#cs-tabs')).toBeVisible();
+    expect(await dark()).toBe(true);
+    await expect(page.locator('#cs-rail')).toBeVisible();
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    await page.locator('#sheet [data-theme="light"]').click();
+    expect(await dark()).toBe(false);
   });
 });
