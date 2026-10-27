@@ -9,7 +9,7 @@ const BASE: Record<string, string> = {
   'building.posRonda.blurb': 'Pos jaga malam. +2 Popularitas per bulan. Belum ada yang pernah lihat orang jaga.',
   'building.biopori.blurb': 'Saluran beton yang mengalirkan air hujan, lengkap dengan jembatan papan. Murah dan cepat. Tiap level meredam kerusakan banjir.',
   'building.jalan.name': 'Jalan Setapak',
-  'building.jalan.blurb': 'Jalan setapak gratis. Setiap bangunan butuh jalan ke Kantor RT, kalau tidak diam saja. Bangunan di sampingnya untung 10% lebih banyak, dan warga hanya lewat sini. Memakan satu petak. Bisa dibongkar kapan saja.',
+  'building.jalan.blurb': 'Jalan setapak gratis. Setiap bangunan butuh jalan ke Kantor RT, kalau tidak diam saja. Tetangganya untung 10% lebih banyak. Satu petak. Bisa dibongkar kapan saja.',
   'building.wifi.name': 'Menara Wifi',
   'building.wifi.blurb': 'Jual voucher. Membuka kerja ojol, influencer dan buzzer.',
   'building.indomaret.blurb': 'Pemasukan besar. Memunculkan tukang parkir. Benci Alfamart.',
