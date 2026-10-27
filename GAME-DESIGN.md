@@ -2,7 +2,7 @@
 
 The one design doc for Pak Pejabat. A satirical kampung management sim, shipped as a PWA. You play Pak RT and work up the ladder to Pak Lurah.
 It replaces the old DESIGN.md, STAGES.md and PACING.md, which were deleted.
-Builder rules stay in their own files: [UI-RUBRIC.md](UI-RUBRIC.md), [ART.md](ART.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
+Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Contents
 
@@ -290,7 +290,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 
 ## 6. UI, art and tech rules
 
-These are the design-level UI rules. Measurable checks are in [UI-RUBRIC.md](UI-RUBRIC.md). Art detail is in [ART.md](ART.md).
+These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Art detail is in [ART.md](ART.md).
 
 ### Touch and layout
 
