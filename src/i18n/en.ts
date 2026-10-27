@@ -11,6 +11,7 @@ export const EN = {
   'page.welcome': 'Welcome, Pak Pejabat.',
   'page.menu': 'Menu',
   'home.start': 'Start',
+  'home.update': 'Update available',
   'home.continue': 'Continue',
   'home.new': 'New game',
   'home.back': 'Back',
