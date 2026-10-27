@@ -51,6 +51,8 @@ export const EN = {
   'sim.needStars': 'Reach {title} ({n}★)',
   'sim.starTitle': '{stars}★ {title}',
   'sim.starBody': 'New: {list}.',
+  'sim.camatTitle': 'Pak Camat calls',
+  'sim.camatBody': 'Kecamatan wants 10 residents by Lebaran. It did not say which Lebaran.',
   'sim.starBodyNone': 'The kampung is proud of you.',
   'sim.skTitle': 'An SK has arrived',
   'sim.skBody': 'The next level is waiting for you. Open the Menu to accept or decline.',

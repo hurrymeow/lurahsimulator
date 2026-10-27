@@ -59,6 +59,7 @@ function eligible(s: GameState, e: EventDef): boolean {
   const w = e.when;
   if (w.chance <= 0) return false;
   if (w.minMonth !== undefined && s.month < w.minMonth) return false;
+  if (w.maxMonth !== undefined && s.month > w.maxMonth) return false;
   if (w.minStars !== undefined && s.stage.stars.rt < w.minStars) return false;
   if (w.months && !w.months.includes(s.month % 12)) return false;
   if (w.needs && !s.buildings.some((b) => b.def === w.needs && b.status === 'active')) return false;

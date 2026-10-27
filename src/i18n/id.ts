@@ -48,6 +48,8 @@ export const ID: Record<Key, string> = {
   'sim.needStars': 'Capai {title} ({n}★)',
   'sim.starTitle': '{stars}★ {title}',
   'sim.starBody': 'Baru: {list}.',
+  'sim.camatTitle': 'Pak Camat menelepon',
+  'sim.camatBody': 'Kecamatan minta 10 warga sebelum Lebaran. Lebaran yang mana, tidak disebut.',
   'sim.starBodyNone': 'Kampung bangga padamu.',
   'sim.skTitle': 'SK sudah tiba',
   'sim.skBody': 'Jabatan berikutnya menunggu. Buka Menu untuk menerima atau menolak.',
