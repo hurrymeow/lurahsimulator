@@ -75,6 +75,24 @@ export const STEMPEL = {
   perBuild: 1,
 };
 
+/** Jalan Setapak wears out. Cracked paths are not road, so buildings past them lose access until fixed. */
+export const PATH_DECAY = {
+  /** No cracks in year 1. */
+  safeMonths: 12,
+  /** Chance a working path cracks in a month. About one crack every 8 months on a 30-tile network. */
+  crackChance: 0.004,
+  /** A damaged stretch left alone this many months grows once. */
+  spreadEvery: 6,
+  /** Each growth adds this share of the stretch's size, and always at least one tile. */
+  spreadRate: 0.1,
+  /** Months unrepaired before a crack turns into potholes. Looks only. */
+  potholeAfter: 6,
+  /** Rupiah to fix one tile, before inflation. */
+  repairPerTile: 150_000,
+  /** Orang Dalam to have a whole stretch fixed through a connection. */
+  favour: 1,
+};
+
 /** Most extra income decorations can add to one building, however many stand nearby. */
 export const DECOR_CAP = 0.6;
 

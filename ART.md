@@ -184,6 +184,30 @@ sparkle, rosy cheeks (`#f07f86`), an open smile with a pink tongue. Blinks are h
 arcs (^ ^). Only give a face to things that earn the joke (the sun today). Buildings stay
 faceless, so the map stays readable.
 
+## Building levels
+
+- Every level looks different, like a building card in a mobile builder: level 1 is makeshift,
+  the top level is built to last. The silhouette and the materials change, not just the size.
+  Warung: tarp-roofed gerobak, zinc-roofed kiosk, whitewashed brick with a tile roof and an awning.
+  Pos ronda: bamboo balai-balai under rumbia, wooden hut, green-and-white siskamling post. Kantor RT:
+  a front room with a nameboard, the office with a flag, a pendopo under a joglo roof.
+- A level never grows more than one storey (8px) over level 1, and nothing but the wifi tower goes
+  above 28px. A building that grows taller would hide the small ones behind it. `tests/art.test.ts`
+  checks both.
+- Sprites with their own level art take `level` as the third argument and are listed in `LEVELLED`.
+  Every other sprite gets the upgrade kit in front of it: a bamboo pagar at level 2, a whitewashed
+  pagar tembok with potted plants and a lamp at level 3. Ground pieces skip the kit (`NO_KIT`).
+- The inspector shows every level side by side, the current one framed.
+
+## Terraced hills and icons
+
+- Toward the mountains the land rises into terraces: kebun teh on the left, sawah terasering on the
+  right. Each terrace is a band of a smooth height field. Its riser is a lit rim over a dark line,
+  steps alternate light and dark, and slopes facing the top left are lit.
+- Menu icons sit on a cream bevelled plate, like the tool panel of an old isometric city builder.
+  Panels about the kampung show a tiny scene drawn with the map's own sprites. Abstract ones show
+  their glyph in dark ink with a brick-red accent.
+
 ## Adding a sprite
 
 1. Add a function to `ART` in `src/render/iso.ts`. Start with `p.shadow(inset)`.

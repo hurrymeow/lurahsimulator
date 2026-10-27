@@ -1,3 +1,4 @@
+import { PATH_DECAY } from '../sim/balance';
 import { rupiahShort } from '../format';
 import { def } from '../sim/content';
 import { footprintOf, tilesOf } from '../sim/state';
@@ -387,6 +388,8 @@ export class MapView {
 
   private variant(b: Building): string | undefined {
     if (b.def === 'rumah') return ROOF_COLOURS[b.uid % ROOF_COLOURS.length];
+    // A cracked path shows its age: a split at first, potholes once it has been left for months.
+    if (b.def === 'jalan' && b.status === 'damaged') return this.clock - (b.crackedAt ?? this.clock) >= PATH_DECAY.potholeAfter ? 'rusak' : 'retak';
     if (b.def !== 'selokan') return undefined;
     const has = (dx: number, dy: number) => this.selokan.has((b.y + dy) * GRID_W + b.x + dx);
     return !has(1, 0) && !has(-1, 0) && (has(0, 1) || has(0, -1)) ? 'y' : undefined;
@@ -480,7 +483,7 @@ export class MapView {
       if (!this.onScreen(b.x, b.y) || b.uid === this.hidden) return;
       const d = def(b.def);
       const n = footprintOf(b.def);
-      const art = iso(d.sprite, this.variant(b), n);
+      const art = iso(d.sprite, this.variant(b), n, b.level);
       const flip = b.rot === 1;
       if (ai.has(b.uid)) {
         this.art(ctx, art, b.x, b.y, 1, 0, n, flip);
@@ -504,7 +507,8 @@ export class MapView {
         ctx.filter = 'none';
         this.art(ctx, iso('scaffold', undefined, n), b.x, b.y, 1, 0, n, flip);
       } else if (b.status === 'damaged') {
-        ctx.filter = 'sepia(1) brightness(0.6)';
+        // A cracked path has its own art, so it needs no tint.
+        ctx.filter = b.def === 'jalan' ? 'none' : 'sepia(1) brightness(0.6)';
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.filter = 'none';
       } else if (b.noRoad) {

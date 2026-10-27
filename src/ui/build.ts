@@ -12,8 +12,8 @@ import { h, missingList } from './dom';
 import { storage } from '../storage';
 import { openSheet } from './sheet';
 
-function spriteImg(name: string, size = 40): HTMLImageElement {
-  return h('img', { src: isoURL(name), alt: '', width: size, height: size, class: 'pixel' });
+function spriteImg(name: string, size = 40, level = 1): HTMLImageElement {
+  return h('img', { src: isoURL(name, 3, level), alt: '', width: size, height: size, class: 'pixel' });
 }
 
 /** "Houses 3 · Attracts 1", so the population effect is visible before buying. */

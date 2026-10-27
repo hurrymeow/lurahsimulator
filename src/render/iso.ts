@@ -298,8 +298,55 @@ function inTri(x: number, y: number, a: number[], b: number[], c: number[]): boo
 
 const within = (v: number, lo: number, hi: number) => v >= lo && v < hi;
 
-function minimarket(bands: string[]): (p: Painter) => void {
-  return (p) => {
+/** Four corner posts of a box footprint, h pixels tall, for open-sided stalls and huts. */
+function posts(p: Painter, inset: number, h: number, colour: string): void {
+  const hw = TW / 2 - inset * 2 - 1;
+  const hh = TH / 2 - inset - 1;
+  for (const [x, y] of [[-hw, 0], [0, hh], [hw, 0], [0, -hh]]) p.stroke(x, y, x, y - h, 1, colour);
+}
+
+/**
+ * The upgrade kit for buildings without their own level art: things a kampung adds round a building
+ * as it does well. Level 2 fences the front with a bamboo pagar. Level 3 swaps it for a whitewashed
+ * pagar tembok with tiled caps, two potted plants at the gate and a short lamp. All of it stands in
+ * front and stays low, so a levelled building never hides the ones behind it.
+ */
+function upgradeKit(p: Painter, level: number): void {
+  if (level < 2) return;
+  const wall = level >= 3;
+  // Both front edges, from the side corners to the front corner, with a gate gap in the middle.
+  const edges: [number, number, number, number][] = [[-15, 0, -2, 6.5], [2, 6.5, 15, 0]];
+  p.id++;
+  for (const [x0, y0, x1, y1] of edges) {
+    const steps = Math.round(Math.abs(x1 - x0));
+    for (let k = 0; k <= steps; k++) {
+      const x = Math.round(x0 + ((x1 - x0) * k) / steps) + TW / 2;
+      const y = Math.round(y0 + ((y1 - y0) * k) / steps) + TOP + TH / 2;
+      if (wall) {
+        // Two courses of whitewash with a terracotta cap.
+        p.set(x, y, 'w');
+        p.set(x, y - 1, 'w');
+        p.set(x, y - 2, 'R');
+      } else {
+        // Bamboo: a post every third pixel, two rails between.
+        if (k % 3 === 0) p.set(x, y - 2, 'a');
+        p.set(x, y - 1, k % 3 === 0 ? 'a' : 'n');
+        p.set(x, y, 'a');
+      }
+    }
+  }
+  if (!wall) return;
+  // Potted plants either side of the gate, and a garden lamp by the right pot.
+  for (const dx of [-3, 3]) {
+    p.stroke(dx, 7, dx, 6, 2, 'o');
+    p.blob(dx, 3, 1.8, 'G');
+  }
+  p.stroke(6, 5, 6, -1, 1, 'S');
+  p.set(TW / 2 + 6, TOP + TH / 2 - 2, 'y');
+}
+
+function minimarket(bands: string[]): (p: Painter, v?: string, level?: number) => void {
+  return (p, _v, level = 1) => {
     p.shadow(1);
     p.box(1, 15, 'w', (face, u, j, i) => {
       if (face === 'T') return j === 0 && (u < 0.06 || u > 0.94) ? 'S' : 's';
@@ -308,10 +355,27 @@ function minimarket(bands: string[]): (p: Painter) => void {
       if (j >= 2 && j <= 8) return i % 4 === 0 ? 'w' : 'c';
       return undefined;
     });
+    if (level >= 2) {
+      // A tiang reklame by the road in the shop's colours, lower than the roof, and an ATM column at the
+      // other corner. The shop reads as the busy branch without growing taller.
+      p.stroke(-12, 3, -12, -10, 1, 'S');
+      p.stroke(-13, -16, -11, -11, 3, bands[0]);
+      p.stroke(-13, -13, -11, -12, 3, bands[2] ?? bands[1], false);
+      p.stroke(10, 4, 10, -4, 3, 'S');
+      p.set(TW / 2 + 10, TOP + TH / 2 - 3, 'c');
+      p.set(TW / 2 + 11, TOP + TH / 2 - 3, 'c');
+    }
   };
 }
 
-const ART: Record<string, (p: Painter, variant?: string) => void> = {
+type ArtFn = (p: Painter, variant?: string, level?: number) => void;
+
+/** Sprites that draw their own level progression. Everything else gets the upgrade kit. */
+const LEVELLED = new Set(['warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart']);
+/** Ground pieces and the tukang parkir level up without a fence round them. */
+const NO_KIT = new Set(['parkir', 'biopori', 'kebunSayur', 'sawah', 'kolamLele', 'kolamIkan', 'taman', 'sawahIrigasi', 'embung', 'aspalUlang', 'jalan', 'selokan']);
+
+const ART: Record<string, ArtFn> = {
   rumah: (p, roof = 'o') => {
     p.shadow(3);
     p.box(3, 8, 't', (face, u, j) => {
@@ -322,7 +386,43 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
     });
     p.roof(3, 8, 8, roof);
   },
-  kantorRT: (p) => {
+  kantorRT: (p, _v, level = 1) => {
+    if (level <= 1) {
+      // Pak RT's own front room: a plain house with a zinc roof and a nameboard on a post.
+      p.shadow(2);
+      p.box(3, 10, 't', (face, u, j) => {
+        if (face === 'L' && within(u, 0.42, 0.62) && j < 6) return 'N';
+        if (face === 'R' && within(u, 0.25, 0.75) && within(j, 4, 7)) return 'l';
+        return j === 0 ? 'n' : undefined;
+      });
+      p.roof(3, 10, 7, 's', (x) => (x % 3 === 0 ? 'S' : undefined));
+      p.stroke(-10, 6, -10, -2, 1, 'N');
+      p.stroke(-13, -5, -7, -2, 3, 'w');
+      p.stroke(-12, -4, -9, -3, 1, 'k', false);
+      return;
+    }
+    if (level >= 3) {
+      // A pendopo-fronted office under a two-tier joglo roof: a wide, low hip with a steep crown.
+      p.shadow(0);
+      p.box(1, 9, 'w', (face, u, j, i) => {
+        if (face === 'L' && within(u, 0.42, 0.6) && j < 7) return 'k';
+        if (j < 1) return 'S';
+        if (within(j, 3, 7) && i % 5 >= 2 && !(face === 'L' && within(u, 0.36, 0.66))) return 'l';
+        return undefined;
+      });
+      // Teak pillars along the front.
+      for (const x of [-12, -6, 6, 12]) p.stroke(x, 7 - Math.abs(x) / 2, x, -3 - Math.abs(x) / 2, 1, 'N');
+      p.roof(0, 9, 4, 'N', (x, y) => ((x + y) % 5 === 0 ? 'n' : undefined));
+      p.roof(5, 13, 6, 'R');
+      const ax = TW / 2;
+      const ay = TOP + TH / 2 - 13 - 6;
+      for (let k = 1; k <= 5; k++) p.set(ax, ay - k, 'k');
+      for (let k = 1; k <= 3; k++) {
+        p.set(ax + k, ay - 5, 'r');
+        p.set(ax + k, ay - 4, 'w');
+      }
+      return;
+    }
     p.shadow(1);
     p.box(1, 11, 'w', (face, u, j, i) => {
       if (face === 'L' && within(u, 0.42, 0.6) && j < 7) return 'k';
@@ -331,27 +431,84 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
       return undefined;
     });
     p.roof(1, 11, 9, 'R');
-    // Flag pole on the ridge: red over white.
+    // Flag pole on the ridge: red over white. Short, so the Kantor never hides the houses behind it.
     const ax = TW / 2;
     const ay = TOP + TH / 2 - 11 - 9;
-    for (let k = 1; k <= 9; k++) p.set(ax, ay - k, 'k');
+    for (let k = 1; k <= 5; k++) p.set(ax, ay - k, 'k');
     for (let k = 1; k <= 4; k++) {
-      p.set(ax + k, ay - 9, 'r');
-      p.set(ax + k, ay - 8, 'r');
-      p.set(ax + k, ay - 7, 'w');
-      p.set(ax + k, ay - 6, 'w');
+      p.set(ax + k, ay - 5, 'r');
+      p.set(ax + k, ay - 4, 'r');
+      p.set(ax + k, ay - 3, 'w');
+      p.set(ax + k, ay - 2, 'w');
     }
   },
-  warung: (p) => {
+  warung: (p, _v, level = 1) => {
+    if (level <= 1) {
+      // Warung tenda: a wooden gerobak counter under a blue terpal on bamboo poles, a red stool beside.
+      p.shadow(4);
+      posts(p, 4, 9, 'a');
+      p.box(6, 4, 'n', (face, _u, j, i) => (face === 'L' && j === 2 ? (i % 3 ? 'y' : 'c') : undefined));
+      p.roof(4, 9, 2, 'b', (x) => (x % 4 === 0 ? 'B' : undefined));
+      p.stroke(9, 5, 9, 3, 2, 'r');
+      return;
+    }
+    if (level >= 3) {
+      // A whitewashed brick warung: tile roof, a yellow nameboard band, a striped awning and a red cooler.
+      p.shadow(2);
+      p.box(2, 9, 'w', (face, u, j, i) => {
+        if (face === 'T') return undefined;
+        if (j >= 7) return 'y';
+        if (face === 'L' && within(u, 0.1, 0.9) && within(j, 2, 6)) return j === 2 ? 't' : i % 3 === 0 ? 'y' : i % 3 === 1 ? 'c' : 'p';
+        if (face === 'R' && within(u, 0.3, 0.7) && j < 6) return 'N';
+        return j === 0 ? 'S' : undefined;
+      });
+      p.roof(2, 9, 5, 'R');
+      // Awning over the counter, red and white.
+      p.id++;
+      for (let x = -13; x <= -1; x++) for (let k = 0; k < 2; k++) p.set(TW / 2 + x, TOP + TH / 2 - 6 + k + Math.round((x + 13) / 2), Math.floor((x + 13) / 2) % 2 ? 'w' : 'r');
+      p.stroke(10, 4, 11, 0, 3, 'r');
+      p.set(TW / 2 + 10, TOP + TH / 2 - 1, 'w');
+      return;
+    }
     p.shadow(3);
     p.box(3, 8, 'n', (face, u, j, i) => {
       if (face === 'T') return undefined;
       if (face === 'L' && within(u, 0.12, 0.88) && within(j, 3, 7)) return j === 3 ? 't' : i % 3 === 0 ? 'y' : i % 3 === 1 ? 'c' : 'k';
       return j === 0 ? 'N' : undefined;
     });
-    p.roof(3, 8, 5, 'r', (x) => (Math.floor(x / 2) % 2 ? 'w' : undefined));
+    // Zinc roof with corrugations, sachet strips hanging from the eave.
+    p.roof(3, 8, 4, 's', (x) => (x % 2 ? 'S' : undefined));
+    for (const x of [-9, -6, -3]) p.stroke(x, -4 + (x + 12) / 2, x, -1 + (x + 12) / 2, 1, x === -6 ? 'p' : 'y');
   },
-  posRonda: (p) => {
+  posRonda: (p, _v, level = 1) => {
+    // The kentongan: a slit log drum hanging by the post, at every level.
+    const kentongan = () => {
+      p.stroke(-9, -1, -9, -4, 2, 'n');
+      p.set(TW / 2 - 9, TOP + TH / 2 - 3, 'N');
+    };
+    if (level <= 1) {
+      // A bamboo balai-balai under a rumbia thatch, open on every side.
+      p.shadow(4);
+      posts(p, 4, 7, 'a');
+      p.box(5, 2, 'a', (face, _u, _j, i) => (face !== 'T' && i % 2 ? 'n' : undefined));
+      p.roof(4, 7, 5, 'a', (x, y) => ((x + 2 * y) % 3 === 0 ? 'n' : undefined));
+      kentongan();
+      return;
+    }
+    if (level >= 3) {
+      // A siskamling post painted green and white, tile roof, a lamp under the eave.
+      p.shadow(3);
+      p.box(3, 8, 'w', (face, u, j) => {
+        if (face === 'T') return undefined;
+        if (j < 3) return 'G';
+        if (face === 'L' && within(u, 0.15, 0.85) && within(j, 4, 7)) return 'k';
+        return undefined;
+      });
+      p.roof(3, 8, 5, 'R');
+      p.set(TW / 2 - 4, TOP + TH / 2 - 9, 'y');
+      kentongan();
+      return;
+    }
     p.shadow(4);
     p.box(4, 7, 't', (face, u, j) => {
       if (face === 'T') return null;
@@ -361,6 +518,7 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
       return null;
     });
     p.roof(4, 7, 6, 'N', (x, y) => ((x + y) % 4 === 0 ? 'n' : undefined));
+    kentongan();
   },
   // Variant 'y' runs the channel along the tile's y axis, so a column of selokan joins up.
   // Bare, with its own ink banks, so neighbouring channels join without an outline between them.
@@ -375,16 +533,42 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
     });
   },
   // Paving stones. Bare, so neighbouring path tiles join up without an outline between them.
-  jalan: (p) => {
+  // Paving stones. A cracked path ('retak') gets a dark split across it; left for months it turns
+  // into potholes ('rusak') with a puddle and loose stones.
+  jalan: (p, v) => {
     p.bare = true;
     p.ground((a, b) => {
       if (a < 0.03 || a > 0.97 || b < 0.03 || b > 0.97) return 'n';
       const row = Math.floor(b * 4);
       const seam = Math.abs(((a * 4 + (row % 2) * 0.5) % 1) - 0.5) > 0.46 || (b * 4) % 1 < 0.1;
+      if (v === 'retak' || v === 'rusak') {
+        // A zigzag split from one edge to the other, two straight steps so it reads as a crack.
+        const line = a < 0.5 ? 0.3 + a * 0.5 : 0.8 - (a - 0.5) * 0.6;
+        if (Math.abs(b - line) < 0.035) return '#4a3424';
+      }
+      if (v === 'rusak') {
+        // Two potholes: a dark rim, muddy water, a glint of sky. Stones kicked out lie around them.
+        for (const [ca, cb, r] of [[0.33, 0.62, 0.17], [0.7, 0.3, 0.12]]) {
+          const d = Math.hypot(a - ca, (b - cb) * 1.1) / r;
+          if (d < 0.55) return d < 0.25 && a < ca ? '#a9c6d6' : '#6f7f86';
+          if (d < 1) return '#5b4030';
+          if (d < 1.35 && (Math.floor(a * 23) + Math.floor(b * 17)) % 4 === 0) return 's';
+        }
+      }
       return seam ? 's' : 't';
     });
   },
-  wifi: (p) => {
+  wifi: (p, _v, level = 1) => {
+    if (level <= 1) {
+      // A bamboo pole lashed to a post, a pan antenna and a small router box at its foot.
+      p.shadow(8);
+      p.box(9, 3, 'S', (face, _u, j) => (face === 'L' && j === 1 ? 'c' : undefined));
+      p.stroke(0, -3, 0, -20, 2, 'a');
+      for (const y of [-8, -14]) p.set(TW / 2, TOP + TH / 2 + y, 'n');
+      p.stroke(-3, -20, 3, -22, 2, 's');
+      p.set(TW / 2, TOP + TH / 2 - 23, 'r');
+      return;
+    }
     p.shadow(6);
     p.box(5, 3, 'S');
     p.box(7, 28, 's', (face, _u, j) => (face !== 'T' && j % 4 === 0 ? 'S' : undefined), 3);
@@ -392,8 +576,22 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
     const ay = TOP + TH / 2 - 32;
     for (const [dx, dy] of [[-4, -1], [-5, -3], [-4, -5], [4, -1], [5, -3], [4, -5], [-7, -3], [7, -3], [0, -2], [0, -3]]) p.set(ax + dx, ay + dy, dx === 0 ? 'r' : 'c');
   },
-  // Two floors of rooms with a tin roof.
-  kosan: (p) => {
+  // Kos-kosan. Level 1 is one long row of rooms; level 2 adds a floor, a balcony rail and a jemuran.
+  kosan: (p, _v, level = 1) => {
+    if (level <= 1) {
+      p.shadow(1);
+      p.box(1, 8, 'o', (face, _u, j, i) => {
+        if (face === 'T') return undefined;
+        if (j < 1) return 'S';
+        // A door every six pixels, each with its own small window.
+        if (face === 'L' && i % 6 >= 2 && i % 6 < 4 && j < 6) return 'k';
+        if (face === 'L' && i % 6 === 5 && within(j, 3, 5)) return 'l';
+        if (face === 'R' && within(j, 3, 6) && i % 5 >= 2) return 'l';
+        return undefined;
+      });
+      p.roof(1, 8, 5, 'R');
+      return;
+    }
     p.shadow(1);
     p.box(1, 15, 'o', (face, u, j, i) => {
       if (face === 'T') return undefined;
@@ -403,6 +601,20 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
       return undefined;
     });
     p.roof(1, 15, 6, 'R');
+    // Balcony rail along the upper floor.
+    p.id++;
+    for (let x = -14; x <= -1; x++) p.set(TW / 2 + x, TOP + TH / 2 - 10 + Math.round((x + 14) / 2), (x & 1) ? 'S' : 'w');
+    // A jemuran in front of the side wall: laundry in every colour in the kampung.
+    p.stroke(5, 7, 5, -3, 1, 'S');
+    p.stroke(13, 3, 13, -7, 1, 'S');
+    p.id++;
+    ['p', 'b', 'y', 'w', 'r', 'g', 'o'].forEach((c, k) => {
+      const x = TW / 2 + 6 + k;
+      const y = TOP + TH / 2 - 3 - Math.round(k / 2);
+      p.set(x, y, c);
+      p.set(x, y + 1, c);
+      if (k % 2 === 0) p.set(x, y + 2, c);
+    });
   },
   // Open field: grass with chalk lines and a goalpost.
   lapangan: (p) => {
@@ -414,7 +626,15 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
     });
   },
   // A low shed with blue bins out front.
-  bankSampah: (p) => {
+  bankSampah: (p, _v, level = 1) => {
+    if (level <= 1) {
+      // A lean-to of zinc on poles over a pile of karung, sacks of sorted plastic.
+      p.shadow(4);
+      posts(p, 3, 7, 'n');
+      for (const [dx, up] of [[-4, 2], [1, 2], [-1, 5], [5, 3]]) p.blob(dx, up, 2.6, 'w');
+      p.roof(3, 7, 3, 's', (x) => (x % 2 ? 'S' : undefined));
+      return;
+    }
     p.shadow(3);
     p.box(3, 7, 'a', (face, u, j) => {
       if (face === 'L' && within(u, 0.15, 0.85) && within(j, 2, 5)) return 'B';
@@ -510,27 +730,33 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
 
 const cache = new Map<string, Art>();
 
+/** Paints a sprite at a level: its own level art if it has some, otherwise the base art plus the upgrade kit. */
+export function paint(p: Painter, name: string, variant?: string, level = 1): void {
+  const fn: ArtFn = ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's'));
+  fn(p, variant, level);
+  if (!LEVELLED.has(name) && !NO_KIT.has(name) && !p.bare) upgradeKit(p, level);
+}
+
 /**
  * Isometric art for a sprite name. variant is a roof colour for rumah, or 'y' for a selokan. n is the
  * footprint: big buildings get their own art at n times the size. Unknown names get a plain box.
  */
-export function iso(name: string, variant?: string, n = 1): Art {
-  const key = `${name}:${variant ?? ''}:${n}`;
+export function iso(name: string, variant?: string, n = 1, level = 1): Art {
+  const key = `${name}:${variant ?? ''}:${n}:${level}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const p = new Painter();
-  (ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant);
+  paint(p, name, variant, level);
   // A big footprint gets its own art, n times the size with 1px outlines, not the small art stretched.
   const art = (n > 1 ? p.upscale(n) : p).finish();
   cache.set(key, art);
   return art;
 }
 
-export function isoURL(name: string, scale = 3): string {
-  const { canvas } = iso(name);
+export function isoURL(name: string, scale = 3, level = 1): string {
+  const { canvas, alpha: a } = iso(name, undefined, 1, level);
   // Crop the empty headroom so the thumbnail fills its button.
   let top = 0;
-  const a = iso(name).alpha;
   while (top < canvas.height && !a.slice(top * canvas.width, (top + 1) * canvas.width).some((v) => v)) top++;
   const h = canvas.height - top;
   const c = document.createElement('canvas');

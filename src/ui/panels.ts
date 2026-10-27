@@ -5,6 +5,8 @@ import type { App } from '../app';
 import { rupiah } from '../format';
 import { bookCombos, comboMemberNames } from '../sim/combos';
 import { checkAssign, assign, levelOf, liveJobs } from '../sim/jobs';
+import { PATH_DECAY } from '../sim/balance';
+import { checkRepairPath, isPath, neglect, repairPath, repairPathCost, stretchOf, type RepairWay } from '../sim/decay';
 import { checkRepair, repair, repairCost } from '../sim/events';
 import { checkRestart, checkRestartODn, RESTART_ODN, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
 import { announce, checkAnnounce, wacanaCost } from '../sim/wacana';
@@ -130,8 +132,28 @@ export function parkirExtras(app: App, b: Building): Node[] {
   return [h('p', { class: 'meta' }, t('insp.parkir', { shop: owner ? t('insp.parkirShop') : t('insp.parkirOld'), level: b.level }))];
 }
 
+/** A cracked path: fix the tile, fix the whole stretch, or call a favour for the stretch. */
+function pathExtras(app: App, b: Building): Node[] {
+  const s = app.s;
+  const stretch = stretchOf(s, b);
+  const fix = (way: RepairWay) => () => {
+    for (const o of repairPath(s, b, way)) app.view.burst(o.x, o.y);
+    app.tap(15);
+    app.save();
+    app.refresh();
+    app.inspect(b.uid);
+  };
+  return [
+    h('p', { class: 'meta' }, t('insp.pathCracked', { months: neglect(s, stretch), every: PATH_DECAY.spreadEvery })),
+    actionButton(t('insp.pathFixTile', { cost: rupiah(repairPathCost(s, b, 'tile')) }), checkRepairPath(s, b, 'tile'), fix('tile'), true),
+    stretch.length > 1 ? actionButton(t('insp.pathFixStretch', { n: stretch.length, cost: rupiah(repairPathCost(s, b, 'stretch')) }), checkRepairPath(s, b, 'stretch'), fix('stretch')) : null,
+    actionButton(t('insp.pathFavour', { n: PATH_DECAY.favour, tiles: stretch.length }), checkRepairPath(s, b, 'favour'), fix('favour')),
+  ].filter((n): n is HTMLElement => n !== null);
+}
+
 export function damagedExtras(app: App, b: Building): Node[] {
   if (b.status !== 'damaged') return [];
+  if (isPath(b)) return pathExtras(app, b);
   const s = app.s;
   const cost = repairCost(s, b);
   return [
