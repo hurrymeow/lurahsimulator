@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoPaused, simRunning, type PauseInputs } from '../src/ui/autopause';
+import { autoPaused, showPausedBadge, simRunning, type PauseInputs } from '../src/ui/autopause';
 
 const idle: PauseInputs = { speed: 1, held: false, sheetOpen: false, modals: 0, pendingEvent: false, placing: false, howtoOpen: false };
 
@@ -24,5 +24,14 @@ describe('auto-pause', () => {
   it('keeps a manual pause paused after the menu closes', () => {
     expect(simRunning({ ...idle, speed: 0, sheetOpen: true })).toBe(false);
     expect(simRunning({ ...idle, speed: 0 })).toBe(false);
+  });
+
+  it('shows the Paused pill only over a visible map', () => {
+    expect(showPausedBadge(idle)).toBe(false);
+    expect(showPausedBadge({ ...idle, placing: true })).toBe(true);
+    for (const patch of [{ sheetOpen: true }, { modals: 1 }, { pendingEvent: true }, { howtoOpen: true }, { held: true }]) {
+      expect(showPausedBadge({ ...idle, ...patch })).toBe(false);
+    }
+    expect(showPausedBadge({ ...idle, placing: true, sheetOpen: true })).toBe(false);
   });
 });
