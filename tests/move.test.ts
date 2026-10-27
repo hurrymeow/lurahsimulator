@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { checkMove, moveBuilding, place, rotateBuilding } from '../src/sim/rules';
-import { buildingAt, newGame } from '../src/sim/state';
+import { activeCombos, comboIncomeMult, discoverCombos } from '../src/sim/combos';
+import { addBuilding, buildingAt, newGame } from '../src/sim/state';
+import type { SimEffect } from '../src/sim/types';
 
 describe('moving and rotating', () => {
   it('moves a building for free and keeps its level and status', () => {
@@ -41,5 +43,25 @@ describe('moving and rotating', () => {
     expect(b.rot).toBe(1);
     rotateBuilding(b);
     expect(b.rot).toBe(0);
+  });
+});
+
+describe('moving and combos', () => {
+  it('a building moved next to its partner fires the combo, and moving it away ends it', () => {
+    const s = newGame(1);
+    s.res.rupiah = 1e9;
+    addBuilding(s, 'kolamLele', 5, 5, 'active');
+    const w = addBuilding(s, 'warteg', 11, 11, 'active');
+    expect(activeCombos(s).some((a) => a.combo.id === 'pecelLele')).toBe(false);
+    expect(moveBuilding(s, w, 6, 5).ok).toBe(true);
+    expect(activeCombos(s).some((a) => a.combo.id === 'pecelLele')).toBe(true);
+    expect(comboIncomeMult(s, w)).toBeCloseTo(1.4);
+    const fx: SimEffect[] = [];
+    discoverCombos(s, fx);
+    expect(s.discovered).toContain('pecelLele');
+    expect(fx.some((f) => f.kind === 'notice')).toBe(true);
+    expect(moveBuilding(s, w, 11, 11).ok).toBe(true);
+    expect(activeCombos(s).some((a) => a.combo.id === 'pecelLele')).toBe(false);
+    expect(comboIncomeMult(s, w)).toBe(1);
   });
 });
