@@ -394,7 +394,7 @@ export class App {
     const emasBar = document.getElementById('emas');
     emasBar?.addEventListener('click', () => this.explain('emas'));
     emasBar?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') this.explain('emas'); });
-    hud.replaceChildren(...chips, chip('pop', h('span', { class: 'chip-text' }, t('res.pop')), t('res.pop')));
+    hud.replaceChildren(...chips, chip('pop', img('people'), t('res.pop')));
     this.refresh();
   }
 
@@ -404,9 +404,8 @@ export class App {
     this.tap();
     const row = (kind: 'up' | 'down' | 'edge') =>
       h('p', { class: `exp-row exp-${kind}` }, h('strong', {}, `${{ up: '▲', down: '▼', edge: '■' }[kind]} ${t(`exp.${kind}`)}`), ` ${t(`exp.${id}.${kind}` as Key)}`);
-    const text = id === 'pop' || id === 'emas';
     const colour = id === 'pop' ? '#f4f4f5' : id === 'emas' ? '#fbbf24' : RES_COLOUR[id];
-    const icon = text ? h('span', { class: 'chip-text' }, id === 'emas' ? 'Emas' : t('res.pop')) : h('img', { src: iconURL(RES_META[id].icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
+    const icon = id === 'emas' ? h('span', { class: 'chip-text' }, 'Emas') : h('img', { src: iconURL(id === 'pop' ? 'people' : RES_META[id].icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
     const title = id === 'pop' ? t('res.warga') : id === 'emas' ? t('stats.emasTitle') : RES_META[id].label();
     const body = id === 'pop'
       ? `${t('exp.pop.what')} ${t('pop.line', { pop: population(this.s), housing: housing(this.s), attract: attractTarget(this.s) })}${population(this.s) >= housing(this.s) ? ` ${t('pop.full')}` : ''}`

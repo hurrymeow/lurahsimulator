@@ -591,7 +591,7 @@ test.describe('slim HUD and one menu', () => {
       await page.locator('#modal').click();
       await expect(page.locator('#modal')).toBeHidden();
     }
-    await expect(page.locator('#chip-pop')).toContainText('Pop');
+    await expect(page.locator('#chip-pop img')).toBeVisible();
     await expect(page.locator('#chip-sabar')).not.toContainText(/Sabar/);
   });
 
