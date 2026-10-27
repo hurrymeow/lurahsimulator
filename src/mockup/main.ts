@@ -1,6 +1,6 @@
 // Local test render of the in-game screen, dressed like a 90s train-and-city builder: a cream frame,
 // a build palette on the left, a satellite view, a status box and a two-line tab row along the
-// bottom. The map in the middle is the real MapView on a sample kampung. Open /mockup.html in dev.
+// bottom. The map in the middle is the real MapView on a sample kampung. Open /mockup.html (dev server or live site).
 import '@fontsource/atkinson-hyperlegible/latin-400.css';
 import '@fontsource/atkinson-hyperlegible/latin-700.css';
 import './mockup.css';
