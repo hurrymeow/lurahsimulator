@@ -22,6 +22,12 @@ export function deserialize(raw: string | null): GameState | null {
     s.neighbours ??= [];
     s.stempel ??= { stock: 0, backlog: 0, clear: 0 };
     s.debtFree ??= 0;
+    // Saves from before the first-win celebrations: whatever they already reached stays quiet.
+    s.firsts ??= [
+      ...(s.buildings.some((b) => b.def === 'rumah' && b.status === 'active') ? (['house'] as const) : []),
+      ...(s.stats.arrived > 0 ? (['resident'] as const) : []),
+      ...(s.stage.stars.rt > 0 ? (['star'] as const) : []),
+    ];
     s.rw ??= { kaderDecay: 0 };
     s.kel ??= { budget: 0, spentBase: 0, serapanRun: 0, cleanAudits: 0 };
     setGrid(s.stage.current);

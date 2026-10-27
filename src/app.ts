@@ -11,7 +11,7 @@ import { checkMove, checkPlace, moveBuilding, place } from './sim/rules';
 import { linePath, placeLine, type LineTile } from './sim/line';
 import { lotAt } from './sim/area';
 import { promote } from './sim/grow';
-import { RT_H, RT_W } from './sim/types';
+import { RT_H, RT_W, type FirstKind } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
 import { attractTarget, buildCost, buildingAt, byUid, footprintOf, newGame, population, housing, year } from './sim/state';
@@ -169,6 +169,8 @@ export class App {
         }
         this.haptic(20);
         audio.play('build');
+      } else if (f.kind === 'first') {
+        this.celebrate(f.what, f.x ?? Math.floor(RT_W / 2), f.y ?? Math.floor(RT_H / 2));
       } else if (f.kind === 'notice') {
         if (f.fanfare) this.view.pulse();
         if (f.fanfare) this.modal(f);
@@ -192,15 +194,44 @@ export class App {
 
   private showEventSoon = false;
 
-  /** Income coins arc into the money chip, which bumps as they land. A few per tick, biggest earners first. */
-  private flyCoins(earn: { x: number; y: number; amount: number }[]): void {
+  /** Where coins land: the money chip, which bumps as each one arrives. Null with effects off. */
+  private coinTarget(): { to: { x: number; y: number }; land: () => void } | null {
     const chip = document.getElementById('chip-rupiah');
     const map = document.getElementById('map');
-    if (!chip || !map || !this.view.effects) return;
+    if (!chip || !map || !this.view.effects) return null;
     const c = chip.getBoundingClientRect();
     const m = map.getBoundingClientRect();
     const to = { x: c.left + c.width / 2 - m.left, y: c.top + c.height / 2 - m.top };
-    const land = () => chip.animate?.([{ transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 160 });
+    return { to, land: () => chip.animate?.([{ transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 160 }) };
+  }
+
+  /**
+   * The big version of the feedback, for the first house, resident and star only. A label over the
+   * map, a coin burst, a glow and a brief zoom punch on the map. It never blocks input. The star
+   * already has its fanfare card, so it skips the sound.
+   */
+  private celebrate(what: FirstKind, x: number, y: number): void {
+    const map = document.getElementById('map');
+    const wrap = map?.parentElement;
+    if (wrap) {
+      const tag = h('div', { class: 'first-burst', role: 'status' }, t(`first.${what}` as Key));
+      wrap.append(tag);
+      setTimeout(() => tag.remove(), 2200);
+    }
+    this.haptic([20, 30, 20, 30, 40]);
+    if (what !== 'star') audio.play('first');
+    const target = this.coinTarget();
+    if (!target) return;
+    this.view.pulse();
+    this.view.coins(x, y, 8, target.to, target.land);
+    map?.animate?.([{ transform: 'scale(1)' }, { transform: 'scale(1.04)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 450, easing: 'ease-out' });
+  }
+
+  /** Income coins arc into the money chip, which bumps as they land. A few per tick, biggest earners first. */
+  private flyCoins(earn: { x: number; y: number; amount: number }[]): void {
+    const target = this.coinTarget();
+    if (!target) return;
+    const { to, land } = target;
     let budget = 12;
     for (const p of earn.sort((a, b) => b.amount - a.amount)) {
       const n = Math.min(budget, p.amount >= 500_000 ? 3 : p.amount >= 150_000 ? 2 : 1);

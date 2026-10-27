@@ -441,3 +441,32 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .home-start { font-size: 22px; }
 .home-warn { margin: 0; padding: 8px 12px; text-align: center; line-height: 1.4; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
 .warn { color: var(--danger); }
+
+/* First-win label: floats over the map, never takes a tap. Static with reduce motion. */
+.first-burst {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  transform: translateX(-50%);
+  z-index: 6;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  border: 2px solid #facc15;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: #facc15;
+  font-family: var(--font-pixel);
+  font-size: 20px;
+  line-height: 1.3;
+  text-align: center;
+  pointer-events: none;
+  animation: first-pop 2.2s ease-out forwards;
+}
+@keyframes first-pop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.6); }
+  12% { opacity: 1; transform: translateX(-50%) scale(1.12); }
+  22% { transform: translateX(-50%) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}

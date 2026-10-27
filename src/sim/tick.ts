@@ -8,6 +8,7 @@ import { comboIncomeMult, comboSystem } from './combos';
 import { def, placeableDefs } from './content';
 import { EMAS } from '../data/ranking';
 import { eventSystem } from './events';
+import { first } from './firsts';
 import { pathDecaySystem } from './decay';
 import { lineSystem } from './lines';
 import { debtSystem, iuranFromNeighbours, neighboursSystem, neighboursYearEnd, stempelSystem } from './grow';
@@ -75,6 +76,7 @@ export function advanceConstruction(s: GameState, fx: Fx): void {
       b.status = 'active';
       fx.push({ kind: 'built', uid: b.uid });
       if (onBuildingFinished(s, fx, b) === 'ok') fx.push({ kind: 'notice', title: t('sim.openTitle', { name: bName(def(b.def)) }), body: bBlurb(def(b.def)), tone: 'good', x: b.x, y: b.y });
+      if (b.def === 'rumah') first(s, fx, 'house', b);
       novelty(s);
     }
   }
@@ -142,6 +144,7 @@ function arrive(s: GameState, fx: Fx, reason: string, ownHouse = false): boolean
   s.lastArrival = s.month;
   const home = s.buildings.filter((b) => b.def === 'rumah').at(-1);
   fx.push({ kind: 'notice', title: t('sim.movedIn', { name: r.name }), body: reason, tone: 'good', x: home?.x, y: home?.y });
+  first(s, fx, 'resident', home);
   novelty(s);
   return true;
 }

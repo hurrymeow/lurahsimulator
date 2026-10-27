@@ -326,7 +326,11 @@ export interface GameState {
   /** Quarterly report bookkeeping. Absent in older saves and on a fresh game. */
   quarter?: QuarterTrack;
   stats: { earned: number; spent: number; arrived: number; left: number };
+  /** Milestones already celebrated. Absent in older saves. */
+  firsts?: FirstKind[];
 }
+
+export type FirstKind = 'house' | 'resident' | 'star';
 
 export type SimEffect =
   | { kind: 'pop'; x: number; y: number; res: ResourceId; amount: number }
@@ -335,6 +339,7 @@ export type SimEffect =
   | { kind: 'level'; x: number; y: number; name: string; level: number }
   | { kind: 'event'; eventId: string }
   | { kind: 'built'; uid: number }
+  | { kind: 'first'; what: FirstKind; x?: number; y?: number }
   | { kind: 'report'; report: QuarterReport };
 
 export type CheckResult = { ok: true } | { ok: false; missing: string[] };
