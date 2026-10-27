@@ -220,10 +220,11 @@ export class App {
       const check = checkChoice(this.s, c);
       const cost = eventCost(this.s, c);
       const label = eLabel(e, i, c).replace(/ · Rp [\d.]+/, '').replace(/ · \d Orang (Inside|Dalam)/, '');
-      // One unbreakable run, in words: a price never splits across lines or hides behind an icon.
-      const price = [...(cost.rupiah ? [rupiah(cost.rupiah)] : []), ...(cost.orangDalam ? [`${cost.orangDalam} ${t('res.orangDalam')}`] : [])].join(' + ');
+      // One unbreakable run: a price never splits from its icon across lines.
+      const od = cost.orangDalam ? [`${cost.orangDalam} `, h('img', { src: iconURL('orangDalam'), alt: t('res.orangDalam'), width: 18, height: 18, class: 'inline-icon' })] : [];
+      const price: Node[] = [...(cost.rupiah ? [document.createTextNode(rupiah(cost.rupiah))] : []), ...(cost.rupiah && od.length ? [document.createTextNode(' + ')] : []), ...od.map((x) => (x instanceof Node ? x : document.createTextNode(x)))];
       return h('div', { class: 'action' },
-        h('button', { class: `btn ${i === 0 ? '' : 'btn-primary'}`, disabled: !check.ok, onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i); } }, label, ...(price ? [' · ', h('span', { class: 'price' }, price)] : [])),
+        h('button', { class: `btn ${i === 0 ? '' : 'btn-primary'}`, disabled: !check.ok, onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i); } }, label, ...(price.length ? [' · ', h('span', { class: 'price' }, ...price)] : [])),
         check.ok ? null : missingList(check.missing),
       );
     });
