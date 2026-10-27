@@ -99,7 +99,7 @@ export const ID: Record<Key, string> = {
   'set.languageHelp': 'Mengubah semua label, pesan dan tutorial.',
   'set.newGame': 'Game baru',
   'set.newGameArmed': 'Ketuk lagi untuk hapus kampung ini',
-  'set.satire': 'Kampung Story adalah satire tentang sistem dan birokrasi. Kemiripan dengan kelurahan Anda hanya kebetulan. Laporkan, lalu tunggu 3 bulan untuk balasan.',
+  'set.satire': 'Pejabat Sim adalah satire tentang sistem dan birokrasi. Kemiripan dengan kelurahan Anda hanya kebetulan. Laporkan, lalu tunggu 3 bulan untuk balasan.',
 
   'how.title': 'Cara main',
   'how.intro': 'Kamu Pak RT. Kembangkan kampung, jaga Popularitas, kalahkan Kampung Sebelah.',
@@ -315,7 +315,7 @@ export const ID: Record<Key, string> = {
   'modal.tap': 'Ketuk untuk lanjut',
   'event.result': 'Hasil kejadian',
   'event.mod': '{label}: pemasukan x{mult} selama {n} bulan',
-  'install.title': 'Pasang Kampung Story',
+  'install.title': 'Pasang Pejabat Sim',
   'install.ios': 'Ketuk Bagikan, lalu "Tambah ke Layar Utama".',
 
   'sim.needPop': 'Butuh {n} warga (punya {have})',

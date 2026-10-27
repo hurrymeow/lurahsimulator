@@ -1,6 +1,6 @@
 {
-  "name": "Kampung Story",
-  "short_name": "Kampung Story",
+  "name": "Pejabat Sim",
+  "short_name": "Pejabat Sim",
   "description": "A satirical kampung management sim. Every joke moves a number.",
   "start_url": "./",
   "scope": "./",
