@@ -714,13 +714,18 @@ test.describe('walkers and effects', () => {
     const before = await spots(page);
     await page.waitForTimeout(4500);
     expect(await spots(page)).not.toBe(before);
-    // Nobody stands inside a building.
-    const inside = await page.evaluate(() => {
-      const app = (window as unknown as { pakrt: any }).pakrt;
-      const solid = app.s.buildings.filter((b: any) => !['biopori', 'parkir', 'jalan'].includes(b.def));
-      return app.view.crowd.people.filter((p: any) => solid.some((b: any) => b.x === Math.floor(p.fx) && b.y === Math.floor(p.fy))).length;
-    });
-    expect(inside).toBe(0);
+    // Nobody lingers inside a building. A walker leaving or reaching a door is on its tile for a moment, so a walker only
+    // counts if it is inside at two samples a second apart.
+    const insideNow = () =>
+      page.evaluate(() => {
+        const app = (window as unknown as { pakrt: any }).pakrt;
+        const solid = app.s.buildings.filter((b: any) => !['biopori', 'parkir', 'jalan'].includes(b.def));
+        return app.view.crowd.people.filter((p: any) => solid.some((b: any) => b.x === Math.floor(p.fx) && b.y === Math.floor(p.fy))).map((p: any) => p.id as number);
+      });
+    const first = await insideNow();
+    await page.waitForTimeout(1000);
+    const second = await insideNow();
+    expect(first.filter((id: number) => second.includes(id))).toEqual([]);
   });
 
   test('walkers stay on paths, and a building with no path is marked and idle', async ({ page }) => {
