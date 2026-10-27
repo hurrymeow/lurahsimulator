@@ -88,12 +88,18 @@ test.describe('opener', () => {
     await page.goto(`/?debug&coach&lang=${lang()}`);
     await passHome(page);
     await page.evaluate(() => document.fonts.ready);
-    await page.locator('#howtoGo').click();
+    // A new game opens straight on the welcome note, with no How to play card first.
+    await expect(page.locator('#howto')).toBeHidden();
     // The goal sits under the Emas bar from the first frame.
     await expect(page.locator('#goal')).toBeVisible();
     await expect(page.locator('#goal')).toContainText(/\d/);
     await expect(page.locator('#coach')).toBeVisible();
     await expect(page.locator('#menu-btn')).toHaveClass(/coach-pulse/);
+    // The note sits right above the bottom bar, next to the Menu button it points at.
+    const note = (await page.locator('#coach').boundingBox())!;
+    const menuBox = (await page.locator('#menu-btn').boundingBox())!;
+    expect(menuBox.y - (note.y + note.height)).toBeLessThan(40);
+    expect(menuBox.y - (note.y + note.height)).toBeGreaterThanOrEqual(0);
     await expectLegible(page, 'opener, Menu step');
     await page.locator('#menu-btn').click();
     await expect(page.locator('#act-build')).toHaveClass(/coach-pulse/);
@@ -112,7 +118,7 @@ test.describe('opener', () => {
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('#place-ok')).toHaveClass(/coach-pulse/);
     await page.locator('#place-ok').click();
-    await expect(page.locator('#coach')).toContainText(/Rumah/);
+    await expect(page.locator('#coach-skip')).toHaveText(lang() === 'en' ? 'Got it' : 'Paham');
     await page.locator('#coach-skip').click();
     await expect(page.locator('#coach')).toBeHidden();
   });
@@ -120,7 +126,6 @@ test.describe('opener', () => {
   test('the first month passes without a pop-up over the opener', async ({ page }) => {
     await page.goto(`/?debug&coach&lang=${lang()}`);
     await passHome(page);
-    await page.locator('#howtoGo').click();
     await expect(page.locator('#coach')).toBeVisible();
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
     await expect(page.locator('#modal')).toBeHidden();
@@ -130,7 +135,6 @@ test.describe('opener', () => {
   test('Skip ends the opener for good, even after a reload', async ({ page }) => {
     await page.goto(`/?debug&coach&lang=${lang()}`);
     await passHome(page);
-    await page.locator('#howtoGo').click();
     await expect(page.locator('#coach')).toBeVisible();
     await page.locator('#coach-skip').click();
     await expect(page.locator('#coach')).toBeHidden();
@@ -143,7 +147,7 @@ test.describe('opener', () => {
 
 test.describe('tips', () => {
   test('a mechanic is taught once, on tap, and Skip tips silences the rest', async ({ page }) => {
-    const RANKED = { id: 'Tiap tahun kamu diperingkat.', en: 'Every year you are ranked.' }[lang()];
+    const RANKED = { id: 'Waktunya rapor.', en: 'Report card time.' }[lang()];
     await start(page);
     await page.locator('#howtoGo').click();
     await expect(page.locator('#modal')).toBeHidden();
@@ -153,7 +157,7 @@ test.describe('tips', () => {
       a.s.lastEvent = { banjir: 0 };
       a.refresh();
     });
-    await expect(page.locator('#modal .card h2')).toHaveText({ id: 'Banjir menguji biopori-mu.', en: 'Banjir tests your biopori.' }[lang()]);
+    await expect(page.locator('#modal .card h2')).toHaveText({ id: 'Musim hujan datang.', en: 'Rainy months are coming.' }[lang()]);
     await expectLegible(page, 'tip');
     await page.waitForTimeout(1500);
     await expect(page.locator('#modal')).toBeVisible();
@@ -226,7 +230,7 @@ test.describe('population and houses', () => {
   });
 
   test('the tip fires when growth stalls and explains both levers once', async ({ page }) => {
-    const TIP = { en: 'Room and a reason.', id: 'Tempat dan alasan.' }[lang()];
+    const TIP = { en: 'Beds and a reason.', id: 'Tempat dan alasan.' }[lang()];
     await start(page);
     await page.locator('#howtoGo').click();
     await page.evaluate(() => {

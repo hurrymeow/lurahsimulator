@@ -3,8 +3,8 @@ import { SAVE_KEY, type App } from '../app';
 import { deserialize } from '../sim/save';
 import { storage } from '../storage';
 import { h } from './dom';
-import { hasSeenHowto, resetHowto, showHowto } from './howto';
-import { resetCoach } from './coach';
+import { hasSeenHowto, resetHowto, showHowto, skipHowto } from './howto';
+import { coachPending, resetCoach } from './coach';
 import { resetBuildSeen } from './build';
 import { resetTips } from './tips';
 import { openSettings } from './settings';
@@ -33,7 +33,8 @@ export function showHome(app: App, install: HTMLButtonElement): void {
       resetCoach();
     }
     leave();
-    if (!hasSeenHowto()) showHowto(app, true);
+    if (coachPending()) skipHowto();
+    else if (!hasSeenHowto()) showHowto(app, true);
   };
 
   const start = h('button', { class: 'btn btn-primary home-start', id: 'home-start' }, t('home.start'));
