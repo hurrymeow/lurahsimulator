@@ -8,7 +8,7 @@ Follow these every session. If a change breaks one, fix the change.
 - No real politicians, parties, ormas or officials.
 - No ethnic, regional or religious jokes.
 - Every joke is a mechanic that moves a number. Flavour text alone gets cut.
-- UI defaults to English, with Bahasa Indonesia as a Settings option. Players who saved a language keep it. Slang and proper names stay as they are in both languages (Sabar, Orang Dalam, Viral, Wacana, Warga, warung, ojol, Kampung Sebelah). Strings live in `src/i18n/`.
+- UI defaults to English, with Bahasa Indonesia as a Settings option. Players who saved a language keep it. Slang and proper names stay as they are in both languages (Sabar, Wacana, Warga, warung, ojol, Kampung Sebelah). Resource names are translated, see `decisions/resource-names.md`. Strings live in `src/i18n/`.
 
 ## Pacing
 

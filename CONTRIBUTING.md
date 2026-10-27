@@ -35,7 +35,7 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 - English is the default. Bahasa Indonesia is an option in Settings.
 - Every string exists in both. Strings live in `src/i18n/`, content translations in the `id-*.ts` files.
 - `tests/i18n.test.ts` fails if a key or placeholder is missing.
-- Slang and proper names stay as they are in both languages (Sabar, Orang Dalam, Wacana, Warga, warung).
+- Slang and proper names stay as they are in both languages (Sabar, Wacana, Warga, warung). Resource names are translated: see `decisions/resource-names.md` (English "Orang Inside" and "Virality", Indonesian "Orang Dalam" and "Viral").
 - Check every screen you touch in both languages.
 
 ## Art

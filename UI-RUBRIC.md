@@ -13,7 +13,7 @@ Pacing and balance live in PACING.md, not here.
 5. **Primary action sits in the bottom third.** Reason: thumb reach in portrait.
 6. **One icon, one meaning, familiar shape,** always with a label or number. Colour never carries meaning alone.
 7. **Tutorial steps: one sentence, 20 words or fewer.** One thing per step ([GameAnalytics](https://gameanalytics.com/blog/tips-for-a-great-first-time-user-experience-ftue-in-f2p-games), [Supersonic](https://supersonic.com/learn/blog/optimizing-ftue/)). The sources give no word count. The limit is a judgement call.
-8. **Event and pop-up bodies 25 words or fewer.** Every pop-up uses one layout: title, body, labelled result rows, buttons at the bottom.
+8. **Event and pop-up bodies, and building blurbs, 25 words or fewer.** Every pop-up uses one layout: title, body, labelled result rows, buttons at the bottom.
 9. **Every unmet requirement says what is missing.** Disabled is never silent.
 10. **Tutorial never covers the control it points at.** Text advances on tap only. Only the multi-step first-build tutorial has Skip. One-card tips use "Tap to continue" and nothing else.
 11. **Feedback ladder.** Routine income gets a small number pop. Combo or unlock gets fanfare. The game works with effects, motion and sound off.
