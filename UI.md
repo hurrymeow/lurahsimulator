@@ -39,7 +39,7 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 | 2, 3, 6, 9, 10, 11 | Review against the audit crawl screenshots |
 | 12 | Timed run. Not automated. |
 
-The audit crawl scripts are in the project files, not in the repo.
+Every new panel or message needs a scan in `tests/e2e/ui.spec.ts`. CI runs the suite on every PR. The audit crawl scripts are in the project files, not in the repo.
 
 ## Status, 2026-10-27
 

@@ -294,9 +294,7 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 
 ### Touch and layout
 
-- Mobile-first, portrait, touch controls.
-- Touch targets at least 48px, with 8px gaps.
-- Primary actions in the bottom third.
+- Mobile-first, portrait, touch controls. Every number (tap size, text size, contrast, word limits) lives in [UI.md](UI.md), not here.
 - Main screen: a slim resource bar at the top, the map, and one bottom row: pause, speed, date, Menu.
 - Every panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game.
 - New panels register an `ActionButton` with a `group` instead of adding a button to the main screen.
@@ -309,7 +307,7 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 - Console look rules:
   - Every console control is a shortcut to a panel the Menu already opens. The Menu button stays, and new panels still go in the Menu, never only in the frame.
   - It restyles the main screen only. Sheets and modals keep the default look.
-  - The same legibility rules apply: text 16px or more, controls 48px or more, no clipped text, contrast checked by the e2e scan.
+  - The rules in [UI.md](UI.md) apply to it unchanged.
   - On short phones (640px tall or less) it drops the title bar and the tab captions, so the map keeps its room.
   - The dev-only `mockup.html` is the reference render of the full console screen with a build palette. It is not linked from the game.
 - Map art follows [ART.md](ART.md): palette, ink, shading, lighting and motion rules.
@@ -327,17 +325,14 @@ The artist's restyle is the reference ([ART.md](ART.md) has the full rules). New
 
 ### Feedback
 
-- Combo or unlock gets fanfare. Routine income gets a small number pop.
-- The game still feels OK with effects off.
+- The feedback ladder is rule 11 in [UI.md](UI.md).
 - Ambient life (walkers, idle loops) follows reduce motion. Particles, coins, pulse and night tint follow effects.
 - Canvas text (pops, badges) draws above the night tint.
 - Haptics toggle in settings.
 
 ### Accessibility
 
-- Every resource has an icon plus a colour. Colour never carries meaning alone.
-- Text contrast 4.5:1, or 3:1 for large text and UI.
-- Pixel font no smaller than 16px.
+- Icon, colour and label rules are rule 6 in [UI.md](UI.md).
 
 ### Tech
 
@@ -357,12 +352,11 @@ The artist's restyle is the reference ([ART.md](ART.md) has the full rules). New
 ### Legibility and testing
 
 - Body text uses Atkinson Hyperlegible. Pixelify Sans (patched as Pak Pixel by scripts/patch-pixel-font.py, so f is not a capital F) is for titles and primary buttons only. Pixelify draws 5 like S/8, so never use it for numbers.
-- No ellipsis and no clipped text. Text wraps. Panels scroll.
+- Text wraps and panels scroll (UI.md rule 5).
 - The map is isometric. Tile diamonds are at least 32px tall. Smaller screens pan the map instead of shrinking it.
 - A tap on a building's body picks that building, even where it overlaps the tile behind.
-- Disabled buttons stay readable: dashed border, muted text, no opacity fade.
-- `npm run e2e` runs Playwright at 320, 360 and 390px wide. It scans every visible DOM text for clipping, ellipsis, font under 16px, contrast under 4.5:1, off-screen text and touch targets under 48px.
-- Every new panel or message needs a scan in `tests/e2e/ui.spec.ts`. CI runs the suite on every PR.
+- Disabled buttons use a dashed border and muted text, with no opacity fade.
+- `npm run e2e` runs the legibility scan. How the UI.md rules are checked is in [UI.md](UI.md).
 
 ## 7. Build order
 
