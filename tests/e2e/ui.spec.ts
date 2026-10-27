@@ -845,6 +845,41 @@ test.describe('home update button', () => {
     await expectLegible(page, 'home with update');
   });
 });
+test.describe('home map preview', () => {
+  /** The map box reaches the right edge, and the canvas and camera match its size. In game the rail takes the left strip. */
+  const fills = async (page: Page, inGame = false) => {
+    const vw = page.viewportSize()!.width;
+    const box = (await page.locator('#map').boundingBox())!;
+    if (inGame) expect(box.x, 'map left edge').toBeGreaterThan(1);
+    else expect(Math.abs(box.x), 'map left edge').toBeLessThanOrEqual(1);
+    expect(Math.abs(box.x + box.width - vw), 'map right edge').toBeLessThanOrEqual(1);
+    const cam = await page.evaluate(() => {
+      const v = (window as unknown as { pakrt: any }).pakrt.view;
+      return { w: v.canvas.width / (window.devicePixelRatio || 1), viewW: v.viewW, panX: v.panX };
+    });
+    expect(Math.abs(cam.w - box.width), 'canvas width').toBeLessThanOrEqual(1);
+    expect(cam.viewW).toBe(cam.w);
+    expect(cam.panX).toBeLessThanOrEqual(0);
+  };
+
+  test('fills the screen on launch and after Start', async ({ page }) => {
+    await page.goto(`/?debug&lang=${lang()}`);
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await fills(page);
+    await passHome(page);
+    await fills(page, true);
+  });
+
+  test('fills the screen in standalone display mode', async ({ page }) => {
+    await page.addInitScript(() => {
+      const mm = window.matchMedia.bind(window);
+      window.matchMedia = (q: string) => (q.includes('display-mode: standalone') ? ({ ...mm(q), matches: true } as MediaQueryList) : mm(q));
+    });
+    await page.goto(`/?debug&lang=${lang()}`);
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await fills(page);
+  });
+});
 test.describe('walkers and effects', () => {
   /** Walker positions, rounded so idle bobbing does not count as moving. */
   const spots = (page: Page) =>
