@@ -695,6 +695,23 @@ test.describe('update banner', () => {
 
   });
 });
+test.describe('home update button', () => {
+  test('stays hidden until an update waits, then shows above Start inside the screen', async ({ page }) => {
+    await page.goto(`/?debug&lang=${lang()}`);
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await expect(page.locator('#home-update')).toBeHidden();
+    await page.evaluate(() => ((document.getElementById('home-update') as HTMLElement).hidden = false));
+    const vh = page.viewportSize()!.height;
+    const up = (await page.locator('#home-update').boundingBox())!;
+    const st = (await page.locator('#home-start').boundingBox())!;
+    expect(up.y).toBeGreaterThanOrEqual(0);
+    expect(up.y + up.height).toBeLessThanOrEqual(st.y);
+    expect(st.y + st.height).toBeLessThanOrEqual(vh);
+    expect(up.height).toBeGreaterThanOrEqual(44);
+    await expect(page.locator('#home-update')).toHaveText(lang() === 'id' ? 'Pembaruan tersedia' : 'Update available');
+    await expectLegible(page, 'home with update');
+  });
+});
 test.describe('walkers and effects', () => {
   /** Walker positions, rounded so idle bobbing does not count as moving. */
   const spots = (page: Page) =>

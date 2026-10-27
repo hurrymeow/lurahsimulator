@@ -10,6 +10,7 @@ export const ID: Record<Key, string> = {
   'page.update': 'Perbarui',
   'page.welcome': 'Selamat datang, Pak Pejabat.',
   'home.start': 'Mulai',
+  'home.update': 'Pembaruan tersedia',
   'home.continue': 'Lanjut',
   'home.new': 'Game baru',
   'home.back': 'Kembali',
