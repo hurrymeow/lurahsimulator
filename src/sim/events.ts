@@ -85,6 +85,21 @@ function sinceRandomPopup(s: GameState): number {
   return times.length ? s.month - Math.max(...times) : Infinity;
 }
 
+/** Months a random popup keeps clear of any other event, before and after (PACING.md target 6). */
+export const EVENT_CLEAR = 3;
+
+/** True when any event just fired or a scheduled one is due within EVENT_CLEAR - 1 months. */
+function crowded(s: GameState): boolean {
+  const last = Object.values(s.lastEvent ?? {});
+  if (last.length && s.month - Math.max(...last) < EVENT_CLEAR) return true;
+  for (let k = 1; k < EVENT_CLEAR; k++) {
+    const due = EVENTS.some((e) => e.when.chance >= 1 && e.when.months?.includes((s.month + k) % 12) && (e.when.minMonth ?? 0) <= s.month + k);
+    if (due) return true;
+    if (s.inspection && s.inspection.visitAt === undefined && s.inspection.warnAt === s.month + k) return true;
+  }
+  return false;
+}
+
 /**
  * Monthly system: maybe raise an event. At most one per month.
  * Scheduled events (chance 1) always come. Random ones share a pool: at most one popup every POPUP_GAP months,
@@ -96,7 +111,7 @@ export function eventSystem(s: GameState, fx: Fx): void {
   const scheduled = all.find((e) => e.when.chance >= 1);
   if (scheduled) return raise(s, fx, scheduled);
   const pool = all.filter((e) => e.when.chance < 1);
-  if (!pool.length || sinceRandomPopup(s) < POPUP_GAP || !chance(s, POPUP_CHANCE)) return;
+  if (!pool.length || sinceRandomPopup(s) < POPUP_GAP || crowded(s) || !chance(s, POPUP_CHANCE)) return;
   let roll = rand(s) * pool.reduce((n, e) => n + e.when.chance, 0);
   for (const e of pool) {
     roll -= e.when.chance;

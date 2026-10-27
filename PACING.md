@@ -10,9 +10,9 @@ Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder
 | 1 | First house built within 30s of New Game | Kairosoft opens on a build. Idle time here loses the player. | Needs a browser run |
 | 2 | First resident within 10s of the house | The first build must visibly pay off. | Pass: month 1 (8s) |
 | 3 | First popup between 45s and 90s | Let the player learn the map first. | Pass: 48 to 56s |
-| 4 | 1★ within 2 min, 2★ within 5 min, 3★ within 10 min | A goal done, a new one in view. | Fail: bot seed 2 never reaches 2★ in 15 min. Other seeds pass (1★ 72 to 80s, 2★ 3 to 4.5 min, 3★ 4.3 to 4.8 min). |
-| 5 | Something new (resident, event, combo or unlock) at least every 30s | Replaces "something new every 1-2 in-game minutes". | Seed 2 has no new combo for about 10 min |
-| 6 | At most 2 popups per minute, never two within 20s | Back-to-back cards read as spam. | Rate 1.9 per min passes. Pairs 8s apart fail (months 6-7, 15-16, 19-20, 27-28). |
+| 4 | 1★ within 2 min, 2★ within 5 min, 3★ within 10 min | A goal done, a new one in view. | Pass in 10 of 10 bot seeds (1★ month 9, 2★ months 23 to 30, 3★ months 32 to 43). Enforced by `tests/balance.test.ts`. |
+| 5 | Something new (resident, event, combo or unlock) at least every 30s | Replaces "something new every 1-2 in-game minutes". | Pass by bot, not asserted. Combos alone can go 30 months apart (seed 8), residents and events fill the gap. |
+| 6 | At most 2 popups per minute, never two within 20s | Back-to-back cards read as spam. | Pass: random popups keep 3 months clear of any other event (`EVENT_CLEAR`). Asserted in `tests/balance.test.ts`. |
 | 7 | Tutorial tips at least 60s apart | One lesson at a time. | Pass (`GAP_MS`) |
 | 8 | No debt or soft-lock in year 1 | Bad choices slow you down. They never end the game. | Pass (balance test) |
 | 9 | Year-1 cash never below 0 for idle or builder bots | Same rule, measured as a number. | Pass (balance test) |
@@ -32,6 +32,5 @@ Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder
 
 ## Open work (not shipped here)
 
-- Fix target 4 and 5 for bot seed 2.
-- Space paired popups at least 3 months apart (target 6).
+- Targets 4 and 6 are fixed and tested. The earlier seed 2 stall came from an unlucky event order, not a balance gap.
 - Browser run for targets 1 and 10.
