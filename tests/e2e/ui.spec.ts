@@ -33,7 +33,7 @@ async function dismissModals(page: Page): Promise<void> {
 }
 
 /**
- * Switches tips off through the product's own Skip tips button, before any are seen.
+ * Dismisses the Sabar tip, the first one a fresh game can hit for certain.
  * A test that is not about tips needs this: a tip can land on the month before a message
  * under test and be shown first, queueing that message behind it.
  */
@@ -44,7 +44,7 @@ async function skipTips(page: Page): Promise<void> {
     app.s.stats.arrived = 1;
     app.refresh();
   });
-  await page.locator('#modal .tip-skip').click();
+  await page.locator('#modal .tap-hint').click();
   await expect(page.locator('#modal')).toBeHidden();
 }
 
@@ -175,7 +175,7 @@ test.describe('opener', () => {
 });
 
 test.describe('tips', () => {
-  test('a mechanic is taught once, on tap, and Skip tips silences the rest', async ({ page }) => {
+  test('a mechanic is taught once, on tap, with no way to switch the rest off', async ({ page }) => {
     const RANKED = { id: 'Waktunya rapor.', en: 'Report card time.' }[lang()];
     await start(page);
     await page.locator('#howtoGo').click();
@@ -201,7 +201,7 @@ test.describe('tips', () => {
       a.s.month = 9;
       a.refresh();
     });
-    // One tip at a time: tap through whatever is due, then Skip tips on the next.
+    // One tip at a time: tap through whatever is due until the report card tip.
     for (let i = 0; i < 6; i++) {
       await expect(page.locator('#modal')).toBeVisible();
       if ((await page.locator('#modal .card h2').textContent()) === RANKED) break;
@@ -209,13 +209,17 @@ test.describe('tips', () => {
       await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
     }
     await expect(page.locator('#modal .card h2')).toHaveText(RANKED);
-    await page.locator('#modal .tip-skip').click();
+    await expect(page.locator('#modal .tip-skip')).toHaveCount(0);
+    await page.locator('#modal .tap-hint').click();
     await expect(page.locator('#modal')).toBeHidden();
+    // The rest still come, each on its own tap.
     await page.evaluate(() => {
       const a = (window as unknown as { pakrt: any }).pakrt;
       a.s.stats.arrived = 1;
       a.refresh();
     });
+    await expect(page.locator('#modal')).toBeVisible();
+    await page.locator('#modal .tap-hint').click();
     await expect(page.locator('#modal')).toBeHidden();
   });
 });
@@ -1376,6 +1380,8 @@ test.describe('build mode', () => {
       const tops = await tabs.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
       expect(new Set(tops).size, `tab tops ${tops}`).toBe(1);
     }
+    // Jalan Setapak leads the first tab, since nothing works without a path.
+    await expect(page.locator('#sheet .card-btn').first()).toContainText(/Jalan Setapak/);
     // A card says "no permit" once: the blurb and the meta line must not both carry it.
     const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
     expect(((await rumah.innerText()).match(/no permit|tanpa izin/gi) ?? []).length).toBe(1);

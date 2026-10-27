@@ -203,7 +203,7 @@ export const RW_EVENTS: StageEventDef[] = [
         cost: { rupiah: 300_000 },
         res: { sabar: 6 },
         modifier: { label: 'Kerja bakti', target: 'biopori', incomeMult: 1.2, months: 6 },
-        result: 'Everyone came for the gorengan. The biopori soak 20% better for 6 months.',
+        result: 'Everyone came for the gorengan. The selokan flow 20% better for 6 months.',
       },
     ],
   },

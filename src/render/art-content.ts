@@ -1,6 +1,6 @@
 import { dither, type Painter, type RoofShape } from './iso';
 
-// Sprites for the content wave: biopori, decorations, farm, shops and facilities. Same rules as ART.md:
+// Sprites for the content wave: selokan, decorations, farm, shops and facilities. Same rules as ART.md:
 // straight isometric boxes, palette keys, the ink pass from Painter.finish. Registered in iso.ts.
 // Only `import type` from iso.ts, so there is no import cycle.
 
@@ -8,9 +8,6 @@ const within = (v: number, lo: number, hi: number) => v >= lo && v < hi;
 const TW = 32;
 const TH = 16;
 const TOP = 40;
-
-/** Centre of the ground diamond in art pixels, plus an offset. */
-const at = (dx: number, dy: number): [number, number] => [TW / 2 + dx, TOP + TH / 2 + dy];
 
 /** A shopfront: a walled box under a roof of the given shape, a door, and a coloured band of awning above a window. */
 const shopfront = (wall: string, roof: string, awning: string, opts: { height?: number; rise?: number; inset?: number; door?: string; shape?: RoofShape } = {}) => (p: Painter): void => {
@@ -27,19 +24,34 @@ const shopfront = (wall: string, roof: string, awning: string, opts: { height?: 
   p.roofShape(shape, inset, height, shape === 'shed' ? Math.max(3, rise - 1) : rise, roof, wall);
 };
 
-export const CONTENT_ART: Record<string, (p: Painter) => void> = {
-  // A round infiltration hole with a stone rim and a sprout. Bare, so the rim is drawn here.
-  biopori: (p) => {
+export const CONTENT_ART: Record<string, (p: Painter, variant?: string) => void> = {
+  // Selokan: a concrete channel across the tile, edge to edge so neighbours line up, with a plank bridge over it.
+  // Bare, so the kerbs and their ink line are drawn here.
+  drain: (p, v) => {
     p.bare = true;
-    p.ground((a, b) => {
-      const d = Math.hypot(a - 0.5, b - 0.5);
-      if (d > 0.3) return null;
-      if (d > 0.25) return 'S';
-      if (d > 0.2) return 's';
-      return d < 0.1 ? 'k' : 'N';
+    p.ground((a0, b0, px) => {
+      // a runs along the channel, b across it. Variant 'y' turns it, so a column of selokan joins up like a row.
+      const [a, b] = v === 'y' ? [b0, a0] : [a0, b0];
+      if (b < 0.06 || b > 0.94) return null;
+      const bridge = within(a, 0.44, 0.56);
+      const edge = b < 0.06 + px || b > 0.94 - px;
+      if (bridge && !edge) {
+        // Planks lie across, a dark gap between each, an ink rail along each end.
+        if (b < 0.12 + px || b > 0.88 - px) return 'N';
+        return Math.floor((a - 0.44) * 32) % 2 ? 'n' : 't';
+      }
+      if (b < 0.26 || b > 0.74) {
+        if (edge) return 'S';
+        // Poured slabs: a seam every quarter, a light face, and the far kerb a shade darker.
+        if (Math.abs(((a * 4) % 1) - 0.5) < px * 0.6 && !within(a, 0.37, 0.63)) return 'S';
+        return b < 0.26 ? 's' : 'S';
+      }
+      // The wall drops into the water, so the near strip is shade, then ripples drift along the channel.
+      if (b < 0.34) return 'b';
+      if (b > 0.66) return 'B';
+      const r = (a * 9 + b * 4) % 1;
+      return r < 0.14 ? 'w' : r < 0.4 ? 'c' : 'l';
     });
-    const [x, y] = at(0, 0);
-    for (const [dx, dy, c] of [[0, -1, 'g'], [-1, -2, 'g'], [1, -2, 'G'], [0, -3, 'g']] as const) p.set(x + dx, y + dy, c);
   },
 
   // Decorations. Small, low and bright, so they read as nice-to-have beside the working buildings.

@@ -35,8 +35,8 @@ export type Speed = (typeof SPEEDS)[number];
 export const SAVE_KEY = 'pakrt.save';
 
 interface Notice {
-  /** Set on tutorial tips. Adds a way to switch all tips off. */
-  tip?: { pics: Node; skip: () => void };
+  /** Set on tutorial tips. Adds the picture row. */
+  tip?: { pics: Node };
   title: string;
   body: string;
   tone: 'good' | 'bad' | 'info';
@@ -346,11 +346,6 @@ export class App {
     return this.modalQueue.length === 0 && !this.s.pendingEvent && !sheetOpen() && document.getElementById('howto')!.hidden;
   }
 
-  private dropTips(): void {
-    this.modalQueue = this.modalQueue.filter((m) => !m.tip);
-    this.showModal();
-  }
-
   private showModal(): void {
     const n = this.modalQueue[0];
     const el = document.getElementById('modal')!;
@@ -367,7 +362,6 @@ export class App {
         n.extra,
         n.tip?.pics,
         h('p', { class: 'tap-hint' }, t('modal.tap')),
-        n.tip ? h('button', { class: 'btn tip-skip', onclick: (e: Event) => { e.stopPropagation(); n.tip!.skip(); this.dropTips(); } }, t('tip.skip')) : null,
       ),
     );
     el.classList.toggle('tip-modal', !!n.tip);

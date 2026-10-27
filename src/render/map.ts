@@ -392,7 +392,7 @@ export class MapView {
     if (b.def === 'rumah') return ROOF_COLOURS[b.uid % ROOF_COLOURS.length] + ROOF_SHAPES[Math.floor(b.uid / 5) % ROOF_SHAPES.length] + WALL_COLOURS[Math.floor(b.uid / 2) % WALL_COLOURS.length];
     // A cracked path shows its age: a split at first, potholes once it has been left for months.
     if (b.def === 'jalan' && b.status === 'damaged') return this.clock - (b.crackedAt ?? this.clock) >= PATH_DECAY.potholeAfter ? 'rusak' : 'retak';
-    if (b.def !== 'selokan') return undefined;
+    if (b.def !== 'selokan' && b.def !== 'biopori') return undefined;
     const has = (dx: number, dy: number) => this.selokan.has((b.y + dy) * GRID_W + b.x + dx);
     return !has(1, 0) && !has(-1, 0) && (has(0, 1) || has(0, -1)) ? 'y' : undefined;
   }
@@ -431,7 +431,7 @@ export class MapView {
     for (const n of s.neighbours) for (const b of n.buildings) { all.push(b); ai.add(b.uid); }
     for (const b of all) {
       for (const p of tilesOf(b)) this.occupied.add(p.y * GRID_W + p.x);
-      if (b.def === 'selokan') this.selokan.add(b.y * GRID_W + b.x);
+      if (b.def === 'selokan' || b.def === 'biopori') this.selokan.add(b.y * GRID_W + b.x);
     }
     for (const b of all) {
       if (FLAT_AO.has(b.def) || !this.onScreen(b.x, b.y)) continue;

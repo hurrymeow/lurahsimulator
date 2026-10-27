@@ -58,11 +58,10 @@ const CORE_BUILDINGS: BuildingDef[] = [
     sprite: 'posRonda',
   },
   {
-    // Replaced the selokan: a drain is one long connected channel, which a single tile cannot be.
-    // A biopori is a lone infiltration hole, so it makes sense on a tile by itself.
+    // The selokan is back (id stays 'biopori' so old saves load). One tile of drain works alone and lines up with its neighbours.
     id: 'biopori',
-    name: 'Biopori',
-    blurb: 'Infiltration hole that soaks up rain. Cheap and quick. Each level softens banjir damage.',
+    name: 'Selokan',
+    blurb: 'Concrete drain with a plank bridge that carries rain away. Cheap and quick. Each level softens banjir damage.',
     cost: 400_000,
     upkeep: 10_000,
     income: 0,
@@ -72,7 +71,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
     maxLevel: 3,
     placeable: true,
     removable: true,
-    sprite: 'biopori',
+    sprite: 'drain',
   },
   {
     id: 'jalan',
