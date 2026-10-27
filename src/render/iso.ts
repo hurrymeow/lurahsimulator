@@ -19,6 +19,8 @@ export interface Art {
   alpha: Uint8ClampedArray;
   /** Highest painted point, in art pixels above the ground centre. */
   height: number;
+  /** Footprint the art was drawn for. A 2x2 or 3x3 building's art is n times the size with its outline still 1px. */
+  n: number;
 }
 
 type Face = 'L' | 'R' | 'T';
@@ -37,8 +39,8 @@ function shade(c: string, f: number): string {
 const FACE_SHADE: Record<Face, number> = { L: 1, R: 0.72, T: 1.18 };
 
 export class Painter {
-  readonly w = TW;
-  readonly h = TOP + TH;
+  readonly w: number;
+  readonly h: number;
   readonly data: Uint8ClampedArray;
   /** Which shape or face painted each pixel. Ink lines go where two of them meet. */
   readonly ids: Uint16Array;
@@ -46,7 +48,10 @@ export class Painter {
   id = 1;
   /** Skip the ink pass, for specks too small to outline. */
   bare = false;
-  constructor() {
+  /** n is the footprint the canvas is sized for. Sprites always paint at n = 1; upscale() makes the big one. */
+  constructor(readonly n = 1) {
+    this.w = TW * n;
+    this.h = (TOP + TH) * n;
     this.data = new Uint8ClampedArray(this.w * this.h * 4);
     this.ids = new Uint16Array(this.w * this.h);
   }
@@ -219,8 +224,49 @@ export class Painter {
     });
   }
 
-  finish(): Art {
+  /**
+   * The same art for an n x n footprint, with outlines kept 1px instead of scaled to n px.
+   * Fills and face ids scale up pixel for pixel, and the ink pass has not run yet, so it runs on the
+   * big canvas. Bare art (flat ground that paints its own border band) has no ink pass: its silhouette
+   * band keeps only its outermost pixel, and the rest takes the colour just inside the band.
+   */
+  upscale(n: number): Painter {
+    const q = new Painter(n);
+    q.bare = this.bare;
+    const { w, h, ids, data } = this;
+    const solid = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && ids[y * w + x] > 0;
+    // Bare art only: for each small pixel on the silhouette, the inner neighbour whose colour fills in for it.
+    const inner = new Int32Array(w * h).fill(-1);
+    if (this.bare)
+      for (let y = 0; y < h; y++)
+        for (let x = 0; x < w; x++) {
+          if (!solid(x, y)) continue;
+          const near = [[x, y + 1], [x - 1, y], [x + 1, y], [x, y - 1]];
+          if (near.every(([a, b]) => solid(a, b))) continue;
+          const edge = (a: number, b: number) => [[a, b + 1], [a - 1, b], [a + 1, b], [a, b - 1]].some(([c, d]) => !solid(c, d));
+          const inside = near.find(([a, b]) => solid(a, b) && !edge(a, b));
+          inner[y * w + x] = inside ? inside[1] * w + inside[0] : y * w + x;
+        }
+    const big = (x: number, y: number) => x >= 0 && y >= 0 && x < q.w && y < q.h && ids[Math.floor(y / n) * w + Math.floor(x / n)] > 0;
+    for (let y = 0; y < q.h; y++)
+      for (let x = 0; x < q.w; x++) {
+        let from = Math.floor(y / n) * w + Math.floor(x / n);
+        const to = y * q.w + x;
+        q.ids[to] = ids[from];
+        if (inner[from] >= 0 && big(x - 1, y) && big(x + 1, y) && big(x, y - 1) && big(x, y + 1)) from = inner[from];
+        q.data.set(data.subarray(from * 4, from * 4 + 4), to * 4);
+      }
+    return q;
+  }
+
+  /** Runs the ink pass (unless bare) and returns the RGBA pixels. Pure, so tests read it without a canvas. */
+  pixels(): Uint8ClampedArray {
     if (!this.bare) this.ink();
+    return this.data;
+  }
+
+  finish(): Art {
+    this.pixels();
     const c = document.createElement('canvas');
     c.width = this.w;
     c.height = this.h;
@@ -229,9 +275,9 @@ export class Painter {
     let top = 0;
     for (let k = 0; k < alpha.length; k++) {
       alpha[k] = this.data[k * 4 + 3];
-      if (alpha[k] === 255 && !top) top = TOP + TH / 2 - Math.floor(k / this.w);
+      if (alpha[k] === 255 && !top) top = (TOP + TH / 2) * this.n - Math.floor(k / this.w);
     }
-    return { canvas: c, alpha, height: top };
+    return { canvas: c, alpha, height: top, n: this.n };
   }
 }
 
@@ -464,14 +510,18 @@ const ART: Record<string, (p: Painter, variant?: string) => void> = {
 
 const cache = new Map<string, Art>();
 
-/** Isometric art for a sprite name. variant is a roof colour for rumah, or 'y' for a selokan. Unknown names get a plain box. */
-export function iso(name: string, variant?: string): Art {
-  const key = `${name}:${variant ?? ''}`;
+/**
+ * Isometric art for a sprite name. variant is a roof colour for rumah, or 'y' for a selokan. n is the
+ * footprint: big buildings get their own art at n times the size. Unknown names get a plain box.
+ */
+export function iso(name: string, variant?: string, n = 1): Art {
+  const key = `${name}:${variant ?? ''}:${n}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const p = new Painter();
   (ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant);
-  const art = p.finish();
+  // A big footprint gets its own art, n times the size with 1px outlines, not the small art stretched.
+  const art = (n > 1 ? p.upscale(n) : p).finish();
   cache.set(key, art);
   return art;
 }

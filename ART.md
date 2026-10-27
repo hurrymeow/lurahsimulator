@@ -52,6 +52,10 @@ No third-party art or names. Everything is drawn in code.
 - The sun's rim is a deep amber, `#8a4f12`. Selokan banks are a dark warm grey, `#4a4a44`.
 - Set `p.bare = true` to skip the ink pass for flat or lattice art: selokan (it draws its own
   banks so neighbours join up), grass tufts, bamboo scaffolding.
+- Big buildings (2x2, 3x3) keep the same 1px outline as a warung. Their sprite is painted on one
+  tile, then `Painter.upscale(n)` scales the fills and face ids, and the ink pass runs on the big
+  canvas. Bare art that paints its own border band (lapangan, sawah) keeps only the band's outer
+  pixel. Never stretch a finished, outlined sprite: its outline comes out n pixels thick.
 - Terrain borders are coloured, not inked. The higher ground takes a dark edge in its own
   colour (0.6x). The lower side gets a bright rim that eases back to its base colour over three
   pixels (1.2x, 1.11x, 1.05x). Sea meeting sand gets foam, then lighter shallows. Rank, high to
@@ -185,7 +189,8 @@ faceless, so the map stays readable.
 1. Add a function to `ART` in `src/render/iso.ts`. Start with `p.shadow(inset)`.
 2. Build it from `box` and `roof` with palette keys, and paint details per face through the
    `paint` callback.
-3. Keep it inside the tile's footprint and under the 40-pixel headroom.
+3. Keep it inside the tile's footprint and under the 40-pixel headroom. A 2x2 or 3x3 building is
+   still painted on one tile: `iso(name, variant, n)` makes the big art.
 4. Let the outline pass run, unless it is a flat decal or lattice (`p.bare = true`). Flat decals
    that tile, like selokan and jalan, draw their own edges so neighbours join up.
 5. Check it at 4x on grass next to the existing sprites, then in game at day and night.
