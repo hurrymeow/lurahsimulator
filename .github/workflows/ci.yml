@@ -35,6 +35,11 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # The official image ships the browsers and system libraries, so there is no apt step to stall.
+    # Keep the tag equal to @playwright/test in package-lock.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
     strategy:
       fail-fast: false
       matrix:
@@ -46,17 +51,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - id: pw
-        run: echo "version=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
-      - id: pw-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
-      - if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: timeout 180 npx playwright install --with-deps chromium || timeout 180 npx playwright install --with-deps chromium
-      - if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: timeout 180 npx playwright install-deps chromium || timeout 180 npx playwright install-deps chromium
       - run: npx playwright test --shard=${{ matrix.shard }}/6
         env:
           CI: 'true'
