@@ -7,7 +7,7 @@ Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder
 
 | # | Target | Why | Status 2026-10-27 |
 | --- | --- | --- | --- |
-| 1 | First house built within 30s of New Game | Kairosoft opens on a build. Idle time here loses the player. | Needs a browser run |
+| 1 | First house built within 30s of New Game | Kairosoft opens on a build. Idle time here loses the player. | Estimate: about 25 to 35s (6 taps, 57 tutorial words). Close to the line. Not timed. |
 | 2 | First resident within 10s of the house | The first build must visibly pay off. | Pass: month 1 (8s) |
 | 3 | First popup between 45s and 90s | Let the player learn the map first. | Pass: 48 to 56s |
 | 4 | 1★ within 2 min, 2★ within 5 min, 3★ within 10 min | A goal done, a new one in view. | Pass in 10 of 10 bot seeds (1★ month 9, 2★ months 23 to 30, 3★ months 32 to 43). Enforced by `tests/balance.test.ts`. |
@@ -16,7 +16,7 @@ Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder
 | 7 | Tutorial tips at least 60s apart | One lesson at a time. | Pass (`GAP_MS`) |
 | 8 | No debt or soft-lock in year 1 | Bad choices slow you down. They never end the game. | Pass (balance test) |
 | 9 | Year-1 cash never below 0 for idle or builder bots | Same rule, measured as a number. | Pass (balance test) |
-| 10 | Each star unlocks something the player can use within 30s | Stars must feel like rewards, not counters. | Not measured |
+| 10 | Each star unlocks something the player can use within 30s | Stars must feel like rewards, not counters. | Pass by design (STAGES.md unlocks per star). Affordability at that moment not measured. |
 
 ## Sources
 
@@ -33,4 +33,4 @@ Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder
 ## Open work (not shipped here)
 
 - Targets 4 and 6 are fixed and tested. The earlier seed 2 stall came from an unlucky event order, not a balance gap.
-- Browser run for targets 1 and 10.
+- A human-timed run for targets 1 and 10, if the estimates matter.
