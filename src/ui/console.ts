@@ -8,6 +8,7 @@ import { TH, TW } from '../render/iso';
 import { WORLD_OX, WORLD_OY } from '../render/scenery';
 import { GRID_H, GRID_W } from '../sim/types';
 import { h } from './dom';
+import { menuIconURL } from './icons';
 import './console.css';
 
 export function setupConsole(app: App): void {
@@ -15,10 +16,31 @@ export function setupConsole(app: App): void {
   const stage = document.getElementById('stage')!;
   const map = document.getElementById('map') as HTMLCanvasElement;
 
-  // ---------- title bar ----------
+  // ---------- top bar: time controls beside the date, like a city builder's clock ----------
   const date = h('span', { class: 'cs-date', id: 'cs-date' });
-  const title = h('header', { class: 'cs-title cs', id: 'cs-title' }, h('span', { class: 'cs-name' }, document.title.toUpperCase()), date);
+  const clock = h('div', { class: 'cs-clock' }, document.getElementById('pause-btn')!, document.getElementById('speed-btn')!);
+  const title = h('header', { class: 'cs-title cs', id: 'cs-title' }, clock, date);
   root.insertBefore(title, document.getElementById('hud'));
+
+  // ---------- bottom bar: a dock of the most used panels beside Menu, and the month as a thin line ----------
+  const bar = document.getElementById('bottombar')!;
+  const month = document.querySelector('.month-track')!;
+  month.classList.add('cs-month');
+  bar.prepend(month);
+  const menuBtn = document.getElementById('menu-btn')!;
+  const DOCK: { id: string; label: () => string }[] = [
+    { id: 'build', label: () => t('menu.build') },
+    { id: 'warga', label: () => t('menu.warga') },
+  ];
+  const dock = DOCK.map((d) => {
+    const icon = menuIconURL(d.id);
+    const b = h('button', { class: 'btn cs-dock', id: `dock-${d.id}`, type: 'button', onclick: () => app.actions.find((a) => a.id === d.id)?.open(app) },
+      icon ? h('img', { src: icon, alt: '', width: 28, height: 28, class: 'pixel' }) : null,
+      h('span', {}, ''),
+    );
+    return { d, b };
+  });
+  for (const { b } of dock) menuBtn.before(b);
 
   // ---------- satellite view ----------
   const sat = h('canvas', { width: 88, height: 60, id: 'cs-sat-map' }) as HTMLCanvasElement;
@@ -28,6 +50,7 @@ export function setupConsole(app: App): void {
   // The date follows the month; the satellite label follows the language.
   app.refreshers.push(() => {
     date.textContent = dateLabel(app.s.month);
+    for (const { d, b } of dock) b.lastElementChild!.textContent = d.label();
     satBox.setAttribute('aria-label', t('cs.satHelp'));
     // Out of the way while a building is being placed.
     satBox.hidden = !document.getElementById('placebar')!.hidden;

@@ -106,8 +106,7 @@ html:not(.theme-dark) #chip-pop img { filter: brightness(0.18); }
 /* Short phones give the map every pixel: the title bar and satellite view drop out, and the date
    goes back to the bottom row. */
 @media (max-height: 640px) {
-  .cs-title, .cs-sat { display: none !important; }
-  #date { display: inline; }
+  .cs-sat { display: none !important; }
 }
 
 /* Light theme: warning colours in ink-dark tones, so they keep their contrast on cream. */
@@ -118,3 +117,20 @@ html:not(.theme-dark) :is(#hud, #bottombar, #goal, #ticker) :is(.missing, .warn)
 
 /* The home screen hides the status row and the toast with the rest of the HUD. */
 #app.home-open :is(#status, #ticker) { visibility: hidden; }
+
+/* ---------- prototype: clock in the top bar, dock and month line in the bottom bar ---------- */
+.cs-title { min-height: var(--touch); padding: 0 8px 0 0; }
+.cs-clock { display: flex; align-self: stretch; }
+.cs-clock .btn { min-height: var(--touch); border: 0; border-right: 1px solid var(--cs-line); border-radius: 0; background: var(--cs-cream); color: var(--cs-ink); box-shadow: none; }
+.cs-clock #pause-btn[aria-pressed='true'] { background: var(--cs-green); color: var(--cs-on-green); }
+#bottombar { position: relative; padding: 8px 8px 6px; }
+.cs-month.month-track { position: absolute; top: 0; left: 0; right: 0; max-width: none; height: 4px; border-radius: 0; border: 0; background: var(--cs-cream-3); }
+.date-wrap { display: none; }
+#mainbar { gap: 6px; }
+.cs-dock { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 6px; font-weight: 700; }
+.cs-dock img { flex: none; }
+#menu-btn { flex: 1; }
+@media (max-width: 359px) {
+  /* The dock keeps its words; the icons go so nothing clips. */
+  .cs-dock img { display: none; }
+}

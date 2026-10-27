@@ -519,6 +519,17 @@ export class MapView {
         ctx.filter = b.def === 'jalan' ? 'none' : 'sepia(1) brightness(0.6)';
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.filter = 'none';
+        if (b.def === 'jalan') {
+          // A broken path must read at a glance: a red tint and an orange edge that breathes slowly
+          // (steady with reduce motion), so it stands out from the sandy paths round it.
+          const pulse = this.motion ? 0.5 + 0.5 * Math.sin(now / 420) : 1;
+          this.diamond(ctx, b.x, b.y);
+          ctx.fillStyle = `rgba(220, 38, 38, ${0.2 + 0.15 * pulse})`;
+          ctx.fill();
+          ctx.strokeStyle = `rgba(234, 88, 12, ${0.55 + 0.45 * pulse})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
       } else if (b.noRoad) {
         ctx.filter = 'grayscale(1) brightness(0.75)';
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
@@ -560,7 +571,7 @@ export class MapView {
     for (const b of sorted) {
       if (!tops.has(b.y * GRID_W + b.x)) continue;
       const label = b.status === 'permit' || b.status === 'building' ? `${b.timer}` : b.status === 'mangkrak' ? '80%' : b.status === 'damaged' ? '!' : b.noRoad ? t('map.noRoad') : null;
-      if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label, badges);
+      if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label, badges, b.status === 'damaged');
     }
     // Speech bubbles go last of all, above buildings, window lights, weather and badges.
     this.crowd.drawBubbles(ctx);
@@ -741,15 +752,16 @@ export class MapView {
     }
   }
 
-  private badge(ctx: CanvasRenderingContext2D, cx: number, cy0: number, text: string, placed: BadgeBox[]): void {
+  /** warn: a repair is needed, so the badge is warning orange instead of black. */
+  private badge(ctx: CanvasRenderingContext2D, cx: number, cy0: number, text: string, placed: BadgeBox[], warn = false): void {
     ctx.font = '700 16px "Atkinson Hyperlegible", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const w = Math.max(20, ctx.measureText(text).width + 8);
     const cy = placeBadge(placed, cx, cy0, w);
-    ctx.fillStyle = '#0b0b0c';
+    ctx.fillStyle = warn ? '#c2410c' : '#0b0b0c';
     ctx.fillRect(cx - w / 2, cy - 10, w, 20);
-    ctx.strokeStyle = '#f4f4f5';
+    ctx.strokeStyle = warn ? '#fff7ed' : '#f4f4f5';
     ctx.lineWidth = 1;
     ctx.strokeRect(cx - w / 2 + 0.5, cy - 9.5, w - 1, 19);
     ctx.fillStyle = '#f4f4f5';
