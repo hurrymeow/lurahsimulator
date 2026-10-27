@@ -8,3 +8,4 @@
 - Notices are a 3s toast over the map (`App.toast`, `#ticker.notice-toast`). The home screen shows the Welcome toast when play starts.
 - E2E: the goal expands on tap; a toast shows inside the map, fades, and stays in the Log; Light and Dark main-screen boxes match exactly.
 - ART.md has a new UI chrome section. GAME-DESIGN.md section 6, UI.md rule 2 and CONTRIBUTING.md describe the status row and the toast.
+- Baselines redrawn in CI's Playwright image by the Update baselines workflow (commit 2fca619): HUD, Build sheet, event popup and tip card changed with the new layout. The home baseline hides the map, so it barely moved. Before and after images are linked in the PR.
