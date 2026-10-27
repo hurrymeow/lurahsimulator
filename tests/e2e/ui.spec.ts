@@ -69,6 +69,19 @@ async function expectCentred(page: Page, where: string): Promise<void> {
   if (!m.full) expect(m.off, `${where} is vertically centred`).toBeLessThan(3);
 }
 
+/** The coach note must never sit on top of anything it is not pointing at, or on the target itself. */
+async function expectCoachClear(page: Page, selectors: string[], where: string): Promise<void> {
+  const note = (await page.locator('#coach').boundingBox())!;
+  for (const sel of selectors) {
+    for (const el of await page.locator(sel).all()) {
+      const b = await el.boundingBox();
+      if (!b) continue;
+      const overlap = b.x < note.x + note.width && b.x + b.width > note.x && b.y < note.y + note.height && b.y + b.height > note.y;
+      expect(overlap, `${where}: the note covers ${sel}`).toBe(false);
+    }
+  }
+}
+
 async function expectLegible(page: Page, where: string): Promise<void> {
   const problems = await scanLegibility(page);
   expect(problems, `${where}\n${problems.map((p) => `${p.rule}: "${p.text}" (${p.detail})`).join('\n')}`).toEqual([]);
@@ -117,6 +130,7 @@ test.describe('opener', () => {
     await page.locator('#act-build').click();
     const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
     await expect(rumah).toHaveClass(/coach-pulse/);
+    await expectCoachClear(page, ['#sheet .tabs', '#sheet > p', '#sheet .card-btn.coach-pulse'], 'Pick step');
     await expectLegible(page, 'opener, Pick step');
     await rumah.click();
     await expect(page.locator('#coach')).toBeVisible();
@@ -128,6 +142,7 @@ test.describe('opener', () => {
     });
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('#place-ok')).toHaveClass(/coach-pulse/);
+    await expectCoachClear(page, ['#place-ok', '#place-cancel'], 'Place step');
     await page.locator('#place-ok').click();
     await expect(page.locator('#coach-skip')).toHaveText(lang() === 'en' ? 'Got it' : 'Paham');
     await page.locator('#coach-skip').click();
