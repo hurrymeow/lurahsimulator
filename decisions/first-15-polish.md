@@ -5,5 +5,3 @@
 - The four starting Build tabs share one row (tighter tab padding), so the first Rumah card shows without scrolling.
 - The Rumah blurb no longer says "no permit" because the meta line under it already does.
 - Reference: Kairosoft keeps the opener to one thing at a time. Report, ranking and a new system explainer should not stack.
-- Speech bubbles are queued and painted after buildings, window lights, weather and badges, so no layer covers them. An e2e check records the draw order of a night frame and fails if anything paints after the bubble.
-- English goal lines read "Combos found: 0 of 1" instead of "1 combos found", so no count needs a plural.
