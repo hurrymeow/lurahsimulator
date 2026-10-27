@@ -108,11 +108,16 @@ async function seed(page: Page): Promise<void> {
 }
 
 test.describe('opener', () => {
-  test('the goal strip shows a quick goal and the next star, and names the first combo at minute 4', async ({ page }) => {
+  test('the goal shows on one line, expands to the next star on tap, and names the first combo at minute 4', async ({ page }) => {
     await start(page);
     const goal = page.locator('#goal');
     await expect(goal.locator('.goal-now')).toBeVisible();
+    // Next star hides behind a tap on the goal line.
+    await expect(goal.locator('.goal-star')).toBeHidden();
+    // The How to play card is still up in this test, so press the line directly.
+    await goal.locator('.goal-now').dispatchEvent('click');
     await expect(goal.locator('.goal-star')).toBeVisible();
+    await expect(goal.locator('.goal-now')).toHaveAttribute('aria-expanded', 'true');
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.s.month = 30;
@@ -621,8 +626,8 @@ test.describe('slim HUD and one menu', () => {
     const ids = await page.evaluate(() =>
       [...document.querySelectorAll('button')].filter((b) => b.getClientRects().length && b.id !== 'ticker').map((b) => b.id),
     );
-    // The frame adds no buttons: every panel opens from Menu.
-    expect(ids).toEqual(['chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'pause-btn', 'speed-btn', 'menu-btn']);
+    // The frame adds no panel buttons: every panel opens from Menu. The goal line only expands the next star.
+    expect(ids).toEqual(['chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'goal-now', 'pause-btn', 'speed-btn', 'menu-btn']);
     const hud = (await page.locator('#hud').boundingBox())!;
     expect(hud.height).toBeLessThanOrEqual(80);
   });
@@ -726,6 +731,8 @@ test.describe('text is legible and never cut off', () => {
     await expectLegible(page, 'Stats panel');
     await page.locator('.sheet-head .btn').click();
 
+    // The toast opens the Log on tap while it shows.
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.toast());
     await page.locator('#ticker').click();
     await expectLegible(page, 'Log panel');
     await page.locator('.sheet-head .btn').click();
@@ -1820,6 +1827,44 @@ test.describe('console frame and theme', () => {
     await page.locator('#act-settings').click();
     await page.locator('#sheet [data-theme="light"]').click();
     expect(await dark()).toBe(false);
+  });
+
+  test('light and dark share the same layout and sizes', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const boxes = () => page.evaluate(() =>
+      ['cs-title', 'hud', 'status', 'goal', 'emas', 'stage', 'map', 'cs-sat', 'bottombar', 'pause-btn', 'speed-btn', 'menu-btn'].map((id) => {
+        const r = document.getElementById(id)!.getBoundingClientRect();
+        return `${id} ${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)}`;
+      }),
+    );
+    const light = await boxes();
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.settings.theme = 'dark';
+      app.applySettings();
+    });
+    expect(await page.evaluate(() => document.documentElement.classList.contains('theme-dark'))).toBe(true);
+    expect(await boxes()).toEqual(light);
+  });
+
+  test('a notice shows as a toast over the map, fades, and stays in the Log', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.notice({ title: 'Toast test', body: 'It fades.', tone: 'info' }));
+    const toast = page.locator('#ticker');
+    await expect(toast).toBeVisible();
+    await expect(toast).toContainText('Toast test');
+    // It floats inside the map, not in a band of its own.
+    const tb = (await toast.boundingBox())!;
+    const mb = (await page.locator('#map').boundingBox())!;
+    expect(tb.y).toBeGreaterThanOrEqual(mb.y);
+    expect(tb.y + tb.height).toBeLessThanOrEqual(mb.y + mb.height + 1);
+    await expectLegible(page, 'notice toast');
+    await expect(toast).toBeHidden({ timeout: 6000 });
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-log').click();
+    await expect(page.locator('#sheet')).toContainText('Toast test');
   });
 
   test('every panel the frame used to shortcut still opens from Menu', async ({ page }) => {

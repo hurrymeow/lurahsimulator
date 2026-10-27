@@ -297,12 +297,15 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 - Mobile-first, portrait, touch controls. Every number (tap size, text size, contrast, word limits) lives in [UI.md](UI.md), not here.
 - Main screen is the console frame, after a 90s train-and-city builder (`src/ui/console.ts`, `src/ui/console.css`). It is kept simple so the map has room. Top to bottom:
   - a slim title bar: the name and the date. It is a label, not a control;
-  - the resource bar, the Indonesia Emas bar, the goal strip and the ticker;
+  - the resource bar;
+  - one status row: the current goal on one line ("Now: reach 6 residents"), and beside it a compact Indonesia Emas 2045 meter. Tap the goal to show the next star below it; tap the meter to learn what Emas is;
   - the map, full width, with a small satellite view in its top-right corner that pans the map when tapped;
   - one compact bottom row: pause, speed, month bar, Menu.
 - Every panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game.
 - No shortcut on the main screen duplicates a Menu panel: no rail, no quick tabs, no SYSTEM button. A new panel registers an `ActionButton` with a `group` in the Menu. Don't add main-screen buttons.
+- Notices are toasts, not a band: the latest one floats over the bottom of the map for 3 seconds, then fades. Tap it to open the Log. Every notice also stays in the Log (Menu > Log), so a missed toast is never lost. Important messages still use the pause-and-tap modal.
 - The satellite view hides while a building is being placed.
+- Light and Dark share one layout: every size, gap and position is the same, and only colours change. An e2e test compares the boxes in both themes.
 - On short phones (640px tall or less) the title bar and the satellite view drop out, and the date goes back to the bottom row, so the map gets every pixel.
 - Sheets and modals keep their own dark look in both themes (see Themes below).
 - Clean pixel UI: 1px rules, square corners, dark green (`#2f6b45`) for primary actions. The bottom row has no padding round its 48px controls and no drop shadows. No cluttered Windows-XP-style panels.

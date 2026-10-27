@@ -23,8 +23,8 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 
 - Mobile portrait first. Test at 320, 360, 412 and 430px wide.
 - Style reference is Kairosoft's Dungeon Village. Own art and names only, no Kairosoft assets.
-- Main screen: the console frame (slim title bar, resource bar, the full-width map with a small satellite view, one bottom row). See [GAME-DESIGN.md](GAME-DESIGN.md#touch-and-layout).
-- Settings > Theme switches the frame between Light (default) and Dark. Check new UI in both.
+- Main screen: the console frame (slim title bar, resource bar, one status row with the goal and the 2045 meter, the full-width map with a small satellite view, one bottom row). Notices are toasts over the map. See [GAME-DESIGN.md](GAME-DESIGN.md#touch-and-layout).
+- Settings > Theme switches the frame between Light (default) and Dark. Both share one layout; only colours change. Check new UI in both.
 - New panel? Register an `ActionButton` with a `group` in the Menu. Never add a main-screen button.
 - Nothing on the main screen duplicates a Menu panel.
 - Text never cuts off. No ellipsis, text wraps, panels scroll. Body font 16px or more.

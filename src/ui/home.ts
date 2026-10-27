@@ -24,6 +24,8 @@ export function showHome(app: App, install: HTMLButtonElement, update: HTMLButto
     root.classList.remove('home-open');
     app.view.recentre();
     app.held = false;
+    // The latest notice (Welcome on a new game) shows as a toast once the map is in view.
+    app.toast();
   };
   const begin = (fresh: boolean) => {
     if (fresh) {
