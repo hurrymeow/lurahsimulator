@@ -1,7 +1,7 @@
 # Game design
 
 The one design doc for Pak Pejabat. A satirical kampung management sim, shipped as a PWA. You play Pak RT and work up the ladder to Pak Lurah.
-It replaces DESIGN.md, STAGES.md and PACING.md, which are now one-line pointers here.
+It replaces the old DESIGN.md, STAGES.md and PACING.md, which were deleted.
 Builder rules stay in their own files: [UI-RUBRIC.md](UI-RUBRIC.md), [ART.md](ART.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Contents

@@ -2,7 +2,7 @@ import type { BuildingDef, Resources, StageId, Stars } from '../../sim/types';
 import type { ComboDef } from '../combos';
 import type { EventChoice, EventDef } from '../events';
 
-// Content for the RW and Kelurahan/Desa stages (see STAGES.md). Nothing here is read by the
+// Content for the RW and Kelurahan/Desa stages (see GAME-DESIGN.md). Nothing here is read by the
 // engine yet. Every item carries a `gate`, so it stays invisible until the stage engine lands.
 
 /** Which way the player went at the Kelurahan promotion. */

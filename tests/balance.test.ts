@@ -103,7 +103,7 @@ describe('star pacing', () => {
   }, 30_000);
 });
 
-// PACING.md targets 4 and 6. A month is 8s at 1x, so 2 min is 15 months, 5 min is 37 and 10 min is 75.
+// GAME-DESIGN.md targets 4 and 6. A month is 8s at 1x, so 2 min is 15 months, 5 min is 37 and 10 min is 75.
 describe('pacing targets', () => {
   it('stars come on time and popups never come within 3 months of each other', () => {
     for (let seed = 1; seed <= 10; seed++) {
