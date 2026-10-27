@@ -58,6 +58,11 @@ export function resetHowto(): void {
   storage.remove(SEEN);
 }
 
+/** A new game that starts with the guide skips the first-launch card. */
+export function skipHowto(): void {
+  storage.set(SEEN, '1');
+}
+
 export function hasSeenHowto(): boolean {
   return storage.get(SEEN) === '1';
 }
