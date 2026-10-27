@@ -25,7 +25,7 @@ import { h, missingList } from './ui/dom';
 import { RIVAL_NAMES } from './data/ranking';
 import { areaScore } from './sim/ranking';
 import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
-import { autoPaused, simRunning, type PauseInputs } from './ui/autopause';
+import { showPausedBadge, simRunning, type PauseInputs } from './ui/autopause';
 
 export const MONTH_MS = 8000;
 /** First year the 4x speed is allowed. */
@@ -129,7 +129,7 @@ export class App {
       }
     }
     const badge = document.getElementById('auto-pause');
-    if (badge) badge.hidden = this.held || !autoPaused(this.pauseInputs());
+    if (badge) badge.hidden = !showPausedBadge(this.pauseInputs());
     const bar = document.getElementById('month-progress');
     if (bar) bar.style.width = `${(this.acc / MONTH_MS) * 100}%`;
     this.view.frozen = !this.running;

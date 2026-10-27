@@ -613,8 +613,7 @@ test.describe('slim HUD and one menu', () => {
     expect(await pk('a.running')).toBe(true);
 
     await page.locator('#menu-btn').click();
-    await expect(badge).toBeVisible();
-    await expect(badge).toHaveText(WORDS[lang()].paused);
+    await expect(badge).toBeHidden();
     expect(await pk('a.running')).toBe(false);
     expect(await pk('a.speed')).toBe(1);
     await page.getByRole('button', { name: WORDS[lang()].close }).click();
@@ -623,6 +622,7 @@ test.describe('slim HUD and one menu', () => {
 
     await pk("a.startPlacing('rumah')");
     await expect(badge).toBeVisible();
+    await expect(badge).toHaveText(WORDS[lang()].paused);
     expect(await pk('a.running')).toBe(false);
     await pk('a.stopPlacing()');
     await expect(badge).toBeHidden();
