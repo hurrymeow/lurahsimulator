@@ -1594,3 +1594,45 @@ test.describe('path decay, level art and menu icons', () => {
     await expectLegible(page, 'menu with icon plates');
   });
 });
+
+test.describe('sheets keep their place', () => {
+  test('the Build tab row does not jump when switching tabs', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await skipTips(page);
+    await seed(page);
+    await page.evaluate(() => ((window as unknown as { pakrt: any }).pakrt.speed = 0));
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-build').click();
+    const tabs = page.locator('.sheet .tabs .tab');
+    const n = await tabs.count();
+    expect(n).toBeGreaterThan(1);
+    let top: number | undefined;
+    for (let i = 0; i < n; i++) {
+      await tabs.nth(i).click();
+      const y = (await tabs.first().boundingBox())!.y;
+      top ??= y;
+      expect(Math.abs(y - top), `tab ${i} moved the tab row`).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('the SK choices stack at the same width', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await skipTips(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.s.stage.stars.rt = 3;
+      app.s.stage.sk = 'offered';
+      app.refresh();
+    });
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#stage-btn').click();
+    const widths = await page.locator('.sheet > .btn').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)));
+    expect(widths.length).toBeGreaterThan(1);
+    expect(new Set(widths).size, `button widths ${widths}`).toBe(1);
+    await expectLegible(page, 'stage sheet');
+  });
+});
