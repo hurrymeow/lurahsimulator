@@ -1,6 +1,7 @@
-// Console frame: the main screen after a 90s train-and-city builder. A slim title bar with the
-// name and the date, and a small satellite view that pans the map. Every panel lives in the Menu,
-// so the frame adds no buttons of its own. Settings picks a light or dark frame.
+// Console frame: the main screen after a 90s train-and-city builder. Two slim rows on top: time
+// (play, speed, date, the 2045 meter) and money (the five resources). The goal floats as a pill on
+// the map's top-left, opposite a small satellite view. At the bottom, the month as a thin line and
+// a dock of three equal buttons: Build, Warga and Menu. Settings picks a light or dark frame.
 import { t } from '../i18n';
 import type { App } from '../app';
 import { dateLabel } from '../format';
@@ -8,17 +9,49 @@ import { TH, TW } from '../render/iso';
 import { WORLD_OX, WORLD_OY } from '../render/scenery';
 import { GRID_H, GRID_W } from '../sim/types';
 import { h } from './dom';
+import { menuIconURL } from './icons';
 import './console.css';
 
+/** Panels with their own dock button. The Menu stops listing them, so nothing appears twice. */
+const DOCK = ['build', 'warga'];
+
 export function setupConsole(app: App): void {
-  const root = document.getElementById('app')!;
   const stage = document.getElementById('stage')!;
   const map = document.getElementById('map') as HTMLCanvasElement;
 
-  // ---------- title bar ----------
+  // ---------- top: a time row and a money row ----------
   const date = h('span', { class: 'cs-date', id: 'cs-date' });
-  const title = h('header', { class: 'cs-title cs', id: 'cs-title' }, h('span', { class: 'cs-name' }, document.title.toUpperCase()), date);
-  root.insertBefore(title, document.getElementById('hud'));
+  const clock = h('div', { class: 'cs-clock' }, document.getElementById('pause-btn')!, document.getElementById('speed-btn')!);
+  const row1 = h('div', { class: 'cs-row cs', id: 'cs-row1' }, clock, date, document.getElementById('emas')!);
+  const row2 = h('div', { class: 'cs-row cs', id: 'cs-row2' }, document.getElementById('hud')!);
+  const status = document.getElementById('status')!;
+  status.before(row1, row2);
+  // The goal floats as a pill over the map's top-left corner, opposite the satellite view.
+  const goal = document.getElementById('goal')!;
+  goal.classList.add('cs-goal-float');
+  stage.append(goal);
+  status.remove();
+
+  // ---------- bottom: the month as a thin line, and three equal dock buttons ----------
+  const bar = document.getElementById('bottombar')!;
+  const month = document.querySelector('.month-track')!;
+  month.classList.add('cs-month');
+  bar.prepend(month);
+  const menuBtn = document.getElementById('menu-btn')!;
+  const dock = DOCK.map((id) => {
+    const action = app.actions.find((a) => a.id === id)!;
+    action.dock = true;
+    const icon = menuIconURL(id);
+    const b = h('button', { class: 'btn cs-dock', id: `dock-${id}`, type: 'button', onclick: () => action.open(app) },
+      icon ? h('img', { src: icon, alt: '', width: 24, height: 24, class: 'pixel' }) : null,
+      h('span', {}, ''),
+    );
+    menuBtn.before(b);
+    return { action, b };
+  });
+  // Menu gets an icon too, so the three bottom buttons read as one set.
+  menuBtn.replaceChildren(h('span', { class: 'cs-menu-icon', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), h('span', { 'data-i18n': 'page.menu' }, t('page.menu')));
+  menuBtn.removeAttribute('data-i18n');
 
   // ---------- satellite view ----------
   const sat = h('canvas', { width: 88, height: 60, id: 'cs-sat-map' }) as HTMLCanvasElement;
@@ -28,6 +61,7 @@ export function setupConsole(app: App): void {
   // The date follows the month; the satellite label follows the language.
   app.refreshers.push(() => {
     date.textContent = dateLabel(app.s.month);
+    for (const { action, b } of dock) b.lastElementChild!.textContent = action.label();
     satBox.setAttribute('aria-label', t('cs.satHelp'));
     // Out of the way while a building is being placed.
     satBox.hidden = !document.getElementById('placebar')!.hidden;

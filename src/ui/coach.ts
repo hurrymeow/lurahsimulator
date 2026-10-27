@@ -116,9 +116,10 @@ export function setupCoach(app: App): void {
     }
     const list = document.querySelector('.build-list');
     const card = [...document.querySelectorAll('.build-list .card-btn')].find((c) => c.querySelector('strong')?.textContent?.startsWith(bName(def('rumah'))));
-    const menu = document.getElementById('act-build');
+    // Build has its own button in the bottom dock, so the opener points straight at it.
+    const build = document.getElementById('dock-build');
     // Time holds while the welcome is up, so nothing happens before the first tap.
-    app.held = !app.placing && !visible(list) && !visible(menu);
+    app.held = !app.placing && !visible(list);
     if (app.placing) {
       const ok = document.getElementById('place-ok');
       if (visible(ok) && !(ok as HTMLButtonElement).disabled) show('coach.place', ok);
@@ -126,8 +127,7 @@ export function setupCoach(app: App): void {
     } else if (visible(list)) {
       if (card) show('coach.pick', card);
       else show('coach.housing', document.querySelector('.tab[data-tab="housing"]'));
-    } else if (visible(menu)) show('coach.build', menu);
-    else show('coach.menu', document.getElementById('menu-btn'));
+    } else show('coach.menu', build);
   };
   setInterval(step, 250);
 }

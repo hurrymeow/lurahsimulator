@@ -515,10 +515,22 @@ export class MapView {
         ctx.filter = 'none';
         this.art(ctx, iso('scaffold', undefined, n), b.x, b.y, 1, 0, n, flip);
       } else if (b.status === 'damaged') {
-        // A cracked path has its own art, so it needs no tint.
-        ctx.filter = b.def === 'jalan' ? 'none' : 'sepia(1) brightness(0.6)';
+        // A broken path greys out as a whole tile; other buildings tint brown.
+        ctx.filter = b.def === 'jalan' ? 'grayscale(1) brightness(0.78) contrast(1.1)' : 'sepia(1) brightness(0.6)';
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.filter = 'none';
+        if (b.def === 'jalan') {
+          this.cracks(ctx, b);
+          // A broken path must read at a glance: a red tint and an orange edge that breathes slowly
+          // (steady with reduce motion), so it stands out from the sandy paths round it.
+          const pulse = this.motion ? 0.5 + 0.5 * Math.sin(now / 420) : 1;
+          this.diamond(ctx, b.x, b.y);
+          ctx.fillStyle = `rgba(220, 38, 38, ${0.2 + 0.15 * pulse})`;
+          ctx.fill();
+          ctx.strokeStyle = `rgba(234, 88, 12, ${0.55 + 0.45 * pulse})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
       } else if (b.noRoad) {
         ctx.filter = 'grayscale(1) brightness(0.75)';
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
@@ -560,7 +572,7 @@ export class MapView {
     for (const b of sorted) {
       if (!tops.has(b.y * GRID_W + b.x)) continue;
       const label = b.status === 'permit' || b.status === 'building' ? `${b.timer}` : b.status === 'mangkrak' ? '80%' : b.status === 'damaged' ? '!' : b.noRoad ? t('map.noRoad') : null;
-      if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label, badges);
+      if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label, badges, b.status === 'damaged');
     }
     // Speech bubbles go last of all, above buildings, window lights, weather and badges.
     this.crowd.drawBubbles(ctx);
@@ -741,15 +753,46 @@ export class MapView {
     }
   }
 
-  private badge(ctx: CanvasRenderingContext2D, cx: number, cy0: number, text: string, placed: BadgeBox[]): void {
+  /**
+   * Cracks across the whole tile, in art pixels from its centre: a long split corner to corner and
+   * two branches, mirrored per tile so neighbours do not repeat. Each crack is a dark line with a
+   * light lip below it, so it reads as cut into the ground.
+   */
+  private cracks(ctx: CanvasRenderingContext2D, b: Building): void {
+    const c = this.tileCentre(b.x, b.y);
+    const s = this.scale;
+    const m = b.uid % 2 ? -1 : 1;
+    const lines = [
+      [[-13, -1], [-8, 1], [-4, -1], [0, 1], [5, -1], [9, 1], [13, 0]],
+      [[-2, -6], [-1, -3], [1, -1]],
+      [[3, 1], [4, 3], [2, 5], [3, 6]],
+      [[-7, 0], [-8, 3], [-6, 4]],
+    ];
+    const path = (dy: number) => {
+      ctx.beginPath();
+      for (const line of lines)
+        line.forEach(([x, y], i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, Math.round(c.x + x * m * s), Math.round(c.y + (y + dy) * s)));
+    };
+    ctx.lineWidth = s;
+    ctx.lineJoin = 'miter';
+    path(1);
+    ctx.strokeStyle = 'rgba(244, 244, 245, 0.55)';
+    ctx.stroke();
+    path(0);
+    ctx.strokeStyle = 'rgba(24, 24, 27, 0.9)';
+    ctx.stroke();
+  }
+
+  /** warn: a repair is needed, so the badge is warning orange instead of black. */
+  private badge(ctx: CanvasRenderingContext2D, cx: number, cy0: number, text: string, placed: BadgeBox[], warn = false): void {
     ctx.font = '700 16px "Atkinson Hyperlegible", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const w = Math.max(20, ctx.measureText(text).width + 8);
     const cy = placeBadge(placed, cx, cy0, w);
-    ctx.fillStyle = '#0b0b0c';
+    ctx.fillStyle = warn ? '#c2410c' : '#0b0b0c';
     ctx.fillRect(cx - w / 2, cy - 10, w, 20);
-    ctx.strokeStyle = '#f4f4f5';
+    ctx.strokeStyle = warn ? '#fff7ed' : '#f4f4f5';
     ctx.lineWidth = 1;
     ctx.strokeRect(cx - w / 2 + 0.5, cy - 9.5, w - 1, 19);
     ctx.fillStyle = '#f4f4f5';
