@@ -366,6 +366,7 @@ export class App {
         n.tip ? h('button', { class: 'btn tip-skip', onclick: (e: Event) => { e.stopPropagation(); n.tip!.skip(); this.dropTips(); } }, t('tip.skip')) : null,
       ),
     );
+    el.classList.toggle('tip-modal', !!n.tip);
     el.hidden = false;
     if (n.fanfare) {
       this.haptic([30, 40, 30]);
