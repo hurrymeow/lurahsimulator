@@ -31,5 +31,10 @@ function serviceWorker(): Plugin {
 export default defineConfig({
   base: './',
   plugins: [serviceWorker()],
-  build: { target: 'es2022', assetsInlineLimit: 0 },
+  build: {
+    target: 'es2022',
+    assetsInlineLimit: 0,
+    // The game, plus the in-game UI mockup so it can be opened on the live site at /mockup.html.
+    rollupOptions: { input: { main: 'index.html', mockup: 'mockup.html' } },
+  },
 });
