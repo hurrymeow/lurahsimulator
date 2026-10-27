@@ -112,3 +112,9 @@ html:not(.theme-dark) #chip-pop img { filter: brightness(0.18); }
   .cs-tab { min-height: var(--touch); }
   .cs-tab-small { display: none; }
 }
+
+/* Light theme: warning colours in ink-dark tones, so they keep their contrast on cream. */
+html:not(.theme-dark) .chip.full .chip-value { color: #8a4b00; }
+html:not(.theme-dark) :is(#hud, #bottombar, #goal, #ticker) :is(.missing, .warn) { color: #9b1c1c; }
+/* The home screen keeps its dark backdrop under the hidden frame, as before. */
+#app.home-open { background: #0b0b0c; }

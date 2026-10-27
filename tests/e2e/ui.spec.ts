@@ -615,13 +615,20 @@ test.describe('events, ranking, settings', () => {
 });
 
 test.describe('slim HUD and one menu', () => {
-  test('main screen has only pause, speed and Menu buttons', async ({ page }) => {
+  test('main screen has only pause, speed, Menu and the frame shortcuts', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     const ids = await page.evaluate(() =>
       [...document.querySelectorAll('button')].filter((b) => b.getClientRects().length && b.id !== 'ticker').map((b) => b.id),
     );
-    expect(ids).toEqual(['chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'pause-btn', 'speed-btn', 'menu-btn']);
+    // Short phones drop the title bar and its SYSTEM button.
+    const tall = page.viewportSize()!.height > 640;
+    expect(ids).toEqual([
+      ...(tall ? ['cs-system'] : []),
+      'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop',
+      'cs-rail-wacana', 'cs-rail-build', 'pause-btn', 'speed-btn', 'menu-btn',
+      'cs-tab-log', 'cs-tab-stats', 'cs-tab-warga', 'cs-tab-wacana',
+    ]);
     const hud = (await page.locator('#hud').boundingBox())!;
     expect(hud.height).toBeLessThanOrEqual(80);
   });
@@ -1467,6 +1474,8 @@ test.describe('build mode', () => {
     const roads = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'jalan').length);
     const had = await roads();
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('jalan'));
+    // The frame's rail narrows the map: pan right so both ends of the path are on screen.
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.panBy(56, 0));
     const box = (await page.locator('#map').boundingBox())!;
     const tap = async (dx: number, dy: number) => {
       const at = await page.evaluate(([x, y]) => {
@@ -1581,10 +1590,14 @@ test.describe('zoom, big lots and the Warga list', () => {
         const app = (window as unknown as { pakrt: any }).pakrt;
         const b = app.s.buildings.find((o: any) => o.uid === 9001);
         // Zoomed in, a short view can leave the field above the top edge. Nudge it just inside, no more.
+        const r = document.getElementById('map')!.getBoundingClientRect();
         const c0 = app.view.tileCentre(b.x + 1, b.y + 1);
         if (c0.y < 40) app.view.panBy(0, 40 - c0.y);
+        // Keep it clear of the frame's satellite view in the top-right corner.
+        const sat = document.getElementById('cs-sat')!.getBoundingClientRect();
+        const c1 = app.view.tileCentre(b.x + 1, b.y + 1);
+        if (c1.y < sat.bottom - r.top + 16 && c1.x > sat.left - r.left - 24) app.view.panBy(sat.left - r.left - 24 - c1.x, 0);
         const c = app.view.tileCentre(b.x + 1, b.y + 1);
-        const r = document.getElementById('map')!.getBoundingClientRect();
         return { x: r.left + c.x, y: r.top + c.y };
       });
       await page.mouse.click(at.x, at.y);
