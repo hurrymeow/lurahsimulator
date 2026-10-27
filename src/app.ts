@@ -234,6 +234,8 @@ export class App {
         ...choices,
       ),
     );
+    // A tip before this leaves the bottom-aligned layout behind. An event card is always centred.
+    el.classList.remove('tip-modal');
     el.onclick = null;
     el.hidden = false;
   }
