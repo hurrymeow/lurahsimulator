@@ -12,7 +12,7 @@ Follow these every session. If a change breaks one, fix the change.
 
 ## Pacing
 
-- Something new every 1-2 in-game minutes: a resident, event, unlock or combo.
+- Something new at least every 30s of real time at 1x: a resident, event, unlock or combo. Full targets in [PACING.md](PACING.md).
 - Growth is visible on the map, not only in menus.
 - Bad choices slow you down. They never soft-lock the game.
 - Early-game safety net: no debt spiral in year 1.
