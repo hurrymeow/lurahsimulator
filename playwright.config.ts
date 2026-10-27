@@ -9,6 +9,8 @@ const PHONES = [
 export default defineConfig({
   testDir: 'tests/e2e',
   timeout: 60_000,
+  // Ends a hung run with a report before the 10 min job cap kills it. Local runs have no cap.
+  globalTimeout: process.env.CI ? 8 * 60_000 : 0,
   retries: process.env.CI ? 1 : 0,
   // Per-test sharding. Without it Playwright shards whole spec files, so 6 projects split 2/2/1/1 across 4 shards.
   fullyParallel: true,
