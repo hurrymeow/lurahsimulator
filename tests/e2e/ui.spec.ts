@@ -1115,6 +1115,7 @@ test.describe('home screen', () => {
     await page.reload();
     await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
     await page.evaluate(() => document.fonts.ready);
+    await expect(page.locator('#goal')).toBeHidden();
     await expect(page.locator('#home .home-title')).toHaveText(await page.title());
     await expect(page.locator('#home button:visible')).toHaveCount(2);
     await expect(page.locator('#home-start')).toHaveText(W[lang()].start);

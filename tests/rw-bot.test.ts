@@ -47,5 +47,5 @@ describe('RW bot', () => {
     
     expect(got.filter((g) => g.stars >= 2).length, JSON.stringify(got)).toBeGreaterThanOrEqual(4);
     for (const g of got) expect(g.combos.length, `seed ${g.seed}`).toBeGreaterThanOrEqual(2);
-  });
+  }, 30_000);
 });

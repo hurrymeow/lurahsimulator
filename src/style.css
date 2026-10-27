@@ -407,7 +407,7 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .checklist li.done { color: var(--muted); text-decoration: line-through; }
 
 /* Home screen: the map shows through, the HUD hides, one Start button sits in the bottom third. */
-#app.home-open :is(#hud, #emas, #ticker, #bottombar, #update-banner) { visibility: hidden; }
+#app.home-open :is(#hud, #emas, #goal, #ticker, #bottombar, #update-banner) { visibility: hidden; }
 .home {
   position: fixed;
   inset: 0;
