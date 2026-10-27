@@ -73,7 +73,11 @@ export function openBuild(app: App): void {
   const show = (c: BuildCategory) => {
     tab = c;
     lastTab = c;
-    list.replaceChildren(...visible.filter((d) => categoryOf(d) === c).map(card));
+    // Jalan Setapak leads the first tab and its own, since nothing works without a path.
+    const here = visible.filter((d) => categoryOf(d) === c);
+    const path = visible.find((d) => d.id === 'jalan');
+    const rows = path && c === tabs[0] && !here.includes(path) ? [path, ...here] : here.sort((a, b) => Number(b.id === 'jalan') - Number(a.id === 'jalan'));
+    list.replaceChildren(...rows.map(card));
     bar.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tab === c)));
   };
   for (const c of tabs) bar.append(h('button', { class: 'btn tab', 'data-tab': c, 'aria-pressed': 'false', onclick: () => show(c) }, t(`build.cat.${c}` as Key), visible.some((d) => categoryOf(d) === c && fresh.has(d.id)) ? h('span', { class: 'new-dot', 'aria-hidden': 'true' }, ' ●') : null));
