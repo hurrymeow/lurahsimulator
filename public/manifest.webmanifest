@@ -1,6 +1,6 @@
 {
-  "name": "Pejabat Sim",
-  "short_name": "Pejabat Sim",
+  "name": "Pak Pejabat",
+  "short_name": "Pak Pejabat",
   "description": "A satirical kampung management sim. Every joke moves a number.",
   "start_url": "./",
   "scope": "./",
