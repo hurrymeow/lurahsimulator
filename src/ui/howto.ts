@@ -10,7 +10,7 @@ import { attractTarget, housing, population } from '../sim/state';
 
 const SEEN = 'pakrt.howto';
 
-type Pic = { sprite: string } | { icon: string } | { text: string };
+type Pic = { sprite: string } | { icon: string } | { text: string } | { word: Key };
 
 export interface Step {
   id: string;
@@ -32,19 +32,20 @@ export const STEPS: Step[] = [
   { id: 'time', n: 8, basic: true, pics: [{ text: '❚❚' }, { text: '1x' }, { text: '2x' }, { text: '4x' }] },
   // A one-month permit is over before a tip helps, so Orang Inside waits for a longer queue.
   { id: 'orang', n: 2, when: (s) => s.res.orangDalam >= 1 && s.buildings.some((b) => b.status === 'permit' && b.timer >= 2), pics: [{ icon: 'orangDalam' }, { text: '›' }, { sprite: 'permit' }, { text: '›' }, { sprite: 'warung' }] },
-  { id: 'house', n: 11, when: (s) => s.stats.arrived >= 1 || s.res.sabar < 40 || (s.month >= 2 && (population(s) >= housing(s) || attractTarget(s) <= population(s))), pics: [{ sprite: 'rumah' }, { text: '3' }, { icon: 'people' }, { sprite: 'warung' }] },
+  { id: 'house', n: 11, when: (s) => s.stats.arrived >= 1 || s.res.sabar < 40 || (s.month >= 2 && (population(s) >= housing(s) || attractTarget(s) <= population(s))), pics: [{ sprite: 'rumah' }, { word: 'how.pic.beds' }, { text: '+' }, { sprite: 'warung' }] },
   { id: 'combo', n: 4, when: (s) => s.discovered.length >= 1 || (s.month >= 3 && s.buildings.filter((b) => b.status === 'active' && b.def !== 'rumah').length >= 2), pics: [{ sprite: 'warung' }, { sprite: 'posRonda' }, { sprite: 'wifi' }] },
-  { id: 'jobs', n: 5, when: (s) => s.month >= 3 && s.residents.length >= 3 && s.buildings.some((b) => b.status === 'active' && def(b.def).jobSlots), pics: [{ icon: 'people' }, { text: '›' }, { sprite: 'wifi' }, { icon: 'viral' }] },
+  { id: 'jobs', n: 5, when: (s) => s.month >= 3 && s.residents.length >= 3 && s.buildings.some((b) => b.status === 'active' && def(b.def).jobSlots), pics: [{ word: 'how.pic.resident' }, { text: '›' }, { sprite: 'wifi' }, { icon: 'viral' }] },
   { id: 'wacana', n: 6, when: (s) => s.month >= 3 && s.buildings.some((b) => b.def === 'kantorRT' && b.status === 'active'), pics: [{ sprite: 'kantorRT' }, { icon: 'sabar' }] },
   { id: 'trouble', n: 7, when: (s) => s.buildings.some((b) => b.def === 'parkir' || b.status === 'mangkrak'), pics: [{ sprite: 'indomaret' }, { text: '80%' }, { sprite: 'parkir' }] },
   { id: 'banjir', n: 9, when: (s) => s.lastEvent?.banjir !== undefined, pics: [{ sprite: 'biopori' }, { icon: 'sabar' }] },
   { id: 'road', n: 12, when: (s) => s.buildings.some((b) => b.noRoad && b.status === 'active'), pics: [{ sprite: 'jalan' }, { text: '›' }, { sprite: 'warung' }] },
-  { id: 'ranking', n: 10, when: (s) => s.month >= 9, pics: [{ icon: 'people' }, { text: 'vs' }, { icon: 'sabar' }] },
+  { id: 'ranking', n: 10, when: (s) => s.month >= 9, pics: [{ word: 'how.pic.us' }, { text: 'vs' }, { word: 'how.pic.them' }] },
 ];
 
 function pic(p: Pic): Node {
   if ('sprite' in p) return spriteImg(p.sprite, 48);
   if ('icon' in p) return h('img', { src: iconURL(p.icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
+  if ('word' in p) return h('span', { class: 'pic-text' }, t(p.word));
   return h('span', { class: 'pic-text' }, p.text);
 }
 
@@ -56,6 +57,11 @@ let resume: (() => void) | null = null;
 
 export function resetHowto(): void {
   storage.remove(SEEN);
+}
+
+/** A new game that starts with the guide skips the first-launch card. */
+export function skipHowto(): void {
+  storage.set(SEEN, '1');
 }
 
 export function hasSeenHowto(): boolean {

@@ -103,9 +103,14 @@ html.no-effects #dof { display: none; }
 .goal[hidden] { display: none; }
 .new-tag { margin-left: 8px; padding: 0 6px; font-size: 16px; font-weight: 700; color: #0b0b0c; background: #fbbf24; border-radius: 6px; }
 .new-dot { color: #fbbf24; }
-.coach { position: absolute; left: 12px; right: 12px; top: 44px; z-index: 6; display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; background: var(--surface); border: 2px solid #fbbf24; border-radius: var(--radius); }
+.coach { position: fixed; left: 12px; right: 12px; z-index: 25; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; background: var(--surface); border: 2px solid #fbbf24; border-radius: var(--radius); }
 .coach[hidden] { display: none; }
-.coach-text { flex: 1; margin: 0; font-size: 16px; line-height: 1.3; }
+.coach { pointer-events: none; }
+.coach .btn { pointer-events: auto; }
+.coach::after { content: ''; position: absolute; bottom: -9px; left: var(--ax, 50%); width: 14px; height: 14px; background: var(--surface); border-right: 2px solid #fbbf24; border-bottom: 2px solid #fbbf24; transform: rotate(45deg); }
+.coach.arrow-up::after { top: -9px; bottom: auto; transform: rotate(225deg); }
+.coach.no-arrow::after { display: none; }
+.coach-text { flex: 1; margin: 0; font-size: 16px; line-height: 1.35; }
 .coach-pulse { --c: #fbbf24; animation: hint 1.2s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .coach-pulse { animation: none; box-shadow: inset 0 0 0 3px #fbbf24; } }
 .ticker {
@@ -191,6 +196,11 @@ html.no-effects #dof { display: none; }
 .cost { color: var(--rupiah); }
 .inspect-head { display: flex; gap: 12px; align-items: flex-start; }
 .inspect-head p { margin: 0 0 6px; }
+/* Level strip in the inspector: each level's sprite, the current one framed. */
+.level-strip { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 10px; }
+.level-strip .lv { margin: 0; padding: 4px 6px 2px; display: flex; flex-direction: column; align-items: center; border: 1px solid var(--line); border-radius: var(--radius); opacity: 0.7; }
+.level-strip .lv.current { opacity: 1; border-color: var(--accent); background: var(--surface-2); }
+.level-strip figcaption { font-size: 16px; }
 .log-row { border-left: 4px solid var(--muted); padding: 4px 10px; margin-bottom: 8px; }
 .log-row p { margin: 2px 0 0; color: var(--muted); }
 .log-row.tone-good { border-left-color: var(--rupiah); }
@@ -216,6 +226,7 @@ html.no-effects #dof { display: none; }
   padding: 20px;
   text-align: center;
 }
+.modal.tip-modal { align-items: flex-end; padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 .modal .card h2 { margin: 0 0 8px; font-size: 22px; }
 .modal .card p { line-height: 1.4; }
 .modal .card.fanfare { border-color: #facc15; animation: pop-in 0.35s ease-out; }

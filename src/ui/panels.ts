@@ -5,6 +5,8 @@ import type { App } from '../app';
 import { rupiah } from '../format';
 import { bookCombos, comboMemberNames } from '../sim/combos';
 import { checkAssign, assign, levelOf, liveJobs } from '../sim/jobs';
+import { PATH_DECAY } from '../sim/balance';
+import { checkRepairPath, isPath, neglect, repairPath, repairPathCost, stretchOf, type RepairWay } from '../sim/decay';
 import { checkRepair, repair, repairCost } from '../sim/events';
 import { checkRestart, checkRestartODn, RESTART_ODN, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
 import { announce, checkAnnounce, wacanaCost } from '../sim/wacana';
@@ -15,10 +17,11 @@ import { h } from './dom';
 import { openSheet } from './sheet';
 
 // ---------- Warga ----------
-export function openResidents(app: App): void {
+/** focus: the resident just edited. The list opens scrolled to their row instead of the top. */
+export function openResidents(app: App, focus?: number): void {
   const s = app.s;
   const rows = s.residents.map((r) =>
-    h('button', { class: 'card-btn slim', onclick: () => openResident(app, r.id) },
+    h('button', { class: 'card-btn slim', 'data-rid': String(r.id), onclick: () => openResident(app, r.id) },
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, r.name), h('span', { class: 'meta' }, `${jobDef(r.job) ? jName(jobDef(r.job)!) : t('res.noJob')} · ${t('res.level', { n: levelOf(r) })}`)),
         r.job === 'pns' ? h('p', { class: 'meta' }, t('res.pensiun', { n: Math.round(r.pensiun) })) : null,
@@ -27,6 +30,11 @@ export function openResidents(app: App): void {
     ),
   );
   openSheet(t('menu.warga'), [h('p', { class: 'meta' }, t('res.hint')), ...rows]);
+  const row = focus === undefined ? null : document.querySelector<HTMLElement>(`#sheet [data-rid="${focus}"]`);
+  if (row) {
+    row.scrollIntoView({ block: 'center' });
+    row.focus({ preventScroll: true });
+  }
 }
 
 function openResident(app: App, id: number): void {
@@ -36,7 +44,7 @@ function openResident(app: App, id: number): void {
     const check = checkAssign(app.s, r, job);
     const label = job === 'none' ? t('res.noJob') : jName(jobDef(job)!);
     return h('div', { class: 'action' },
-      h('button', { class: `btn ${r.job === job ? 'btn-primary' : ''}`, disabled: !check.ok, 'aria-pressed': String(r.job === job), onclick: () => { assign(app.s, r, job, true); app.save(); app.refresh(); openResidents(app); } }, r.job === job ? t('res.current', { label }) : label),
+      h('button', { class: `btn ${r.job === job ? 'btn-primary' : ''}`, disabled: !check.ok, 'aria-pressed': String(r.job === job), onclick: () => { assign(app.s, r, job, true); app.save(); app.refresh(); openResidents(app, r.id); } }, r.job === job ? t('res.current', { label }) : label),
       job !== 'none' ? h('p', { class: 'meta' }, jBlurb(jobDef(job)!)) : null,
       check.ok ? null : h('ul', { class: 'missing' }, ...check.missing.map((m) => h('li', {}, m))),
     );
@@ -124,8 +132,28 @@ export function parkirExtras(app: App, b: Building): Node[] {
   return [h('p', { class: 'meta' }, t('insp.parkir', { shop: owner ? t('insp.parkirShop') : t('insp.parkirOld'), level: b.level }))];
 }
 
+/** A cracked path: fix the tile, fix the whole stretch, or call a favour for the stretch. */
+function pathExtras(app: App, b: Building): Node[] {
+  const s = app.s;
+  const stretch = stretchOf(s, b);
+  const fix = (way: RepairWay) => () => {
+    for (const o of repairPath(s, b, way)) app.view.burst(o.x, o.y);
+    app.tap(15);
+    app.save();
+    app.refresh();
+    app.inspect(b.uid);
+  };
+  return [
+    h('p', { class: 'meta' }, t('insp.pathCracked', { months: neglect(s, stretch), every: PATH_DECAY.spreadEvery })),
+    actionButton(t('insp.pathFixTile', { cost: rupiah(repairPathCost(s, b, 'tile')) }), checkRepairPath(s, b, 'tile'), fix('tile'), true),
+    stretch.length > 1 ? actionButton(t('insp.pathFixStretch', { n: stretch.length, cost: rupiah(repairPathCost(s, b, 'stretch')) }), checkRepairPath(s, b, 'stretch'), fix('stretch')) : null,
+    actionButton(t('insp.pathFavour', { n: PATH_DECAY.favour, tiles: stretch.length }), checkRepairPath(s, b, 'favour'), fix('favour')),
+  ].filter((n): n is HTMLElement => n !== null);
+}
+
 export function damagedExtras(app: App, b: Building): Node[] {
   if (b.status !== 'damaged') return [];
+  if (isPath(b)) return pathExtras(app, b);
   const s = app.s;
   const cost = repairCost(s, b);
   return [
