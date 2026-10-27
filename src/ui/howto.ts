@@ -30,9 +30,9 @@ export const stepBody = (s: Step) => t(`how.${s.n}.body` as Key);
 export const STEPS: Step[] = [
   { id: 'build', n: 1, basic: true, pics: [{ sprite: 'warung' }, { text: '›' }, { sprite: 'biopori' }] },
   { id: 'time', n: 8, basic: true, pics: [{ text: '❚❚' }, { text: '1x' }, { text: '2x' }, { text: '4x' }] },
-  { id: 'orang', n: 2, when: (s) => s.res.orangDalam >= 1 && s.buildings.some((b) => b.status === 'permit'), pics: [{ icon: 'orangDalam' }, { text: '›' }, { sprite: 'permit' }, { text: '›' }, { sprite: 'warung' }] },
-  { id: 'sabar', n: 3, when: (s) => s.stats.arrived >= 1 || s.res.sabar < 40, pics: [{ sprite: 'rumah' }, { icon: 'people' }, { icon: 'sabar' }] },
-  { id: 'house', n: 11, when: (s) => s.month >= 2 && (population(s) >= housing(s) || attractTarget(s) <= population(s)), pics: [{ sprite: 'rumah' }, { text: '3' }, { icon: 'people' }, { sprite: 'warung' }] },
+  // A one-month permit is over before a tip helps, so Orang Inside waits for a longer queue.
+  { id: 'orang', n: 2, when: (s) => s.res.orangDalam >= 1 && s.buildings.some((b) => b.status === 'permit' && b.timer >= 2), pics: [{ icon: 'orangDalam' }, { text: '›' }, { sprite: 'permit' }, { text: '›' }, { sprite: 'warung' }] },
+  { id: 'house', n: 11, when: (s) => s.stats.arrived >= 1 || s.res.sabar < 40 || (s.month >= 2 && (population(s) >= housing(s) || attractTarget(s) <= population(s))), pics: [{ sprite: 'rumah' }, { text: '3' }, { icon: 'people' }, { sprite: 'warung' }] },
   { id: 'combo', n: 4, when: (s) => s.discovered.length >= 1 || (s.month >= 3 && s.buildings.filter((b) => b.status === 'active' && b.def !== 'rumah').length >= 2), pics: [{ sprite: 'warung' }, { sprite: 'posRonda' }, { sprite: 'wifi' }] },
   { id: 'jobs', n: 5, when: (s) => s.month >= 3 && s.residents.length >= 3 && s.buildings.some((b) => b.status === 'active' && def(b.def).jobSlots), pics: [{ icon: 'people' }, { text: '›' }, { sprite: 'wifi' }, { icon: 'viral' }] },
   { id: 'wacana', n: 6, when: (s) => s.month >= 3 && s.buildings.some((b) => b.def === 'kantorRT' && b.status === 'active'), pics: [{ sprite: 'kantorRT' }, { icon: 'sabar' }] },

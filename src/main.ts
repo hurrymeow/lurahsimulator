@@ -13,6 +13,8 @@ import { GLYPH_PX, glyphURL } from './ui/glyphs';
 import { inspect } from './ui/inspect';
 import { showHome } from './ui/home';
 import { showHowto } from './ui/howto';
+import { setupCoach } from './ui/coach';
+import { setupGoal } from './ui/goal';
 import { setupTips } from './ui/tips';
 import { openSettings } from './ui/settings';
 import { openNeighbours } from './ui/neighbours';
@@ -49,6 +51,8 @@ $('scrim').addEventListener('click', closeSheet);
 setupInstall(installBtn, (text) => app.modal({ title: t('install.title'), body: text, tone: 'info' }));
 setupUpdates($('update-banner'), $<HTMLButtonElement>('update-btn'));
 app.refresh();
+setupGoal(app);
+setupCoach(app);
 setupTips(app);
 // Second install button on the home screen. Hidden when installed or not offered.
 const homeInstall = h('button', { class: 'btn home-install', id: 'home-install', hidden: true }, t('menu.install'));

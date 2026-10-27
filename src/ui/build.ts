@@ -9,6 +9,7 @@ import { attractTarget, buildCost, footprintOf, housing, population } from '../s
 import { nextStarChecklist } from '../sim/stages';
 import type { BuildCategory } from '../sim/types';
 import { h, missingList } from './dom';
+import { storage } from '../storage';
 import { openSheet } from './sheet';
 
 function spriteImg(name: string, size = 40): HTMLImageElement {
@@ -23,6 +24,22 @@ function populationBits(d: { housing?: number; attract?: number }): string[] {
   return bits;
 }
 
+const SEEN_KEY = 'pakrt.buildSeen';
+
+function loadSeen(): Set<string> | null {
+  try {
+    const v = JSON.parse(storage.get(SEEN_KEY) ?? 'null');
+    return Array.isArray(v) ? new Set(v) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** New game: the next Build screen counts everything on it as already seen. */
+export function resetBuildSeen(): void {
+  storage.remove(SEEN_KEY);
+}
+
 /** The tab the player last used, so a second build opens where the first left off. */
 let lastTab: BuildCategory | null = null;
 
@@ -30,6 +47,9 @@ export function openBuild(app: App): void {
   const s = app.s;
   // Anything still locked (stars, population, a missing building, a year) stays out of sight. The header says what the next star wants.
   const visible = placeableDefs().filter((d) => requirementGaps(s, d, { ignoreLimit: true }).length === 0);
+  // Buildings that opened since the player last looked carry a New tag. The first look marks the starter set as seen.
+  const seen = loadSeen();
+  const fresh = new Set(seen ? visible.filter((d) => !seen.has(d.id)).map((d) => d.id) : []);
   const card = (d: (typeof visible)[number]): HTMLElement => {
     const cost = buildCost(s, d);
     const missing = requirementGaps(s, d);
@@ -40,7 +60,7 @@ export function openBuild(app: App): void {
     return h('button', { class: `card-btn ${ok ? '' : 'locked'}`, 'aria-disabled': String(!ok), onclick: () => (ok ? app.startPlacing(d.id) : undefined) },
       spriteImg(d.sprite),
       h('div', { class: 'card-text' },
-        h('div', { class: 'card-title' }, h('strong', {}, bName(d)), h('span', { class: 'cost' }, rupiah(cost))),
+        h('div', { class: 'card-title' }, h('strong', {}, bName(d), fresh.has(d.id) ? h('span', { class: 'new-tag' }, t('build.new')) : null), h('span', { class: 'cost' }, rupiah(cost))),
         h('p', {}, bBlurb(d)),
         ok ? h('p', { class: 'meta' }, meta.join(' · ')) : missingList(missing),
       ),
@@ -56,7 +76,7 @@ export function openBuild(app: App): void {
     list.replaceChildren(...visible.filter((d) => categoryOf(d) === c).map(card));
     bar.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tab === c)));
   };
-  for (const c of tabs) bar.append(h('button', { class: 'btn tab', 'data-tab': c, 'aria-pressed': 'false', onclick: () => show(c) }, t(`build.cat.${c}` as Key)));
+  for (const c of tabs) bar.append(h('button', { class: 'btn tab', 'data-tab': c, 'aria-pressed': 'false', onclick: () => show(c) }, t(`build.cat.${c}` as Key), visible.some((d) => categoryOf(d) === c && fresh.has(d.id)) ? h('span', { class: 'new-dot', 'aria-hidden': 'true' }, ' ●') : null));
   if (tab) show(tab);
   // The two population levers, and what the next star wants, right where the player acts.
   const goal = nextStarChecklist(s)?.find((l) => !l.done);
@@ -64,7 +84,7 @@ export function openBuild(app: App): void {
     h('p', { class: 'meta' }, t('pop.line', { pop: population(s), housing: housing(s), attract: attractTarget(s) })),
   ];
   if (goal) head.push(h('p', { class: 'meta' }, t('stage.next', { goal: goal.text })));
-  openSheet(t('build.title'), [...head, bar, list]);
+  openSheet(t('build.title'), [...head, bar, list], () => storage.set(SEEN_KEY, JSON.stringify(visible.map((d) => d.id))));
 }
 
 export { spriteImg };
