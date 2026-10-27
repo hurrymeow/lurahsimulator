@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#f3eed6" />
+    <title>Pak Pejabat · UI mockup</title>
+  </head>
+  <body>
+    <!-- Test render of an in-game screen in the style of a 90s train-and-city builder. Built and deployed at /mockup.html; not linked from the game. -->
+    <div id="mk">
+      <header class="mk-title">
+        <span class="mk-name">PAK PEJABAT</span>
+        <button class="mk-system" id="mk-system"></button>
+        <span class="mk-date" id="mk-date"></span>
+      </header>
+      <div class="mk-money" id="mk-money"></div>
+      <main class="mk-mid">
+        <nav class="mk-rail" id="mk-rail"></nav>
+        <div class="mk-stage">
+          <canvas id="mk-map" aria-label="Kampung map"></canvas>
+          <aside class="mk-palette" id="mk-palette"></aside>
+          <figure class="mk-sat">
+            <span class="mk-sat-label" id="mk-sat-label"></span>
+            <canvas id="mk-sat" width="128" height="88"></canvas>
+          </figure>
+          <div class="mk-zoom">
+            <button class="mk-btn" id="mk-zin" aria-label="Zoom in">+</button>
+            <button class="mk-btn" id="mk-zout" aria-label="Zoom out">−</button>
+          </div>
+        </div>
+      </main>
+      <section class="mk-status" id="mk-status"></section>
+      <footer class="mk-tabs" id="mk-tabs"></footer>
+    </div>
+    <script type="module" src="/src/mockup/main.ts"></script>
+  </body>
+</html>

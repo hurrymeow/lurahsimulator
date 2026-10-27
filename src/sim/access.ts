@@ -4,7 +4,7 @@ import { addBuilding } from './state';
 import { def } from './content';
 import { GRID_H, GRID_W, type Building, type GameState } from './types';
 
-/** Flat pieces are ground, not destinations: they need no road and block nothing. */
+/** Flat pieces are ground, not destinations: they need no road and block nothing. Decorations need no road either. */
 export const FLAT = new Set(['selokan', 'biopori', 'kolamIkan', 'kebunSayur', 'sawah', 'kolamLele', 'parkir', 'jalan', 'aspalUlang', 'sawahIrigasi', 'embung', 'taman']);
 const ROADS = new Set(['jalan', 'aspalUlang']);
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
@@ -12,7 +12,7 @@ const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 export const isRoadPiece = (b: Building) => ROADS.has(b.def) && b.status === 'active';
 const isHub = (b: Building) => b.def.startsWith('kantor');
 /** RW and Kelurahan buildings stand on seam lots, which are roads already. */
-const needsRoad = (b: Building) => !FLAT.has(b.def) && !isHub(b) && (def(b.def).scope ?? 'rt') === 'rt';
+const needsRoad = (b: Building) => !FLAT.has(b.def) && def(b.def).category !== 'decoration' && !isHub(b) && (def(b.def).scope ?? 'rt') === 'rt';
 
 /** Tiles a walker or a delivery can stand on: active paths and the dirt seams between cells. */
 export function roadTiles(s: GameState): Uint8Array {

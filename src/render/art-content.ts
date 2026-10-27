@@ -1,6 +1,6 @@
-import type { Painter } from './iso';
+import { dither, type Painter, type RoofShape } from './iso';
 
-// Sprites for the content wave: biopori, decorations, farm, shops and facilities. Same rules as ART.md:
+// Sprites for the content wave: selokan, decorations, farm, shops and facilities. Same rules as ART.md:
 // straight isometric boxes, palette keys, the ink pass from Painter.finish. Registered in iso.ts.
 // Only `import type` from iso.ts, so there is no import cycle.
 
@@ -9,12 +9,9 @@ const TW = 32;
 const TH = 16;
 const TOP = 40;
 
-/** Centre of the ground diamond in art pixels, plus an offset. */
-const at = (dx: number, dy: number): [number, number] => [TW / 2 + dx, TOP + TH / 2 + dy];
-
-/** A shopfront: a walled box with a hipped roof, a door, and a coloured band of awning above a window. */
-const shopfront = (wall: string, roof: string, awning: string, opts: { height?: number; rise?: number; inset?: number; door?: string } = {}) => (p: Painter): void => {
-  const { height = 8, rise = 5, inset = 3, door = 'N' } = opts;
+/** A shopfront: a walled box under a roof of the given shape, a door, and a coloured band of awning above a window. */
+const shopfront = (wall: string, roof: string, awning: string, opts: { height?: number; rise?: number; inset?: number; door?: string; shape?: RoofShape } = {}) => (p: Painter): void => {
+  const { height = 8, rise = 5, inset = 3, door = 'N', shape = 'hip' } = opts;
   p.shadow(inset);
   p.box(inset, height, wall, (face, u, j, i) => {
     if (face === 'T') return undefined;
@@ -24,22 +21,37 @@ const shopfront = (wall: string, roof: string, awning: string, opts: { height?: 
     if (j >= height - 2) return i % 4 < 2 ? awning : 'w';
     return undefined;
   });
-  p.roof(inset, height, rise, roof);
+  p.roofShape(shape, inset, height, shape === 'shed' ? Math.max(3, rise - 1) : rise, roof, wall);
 };
 
-export const CONTENT_ART: Record<string, (p: Painter) => void> = {
-  // A round infiltration hole with a stone rim and a sprout. Bare, so the rim is drawn here.
-  biopori: (p) => {
+export const CONTENT_ART: Record<string, (p: Painter, variant?: string) => void> = {
+  // Selokan: a concrete channel across the tile, edge to edge so neighbours line up, with a plank bridge over it.
+  // Bare, so the kerbs and their ink line are drawn here.
+  drain: (p, v) => {
     p.bare = true;
-    p.ground((a, b) => {
-      const d = Math.hypot(a - 0.5, b - 0.5);
-      if (d > 0.3) return null;
-      if (d > 0.25) return 'S';
-      if (d > 0.2) return 's';
-      return d < 0.1 ? 'k' : 'N';
+    p.ground((a0, b0, px) => {
+      // a runs along the channel, b across it. Variant 'y' turns it, so a column of selokan joins up like a row.
+      const [a, b] = v === 'y' ? [b0, a0] : [a0, b0];
+      if (b < 0.06 || b > 0.94) return null;
+      const bridge = within(a, 0.44, 0.56);
+      const edge = b < 0.06 + px || b > 0.94 - px;
+      if (bridge && !edge) {
+        // Planks lie across, a dark gap between each, an ink rail along each end.
+        if (b < 0.12 + px || b > 0.88 - px) return 'N';
+        return Math.floor((a - 0.44) * 32) % 2 ? 'n' : 't';
+      }
+      if (b < 0.26 || b > 0.74) {
+        if (edge) return 'S';
+        // Poured slabs: a seam every quarter, a light face, and the far kerb a shade darker.
+        if (Math.abs(((a * 4) % 1) - 0.5) < px * 0.6 && !within(a, 0.37, 0.63)) return 'S';
+        return b < 0.26 ? 's' : 'S';
+      }
+      // The wall drops into the water, so the near strip is shade, then ripples drift along the channel.
+      if (b < 0.34) return 'b';
+      if (b > 0.66) return 'B';
+      const r = (a * 9 + b * 4) % 1;
+      return r < 0.14 ? 'w' : r < 0.4 ? 'c' : 'l';
     });
-    const [x, y] = at(0, 0);
-    for (const [dx, dy, c] of [[0, -1, 'g'], [-1, -2, 'g'], [1, -2, 'G'], [0, -3, 'g']] as const) p.set(x + dx, y + dy, c);
   },
 
   // Decorations. Small, low and bright, so they read as nice-to-have beside the working buildings.
@@ -65,13 +77,16 @@ export const CONTENT_ART: Record<string, (p: Painter) => void> = {
   // Flat pond: bare, so it draws its own stone rim.
   kolamIkan: (p) => {
     p.bare = true;
-    p.ground((a, b) => {
-      if (a < 0.1 || a > 0.9 || b < 0.1 || b > 0.9) return 'S';
-      if (a < 0.17 || a > 0.83 || b < 0.17 || b > 0.83) return 's';
+    p.ground((a, b, px) => {
+      // A stone kerb two pixels wide, then a lighter coping, at any size.
+      const e = Math.min(a, b, 1 - a, 1 - b);
+      if (e < 2 * px) return 'S';
+      if (e < 4 * px) return 's';
       if (within(a, 0.3, 0.43) && within(b, 0.4, 0.48)) return 'o';
       if (within(a, 0.56, 0.68) && within(b, 0.55, 0.62)) return 'y';
       return within(a, 0.7, 0.78) && within(b, 0.25, 0.32) ? 'w' : 'l';
     });
+    p.overlay.push(dither);
   },
   mural: (p) => {
     p.shadow(2);
@@ -83,7 +98,8 @@ export const CONTENT_ART: Record<string, (p: Painter) => void> = {
     });
   },
   tamanBermain: (p) => {
-    p.ground((a, b) => (a < 0.04 || a > 0.96 || b < 0.04 || b > 0.96 ? null : Math.floor((a + b) * 6) % 2 ? 'g' : 'G'));
+    p.ground((a, b, px) => (Math.min(a, b, 1 - a, 1 - b) < px ? null : Math.floor((a + b) * 6) % 2 ? 'g' : 'G'));
+    p.overlay.push(dither);
     p.box(7, 5, 'S');
     p.stroke(-10, -6, 10, -1, 3, 'o');
     p.blob(-11, 8, 2, 'r');
@@ -100,6 +116,7 @@ export const CONTENT_ART: Record<string, (p: Painter) => void> = {
     p.stroke(0, -17, -7, -9, 1, 'l');
     p.stroke(0, -17, 7, -9, 1, 'l');
     p.blob(0, 18, 3, 'c');
+    p.overlay.push(dither);
   },
   patungIkon: (p) => {
     p.shadow(6);
@@ -111,8 +128,8 @@ export const CONTENT_ART: Record<string, (p: Painter) => void> = {
   // Farm. Flat plots are bare and draw their own pematang edge so neighbouring plots join up.
   kebunSayur: (p) => {
     p.bare = true;
-    p.ground((a, b) => {
-      if (a < 0.05 || a > 0.95 || b < 0.05 || b > 0.95) return 'n';
+    p.ground((a, b, px) => {
+      if (Math.min(a, b, 1 - a, 1 - b) < 1.2 * px) return 'n';
       const row = Math.floor(b * 5);
       if (row % 2 === 0) return 'N';
       return Math.floor(a * 6) % 2 ? 'g' : 'G';
@@ -121,9 +138,11 @@ export const CONTENT_ART: Record<string, (p: Painter) => void> = {
   // Water-filled paddies with green rice rows and a clay bund.
   sawah: (p) => {
     p.bare = true;
-    p.ground((a, b) => {
-      if (a < 0.06 || a > 0.94 || b < 0.06 || b > 0.94) return 'n';
-      if (a < 0.1 || a > 0.9 || b < 0.1 || b > 0.9) return 't';
+    p.ground((a, b, px) => {
+      // A pematang bund: a 1px dark edge and a 1px top, the same width on a big plot.
+      const e = Math.min(a, b, 1 - a, 1 - b);
+      if (e < 1.2 * px) return 'n';
+      if (e < 2.4 * px) return 't';
       const row = Math.floor(b * 6) % 2;
       return row === 0 && Math.floor(a * 8) % 2 === 0 ? 'g' : row === 0 ? 'G' : 'l';
     });
@@ -137,9 +156,10 @@ export const CONTENT_ART: Record<string, (p: Painter) => void> = {
   },
   kolamLele: (p) => {
     p.bare = true;
-    p.ground((a, b) => {
-      if (a < 0.07 || a > 0.93 || b < 0.07 || b > 0.93) return 'B';
-      if (a < 0.12 || a > 0.88 || b < 0.12 || b > 0.88) return 'b';
+    p.ground((a, b, px) => {
+      const e = Math.min(a, b, 1 - a, 1 - b);
+      if (e < 1.2 * px) return 'B';
+      if (e < 2.4 * px) return 'b';
       if (within(a, 0.3, 0.45) && within(b, 0.38, 0.46)) return 'k';
       if (within(a, 0.55, 0.7) && within(b, 0.55, 0.63)) return 'k';
       return 'c';
@@ -147,32 +167,33 @@ export const CONTENT_ART: Record<string, (p: Painter) => void> = {
   },
 
   // Shops and facilities share the shopfront shape and differ in colour and one sign detail.
-  warteg: shopfront('t', 'G', 'g'),
-  warkop: shopfront('N', 'r', 'y'),
+  // Each shop type has its own roof, so a row of shops reads as a street, not one copy.
+  warteg: shopfront('t', 'G', 'g', { shape: 'gable' }),
+  warkop: shopfront('N', 'r', 'y', { shape: 'shed' }),
   tokoKelontong: shopfront('y', 'o', 'r', { height: 9, rise: 5 }),
   fotokopi: (p) => {
-    shopfront('w', 'B', 'b')(p);
+    shopfront('w', 'B', 'b', { shape: 'flat' })(p);
     p.blob(-7, 14, 2, 'a');
   },
   barbershop: (p) => {
-    shopfront('c', 'R', 'w')(p);
+    shopfront('c', 'R', 'w', { shape: 'shed' })(p);
     // The barber pole: red and white bands on a short post.
     for (let k = 0; k < 8; k++) p.set(TW / 2 + 10, TOP + TH / 2 - 2 - k, k % 4 < 2 ? 'r' : 'w');
     p.set(TW / 2 + 10, TOP + TH / 2 - 10, 'b');
   },
   bengkel: (p) => {
-    shopfront('S', 'b', 'o', { height: 9, rise: 4, door: 'k' })(p);
+    shopfront('S', 'b', 'o', { height: 9, rise: 4, door: 'k', shape: 'gable' })(p);
     p.box(9, 4, 'k', undefined, 0);
   },
   apotek: (p) => {
-    shopfront('w', 'g', 'g')(p);
+    shopfront('w', 'g', 'g', { shape: 'flat' })(p);
     // A red cross over the door.
     const x = TW / 2 - 5;
     const y = TOP + TH / 2 - 11;
     for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]]) p.set(x + dx, y + dy, 'r');
   },
   koperasi: (p) => {
-    shopfront('w', 'b', 'a', { height: 10, rise: 6, inset: 2 })(p);
+    shopfront('w', 'b', 'a', { height: 10, rise: 6, inset: 2, shape: 'gableY' })(p);
     p.blob(0, 18, 2.2, 'a');
   },
   posSatpam: (p) => {
@@ -205,8 +226,8 @@ export const CONTENT_ART: Record<string, (p: Painter) => void> = {
       if (face === 'L' && within(u, 0.2, 0.8) && j < 6) return j === 5 ? 'N' : 'n';
       return undefined;
     });
-    p.roof(2, 8, 4, 'n');
-    p.box(10, 3, 'a', undefined, 8);
+    // A warehouse pelana with a vent on the gable end.
+    p.roofShape('gable', 2, 8, 5, 'n', 'S');
   },
   kontrakan: (p) => {
     p.shadow(1);
@@ -216,7 +237,8 @@ export const CONTENT_ART: Record<string, (p: Painter) => void> = {
       if (face === 'R' && i % 6 >= 2 && within(j, 3, 7)) return 'l';
       return undefined;
     });
-    p.roof(1, 9, 6, 'R');
+    // Row houses share one long shed roof.
+    p.roofShape('shed', 1, 9, 4, 'R', 'a');
   },
   gerobakBakso: (p) => {
     p.shadow(8);

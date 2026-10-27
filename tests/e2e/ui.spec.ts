@@ -33,7 +33,7 @@ async function dismissModals(page: Page): Promise<void> {
 }
 
 /**
- * Switches tips off through the product's own Skip tips button, before any are seen.
+ * Dismisses the Sabar tip, the first one a fresh game can hit for certain.
  * A test that is not about tips needs this: a tip can land on the month before a message
  * under test and be shown first, queueing that message behind it.
  */
@@ -44,7 +44,7 @@ async function skipTips(page: Page): Promise<void> {
     app.s.stats.arrived = 1;
     app.refresh();
   });
-  await page.locator('#modal .tip-skip').click();
+  await page.locator('#modal .tap-hint').click();
   await expect(page.locator('#modal')).toBeHidden();
 }
 
@@ -56,6 +56,30 @@ async function runMonth(page: Page): Promise<void> {
   // The first choice is always free, so an event can never soft-lock the test.
   await event.locator('.btn').first().click();
   await page.locator('#modal .tap-hint').click();
+}
+
+/** The open pop-up card sits mid-screen with centred text, the same for an event as for its result. */
+async function expectCentred(page: Page, where: string): Promise<void> {
+  const m = await page.evaluate(() => {
+    const card = document.querySelector('#modal .card') as HTMLElement;
+    const r = card.getBoundingClientRect();
+    return { off: Math.abs(r.top + r.height / 2 - innerHeight / 2), full: r.height >= innerHeight * 0.85, align: getComputedStyle(card.querySelector('p')!).textAlign };
+  });
+  expect(m.align, `${where} text alignment`).toBe('center');
+  if (!m.full) expect(m.off, `${where} is vertically centred`).toBeLessThan(3);
+}
+
+/** The coach note must never sit on top of anything it is not pointing at, or on the target itself. */
+async function expectCoachClear(page: Page, selectors: string[], where: string): Promise<void> {
+  const note = (await page.locator('#coach').boundingBox())!;
+  for (const sel of selectors) {
+    for (const el of await page.locator(sel).all()) {
+      const b = await el.boundingBox();
+      if (!b) continue;
+      const overlap = b.x < note.x + note.width && b.x + b.width > note.x && b.y < note.y + note.height && b.y + b.height > note.y;
+      expect(overlap, `${where}: the note covers ${sel}`).toBe(false);
+    }
+  }
 }
 
 async function expectLegible(page: Page, where: string): Promise<void> {
@@ -83,9 +107,97 @@ async function seed(page: Page): Promise<void> {
   await dismissModals(page);
 }
 
+test.describe('opener', () => {
+  test('the goal strip shows a quick goal and the next star, and names the first combo at minute 4', async ({ page }) => {
+    await start(page);
+    const goal = page.locator('#goal');
+    await expect(goal.locator('.goal-now')).toBeVisible();
+    await expect(goal.locator('.goal-star')).toBeVisible();
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.month = 30;
+      app.s.discovered = [];
+      app.refresh();
+    });
+    await expect(goal.locator('.goal-now')).toContainText('combo');
+    // The longest line must sit inside the screen with no clipping.
+    const box = (await goal.boundingBox())!;
+    const vw = page.viewportSize()!.width;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(vw);
+    expect(await goal.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+    expect(await scanLegibility(page)).toEqual([]);
+  });
+
+  test('a new game walks the first Rumah, shows the goal, and Skip ends it', async ({ page }) => {
+    await page.goto(`/?debug&coach&lang=${lang()}`);
+    await passHome(page);
+    await page.evaluate(() => document.fonts.ready);
+    // A new game opens straight on the welcome note, with no How to play card first.
+    await expect(page.locator('#howto')).toBeHidden();
+    // The goal sits under the Emas bar from the first frame.
+    await expect(page.locator('#goal')).toBeVisible();
+    await expect(page.locator('#goal')).toContainText(/\d/);
+    await expect(page.locator('#coach')).toBeVisible();
+    await expect(page.locator('#menu-btn')).toHaveClass(/coach-pulse/);
+    // The note sits right above the bottom bar, next to the Menu button it points at.
+    const note = (await page.locator('#coach').boundingBox())!;
+    const menuBox = (await page.locator('#menu-btn').boundingBox())!;
+    expect(menuBox.y - (note.y + note.height)).toBeLessThan(40);
+    expect(menuBox.y - (note.y + note.height)).toBeGreaterThanOrEqual(0);
+    await expectLegible(page, 'opener, Menu step');
+    await page.locator('#menu-btn').click();
+    await expect(page.locator('#act-build')).toHaveClass(/coach-pulse/);
+    await page.locator('#act-build').click();
+    const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
+    await expect(rumah).toHaveClass(/coach-pulse/);
+    await expectCoachClear(page, ['#sheet .tabs', '#sheet > p', '#sheet .card-btn.coach-pulse'], 'Pick step');
+    await expectLegible(page, 'opener, Pick step');
+    await rumah.click();
+    await expect(page.locator('#coach')).toBeVisible();
+    const box = (await page.locator('#map').boundingBox())!;
+    const at = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      return app.view.tileCentre(k.x - 1, k.y + 2);
+    });
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    await expect(page.locator('#place-ok')).toHaveClass(/coach-pulse/);
+    await expectCoachClear(page, ['#place-ok', '#place-cancel'], 'Place step');
+    await page.locator('#place-ok').click();
+    await expect(page.locator('#coach-skip')).toHaveText(lang() === 'en' ? 'Got it' : 'Paham');
+    await page.locator('#coach-skip').click();
+    await expect(page.locator('#coach')).toBeHidden();
+    // Got it stays dismissed: the note does not come back on the next check.
+    await page.waitForTimeout(800);
+    await expect(page.locator('#coach')).toBeHidden();
+  });
+
+  test('the first month passes without a pop-up over the opener', async ({ page }) => {
+    await page.goto(`/?debug&coach&lang=${lang()}`);
+    await passHome(page);
+    await expect(page.locator('#coach')).toBeVisible();
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
+    await expect(page.locator('#modal')).toBeHidden();
+    await expect(page.locator('#coach')).toBeVisible();
+  });
+
+  test('Skip ends the opener for good, even after a reload', async ({ page }) => {
+    await page.goto(`/?debug&coach&lang=${lang()}`);
+    await passHome(page);
+    await expect(page.locator('#coach')).toBeVisible();
+    await page.locator('#coach-skip').click();
+    await expect(page.locator('#coach')).toBeHidden();
+    await page.reload();
+    await passHome(page);
+    await page.waitForTimeout(600);
+    await expect(page.locator('#coach')).toBeHidden();
+  });
+});
+
 test.describe('tips', () => {
-  test('a mechanic is taught once, on tap, and Skip tips silences the rest', async ({ page }) => {
-    const RANKED = { id: 'Tiap tahun kamu diperingkat.', en: 'Every year you are ranked.' }[lang()];
+  test('a mechanic is taught once, on tap, with no way to switch the rest off', async ({ page }) => {
+    const RANKED = { id: 'Waktunya rapor.', en: 'Report card time.' }[lang()];
     await start(page);
     await page.locator('#howtoGo').click();
     await expect(page.locator('#modal')).toBeHidden();
@@ -95,7 +207,7 @@ test.describe('tips', () => {
       a.s.lastEvent = { banjir: 0 };
       a.refresh();
     });
-    await expect(page.locator('#modal .card h2')).toHaveText({ id: 'Banjir menguji biopori-mu.', en: 'Banjir tests your biopori.' }[lang()]);
+    await expect(page.locator('#modal .card h2')).toHaveText({ id: 'Musim hujan datang.', en: 'Rainy months are coming.' }[lang()]);
     await expectLegible(page, 'tip');
     await page.waitForTimeout(1500);
     await expect(page.locator('#modal')).toBeVisible();
@@ -110,7 +222,7 @@ test.describe('tips', () => {
       a.s.month = 9;
       a.refresh();
     });
-    // One tip at a time: tap through whatever is due, then Skip tips on the next.
+    // One tip at a time: tap through whatever is due until the report card tip.
     for (let i = 0; i < 6; i++) {
       await expect(page.locator('#modal')).toBeVisible();
       if ((await page.locator('#modal .card h2').textContent()) === RANKED) break;
@@ -118,13 +230,17 @@ test.describe('tips', () => {
       await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
     }
     await expect(page.locator('#modal .card h2')).toHaveText(RANKED);
-    await page.locator('#modal .tip-skip').click();
+    await expect(page.locator('#modal .tip-skip')).toHaveCount(0);
+    await page.locator('#modal .tap-hint').click();
     await expect(page.locator('#modal')).toBeHidden();
+    // The rest still come, each on its own tap.
     await page.evaluate(() => {
       const a = (window as unknown as { pakrt: any }).pakrt;
       a.s.stats.arrived = 1;
       a.refresh();
     });
+    await expect(page.locator('#modal')).toBeVisible();
+    await page.locator('#modal .tap-hint').click();
     await expect(page.locator('#modal')).toBeHidden();
   });
 });
@@ -168,7 +284,7 @@ test.describe('population and houses', () => {
   });
 
   test('the tip fires when growth stalls and explains both levers once', async ({ page }) => {
-    const TIP = { en: 'Room and a reason.', id: 'Tempat dan alasan.' }[lang()];
+    const TIP = { en: 'Beds and a reason.', id: 'Tempat dan alasan.' }[lang()];
     await start(page);
     await page.locator('#howtoGo').click();
     await page.evaluate(() => {
@@ -190,6 +306,8 @@ test.describe('population and houses', () => {
     }
     await expect(page.locator('#modal .card h2')).toHaveText(TIP);
     await expect(page.locator('#modal .pics')).toBeVisible();
+    // The picture row says "beds" in words, not in an icon nobody can read.
+    await expect(page.locator('#modal .pics')).toContainText(lang() === 'en' ? '3 beds' : '3 tempat');
     await expectLegible(page, 'houses tip');
     await page.locator('#modal .tap-hint').click();
     await expect(page.locator('#modal')).toBeHidden();
@@ -203,6 +321,22 @@ test.describe('population and houses', () => {
     await expect(page.locator('#modal .exp')).toBeVisible();
     await expect(page.locator('#modal .card p').first()).toContainText(POP_LINE);
     await expectLegible(page, 'pop explain card');
+  });
+});
+
+test.describe('first wins', () => {
+  test('the first house, resident and star each get a legible label that never blocks taps', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    for (const what of ['house', 'resident', 'star'] as const) {
+      await page.evaluate((w) => (window as unknown as { pakrt: any }).pakrt.handleFx([{ kind: 'first', what: w }]), what);
+      const tag = page.locator('.first-burst');
+      await expect(tag).toBeVisible();
+      await page.waitForTimeout(500);
+      expect(await scanLegibility(page), `first ${what}`).toEqual([]);
+      expect(await tag.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe('none');
+      await tag.evaluate((el) => el.remove());
+    }
   });
 });
 
@@ -234,7 +368,7 @@ test.describe('events, ranking, settings', () => {
   test('yearly report card is legible, pauses the game and dismisses on tap', async ({ page }) => {
     await start(page);
     await dismissModals(page);
-    // Tips off: an arrival on the month before the report would be shown first and hold it back.
+    // An arrival on the month before the report can show a tip first, so the loop below taps tips away.
     await skipTips(page);
     await seed(page);
     const title = (n: number) => ({ id: `Laporan tahun ${n}`, en: `Year ${n} report` })[lang()];
@@ -248,6 +382,11 @@ test.describe('events, ranking, settings', () => {
     for (let i = 0; i < 3; i++) {
       if ((await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month)) >= 12) break;
       await runMonth(page);
+      // A tip can land first. Tap it away; the report waits behind it.
+      for (let k = 0; k < 4 && (await page.locator('#modal').isVisible()) && !(await page.locator('#modal .card.report-card').isVisible()); k++) {
+        await page.locator('#modal .tap-hint').click();
+        await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+      }
     }
     await expect(page.locator('#modal .card.report-card')).toBeVisible();
     await expect(page.locator('#modal .card h2')).toHaveText(title(1));
@@ -262,7 +401,52 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#modal .card.report-card')).toBeHidden();
   });
 
-  for (const id of ['agustusan', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga', 'partTime', 'padam', 'hibah']) {
+  test('every event shows prices in one piece, and every result row names its resource', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await skipTips(page);
+    await seed(page);
+    const ids = ['guntingPita', 'agustusan', 'banjir', 'cabai', 'kecamatan', 'partTime', 'cctv', 'kkn', 'startupPilot', 'hajatan', 'pasarMalam', 'sisaAnggaran', 'magang', 'pungli', 'pangkalanOjol', 'lesGratis', 'padam', 'rapatWarga', 'hibah', 'lombaKampung', 'truckSampah', 'lubangViral', 'sembako', 'pbb', 'festivalKuliner'];
+    for (const id of ids) {
+      await page.evaluate((i) => {
+        const app = (window as unknown as { pakrt: any }).pakrt;
+        app.speed = 0;
+        app.s.res.rupiah = 1e9;
+        app.s.res.orangDalam = 50;
+        app.s.pendingEvent = i;
+        app.showEvent();
+      }, id);
+      const card = page.locator('#modal .card.event');
+      await expect(card).toBeVisible();
+      for (const price of await card.locator('.price').all()) {
+        // A price on two lines would split the number from its word.
+        expect(await price.evaluate((el) => el.getClientRects().length), `${id} price wraps`).toBe(1);
+      }
+      await expectLegible(page, `event ${id}`);
+      await card.locator('.btn').last().click();
+      for (const chip of await page.locator('#modal .outcome-chip').all()) {
+        expect((await chip.locator('.outcome-name').textContent())?.trim(), `${id} result row has no word`).toBeTruthy();
+      }
+      await expectLegible(page, `result of ${id}`);
+      await page.locator('#modal .tap-hint').click();
+      await expect(page.locator('#modal')).toBeHidden();
+    }
+  });
+
+  test('an event right after a tip is centred, not left at the bottom', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.modal({ title: 'Tip', body: 'A tip', tone: 'info', tip: { pics: null, skip: () => {} } });
+      app.s.pendingEvent = 'agustusan';
+      app.showEvent();
+    });
+    await expect(page.locator('#modal .card.event')).toBeVisible();
+    await expectCentred(page, 'event after a tip');
+  });
+
+  for (const id of ['guntingPita', 'agustusan', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga', 'partTime', 'padam', 'hibah']) {
     for (const broke of [false, true]) {
       test(`event ${id}${broke ? ' while broke' : ''} is legible and has a free choice`, async ({ page }) => {
         await start(page);
@@ -275,6 +459,9 @@ test.describe('events, ranking, settings', () => {
         }, [id, broke] as const);
         await expect(page.locator('#modal .card.event')).toBeVisible();
         await expectLegible(page, `event ${id}`);
+        await expectCentred(page, `event ${id}`);
+        // The cost shows once, as a number and icon, never also spelled out in the label.
+        for (const label of await page.locator('#modal .card.event .btn').allInnerTexts()) expect(label, `event ${id} choice`).not.toMatch(/Orang (Inside|Dalam)/);
         // The game is paused until a choice is made, and the first choice always works.
         const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month);
         await page.waitForTimeout(300);
@@ -284,6 +471,7 @@ test.describe('events, ranking, settings', () => {
         await expect(page.locator('#modal .card h2')).toHaveText({ id: 'Hasil kejadian', en: 'Event result' }[lang()]);
         if (id !== 'banjir' && id !== 'kecamatan') await expect(page.locator('#modal .outcome-chip, #modal .outcome-mod').first()).toBeVisible();
         await expectLegible(page, `outcome ${id}`);
+        await expectCentred(page, `outcome ${id}`);
         await page.locator('#modal .tap-hint').click();
         await expect(page.locator('#modal')).toBeHidden();
         expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.pendingEvent)).toBeNull();
@@ -427,13 +615,20 @@ test.describe('events, ranking, settings', () => {
 });
 
 test.describe('slim HUD and one menu', () => {
-  test('main screen has only pause, speed and Menu buttons', async ({ page }) => {
+  test('main screen has only pause, speed, Menu and the frame shortcuts', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     const ids = await page.evaluate(() =>
       [...document.querySelectorAll('button')].filter((b) => b.getClientRects().length && b.id !== 'ticker').map((b) => b.id),
     );
-    expect(ids).toEqual(['chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'pause-btn', 'speed-btn', 'menu-btn']);
+    // Short phones keep only the rail: no title bar and no quick tabs.
+    const tall = page.viewportSize()!.height > 640;
+    expect(ids).toEqual([
+      ...(tall ? ['cs-system'] : []),
+      'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop',
+      'cs-rail-wacana', 'cs-rail-build', 'pause-btn', 'speed-btn', 'menu-btn',
+      ...(tall ? ['cs-tab-log', 'cs-tab-stats', 'cs-tab-warga', 'cs-tab-wacana'] : []),
+    ]);
     const hud = (await page.locator('#hud').boundingBox())!;
     expect(hud.height).toBeLessThanOrEqual(80);
   });
@@ -449,7 +644,7 @@ test.describe('slim HUD and one menu', () => {
       await page.locator('#modal').click();
       await expect(page.locator('#modal')).toBeHidden();
     }
-    await expect(page.locator('#chip-pop')).toContainText('Pop');
+    await expect(page.locator('#chip-pop img')).toBeVisible();
     await expect(page.locator('#chip-sabar')).not.toContainText(/Sabar/);
   });
 
@@ -462,8 +657,7 @@ test.describe('slim HUD and one menu', () => {
     expect(await pk('a.running')).toBe(true);
 
     await page.locator('#menu-btn').click();
-    await expect(badge).toBeVisible();
-    await expect(badge).toHaveText(WORDS[lang()].paused);
+    await expect(badge).toBeHidden();
     expect(await pk('a.running')).toBe(false);
     expect(await pk('a.speed')).toBe(1);
     await page.getByRole('button', { name: WORDS[lang()].close }).click();
@@ -472,6 +666,7 @@ test.describe('slim HUD and one menu', () => {
 
     await pk("a.startPlacing('rumah')");
     await expect(badge).toBeVisible();
+    await expect(badge).toHaveText(WORDS[lang()].paused);
     expect(await pk('a.running')).toBe(false);
     await pk('a.stopPlacing()');
     await expect(badge).toBeHidden();
@@ -584,8 +779,9 @@ test.describe('text is legible and never cut off', () => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
       const c = app.view.tileCentre(k.x, k.y);
-      // Aim at the roof, which overlaps the tile behind on screen.
-      return { x: c.x, y: c.y - app.view.tile * 1.2 };
+      // Aim at the roof, which overlaps the tile behind on screen. A level-1 Kantor RT is a low house,
+      // so aim just under its ridge: still above the tile's own top corner.
+      return { x: c.x, y: c.y - app.view.tile * 0.9 };
     });
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('.sheet-head')).toContainText('Kantor RT');
@@ -632,6 +828,89 @@ test.describe('update banner', () => {
 
   });
 });
+test.describe('home update button', () => {
+  test('stays hidden until an update waits, then shows above Start inside the screen', async ({ page }) => {
+    await page.goto(`/?debug&lang=${lang()}`);
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await expect(page.locator('#home-update')).toBeHidden();
+    await page.evaluate(() => ((document.getElementById('home-update') as HTMLElement).hidden = false));
+    const vh = page.viewportSize()!.height;
+    const up = (await page.locator('#home-update').boundingBox())!;
+    const st = (await page.locator('#home-start').boundingBox())!;
+    expect(up.y).toBeGreaterThanOrEqual(0);
+    expect(up.y + up.height).toBeLessThanOrEqual(st.y);
+    expect(st.y + st.height).toBeLessThanOrEqual(vh);
+    expect(up.height).toBeGreaterThanOrEqual(44);
+    await expect(page.locator('#home-update')).toHaveText(lang() === 'id' ? 'Pembaruan tersedia' : 'Update available');
+    await expectLegible(page, 'home with update');
+  });
+});
+test.describe('home map preview', () => {
+  /** The map box reaches the right edge, and the canvas and camera match its size. In game the rail takes the left strip. */
+  const fills = async (page: Page, inGame = false) => {
+    const vw = page.viewportSize()!.width;
+    const box = (await page.locator('#map').boundingBox())!;
+    if (inGame) expect(box.x, 'map left edge').toBeGreaterThan(1);
+    else expect(Math.abs(box.x), 'map left edge').toBeLessThanOrEqual(1);
+    expect(Math.abs(box.x + box.width - vw), 'map right edge').toBeLessThanOrEqual(1);
+    const cam = await page.evaluate(() => {
+      const v = (window as unknown as { pakrt: any }).pakrt.view;
+      return { w: v.canvas.width / (window.devicePixelRatio || 1), viewW: v.viewW, panX: v.panX };
+    });
+    expect(Math.abs(cam.w - box.width), 'canvas width').toBeLessThanOrEqual(1);
+    expect(cam.viewW).toBe(cam.w);
+    expect(cam.panX).toBeLessThanOrEqual(0);
+  };
+
+  /** Fails when a whole edge line of the map canvas is black or empty, where the map should reach. */
+  const edges = async (page: Page, where: string) => {
+    await page.waitForTimeout(150);
+    const dead = await page.evaluate(() => {
+      const src = document.getElementById('map') as HTMLCanvasElement;
+      const c = document.createElement('canvas');
+      c.width = src.width;
+      c.height = src.height;
+      const ctx = c.getContext('2d')!;
+      ctx.drawImage(src, 0, 0);
+      const { width: w, height: h } = c;
+      const lit = (x: number, y: number, dx: number, dy: number, n: number) => {
+        const d = ctx.getImageData(x, y, dx || 1, dy || 1).data;
+        for (let i = 0; i < n * 4; i += 4) if (d[i + 3] > 0 && d[i] + d[i + 1] + d[i + 2] > 24) return true;
+        return false;
+      };
+      const out: string[] = [];
+      if (!lit(0, 0, 1, h, h)) out.push('left');
+      if (!lit(w - 1, 0, 1, h, h)) out.push('right');
+      if (!lit(0, 0, w, 1, w)) out.push('top');
+      if (!lit(0, h - 1, w, 1, w)) out.push('bottom');
+      return out;
+    });
+    expect(dead, `${where}: black map edges`).toEqual([]);
+  };
+
+  test('fills the screen on launch and after Start', async ({ page }) => {
+    await page.goto(`/?debug&lang=${lang()}`);
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await fills(page);
+    await edges(page, 'home');
+    await passHome(page);
+    await fills(page, true);
+    await edges(page, 'in game');
+    await dismissModals(page);
+    await seed(page);
+    await edges(page, 'in game, seeded');
+  });
+
+  test('fills the screen in standalone display mode', async ({ page }) => {
+    await page.addInitScript(() => {
+      const mm = window.matchMedia.bind(window);
+      window.matchMedia = (q: string) => (q.includes('display-mode: standalone') ? ({ ...mm(q), matches: true } as MediaQueryList) : mm(q));
+    });
+    await page.goto(`/?debug&lang=${lang()}`);
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await fills(page);
+  });
+});
 test.describe('walkers and effects', () => {
   /** Walker positions, rounded so idle bobbing does not count as moving. */
   const spots = (page: Page) =>
@@ -656,13 +935,18 @@ test.describe('walkers and effects', () => {
     const before = await spots(page);
     await page.waitForTimeout(4500);
     expect(await spots(page)).not.toBe(before);
-    // Nobody stands inside a building.
-    const inside = await page.evaluate(() => {
-      const app = (window as unknown as { pakrt: any }).pakrt;
-      const solid = app.s.buildings.filter((b: any) => !['biopori', 'parkir', 'jalan'].includes(b.def));
-      return app.view.crowd.people.filter((p: any) => solid.some((b: any) => b.x === Math.floor(p.fx) && b.y === Math.floor(p.fy))).length;
-    });
-    expect(inside).toBe(0);
+    // Nobody lingers inside a building. A walker leaving or reaching a door is on its tile for a moment, so a walker only
+    // counts if it is inside at two samples a second apart.
+    const insideNow = () =>
+      page.evaluate(() => {
+        const app = (window as unknown as { pakrt: any }).pakrt;
+        const solid = app.s.buildings.filter((b: any) => !['biopori', 'parkir', 'jalan'].includes(b.def));
+        return app.view.crowd.people.filter((p: any) => solid.some((b: any) => b.x === Math.floor(p.fx) && b.y === Math.floor(p.fy))).map((p: any) => p.id as number);
+      });
+    const first = await insideNow();
+    await page.waitForTimeout(1000);
+    const second = await insideNow();
+    expect(first.filter((id: number) => second.includes(id))).toEqual([]);
   });
 
   test('walkers stay on paths, and a building with no path is marked and idle', async ({ page }) => {
@@ -802,6 +1086,68 @@ test.describe('walkers and effects', () => {
     // The effects overhead is fixed, and the RT test above holds it to 80%. Here it only has to stay in the same league.
     // Shared runners swing this ratio between 0.4 and 0.6, so it takes the best of five and a 0.35 floor.
     expect(bigBusy, `Kelurahan ${big.toFixed(0)} fps, with effects ${bigBusy.toFixed(0)} fps`).toBeGreaterThan(big * 0.35);
+  });
+
+  test('a speech bubble is painted after every building and window light', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    // Records the draw order: lit windows (L) and the bubble text (B). Other text (T) is floating numbers, which may sit on top.
+    const order = await page.evaluate(
+      () =>
+        new Promise<string[]>((done) => {
+          const app = (window as unknown as { pakrt: any }).pakrt;
+          app.settings.effects = true;
+          app.applySettings();
+          app.s.month = 2;
+          app.acc = 4800;
+          const walker = app.view.crowd.people.find((p: any) => !p.away);
+          const log: string[] = [];
+          const proto = CanvasRenderingContext2D.prototype as any;
+          const { fillRect, fillText, setTransform } = proto;
+          proto.setTransform = function (...a: unknown[]) { log.push('F'); return setTransform.apply(this, a); };
+          proto.fillRect = function (...a: unknown[]) { if (this.fillStyle === '#fde68a') log.push('L'); return fillRect.apply(this, a); };
+          proto.fillText = function (text: string, ...a: unknown[]) { log.push(text === 'Layer check' ? 'B' : 'T'); return fillText.call(this, text, ...a); };
+          let n = 0;
+          const f = () => {
+            walker.say = 'Layer check';
+            walker.sayUntil = performance.now() + 5000;
+            if (++n < 20) return requestAnimationFrame(f);
+            Object.assign(proto, { fillRect, fillText, setTransform });
+            done(log);
+          };
+          requestAnimationFrame(f);
+        }),
+    );
+    expect(order.filter((o) => o === 'B').length, 'a bubble was drawn').toBeGreaterThan(0);
+    expect(order.filter((o) => o === 'L').length, 'lit windows were drawn').toBeGreaterThan(0);
+    let bubbled = false;
+    for (const o of order) {
+      if (o === 'F') bubbled = false;
+      else if (o === 'B') bubbled = true;
+      else if (bubbled && o === 'L') throw new Error(`"${o}" was painted over the speech bubble`);
+    }
+  });
+
+  test('every overlay is on top at its own centre', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const onTop = (sel: string) =>
+      page.evaluate((sel) => {
+        const el = document.querySelector(sel) as HTMLElement | null;
+        if (!el) return 'missing';
+        const r = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return hit && el.contains(hit) ? 'ok' : `covered by ${hit?.id || hit?.className || hit?.tagName}`;
+      }, sel);
+    await page.locator('#menu-btn').click();
+    expect(await onTop('#sheet')).toBe('ok');
+    await page.getByRole('button', { name: WORDS[lang()].close }).click();
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.explain('rupiah'));
+    expect(await onTop('#modal .card')).toBe('ok');
+    await page.locator('#modal').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    for (const sel of ['#hud', '#bottombar', '#menu-btn']) expect(await onTop(sel), sel).toBe('ok');
   });
 
   test('walkers, particles and night keep the frame rate', async ({ page }) => {
@@ -1057,6 +1403,7 @@ test.describe('home screen', () => {
     await page.reload();
     await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
     await page.evaluate(() => document.fonts.ready);
+    await expect(page.locator('#goal')).toBeHidden();
     await expect(page.locator('#home .home-title')).toHaveText(await page.title());
     await expect(page.locator('#home button:visible')).toHaveCount(2);
     await expect(page.locator('#home-start')).toHaveText(W[lang()].start);
@@ -1143,10 +1490,20 @@ test.describe('build mode', () => {
     expect(await tabs.count()).toBeGreaterThan(2);
     await expect(page.locator('#sheet .tabs .tab[aria-pressed="true"]')).toHaveCount(1);
     await expectLegible(page, 'build tabs');
-    await page.locator('#sheet .tabs .tab[data-tab="paths"]').click();
+    // The four starting tabs share one row, so the first Rumah card stays on screen.
+    if ((await tabs.count()) <= 4) {
+      const tops = await tabs.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+      expect(new Set(tops).size, `tab tops ${tops}`).toBe(1);
+    }
+    // Jalan Setapak leads the first tab, since nothing works without a path.
+    await expect(page.locator('#sheet .card-btn').first()).toContainText(/Jalan Setapak/);
+    // A card says "no permit" once: the blurb and the meta line must not both carry it.
+    const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
+    expect(((await rumah.innerText()).match(/no permit|tanpa izin/gi) ?? []).length).toBe(1);
+    await page.locator('#sheet .tabs .tab[data-tab="decoration"]').click();
     await expect(page.locator('#sheet .card-btn').first()).toBeVisible();
-    await expect(page.locator('#sheet .tabs .tab[data-tab="paths"]')).toHaveAttribute('aria-pressed', 'true');
-    await expectLegible(page, 'paths tab');
+    await expect(page.locator('#sheet .tabs .tab[data-tab="decoration"]')).toHaveAttribute('aria-pressed', 'true');
+    await expectLegible(page, 'decor tab');
   });
 
   test('Place and Cancel sit right under the chosen tile', async ({ page }) => {
@@ -1183,6 +1540,8 @@ test.describe('build mode', () => {
     const roads = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'jalan').length);
     const had = await roads();
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('jalan'));
+    // The frame's rail narrows the map: pan right so both ends of the path are on screen.
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.panBy(56, 0));
     const box = (await page.locator('#map').boundingBox())!;
     const tap = async (dx: number, dy: number) => {
       const at = await page.evaluate(([x, y]) => {
@@ -1192,9 +1551,9 @@ test.describe('build mode', () => {
       }, [dx, dy]);
       await page.mouse.click(box.x + at.x, box.y + at.y);
     };
-    await tap(-2, -2);
+    await tap(-2, 3);
     await expect(page.locator('#place-float')).toBeHidden();
-    await tap(2, -2);
+    await tap(2, 3);
     await expect(page.locator('#place-ok')).toHaveText(lang() === 'en' ? 'Yes' : 'Ya');
     await expect(page.locator('#place-ok')).toBeEnabled();
     await expectLegible(page, 'path preview');
@@ -1230,5 +1589,246 @@ test.describe('moving and turning', () => {
     const k = await pk<{ x: number; y: number }>("a.s.buildings.find((b) => b.def === 'kantorRT')");
     expect(await pk<number>(`a.s.buildings.find((b) => b.uid === ${uid}).y`)).toBe(k.y - 1);
     expect(await pk<number>('a.s.res.rupiah')).toBe(cash);
+  });
+});
+
+test.describe('zoom, big lots and the Warga list', () => {
+  test('after picking a job, the Warga list stays on that resident', async ({ page }) => {
+    await start(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      for (let i = 0; i < 30; i++) app.s.residents.push({ id: app.s.nextResidentId++, name: `Pak Budi ${i}`, job: 'none', pensiun: 0, fake: 0, arrived: 0 });
+    });
+    await dismissModals(page);
+    await page.evaluate(() => { const app = (window as any).pakrt; app.actions.find((a: any) => a.id === 'warga').open(app); });
+    const row = page.locator('#sheet [data-rid]').nth(25);
+    const id = await row.getAttribute('data-rid');
+    await row.scrollIntoViewIfNeeded();
+    await row.click();
+    // "No job" is always allowed, and picking it sends the player back to the list.
+    await page.locator('#sheet .action .btn').first().click();
+    const back = page.locator(`#sheet [data-rid="${id}"]`);
+    await expect(back).toBeInViewport();
+    await expect(back).toBeFocused();
+    expect(await page.locator('#sheet').evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  });
+
+  test('wheel and pinch zoom in and out in whole steps, and a pinch is not a tap', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const scale = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.scale as number);
+    const box = (await page.locator('#map').boundingBox())!;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    const s0 = await scale();
+    await page.mouse.move(cx, cy);
+    await page.mouse.wheel(0, -120);
+    await expect.poll(scale).toBe(s0 + 1);
+    await page.mouse.wheel(0, 120);
+    await page.mouse.wheel(0, 120);
+    await expect.poll(scale).toBe(s0 - 1);
+    const cdp = await page.context().newCDPSession(page);
+    const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', d: number) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: cx - d, y: cy, id: 1 }, { x: cx + d, y: cy, id: 2 }] });
+    const before = await scale();
+    await touch('touchStart', 20);
+    for (const d of [30, 40, 50, 60]) await touch('touchMove', d);
+    await touch('touchEnd', 0);
+    await expect.poll(scale).toBeGreaterThan(before);
+    await expect(page.locator('#modal')).toBeHidden();
+    await expect(page.locator('#sheet')).toBeHidden();
+    await expectLegible(page, 'zoomed map');
+  });
+
+  test('a 3x3 Lapangan opens from a tap on its middle at default and zoomed-in scale', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      app.s.buildings.push({ uid: 9001, def: 'lapangan', x: k.x - 4, y: k.y - 4, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      app.refresh();
+    });
+    for (const zoom of [0, 1]) {
+      if (zoom) await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.zoomBy(1));
+      await page.waitForTimeout(150);
+      // The middle tile of the field, not the building's own corner tile.
+      const at = await page.evaluate(() => {
+        const app = (window as unknown as { pakrt: any }).pakrt;
+        const b = app.s.buildings.find((o: any) => o.uid === 9001);
+        // Zoomed in, a short view can leave the field above the top edge. Nudge it just inside, no more.
+        const r = document.getElementById('map')!.getBoundingClientRect();
+        const c0 = app.view.tileCentre(b.x + 1, b.y + 1);
+        if (c0.y < 40) app.view.panBy(0, 40 - c0.y);
+        // Keep it clear of the frame's satellite view in the top-right corner.
+        const sat = document.getElementById('cs-sat')!.getBoundingClientRect();
+        const c1 = app.view.tileCentre(b.x + 1, b.y + 1);
+        if (sat.width && c1.y < sat.bottom - r.top + 16 && c1.x > sat.left - r.left - 24) app.view.panBy(sat.left - r.left - 24 - c1.x, 0);
+        const c = app.view.tileCentre(b.x + 1, b.y + 1);
+        return { x: r.left + c.x, y: r.top + c.y };
+      });
+      await page.mouse.click(at.x, at.y);
+      await expect(page.locator('#sheet')).toBeVisible();
+      await expect(page.locator('#sheet h2').first()).toContainText('Lapangan');
+      await page.locator('#sheet .sheet-head .btn-icon').click();
+    }
+  });
+});
+
+test.describe('path decay, level art and menu icons', () => {
+  test('a cracked path offers a tile fix, a stretch fix and a favour, and the favour fixes the stretch', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const uid = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const s = app.s;
+      s.month = 30;
+      s.res.orangDalam = 3;
+      const k = s.buildings.find((b: any) => b.def === 'kantorRT');
+      const ids: number[] = [];
+      for (let i = 0; i < 3; i++) {
+        const b = { uid: s.nextUid++, def: 'jalan', x: k.x - 3 + i, y: k.y - 3, level: 1, status: 'damaged', timer: 0, invested: 0, placedAt: 0, crackedAt: 20 };
+        s.buildings.push(b);
+        ids.push(b.uid);
+      }
+      app.refresh();
+      return ids[1];
+    });
+    // A tutorial tip can pop up over the map first. Clear it, then open the path.
+    await dismissModals(page);
+    await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.inspect(u), uid);
+    await dismissModals(page);
+    const sheet = page.locator('#sheet');
+    await expect(sheet).toBeVisible();
+    // Fix this tile, fix all 3 tiles, call a favour that fixes all 3.
+    await expect(sheet.locator('.action .btn', { hasText: /3 (tiles|petak)/ })).toHaveCount(2);
+    await expect(sheet.locator('.action .btn', { hasText: /Orang/ })).toHaveCount(1);
+    await expectLegible(page, 'cracked path inspector');
+    await sheet.locator('.action .btn', { hasText: /Orang/ }).click();
+    const left = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'jalan' && b.status === 'damaged').length);
+    expect(left).toBe(0);
+    expect(await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.s.buildings.find((b: any) => b.uid === u).status, uid)).toBe('active');
+  });
+
+  test('the inspector shows every level of a building and marks the current one', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const b = { uid: 9100, def: 'warung', x: 1, y: 1, level: 2, status: 'active', timer: 0, invested: 0, placedAt: 0 };
+      app.s.buildings.push(b);
+      app.inspect(b.uid);
+    });
+    const strip = page.locator('#sheet .level-strip');
+    await expect(strip.locator('.lv')).toHaveCount(3);
+    await expect(strip.locator('.lv.current')).toHaveCount(1);
+    await expect(strip.locator('.lv').nth(1)).toHaveClass(/current/);
+    for (const img of await strip.locator('img').all()) expect(await img.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)).toBe(true);
+    await expectLegible(page, 'level strip');
+  });
+
+  test('every menu tile has a drawn icon plate', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    const imgs = page.locator('#sheet .tile img');
+    expect(await imgs.count()).toBeGreaterThan(5);
+    for (const img of await imgs.all()) {
+      expect(await img.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth >= 44)).toBe(true);
+      expect(await img.getAttribute('width')).toBe('44');
+    }
+    await expectLegible(page, 'menu with icon plates');
+  });
+});
+
+test.describe('sheets keep their place', () => {
+  test('the Build tab row does not jump when switching tabs', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await skipTips(page);
+    await seed(page);
+    await page.evaluate(() => ((window as unknown as { pakrt: any }).pakrt.speed = 0));
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-build').click();
+    const tabs = page.locator('.sheet .tabs .tab');
+    const n = await tabs.count();
+    expect(n).toBeGreaterThan(1);
+    let top: number | undefined;
+    for (let i = 0; i < n; i++) {
+      await tabs.nth(i).click();
+      const y = (await tabs.first().boundingBox())!.y;
+      top ??= y;
+      expect(Math.abs(y - top), `tab ${i} moved the tab row`).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('the SK choices stack at the same width', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await skipTips(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.s.stage.stars.rt = 3;
+      app.s.stage.sk = 'offered';
+      app.refresh();
+    });
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#stage-btn').click();
+    const widths = await page.locator('.sheet > .btn').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)));
+    expect(widths.length).toBeGreaterThan(1);
+    expect(new Set(widths).size, `button widths ${widths}`).toBe(1);
+    await expectLegible(page, 'stage sheet');
+  });
+});
+
+test.describe('console frame and theme', () => {
+  test('frames the map in light by default, switches to dark and back, and every frame control opens its panel', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    // Short phones keep only the rail, so the map stays as tall as it was before the frame.
+    const tall = page.viewportSize()!.height > 640;
+    for (const id of [...(tall ? ['#cs-title', '#cs-sat', '#cs-tabs'] : []), '#cs-rail', '#map', '#menu-btn', '#pause-btn']) await expect(page.locator(id)).toBeVisible();
+    if (!tall) for (const id of ['#cs-title', '#cs-sat', '#cs-tabs']) await expect(page.locator(id)).toBeHidden();
+    const dark = () => page.evaluate(() => document.documentElement.classList.contains('theme-dark'));
+    expect(await dark()).toBe(false);
+    await expectLegible(page, 'console frame, light');
+    // The map keeps a usable size, and the rail sits beside it rather than over it.
+    const map = (await page.locator('#map').boundingBox())!;
+    const rail = (await page.locator('#cs-rail').boundingBox())!;
+    expect(map.height).toBeGreaterThan(200);
+    expect(map.x).toBeGreaterThanOrEqual(rail.x + rail.width - 1);
+    // Theme: Light and Dark buttons in Settings.
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    await page.locator('#sheet [data-theme="dark"]').click();
+    await expect(page.locator('#sheet [data-theme="dark"]')).toHaveAttribute('aria-pressed', 'true');
+    expect(await dark()).toBe(true);
+    await expectLegible(page, 'settings, dark theme');
+    await page.locator('.sheet-head .btn').click();
+    await expectLegible(page, 'console frame, dark');
+    // Each control opens a sheet that the Menu also opens.
+    for (const id of [...(tall ? ['#cs-system', '#cs-tab-log', '#cs-tab-stats', '#cs-tab-warga', '#cs-tab-wacana'] : []), '#cs-rail-build', '#cs-rail-wacana']) {
+      await page.locator(id).click();
+      await expect(page.locator('#sheet')).toBeVisible();
+      await page.locator('.sheet-head .btn').click();
+      await expect(page.locator('#sheet')).toBeHidden();
+    }
+    // A tap on the satellite view pans the map.
+    if (tall) {
+      const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox);
+      const sat = (await page.locator('#cs-sat-map').boundingBox())!;
+      await page.mouse.click(sat.x + 4, sat.y + 4);
+      expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox)).not.toBe(before);
+    }
+    // The theme survives a reload, then goes back to light.
+    await page.reload();
+    await passHome(page);
+    expect(await dark()).toBe(true);
+    await expect(page.locator('#cs-rail')).toBeVisible();
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    await page.locator('#sheet [data-theme="light"]').click();
+    expect(await dark()).toBe(false);
   });
 });

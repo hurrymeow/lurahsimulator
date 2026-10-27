@@ -3,6 +3,7 @@ import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR
 import { STAGE_EVENTS } from '../data/higher';
 import { rupiah } from '../format';
 import { activeCombos } from './combos';
+import { isPath, tileRepairCost } from './decay';
 import { def, isCover } from './content';
 import { gateOpen } from './gate';
 import { banjirCut, wacanaNoReceipt } from './kel';
@@ -58,6 +59,7 @@ function eligible(s: GameState, e: EventDef): boolean {
   const w = e.when;
   if (w.chance <= 0) return false;
   if (w.minMonth !== undefined && s.month < w.minMonth) return false;
+  if (w.maxMonth !== undefined && s.month > w.maxMonth) return false;
   if (w.minStars !== undefined && s.stage.stars.rt < w.minStars) return false;
   if (w.months && !w.months.includes(s.month % 12)) return false;
   if (w.needs && !s.buildings.some((b) => b.def === w.needs && b.status === 'active')) return false;
@@ -84,6 +86,21 @@ function sinceRandomPopup(s: GameState): number {
   return times.length ? s.month - Math.max(...times) : Infinity;
 }
 
+/** Months a random popup keeps clear of any other event, before and after (GAME-DESIGN.md target 6). */
+export const EVENT_CLEAR = 3;
+
+/** True when any event just fired or a scheduled one is due within EVENT_CLEAR - 1 months. */
+function crowded(s: GameState): boolean {
+  const last = Object.values(s.lastEvent ?? {});
+  if (last.length && s.month - Math.max(...last) < EVENT_CLEAR) return true;
+  for (let k = 1; k < EVENT_CLEAR; k++) {
+    const due = EVENTS.some((e) => e.when.chance >= 1 && e.when.months?.includes((s.month + k) % 12) && (e.when.minMonth ?? 0) <= s.month + k);
+    if (due) return true;
+    if (s.inspection && s.inspection.visitAt === undefined && s.inspection.warnAt === s.month + k) return true;
+  }
+  return false;
+}
+
 /**
  * Monthly system: maybe raise an event. At most one per month.
  * Scheduled events (chance 1) always come. Random ones share a pool: at most one popup every POPUP_GAP months,
@@ -95,7 +112,7 @@ export function eventSystem(s: GameState, fx: Fx): void {
   const scheduled = all.find((e) => e.when.chance >= 1);
   if (scheduled) return raise(s, fx, scheduled);
   const pool = all.filter((e) => e.when.chance < 1);
-  if (!pool.length || sinceRandomPopup(s) < POPUP_GAP || !chance(s, POPUP_CHANCE)) return;
+  if (!pool.length || sinceRandomPopup(s) < POPUP_GAP || crowded(s) || !chance(s, POPUP_CHANCE)) return;
   let roll = rand(s) * pool.reduce((n, e) => n + e.when.chance, 0);
   for (const e of pool) {
     roll -= e.when.chance;
@@ -192,6 +209,8 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
 }
 
 export function repairCost(s: GameState, b: Building): number {
+  // A path costs nothing to lay, so it has its own repair price, and Virality does not waive it.
+  if (isPath(b)) return tileRepairCost(s);
   return s.res.viral >= VIRAL_REPAIR_AT ? 0 : price(s, def(b.def).cost * REPAIR_FRACTION);
 }
 
@@ -209,6 +228,7 @@ export function repair(s: GameState, b: Building): CheckResult {
   s.res.rupiah -= cost;
   s.stats.spent += cost;
   b.status = 'active';
+  delete b.crackedAt;
   return check;
 }
 

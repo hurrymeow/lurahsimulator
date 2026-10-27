@@ -1,7 +1,7 @@
 # Art direction
 
-How Kampung Story looks, and how to keep new art in that look. Follow this for every sprite, scenery
-change and effect. [DESIGN.md](DESIGN.md) still rules on UI, legibility and accessibility.
+How Pak Pejabat looks, and how to keep new art in that look. Follow this for every sprite, scenery
+change and effect. [GAME-DESIGN.md](GAME-DESIGN.md) still rules on UI, legibility and accessibility.
 
 ## The look in one line
 
@@ -52,6 +52,19 @@ No third-party art or names. Everything is drawn in code.
 - The sun's rim is a deep amber, `#8a4f12`. Selokan banks are a dark warm grey, `#4a4a44`.
 - Set `p.bare = true` to skip the ink pass for flat or lattice art: selokan (it draws its own
   banks so neighbours join up), grass tufts, bamboo scaffolding.
+- Big buildings (2x2, 3x3) are drawn at their own size, not scaled up. `new Painter(n)` takes the
+  same one-tile coordinates and rasterises every edge, diagonal and outline natively, so a 3x3's
+  roofline is a smooth 1px 2:1 line like a warung's, never a scaled stair step. Paint callbacks get
+  one-tile rows and columns, so windows and courses keep their proportions. Never stretch a
+  finished sprite: its outline comes out n pixels thick and its diagonals scallop.
+- Borders that must stay thin take `px` from `ground()`: one canvas pixel in a or b. Write a kerb
+  or a bund as `e < 2 * px`, not as a fraction, so it is two pixels on any lot.
+- Edges of flat pieces: the ink pass's 1px coloured line, then a light kerb inside it where it
+  helps. A standalone flat piece (lapangan, taman, kolam, embung) also gets `dither`: a
+  half-transparent checker of its edge colour on the grass just outside, so it settles into the
+  ground. Pieces that tile (jalan, selokan, sawah) skip it, or they would bleed onto neighbours.
+- Fine 1px detail that must not be outlined (fences, chalk, lamps) goes in `p.overlay`, which runs
+  after the ink pass in native pixels.
 - Terrain borders are coloured, not inked. The higher ground takes a dark edge in its own
   colour (0.6x). The lower side gets a bright rim that eases back to its base colour over three
   pixels (1.2x, 1.11x, 1.05x). Sea meeting sand gets foam, then lighter shallows. Rank, high to
@@ -112,19 +125,23 @@ Scenery colours:
 | Kebun, hutan | `#5f8a3c`, `#4a7334` |
 | Beach, sea | Sand `#e6c486` to `#f3daa2` with ripples, sea `#367f80` to `#4a9b96` with `#8fd0c2` wave dashes |
 | Sky | Deep blue `#3f6fae` down to warm haze `#f3d9a8` at the horizon, banded in steps, 32 lighter rays |
-| Clouds | Stacked slabs, `#f3efe6` lit, `#c9c3dc` underside, no ink |
-| Mountains | Hazed toward the sky: `#93b0ac` lit, `#6f8d90` shade, straight strata, forested feet, ink `#5a6a74` |
-| Tree line | Straight-sided pines on the horizon, `#6e9580` lit, `#57806c` shade |
+| Clouds | Long thin streaks that taper at both ends: `#fbf8f2` top to `#c9c2d8` underside, no ink. Drawn per frame (`clouds()`): they slide slowly to and fro and twitch a pixel now and then |
+| Mountains | Twin low, broad volcanoes: concave slopes, blunt crater top, `#f1f0ec` lit to `#7689ad` shade with no ridge line, faint ravines, feet melting into haze `#d6dee2`. No ink |
+| Tree line | Soft rounded canopy in the horizon haze, `#88a894` / `#71927f` |
+| Hills | Lit triangle facets over corner heights (`cornerHeight`), a soft grid line on each tile edge (0.86 to 0.88 shade) |
+| Haze | `#ced6c4`. Far land, the hill silhouette and the mountains' feet fade into it through a 4x4 ordered dither |
 
 Rules:
 
 - Warm first. Cool colours (teal, blue) are accents, never the main field.
 - Saturated, but not neon. If a colour glows on the dark UI, pull it toward cream or brown.
 - Far things fade toward the sky colour (aerial perspective), ink included.
+- Distance is the one place for dithering: haze, the hill silhouette, mountains and clouds blend
+  through a 4x4 ordered (Bayer) dither in a few flat steps. Sprites and near ground never dither.
 - Ground texture uses clumps squashed 2:1, so they lie flat on the isometric plane.
 - The kampung is a raised block: where land meets the beach or the world's edge, a 7-pixel
   dirt cliff drops away. That gives the diorama its depth.
-- UI chrome stays Mono Dark. Colour belongs to the map and to resource meaning.
+- UI chrome follows the console frame and its Light or Dark theme (GAME-DESIGN.md section 6). Colour belongs to the map and to resource meaning.
 
 ## Lighting and atmosphere
 
@@ -180,12 +197,57 @@ sparkle, rosy cheeks (`#f07f86`), an open smile with a pink tongue. Blinks are h
 arcs (^ ^). Only give a face to things that earn the joke (the sun today). Buildings stay
 faceless, so the map stays readable.
 
+## Building levels
+
+- Every level looks different, like a building card in a mobile builder: level 1 is makeshift,
+  the top level is built to last. The silhouette and the materials change, not just the size.
+  Warung: tarp-roofed gerobak, zinc-roofed kiosk, whitewashed brick with a tile roof and an awning.
+  Pos ronda: bamboo balai-balai under rumbia, wooden hut, green-and-white siskamling post. Kantor RT:
+  a front room with a nameboard, the office with a flag, a pendopo under a joglo roof.
+- A level never grows more than one storey (8px) over level 1, and nothing but the wifi tower goes
+  above 28px. A building that grows taller would hide the small ones behind it. `tests/art.test.ts`
+  checks both.
+- Sprites with their own level art take `level` as the third argument and are listed in `LEVELLED`.
+  Every other sprite gets the upgrade kit along its front edges: a tidy wooden plank fence at level
+  2, a clean stone wall with a light cap, potted plants and a lamp at level 3. It is drawn in native
+  1px lines after the ink pass, so it is as fine on a 3x3 as on one tile. Ground pieces skip it.
+- The inspector shows every level side by side, the current one framed.
+
+## Roofs and walls
+
+- Houses look like a perumahan built over the years, not one house copied. `roofShape` draws a
+  limasan hip, a pelana (gable) either way round, a mono-pitch shed, or a flat dak beton with a
+  parapet round a recessed deck. A rumah's variant picks roof colour, roof shape and wall colour.
+- Every house has a band of roster vents under the eave and small weep holes along its base.
+  Minimalis houses (shed, flat) get batu alam on the corners, and a flat roof carries a tandon.
+- Gable ends and a shed's side are wall, with a small vent near the peak.
+- Each shop type has its own roof, so a row of shops reads as a street.
+- No roof shape rises above the hipped roof of the same house. `tests/art.test.ts` checks it.
+- The bank sampah is a TPS: an open concrete bak heaped with bags, a green sign, no roof.
+
+## Terraced hills and icons
+
+- Behind the ring road the land rolls into real hills: each tile is two flat-lit triangles over its
+  corner heights, drawn back to front, with a soft grid line along every tile edge, like an old
+  train-and-city builder's map. The kampung, the ring road, the front sawah and the coast stay flat,
+  so plots, taps and the beach cliff never change.
+- Toward the mountains the hills carry terraces: kebun teh on the left, sawah terasering on the
+  right. Each terrace is a band of the real hill height. Its riser is a lit rim over a dark line,
+  steps alternate light and dark, and slopes facing the top left are lit.
+- Trees stand on the hill surface. Palms and pisang keep to the low kebun by the ring road, shade
+  trees gather in groves on hilltops, and steep faces stay bare so the hills read. Far tree clumps
+  and three tiny hamlets sit in the haze along the hilltops.
+- Menu icons sit on a cream bevelled plate, like the tool panel of an old isometric city builder.
+  Panels about the kampung show a tiny scene drawn with the map's own sprites. Abstract ones show
+  their glyph in dark ink with a brick-red accent.
+
 ## Adding a sprite
 
 1. Add a function to `ART` in `src/render/iso.ts`. Start with `p.shadow(inset)`.
 2. Build it from `box` and `roof` with palette keys, and paint details per face through the
    `paint` callback.
-3. Keep it inside the tile's footprint and under the 40-pixel headroom.
+3. Keep it inside the tile's footprint and under the 40-pixel headroom. A 2x2 or 3x3 building is
+   still written in one-tile coordinates: `iso(name, variant, n)` draws it natively at n.
 4. Let the outline pass run, unless it is a flat decal or lattice (`p.bare = true`). Flat decals
    that tile, like selokan and jalan, draw their own edges so neighbours join up.
 5. Check it at 4x on grass next to the existing sprites, then in game at day and night.

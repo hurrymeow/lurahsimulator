@@ -1,3 +1,5 @@
+@font-face { font-family: 'Pak Pixel'; font-weight: 400; font-display: swap; src: url('./fonts/pak-pixel-400.woff2') format('woff2'); }
+@font-face { font-family: 'Pak Pixel'; font-weight: 700; font-display: swap; src: url('./fonts/pak-pixel-700.woff2') format('woff2'); }
 /* Mono Dark tokens. UI chrome is monochrome; colour is reserved for game meaning. */
 :root {
   --bg: #0b0b0c;
@@ -17,7 +19,7 @@
   --gap: 8px;
   --radius: 10px;
   --font: 'Atkinson Hyperlegible', system-ui, sans-serif;
-  --font-pixel: 'Pixelify Sans', 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --font-pixel: 'Pak Pixel', 'Atkinson Hyperlegible', system-ui, sans-serif;
   color-scheme: dark;
 }
 
@@ -93,8 +95,28 @@ html.no-effects #dof { display: none; }
 .chip img { image-rendering: pixelated; flex: none; }
 .chip-value { font-weight: 700; color: var(--c); font-size: 16px; white-space: nowrap; }
 .chip.negative .chip-value { color: var(--danger); }
+.chip.full .chip-value { color: #fbbf24; }
+.chip.full .chip-value::after { content: '!'; }
+.chip.full { animation: hint 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .chip.full { animation: none; } }
 .chip.negative .chip-value::before { content: '▼ '; }
 
+.goal { padding: 4px 12px; font-size: 16px; line-height: 1.3; color: var(--text); background: var(--surface); border-bottom: 1px solid var(--surface-2); }
+.goal[hidden] { display: none; }
+.goal [hidden] { display: none; }
+.goal-now { font-weight: 700; }
+.new-tag { margin-left: 8px; padding: 0 6px; font-size: 16px; font-weight: 700; color: #0b0b0c; background: #fbbf24; border-radius: 6px; }
+.new-dot { color: #fbbf24; }
+.coach { position: fixed; left: 12px; right: 12px; z-index: 25; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; background: var(--surface); border: 2px solid #fbbf24; border-radius: var(--radius); }
+.coach[hidden] { display: none; }
+.coach { pointer-events: none; }
+.coach .btn { pointer-events: auto; }
+.coach::after { content: ''; position: absolute; bottom: -9px; left: var(--ax, 50%); width: 14px; height: 14px; background: var(--surface); border-right: 2px solid #fbbf24; border-bottom: 2px solid #fbbf24; transform: rotate(45deg); }
+.coach.arrow-up::after { top: -9px; bottom: auto; transform: rotate(225deg); }
+.coach.no-arrow::after { display: none; }
+.coach-text { flex: 1; margin: 0; font-size: 16px; line-height: 1.35; }
+.coach-pulse { --c: #fbbf24; animation: hint 1.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .coach-pulse { animation: none; box-shadow: inset 0 0 0 3px #fbbf24; } }
 .ticker {
   margin: var(--gap) 12px;
   min-height: var(--touch);
@@ -167,8 +189,10 @@ html.no-effects #dof { display: none; }
   border-radius: var(--radius);
   cursor: pointer;
 }
+/* The Build sheet always fills to its max height, so the tab row stays put when switching. */
+.build-list { min-height: 100dvh; }
 .tabs { display: flex; flex-wrap: wrap; gap: var(--gap); margin: var(--gap) 0; }
-.tabs .tab { flex: 1 1 auto; }
+.tabs .tab { flex: 1 1 auto; padding: 0 6px; }
 .tabs .tab[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
 .card-btn.locked { border-style: dashed; cursor: default; }
 .card-btn.locked .pixel { filter: grayscale(1); }
@@ -178,6 +202,11 @@ html.no-effects #dof { display: none; }
 .cost { color: var(--rupiah); }
 .inspect-head { display: flex; gap: 12px; align-items: flex-start; }
 .inspect-head p { margin: 0 0 6px; }
+/* Level strip in the inspector: each level's sprite, the current one framed. */
+.level-strip { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 10px; }
+.level-strip .lv { margin: 0; padding: 4px 6px 2px; display: flex; flex-direction: column; align-items: center; border: 1px solid var(--line); border-radius: var(--radius); opacity: 0.7; }
+.level-strip .lv.current { opacity: 1; border-color: var(--accent); background: var(--surface-2); }
+.level-strip figcaption { font-size: 16px; }
 .log-row { border-left: 4px solid var(--muted); padding: 4px 10px; margin-bottom: 8px; }
 .log-row p { margin: 2px 0 0; color: var(--muted); }
 .log-row.tone-good { border-left-color: var(--rupiah); }
@@ -203,6 +232,7 @@ html.no-effects #dof { display: none; }
   padding: 20px;
   text-align: center;
 }
+.modal.tip-modal { align-items: flex-end; padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 .modal .card h2 { margin: 0 0 8px; font-size: 22px; }
 .modal .card p { line-height: 1.4; }
 .modal .card.fanfare { border-color: #facc15; animation: pop-in 0.35s ease-out; }
@@ -269,6 +299,8 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
 }
 .sheet h2 { margin: 0 0 12px; font-size: 20px; }
+/* Stand-alone buttons in a sheet (the SK choices) stack at full width, not ragged side by side. */
+.sheet > .btn { display: flex; width: 100%; margin-top: var(--gap); }
 .sheet p { line-height: 1.4; }
 
 .toast {
@@ -323,8 +355,8 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
 .toggle b { min-width: 3ch; text-align: right; }
 .toggle[aria-checked='true'] { border-color: var(--accent); }
 .toggle[aria-checked='true'] b::before { content: '✓ '; }
-.modal .card.event { text-align: left; max-height: 90dvh; overflow-y: auto; cursor: default; }
-.modal .card.event h2 { text-align: center; }
+.modal .card.event .price { white-space: nowrap; }
+.modal .card.event { max-height: 90dvh; overflow-y: auto; cursor: default; }
 .sheet h3 { margin: 16px 0 4px; font-size: 18px; }
 .chip.flash-up { animation: flash-up 0.7s ease-out; }
 .chip.flash-down { animation: flash-down 0.7s ease-out; }
@@ -358,9 +390,8 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tile img { image-rendering: pixelated; }
 
-/* Tutorial tips: a modal card with a picture row and a Skip tips button. */
+/* Tutorial tips: a modal card with a picture row. */
 .modal .card .pics { margin-bottom: 8px; }
-.tip-skip { margin-top: 8px; width: 100%; }
 
 .slider-row { display: flex; justify-content: space-between; gap: var(--gap); }
 .slider { width: 100%; min-height: 44px; accent-color: var(--accent); }
@@ -397,7 +428,7 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .checklist li.done { color: var(--muted); text-decoration: line-through; }
 
 /* Home screen: the map shows through, the HUD hides, one Start button sits in the bottom third. */
-#app.home-open :is(#hud, #emas, #ticker, #bottombar, #update-banner) { visibility: hidden; }
+#app.home-open :is(#hud, #emas, #goal, #ticker, #bottombar, #update-banner) { visibility: hidden; }
 .home {
   position: fixed;
   inset: 0;
@@ -415,3 +446,32 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .home-start { font-size: 22px; }
 .home-warn { margin: 0; padding: 8px 12px; text-align: center; line-height: 1.4; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
 .warn { color: var(--danger); }
+
+/* First-win label: floats over the map, never takes a tap. Static with reduce motion. */
+.first-burst {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  transform: translateX(-50%);
+  z-index: 6;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  border: 2px solid #facc15;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: #facc15;
+  font-family: var(--font-pixel);
+  font-size: 20px;
+  line-height: 1.3;
+  text-align: center;
+  pointer-events: none;
+  animation: first-pop 2.2s ease-out forwards;
+}
+@keyframes first-pop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.6); }
+  12% { opacity: 1; transform: translateX(-50%) scale(1.12); }
+  22% { transform: translateX(-50%) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}

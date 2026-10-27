@@ -22,18 +22,36 @@ const run = (s: GameState, n: number) => {
 };
 
 describe('events', () => {
-  it('raises 17 Agustus every August, even in year 1, and pauses the game', () => {
+  it('opens with Gunting Pita at month 6, then 17 Agustus waits for August of year 2', () => {
     const s = newGame(1);
-    let raised = '';
-    for (let i = 0; i < 8; i++) {
-      const fx = tick(s);
-      if (fx.some((f) => f.kind === 'event' && f.eventId === 'agustusan')) raised = 'yes';
-      if (s.pendingEvent === 'agustusan') break;
+    const raised: [string, number][] = [];
+    for (let i = 0; i < 20; i++) {
+      tick(s);
+      if (s.pendingEvent) raised.push([s.pendingEvent, s.month]);
       s.pendingEvent = null;
     }
-    expect(raised).toBe('yes');
-    expect(s.month).toBe(7);
-    expect(s.pendingEvent).toBe('agustusan');
+    expect(raised[0]).toEqual(['guntingPita', 6]);
+    expect(raised.filter(([id]) => id === 'guntingPita')).toHaveLength(1);
+    expect(raised.find(([id]) => id === 'agustusan')?.[1]).toBe(19);
+  });
+
+  it('Gunting Pita never punishes and its second choice clearly wins', () => {
+    const e = eventDef('guntingPita')!;
+    const gain = (c: (typeof e.choices)[number]) => (c.res?.sabar ?? 0) + (c.res?.viral ?? 0);
+    for (const c of e.choices) expect(Object.values(c.res ?? {}).every((v) => v >= 0), c.label).toBe(true);
+    expect(gain(e.choices[1])).toBeGreaterThan(gain(e.choices[0]));
+  });
+
+  it('a save past month 12 never sees Gunting Pita', () => {
+    const s = newGame(1);
+    s.month = 30;
+    for (let i = 0; i < 12; i++) { tick(s); expect(s.pendingEvent).not.toBe('guntingPita'); s.pendingEvent = null; }
+  });
+
+  it('Pak Camat calls once, in month 1, as a ticker line', () => {
+    const s = newGame(1);
+    const calls = [0, 0, 0].map(() => tick(s).filter((f) => f.kind === 'notice' && f.title === 'Pak Camat calls').length);
+    expect(calls).toEqual([1, 0, 0]);
   });
 
   it('a pending event blocks the tick until resolved', () => {
@@ -141,7 +159,7 @@ describe('more events', () => {
         s.res.sabar = 60;
         s.res.rupiah = Math.max(s.res.rupiah, 1_000_000);
         if (fx.some((f) => f.kind === 'event')) {
-          if (!['agustusan', 'banjir', 'kecamatan'].includes(s.pendingEvent!)) months.push(s.month);
+          if (!['guntingPita', 'agustusan', 'banjir', 'kecamatan'].includes(s.pendingEvent!)) months.push(s.month);
           s.pendingEvent = null;
         }
       }
@@ -247,7 +265,7 @@ describe('yearly ranking and Indonesia Emas', () => {
     expect(win.ranking[0].won).toBe(true);
     expect(win.res.orangDalam).toBeGreaterThan(od);
 
-    const lose = newGame(10);
+    const lose = newGame(11);
     lose.month = 11;
     for (const r of lose.residents) r.manual = true;
     lose.res.sabar = 50;
@@ -319,7 +337,7 @@ describe('kecamatan inspection', () => {
   };
   const warn = () => {
     const s = newGame(5);
-    s.month = 11;
+    s.month = 14;
     const fx = tick(s);
     return { s, fx };
   };
@@ -327,12 +345,12 @@ describe('kecamatan inspection', () => {
   it('warns in year 2 with a free first choice, then visits two months later', () => {
     const { s, fx } = warn();
     expect(fx.some((f) => f.kind === 'event' && f.eventId === 'kecamatan')).toBe(true);
-    expect(s.inspection?.visitAt).toBe(14);
+    expect(s.inspection?.visitAt).toBe(17);
     resolveEvent(s, [], 0);
     expect(next(s)).not.toContainEqual(expect.objectContaining({ title: expect.stringContaining('Kecamatan') }));
     const out = next(s);
     expect(out.some((f) => f.kind === 'notice' && f.title.startsWith('Kecamatan'))).toBe(true);
-    expect(s.inspection?.warnAt).toBe(24);
+    expect(s.inspection?.warnAt).toBe(27);
   });
 
   it('cat ulang inflates the score for one visit only', () => {

@@ -1,3 +1,4 @@
+import { PATH_DECAY } from '../sim/balance';
 import { rupiahShort } from '../format';
 import { def } from '../sim/content';
 import { footprintOf, tilesOf } from '../sim/state';
@@ -8,8 +9,9 @@ import { iso, TH, TOP, TW, type Art } from './iso';
 import { t } from '../i18n';
 import { Crowd } from './people';
 import { Weather } from './weather';
-import { buildWorld, decoAt, farRoofs, layoutWorld, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
-import { ICONS, ROOF_COLOURS, sprite } from './sprites';
+import { placeBadge, type BadgeBox } from './badge';
+import { buildWorld, clouds, decoAt, farRoofs, layoutWorld, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
+import { ICONS, ROOF_COLOURS, ROOF_SHAPES, WALL_COLOURS, sprite } from './sprites';
 
 export const RES_COLOUR: Record<ResourceId, string> = {
   rupiah: '#4ade80',
@@ -94,7 +96,7 @@ interface Hit {
   left: number;
   top: number;
   art: Art;
-  /** Whole-number scale of the art, for a footprint wider than one tile. */
+  /** CSS pixels per art pixel, over the map scale: n for small art stretched over an n-tile footprint, 1 for art drawn at its footprint's size. */
   k: number;
   /** Drawn mirrored. */
   flip: boolean;
@@ -102,6 +104,9 @@ interface Hit {
 
 /** Diamonds are at least 32px tall, so the tap area matches a 32px square. */
 const MIN_SCALE = 2;
+/** Zoom stays on whole-number scales so pixels stay crisp. 1 is an overview: tiles get small, but taps still land. */
+export const ZOOM_MIN = 1;
+export const ZOOM_MAX = 6;
 /** Grids at least this wide open at half size. */
 const HALF_ZOOM_GRID_W = 52;
 const POP_MS = 1200;
@@ -169,12 +174,22 @@ export class MapView {
   private panX = 0;
   private panY = 0;
   private centred = false;
+  /** Scale the player zoomed to. Null follows the screen size. */
+  private zoomed: number | null = null;
 
   /** The grid changed size: lay the world out again, redraw it and open on the player's RT. */
   regrid(): void {
     layoutWorld();
     measure();
     this.world = null;
+    this.centred = false;
+    // A grown map opens at its own default size, half size for the Kelurahan.
+    this.zoomed = null;
+    this.resize();
+  }
+
+  /** The box changed shape under the camera (home screen opens or closes): open on the kampung again. */
+  recentre(): void {
     this.centred = false;
     this.resize();
   }
@@ -186,7 +201,7 @@ export class MapView {
     this.canvas.height = Math.round(h * dpr);
     // Whole-number scale keeps pixels crisp. A small screen pans instead of shrinking tiles.
     // Kelurahan is 52 tiles wide, so it opens at half size. Its lots take 2x2 tiles and still tap like one RT tile.
-    this.scale = Math.max(GRID_W >= HALF_ZOOM_GRID_W ? MIN_SCALE / 2 : MIN_SCALE, Math.floor(Math.min(w / MAP_W, h / MAP_H)));
+    this.scale = this.zoomed ?? Math.max(GRID_W >= HALF_ZOOM_GRID_W ? MIN_SCALE / 2 : MIN_SCALE, Math.floor(Math.min(w / MAP_W, h / MAP_H)));
     this.tile = TH * this.scale;
     this.viewW = w;
     this.viewH = h;
@@ -208,6 +223,25 @@ export class MapView {
     const top = Math.floor(gh <= this.viewH ? (this.viewH - gh) / 2 : this.panY);
     this.ox = left + PAN_LEFT * this.scale;
     this.oy = top + PAN_TOP * this.scale;
+  }
+
+  /**
+   * Zooms by whole steps, keeping the ground under (cx, cy) in place: the mouse pointer, or the middle
+   * of a pinch. Returns false at either end of the range.
+   */
+  zoomBy(steps: number, cx = this.viewW / 2, cy = this.viewH / 2): boolean {
+    const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, this.scale + steps));
+    if (next === this.scale) return false;
+    // Art-pixel point under the anchor, measured from tile (0,0)'s top corner.
+    const ax = (cx - this.ox) / this.scale;
+    const ay = (cy - this.oy) / this.scale;
+    this.zoomed = next;
+    this.scale = next;
+    this.tile = TH * next;
+    this.panX = cx - ax * next - PAN_LEFT * next;
+    this.panY = cy - ay * next - PAN_TOP * next;
+    this.clampPan();
+    return true;
   }
 
   panBy(dx: number, dy: number): void {
@@ -284,7 +318,7 @@ export class MapView {
   }
 
   /** The kampung and the land around it, drawn once at art resolution. */
-  private drawWorld(): HTMLCanvasElement {
+  drawWorld(): HTMLCanvasElement {
     return (this.world ??= buildWorld());
   }
 
@@ -299,10 +333,12 @@ export class MapView {
   private art(ctx: CanvasRenderingContext2D, art: Art, x: number, y: number, grow = 1, squash = 0, n = 1, flip = false): Hit {
     const c = this.corner(x, y);
     const s = this.scale;
-    // A bigger footprint draws the same sprite n times larger, so its ground diamond covers every tile.
-    const k = s * n;
-    const left = c.x - (TW * k) / 2;
-    const top = c.y - TOP * k;
+    // A bigger footprint covers n tiles a side. Art from iso(name, variant, n) is already that big, with
+    // 1px outlines, so it draws at the map scale; small art stretches by n (the ghost row, scenery).
+    const g = s * n;
+    const k = g / art.n;
+    const left = c.x - (TW * g) / 2;
+    const top = c.y - TOP * g;
     if (flip) {
       ctx.save();
       ctx.translate(c.x, 0);
@@ -312,13 +348,13 @@ export class MapView {
     if (grow < 1 || squash) {
       // Scale up from the footprint's ground centre, so the building rises out of its plot.
       const gx = c.x;
-      const gy = c.y + (TH * k) / 2;
+      const gy = c.y + (TH * g) / 2;
       const w = art.canvas.width * k * grow * (1 + squash / 2);
       const h = art.canvas.height * k * grow * (1 - squash);
-      ctx.drawImage(art.canvas, gx - w / 2, gy - (TOP + TH / 2) * k * grow * (1 - squash), w, h);
+      ctx.drawImage(art.canvas, gx - w / 2, gy - (TOP + TH / 2) * g * grow * (1 - squash), w, h);
     } else ctx.drawImage(art.canvas, left, top, art.canvas.width * k, art.canvas.height * k);
     if (flip) ctx.restore();
-    return { x, y, left, top, art, k: n, flip };
+    return { x, y, left, top, art, k: k / s, flip };
   }
 
   /** Flat 2D sprite standing on the tile centre, used for the permit sign. */
@@ -343,7 +379,7 @@ export class MapView {
 
   /** Top of a tile's art, in CSS pixels, for badges and pops. */
   private artTop(x: number, y: number, art: Art | null, n = 1): number {
-    return this.tileCentre(x + (n - 1) / 2, y + (n - 1) / 2).y - (art ? art.height : 0) * this.scale * n;
+    return this.tileCentre(x + (n - 1) / 2, y + (n - 1) / 2).y - (art ? (art.height * n) / art.n : 0) * this.scale;
   }
 
   /** Tiles holding a selokan and tiles holding anything, rebuilt each frame so lookups stay O(1) on a big map. */
@@ -358,8 +394,11 @@ export class MapView {
   }
 
   private variant(b: Building): string | undefined {
-    if (b.def === 'rumah') return ROOF_COLOURS[b.uid % ROOF_COLOURS.length];
-    if (b.def !== 'selokan') return undefined;
+    // Houses vary by roof colour, roof shape and wall colour, like a perumahan built over the years.
+    if (b.def === 'rumah') return ROOF_COLOURS[b.uid % ROOF_COLOURS.length] + ROOF_SHAPES[Math.floor(b.uid / 5) % ROOF_SHAPES.length] + WALL_COLOURS[Math.floor(b.uid / 2) % WALL_COLOURS.length];
+    // A cracked path shows its age: a split at first, potholes once it has been left for months.
+    if (b.def === 'jalan' && b.status === 'damaged') return this.clock - (b.crackedAt ?? this.clock) >= PATH_DECAY.potholeAfter ? 'rusak' : 'retak';
+    if (b.def !== 'selokan' && b.def !== 'biopori') return undefined;
     const has = (dx: number, dy: number) => this.selokan.has((b.y + dy) * GRID_W + b.x + dx);
     return !has(1, 0) && !has(-1, 0) && (has(0, 1) || has(0, -1)) ? 'y' : undefined;
   }
@@ -398,7 +437,7 @@ export class MapView {
     for (const n of s.neighbours) for (const b of n.buildings) { all.push(b); ai.add(b.uid); }
     for (const b of all) {
       for (const p of tilesOf(b)) this.occupied.add(p.y * GRID_W + p.x);
-      if (b.def === 'selokan') this.selokan.add(b.y * GRID_W + b.x);
+      if (b.def === 'selokan' || b.def === 'biopori') this.selokan.add(b.y * GRID_W + b.x);
     }
     for (const b of all) {
       if (FLAT_AO.has(b.def) || !this.onScreen(b.x, b.y)) continue;
@@ -446,13 +485,13 @@ export class MapView {
     this.night = this.effects ? darkness(this.clock) : 0;
     this.lights = [];
     this.crowd.bubbles = this.effects && !this.frozen;
-    this.crowd.update(s, now, this.motion && !this.frozen);
+    this.crowd.update(s, now, this.motion && !this.frozen, darkness(this.clock));
     this.crowd.begin();
     const drawOne = (b: Building): void => {
       if (!this.onScreen(b.x, b.y) || b.uid === this.hidden) return;
       const d = def(b.def);
-      const art = iso(d.sprite, this.variant(b));
       const n = footprintOf(b.def);
+      const art = iso(d.sprite, this.variant(b), n, b.level);
       const flip = b.rot === 1;
       if (ai.has(b.uid)) {
         this.art(ctx, art, b.x, b.y, 1, 0, n, flip);
@@ -468,20 +507,21 @@ export class MapView {
         ctx.globalAlpha = 0.5;
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.globalAlpha = 1;
-        this.art(ctx, iso('scaffold'), b.x, b.y, 1, 0, n, flip);
+        this.art(ctx, iso('scaffold', undefined, n), b.x, b.y, 1, 0, n, flip);
         if (this.effects) this.fx.construct(b.x, b.y, now);
       } else if (b.status === 'mangkrak') {
         ctx.filter = 'grayscale(1) brightness(0.7)';
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.filter = 'none';
-        this.art(ctx, iso('scaffold'), b.x, b.y, 1, 0, n, flip);
+        this.art(ctx, iso('scaffold', undefined, n), b.x, b.y, 1, 0, n, flip);
       } else if (b.status === 'damaged') {
-        ctx.filter = 'sepia(1) brightness(0.6)';
+        // A cracked path has its own art, so it needs no tint.
+        ctx.filter = b.def === 'jalan' ? 'none' : 'sepia(1) brightness(0.6)';
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.filter = 'none';
       } else if (b.noRoad) {
         ctx.filter = 'grayscale(1) brightness(0.75)';
-        this.hits.push(this.art(ctx, art, b.x, b.y));
+        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.filter = 'none';
       } else {
         const born = this.spawned.get(b.uid);
@@ -491,7 +531,7 @@ export class MapView {
         if (b.level > 1) this.levelPips(ctx, b.x + n - 1, b.y + n - 1, b.level);
         this.idle(ctx, b, now);
       }
-      tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' || b.status === 'mangkrak' ? iso('scaffold') : art, n));
+      tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' || b.status === 'mangkrak' ? iso('scaffold', undefined, n) : art, n));
     };
     // Flat pieces are ground: paths, fields and ponds draw first, so no walker or building ever hides under them.
     const { ground, standing } = groundFirst(sorted);
@@ -516,11 +556,14 @@ export class MapView {
     }
 
     // Badges sit above every building so a taller neighbour in front never hides them.
+    const badges: BadgeBox[] = [];
     for (const b of sorted) {
       if (!tops.has(b.y * GRID_W + b.x)) continue;
       const label = b.status === 'permit' || b.status === 'building' ? `${b.timer}` : b.status === 'mangkrak' ? '80%' : b.status === 'damaged' ? '!' : b.noRoad ? t('map.noRoad') : null;
-      if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label);
+      if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label, badges);
     }
+    // Speech bubbles go last of all, above buildings, window lights, weather and badges.
+    this.crowd.drawBubbles(ctx);
 
     if (this.ghost) {
       const g = this.ghost;
@@ -528,7 +571,7 @@ export class MapView {
         if ('have' in p && p.have) continue;
         const n = g.tiles ? 1 : g.n;
         ctx.globalAlpha = 0.6;
-        if (p.ok) this.art(ctx, iso(g.sprite), p.x, p.y, 1, 0, n, g.flip);
+        if (p.ok) this.art(ctx, iso(g.sprite, undefined, n), p.x, p.y, 1, 0, n, g.flip);
         ctx.globalAlpha = 1;
         this.diamond(ctx, p.x, p.y, 0, n);
         ctx.strokeStyle = p.ok ? '#4ade80' : '#f87171';
@@ -612,6 +655,17 @@ export class MapView {
     ctx.drawImage(halo, wx + SUN_X * s - hr / 2, wy + (SUN_Y + bob) * s - hr / 2, hr, hr);
     ctx.drawImage(sun, wx + (SUN_X - SUN_SIZE / 2) * s, wy + (SUN_Y - SUN_SIZE / 2 + bob) * s, SUN_SIZE * s, SUN_SIZE * s);
 
+    // Clouds slide slowly to and fro, and now and then one twitches up a pixel and settles.
+    clouds().forEach((c, i) => {
+      const dx = Math.round(Math.sin(t / c.period * Math.PI * 2 + c.phase) * c.sway);
+      const tick = Math.floor(t / 650);
+      const twitch = this.motion && ((tick * 7 + i * 13) % 23 === 0) ? -1 : 0;
+      const left = wx + (c.x + dx) * s;
+      const top = wy + (c.y + twitch) * s;
+      if (left > this.viewW || left + c.art.width * s < 0 || top > this.viewH || top + c.art.height * s < 0) return;
+      ctx.drawImage(c.art, left, top, c.art.width * s, c.art.height * s);
+    });
+
     // Ground anchor row in tree art: the stretch grows upward from the roots.
     const anchor = TOP + TH / 2;
     for (const tree of worldTrees()) {
@@ -637,8 +691,8 @@ export class MapView {
       const cx = l.x + s;
       const cy = l.y + s;
       const hidden = this.hits.slice(l.after).some((h) => {
-        const ax = Math.floor((cx - h.left) / s);
-        const ay = Math.floor((cy - h.top) / s);
+        const ax = Math.floor((cx - h.left) / (s * h.k));
+        const ay = Math.floor((cy - h.top) / (s * h.k));
         return ax >= 0 && ay >= 0 && ax < h.art.canvas.width && ay < h.art.canvas.height && h.art.alpha[ay * h.art.canvas.width + ax] > 0;
       });
       if (!hidden) ctx.fillRect(l.x, l.y, 2 * s, 3 * s);
@@ -687,11 +741,12 @@ export class MapView {
     }
   }
 
-  private badge(ctx: CanvasRenderingContext2D, cx: number, cy: number, text: string): void {
+  private badge(ctx: CanvasRenderingContext2D, cx: number, cy0: number, text: string, placed: BadgeBox[]): void {
     ctx.font = '700 16px "Atkinson Hyperlegible", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const w = Math.max(20, ctx.measureText(text).width + 8);
+    const cy = placeBadge(placed, cx, cy0, w);
     ctx.fillStyle = '#0b0b0c';
     ctx.fillRect(cx - w / 2, cy - 10, w, 20);
     ctx.strokeStyle = '#f4f4f5';

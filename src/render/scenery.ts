@@ -23,6 +23,7 @@ export const SUN_SIZE = 44;
 
 let trees: Tree[] | null = null;
 let shore: { x: number; y: number }[] | null = null;
+let heights: Int16Array | null = null;
 let XMAX = 0;
 let YMAX = 0;
 // These follow the grid. layoutWorld sets them, and importers see the live values.
@@ -54,9 +55,11 @@ export function layoutWorld(): void {
   SUN_Y = HORIZON - 70;
   trees = null;
   shore = null;
+  heights = null;
+  cloudList = null;
 }
 
-type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea';
+type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' | 'teh' | 'teras';
 
 function hash(x: number, y: number): number {
   let h = (x * 374761393 + y * 668265263) ^ 0x5bd1e995;
@@ -73,8 +76,19 @@ function terrain(tx: number, ty: number): Terrain {
   if (coast > 0.7) return 'sea';
   if (coast > -0.3) return 'beach';
   if (tx > GRID_W || ty > GRID_H) return 'sawah';
-  if (tx < -1 && ty < -1) return tx + ty < -9 ? 'hutan' : 'kebun';
+  // Toward the mountains the land rises into terraced hills: kebun teh on the left, sawah terasering
+  // on the right. Shade trees stand on them (see worldTrees), so no square patch of forest breaks the flow.
+  if (tx + ty < -5 && (tx < -1 || ty < -1)) return tx <= ty ? 'teh' : 'teras';
+  if (tx < -1 && ty < -1) return 'kebun';
   return tx < -1 ? 'kebun' : 'sawah';
+}
+
+/**
+ * Hill height under a world pixel, 0..1 and rising toward the back, smooth enough for contour lines
+ * to flow across tiles like the hills of an old city-builder map.
+ */
+function hill(x: number, y: number, tx: number, ty: number): number {
+  return vnoise(x, y * 2, 80) * 0.3 + vnoise(x + 300, y * 2 + 90, 30) * 0.1 + Math.min(1, -(tx + ty + 5) / 7) * 0.15 + (heightAtPixel(x, y) / HILL_MAX) * 0.6;
 }
 
 const hex = (c: string) => parseInt(c.slice(1), 16);
@@ -94,6 +108,56 @@ function vnoise(x: number, y: number, cell: number): number {
   return top + (bot - top) * sy;
 }
 
+/** Tallest hill, in art pixels above the kampung. */
+const HILL_MAX = 44;
+const smooth = (k: number) => {
+  const c = Math.max(0, Math.min(1, k));
+  return c * c * (3 - 2 * c);
+};
+
+/**
+ * Ground height at a tile corner, in art pixels. The kampung, its ring road, the sawah in front and
+ * the coast stay flat, so every plot and the beach cliff read as before. Behind the ring road the
+ * land rolls up into hills like the terrain of an old train-and-city builder, highest a few tiles
+ * back and easing down toward the world's edges so nothing floats.
+ */
+export function cornerHeight(vx: number, vy: number): number {
+  const w = XMAX - XMIN + 1;
+  if (!heights) {
+    heights = new Int16Array(w * (YMAX - YMIN + 1));
+    for (let y = YMIN; y <= YMAX; y++)
+      for (let x = XMIN; x <= XMAX; x++) {
+        // Tiles behind the ring road, on the back two sides.
+        const out = Math.max(-1 - x, -1 - y);
+        const front = Math.max(x - GRID_W - 1, y - GRID_H - 1);
+        const rise = smooth(out / 5) * smooth(1 - front / 3);
+        const edge = smooth(Math.min(x - XMIN, y - YMIN) / 3) * (0.55 + 0.45 * smooth((x + y - FAR) / 4));
+        const n = vnoise(x + 40, y + 40, 4) * 0.7 + vnoise(x + 7, y + 90, 2) * 0.3;
+        heights[(y - YMIN) * w + x - XMIN] = Math.round(HILL_MAX * rise * edge * (0.2 + 0.8 * n));
+      }
+  }
+  if (vx < XMIN || vy < YMIN || vx > XMAX || vy > YMAX) return 0;
+  return heights[(vy - YMIN) * w + vx - XMIN];
+}
+
+/** Ground height anywhere in tile space, blended between the four corners. */
+export function heightAt(a: number, b: number): number {
+  const x = Math.floor(a);
+  const y = Math.floor(b);
+  const fx = a - x;
+  const fy = b - y;
+  const top = cornerHeight(x, y) + (cornerHeight(x + 1, y) - cornerHeight(x, y)) * fx;
+  const bot = cornerHeight(x, y + 1) + (cornerHeight(x + 1, y + 1) - cornerHeight(x, y + 1)) * fx;
+  return top + (bot - top) * fy;
+}
+
+/** Height under a flat (unraised) world pixel, for texture that follows the hills. */
+function heightAtPixel(x: number, y: number): number {
+  const rx = (x + 0.5 - WORLD_OX) / (TW / 2);
+  const ry = (y + 0.5 - WORLD_OY) / (TH / 2);
+  return heightAt((rx + ry) / 2, (ry - rx) / 2);
+}
+
 /** Clumpy texture, squashed 2:1 so clumps lie flat on the isometric ground. */
 function clumps(x: number, y: number): number {
   return vnoise(x, y * 2, 9) * 0.65 + vnoise(x + 71, y * 2 + 13, 3.5) * 0.35;
@@ -107,6 +171,9 @@ const KEBUN = ['#4f7733', '#5a843a', '#669142'];
 const HUTAN = ['#3c6229', '#466e30', '#517a37'];
 const DIRT = ['#b87444', '#c4804b', '#d08a52', '#d99a62'];
 const SAND = ['#e6c486', '#edd093', '#f3daa2'];
+/** Tea rows on terraced hills, lit to shaded. */
+const TEH = ['#7aa84a', '#679a3f', '#578a37', '#4a7a30'];
+const TERAS = ['#a8cb5e', '#94bc53', '#86ab45'];
 
 function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx: number, ty: number): string {
   const n = clumps(x, y);
@@ -135,6 +202,27 @@ function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx
       // Sand with wind ripples along the shore.
       if ((x + 2 * y + Math.floor(n * 6)) % 11 === 0) return '#dcb778';
       return tone(n, SAND);
+    case 'teh':
+    case 'teras': {
+      // Terraces follow the hill's contours. Each step is a band; its riser is a lit rim over a dark
+      // line, steps alternate light and dark, and slopes facing the light (top left) are brighter.
+      const STEPS = 10;
+      const h = hill(x, y, tx, ty);
+      const band = Math.floor(h * STEPS);
+      if (Math.floor(hill(x, y + 1, tx, ty) * STEPS) !== band) return t === 'teh' ? '#3a5f27' : '#6f472a';
+      const rim = Math.floor(hill(x, y - 1, tx, ty) * STEPS) !== band;
+      const lit = hill(x - 2, y - 1, tx, ty) - hill(x + 2, y + 1, tx, ty);
+      const shadeK = Math.max(0, Math.min(2, (lit > 0.003 ? 0 : lit < -0.003 ? 2 : 1) + (band % 2)));
+      if (t === 'teh') {
+        if (rim) return '#a6cf63';
+        // Tea bushes in clumps along the step, picked paths showing between them.
+        return speck < 0.035 ? '#8a6a3e' : n > 0.62 ? TEH[Math.min(3, shadeK + 1)] : TEH[shadeK];
+      }
+      if (rim) return '#b9d97a';
+      // Some steps are freshly flooded for planting: still water with a glint.
+      if (band % 4 === 1) return (x + 2 * y) % 17 === 0 ? '#c9e6e2' : n > 0.55 ? '#9fd0cf' : '#8fc7c8';
+      return Math.floor(x / 2 + band) % 4 === 0 ? '#7a9e3f' : TERAS[shadeK];
+    }
     case 'sea':
       // Shimmering bands and short straight wave dashes.
       if ((x + 2 * y) % 24 < 4 && y % 6 === 0) return '#8fd0c2';
@@ -142,34 +230,66 @@ function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx
   }
 }
 
-/** One mountain: two flat-lit faces split by a straight ridge, a zigzag snow cap and an ink edge. */
-function mountain(img: ImageData, cx: number, baseY: number, hw: number, h: number): void {
-  const peak = baseY - h;
-  // The mountains stand on the horizon: nothing of them is drawn over the land in front.
-  for (let y = Math.max(0, Math.floor(peak)); y < Math.min(WORLD_H, baseY, HORIZON); y++) {
-    const span = (hw * (y - peak)) / h;
-    for (let x = Math.max(0, Math.floor(cx - span)); x < Math.min(WORLD_W, Math.ceil(cx + span)); x++) {
-      const edge = x - (cx - span) < 2 || cx + span - x < 2 || Math.abs(x + 0.5 - cx) < 1;
-      // Snow line: a straight-edged zigzag across the peak.
-      const zig = Math.abs(((x - cx) % 16 + 16) % 16 - 8);
-      const snow = y - peak < h * 0.2 + zig;
-      const snowEdge = !snow && y - peak < h * 0.2 + zig + 2;
-      // Rock strata run parallel to each slope, and forest darkens the lower flanks.
-      const along = x < cx ? x + (y - peak) * (hw / h) : x - (y - peak) * (hw / h);
-      const strata = Math.floor(along) % 12 === 0;
-      const forest = y - peak > h * 0.62 + Math.abs(((x % 14) + 14) % 14 - 7);
-      const lit = x < cx;
-      // Aerial perspective: the far mountains fade toward the sky colour, ink included.
-      const c = edge || snowEdge
-        ? '#5a6a74'
-        : snow
-          ? lit ? '#f4f1ea' : '#cfd6dc'
-          : forest
-            ? lit ? '#6f9a7c' : '#577f69'
-            : strata
-              ? lit ? '#7f9fa0' : '#5f7d84'
-              : lit ? '#93b0ac' : '#6f8d90';
-      put(img, x, y, c);
+/** 4x4 ordered-dither thresholds, 0..1. Blends step through it so gradients stay in whole pixels. */
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
+const bayer = (x: number, y: number) => BAYER[(y & 3) * 4 + (x & 3)];
+
+/** Haze at the horizon, which the far land and the mountains' feet fade into. */
+const HAZE = [206, 214, 196];
+
+/** Ridged noise: sharp creases where smooth noise crosses its middle, for crags and gullies. */
+const ridged = (x: number, y: number, cell: number) => 1 - Math.abs(vnoise(x, y, cell) * 2 - 1);
+
+/**
+ * One volcano, painted like an old landscape of a Javanese gunung: a broad cone with long concave
+ * skirts and a blunt, notched crater top. Light comes from the left, so the cone turns from warm
+ * white to cool blue across its face, with no hard ridge. Ravines run down from the summit as
+ * thin light and dark streaks that fade out down the slope, and the foot melts into the haze.
+ * Tones step through an ordered dither.
+ */
+function mountain(img: ImageData, land: Uint8Array, cx: number, baseY: number, hw: number, h: number, seed: number, lean: number): void {
+  const topY = baseY - h;
+  // Height across the cone, 0..1: concave skirts, a flat crater a few pixels wide, a small
+  // shoulder cone on one flank, and a gently uneven rim.
+  const profile = (x: number): number => {
+    const u = (x - cx) / hw - lean;
+    const crater = 0.07;
+    const d = Math.max(0, Math.abs(u) - crater) / (1 - crater);
+    if (d >= 1) return 0;
+    let p = (1 - d) ** 2.1;
+    // A notch in the crater rim.
+    if (Math.abs(u) < crater) p -= 0.018 * (1 - Math.abs(u + crater * 0.3) / crater);
+    const su = u + 0.5 * Math.sign(lean || 1);
+    const shoulder = Math.abs(su) < 0.22 ? 0.3 * (1 - Math.abs(su) / 0.22) ** 1.6 : 0;
+    return Math.max(0, Math.max(p, shoulder) + (vnoise(x + seed, seed, 10) - 0.5) * 0.012 * (1 - d));
+  };
+  const RAMP = ['#f1f0ec', '#d3dce8', '#b8c6db', '#9fb1cc', '#8a9dbe', '#7689ad'];
+  const HAZE_RGB = [214, 222, 226];
+  const x0 = Math.max(0, Math.floor(cx - hw));
+  const x1 = Math.min(WORLD_W, Math.ceil(cx + hw));
+  const peakX = cx + lean * hw;
+  for (let x = x0; x < x1; x++) {
+    const top = Math.round(baseY - profile(x) * h);
+    for (let y = Math.max(0, top); y < Math.min(WORLD_H, HORIZON); y++) {
+      if (land[y * WORLD_W + x]) continue;
+      const dy = y - topY;
+      const dith = bayer(x, y);
+      // Across the face: lit on the left, cool on the right, with the turn drifting with height.
+      const across = (x - peakX) / (hw * (0.25 + (0.75 * Math.max(0, dy)) / h));
+      // Ravines radiate from the summit: ridged noise on the angle from the crater.
+      const angle = (x - peakX) / (dy + 10);
+      const ravine = ridged(angle * 9 + seed, dy * 0.02, 1) ** 3;
+      const fade = Math.max(0, 1 - dy / (h * 0.9));
+      let v = 0.42 + across * 0.38 + (dy / h) * 0.18 + (y - top < 2 ? -0.12 : 0);
+      v += ravine * fade * (across < 0 ? -0.22 : 0.26) + (vnoise(x * 0.7 + seed, y, 3) - 0.5) * 0.08;
+      const i = Math.max(0, Math.min(RAMP.length - 1, Math.floor(v * RAMP.length + dith - 0.5)));
+      const c = hex(RAMP[i]);
+      let rgb = [c >> 16, (c >> 8) & 255, c & 255];
+      // The lower half dissolves into haze, as in a painting of a far volcano.
+      const mist = smooth((dy - h * 0.6) / (h * 0.45)) * 0.8;
+      const m = Math.max(0, Math.min(1, Math.round((mist + (dith - 0.5) * 0.3) * 5) / 5));
+      if (m) rgb = rgb.map((ch, k) => Math.round(ch + (HAZE_RGB[k] - ch) * m));
+      img.data.set([rgb[0], rgb[1], rgb[2], 255], (y * WORLD_W + x) * 4);
     }
   }
 }
@@ -213,26 +333,91 @@ export function buildWorld(): HTMLCanvasElement {
 
   // Ground tiles. Each pixel remembers its terrain, so ink lines can follow every border.
   const land = new Uint8Array(WORLD_W * WORLD_H);
+  // Tile depth (a + b) of each land pixel, for the haze over the far land.
+  const depth = new Float32Array(WORLD_W * WORLD_H);
+  // Kind numbers: 1-7 in this order, 8 is the cliff, 9 and 10 the terraced hills.
   const KINDS: Terrain[] = ['grass', 'road', 'sawah', 'kebun', 'hutan', 'beach', 'sea'];
-  for (let y = HORIZON; y < WORLD_H; y++)
-    for (let x = 0; x < WORLD_W; x++) {
-      const rx = (x + 0.5 - WORLD_OX) / (TW / 2);
-      const ry = (y + 0.5 - WORLD_OY) / (TH / 2);
-      const a = (rx + ry) / 2;
-      const b = (ry - rx) / 2;
-      const tx = Math.floor(a);
-      const ty = Math.floor(b);
-      if (tx < XMIN || ty < YMIN || tx >= XMAX || ty >= YMAX || tx + ty < FAR) continue;
+  const kindOf = (t: Terrain) => (t === 'teh' ? 9 : t === 'teras' ? 10 : KINDS.indexOf(t) + 1);
+  // Each tile is two flat-lit triangles over its corner heights, drawn back to front so nearer
+  // hills cover farther ones. Texture is sampled at the tile's flat position, so it sticks to the
+  // ground as it rises. Slopes facing the light (top left) brighten and the rest darken in a few
+  // flat steps, and a soft grid line runs along every tile edge, like an old city-builder map.
+  const GRID_LINE = new Set<Terrain>(['grass', 'kebun', 'hutan', 'teh', 'teras']);
+  const LIGHT = (() => {
+    const v = [-0.75, -0.3, 1];
+    const m = Math.hypot(v[0], v[1], v[2]);
+    return v.map((c) => c / m);
+  })();
+  /** World units of one tile side, against heights in art pixels. */
+  const SIDE = 20;
+  const OX = WORLD_OX;
+  const OY = WORLD_OY;
+  const tri = (t: Terrain, tx: number, ty: number, kind: number, v: [number, number, number][]) => {
+    // Screen corners of the triangle; each v is [a, b, height].
+    const P = v.map(([a, b, h]) => [OX + ((a - b) * TW) / 2, OY + ((a + b) * TH) / 2 - h]);
+    const area = (P[1][0] - P[0][0]) * (P[2][1] - P[0][1]) - (P[2][0] - P[0][0]) * (P[1][1] - P[0][1]);
+    if (Math.abs(area) < 1e-6) return;
+    // Facet light from the triangle's normal, in flat steps.
+    const e1 = [(v[1][0] - v[0][0]) * SIDE, (v[1][1] - v[0][1]) * SIDE, v[1][2] - v[0][2]];
+    const e2 = [(v[2][0] - v[0][0]) * SIDE, (v[2][1] - v[0][1]) * SIDE, v[2][2] - v[0][2]];
+    let n = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+    if (n[2] < 0) n = n.map((c) => -c);
+    const nm = Math.hypot(n[0], n[1], n[2]);
+    const dot = (n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]) / nm;
+    const lit = Math.max(0.7, Math.min(1.22, Math.round((1 + (dot - LIGHT[2]) * 1.9) / 0.06) * 0.06));
+    // Attribute gradients across the screen, for the grid-line test against the pixel up and left.
+    const grad = (j: number) => {
+      const d1 = v[1][j] - v[0][j];
+      const d2 = v[2][j] - v[0][j];
+      return [(d1 * (P[2][1] - P[0][1]) - d2 * (P[1][1] - P[0][1])) / area, (d2 * (P[1][0] - P[0][0]) - d1 * (P[2][0] - P[0][0])) / area];
+    };
+    const [dax, day] = grad(0);
+    const [dbx, dby] = grad(1);
+    const x0 = Math.max(0, Math.floor(Math.min(P[0][0], P[1][0], P[2][0])));
+    const x1 = Math.min(WORLD_W - 1, Math.ceil(Math.max(P[0][0], P[1][0], P[2][0])));
+    const y0 = Math.max(0, Math.floor(Math.min(P[0][1], P[1][1], P[2][1])));
+    const y1 = Math.min(WORLD_H - 1, Math.ceil(Math.max(P[0][1], P[1][1], P[2][1])));
+    const lined = GRID_LINE.has(t);
+    for (let y = y0; y <= y1; y++)
+      for (let x = x0; x <= x1; x++) {
+        const px = x + 0.5;
+        const py = y + 0.5;
+        const w1 = ((px - P[0][0]) * (P[2][1] - P[0][1]) - (P[2][0] - P[0][0]) * (py - P[0][1])) / area;
+        const w2 = ((P[1][0] - P[0][0]) * (py - P[0][1]) - (px - P[0][0]) * (P[1][1] - P[0][1])) / area;
+        const w0 = 1 - w1 - w2;
+        if (w0 < -1e-7 || w1 < -1e-7 || w2 < -1e-7) continue;
+        const a = w0 * v[0][0] + w1 * v[1][0] + w2 * v[2][0];
+        const b = w0 * v[0][1] + w1 * v[1][1] + w2 * v[2][1];
+        // Flat-world pixel for texture, so clumps and rows stay put on the slope.
+        const fx = Math.floor(OX + ((a - b) * TW) / 2);
+        const fy = Math.floor(OY + ((a + b) * TH) / 2);
+        const edge = lined && (Math.floor(a - dax) !== Math.floor(a) || Math.floor(b - dbx) !== Math.floor(b) || Math.floor(a - day) !== Math.floor(a) || Math.floor(b - dby) !== Math.floor(b));
+        land[y * WORLD_W + x] = kind;
+        depth[y * WORLD_W + x] = a + b;
+        const c = hex(groundColour(t, a - tx, b - ty, fx, fy, tx, ty));
+        const f = lit * (edge ? (t === 'grass' ? 0.86 : 0.88) : 1);
+        img.data.set([Math.min(255, Math.round(((c >> 16) & 255) * f)), Math.min(255, Math.round(((c >> 8) & 255) * f)), Math.min(255, Math.round((c & 255) * f)), 255], (y * WORLD_W + x) * 4);
+      }
+  };
+  for (let d = Math.max(FAR, XMIN + YMIN); d < XMAX + YMAX - 1; d++)
+    for (let tx = XMIN; tx < XMAX; tx++) {
+      const ty = d - tx;
+      if (ty < YMIN || ty >= YMAX) continue;
       const t = terrain(tx, ty);
-      land[y * WORLD_W + x] = KINDS.indexOf(t) + 1;
-      put(img, x, y, groundColour(t, a - tx, b - ty, x, y, tx, ty));
+      const kind = kindOf(t);
+      const A: [number, number, number] = [tx, ty, cornerHeight(tx, ty)];
+      const B: [number, number, number] = [tx + 1, ty, cornerHeight(tx + 1, ty)];
+      const C: [number, number, number] = [tx + 1, ty + 1, cornerHeight(tx + 1, ty + 1)];
+      const D: [number, number, number] = [tx, ty + 1, cornerHeight(tx, ty + 1)];
+      tri(t, tx, ty, kind, [A, B, C]);
+      tri(t, tx, ty, kind, [A, C, D]);
     }
   // The kampung stands on raised land: where it meets the beach, or the world's front edge, a dirt
   // cliff drops in strata with a grassy lip, like a diorama block. Kind 8, so the ink pass outlines it.
   const LOW = new Set([6, 7]);
   const CLIFF = 7;
   for (let x = 0; x < WORLD_W; x++)
-    for (let y = HORIZON; y < WORLD_H - 1; y++) {
+    for (let y = 0; y < WORLD_H - 1; y++) {
       const k = y * WORLD_W + x;
       // Only real land casts a cliff, never cliff already drawn, so faces do not stack.
       if (!land[k] || land[k] === 8 || LOW.has(land[k]) || !(LOW.has(land[k + WORLD_W]) || !land[k + WORLD_W])) continue;
@@ -249,22 +434,24 @@ export function buildWorld(): HTMLCanvasElement {
   // over road over cliff over beach over sea) takes a dark edge in its own colour. The lower side
   // gets a bright rim that eases back to its base colour over three pixels, so each transition
   // reads clearly without hard black lines. Sea meets sand with a line of foam.
-  const RANK = [2, 7, 5, 6, 8, 9, 3, 2, 4];
+  const RANK = [2, 7, 5, 6, 8, 9, 3, 2, 4, 8, 6];
   const rank = (k: number) => RANK[land[k] || 7];
   const edits: [number, number, number][] = [];
   const NEAR: [number, number, number][] = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [2, 0, 2], [-2, 0, 2], [0, 2, 2], [0, -2, 2], [3, 0, 3], [-3, 0, 3]];
-  for (let y = HORIZON; y < WORLD_H - 1; y++)
+  for (let y = 1; y < WORLD_H - 1; y++)
     for (let x = 1; x < WORLD_W - 1; x++) {
       const k = y * WORLD_W + x;
       if (!land[k]) continue;
       const r = rank(k);
       // The horizon and the world's back edge get the dark edge too.
-      let dark = y === HORIZON || (y > HORIZON && !land[k - WORLD_W] && land[k] !== 7);
+      let dark = false;
       let rim = 0;
       for (const [dx, dy, d] of NEAR) {
         const yy = y + dy;
         const xx = x + dx;
-        if (yy < HORIZON || yy >= WORLD_H || xx < 0 || xx >= WORLD_W) continue;
+        if (yy < 0 || yy >= WORLD_H || xx < 0 || xx >= WORLD_W) continue;
+        // Sky above a hilltop is no border: the haze pass softens that edge instead.
+        if (dy < 0 && !land[yy * WORLD_W + xx]) continue;
         const o = rank(yy * WORLD_W + xx);
         if (o === r) continue;
         if (d === 1 && o < r) dark = true;
@@ -286,42 +473,28 @@ export function buildWorld(): HTMLCanvasElement {
     for (let c = 0; c < 3; c++) img.data[i + c] = Math.min(255, Math.round(img.data[i + c] * f));
   }
 
-  mountain(img, M1, base, 130, 165);
-  mountain(img, M2, base, 120, 150);
+  mountain(img, land, M1, base, 235, 122, 17, -0.06);
+  mountain(img, land, M2, base, 220, 106, 83, 0.08);
 
-  // Soft blocky clouds drifting in front of the peaks: stacked slabs, lit on top and shaded lilac
-  // underneath, no ink.
-  for (const [cx, cy, w] of [[sx - 70, sy - 38, 44], [sx + 72, sy - 82, 48], [sx - 28, sy - 118, 34], [sx + 190, sy - 50, 52], [sx - 200, sy - 90, 56], [sx + 300, sy - 110, 44], [sx - 330, sy - 40, 48]]) {
-    const slabs = [[-w / 2, 0, w, 7], [-w / 2 + w * 0.15, -6, w * 0.6, 7], [-w / 2 + w * 0.35, -11, w * 0.35, 6], [-w / 2 + w * 0.55, -3, w * 0.4, 6]];
-    for (const [ox, oy, sw, sh] of slabs)
-      for (let y = 0; y < sh; y++)
-        for (let x = 0; x < sw; x++) {
-          const px = Math.round(cx + ox + x);
-          const py = Math.round(cy + oy + y);
-          if (px < 0 || py < 0 || px >= WORLD_W || py >= HORIZON) continue;
-          put(img, px, py, y >= sh - 2 ? '#c9c3dc' : y === 0 || x === 0 ? '#ffffff' : '#f3efe6');
-        }
-  }
-
-  // A hazy pine tree line along the horizon, in front of the mountains' feet: straight-sided
-  // triangles, lit on the left.
-  for (let x0 = -4; x0 < WORLD_W; x0 += 5 + Math.floor(hash(x0, 7) * 4)) {
-    const h = 8 + Math.floor(hash(x0, 3) * 9);
-    const half = Math.ceil(h / 3);
-    for (let y = 0; y < h; y++) {
-      const span = Math.floor((half * y) / h);
-      for (let dx = -span; dx <= span; dx++) {
-        const px = x0 + dx;
-        const py = HORIZON - h + y;
-        if (px < 0 || px >= WORLD_W || py < 0) continue;
-        put(img, px, py, dx < 0 ? '#6e9580' : '#57806c');
-      }
+  // A soft, distant tree line along the horizon in front of the mountains' feet: rounded canopy
+  // tops from smooth noise, deep in the haze, its top edge breaking up through the dither.
+  for (let x = 0; x < WORLD_W; x++) {
+    const top = HORIZON - (4 + vnoise(x, 5, 11) * 7 + vnoise(x + 50, 9, 4) * 2.5);
+    for (let y = Math.max(0, Math.floor(top) - 1); y < HORIZON; y++) {
+      if (land[y * WORLD_W + x]) continue;
+      const dith = bayer(x, y);
+      if (y - top < 1.5 && dith > y - top + 0.4) continue;
+      const lit = vnoise(x * 1.7, y * 1.7, 3) > 0.55;
+      const base = hex(lit ? '#88a894' : '#71927f');
+      const m = Math.round((0.5 + (y - top) * 0.02 + (dith - 0.5) * 0.25) * 4) / 4;
+      const rgb = [base >> 16, (base >> 8) & 255, base & 255].map((ch, i) => Math.round(ch + (HAZE[i] - ch) * m));
+      img.data.set([rgb[0], rgb[1], rgb[2], 255], (y * WORLD_W + x) * 4);
     }
   }
 
   // Fallen leaves scattered over the grass, road and gardens, like an afternoon after a breeze.
   const LEAVES = ['#e57d2e', '#f4b935', '#df4a2c', '#c9a14a'];
-  for (let y = HORIZON + 1; y < WORLD_H - 1; y++)
+  for (let y = 1; y < WORLD_H - 1; y++)
     for (let x = 0; x < WORLD_W - 2; x++) {
       const kind = land[y * WORLD_W + x];
       if (kind !== 1 && kind !== 2 && kind !== 4) continue;
@@ -332,6 +505,75 @@ export function buildWorld(): HTMLCanvasElement {
       put(img, x + 1, y, c);
       if (r < 0.0012) put(img, x + 1, y - 1, c);
     }
+
+  // Small far details along the hilltops: round tree clumps and a few hamlet roofs, painted before
+  // the haze so they sink into the same air.
+  const skyline = new Int32Array(WORLD_W).fill(-1);
+  for (let x = 0; x < WORLD_W; x++) {
+    let y = 0;
+    while (y < WORLD_H && !land[y * WORLD_W + x]) y++;
+    if (y < WORLD_H) skyline[x] = y;
+  }
+  const farLand = (x: number, y: number) => x >= 0 && x < WORLD_W && y >= 0 && y < WORLD_H && land[y * WORLD_W + x] && land[y * WORLD_W + x] !== 2 && depth[y * WORLD_W + x] < -7;
+  const CLUMP = ['#5d8a4a', '#4c7a3f', '#3d6834'];
+  for (let x0 = 2; x0 < WORLD_W - 2; x0 += 2 + Math.floor(hash(x0, 21) * 5)) {
+    if (skyline[x0] < 0) continue;
+    const y0 = skyline[x0] + 2 + Math.floor(hash(x0, 22) ** 2 * 26);
+    if (!farLand(x0, y0) || hash(x0, 23) < 0.25) continue;
+    const r = 1.5 + hash(x0, 24) * 1.8;
+    put(img, x0, y0, '#5a3d26');
+    put(img, x0, y0 + 1, '#5a3d26');
+    for (let dy = -Math.ceil(r * 2); dy <= 0; dy++)
+      for (let dx = -Math.ceil(r); dx <= Math.ceil(r); dx++) {
+        const ex = dx / r;
+        const ey = (dy + r) / r;
+        if (ex * ex + ey * ey > 1 || !farLand(x0 + dx, y0 + dy - 1) && !(y0 + dy - 1 < skyline[x0 + dx])) continue;
+        put(img, x0 + dx, y0 + dy - 1, CLUMP[ex < -0.3 && ey < 0.2 ? 0 : ex > 0.3 ? 2 : 1]);
+        if (y0 + dy - 1 < skyline[x0 + dx]) land[(y0 + dy - 1) * WORLD_W + x0 + dx] = 4;
+      }
+  }
+  for (const fx of [0.3, 0.55, 0.72]) {
+    const x0 = Math.floor(WORLD_W * fx);
+    if (skyline[x0] < 0) continue;
+    const y0 = skyline[x0] + 10;
+    for (let k = 0; k < 3; k++) {
+      const hx = x0 + k * 7 - 7;
+      const hy = y0 + (k % 2) * 3;
+      if (!farLand(hx, hy) || !farLand(hx + 5, hy)) continue;
+      for (let dx = 0; dx < 6; dx++) {
+        put(img, hx + dx, hy - 3, dx === 0 || dx === 5 ? '#8a4a2c' : '#b0603a');
+        put(img, hx + dx, hy - 2, dx === 0 ? '#8a4a2c' : '#c46e42');
+        if (dx > 0 && dx < 5) put(img, hx + dx, hy - 1, dx === 2 ? '#7a6250' : '#eadfc8');
+      }
+    }
+  }
+
+  // Aerial perspective over the far land: the back hills fade toward the horizon haze in dithered
+  // steps, so they sit in the same air as the mountains instead of cutting a hard line across them.
+  const NEAR_HAZE = -6;
+  for (let y = 0; y < WORLD_H; y++)
+    for (let x = 0; x < WORLD_W; x++) {
+      const k = y * WORLD_W + x;
+      if (!land[k] || depth[k] > NEAR_HAZE) continue;
+      const f = smooth((NEAR_HAZE - depth[k]) / (NEAR_HAZE - FAR)) * 0.6;
+      const m = Math.max(0, Math.round((f + (bayer(x, y) - 0.5) * 0.3) * 6) / 6);
+      if (!m) continue;
+      const i = k * 4;
+      for (let c = 0; c < 3; c++) img.data[i + c] = Math.round(img.data[i + c] + (HAZE[c] - img.data[i + c]) * m);
+    }
+  // The hill silhouette frays into the sky and mountains behind it: a few dithered pixels of the
+  // hilltop's own colour above the edge, thinning out, so no clean stair-stepped line is left.
+  for (let x = 0; x < WORLD_W; x++) {
+    let y = 0;
+    while (y < WORLD_H && !land[y * WORLD_W + x]) y++;
+    if (y >= WORLD_H || y === 0) continue;
+    const src = (y * WORLD_W + x) * 4;
+    for (let d = 1; d <= 3 && y - d >= 0; d++) {
+      if (bayer(x, y - d) > 0.62 - d * 0.18) continue;
+      const i = ((y - d) * WORLD_W + x) * 4;
+      for (let c = 0; c < 3; c++) img.data[i + c] = Math.round((img.data[src + c] * 2 + img.data[i + c]) / 3);
+    }
+  }
   ctx.putImageData(img, 0, 0);
 
   return c;
@@ -358,10 +600,96 @@ export function worldTrees(): Tree[] {
       if (ty < YMIN || ty >= YMAX) continue;
       const t = terrain(tx, ty);
       const n = hash(tx * 5 + 1, ty * 3 + 2);
-      const name = t === 'hutan' ? (n < 0.75 ? 'pohon' : 'kelapa') : t === 'kebun' ? (n < 0.35 ? 'kelapa' : n < 0.6 ? 'pisang' : n < 0.8 ? 'pohon' : null) : t === 'beach' && n < 0.25 ? 'kelapa' : null;
-      if (name) trees.push({ name, tx, ty, x: WORLD_OX + ((tx - ty) * TW) / 2 - TW / 2, y: WORLD_OY + ((tx + ty) * TH) / 2 - TOP });
+      // The hills stay open so their shape reads. Palms and pisang keep to the low kebun by the
+      // ring road; shade trees gather in small groves on the hilltops; steep faces stay bare.
+      const h = heightAt(tx + 0.5, ty + 0.5);
+      const corners = [cornerHeight(tx, ty), cornerHeight(tx + 1, ty), cornerHeight(tx + 1, ty + 1), cornerHeight(tx, ty + 1)];
+      const steep = Math.max(...corners) - Math.min(...corners) > 9;
+      const grove = h > 26 && vnoise(tx + 11, ty + 5, 3) > 0.55;
+      const kebun = steep ? null : h < 6 ? (n < 0.3 ? 'kelapa' : n < 0.5 ? 'pisang' : n < 0.58 ? 'pohon' : null) : grove && n < 0.6 ? 'pohon' : n < 0.05 ? 'kelapa' : null;
+      // Far back, toward the horizon, more trees stand among the terraces so the edge is not bare.
+      const far = tx + ty < -7 && !steep && (n < 0.16 ? 'pohon' : n < 0.21 ? 'bush' : n < 0.24 ? 'kelapa' : null);
+      const name = far ? far : t === 'hutan' ? (n < 0.75 ? 'pohon' : 'kelapa') : t === 'teh' && (grove ? n < 0.4 : n < 0.03) && !steep ? 'pohon' : t === 'teras' && n < 0.03 && !steep ? 'kelapa' : t === 'kebun' ? kebun : t === 'beach' && n < 0.25 ? 'kelapa' : null;
+      if (name) trees.push({ name, tx, ty, x: WORLD_OX + ((tx - ty) * TW) / 2 - TW / 2, y: WORLD_OY + ((tx + ty) * TH) / 2 - TOP - Math.round(heightAt(tx + 0.5, ty + 0.5)) });
     }
   return trees;
+}
+
+export interface Cloud {
+  art: HTMLCanvasElement;
+  /** Resting top-left corner in the world canvas. */
+  x: number;
+  y: number;
+  /** How far it slides either way, in art pixels, and how long one slide takes, in ms. */
+  sway: number;
+  period: number;
+  phase: number;
+}
+
+let cloudList: Cloud[] | null = null;
+
+/**
+ * A long, thin cloud: two or three drawn-out streaks that taper at both ends, the top edge gently
+ * lifted and the base nearly flat, lit along the top and cooling to lilac underneath. The ends
+ * thin out through the dither, so the cloud fades into the sky instead of stopping at a line.
+ */
+function cloudArt(w: number, seed: number): HTMLCanvasElement {
+  const H = Math.round(7 + hash(seed, 2) * 5);
+  const streaks = 2 + Math.floor(hash(seed, 1) * 2);
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(w);
+  c.height = H + streaks * 2;
+  const ctx = c.getContext('2d')!;
+  const TONES = ['#fbf8f2', '#efebe6', '#dcd7e2', '#c9c2d8'];
+  for (let k = 0; k < streaks; k++) {
+    // Each streak is shorter and sits a little lower and to one side of the one above it.
+    const len = w * (1 - k * 0.22) * (0.85 + hash(seed, k + 3) * 0.15);
+    const x0 = (w - len) * (0.2 + hash(seed, k + 5) * 0.6);
+    const base = H + k * 2;
+    const thick = H * (1 - k * 0.3);
+    // Where the streak swells, off centre so it reads as drawn by the wind.
+    const peak = 0.3 + hash(seed, k + 9) * 0.4;
+    for (let x = 0; x < len; x++) {
+      const u = x / len;
+      const env = u < peak ? u / peak : (1 - u) / (1 - peak);
+      const t = Math.round(thick * env ** 0.8 * (0.8 + 0.2 * vnoise(x + seed * 7, k, 9)));
+      for (let dy = 0; dy < t; dy++) {
+        const px = Math.round(x0 + x);
+        const py = base - 1 - dy;
+        if (py < 0) continue;
+        // Thin ends and the top fringe fall away through the dither.
+        const edge = Math.min(env * 3, 1);
+        if (bayer(px, py) > edge) continue;
+        const v = 1 - dy / Math.max(1, t);
+        const i = Math.min(TONES.length - 1, Math.max(0, Math.floor(v * TONES.length + bayer(px + 1, py) - 0.5)));
+        ctx.fillStyle = TONES[TONES.length - 1 - i];
+        ctx.fillRect(px, py, 1, 1);
+      }
+    }
+  }
+  return c;
+}
+
+/** Clouds round the sun and the twin volcanoes, two of them hugging the flanks. Drawn per frame so they can drift. */
+export function clouds(): Cloud[] {
+  if (cloudList) return cloudList;
+  const at = (dx: number, y: number, w: number, i: number, sway = 18): Cloud => {
+    const art = cloudArt(w, i * 13 + 5);
+    return { art, x: Math.round(SUN_X + dx - w / 2), y: Math.round(y - art.height), sway, period: 38000 + hash(i, 3) * 30000, phase: hash(i, 9) * Math.PI * 2 };
+  };
+  cloudList = [
+    at(-150, SUN_Y + 12, 110, 1),
+    at(130, SUN_Y - 48, 130, 2),
+    at(-20, SUN_Y - 96, 90, 3),
+    at(260, SUN_Y - 8, 120, 4),
+    at(-290, SUN_Y - 60, 140, 5),
+    at(380, SUN_Y - 85, 100, 6),
+    at(-440, SUN_Y + 2, 120, 7),
+    // Banks wrapped round the volcanoes' middles, slower and shorter of travel.
+    at(M1 - SUN_X - 80, HORIZON - 34, 150, 8, 8),
+    at(M2 - SUN_X + 85, HORIZON - 30, 140, 9, 8),
+  ];
+  return cloudList;
 }
 
 const suns = new Map<boolean, HTMLCanvasElement>();

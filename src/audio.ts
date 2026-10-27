@@ -4,7 +4,7 @@ import type { Settings } from './settings';
  * All sound is synthesised with Web Audio, so there is nothing to download or license.
  * The context is created on the first tap, since browsers block audio before a gesture.
  */
-export type Sfx = 'tap' | 'build' | 'event' | 'fanfare' | 'bad';
+export type Sfx = 'tap' | 'build' | 'event' | 'fanfare' | 'first' | 'bad';
 
 const MUSIC_MIX = 0.5;
 const BEAT = 60 / 96 / 2;
@@ -88,6 +88,7 @@ class Audio {
       case 'build': this.tone(392, 0, 0.1, 0.16); this.tone(523, 0.08, 0.16, 0.16); break;
       case 'event': this.tone(784, 0, 0.12, 0.14); this.tone(659, 0.1, 0.2, 0.14); break;
       case 'bad': this.tone(196, 0, 0.3, 0.18, 'sawtooth'); this.tone(147, 0.12, 0.35, 0.16, 'sawtooth'); break;
+      case 'first': [523, 659, 784, 1047, 1319, 1568].forEach((f, k) => this.tone(f, k * 0.07, 0.35, 0.16)); break;
       case 'fanfare': [523, 659, 784, 1047].forEach((f, k) => this.tone(f, k * 0.09, 0.4, 0.15)); break;
     }
   }

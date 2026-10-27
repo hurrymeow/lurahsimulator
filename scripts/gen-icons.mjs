@@ -1,9 +1,9 @@
-// Generates Kampung Story pixel icons with no dependencies. Run: npm run icons
+// Generates Pak Pejabat pixel icons with no dependencies. Run: npm run icons
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 
 const BG = [0x0b, 0x0b, 0x0c];
-// ART.md palette keys, as RGB. Icon colour exception is logged in DESIGN.md.
+// ART.md palette keys, as RGB. Icon colour exception is logged in GAME-DESIGN.md.
 const COLORS = {
   k: [0x2a, 0x18, 0x10], w: [0xf6, 0xec, 0xd4], r: [0xdf, 0x4a, 0x2c], R: [0xa8, 0x32, 0x1f],
   y: [0xf4, 0xb9, 0x35], g: [0x86, 0xb8, 0x4c], G: [0x52, 0x7f, 0x34], N: [0x60, 0x36, 0x20],

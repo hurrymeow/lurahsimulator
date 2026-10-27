@@ -1,0 +1,38 @@
+# AGENTS.md
+
+Single source of rules for AI coding agents. Tool-specific files (CLAUDE.md, .cursor/rules, .github/copilot-instructions.md, GEMINI.md, .windsurfrules) only point here.
+
+## Read first
+
+Read before you plan or write code. Read only what your change touches, but never skip a doc that applies.
+
+- [CONTRIBUTING.md](CONTRIBUTING.md): UI, i18n, art, tone, naming, workflow. Always read.
+- [UI.md](UI.md): 12 UI rules. Read for any screen, text or layout change.
+- [ART.md](ART.md): sprite and icon rules. Read for any art.
+- [GAME-DESIGN.md](GAME-DESIGN.md): the game design. Pitch, stage ladder, pacing targets, economy, tone and politics, UI rules. Read for new mechanics, map or stage work, economy, events, tutorial or progression. Read only the section you touch.
+- `decisions/`: past decisions. Search it before you change anything it may cover.
+
+## Conformance protocol
+
+Run this before coding and again before you commit.
+
+1. List the docs that apply to your planned change.
+2. Compare the plan, then the diff, against each rule in them.
+3. If anything conflicts, **stop**. Do not code around it. Do not diverge silently.
+4. Tell the human which doc, which rule, and what your change does instead.
+5. Ask them to choose one:
+   - **1) Change the code** to match the doc.
+   - **2) Update the doc** to match the change.
+6. Wait for the answer. Do not pick for them.
+7. On choice 2, edit the doc in the same PR. Add `decisions/<pr-or-slug>.md` saying what changed and why.
+8. In the PR body, state "Follows the docs" or "Updates the docs: <which, why>".
+
+Unsure whether it conflicts? Treat it as a conflict and ask.
+
+## Workflow rules
+
+- After opening a PR, enable auto-merge (squash). It merges when the required `ci` check is green.
+- After every push, check the PR for merge conflicts. A conflicted PR never starts CI. Merge main in and push again.
+- CI runs en and id at 320, 360, 412 and 430px. Do not cut that down.
+- Log design decisions in `decisions/<pr-or-slug>.md` and shipped work in `progress/<pr-or-slug>.md`.
+- Never edit `DECISIONS.md` or `PROGRESS.md` (frozen), or another PR's log file.

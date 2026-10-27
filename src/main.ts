@@ -1,6 +1,4 @@
 import { t } from './i18n';
-import '@fontsource/pixelify-sans/latin-400.css';
-import '@fontsource/pixelify-sans/latin-700.css';
 import '@fontsource/atkinson-hyperlegible/latin-400.css';
 import '@fontsource/atkinson-hyperlegible/latin-700.css';
 import './style.css';
@@ -9,16 +7,19 @@ import { setupInstall } from './pwa/install';
 import { setupUpdates } from './pwa/update';
 import { openBuild } from './ui/build';
 import { h } from './ui/dom';
-import { GLYPH_PX, glyphURL } from './ui/glyphs';
+import { ICON_PX, menuIconURL } from './ui/icons';
 import { inspect } from './ui/inspect';
 import { showHome } from './ui/home';
 import { showHowto } from './ui/howto';
+import { setupCoach } from './ui/coach';
+import { setupGoal } from './ui/goal';
 import { setupTips } from './ui/tips';
 import { openSettings } from './ui/settings';
 import { openNeighbours } from './ui/neighbours';
 import { openMenu } from './ui/menu';
 import { closeSheet } from './ui/sheet';
 import { registerSystems } from './systems';
+import { setupConsole } from './ui/console';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -35,7 +36,7 @@ app.actions.push(
 );
 
 // Lives in the Menu's Game group. Hidden until the browser offers an install.
-const installBtn = h('button', { class: 'tile', id: 'install-btn', hidden: true }, h('img', { src: glyphURL('install')!, alt: '', width: GLYPH_PX, height: GLYPH_PX, class: 'pixel' }), h('span', { id: 'install-label' }, t('menu.install')));
+const installBtn = h('button', { class: 'tile', id: 'install-btn', hidden: true }, h('img', { src: menuIconURL('install')!, alt: '', width: ICON_PX, height: ICON_PX, class: 'pixel' }), h('span', { id: 'install-label' }, t('menu.install')));
 
 $('menu-btn').addEventListener('click', () => openMenu(app, [installBtn]));
 $('hud').addEventListener('keydown', (e) => {
@@ -47,13 +48,18 @@ $('place-ok').addEventListener('click', () => app.confirmPlace());
 $('scrim').addEventListener('click', closeSheet);
 
 setupInstall(installBtn, (text) => app.modal({ title: t('install.title'), body: text, tone: 'info' }));
-setupUpdates($('update-banner'), $<HTMLButtonElement>('update-btn'));
 app.refresh();
+setupGoal(app);
+setupCoach(app);
 setupTips(app);
+setupConsole(app);
 // Second install button on the home screen. Hidden when installed or not offered.
 const homeInstall = h('button', { class: 'btn home-install', id: 'home-install', hidden: true }, t('menu.install'));
 setupInstall(homeInstall, (text) => app.modal({ title: t('install.title'), body: text, tone: 'info' }));
-showHome(app, homeInstall);
+// Update button on the home screen. Hidden until a new version is waiting.
+const homeUpdate = h('button', { class: 'btn home-update', id: 'home-update', hidden: true }, t('home.update'));
+setupUpdates($('update-banner'), $<HTMLButtonElement>('update-btn'), homeUpdate);
+showHome(app, homeInstall, homeUpdate);
 
 // ?debug exposes the app for play-testing from the console.
 if (new URLSearchParams(location.search).has('debug')) (window as unknown as { pakrt: App }).pakrt = app;

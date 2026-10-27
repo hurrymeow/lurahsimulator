@@ -11,7 +11,7 @@ import { checkMove, checkPlace, moveBuilding, place } from './sim/rules';
 import { linePath, placeLine, type LineTile } from './sim/line';
 import { lotAt } from './sim/area';
 import { promote } from './sim/grow';
-import { RT_H, RT_W } from './sim/types';
+import { RT_H, RT_W, type FirstKind } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
 import { attractTarget, buildCost, buildingAt, byUid, footprintOf, newGame, population, housing, year } from './sim/state';
@@ -25,7 +25,7 @@ import { h, missingList } from './ui/dom';
 import { RIVAL_NAMES } from './data/ranking';
 import { areaScore } from './sim/ranking';
 import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
-import { autoPaused, simRunning, type PauseInputs } from './ui/autopause';
+import { showPausedBadge, simRunning, type PauseInputs } from './ui/autopause';
 
 export const MONTH_MS = 8000;
 /** First year the 4x speed is allowed. */
@@ -35,8 +35,8 @@ export type Speed = (typeof SPEEDS)[number];
 export const SAVE_KEY = 'pakrt.save';
 
 interface Notice {
-  /** Set on tutorial tips. Adds a way to switch all tips off. */
-  tip?: { pics: Node; skip: () => void };
+  /** Set on tutorial tips. Adds the picture row. */
+  tip?: { pics: Node };
   title: string;
   body: string;
   tone: 'good' | 'bad' | 'info';
@@ -129,7 +129,7 @@ export class App {
       }
     }
     const badge = document.getElementById('auto-pause');
-    if (badge) badge.hidden = this.held || !autoPaused(this.pauseInputs());
+    if (badge) badge.hidden = !showPausedBadge(this.pauseInputs());
     const bar = document.getElementById('month-progress');
     if (bar) bar.style.width = `${(this.acc / MONTH_MS) * 100}%`;
     this.view.frozen = !this.running;
@@ -169,6 +169,8 @@ export class App {
         }
         this.haptic(20);
         audio.play('build');
+      } else if (f.kind === 'first') {
+        this.celebrate(f.what, f.x ?? Math.floor(RT_W / 2), f.y ?? Math.floor(RT_H / 2));
       } else if (f.kind === 'notice') {
         if (f.fanfare) this.view.pulse();
         if (f.fanfare) this.modal(f);
@@ -192,15 +194,44 @@ export class App {
 
   private showEventSoon = false;
 
-  /** Income coins arc into the money chip, which bumps as they land. A few per tick, biggest earners first. */
-  private flyCoins(earn: { x: number; y: number; amount: number }[]): void {
+  /** Where coins land: the money chip, which bumps as each one arrives. Null with effects off. */
+  private coinTarget(): { to: { x: number; y: number }; land: () => void } | null {
     const chip = document.getElementById('chip-rupiah');
     const map = document.getElementById('map');
-    if (!chip || !map || !this.view.effects) return;
+    if (!chip || !map || !this.view.effects) return null;
     const c = chip.getBoundingClientRect();
     const m = map.getBoundingClientRect();
     const to = { x: c.left + c.width / 2 - m.left, y: c.top + c.height / 2 - m.top };
-    const land = () => chip.animate?.([{ transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 160 });
+    return { to, land: () => chip.animate?.([{ transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 160 }) };
+  }
+
+  /**
+   * The big version of the feedback, for the first house, resident and star only. A label over the
+   * map, a coin burst, a glow and a brief zoom punch on the map. It never blocks input. The star
+   * already has its fanfare card, so it skips the sound.
+   */
+  private celebrate(what: FirstKind, x: number, y: number): void {
+    const map = document.getElementById('map');
+    const wrap = map?.parentElement;
+    if (wrap) {
+      const tag = h('div', { class: 'first-burst', role: 'status' }, t(`first.${what}` as Key));
+      wrap.append(tag);
+      setTimeout(() => tag.remove(), 2200);
+    }
+    this.haptic([20, 30, 20, 30, 40]);
+    if (what !== 'star') audio.play('first');
+    const target = this.coinTarget();
+    if (!target) return;
+    this.view.pulse();
+    this.view.coins(x, y, 8, target.to, target.land);
+    map?.animate?.([{ transform: 'scale(1)' }, { transform: 'scale(1.04)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 450, easing: 'ease-out' });
+  }
+
+  /** Income coins arc into the money chip, which bumps as they land. A few per tick, biggest earners first. */
+  private flyCoins(earn: { x: number; y: number; amount: number }[]): void {
+    const target = this.coinTarget();
+    if (!target) return;
+    const { to, land } = target;
     let budget = 12;
     for (const p of earn.sort((a, b) => b.amount - a.amount)) {
       const n = Math.min(budget, p.amount >= 500_000 ? 3 : p.amount >= 150_000 ? 2 : 1);
@@ -219,11 +250,12 @@ export class App {
     const choices = e.choices.map((c, i) => {
       const check = checkChoice(this.s, c);
       const cost = eventCost(this.s, c);
-      const label = eLabel(e, i, c).replace(/ · Rp [\d.]+/, '').replace(/ · \d Orang Inside/, '');
+      const label = eLabel(e, i, c).replace(/ · Rp [\d.]+/, '').replace(/ · \d Orang (Inside|Dalam)/, '');
+      // One unbreakable run: a price never splits from its icon across lines.
       const od = cost.orangDalam ? [`${cost.orangDalam} `, h('img', { src: iconURL('orangDalam'), alt: t('res.orangDalam'), width: 18, height: 18, class: 'inline-icon' })] : [];
       const price: Node[] = [...(cost.rupiah ? [document.createTextNode(rupiah(cost.rupiah))] : []), ...(cost.rupiah && od.length ? [document.createTextNode(' + ')] : []), ...od.map((x) => (x instanceof Node ? x : document.createTextNode(x)))];
       return h('div', { class: 'action' },
-        h('button', { class: `btn ${i === 0 ? '' : 'btn-primary'}`, disabled: !check.ok, onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i); } }, label, ...(price.length ? [' · ', ...price] : [])),
+        h('button', { class: `btn ${i === 0 ? '' : 'btn-primary'}`, disabled: !check.ok, onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i); } }, label, ...(price.length ? [' · ', h('span', { class: 'price' }, ...price)] : [])),
         check.ok ? null : missingList(check.missing),
       );
     });
@@ -234,6 +266,8 @@ export class App {
         ...choices,
       ),
     );
+    // A tip before this leaves the bottom-aligned layout behind. An event card is always centred.
+    el.classList.remove('tip-modal');
     el.onclick = null;
     el.hidden = false;
   }
@@ -262,6 +296,7 @@ export class App {
         const amt = id === 'rupiah' ? rupiah(Math.abs(v)) : String(Math.round(Math.abs(v) * 10) / 10);
         return h('div', { class: `outcome-chip ${v < 0 ? 'negative' : 'positive'}`, style: `--c:${RES_COLOUR[id]}`, role: 'text', 'aria-label': `${RES_META[id].label()} ${v < 0 ? '-' : '+'}${amt}` },
           h('img', { src: iconURL(RES_META[id].icon), alt: '', width: 24, height: 24 }),
+          h('span', { class: 'outcome-name' }, RES_META[id].label()),
           h('span', { class: 'outcome-value' }, `${v < 0 ? '▼ -' : '▲ +'}${amt}`),
         );
       });
@@ -342,11 +377,6 @@ export class App {
     return this.modalQueue.length === 0 && !this.s.pendingEvent && !sheetOpen() && document.getElementById('howto')!.hidden;
   }
 
-  private dropTips(): void {
-    this.modalQueue = this.modalQueue.filter((m) => !m.tip);
-    this.showModal();
-  }
-
   private showModal(): void {
     const n = this.modalQueue[0];
     const el = document.getElementById('modal')!;
@@ -363,9 +393,9 @@ export class App {
         n.extra,
         n.tip?.pics,
         h('p', { class: 'tap-hint' }, t('modal.tap')),
-        n.tip ? h('button', { class: 'btn tip-skip', onclick: (e: Event) => { e.stopPropagation(); n.tip!.skip(); this.dropTips(); } }, t('tip.skip')) : null,
       ),
     );
+    el.classList.toggle('tip-modal', !!n.tip);
     el.hidden = false;
     if (n.fanfare) {
       this.haptic([30, 40, 30]);
@@ -390,7 +420,7 @@ export class App {
     const emasBar = document.getElementById('emas');
     emasBar?.addEventListener('click', () => this.explain('emas'));
     emasBar?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') this.explain('emas'); });
-    hud.replaceChildren(...chips, chip('pop', h('span', { class: 'chip-text' }, t('res.pop')), t('res.pop')));
+    hud.replaceChildren(...chips, chip('pop', img('people'), t('res.pop')));
     this.refresh();
   }
 
@@ -400,12 +430,11 @@ export class App {
     this.tap();
     const row = (kind: 'up' | 'down' | 'edge') =>
       h('p', { class: `exp-row exp-${kind}` }, h('strong', {}, `${{ up: '▲', down: '▼', edge: '■' }[kind]} ${t(`exp.${kind}`)}`), ` ${t(`exp.${id}.${kind}` as Key)}`);
-    const text = id === 'pop' || id === 'emas';
     const colour = id === 'pop' ? '#f4f4f5' : id === 'emas' ? '#fbbf24' : RES_COLOUR[id];
-    const icon = text ? h('span', { class: 'chip-text' }, id === 'emas' ? 'Emas' : t('res.pop')) : h('img', { src: iconURL(RES_META[id].icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
+    const icon = id === 'emas' ? h('span', { class: 'chip-text' }, 'Emas') : h('img', { src: iconURL(id === 'pop' ? 'people' : RES_META[id].icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
     const title = id === 'pop' ? t('res.warga') : id === 'emas' ? t('stats.emasTitle') : RES_META[id].label();
     const body = id === 'pop'
-      ? `${t('exp.pop.what')} ${t('pop.line', { pop: population(this.s), housing: housing(this.s), attract: attractTarget(this.s) })}`
+      ? `${t('exp.pop.what')} ${t('pop.line', { pop: population(this.s), housing: housing(this.s), attract: attractTarget(this.s) })}${population(this.s) >= housing(this.s) ? ` ${t('pop.full')}` : ''}`
       : t(`exp.${id}.what` as Key);
     this.modalQueue.push({ title, body, tone: 'info', extra: h('div', { class: 'exp', style: `--c:${colour}` }, icon, row('up'), row('down'), row('edge')) });
     this.showModal();
@@ -424,6 +453,7 @@ export class App {
     set('orangDalam', `${Math.floor(r.orangDalam)}`, t('res.orangDalam'));
     set('viral', `${Math.round(r.viral)}`, t('res.viral'));
     set('pop', `${population(this.s)}/${housing(this.s)}`, t('page.resourcesLabel'));
+    document.getElementById('chip-pop')?.classList.toggle('full', population(this.s) >= housing(this.s));
     document.getElementById('chip-rupiah')!.classList.toggle('negative', r.rupiah < 0);
     this.flashChanges();
     const emas = document.getElementById('emas-value');
@@ -517,19 +547,86 @@ export class App {
   private bindMap(): void {
     const canvas = document.getElementById('map') as HTMLCanvasElement;
     let down: { x: number; y: number; lastX: number; lastY: number; moved: boolean } | null = null;
+    // Every finger on the map. Two make a pinch: spreading them zooms in a whole step at a time.
+    const fingers = new Map<number, { x: number; y: number }>();
+    let pinch: { dist: number; midX: number; midY: number } | null = null;
+    const local = (x: number, y: number) => {
+      const r = canvas.getBoundingClientRect();
+      return { x: x - r.left, y: y - r.top };
+    };
+    const pinchNow = () => {
+      const [a, b] = [...fingers.values()];
+      return { dist: Math.hypot(a.x - b.x, a.y - b.y), midX: (a.x + b.x) / 2, midY: (a.y + b.y) / 2 };
+    };
     canvas.addEventListener('pointerdown', (e) => {
       canvas.setPointerCapture(e.pointerId);
-      down = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, moved: false };
+      fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (fingers.size === 2) {
+        pinch = pinchNow();
+        // A pinch is never a tap.
+        if (down) down.moved = true;
+        return;
+      }
+      if (fingers.size === 1) down = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, moved: false };
     });
     canvas.addEventListener('pointermove', (e) => {
+      if (fingers.has(e.pointerId)) fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && fingers.size === 2) {
+        const now = pinchNow();
+        // The pair drags the map like one finger does.
+        this.view.panBy(now.midX - pinch.midX, now.midY - pinch.midY);
+        pinch.midX = now.midX;
+        pinch.midY = now.midY;
+        // Whole-number zoom keeps pixels crisp, so a step fires each time the fingers spread or close by a quarter.
+        const k = now.dist / pinch.dist;
+        if (k > 1.25 || k < 0.8) {
+          const at = local(now.midX, now.midY);
+          this.view.zoomBy(k > 1 ? 1 : -1, at.x, at.y);
+          pinch.dist = now.dist;
+        }
+        return;
+      }
       if (!down) return;
       if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) down.moved = true;
       if (down.moved) this.view.panBy(e.clientX - down.lastX, e.clientY - down.lastY);
       down.lastX = e.clientX;
       down.lastY = e.clientY;
     });
-    canvas.addEventListener('pointercancel', () => (down = null));
+    const lift = (e: PointerEvent) => {
+      fingers.delete(e.pointerId);
+      if (fingers.size < 2) pinch = null;
+      // One finger left after a pinch carries on panning from where it is, not from where the drag began.
+      const rest = fingers.size === 1 ? [...fingers.values()][0] : null;
+      if (rest && down) Object.assign(down, { lastX: rest.x, lastY: rest.y, moved: true });
+    };
+    canvas.addEventListener('pointercancel', (e) => {
+      lift(e);
+      down = null;
+    });
+    // Mouse wheel and trackpad pinch (a wheel event with ctrlKey). A notch (50 to 120px, by screen scaling) is one step.
+    let wheel = 0;
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      wheel += e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY * (e.ctrlKey ? 4 : 1);
+      if (Math.abs(wheel) < 50) return;
+      const at = local(e.clientX, e.clientY);
+      this.view.zoomBy(wheel < 0 ? 1 : -1, at.x, at.y);
+      wheel = 0;
+    }, { passive: false });
+    // + and - zoom from the keyboard, around the middle of the map.
+    document.addEventListener('keydown', (e) => {
+      if (sheetOpen() || (e.target as HTMLElement).closest?.('input, textarea, select')) return;
+      if (e.key === '+' || e.key === '=') this.view.zoomBy(1);
+      else if (e.key === '-' || e.key === '_') this.view.zoomBy(-1);
+    });
     canvas.addEventListener('pointerup', (e) => {
+      const was = fingers.size;
+      lift(e);
+      // The second finger of a pinch lifting: wait for the last one, and do not tap.
+      if (was > 1 || !down) {
+        if (fingers.size === 0) down = null;
+        return;
+      }
       const wasDrag = down?.moved;
       down = null;
       if (wasDrag) return;
@@ -718,7 +815,9 @@ export class App {
     const w = float.offsetWidth;
     const hgt = float.offsetHeight;
     const room = float.parentElement!.clientHeight;
-    const x = Math.min(Math.max(a.x - w / 2, 4), float.parentElement!.clientWidth - w - 4);
+    // The anchor is in canvas pixels; the canvas sits right of the frame's rail.
+    const left = document.getElementById('map')!.offsetLeft;
+    const x = Math.min(Math.max(left + a.x - w / 2, left + 4), float.parentElement!.clientWidth - w - 4);
     const y = a.below + 8 + hgt > room ? Math.max(4, a.above - 8 - hgt) : a.below + 8;
     float.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
   }
@@ -745,6 +844,8 @@ export class App {
     document.documentElement.classList.toggle('large-text', this.settings.largeText);
     document.documentElement.classList.toggle('reduce-motion', this.settings.reduceMotion);
     document.documentElement.classList.toggle('high-contrast', this.settings.highContrast);
+    document.documentElement.classList.toggle('theme-dark', this.settings.theme === 'dark');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', this.settings.theme === 'dark' ? '#0b0b0c' : '#f3eed6');
     this.view.effects = this.settings.effects && !this.settings.reduceMotion;
     document.documentElement.classList.toggle('no-effects', !this.view.effects);
     this.view.motion = !this.settings.reduceMotion;

@@ -12,7 +12,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
     // kampung pulls in, so amenities still matter once the beds are full.
     id: 'rumah',
     name: 'Rumah',
-    blurb: 'Houses 3 residents and brings new ones. Built at once, no permit.',
+    blurb: 'Houses 3 residents and brings new ones.',
     cost: 800_000,
     upkeep: 0,
     income: 0,
@@ -58,11 +58,10 @@ const CORE_BUILDINGS: BuildingDef[] = [
     sprite: 'posRonda',
   },
   {
-    // Replaced the selokan: a drain is one long connected channel, which a single tile cannot be.
-    // A biopori is a lone infiltration hole, so it makes sense on a tile by itself.
+    // The selokan is back (id stays 'biopori' so old saves load). One tile of drain works alone and lines up with its neighbours.
     id: 'biopori',
-    name: 'Biopori',
-    blurb: 'Infiltration hole that soaks up rain. Cheap and quick. Each level softens banjir damage.',
+    name: 'Selokan',
+    blurb: 'Concrete drain with a plank bridge that carries rain away. Cheap and quick. Each level softens banjir damage.',
     cost: 400_000,
     upkeep: 10_000,
     income: 0,
@@ -72,12 +71,12 @@ const CORE_BUILDINGS: BuildingDef[] = [
     maxLevel: 3,
     placeable: true,
     removable: true,
-    sprite: 'biopori',
+    sprite: 'drain',
   },
   {
     id: 'jalan',
     name: 'Jalan Setapak',
-    blurb: 'Free footpath. Every building needs a path to the Kantor RT or it sits idle. Buildings beside it earn 10% more income, and residents walk only on paths. Takes up a tile. Remove it any time.',
+    blurb: 'Free footpath. Every building needs a path to the Kantor RT or it sits idle. Neighbours earn 10% more. Takes one tile. Remove any time.',
     cost: 0,
     upkeep: 0,
     income: 0,

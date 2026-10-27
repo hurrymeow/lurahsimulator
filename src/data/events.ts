@@ -40,6 +40,8 @@ export interface EventDef {
     months?: number[];
     /** Earliest month since start. */
     minMonth?: number;
+    /** Latest month since start. A saved game past it never sees a first-minutes event. */
+    maxMonth?: number;
     /** RT stars needed before it can happen. */
     minStars?: number;
     /** Weight among the random events that are eligible. 1 = always, on schedule. */
@@ -66,7 +68,8 @@ export const EVENTS: EventDef[] = [
     id: 'agustusan',
     name: '17 Agustus: Lomba',
     body: 'Panjat pinang, balap karung and kerupuk. The panitia wants a budget, and the kampung wants a prize.',
-    when: { months: [7], chance: 1 },
+    // The first popup is Gunting Pita at month 6, so the lomba waits for year 2 and never lands within 3 months of it.
+    when: { months: [7], minMonth: 8, chance: 1 },
     choices: [
       { label: 'Skip the lomba', res: { sabar: -8 }, result: 'Nobody won anything.' },
       {
@@ -82,7 +85,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'banjir',
     name: 'Banjir',
-    body: 'Hujan deras for three days. Biopori level decides how much of the kampung floats. Each biopori level cuts the damage by 20%.',
+    body: 'Heavy rain for three days. Selokan level decides how much of the kampung floats. Each selokan level cuts the damage by 20%.',
     when: { months: [10, 11, 0, 1], minMonth: 10, chance: 0.3, cooldown: 9 },
     choices: [{ label: 'Check the damage', special: 'banjir', result: '' }],
   },
@@ -110,7 +113,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatan',
     name: 'Kecamatan Inspection',
-    body: 'A Kecamatan inspector visits in 2 months to score the kampung: drainage, Popularitas, abandoned projects and parkir liar. A good score earns Orang Inside. A bad one costs Popularitas. Fresh paint counts too.',
+    body: 'An inspector comes in 2 months to score drainage, Popularitas, abandoned projects and parkir liar. Good scores earn Orang Inside. Bad ones cost Popularitas.',
     // Raised by the inspection system on its own schedule, never at random.
     when: { chance: 0 },
     choices: [
@@ -142,7 +145,7 @@ export const REPAIR_FRACTION = 0.25;
 
 /** Kecamatan inspections. The first warning lands in year 2, so year 1 stays safe. */
 export const INSPECTION = {
-  firstWarn: 12,
+  firstWarn: 15,
   /** Months between the warning and the visit. */
   lead: 2,
   /** Months from one visit to the next warning. */

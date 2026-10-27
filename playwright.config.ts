@@ -2,15 +2,19 @@ import { defineConfig } from '@playwright/test';
 
 const PHONES = [
   { name: 'phone-360', viewport: { width: 360, height: 640 } },
-  { name: 'phone-390', viewport: { width: 390, height: 844 } },
   { name: 'phone-320', viewport: { width: 320, height: 568 } },
+  // Big phones at installed-app (standalone) heights: no browser bar, so taller than a browser tab.
+  { name: 'phone-412', viewport: { width: 412, height: 915 } },
+  { name: 'phone-430', viewport: { width: 430, height: 932 } },
 ];
 
 export default defineConfig({
   testDir: 'tests/e2e',
   timeout: 60_000,
+  // Ends a hung run with a report before the 10 min job cap kills it. Local runs have no cap.
+  globalTimeout: process.env.CI ? 8 * 60_000 : 0,
   retries: process.env.CI ? 1 : 0,
-  // Per-test sharding. Without it Playwright shards whole spec files, so 6 projects split 2/2/1/1 across 4 shards.
+  // Per-test sharding. Without it Playwright shards whole spec files, so whole spec files would split unevenly across shards.
   fullyParallel: true,
   workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
