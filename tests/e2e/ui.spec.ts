@@ -108,6 +108,27 @@ async function seed(page: Page): Promise<void> {
 }
 
 test.describe('opener', () => {
+  test('the goal strip shows a quick goal and the next star, and names the first combo at minute 4', async ({ page }) => {
+    await start(page);
+    const goal = page.locator('#goal');
+    await expect(goal.locator('.goal-now')).toBeVisible();
+    await expect(goal.locator('.goal-star')).toBeVisible();
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.month = 30;
+      app.s.discovered = [];
+      app.refresh();
+    });
+    await expect(goal.locator('.goal-now')).toContainText('combo');
+    // The longest line must sit inside the screen with no clipping.
+    const box = (await goal.boundingBox())!;
+    const vw = page.viewportSize()!.width;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(vw);
+    expect(await goal.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+    expect(await scanLegibility(page)).toEqual([]);
+  });
+
   test('a new game walks the first Rumah, shows the goal, and Skip ends it', async ({ page }) => {
     await page.goto(`/?debug&coach&lang=${lang()}`);
     await passHome(page);
@@ -1559,6 +1580,9 @@ test.describe('zoom, big lots and the Warga list', () => {
       const at = await page.evaluate(() => {
         const app = (window as unknown as { pakrt: any }).pakrt;
         const b = app.s.buildings.find((o: any) => o.uid === 9001);
+        // Zoomed in, a short view can leave the field above the top edge. Nudge it just inside, no more.
+        const c0 = app.view.tileCentre(b.x + 1, b.y + 1);
+        if (c0.y < 40) app.view.panBy(0, 40 - c0.y);
         const c = app.view.tileCentre(b.x + 1, b.y + 1);
         const r = document.getElementById('map')!.getBoundingClientRect();
         return { x: r.left + c.x, y: r.top + c.y };
