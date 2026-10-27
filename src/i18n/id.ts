@@ -100,7 +100,7 @@ export const ID: Record<Key, string> = {
   'set.languageHelp': 'Mengubah semua label, pesan dan tutorial.',
   'set.newGame': 'Game baru',
   'set.newGameArmed': 'Ketuk lagi untuk hapus kampung ini',
-  'set.satire': 'Pak Pejabat adalah satire tentang sistem dan birokrasi. Kemiripan dengan kelurahan Anda hanya kebetulan. Laporkan, lalu tunggu 3 bulan untuk balasan.',
+  'set.satire': 'Pak Pejabat adalah satire tentang sistem dan birokrasi. Kemiripan dengan kelurahan Anda hanya kebetulan. Laporkan, lalu tunggu 3 bulan.',
 
   'how.title': 'Cara main',
   'how.intro': 'Selamat datang, Pak Pejabat. Kembangkan kampung, jaga Popularitas, dan jangan kalah dari Kampung Sebelah.',
@@ -144,7 +144,7 @@ export const ID: Record<Key, string> = {
   'coach.pick': 'Pilih Rumah. Satu rumah punya tempat untuk 3 warga baru.',
   'coach.tile': 'Sekarang ketuk petak kosong dekat jalan.',
   'coach.place': 'Sip. Ketuk Pasang untuk membangunnya.',
-  'coach.done': 'Mantap, Pak! Lebih banyak tempat berarti lebih banyak warga. Waktu jalan sendiri: jeda atau percepat di bawah. Targetmu ada di bawah bar uang.',
+  'coach.done': 'Mantap, Pak! Lebih banyak tempat, lebih banyak warga. Waktu jalan sendiri: jeda atau percepat di bawah.',
   'coach.gotIt': 'Paham',
   'coach.skip': 'Lewati',
 
@@ -294,7 +294,7 @@ export const ID: Record<Key, string> = {
   'pop.full': 'Rumah penuh. Bangun rumah lagi supaya warga baru bisa pindah.',
   'res.current': '{label} (sekarang)',
 
-  'wac.intro': 'Umumkan kebijakan untuk dapat dukungan. Dukungan memberi Popularitas tiap bulan dan turun 20% per bulan. Tiap wacana punya biaya samping, dan diulang makin mahal dan makin lemah. Tidak ada yang dibangun.',
+  'wac.intro': 'Umumkan kebijakan untuk dapat dukungan. Dukungan memberi Popularitas tiap bulan dan turun 20% per bulan. Wacana punya biaya samping, diulang makin lemah.',
   'wac.approval': 'Dukungan {n}%',
   'wac.none': 'Belum diumumkan',
   'wac.times': 'Diumumkan {n}x. Terbangun: 0.',
@@ -311,7 +311,7 @@ export const ID: Record<Key, string> = {
   'combo.noticeBody': '{story} {effect} Tercatat di Buku Combo.',
 
   'stats.title': 'Kas, warga, peringkat',
-  'stats.intro': 'Rupiah membayar bangunan. Popularitas di bawah 25 menghentikan warga baru, di bawah 15 orang pergi. Orang Dalam melewati antrean izin. Viral menaikkan pemasukan toko dan turun 10% per bulan.',
+  'stats.intro': 'Rupiah bayar bangunan. Popularitas di bawah 25 hentikan warga baru, di bawah 15 pergi. Orang Dalam lewati antrean izin. Viral menaikkan toko, turun 10% sebulan.',
   'stats.totals': 'Pemasukan {earned}. Pengeluaran {spent}. Datang {arrived}. Pergi {left}.',
   'stats.emasTitle': 'Indonesia Emas 2045',
   'stats.emas': '{n}% tercapai. Wacana, pergantian tahun, dan menang peringkat mendorongnya. Proyek mangkrak menariknya mundur.',

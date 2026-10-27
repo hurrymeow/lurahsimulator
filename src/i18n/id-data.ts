@@ -101,7 +101,7 @@ const BASE: Record<string, string> = {
   'event.cabai.c2.result': 'Satu truk cabai tiba.',
   'event.cabai.c2.mod': 'Operasi pasar',
   'event.kecamatan.name': 'Inspeksi Kecamatan',
-  'event.kecamatan.body': 'Petugas Kecamatan datang dalam 2 bulan untuk menilai kampung: drainase, Popularitas, proyek mangkrak dan parkir liar. Nilai bagus memberi Orang Dalam. Nilai buruk mengurangi Popularitas. Cat baru juga dihitung.',
+  'event.kecamatan.body': 'Petugas Kecamatan datang dalam 2 bulan untuk menilai drainase, Popularitas, proyek mangkrak dan parkir liar. Nilai bagus memberi Orang Dalam. Nilai buruk mengurangi Popularitas.',
   'event.kecamatan.c0.label': 'Biasa saja',
   'event.kecamatan.c0.result': 'Petugas akan melihat kampung apa adanya.',
   'event.kecamatan.c1.label': 'Cat ulang pagar · Rp 750.000',
