@@ -121,6 +121,9 @@ test.describe('opener', () => {
     await expect(page.locator('#coach-skip')).toHaveText(lang() === 'en' ? 'Got it' : 'Paham');
     await page.locator('#coach-skip').click();
     await expect(page.locator('#coach')).toBeHidden();
+    // Got it stays dismissed: the note does not come back on the next check.
+    await page.waitForTimeout(800);
+    await expect(page.locator('#coach')).toBeHidden();
   });
 
   test('the first month passes without a pop-up over the opener', async ({ page }) => {
@@ -252,6 +255,8 @@ test.describe('population and houses', () => {
     }
     await expect(page.locator('#modal .card h2')).toHaveText(TIP);
     await expect(page.locator('#modal .pics')).toBeVisible();
+    // The picture row says "beds" in words, not in an icon nobody can read.
+    await expect(page.locator('#modal .pics')).toContainText(lang() === 'en' ? '3 beds' : '3 tempat');
     await expectLegible(page, 'houses tip');
     await page.locator('#modal .tap-hint').click();
     await expect(page.locator('#modal')).toBeHidden();

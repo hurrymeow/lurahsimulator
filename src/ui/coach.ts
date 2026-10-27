@@ -43,6 +43,7 @@ export function setupCoach(app: App): void {
 
   const finish = () => {
     storage.set(KEY, 'done');
+    doneAt = 0;
     running = false;
     app.held = false;
     bar.hidden = true;
