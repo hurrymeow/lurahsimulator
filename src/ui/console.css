@@ -96,6 +96,8 @@ html:not(.theme-dark) #chip-pop img { filter: brightness(0.18); }
 
 /* The home screen hides the frame with the rest of the HUD. */
 #app.home-open .cs { visibility: hidden; }
+/* The rail is hidden there, so its gutter goes too, and the map fills the whole screen behind the title. */
+#app.home-open #stage { position: fixed; inset: 0; padding-left: 0; border-bottom: 0; }
 
 @media (max-width: 359px) {
   .cs-name, .cs-date { padding: 0 6px; }

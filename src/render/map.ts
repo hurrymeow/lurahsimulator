@@ -188,6 +188,12 @@ export class MapView {
     this.resize();
   }
 
+  /** The box changed shape under the camera (home screen opens or closes): open on the kampung again. */
+  recentre(): void {
+    this.centred = false;
+    this.resize();
+  }
+
   resize(): void {
     const dpr = window.devicePixelRatio || 1;
     const { clientWidth: w, clientHeight: h } = this.canvas;

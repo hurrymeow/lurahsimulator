@@ -22,6 +22,7 @@ export function showHome(app: App, install: HTMLButtonElement, update: HTMLButto
   const leave = () => {
     el.remove();
     root.classList.remove('home-open');
+    app.view.recentre();
     app.held = false;
   };
   const begin = (fresh: boolean) => {
@@ -67,6 +68,7 @@ export function showHome(app: App, install: HTMLButtonElement, update: HTMLButto
 
   app.held = true;
   root.classList.add('home-open');
+  app.view.recentre();
   front();
   root.append(el);
   start.focus({ preventScroll: true });
