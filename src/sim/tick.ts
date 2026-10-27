@@ -9,7 +9,7 @@ import { def, placeableDefs } from './content';
 import { EMAS } from '../data/ranking';
 import { eventSystem } from './events';
 import { pathDecaySystem } from './decay';
-import { lineSystem } from './lines';
+import { camatCallSystem, lineSystem } from './lines';
 import { debtSystem, iuranFromNeighbours, neighboursSystem, neighboursYearEnd, stempelSystem } from './grow';
 import { inspectionSystem } from './inspection';
 import { jobsSystem, used } from './jobs';
@@ -226,6 +226,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   inspectionSystem,
   eventSystem,
   lineSystem,
+  camatCallSystem,
   quarterSystem,
 ];
 

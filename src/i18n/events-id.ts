@@ -4,6 +4,10 @@
 type Choice = [string, string | string[], string?];
 
 const EVENTS: [id: string, name: string, body: string, choices: Choice[]][] = [
+  ['guntingPita', 'Gunting Pita', 'Kecamatan mengirim fotografer untuk gunting pita pertama Anda. Pitanya sepanjang satu meter. Guntingnya pinjaman.', [
+    ['Gunting sendiri', 'Klik. Selesai sebelum fotografer menemukan sudut yang pas.'],
+    ['Serahkan ke anak anak', 'Fotonya di mana mana. Pitanya jadi tiga potong.'],
+  ]],
   ['partTime', 'Permintaan Kerja Paruh Waktu', 'Dimas, 16, mau kerja paruh waktu di warung. Ibunya bilang boleh. Gurunya bilang jangan. Izinkan?', [
     ['Bilang tidak', 'Dimas ngambek. Nilainya tetap persis seperti kemarin.'],
     ['Izinkan', ['Barista terbaik se-kampung. Pelanggan datang demi dia.', 'Ya sudah. Tak ada yang sadar, dan itu artinya sukses.', 'Dia tidur di kelas dan gorengannya gosong.']],

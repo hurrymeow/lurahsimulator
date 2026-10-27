@@ -1,9 +1,15 @@
-import { lLine, lName } from '../i18n';
+import { lLine, lName, t } from '../i18n';
 import { LINES, LINE_CHANCE, LINE_MEMORY, type LineDef } from '../data/lines';
 import { incomeShare } from './events';
 import { gain, type Fx } from './gain';
 import { chance, rand } from './rng';
 import type { GameState } from './types';
+
+/** Month 1: Pak Camat sets the first goal by phone, a ticker line only. Faceless, and never a popup. */
+export function camatCallSystem(s: GameState, fx: Fx): void {
+  if (s.month !== 1) return;
+  fx.push({ kind: 'notice', title: t('sim.camatTitle'), body: t('sim.camatBody'), tone: 'info' });
+}
 
 /** Monthly system: a minor happening in the ticker and the log. Never a popup, never pauses the game. */
 export function lineSystem(s: GameState, fx: Fx): void {

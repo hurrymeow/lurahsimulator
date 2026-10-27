@@ -390,7 +390,7 @@ test.describe('events, ranking, settings', () => {
     await dismissModals(page);
     await skipTips(page);
     await seed(page);
-    const ids = ['agustusan', 'banjir', 'cabai', 'kecamatan', 'partTime', 'cctv', 'kkn', 'startupPilot', 'hajatan', 'pasarMalam', 'sisaAnggaran', 'magang', 'pungli', 'pangkalanOjol', 'lesGratis', 'padam', 'rapatWarga', 'hibah', 'lombaKampung', 'truckSampah', 'lubangViral', 'sembako', 'pbb', 'festivalKuliner'];
+    const ids = ['guntingPita', 'agustusan', 'banjir', 'cabai', 'kecamatan', 'partTime', 'cctv', 'kkn', 'startupPilot', 'hajatan', 'pasarMalam', 'sisaAnggaran', 'magang', 'pungli', 'pangkalanOjol', 'lesGratis', 'padam', 'rapatWarga', 'hibah', 'lombaKampung', 'truckSampah', 'lubangViral', 'sembako', 'pbb', 'festivalKuliner'];
     for (const id of ids) {
       await page.evaluate((i) => {
         const app = (window as unknown as { pakrt: any }).pakrt;
@@ -430,7 +430,7 @@ test.describe('events, ranking, settings', () => {
     await expectCentred(page, 'event after a tip');
   });
 
-  for (const id of ['agustusan', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga', 'partTime', 'padam', 'hibah']) {
+  for (const id of ['guntingPita', 'agustusan', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga', 'partTime', 'padam', 'hibah']) {
     for (const broke of [false, true]) {
       test(`event ${id}${broke ? ' while broke' : ''} is legible and has a free choice`, async ({ page }) => {
         await start(page);
@@ -634,8 +634,7 @@ test.describe('slim HUD and one menu', () => {
     expect(await pk('a.running')).toBe(true);
 
     await page.locator('#menu-btn').click();
-    await expect(badge).toBeVisible();
-    await expect(badge).toHaveText(WORDS[lang()].paused);
+    await expect(badge).toBeHidden();
     expect(await pk('a.running')).toBe(false);
     expect(await pk('a.speed')).toBe(1);
     await page.getByRole('button', { name: WORDS[lang()].close }).click();
@@ -644,6 +643,7 @@ test.describe('slim HUD and one menu', () => {
 
     await pk("a.startPlacing('rumah')");
     await expect(badge).toBeVisible();
+    await expect(badge).toHaveText(WORDS[lang()].paused);
     expect(await pk('a.running')).toBe(false);
     await pk('a.stopPlacing()');
     await expect(badge).toBeHidden();
