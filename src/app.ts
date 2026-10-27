@@ -363,6 +363,24 @@ export class App {
     ticker.replaceChildren(h('strong', {}, n.title), h('span', {}, n.body));
     ticker.dataset.tone = n.tone;
     delete ticker.dataset.i18n;
+    this.toast();
+  }
+
+  private toastTimers: number[] = [];
+
+  /**
+   * Shows the latest notice as a toast over the map for 3s, then fades it out. Every notice also
+   * stays in the Log (Menu), so a missed toast is never lost. Tap the toast to open the Log.
+   */
+  toast(): void {
+    const el = document.getElementById('ticker')!;
+    this.toastTimers.forEach((id) => clearTimeout(id));
+    el.classList.remove('fade');
+    el.hidden = false;
+    this.toastTimers = [
+      window.setTimeout(() => el.classList.add('fade'), 3000),
+      window.setTimeout(() => (el.hidden = true), 3400),
+    ];
   }
 
   /** Important message. Pauses the game until tapped. Never advances on a timer. */
@@ -815,7 +833,7 @@ export class App {
     const w = float.offsetWidth;
     const hgt = float.offsetHeight;
     const room = float.parentElement!.clientHeight;
-    // The anchor is in canvas pixels; the canvas sits right of the frame's rail.
+    // The anchor is in canvas pixels, measured from the canvas's own left edge.
     const left = document.getElementById('map')!.offsetLeft;
     const x = Math.min(Math.max(left + a.x - w / 2, left + 4), float.parentElement!.clientWidth - w - 4);
     const y = a.below + 8 + hgt > room ? Math.max(4, a.above - 8 - hgt) : a.below + 8;

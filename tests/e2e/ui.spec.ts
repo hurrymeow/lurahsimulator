@@ -108,11 +108,16 @@ async function seed(page: Page): Promise<void> {
 }
 
 test.describe('opener', () => {
-  test('the goal strip shows a quick goal and the next star, and names the first combo at minute 4', async ({ page }) => {
+  test('the goal shows on one line, expands to the next star on tap, and names the first combo at minute 4', async ({ page }) => {
     await start(page);
     const goal = page.locator('#goal');
     await expect(goal.locator('.goal-now')).toBeVisible();
+    // Next star hides behind a tap on the goal line.
+    await expect(goal.locator('.goal-star')).toBeHidden();
+    // The How to play card is still up in this test, so press the line directly.
+    await goal.locator('.goal-now').dispatchEvent('click');
     await expect(goal.locator('.goal-star')).toBeVisible();
+    await expect(goal.locator('.goal-now')).toHaveAttribute('aria-expanded', 'true');
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.s.month = 30;
@@ -615,20 +620,14 @@ test.describe('events, ranking, settings', () => {
 });
 
 test.describe('slim HUD and one menu', () => {
-  test('main screen has only pause, speed, Menu and the frame shortcuts', async ({ page }) => {
+  test('main screen has only pause, speed and Menu buttons', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     const ids = await page.evaluate(() =>
       [...document.querySelectorAll('button')].filter((b) => b.getClientRects().length && b.id !== 'ticker').map((b) => b.id),
     );
-    // Short phones keep only the rail: no title bar and no quick tabs.
-    const tall = page.viewportSize()!.height > 640;
-    expect(ids).toEqual([
-      ...(tall ? ['cs-system'] : []),
-      'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop',
-      'cs-rail-wacana', 'cs-rail-build', 'pause-btn', 'speed-btn', 'menu-btn',
-      ...(tall ? ['cs-tab-log', 'cs-tab-stats', 'cs-tab-warga', 'cs-tab-wacana'] : []),
-    ]);
+    // The frame adds no panel buttons: every panel opens from Menu. The goal line only expands the next star.
+    expect(ids).toEqual(['chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'goal-now', 'pause-btn', 'speed-btn', 'menu-btn']);
     const hud = (await page.locator('#hud').boundingBox())!;
     expect(hud.height).toBeLessThanOrEqual(80);
   });
@@ -732,6 +731,8 @@ test.describe('text is legible and never cut off', () => {
     await expectLegible(page, 'Stats panel');
     await page.locator('.sheet-head .btn').click();
 
+    // The toast opens the Log on tap while it shows.
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.toast());
     await page.locator('#ticker').click();
     await expectLegible(page, 'Log panel');
     await page.locator('.sheet-head .btn').click();
@@ -846,12 +847,11 @@ test.describe('home update button', () => {
   });
 });
 test.describe('home map preview', () => {
-  /** The map box reaches the right edge, and the canvas and camera match its size. In game the rail takes the left strip. */
-  const fills = async (page: Page, inGame = false) => {
+  /** The map box spans the screen edge to edge, on the home screen and in game, and the canvas and camera match its size. */
+  const fills = async (page: Page, _inGame = false) => {
     const vw = page.viewportSize()!.width;
     const box = (await page.locator('#map').boundingBox())!;
-    if (inGame) expect(box.x, 'map left edge').toBeGreaterThan(1);
-    else expect(Math.abs(box.x), 'map left edge').toBeLessThanOrEqual(1);
+    expect(Math.abs(box.x), 'map left edge').toBeLessThanOrEqual(1);
     expect(Math.abs(box.x + box.width - vw), 'map right edge').toBeLessThanOrEqual(1);
     const cam = await page.evaluate(() => {
       const v = (window as unknown as { pakrt: any }).pakrt.view;
@@ -1540,8 +1540,6 @@ test.describe('build mode', () => {
     const roads = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'jalan').length);
     const had = await roads();
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('jalan'));
-    // The frame's rail narrows the map: pan right so both ends of the path are on screen.
-    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.panBy(56, 0));
     const box = (await page.locator('#map').boundingBox())!;
     const tap = async (dx: number, dy: number) => {
       const at = await page.evaluate(([x, y]) => {
@@ -1783,21 +1781,34 @@ test.describe('sheets keep their place', () => {
 });
 
 test.describe('console frame and theme', () => {
-  test('frames the map in light by default, switches to dark and back, and every frame control opens its panel', async ({ page }) => {
+  test('frames the map in light by default with no extra buttons, switches to dark and back', async ({ page }) => {
     await start(page);
     await dismissModals(page);
-    // Short phones keep only the rail, so the map stays as tall as it was before the frame.
+    // Short phones drop the title bar and the satellite view to give the map every pixel.
     const tall = page.viewportSize()!.height > 640;
-    for (const id of [...(tall ? ['#cs-title', '#cs-sat', '#cs-tabs'] : []), '#cs-rail', '#map', '#menu-btn', '#pause-btn']) await expect(page.locator(id)).toBeVisible();
-    if (!tall) for (const id of ['#cs-title', '#cs-sat', '#cs-tabs']) await expect(page.locator(id)).toBeHidden();
+    for (const id of ['#cs-title', '#cs-sat']) await (tall ? expect(page.locator(id)).toBeVisible() : expect(page.locator(id)).toBeHidden());
+    for (const id of ['#map', '#menu-btn', '#pause-btn', '#speed-btn']) await expect(page.locator(id)).toBeVisible();
+    // No shortcut duplicates the Menu: no rail, no quick tabs, no SYSTEM button.
+    for (const id of ['#cs-rail', '#cs-tabs', '#cs-system']) await expect(page.locator(id)).toHaveCount(0);
     const dark = () => page.evaluate(() => document.documentElement.classList.contains('theme-dark'));
     expect(await dark()).toBe(false);
     await expectLegible(page, 'console frame, light');
-    // The map keeps a usable size, and the rail sits beside it rather than over it.
+    // The map spans the full width and most of the screen.
     const map = (await page.locator('#map').boundingBox())!;
-    const rail = (await page.locator('#cs-rail').boundingBox())!;
-    expect(map.height).toBeGreaterThan(200);
-    expect(map.x).toBeGreaterThanOrEqual(rail.x + rail.width - 1);
+    const vp = page.viewportSize()!;
+    expect(map.width).toBeGreaterThanOrEqual(vp.width - 2);
+    expect(map.height).toBeGreaterThan(vp.height * (tall ? 0.45 : 0.35));
+    // The bottom row stays one compact row of 48px controls.
+    const bar = (await page.locator('#bottombar').boundingBox())!;
+    expect(bar.height).toBeLessThanOrEqual(60);
+    if (tall) {
+      // A small satellite view, and a tap on it pans the map.
+      const sat = (await page.locator('#cs-sat-map').boundingBox())!;
+      expect(sat.width).toBeLessThanOrEqual(96);
+      const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox);
+      await page.mouse.click(sat.x + 4, sat.y + 4);
+      expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox)).not.toBe(before);
+    }
     // Theme: Light and Dark buttons in Settings.
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
@@ -1807,28 +1818,63 @@ test.describe('console frame and theme', () => {
     await expectLegible(page, 'settings, dark theme');
     await page.locator('.sheet-head .btn').click();
     await expectLegible(page, 'console frame, dark');
-    // Each control opens a sheet that the Menu also opens.
-    for (const id of [...(tall ? ['#cs-system', '#cs-tab-log', '#cs-tab-stats', '#cs-tab-warga', '#cs-tab-wacana'] : []), '#cs-rail-build', '#cs-rail-wacana']) {
-      await page.locator(id).click();
-      await expect(page.locator('#sheet')).toBeVisible();
-      await page.locator('.sheet-head .btn').click();
-      await expect(page.locator('#sheet')).toBeHidden();
-    }
-    // A tap on the satellite view pans the map.
-    if (tall) {
-      const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox);
-      const sat = (await page.locator('#cs-sat-map').boundingBox())!;
-      await page.mouse.click(sat.x + 4, sat.y + 4);
-      expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ox)).not.toBe(before);
-    }
     // The theme survives a reload, then goes back to light.
     await page.reload();
     await passHome(page);
     expect(await dark()).toBe(true);
-    await expect(page.locator('#cs-rail')).toBeVisible();
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
     await page.locator('#sheet [data-theme="light"]').click();
     expect(await dark()).toBe(false);
+  });
+
+  test('light and dark share the same layout and sizes', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const boxes = () => page.evaluate(() =>
+      ['cs-title', 'hud', 'status', 'goal', 'emas', 'stage', 'map', 'cs-sat', 'bottombar', 'pause-btn', 'speed-btn', 'menu-btn'].map((id) => {
+        const r = document.getElementById(id)!.getBoundingClientRect();
+        return `${id} ${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)}`;
+      }),
+    );
+    const light = await boxes();
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.settings.theme = 'dark';
+      app.applySettings();
+    });
+    expect(await page.evaluate(() => document.documentElement.classList.contains('theme-dark'))).toBe(true);
+    expect(await boxes()).toEqual(light);
+  });
+
+  test('a notice shows as a toast over the map, fades, and stays in the Log', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.notice({ title: 'Toast test', body: 'It fades.', tone: 'info' }));
+    const toast = page.locator('#ticker');
+    await expect(toast).toBeVisible();
+    await expect(toast).toContainText('Toast test');
+    // It floats inside the map, not in a band of its own.
+    const tb = (await toast.boundingBox())!;
+    const mb = (await page.locator('#map').boundingBox())!;
+    expect(tb.y).toBeGreaterThanOrEqual(mb.y);
+    expect(tb.y + tb.height).toBeLessThanOrEqual(mb.y + mb.height + 1);
+    await expectLegible(page, 'notice toast');
+    await expect(toast).toBeHidden({ timeout: 6000 });
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-log').click();
+    await expect(page.locator('#sheet')).toContainText('Toast test');
+  });
+
+  test('every panel the frame used to shortcut still opens from Menu', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    for (const id of ['build', 'wacana', 'log', 'stats', 'warga', 'settings']) {
+      await page.locator('#menu-btn').click();
+      await page.locator(`#act-${id}`).click();
+      await expect(page.locator('#sheet')).toBeVisible();
+      await page.locator('.sheet-head .btn').click();
+      await expect(page.locator('#sheet')).toBeHidden();
+    }
   });
 });

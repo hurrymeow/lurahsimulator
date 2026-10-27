@@ -17,18 +17,21 @@
     <div id="app">
       <h1 class="sr-only">Pak Pejabat</h1>
       <header id="hud" role="group" data-i18n-aria="page.hud" aria-label="Resources. Tap one to learn what it does."></header>
-      <div id="emas" class="emas" role="button" tabindex="0" data-i18n-aria="page.emas" aria-label="Indonesia Emas 2045 progress">
-        <span class="emas-label">Indonesia Emas 2045</span>
-        <div class="emas-track"><div id="emas-fill"></div></div>
-        <span id="emas-value" class="emas-value">0.01%</span>
+      <!-- One status row: the current goal (tap for the next star) and a compact Indonesia Emas meter. -->
+      <div id="status" class="status-row">
+        <div id="goal" class="goal" hidden></div>
+        <div id="emas" class="emas" role="button" tabindex="0" data-i18n-aria="page.emas" aria-label="Indonesia Emas 2045 progress">
+          <span class="emas-label">2045</span>
+          <div class="emas-track"><div id="emas-fill"></div></div>
+          <span id="emas-value" class="emas-value">0.01%</span>
+        </div>
       </div>
-      <div id="goal" class="goal" role="status" hidden></div>
       <div id="update-banner" class="banner" role="status" hidden>
         <span data-i18n="page.updateReady">New version ready.</span>
         <button id="update-btn" class="btn btn-primary" data-i18n="page.update">Update</button>
       </div>
-      <button id="ticker" class="ticker" aria-live="polite" data-i18n="page.welcome">Welcome, Pak RT.</button>
       <main id="stage">
+        <button id="ticker" class="ticker notice-toast" aria-live="polite" hidden data-i18n="page.welcome">Welcome, Pak RT.</button>
         <canvas id="map" data-i18n-aria="page.map" aria-label="Kampung map"></canvas>
         <div id="dof" aria-hidden="true"></div>
         <div id="place-float" class="place-float" hidden>

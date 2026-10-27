@@ -4,20 +4,34 @@ import { shortGoal } from '../sim/nextstep';
 import { nextStarChecklist } from '../sim/stages';
 import { h } from './dom';
 
-/** Two lines under the Emas bar: a quick goal for the next minute, and the next star. The full checklist is in Menu. */
+/**
+ * The goal, on one line in the status row beside the Emas meter: a quick goal for the next minute.
+ * Tap it to show the next star below. The full checklist is in Menu.
+ */
 export function setupGoal(app: App): void {
   const el = document.getElementById('goal')!;
-  const now = h('div', { class: 'goal-now' });
-  const star = h('div', { class: 'goal-star' });
+  let open = false;
+  const now = h('button', { class: 'goal-now', id: 'goal-now', type: 'button', 'aria-expanded': 'false' });
+  const star = h('div', { class: 'goal-star', hidden: true });
+  now.addEventListener('click', () => {
+    if (now.dataset.more !== 'true') return;
+    open = !open;
+    app.refresh();
+  });
   el.append(now, star);
   app.refreshers.push((a) => {
-    const open = nextStarChecklist(a.s)?.find((l) => !l.done);
+    const next = nextStarChecklist(a.s)?.find((l) => !l.done);
     const quick = shortGoal(a.s);
-    el.hidden = !open && !quick;
-    now.hidden = !quick;
-    star.hidden = !open;
-    if (quick) now.textContent = quick;
-    if (open) star.textContent = t('goal.line', { goal: open.text });
+    const starText = next ? t('goal.line', { goal: next.text }) : '';
+    el.hidden = !next && !quick;
+    // One line: the quick goal, or the next star when there is no quick goal. The star expands only
+    // when it is not already the line.
+    const more = !!quick && !!next;
+    now.textContent = quick ?? starText;
+    now.dataset.more = String(more);
+    now.setAttribute('aria-expanded', String(more && open));
+    star.hidden = !(more && open);
+    star.textContent = starText;
   });
   app.refresh();
 }

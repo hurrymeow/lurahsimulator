@@ -141,7 +141,23 @@ Rules:
 - Ground texture uses clumps squashed 2:1, so they lie flat on the isometric plane.
 - The kampung is a raised block: where land meets the beach or the world's edge, a 7-pixel
   dirt cliff drops away. That gives the diorama its depth.
-- UI chrome follows the console frame and its Light or Dark theme (GAME-DESIGN.md section 6). Colour belongs to the map and to resource meaning.
+- UI chrome follows the console frame and its Light or Dark theme (see UI chrome below). Colour belongs to the map and to resource meaning.
+
+## UI chrome
+
+The frame round the map is drawn in CSS (`src/ui/console.css`), not in pixel art, but it follows the
+same look: flat fills, 1px rules, no gradients, no rounded corners.
+
+| Part | Look |
+| --- | --- |
+| Title bar | Slim strip. Name in the pixel font on the left, date in the body font on the right. Not a control. |
+| Status row | Goal on one bold line, a small ▾ when the next star can expand. A 1px rule, then the 2045 label, a thin track and the percentage. Under 360px wide the track drops out. |
+| Satellite view | 88x60, a 1px rule and a hard 2px drop shadow. No label. |
+| Toast | Full map width, 8px from the map's bottom edge. A 4px muted bar on the left, a 1px rule and a hard 2px drop shadow. Fades over 0.4s after 3s; with reduce motion it just goes. |
+| Bottom row | 48px controls, square, no padding round them and no shadows. Menu is dark green. |
+
+- Light and Dark use the same parts at the same sizes. Only the colour tokens change (GAME-DESIGN.md section 6, Themes).
+- Numbers use the body font, never the pixel font.
 
 ## Lighting and atmosphere
 
