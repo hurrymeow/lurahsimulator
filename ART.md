@@ -1,7 +1,7 @@
 # Art direction
 
 How Pak Pejabat looks, and how to keep new art in that look. Follow this for every sprite, scenery
-change and effect. [DESIGN.md](DESIGN.md) still rules on UI, legibility and accessibility.
+change and effect. [GAME-DESIGN.md](GAME-DESIGN.md) still rules on UI, legibility and accessibility.
 
 ## The look in one line
 

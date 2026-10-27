@@ -8,10 +8,8 @@ Read before you plan or write code. Read only what your change touches, but neve
 
 - [CONTRIBUTING.md](CONTRIBUTING.md): UI, i18n, art, tone, naming, workflow. Always read.
 - [UI-RUBRIC.md](UI-RUBRIC.md): 12 UI rules. Read for any screen, text or layout change.
-- [PACING.md](PACING.md): pacing and balance targets. Read for economy, events, tutorial or progression.
 - [ART.md](ART.md): sprite and icon rules. Read for any art.
-- [STAGES.md](STAGES.md): RT, RW, Kelurahan stage rules. Read for map or stage work.
-- [DESIGN.md](DESIGN.md): game design. Read for new mechanics.
+- [GAME-DESIGN.md](GAME-DESIGN.md): the game design. Pitch, stage ladder, pacing targets, economy, tone and politics, UI rules. Read for new mechanics, map or stage work, economy, events, tutorial or progression. Read only the section you touch.
 - `decisions/`: past decisions. Search it before you change anything it may cover.
 
 ## Conformance protocol

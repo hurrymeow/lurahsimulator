@@ -7,10 +7,9 @@ This page is the short version. The rules live in the files linked below. Read t
 
 | File | Covers |
 | --- | --- |
-| [DESIGN.md](DESIGN.md) | Satire, pacing, UI layout, legibility, accessibility, tech |
+| [GAME-DESIGN.md](GAME-DESIGN.md) | Pitch, stages and stars, pacing targets, economy, tone and politics, UI layout, accessibility, tech |
 | [UI-RUBRIC.md](UI-RUBRIC.md) | Measurable UI and UX rules a PR is checked against |
 | [ART.md](ART.md) | Look, palette, outlines, shading, adding a sprite, art checklist |
-| [STAGES.md](STAGES.md) | RT, RW, Kelurahan and what each stage unlocks |
 | [decisions/](decisions/) | Why things are the way they are. Skim it before changing behaviour. |
 
 Read the decision log with `node scripts/logs.mjs decisions`.
@@ -26,7 +25,7 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 - Style reference is Kairosoft's Dungeon Village. Own art and names only, no Kairosoft assets.
 - Main screen: slim resource bar, the map, one bottom row (pause, speed, date, **Menu**).
 - New panel? Register an `ActionButton` with a `group` in the Menu. Never add a main-screen button.
-- The optional Console look (Settings) adds shortcut tabs round the map. They only point at Menu panels. See [DESIGN.md](DESIGN.md#touch-and-layout).
+- The optional Console look (Settings) adds shortcut tabs round the map. They only point at Menu panels. See [GAME-DESIGN.md](GAME-DESIGN.md#touch-and-layout).
 - Text never cuts off. No ellipsis, text wraps, panels scroll. Body font 16px or more.
 - Touch targets 48px or more.
 - New panel or message needs a scan in `tests/e2e/ui.spec.ts`.
