@@ -16,7 +16,7 @@ const BASE: Record<string, string> = {
   'building.alfamart.blurb': 'Pemasukan besar. Memunculkan tukang parkir. Benci Indomaret.',
   'building.kantorRT.blurb': 'Cap surat. Lama-lama menghasilkan Orang Dalam. Tiap level menambah 2 meja PNS.',
   'building.kantorRT.block': 'Kantor RT lebih awet dari Pak RT mana pun.',
-  'building.rumah.blurb': 'Menampung 3 warga dan mengundang warga baru. Langsung jadi, tanpa izin.',
+  'building.rumah.blurb': 'Menampung 3 warga dan mengundang warga baru.',
   'building.parkir.blurb': 'Muncul di samping setiap toko baru. Setor retribusi kecil ke kas, menguras Popularitas. Bisa ditingkatkan, tak bisa dicopot.',
   'building.parkir.block': 'Tak ada yang ingat mempekerjakannya. Tak ada yang bisa memecatnya.',
 

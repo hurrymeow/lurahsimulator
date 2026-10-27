@@ -247,7 +247,7 @@ describe('yearly ranking and Indonesia Emas', () => {
     expect(win.ranking[0].won).toBe(true);
     expect(win.res.orangDalam).toBeGreaterThan(od);
 
-    const lose = newGame(10);
+    const lose = newGame(11);
     lose.month = 11;
     for (const r of lose.residents) r.manual = true;
     lose.res.sabar = 50;
@@ -319,7 +319,7 @@ describe('kecamatan inspection', () => {
   };
   const warn = () => {
     const s = newGame(5);
-    s.month = 11;
+    s.month = 14;
     const fx = tick(s);
     return { s, fx };
   };
@@ -327,12 +327,12 @@ describe('kecamatan inspection', () => {
   it('warns in year 2 with a free first choice, then visits two months later', () => {
     const { s, fx } = warn();
     expect(fx.some((f) => f.kind === 'event' && f.eventId === 'kecamatan')).toBe(true);
-    expect(s.inspection?.visitAt).toBe(14);
+    expect(s.inspection?.visitAt).toBe(17);
     resolveEvent(s, [], 0);
     expect(next(s)).not.toContainEqual(expect.objectContaining({ title: expect.stringContaining('Kecamatan') }));
     const out = next(s);
     expect(out.some((f) => f.kind === 'notice' && f.title.startsWith('Kecamatan'))).toBe(true);
-    expect(s.inspection?.warnAt).toBe(24);
+    expect(s.inspection?.warnAt).toBe(27);
   });
 
   it('cat ulang inflates the score for one visit only', () => {

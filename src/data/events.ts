@@ -142,7 +142,7 @@ export const REPAIR_FRACTION = 0.25;
 
 /** Kecamatan inspections. The first warning lands in year 2, so year 1 stays safe. */
 export const INSPECTION = {
-  firstWarn: 12,
+  firstWarn: 15,
   /** Months between the warning and the visit. */
   lead: 2,
   /** Months from one visit to the next warning. */
