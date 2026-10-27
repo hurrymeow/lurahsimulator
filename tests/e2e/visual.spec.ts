@@ -57,7 +57,9 @@ test.describe('visual baselines', () => {
   test('Build sheet', async ({ page }) => {
     await open(page);
     await play(page);
-    await page.locator('#cs-rail-build').click();
+    // Build opens from the Menu, like every other panel.
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-build').click();
     await settle(page);
     await expect(page).toHaveScreenshot(`build-${lang()}.png`, SHOT);
   });
