@@ -6,6 +6,17 @@ import type { EventDef } from './events';
 const NOW = 6;
 
 export const MORE_EVENTS: EventDef[] = [
+  // ---------- the first popup: a light joke with one clear winner, on schedule at month 6 (PACING.md target 3) ----------
+  {
+    id: 'guntingPita',
+    name: 'Gunting Pita',
+    body: 'Kecamatan sends a photographer for your first ribbon cutting. The ribbon is one metre long. The scissors are on loan.',
+    when: { minMonth: NOW, maxMonth: 12, chance: 1, cooldown: 9999 },
+    choices: [
+      { label: 'Cut it yourself', res: { sabar: 2 }, result: 'Snip. Done before the photographer found the right angle.' },
+      { label: 'Hand it to the kids', res: { sabar: 6, viral: 8 }, result: 'The photo is everywhere. The ribbon is in three pieces.' },
+    ],
+  },
   // ---------- advice: yes or no, outcome hidden ----------
   {
     id: 'partTime',

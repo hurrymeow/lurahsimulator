@@ -40,6 +40,8 @@ export interface EventDef {
     months?: number[];
     /** Earliest month since start. */
     minMonth?: number;
+    /** Latest month since start. A saved game past it never sees a first-minutes event. */
+    maxMonth?: number;
     /** RT stars needed before it can happen. */
     minStars?: number;
     /** Weight among the random events that are eligible. 1 = always, on schedule. */
@@ -66,7 +68,8 @@ export const EVENTS: EventDef[] = [
     id: 'agustusan',
     name: '17 Agustus: Lomba',
     body: 'Panjat pinang, balap karung and kerupuk. The panitia wants a budget, and the kampung wants a prize.',
-    when: { months: [7], chance: 1 },
+    // The first popup is Gunting Pita at month 6, so the lomba waits for year 2 and never lands within 3 months of it.
+    when: { months: [7], minMonth: 8, chance: 1 },
     choices: [
       { label: 'Skip the lomba', res: { sabar: -8 }, result: 'Nobody won anything.' },
       {
