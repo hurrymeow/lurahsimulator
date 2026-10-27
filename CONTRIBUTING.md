@@ -21,7 +21,7 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 
 ## UI
 
-- Mobile portrait first. Test at 320, 360 and 390px wide.
+- Mobile portrait first. Test at 320, 360, 412 and 430px wide.
 - Style reference is Kairosoft's Dungeon Village. Own art and names only, no Kairosoft assets.
 - Main screen: the console frame (title bar, resource bar, the map with a rail and satellite view, one bottom row, quick tabs). See [GAME-DESIGN.md](GAME-DESIGN.md#touch-and-layout).
 - Settings > Theme switches the frame between Light (default) and Dark. Check new UI in both.
@@ -61,7 +61,7 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 2. Run `npm run typecheck`, `npm test` and `npm run e2e` locally.
 3. Open a PR. Enable auto-merge: `gh pr merge --auto --squash <n>`. It merges when the required `ci` check is green.
 4. After every push, check the PR for merge conflicts. A conflicted PR never starts CI and sends no alert. If it conflicts, merge main in and push.
-5. CI runs both languages at 320, 360 and 390px. Don't cut that down.
+5. CI runs both languages at 320, 360, 412 and 430px. Don't cut that down.
 6. Log decisions in `decisions/<pr-or-slug>.md` and shipped work in `progress/<pr-or-slug>.md`. One file per PR.
    Never edit `DECISIONS.md`, `PROGRESS.md` or another PR's file.
 7. After merge, confirm the live site changed: https://hurrymeow.github.io/lurahsimulator/. Merged is not deployed.
