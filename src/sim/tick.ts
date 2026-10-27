@@ -174,7 +174,7 @@ export function checkUnlocks(s: GameState, fx: Fx): void {
     fx.push({ kind: 'notice', title: t('sim.unlockedTitle', { name: bName(d) }), body: bBlurb(d), tone: 'good', fanfare: true });
     return;
   }
-  fx.push({ kind: 'notice', title: t('sim.unlockedManyTitle', { n: opened.length }), body: t('sim.unlockedManyBody', { names: opened.map(bName).join(', ') }), tone: 'good', fanfare: true });
+  fx.push({ kind: 'notice', title: t('sim.unlockedManyTitle', { n: opened.length }), body: t('sim.unlockedManyBody'), tone: 'good', fanfare: true });
 }
 
 /** A calm village settles back toward a floor. Bad choices slow you down, they never trap you at zero. */

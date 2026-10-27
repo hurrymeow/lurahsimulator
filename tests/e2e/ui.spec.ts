@@ -83,6 +83,54 @@ async function seed(page: Page): Promise<void> {
   await dismissModals(page);
 }
 
+test.describe('opener', () => {
+  test('a new game walks the first Rumah, shows the goal, and Skip ends it', async ({ page }) => {
+    await page.goto(`/?debug&coach&lang=${lang()}`);
+    await passHome(page);
+    await page.evaluate(() => document.fonts.ready);
+    await page.locator('#howtoGo').click();
+    // The goal sits under the Emas bar from the first frame.
+    await expect(page.locator('#goal')).toBeVisible();
+    await expect(page.locator('#goal')).toContainText(/\d/);
+    await expect(page.locator('#coach')).toBeVisible();
+    await expect(page.locator('#menu-btn')).toHaveClass(/coach-pulse/);
+    await expectLegible(page, 'opener, Menu step');
+    await page.locator('#menu-btn').click();
+    await expect(page.locator('#act-build')).toHaveClass(/coach-pulse/);
+    await page.locator('#act-build').click();
+    const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
+    await expect(rumah).toHaveClass(/coach-pulse/);
+    await expectLegible(page, 'opener, Pick step');
+    await rumah.click();
+    await expect(page.locator('#coach')).toBeVisible();
+    const box = (await page.locator('#map').boundingBox())!;
+    const at = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      return app.view.tileCentre(k.x - 1, k.y + 2);
+    });
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    await expect(page.locator('#place-ok')).toHaveClass(/coach-pulse/);
+    await page.locator('#place-ok').click();
+    await expect(page.locator('#coach')).toContainText(/Rumah/);
+    await page.locator('#coach-skip').click();
+    await expect(page.locator('#coach')).toBeHidden();
+  });
+
+  test('Skip ends the opener for good, even after a reload', async ({ page }) => {
+    await page.goto(`/?debug&coach&lang=${lang()}`);
+    await passHome(page);
+    await page.locator('#howtoGo').click();
+    await expect(page.locator('#coach')).toBeVisible();
+    await page.locator('#coach-skip').click();
+    await expect(page.locator('#coach')).toBeHidden();
+    await page.reload();
+    await passHome(page);
+    await page.waitForTimeout(600);
+    await expect(page.locator('#coach')).toBeHidden();
+  });
+});
+
 test.describe('tips', () => {
   test('a mechanic is taught once, on tap, and Skip tips silences the rest', async ({ page }) => {
     const RANKED = { id: 'Tiap tahun kamu diperingkat.', en: 'Every year you are ranked.' }[lang()];

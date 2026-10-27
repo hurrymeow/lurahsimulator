@@ -4,6 +4,8 @@ import { deserialize } from '../sim/save';
 import { storage } from '../storage';
 import { h } from './dom';
 import { hasSeenHowto, resetHowto, showHowto } from './howto';
+import { resetCoach } from './coach';
+import { resetBuildSeen } from './build';
 import { resetTips } from './tips';
 import { openSettings } from './settings';
 
@@ -27,6 +29,8 @@ export function showHome(app: App, install: HTMLButtonElement): void {
       app.newGame();
       resetHowto();
       resetTips();
+      resetBuildSeen();
+      resetCoach();
     }
     leave();
     if (!hasSeenHowto()) showHowto(app, true);
