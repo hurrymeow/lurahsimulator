@@ -331,7 +331,7 @@ test.describe('events, ranking, settings', () => {
   test('yearly report card is legible, pauses the game and dismisses on tap', async ({ page }) => {
     await start(page);
     await dismissModals(page);
-    // Tips off: an arrival on the month before the report would be shown first and hold it back.
+    // An arrival on the month before the report can show a tip first, so the loop below taps tips away.
     await skipTips(page);
     await seed(page);
     const title = (n: number) => ({ id: `Laporan tahun ${n}`, en: `Year ${n} report` })[lang()];
@@ -345,6 +345,11 @@ test.describe('events, ranking, settings', () => {
     for (let i = 0; i < 3; i++) {
       if ((await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month)) >= 12) break;
       await runMonth(page);
+      // A tip can land first. Tap it away; the report waits behind it.
+      for (let k = 0; k < 4 && (await page.locator('#modal').isVisible()) && !(await page.locator('#modal .card.report-card').isVisible()); k++) {
+        await page.locator('#modal .tap-hint').click();
+        await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+      }
     }
     await expect(page.locator('#modal .card.report-card')).toBeVisible();
     await expect(page.locator('#modal .card h2')).toHaveText(title(1));
