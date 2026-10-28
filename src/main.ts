@@ -22,6 +22,7 @@ import { openMenu } from './ui/menu';
 import { closeSheet } from './ui/sheet';
 import { registerSystems } from './systems';
 import { setupConsole } from './ui/console';
+import { observeStatIcons } from './ui/statIcons';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -55,6 +56,7 @@ app.refresh();
 setupGoal(app);
 setupCoach(app);
 setupConsole(app);
+observeStatIcons();
 // Second install button on the home screen. Hidden when installed or not offered.
 const homeInstall = h('button', { class: 'btn home-install', id: 'home-install', hidden: true }, t('menu.install'));
 setupInstall(homeInstall, (text) => app.modal({ title: t('install.title'), body: text, tone: 'info' }));

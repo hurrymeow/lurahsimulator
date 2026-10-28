@@ -448,6 +448,7 @@ export const EN = {
   'combo.ruleJob': 'Also needs a resident working as {job}.',
   'combo.notice': 'Combo: {name}',
   'combo.noticeBody': '{story} {effect} Logged in Combo.',
+  'combo.perMonth': '/mo',
 
   // stats, log, notices
   'stats.title': 'Kas, warga, ranking',

@@ -452,7 +452,10 @@ test.describe('events, ranking, settings', () => {
       await expectLegible(page, `event ${id}`);
       await card.locator('.btn').last().click();
       for (const chip of await page.locator('#modal .outcome-chip').all()) {
-        expect((await chip.locator('.outcome-name').textContent())?.trim(), `${id} result row has no word`).toBeTruthy();
+        // A stat word is now an icon that carries the name in aria-label, with the number beside it (UI.md rule 6).
+        const name = chip.locator('.outcome-name');
+        const word = ((await name.textContent())?.trim() || (await name.locator('[data-stat]').first().getAttribute('aria-label'))) ?? '';
+        expect(word, `${id} result row has no word`).toBeTruthy();
       }
       await expectLegible(page, `result of ${id}`);
       await page.locator('#modal .tap-hint').click();
@@ -2000,6 +2003,31 @@ test.describe('zoom, big lots and the Warga list', () => {
     await page.locator('#sheet .ls-chip').first().click();
     await expect(page.locator('#res-xp')).toBeVisible();
     await expectLegible(page, 'resident experience line');
+  });
+
+  test('stat words become icons, combo tiles show data chips, and Rp amounts stay words', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await openPanel(page, 'combo');
+    const tile = page.locator('#sheet .ls-tile').first();
+    // Tongkrongan, the first combo: warung income, plus two per-month stats.
+    await expect(tile.locator('.ls-desc .ls-amt')).toHaveCount(3);
+    await expect(tile.locator('.ls-desc')).toContainText(/x1[,.]5/);
+    await expect(tile).toHaveAttribute('aria-label', /Tongkrongan/);
+    await tile.click();
+    const detail = page.locator('#sheet .ls-detail');
+    await expect(detail).toBeVisible();
+    // The detail effect is running text, so the observer iconifies its stat words.
+    await expect(detail.locator('[data-stat]')).toHaveCount(2);
+    const detailText = await detail.textContent();
+    expect(detailText).not.toContain('Popularitas');
+    // Tapping an icon shows its one-line name, and the toast itself stays plain.
+    await detail.locator('[data-stat]').first().click();
+    await expect(page.locator('.stat-toast')).toBeVisible();
+    await expect(page.locator('.stat-toast')).toHaveAttribute('data-plain', '');
+    await page.locator('.sheet-head .btn').click();
+    await openPanel(page, 'wacana');
+    await expect(page.locator('#sheet', { hasText: /Rp 40(rb|k)/ })).toBeVisible();
   });
 
   test('a long goal keeps to one line and opens in full on tap', async ({ page }) => {
