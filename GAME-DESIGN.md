@@ -33,8 +33,8 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 ### Clarity
 
 - Unmet requirements always say exactly what is missing.
-- Discovered combos are auto-logged in the in-game Buku Combo.
-- The Buku Combo is a column of full-width cards, one per row, under filter buttons (All, ✓ active, ★ found, ? not yet, each with its count). A card shows the name, the buildings (greyed when missing, silhouettes before it is in town) and a state mark on one line, and the effect in two lines below. Tapping a card opens the whole entry below it: effect, conditions, status and, once discovered, the story (`src/ui/lists.ts`).
+- Discovered combos are auto-logged in the in-game Combo.
+- The Combo book is a column of full-width cards, one per row, under filter buttons (All, ✓ active, ★ found, ? not yet, each with its count). A card shows the name, the buildings (greyed when missing, silhouettes before it is in town) and a state mark on one line, and the effect in two lines below. Tapping a card opens the whole entry below it: effect, conditions, status and, once discovered, the story (`src/ui/lists.ts`).
 - The Warga list opens on a summary line (headcount and what everyone makes a month) and filter buttons: By job (default) and No job (with its count). People sit in boxes per job, headed by the workplace sprite, the headcount and the group's monthly output; each person is a chip with their name. Warga have no star rating (stars are for staff); a resident's own sheet shows their experience as a line, such as "18 months in this job: output +40%". No job comes first, marked red.
 - Speed control: pause, 1x, 2x, 4x.
 - Text advances on tap, never on a timer.

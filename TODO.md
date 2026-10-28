@@ -112,18 +112,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Reword in `src/i18n/id.ts` and `en.ts` to say build a house to raise the population cap or attract residents. Keep it short at 320px.
   - Source: Hari, 2026-10-28
   - `open · — · — · done when:` the beds goal reads clearly in ID and EN and fits at 320px.
-- [ ] **Rename the menu entry "Kas & peringkat" to "Peringkat".**
-  - Problem: `menu.stats` in `src/i18n/id.ts` is too long.
-  - Why: Longer labels clip and add noise.
-  - Suggested solution: Shorten to Peringkat and keep the EN label matching.
-  - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` the menu says Peringkat in ID, EN has the matching short label, and nothing clips at 320px. Both languages checked.
-- [ ] **Rename "Buku Combo" to "Combo".**
-  - Problem: "Buku Combo" appears in `menu.combo`, `how.4.body`, `combo.noticeBody` and `src/ui/lists.ts`.
-  - Why: Hari wants the shorter name.
-  - Suggested solution: Search `src/i18n/id.ts` and `en.ts` for every use and rename. Check `decisions/resource-names.md`.
-  - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` "Buku Combo" no longer shows to the player in ID or EN. Both languages checked.
 - [ ] **Put the combo goal ahead of "build a house" in the goal strip.**
   - Problem: `shortGoal` (`src/sim/nextstep.ts`) shows the combo goal only while `discovered.length === 0` after `COMBO_HINT_MONTH`, and the beds goal can win before that.
   - Why: Hari asks why "Kini: bangun Rumah untuk tambah kamar" outranks finding a combo, when the 1★ needs a combo.
@@ -139,7 +127,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
-Nothing yet.
+- Menu labels shortened: "Kas & peringkat" to "Peringkat" and "Buku Combo" to "Combo" (ID), with EN "Ranking" and "Combo". See `progress/short-menu-labels.md`.
 
 ## Ideas
 
