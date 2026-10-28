@@ -33,6 +33,8 @@ Open tasks and ideas that are not done yet. Each task reads `[ ] status · owner
   4. Cross-check the strings against `src/i18n` for English left in `id`, and against `decisions/resource-names.md`. Keep the deliberate names (for example Orang Dalam).
   5. Skip stat words. The icons-for-stats plan (`/mnt/project-files/plans/icons-for-stats-plan.md`) replaces them with icons.
   6. Return the table to Hari. After Hari picks, edit strings in one PR, run `npm run e2e` (id and en), and log the choices in `decisions/`.
+- [ ] **Fit the tutorial dialogue to the game column on desktop.** On a desktop browser the tutorial dialogue bar (Inem) spans the whole window instead of the centred game column, so it sits detached from the game. The screenshot also shows a Skip button, but tip cards have no Skip, only "Tap to continue" (see AGENTS.md and UI.md). Source: Hari, 2026-10-28.
+  `open · — · — · done when:` the dialogue fits the game column at desktop widths, has no Skip button, and an e2e test at a desktop viewport covers it.
 
 ## Done
 
