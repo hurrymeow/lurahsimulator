@@ -7,7 +7,7 @@ describe('short goal', () => {
     const s = newGame(1);
     if (!s.buildings.some((b) => b.def === 'rumah')) expect(shortGoal(s)).toBe('Now: build your first Rumah.');
     addBuilding(s, 'rumah', 5, 5, 'active');
-    expect(shortGoal(s)).toMatch(/^Now: (reach \d+ residents|build a Rumah for more beds)\.$/);
+    expect(shortGoal(s)).toMatch(/^Now: (reach \d+ residents|build a Rumah to house more residents)\.$/);
   });
 
   it('names the easiest combo once it is time and none is found', () => {

@@ -94,12 +94,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Replace the month tests with the action that makes the tip matter, and say the reason in the tip.
   - Source: Hari, 2026-10-28
   - `open · — · — · done when:` no tip fires on month alone, each fires from a player action or a state it explains, and says what the player gains. Check against GAME-DESIGN.md section 3.
-- [ ] **Reword "Bangun Rumah untuk tambah kamar" in the goal strip.**
-  - Problem: The line (`goal.short.beds`) makes no sense in Indonesian. EN is "Now: build a Rumah for more beds."
-  - Why: The player does not learn that houses raise the population cap and attract residents.
-  - Suggested solution: Reword in `src/i18n/id.ts` and `en.ts` to say build a house to raise the population cap or attract residents. Keep it short at 320px.
-  - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` the beds goal reads clearly in ID and EN and fits at 320px.
 - [ ] **Rename the menu entry "Kas & peringkat" to "Peringkat".**
   - Problem: `menu.stats` in `src/i18n/id.ts` is too long.
   - Why: Longer labels clip and add noise.
@@ -127,6 +121,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- **Reword the goal strip's beds line.** Done in the house-goal reword PR: `goal.short.beds` now says a Rumah houses more residents, in EN and ID. See `progress/house-goal-reword.md`.
 - [x] **Play a sound on every menu click.** Shipped in `progress/menu-click-sound.md`.
 
 ## Ideas
