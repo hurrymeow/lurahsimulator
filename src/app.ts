@@ -147,6 +147,14 @@ export class App {
     const running = simRunning(inputs);
     if (autoPauseStarted(this.wasRunning, inputs)) this.acc = 0;
     this.wasRunning = running;
+    // A popup queued while a sheet was open waits for the sheet to close,
+    // instead of covering the sheet the player is reading. The next frame
+    // after close shows it, so no queued popup is lost.
+    const modalEl = document.getElementById('modal');
+    if (modalEl && modalEl.hidden && !sheetOpen()) {
+      if (this.modalQueue.length > 0) this.showModal();
+      else if (this.s.pendingEvent) this.showEvent();
+    }
     if (running) {
       this.acc += dt * this.speed;
       while (this.acc >= MONTH_MS) {
@@ -215,7 +223,7 @@ export class App {
     }
     if (this.showEventSoon) {
       this.showEventSoon = false;
-      if (this.modalQueue.length === 0) this.showEvent();
+      if (this.modalQueue.length === 0 && !sheetOpen()) this.showEvent();
     }
   }
 
@@ -274,6 +282,9 @@ export class App {
     const e = this.s.pendingEvent ? eventDef(this.s.pendingEvent) : undefined;
     const el = document.getElementById('modal')!;
     if (!e) return;
+    // A card over an open sheet would block the sheet, so it waits. The
+    // frame loop shows it once the sheet closes, and time is already held.
+    if (sheetOpen()) return;
     const choices = e.choices.map((c, i) => {
       const check = checkChoice(this.s, c);
       const cost = eventCost(this.s, c);
@@ -418,7 +429,9 @@ export class App {
   modal(n: Notice & { fanfare?: boolean }): void {
     this.log.unshift(n);
     this.modalQueue.push(n);
-    if (this.modalQueue.length === 1) this.showModal();
+    // A card over an open sheet would block the sheet, so a first card
+    // queued while a sheet is open waits for the frame loop after close.
+    if (this.modalQueue.length === 1 && !sheetOpen()) this.showModal();
   }
 
   /** True when a tip can show without stacking on another message. Never while the home screen is open. */
@@ -430,8 +443,13 @@ export class App {
     const n = this.modalQueue[0];
     const el = document.getElementById('modal')!;
     if (!n) {
-      if (this.s.pendingEvent) this.showEvent();
+      if (this.s.pendingEvent && !sheetOpen()) this.showEvent();
       else el.hidden = true;
+      return;
+    }
+    // Dismissing one card must not drop the next card over an open sheet.
+    if (sheetOpen()) {
+      el.hidden = true;
       return;
     }
     el.replaceChildren(
@@ -712,6 +730,15 @@ export class App {
         this.tapPlacing(tile);
         return;
       }
+      // A walker wins over the tile under them, so tapping a resident on a
+      // path opens their sheet, not the path's. Sprite first, then ground
+      // tile, so a tap on either the walker or where they stand works.
+      const walker = this.view.crowd.hit(e.clientX - rect.left, e.clientY - rect.top, this.view.project, this.view.scale)
+        ?? this.view.crowd.onTile(tile.x, tile.y);
+      if (walker) {
+        this.openResident(walker.id);
+        return;
+      }
       const b = buildingAt(this.s, tile.x, tile.y);
       if (b) this.inspect(b.uid);
       else if (lotAt(tile.x, tile.y) === 'other') this.actions.find((a) => a.id === 'neighbours')?.open(this);
@@ -721,6 +748,8 @@ export class App {
   }
 
   inspect: (uid: number) => void = () => {};
+
+  openResident: (id: number) => void = () => {};
 
   openLog(): void {
     openSheet(t('log.title'), this.log.length ? this.log.map((n) => h('div', { class: `log-row tone-${n.tone}` }, h('strong', {}, n.title), h('p', {}, n.body))) : [h('p', {}, t('page.nothingYet'))]);

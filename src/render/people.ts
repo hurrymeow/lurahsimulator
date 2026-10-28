@@ -434,4 +434,38 @@ export class Crowd {
   near(x: number, y: number, r: number): boolean {
     return this.people.some((p) => Math.abs(p.fx - x - 0.5) + Math.abs(p.fy - y - 0.5) < r);
   }
+
+  /**
+   * Walker whose sprite is under a canvas point, or null. The hit box is at
+   * least 48px, centred on the sprite, so a small walker is tappable. On a
+   * tie the frontmost walker wins, matching draw order. VIP walkers are not
+   * residents, so they never win.
+   */
+  hit(px: number, py: number, project: Project, scale: number): Walker | null {
+    let best: Walker | null = null;
+    let bestScore = Infinity;
+    for (const p of this.people) {
+      if (p.away || p.id < 0) continue;
+      const rows = p.kind === 'ojol' ? OJOL[0] : p.kind === 'vip' ? VIP[0] : p.kind === 'influencer' || p.kind === 'buzzer' ? PHONE[0] : WALK[0];
+      const w = (rows[0].length + 2) * scale;
+      const h = (rows.length + 2) * scale;
+      const g = project(p.fx, p.fy);
+      const cx = g.x;
+      const cy = g.y - h / 2 + 2 * scale;
+      const dx = px - cx;
+      const dy = py - cy;
+      if (Math.abs(dx) > Math.max(w / 2, 24) || Math.abs(dy) > Math.max(h / 2, 24)) continue;
+      const score = Math.hypot(dx, dy) - (p.fx + p.fy) * 0.001;
+      if (score < bestScore) {
+        bestScore = score;
+        best = p;
+      }
+    }
+    return best;
+  }
+
+  /** Walker standing on a tile, or null. Used when a tap lands on their ground tile, not their sprite. */
+  onTile(x: number, y: number): Walker | null {
+    return this.people.find((p) => !p.away && p.id >= 0 && Math.floor(p.fx) === x && Math.floor(p.fy) === y) ?? null;
+  }
 }
