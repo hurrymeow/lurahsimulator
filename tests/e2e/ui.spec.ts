@@ -780,7 +780,7 @@ test.describe('text is legible and never cut off', () => {
     expect(tile).toBeGreaterThanOrEqual(32);
   });
 
-  test('tapping a tall building above its tile opens that building', async ({ page }) => {
+  test('tapping a tall building above its tile does not open it, only its base does', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     const box = (await page.locator('#map').boundingBox())!;
@@ -788,11 +788,18 @@ test.describe('text is legible and never cut off', () => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
       const c = app.view.tileCentre(k.x, k.y);
-      // Aim at the roof, which overlaps the tile behind on screen. A level-1 Kantor RT is a low house,
-      // so aim just under its ridge: still above the tile's own top corner.
+      // Aim at the roof, which overlaps the tile behind on screen. Taps ignore the sprite, so this must not open it.
       return { x: c.x, y: c.y - app.view.tile * 0.9 };
     });
     await page.mouse.click(box.x + at.x, box.y + at.y);
+    await expect(page.locator('.sheet-head')).toHaveCount(0);
+    await dismissModals(page);
+    const base = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      return app.view.tileCentre(k.x, k.y);
+    });
+    await page.mouse.click(box.x + base.x, box.y + base.y);
     await expect(page.locator('.sheet-head')).toContainText('Kantor RT');
   });
 
@@ -1673,6 +1680,26 @@ test.describe('zoom, big lots and the Warga list', () => {
       await expect(page.locator('#sheet h2').first()).toContainText('Lapangan');
       await page.locator('#sheet .sheet-head .btn-icon').click();
     }
+  });
+});
+
+test.describe('map taps', () => {
+  test('a tap on a building hidden behind a taller one still opens it', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const at = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      const mk = (uid: number, def: string, x: number, y: number) => ({ uid, def, x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      // The Warung sits behind; a taller Kantor RT one tile down-screen of it covers its sprite.
+      app.s.buildings.push(mk(9101, 'warung', k.x - 5, k.y - 5), mk(9102, 'kantorRT', k.x - 4, k.y - 4));
+      app.refresh();
+      const r = document.getElementById('map')!.getBoundingClientRect();
+      const c = app.view.tileCentre(k.x - 5, k.y - 5);
+      return { x: r.left + c.x, y: r.top + c.y };
+    });
+    await page.mouse.click(at.x, at.y);
+    await expect(page.locator('#sheet h2').first()).toContainText(lang() === 'en' ? 'Warung' : 'Warung');
   });
 });
 

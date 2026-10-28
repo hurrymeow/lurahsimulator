@@ -259,19 +259,8 @@ export class MapView {
     return { x: this.ox + ((x - y) * TW * this.scale) / 2, y: this.oy + ((x + y) * TH * this.scale) / 2 };
   }
 
-  /**
-   * Tile under a point. With buildings on, a tap on a tall building's body picks that building's
-   * tile, front-most first, instead of the ground tile behind it.
-   */
-  tileAt(px: number, py: number, buildings = false): { x: number; y: number } | null {
-    if (buildings)
-      for (let k = this.hits.length - 1; k >= 0; k--) {
-        const h = this.hits[k];
-        const raw = Math.floor((px - h.left) / (this.scale * h.k));
-        const ax = h.flip ? h.art.canvas.width - 1 - raw : raw;
-        const ay = Math.floor((py - h.top) / (this.scale * h.k));
-        if (ax >= 0 && ay >= 0 && ax < h.art.canvas.width && ay < h.art.canvas.height && h.art.alpha[ay * h.art.canvas.width + ax] > 0) return { x: h.x, y: h.y };
-      }
+  /** Ground tile under a point. Taps hit a building's base tiles, never its sprite, so a tall building cannot hide the one behind it. */
+  tileAt(px: number, py: number): { x: number; y: number } | null {
     const a = (px - this.ox) / ((TW * this.scale) / 2);
     const b = (py - this.oy) / ((TH * this.scale) / 2);
     const x = Math.floor((a + b) / 2);
