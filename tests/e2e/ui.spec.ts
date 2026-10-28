@@ -1009,7 +1009,9 @@ test.describe('walkers and effects', () => {
     const insideNow = () =>
       page.evaluate(() => {
         const app = (window as unknown as { pakrt: any }).pakrt;
-        const solid = app.s.buildings.filter((b: any) => !['biopori', 'parkir', 'jalan'].includes(b.def));
+        // The seed can drop a building on a tile the auto-jobs later pave, so a road under a building still counts as a road.
+        const paved = new Set(app.s.buildings.filter((b: any) => b.def === 'jalan').map((b: any) => `${b.x},${b.y}`));
+        const solid = app.s.buildings.filter((b: any) => !['biopori', 'parkir', 'jalan'].includes(b.def) && !paved.has(`${b.x},${b.y}`));
         return app.view.crowd.people.filter((p: any) => solid.some((b: any) => b.x === Math.floor(p.fx) && b.y === Math.floor(p.fy))).map((p: any) => p.id as number);
       });
     const first = await insideNow();
@@ -1604,13 +1606,14 @@ test.describe('build mode', () => {
       const tops = await tabs.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
       expect(new Set(tops).size, `tab tops ${tops}`).toBe(1);
     }
-    // Jalan Setapak leads the first tab, since nothing works without a path.
-    await expect(page.locator('#sheet .card-btn').first()).toContainText(/Jalan Setapak/);
+    // Jalan Setapak lives in Decor, not on the first tab.
+    await expect(page.locator('#sheet .card-btn', { hasText: /Jalan Setapak/ })).toHaveCount(0);
     // A card says "no permit" once: the blurb and the meta line must not both carry it.
     const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
     expect(((await rumah.innerText()).match(/no permit|tanpa izin/gi) ?? []).length).toBe(1);
     await page.locator('#sheet .tabs .tab[data-tab="decoration"]').click();
-    await expect(page.locator('#sheet .card-btn').first()).toBeVisible();
+    // Jalan Setapak leads the Decor tab, since nothing works without a path.
+    await expect(page.locator('#sheet .card-btn').first()).toContainText(/Jalan Setapak/);
     await expect(page.locator('#sheet .tabs .tab[data-tab="decoration"]')).toHaveAttribute('aria-pressed', 'true');
     await expectLegible(page, 'decor tab');
   });

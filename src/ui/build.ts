@@ -90,10 +90,8 @@ export function openBuild(app: App): void {
   const show = (c: BuildCategory) => {
     tab = c;
     lastTab = c;
-    // Jalan Setapak leads the first tab and its own, since nothing works without a path.
-    const here = visible.filter((d) => categoryOf(d) === c);
-    const path = visible.find((d) => d.id === 'jalan');
-    const rows = path && c === tabs[0] && !here.includes(path) ? [path, ...here] : here.sort((a, b) => Number(b.id === 'jalan') - Number(a.id === 'jalan'));
+    // Jalan Setapak leads the Decor tab it lives on, since nothing works without a path.
+    const rows = visible.filter((d) => categoryOf(d) === c).sort((a, b) => Number(b.id === 'jalan') - Number(a.id === 'jalan'));
     list.replaceChildren(...rows.map(card));
     bar.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tab === c)));
   };

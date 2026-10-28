@@ -64,12 +64,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Constrain the dialogue to the game column width and remove the Skip button from tip cards.
   - Source: Hari, 2026-10-28
   - `open · — · — · done when:` the dialogue fits the game column at desktop widths, has no Skip button, and an e2e test at a desktop viewport covers it.
-- [ ] **Move Jalan Setapak into the Decor tab.**
-  - Problem: Jalan Setapak leads the first Build tab (`src/ui/build.ts`).
-  - Why: Hari says it can just sit in Decor, which would clear the first tab for real buildings. The paced tutorial relies on it being first, so check `decisions/` for Selokan and Jalan Setapak.
-  - Suggested solution: Move it to Decor and update the tutorial pointer.
-  - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` Jalan Setapak is listed under Decor, the tutorial still points the player to it, and EN and ID e2e pass.
 - [ ] **Make the pause state obvious, and freeze animation when paused.**
   - Problem: In build mode especially, pause is easy to miss. Trees still move while paused.
   - Why: The player can think the game is running, or think it is broken.
@@ -100,12 +94,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Replace the month tests with the action that makes the tip matter, and say the reason in the tip.
   - Source: Hari, 2026-10-28
   - `open · — · — · done when:` no tip fires on month alone, each fires from a player action or a state it explains, and says what the player gains. Check against GAME-DESIGN.md section 3.
-- [ ] **Reword "Bangun Rumah untuk tambah kamar" in the goal strip.**
-  - Problem: The line (`goal.short.beds`) makes no sense in Indonesian. EN is "Now: build a Rumah for more beds."
-  - Why: The player does not learn that houses raise the population cap and attract residents.
-  - Suggested solution: Reword in `src/i18n/id.ts` and `en.ts` to say build a house to raise the population cap or attract residents. Keep it short at 320px.
-  - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` the beds goal reads clearly in ID and EN and fits at 320px.
 - [ ] **Put the combo goal ahead of "build a house" in the goal strip.**
   - Problem: `shortGoal` (`src/sim/nextstep.ts`) shows the combo goal only while `discovered.length === 0` after `COMBO_HINT_MONTH`, and the beds goal can win before that.
   - Why: Hari asks why "Kini: bangun Rumah untuk tambah kamar" outranks finding a combo, when the 1★ needs a combo.
@@ -122,6 +110,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 ## Done
 
 - Menu labels shortened: "Kas & peringkat" to "Peringkat" and "Buku Combo" to "Combo" (ID), with EN "Ranking" and "Combo". See `progress/short-menu-labels.md`.
+- **Reword the goal strip's beds line.** Done in the house-goal reword PR: `goal.short.beds` now says a Rumah houses more residents, in EN and ID. See `progress/house-goal-reword.md`.
 - [x] **Play a sound on every menu click.** Shipped in `progress/menu-click-sound.md`.
 
 ## Ideas
