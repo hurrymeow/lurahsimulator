@@ -415,6 +415,8 @@ test.describe('events, ranking, settings', () => {
   });
 
   test('every event shows prices in one piece, and every result row names its resource', async ({ page }) => {
+    // 25 events at about 40s on a good runner. Shared runners hit the 60s default.
+    test.slow();
     await start(page);
     await dismissModals(page);
     await skipTips(page);
