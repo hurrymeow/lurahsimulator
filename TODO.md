@@ -144,6 +144,13 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Source: Hari, 2026-10-28
   - `open · — · — · done when:` Balai RW is 2x2 with new art per ART.md, the agreed extra buildings are larger with art, the footprint tests and combo tests pass, nothing clips at 320px, and the artist's sprites are untouched.
 
+- [ ] **Show the combo's buildings on the combo pop-up.**
+  - Problem: The "Combo: ..." fanfare card (`discoverCombos` in `src/sim/combos.ts`, shown by `showModal` in `src/app.ts`) is text only: the story, the effect and "Tercatat di Combo". It does not show which buildings made it.
+  - Why: The player cannot see what triggered the combo, so it is hard to learn or repeat. A picture of the buildings teaches it at a glance.
+  - Suggested solution: Add the members' sprites in a row under the title, joined by "+", at the level they stand (for example Warung + Koperasi). Reuse `members()` from the Buku Combo in `src/ui/lists.ts` and pass it as the notice's `extra` (the combo fx needs the combo id or the member defs and levels). Sprites only, no new art. Keep the card within UI.md rules 5 and 8 at 320px.
+  - Source: Julian, 2026-10-29
+  - `open · — · — · done when:` every combo pop-up shows its member buildings as sprites under the title, nothing clips at 320px in ID, and an e2e test covers it.
+
 ## Done
 
 - Menu labels shortened: "Kas & peringkat" to "Peringkat" and "Buku Combo" to "Combo" (ID), with EN "Ranking" and "Combo". See `progress/short-menu-labels.md`.
