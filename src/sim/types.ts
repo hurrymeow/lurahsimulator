@@ -219,6 +219,8 @@ export interface BuildingDef {
   income: number;
   attract: number;
   housing?: number;
+  /** Beds at each level, from level 1, when a level adds beds. Defaults to `housing` at every level. */
+  housingLevels?: number[];
   perMonth?: Partial<Resources>;
   permitMonths: number;
   buildMonths: number;

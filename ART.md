@@ -227,6 +227,12 @@ faceless, so the map stays readable.
   Warung: tarp-roofed gerobak, zinc-roofed kiosk, whitewashed brick with a tile roof and an awning.
   Pos ronda: bamboo balai-balai under rumbia, wooden hut, green-and-white siskamling post. Kantor RT:
   a front room with a nameboard, the office with a flag, a pendopo under a joglo roof.
+- Houses grow, not just fence in. Rumah: the bungalow, then a teras canopy in the roof colour on
+  two posts over the door, then a rumah tingkat with a balcony rail on the upper floor. Every roof
+  shape and colour carries through all three levels. Kos-kosan is tall and narrow from level 1 (two
+  floors of rooms under a pelana, a steel stair up the side), then a third floor with a flat dak, a
+  tandon and a jemuran on the deck. A house's housing type reads from its silhouette: squat rumah,
+  long low kontrakan, tall kos.
 - A level never grows more than one storey (8px) over level 1, and nothing but the wifi tower goes
   above 28px. A building that grows taller would hide the small ones behind it. `tests/art.test.ts`
   checks both.
@@ -245,7 +251,7 @@ faceless, so the map stays readable.
   Minimalis houses (shed, flat) get batu alam on the corners, and a flat roof carries a tandon.
 - Gable ends and a shed's side are wall, with a small vent near the peak.
 - Each shop type has its own roof, so a row of shops reads as a street.
-- No roof shape rises above the hipped roof of the same house. `tests/art.test.ts` checks it.
+- No roof shape rises above the hipped roof of the same house at the same level. `tests/art.test.ts` checks it.
 - The bank sampah is a TPS: an open concrete bak heaped with bags, a green sign, no roof.
 
 ## Terraced hills and icons

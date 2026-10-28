@@ -5,7 +5,7 @@ import { rupiah } from '../format';
 import { def } from '../sim/content';
 import { checkDemolish, checkSkipPermit, checkUpgrade, demolish, rotateBuilding, skipPermit, upgrade } from '../sim/rules';
 import { REFUND } from '../sim/balance';
-import { byUid, levelMult, pathMult, upgradeCost } from '../sim/state';
+import { bedsOf, byUid, levelMult, pathMult, upgradeCost } from '../sim/state';
 import { brandKind, brandOf, displayName, hasBrand, hasOwnName, kanibal, nextBrand, rename, sisterOutlets } from '../sim/brands';
 import { FRANCHISE, KANIBAL, NAME_MAX } from '../data/brands';
 import { premanTake } from '../sim/needs';
@@ -80,7 +80,7 @@ export function inspect(app: App, uid: number): void {
     lines.push(h('p', { class: 'meta' }, t('insp.perMonth', { bits: bits.join(' · ') })));
   }
   const popBits: string[] = [];
-  if (d.housing) popBits.push(t('insp.houses', { n: d.housing }));
+  if (d.housing) popBits.push(t('insp.houses', { n: bedsOf(b) }));
   if (d.attract) popBits.push(t('insp.attracts', { n: Math.round(d.attract * levelMult(b.level) * 10) / 10 }));
   if (popBits.length) lines.push(h('p', { class: 'meta' }, popBits.join(' · ')));
   const pm = pathMult(s, b);
