@@ -126,6 +126,27 @@ export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'petani'
 /** Trouble that has shown up at least once. Some buildings open only when their problem appears. */
 export type ProblemId = 'banjir' | 'jobless' | 'permitQueue' | 'preman';
 
+export interface PlayerInfo {
+  title: 'Pak' | 'Bu';
+  name: string;
+  kampung: string;
+}
+
+/** What is true for the warga: fed, in work, safe. Sejahtera is their average. */
+export interface Meters {
+  perut: number;
+  kerja: number;
+  aman: number;
+}
+
+export interface RealisasiState {
+  id: string;
+  /** Month the program starts to work. */
+  landsAt: number;
+  /** Month it stops working. Infinity for a lasting one. */
+  endsAt: number;
+}
+
 export interface Requirement {
   /** Opens once this problem has shown up in the kampung, so the fix arrives with the trouble. */
   problem?: ProblemId;
@@ -227,8 +248,10 @@ export interface Resident {
   manual?: boolean;
   /** Months spent employed. Level comes from this (see levelFor in data/jobs.ts). Absent in older saves. */
   xp?: number;
-  /** Months in a row with no job. Long idleness is the jobless problem (and, later, preman). */
+  /** Months in a row with no job. Long idleness is the jobless problem, and can make a preman. */
   idle?: number;
+  /** Idle too long while the kampung felt unsafe. Takes uang keamanan from a shop until given a job. */
+  preman?: boolean;
 }
 
 export interface WacanaState {
@@ -309,6 +332,12 @@ export interface GameState {
   unlocked: string[];
   /** Problems that have shown up at least once, for the buildings they open. */
   problems?: ProblemId[];
+  /** Who the player is and what their first kampung is called. Absent in old saves: the defaults. */
+  player?: PlayerInfo;
+  /** Perut, Kerja and Aman, 0 to 100, as of the last month. Absent until the first month passes. */
+  meters?: Meters;
+  /** Programs actually carried out (Realisasi), each with the month it lands and the month it ends. */
+  realisasi?: RealisasiState[];
   wacana: WacanaState[];
   modifiers: Modifier[];
   ranking: RankingResult[];

@@ -17,7 +17,10 @@ async function passHome(page: Page): Promise<void> {
   await page.locator('#home-start').click();
   const cont = page.locator('#home-continue');
   if (await cont.isVisible()) await cont.click();
-  else await page.locator('#home-new').click();
+  else {
+    await page.locator('#home-new').click();
+    await page.locator('#home-begin').click();
+  }
   await expect(page.locator('#home')).toHaveCount(0);
 }
 
@@ -526,7 +529,8 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#sheet')).toContainText('Kampung Sebelah');
     await expect(page.locator('#sheet')).toContainText('Indonesia Emas 2045');
     await expectLegible(page, 'stats with ranking');
-    await expect(page.locator('#emas-value')).toHaveText(/^\d+\.\d{2}%$/);
+    // The 2045 meter shows Sejahtera, a whole percent.
+    await expect(page.locator('#emas-value')).toHaveText(/^\d{1,3}%$/);
   });
 
   test('every setting flips, saves, and leaves the game readable', async ({ page }) => {
@@ -1439,7 +1443,16 @@ test.describe('home screen', () => {
     await expect(page.locator('#home-continue')).toHaveCount(0);
     await expectLegible(page, 'home choice, no save');
     await page.locator('#home-new').click();
+    // New game asks who the player is first; the dice fill both names.
+    await expect(page.locator('#home-name')).not.toHaveValue('');
+    await expect(page.locator('#home-kampung')).not.toHaveValue('');
+    await expectLegible(page, 'home naming');
+    await page.locator('[data-title="Bu"]').click();
+    await page.locator('#home-name').fill('Sari');
+    await page.locator('#home-kampung').fill('Melati');
+    await page.locator('#home-begin').click();
     await expect(page.locator('#home')).toHaveCount(0);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.player)).toEqual({ title: 'Bu', name: 'Sari', kampung: 'Kampung Melati' });
     await expect(page.locator('#howto')).toBeVisible();
   });
 
@@ -1468,6 +1481,7 @@ test.describe('home screen', () => {
     await page.locator('#home-start').click();
     await page.locator('#home-new').click();
     await page.locator('#home-wipe').click();
+    await page.locator('#home-begin').click();
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.res.rupiah)).not.toBe(777_000);
     await expect(page.locator('#howto')).toBeVisible();
   });
@@ -1636,6 +1650,22 @@ test.describe('build mode', () => {
     await page.locator('.name-row .btn').click();
     await expect(page.locator('#sheet h2')).toHaveText('Warung Kenangan');
     await expectLegible(page, 'inspector after rename');
+  });
+
+  test('each policy offers Wacana and Realisasi, and the 2045 meter explains Sejahtera', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => { (window as unknown as { pakrt: any }).pakrt.s.res.rupiah = 50_000_000; });
+    await openPanel(page, 'wacana');
+    await expect(page.locator('#sheet .realisasi')).toHaveCount(5);
+    await expectLegible(page, 'wacana and realisasi');
+    await page.locator('#sheet .realisasi .btn-primary').last().click();
+    await expect(page.locator('#sheet .realisasi .good').last()).toBeVisible();
+    await page.locator('.sheet-head .btn').click();
+    await page.locator('#emas').click();
+    await expect(page.locator('#modal .card')).toContainText('Perut');
+    await expect(page.locator('#modal .inem-head')).toBeVisible();
+    await expectLegible(page, 'sejahtera card');
   });
 
   test('a path takes a start tile, an end tile and Yes', async ({ page }) => {

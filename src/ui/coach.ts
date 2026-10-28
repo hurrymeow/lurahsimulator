@@ -3,6 +3,7 @@ import type { App } from '../app';
 import { def } from '../sim/content';
 import { storage } from '../storage';
 import { h } from './dom';
+import { inemURL } from '../render/inem';
 
 const KEY = 'pakrt.coach';
 const DONE_MS = 20_000;
@@ -34,7 +35,9 @@ export function setupCoach(app: App): void {
   if (!enabled) return;
   const text = h('p', { class: 'coach-text', role: 'status', 'aria-live': 'polite' });
   const next = h('button', { class: 'btn', id: 'coach-skip', onclick: () => finish() }, t('coach.skip'));
-  const bar = h('div', { id: 'coach', class: 'coach', hidden: true }, text, next);
+  // Inem guides the first build, so her face sits beside the words.
+  const face = h('img', { src: inemURL(), alt: '', width: 44, height: 60, class: 'pixel coach-face' });
+  const bar = h('div', { id: 'coach', class: 'coach', hidden: true }, face, text, next);
   document.body.append(bar);
   const rumahs = () => app.s.buildings.filter((b) => b.def === 'rumah').length;
   let start = -1;

@@ -17,6 +17,9 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 ## 1. Pitch and core loop
 
 - You are a village head. Build the kampung, keep the residents calm, and climb from Pak RT to Pak Lurah.
+- **The objective, said by Inem in the first minute:** make your own kampung sejahtera before Sidang Emas 2045. The player names themselves (Pak or Bu, a name) and their kampung on New Game; the names run through the goal, the SKs, the ranking and Inem's lines.
+- **Two scores.** The **Laporan** is what Pusat reads: reported residents, programs announced and carried out, Popularitas and ranking wins. Stars and SKs follow it. **Sejahtera** is what is true: the average of **Perut** (households fed), **Kerja** (warga in work) and **Aman** (safety), 0 to 100. The 2045 meter shows Sejahtera. Sidang Emas 2045 is the final review at the top act; it compares both scores for one of four endings (Pejabat Teladan, Pejabat Pencitraan, Pahlawan Tanpa SK, Dimutasi). The calendar stays Year 1, Year 2: "2045" names the review, not a date.
+- **Inem** is the assistant: an aspiring dangdut singer who took the job for the income. Her portrait and name sit on every message and event card and beside the opener. Now and then she flirts with Pak (never about her body, never at warga, never on bad news); with Bu those lines become cheeky best-friend lines (`.bu` string twins).
 - Every joke is a mechanic that moves a number. Flavour text alone gets cut.
 - The loop: build, residents arrive, money and Sabar (patience) move, events and combos fire, stars unlock more to build.
 - The player never runs for office. Promotion is a performance review and an SK, the promotion letter. See [section 5](#5-tone-and-politics-guardrails).
@@ -39,6 +42,8 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 ## 2. Stage ladder
 
 The full ladder runs RT, RW, Kelurahan or Desa, Kecamatan, Kabupaten/Kota, Provinsi and Pusat. Only stages 1 to 3 are specified. Kecamatan and above wait for a playtest of the Kelurahan. Approved by Hari on 2026-10-26.
+
+The ladder reads as three acts (approved by Hari, 2026-10-28): **Act 1 Kampung** (RT, RW, Lurah; pressure: Perut and Kerja), **Act 2 Kota** (Camat, Pj. Wali Kota, Pj. Gubernur; pressure: pinjol, judol and Aman), **Act 3 Pusat** (Pejabat Pusat; Laporan against what is real). City and province posts are Pj. (acting) posts given by SK, so the player still never runs for office. Only Act 1 is built.
 
 Status 2026-10-27: the map engine, RT stars, RW and Kelurahan are built. The Desa path is not. Live grid sizes are 13x17 (RT), 26x34 (RW) and 52x68 (Kelurahan), which replace the 9x13, 18x26 and 36x52 in the sketch below. See `decisions/growing-map-engine.md`.
 
@@ -265,6 +270,13 @@ Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder
 
 How the numbers work, gathered from every stage. The numbers themselves live in `src/data/` and are tuned there. The tests in `tests/balance.test.ts` guard them.
 
+- **Perut:** a household is 3 residents. A Warung Sembako feeds 4, 7 or 10 households at levels 1 to 3 (an old Toko Kelontong feeds 10). Harga Sembako (the cabai event) cuts that by 25% while it lasts. Each unfed household costs **0.1** Popularitas a month.
+- **Kerja:** the share of residents in work, plus programs.
+- **Aman:** **70**, less **0.3** per resident above 15, **2** per resident idle 6 months or more and **4** per preman; plus **3** per Lampu Jalan and **2** per Pos Ronda, plus programs.
+- **Preman:** a resident idle **12** months, while Aman is under **60**, has a **5%** chance a month to turn (at most **15%** of residents). Each costs **0.2** Popularitas a month and takes **10%** of one shop's income as uang keamanan (up to **30%** a shop). Pos Satpam opens with the first preman; while a preman waits, Satpam posts are kept for him, and taking one turns him into the guard. Any job the player gives him does too.
+- **Wacana or Realisasi:** each policy has a real version (Wifi Gratis di Balai, Kerja Bakti Rutin, Biopori Massal, Pelatihan UMKM, Bansos Sembako). It costs Rp 1 to 3 juta, lands after 1 to 3 months and moves a meter for a time (Biopori for good). Announcing fills the Laporan as well as doing does; only doing moves Sejahtera.
+- **Popularitas soft cap:** above **80**, gains shrink toward nothing at 100, so a full kampung settles around 90 instead of sitting at the cap. Each employed resident gives **0.04** (was 0.08), each resident expects **0.14** (was 0.1), and a Satpam gives **0.5** (was 1).
+
 - **Resources:** every resource has an icon and a colour. Names are translated, see `decisions/resource-names.md`. Orang Dalam is "Orang Inside" in EN on purpose.
 - **Growth gates:** stars gate content. Residents, wins and combos set the star goals. Stars never drop.
 - **Kas:** Kas RT becomes Kas RW, then Kas Kelurahan. AI areas pay iuran into it.
@@ -281,7 +293,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 ### Satire
 
 - Satire targets systems and bureaucracy.
-- No real politicians, parties, ormas or officials.
+- No real politicians, parties, ormas or officials. Preman are generic and never coded as any ormas.
 - No ethnic, regional or religious jokes.
 - Every joke is a mechanic that moves a number (see section 1).
 - UI defaults to English, with Bahasa Indonesia as a Settings option. Players who saved a language keep it. Slang and proper names stay as they are in both languages (Sabar, Wacana, Warga, warung, ojol, Kampung Sebelah). Resource names are translated, see `decisions/resource-names.md`. Strings live in `src/i18n/`.

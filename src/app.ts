@@ -1,5 +1,8 @@
 import { connectedRoad, FLAT, hasRoadBeside } from './sim/access';
-import { eBody, eLabel, eName, bName, jName, getLang, initialLang, setLang, t, type Key, type Lang } from './i18n';
+import { eBody, eLabel, eName, bName, jName, getLang, initialLang, setLang, setPlayer, t, type Key, type Lang } from './i18n';
+import { households, fed, laporan, meters, premanList, sejahtera } from './sim/needs';
+import { inemURL } from './render/inem';
+import type { PlayerInfo } from './sim/types';
 import { jobDef } from './data/jobs';
 import { dateLabel, rupiah, rupiahHud } from './format';
 import { MapView, RES_VAR } from './render/map';
@@ -62,6 +65,14 @@ export type MenuGroup = 'kampung' | 'records' | 'game';
 /** dock: the panel has its own button in the bottom dock, so the Menu does not list it again. */
 export type ActionButton = { id: string; label: () => string; open: (app: App) => void; group?: MenuGroup; icon?: string; show?: (app: App) => boolean; dock?: boolean };
 
+/** Inem, the assistant, beside every message she brings: her portrait and her name. */
+export function inemHead(): HTMLElement {
+  return h('div', { class: 'inem-head' },
+    h('img', { src: inemURL(), alt: '', width: 88, height: 120, class: 'pixel inem-face' }),
+    h('span', { class: 'inem-name' }, t('inem.name')),
+  );
+}
+
 export class App {
   s: GameState;
   settings: Settings;
@@ -84,6 +95,7 @@ export class App {
   constructor() {
     const loaded = deserialize(storage.get(SAVE_KEY));
     this.s = loaded ?? newGame();
+    setPlayer(this.s.player);
     this.storageOk = storage.set('pakrt.probe', '1');
     this.settings = loadSettings();
     setLang(initialLang(this.settings.lang));
@@ -263,6 +275,7 @@ export class App {
     });
     el.replaceChildren(
       h('div', { class: 'card event', role: 'dialog', 'aria-live': 'polite' },
+        inemHead(),
         h('h2', {}, eName(e)),
         h('p', {}, eBody(e)),
         ...choices,
@@ -333,8 +346,10 @@ export class App {
     if (this.storageOk) this.storageOk = storage.set(SAVE_KEY, serialize(this.s));
   }
 
-  newGame(): void {
+  newGame(player?: PlayerInfo): void {
     this.s = newGame();
+    if (player) this.s.player = player;
+    setPlayer(this.s.player);
     this.view.regrid();
     this.log = [];
     this.save();
@@ -408,6 +423,7 @@ export class App {
     el.replaceChildren(
       h('div', { class: `card ${n.fanfare ? 'fanfare' : ''} ${n.cls ?? ''}`, role: 'dialog', 'aria-live': 'polite' },
         n.fanfare ? h('div', { class: 'fanfare-tag' }, t('modal.new')) : null,
+        inemHead(),
         h('h2', {}, n.title),
         h('p', {}, n.body),
         n.extra,
@@ -455,7 +471,9 @@ export class App {
     const title = id === 'pop' ? t('res.warga') : id === 'emas' ? t('stats.emasTitle') : RES_META[id].label();
     const body = id === 'pop'
       ? `${t('exp.pop.what')} ${t('pop.line', { pop: population(this.s), housing: housing(this.s), attract: attractTarget(this.s) })}${population(this.s) >= housing(this.s) ? ` ${t('pop.full')}` : ''}`
-      : t(`exp.${id}.what` as Key);
+      : id === 'emas'
+        ? [t('exp.emas.what'), t('meter.line', { ...meters(this.s) }), ...(households(this.s) > fed(this.s) ? [t('meter.hungry', { n: households(this.s) - fed(this.s) })] : []), ...(premanList(this.s).length ? [t('meter.preman', { n: premanList(this.s).length })] : []), t('meter.laporan', { n: laporan(this.s) })].join(' ')
+        : t(`exp.${id}.what` as Key);
     this.modalQueue.push({ title, body, tone: 'info', extra: h('div', { class: 'exp', style: `--c:${colour}` }, icon, row('up'), row('down'), row('edge')) });
     this.showModal();
   }
@@ -476,10 +494,12 @@ export class App {
     document.getElementById('chip-pop')?.classList.toggle('full', population(this.s) >= housing(this.s));
     document.getElementById('chip-rupiah')!.classList.toggle('negative', r.rupiah < 0);
     this.flashChanges();
+    // The 2045 meter shows Sejahtera: how the warga really live, which only real programs move.
+    const sej = sejahtera(meters(this.s));
     const emas = document.getElementById('emas-value');
-    if (emas) emas.textContent = `${this.s.emas.toFixed(2)}%`;
+    if (emas) emas.textContent = `${sej}%`;
     const emasBar = document.getElementById('emas-fill');
-    if (emasBar) emasBar.style.width = `${Math.max(0.5, this.s.emas)}%`;
+    if (emasBar) emasBar.style.width = `${Math.max(0.5, sej)}%`;
     document.getElementById('date')!.textContent = dateLabel(this.s.month);
     // Money and buildings change under build mode, so the free spots are marked again.
     if (this.placing && !this.line) this.markValid();

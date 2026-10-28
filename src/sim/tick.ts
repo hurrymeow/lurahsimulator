@@ -24,6 +24,8 @@ import { noteNet, quarterSystem, snapshot } from './report';
 import { requirementGaps } from './rules';
 import { brandMult, royaltyRate } from './brands';
 import { problemSystem } from './problems';
+import { needsSystem, premanTake } from './needs';
+import { realisasiSystem, realisasiWarungMult } from './realisasi';
 import { addBuilding, addResident, attractTarget, decorMult, emptyTiles, housing, isWorking, levelMult, neighbours, pathMult, population } from './state';
 import { gain, type Fx } from './gain';
 import type { Building, GameState, ResourceId } from './types';
@@ -42,7 +44,7 @@ export function incomeMult(s: GameState, b: Building): number {
 export function buildingIncome(s: GameState, b: Building): number {
   if (!isWorking(b)) return 0;
   const d = def(b.def);
-  return Math.round(d.income * levelMult(b.level) * incomeMult(s, b) * pathMult(s, b) * decorMult(s, b) * burstMult(s, b) * brandMult(s, b));
+  return Math.round(d.income * levelMult(b.level) * incomeMult(s, b) * pathMult(s, b) * decorMult(s, b) * burstMult(s, b) * brandMult(s, b) * (1 - premanTake(s, b)) * (b.def === 'warung' ? realisasiWarungMult(s) : 1));
 }
 
 export function buildingUpkeep(s: GameState, b: Building): number {
@@ -228,6 +230,8 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   neighboursSystem,
   stempelSystem,
   jobsSystem,
+  realisasiSystem,
+  needsSystem,
   wacanaSystem,
   mangkrakSystem,
   expectations,

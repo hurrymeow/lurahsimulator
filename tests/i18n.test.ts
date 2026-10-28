@@ -6,6 +6,7 @@ import { JOBS } from '../src/data/jobs';
 import { LINES } from '../src/data/lines';
 import { STAGES } from '../src/data/stages';
 import { WACANA } from '../src/data/wacana';
+import { REALISASI } from '../src/data/realisasi';
 import { EN } from '../src/i18n/en';
 import { ID } from '../src/i18n/id';
 import { ID_DATA } from '../src/i18n/id-data';
@@ -31,6 +32,7 @@ describe('string tables', () => {
     for (const j of JOBS) expected.add(`job.${j.id}.blurb`);
     for (const st of STAGES) st.titles.forEach((_, i) => expected.add(`stage.${st.id}.title${i}`));
     for (const w of WACANA) { expected.add(`wacana.${w.id}.line`); expected.add(`wacana.${w.id}.trade`); }
+    for (const r of REALISASI) ['name', 'line', 'effect'].forEach((f) => expected.add(`real.${r.id}.${f}`));
     for (const e of EVENTS) {
       expected.add(`event.${e.id}.name`);
       expected.add(`event.${e.id}.body`);

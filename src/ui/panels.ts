@@ -1,3 +1,6 @@
+import { REALISASI } from '../data/realisasi';
+import { checkRealisasi, realisasiCost, startRealisasi } from '../sim/realisasi';
+import { rEffect, rLine, rName } from '../i18n';
 import { jBlurb, jName, t, wLine, wName, wTrade } from '../i18n';
 import { LEVEL_MONTHS, jobDef } from '../data/jobs';
 import { WACANA } from '../data/wacana';
@@ -42,7 +45,31 @@ function openResident(app: App, id: number): void {
   openSheet(r.name, [h('p', { class: 'meta' }, next === undefined ? t('res.levelMax', { n: lv }) : t('res.levelNext', { n: lv, left: next - (r.xp ?? 0) })), ...choices]);
 }
 
-// ---------- Wacana ----------
+// ---------- Wacana and Realisasi ----------
+/** The real version of a policy under its announcement: what it does, its state, and the button to do it. */
+function realisasiPart(app: App, wacanaId: string): Node[] {
+  const s = app.s;
+  const d = REALISASI.find((r) => r.wacana === wacanaId);
+  if (!d) return [];
+  const run = (s.realisasi ?? []).filter((r) => r.id === d.id).at(-1);
+  const state = !run || s.month >= run.endsAt ? null : run.landsAt > s.month ? t('wac.landsIn', { n: run.landsAt - s.month }) : run.endsAt === Infinity ? t('wac.lasting') : t('wac.workingFor', { n: run.endsAt - s.month });
+  return [
+    h('div', { class: 'realisasi' },
+      h('p', {}, h('strong', {}, t('wac.realHead', { name: rName(d) }))),
+      h('p', { class: 'meta' }, rLine(d)),
+      h('p', { class: 'meta' }, rEffect(d)),
+      state ? h('p', { class: 'meta good' }, state) : null,
+      actionButton(t('wac.realisasi', { cost: rupiah(realisasiCost(s, d)) }), checkRealisasi(s, d.id), () => {
+        startRealisasi(s, d.id);
+        app.tap(15);
+        app.save();
+        app.refresh();
+        openWacana(app);
+      }, true),
+    ),
+  ];
+}
+
 export function openWacana(app: App): void {
   const s = app.s;
   const rows = WACANA.map((w) => {
@@ -64,6 +91,7 @@ export function openWacana(app: App): void {
           app.refresh();
           openWacana(app);
         }),
+        ...realisasiPart(app, w.id),
       ),
     );
   });

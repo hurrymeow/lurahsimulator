@@ -44,6 +44,12 @@ function play(seed: number, years: number, smart: boolean, starMonths: number[] 
         const worthIt = d.income > d.upkeep || have === 0;
         if (spot && worthIt && have < 4 && checkPlace(s, d.id, spot.x, spot.y).ok && s.res.rupiah > d.cost * 3) place(s, d.id, spot.x, spot.y);
       }
+      // Preman get a Satpam post each, as a player answers a preman with a Pos Satpam.
+      const preman = s.residents.filter((r) => r.preman).length;
+      if (preman && s.buildings.filter((b) => b.def === 'posSatpam').length < preman + 1) {
+        const spot = emptyTiles(s).find((t) => checkPlace(s, 'posSatpam', t.x, t.y).ok);
+        if (spot && s.res.rupiah > 2_000_000) place(s, 'posSatpam', spot.x, spot.y);
+      }
       // A player watches Popularitas: when it sags and there is cash, announce a cheap policy.
       if (s.res.sabar < 55 && s.res.rupiah > 2_000_000 && s.month % 3 === 0) announce(s, 'hijau');
       for (const b of s.buildings) {

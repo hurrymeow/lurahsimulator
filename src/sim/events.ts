@@ -1,4 +1,5 @@
 import { noteProblem } from './problems';
+import { realisasiBanjir } from './realisasi';
 import { eModLabel, eOutcome, eResult, t } from '../i18n';
 import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR_SABAR, EVENTS, POPUP_CHANCE, MIN_REPEAT_GAP, POPUP_GAP, REPAIR_FRACTION, eventDef, type EventChoice, type EventDef, type EventOutcome as OutcomeDef } from '../data/events';
 import { STAGE_EVENTS } from '../data/higher';
@@ -45,7 +46,7 @@ export function banjirProtection(s: GameState): number {
   const combos = activeCombos(s).reduce((n, a) => n + (a.combo.banjirProtect ?? 0), 0);
   // Kerja Bakti makes the biopori work harder for a while.
   const boost = s.modifiers.filter((m) => m.target === 'biopori').reduce((m, x) => m * x.incomeMult, 1);
-  return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL * boost + combos + banjirCut(s));
+  return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL * boost + combos + banjirCut(s) + realisasiBanjir(s));
 }
 
 /** Lapangan doubles the 17 Agustus prize. Panjat Pinang adds half again. */
