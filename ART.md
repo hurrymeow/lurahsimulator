@@ -159,7 +159,7 @@ same look: flat fills, 1px rules, no gradients, no rounded corners.
 | Dock | Three equal buttons in a grid: Build, Warga, Menu. A 24px icon over a bold label, 52px tall, square, no shadows. Build and Warga use their menu icon plates; Menu is dark green with a three-bar icon. |
 
 | Sheets and pop-ups | Theme tokens: cream and ink in Light, Mono Dark in Dark. Square corners; in Light a 2px ink rule, sheets with a 4px ink lip on top, pop-ups with a hard 4px drop shadow. |
-| Buku Combo tile | Two per row, 112px or taller, a 1px rule (2px green when active). Up to three 24px building sprites joined by +, a 24px state square in the top-right corner (✓ green, ★ amber, ? muted), the name in bold and the effect in two muted lines. Not-yet tiles show black silhouettes. |
+| Buku Combo card | One per row, the full width of the sheet, a 1px rule (2px green when active). Top line: the name in bold on the left; on the right up to three 24px building sprites joined by + and a 24px state square (✓ green, ★ amber, ? muted). Below: the effect in two muted lines. Not-yet cards show black silhouettes. |
 | Warga group | A box per job with a 1px rule; No job adds a 6px red left edge. Head: the 40px workplace sprite, "Job · count" in bold, and the group's output on the right. People are 48px chips: name, level stars under it. |
 | Resource amounts | A 16px icon, a 4px gap and a bold number in the resource's colour; amounts sit 8px apart and align right. |
 

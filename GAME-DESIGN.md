@@ -31,7 +31,7 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 
 - Unmet requirements always say exactly what is missing.
 - Discovered combos are auto-logged in the in-game Buku Combo.
-- The Buku Combo is a collection grid under filter buttons (All, ✓ active, ★ found, ? not yet, each with its count). A tile shows the buildings (greyed when missing, silhouettes before it is in town), a state mark in its corner, the name and the effect in two lines. Tapping a tile opens the whole entry below its row: effect, conditions, status and, once discovered, the story (`src/ui/lists.ts`).
+- The Buku Combo is a column of full-width cards, one per row, under filter buttons (All, ✓ active, ★ found, ? not yet, each with its count). A card shows the name, the buildings (greyed when missing, silhouettes before it is in town) and a state mark on one line, and the effect in two lines below. Tapping a card opens the whole entry below it: effect, conditions, status and, once discovered, the story (`src/ui/lists.ts`).
 - The Warga list opens on a summary line (headcount and what everyone makes a month) and filter buttons: By job (default), No job (with its count) and By level. People sit in boxes per job, headed by the workplace sprite, the headcount and the group's monthly output; each person is a chip with their name and level stars. No job comes first, marked red.
 - Speed control: pause, 1x, 2x, 4x.
 - Text advances on tap, never on a timer.
@@ -309,7 +309,7 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 - The satellite view hides while a building is being placed.
 - Light and Dark share one layout: every size, gap and position is the same, and only colours change. An e2e test compares the boxes in both themes.
 - On short phones (640px tall or less) the satellite view drops out and the goal pill spans the map's width.
-- Sheets, pop-ups, tips and the tutorial follow the theme too, so an open panel matches the frame behind it (see Themes below).
+- Sheets, pop-ups, tips and the tutorial follow the theme too, so an open panel matches the frame behind it (see Themes below). The home screen keeps its dark look over the map in both themes.
 - Clean pixel UI: 1px rules, square corners, dark green (`#2f6b45`) for primary actions. No drop shadows in the bars. No cluttered Windows-XP-style panels.
 - The rules in [UI.md](UI.md) apply to the frame, with rule 1's exception for the slim top rows and the goal pill (28px controls).
 - The dev-only `mockup.html` (also at `/mockup.html` on the live site) is the reference render, with a build palette the game doesn't have. It is not linked from the game.

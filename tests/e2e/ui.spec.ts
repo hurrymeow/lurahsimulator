@@ -1634,13 +1634,19 @@ test.describe('zoom, big lots and the Warga list', () => {
     const tiles = page.locator('#sheet .ls-tile');
     const all = await tiles.count();
     expect(all).toBeGreaterThan(4);
+    // One card per row, the full width of the sheet.
+    const [a, b] = [(await tiles.nth(0).boundingBox())!, (await tiles.nth(1).boundingBox())!];
+    expect(b.y).toBeGreaterThan(a.y + a.height - 1);
+    expect(Math.abs(a.x - b.x)).toBeLessThan(1);
+    expect(a.width).toBeGreaterThan(page.viewportSize()!.width * 0.8);
     // The effect keeps to two lines on the tile.
     const desc = tiles.first().locator('.ls-desc');
     const lines = await desc.evaluate((el) => Math.round(el.clientHeight / parseFloat(getComputedStyle(el).lineHeight)));
     expect(lines).toBeLessThanOrEqual(2);
-    // A tile opens the whole entry below its row, and again closes it.
+    // A card opens the whole entry below it, and again closes it.
     await tiles.first().click();
     await expect(page.locator('#sheet .ls-detail')).toBeVisible();
+    expect(await tiles.first().evaluate((el) => el.nextElementSibling?.classList.contains('ls-detail'))).toBe(true);
     await expect(tiles.first()).toHaveAttribute('aria-expanded', 'true');
     await expectLegible(page, 'Buku Combo entry');
     await tiles.first().click();

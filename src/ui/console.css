@@ -188,3 +188,5 @@ html:not(.theme-dark) :is(.new-dot, .fanfare-tag, .report-grade) { color: #8a4b0
 html:not(.theme-dark) .first-burst { color: #8a4b00; border-color: #c27c0e; }
 html:not(.theme-dark) .modal .card.fanfare { border-color: #c27c0e; }
 html:not(.theme-dark) .chip.full .chip-value { color: #8a4b00; }
+/* The home screen keeps its dark look over the map in both themes (GAME-DESIGN.md section 6, Themes). */
+html:not(.theme-dark) #home { --bg: #0b0b0c; --surface: #18181b; --surface-2: #27272a; --line: #3f3f46; --text: #f4f4f5; --muted: #a1a1aa; --accent: #f4f4f5; --on-accent: #0b0b0c; --danger: #f87171; color: var(--text); }

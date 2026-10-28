@@ -146,7 +146,6 @@ export const EN = {
   'how.11.body': 'A resident needs a free bed and a reason to come. Rumah gives beds. Warung and wifi give reasons. Below 15 Popularitas they leave.',
   'how.pic.menu': 'Menu',
   'how.pic.permit': 'Permit',
-  'how.pic.combo': 'Combo',
   'how.pic.job': 'Job',
   'how.pic.biopori': 'Selokan',
   'how.pic.road': 'Road',

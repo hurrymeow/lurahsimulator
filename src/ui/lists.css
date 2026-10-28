@@ -21,18 +21,18 @@
 .missing-line { color: var(--danger); }
 .story { font-style: italic; }
 
-/* Buku Combo: a two-column collection grid. */
-.ls-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.ls-tile { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-height: 112px; padding: 8px; font: inherit; color: var(--text); text-align: left; background: var(--surface-2); border: 1px solid var(--line); cursor: pointer; }
-.ls-tile.active { border: 2px solid var(--rupiah); padding: 7px; }
+/* Buku Combo: one full-width card per row. */
+.ls-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.ls-tile { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-height: 48px; padding: 8px 10px; font: inherit; color: var(--text); text-align: left; background: var(--surface-2); border: 1px solid var(--line); cursor: pointer; }
+.ls-tile.active { border: 2px solid var(--rupiah); padding: 7px 9px; }
 .ls-tile[aria-expanded='true'] { outline: 3px solid var(--accent); outline-offset: -3px; }
 .ls-tile.todo .ls-sprite { filter: brightness(0) opacity(0.35); }
-.ls-tile-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.ls-tile-top { display: flex; align-items: center; gap: 8px; min-height: 28px; }
 /* Up to three buildings stay on one line, even on a 320px phone. */
 .ls-tile .ls-members { flex-wrap: nowrap; min-width: 0; }
 .ls-tile .ls-plus { padding: 0; }
 .ls-tile .ls-sprite { width: 24px; height: 24px; }
-.ls-tile-name { font-size: 16px; line-height: 1.2; }
+.ls-tile-name { flex: 1; min-width: 0; font-size: 16px; line-height: 1.2; }
 /* The effect keeps to two lines; the tile opens the whole entry. UI.md rule 5 exception. */
 .ls-desc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; color: var(--muted); font-size: 16px; line-height: 1.25; }
 .ls-corner { flex: none; display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; font-family: var(--font-pixel); font-weight: 700; font-size: 16px; color: var(--on-accent); background: var(--muted); }

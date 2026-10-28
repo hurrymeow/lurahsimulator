@@ -141,7 +141,6 @@ export const ID: Record<Key, string> = {
   'how.11.body': 'Warga butuh tempat kosong dan alasan untuk datang. Bangun Rumah untuk tempat. Warung dan wifi jadi alasannya. Di bawah Popularitas 15 mereka pergi.',
   'how.pic.menu': 'Menu',
   'how.pic.permit': 'Izin',
-  'how.pic.combo': 'Combo',
   'how.pic.job': 'Kerja',
   'how.pic.biopori': 'Selokan',
   'how.pic.road': 'Jalan',

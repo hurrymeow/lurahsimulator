@@ -1,5 +1,5 @@
 // The Buku Combo and the Warga list. Both open on a row of filter buttons over a picture-first view:
-// the Buku Combo is a collection grid, the Warga list groups people by job. Icons are the game's own
+// the Buku Combo is a column of cards, the Warga list groups people by job. Icons are the game's own
 // art: building sprites, resource icons, and a job's workplace sprite.
 import { bName, cEffect, cName, cStory, jName, t } from '../i18n';
 import { jobDef, levelMult, MAX_LEVEL } from '../data/jobs';
@@ -84,8 +84,8 @@ const members = (c: ComboDef, st: ComboStatus, size = 32) => {
 
 type ComboFilter = 'all' | ComboStatus['state'];
 
-/** A grid of combo tiles under filter buttons. A tile shows the buildings, the name and the effect in
- * two lines; tapping it opens the whole entry below its row. */
+/** A list of combo cards under filter buttons, one per row. A card shows the name, the buildings, a state
+ * mark and the effect in two lines; tapping it opens the whole entry below it. */
 export function openComboBook(app: App): void {
   const s = app.s;
   const combos = bookCombos(s).map((c) => ({ c, st: comboStatus(s, c) }));
@@ -98,8 +98,7 @@ export function openComboBook(app: App): void {
 
   const tile = ({ c, st }: (typeof combos)[number]) => {
     const b = h('button', { class: `ls-tile ${st.state}`, type: 'button', 'data-combo': c.id, 'aria-expanded': 'false' },
-      h('span', { class: 'ls-tile-top' }, members(c, st, 24), h('span', { class: `ls-corner ${st.state}`, title: stateName(st.state) }, STATE_ICON[st.state])),
-      h('strong', { class: 'ls-tile-name' }, cName(c)),
+      h('span', { class: 'ls-tile-top' }, h('strong', { class: 'ls-tile-name' }, cName(c)), members(c, st, 24), h('span', { class: `ls-corner ${st.state}`, title: stateName(st.state) }, STATE_ICON[st.state])),
       h('span', { class: 'ls-desc', 'data-clamp': '2' }, cEffect(c)),
     );
     b.addEventListener('click', () => show(b, c, st));
@@ -122,10 +121,7 @@ export function openComboBook(app: App): void {
       h('p', { class: st.missing.length ? 'missing-line' : 'meta' }, comboStatusText(st)),
       ...(s.discovered.includes(c.id) ? [h('p', { class: 'meta story' }, cStory(c))] : []),
     );
-    // Below the tile's row, so the grid keeps its order.
-    const tiles = [...grid.querySelectorAll<HTMLElement>('.ls-tile')];
-    const i = tiles.indexOf(b);
-    (tiles[i | 1] ?? b).after(detail);
+    b.after(detail);
     detail.scrollIntoView({ block: 'nearest' });
   };
   const draw = (k: ComboFilter) => {
