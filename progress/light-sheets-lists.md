@@ -9,3 +9,4 @@
 - `src/ui/howto.ts`: the combo tip picture is Warung + Pos Ronda, without the word "Combo" (`how.pic.combo` removed). Unit test in `tests/guide-text.test.ts`.
 - `src/ui/console.css`: the home screen keeps its dark tokens in Light (found by the full e2e run: its title fell to 1.16:1).
 - E2E: the combo test checks one card per row at full width, and that the entry opens right below the card.
+- Baselines redrawn in CI's Playwright image (commit d892ee2): Build sheet, event popup and tip card, in English and Indonesian, now in the Light sheet look. Before: `main`'s `tests/e2e/visual.spec.ts-snapshots/`; after: the same paths at d892ee2.
