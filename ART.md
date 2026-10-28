@@ -292,4 +292,4 @@ faceless, so the map stays readable.
 - [ ] Colours from the palette, warm first.
 - [ ] Reads at 2x on a 320px-wide phone, by day and at night.
 - [ ] Animation is whole-pixel and respects reduce motion and effects.
-- [ ] `npm run e2e` passes, including the frame-rate test.
+- [ ] The touched e2e specs pass locally, including the frame-rate test. CI runs the full suite.
