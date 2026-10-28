@@ -30,7 +30,7 @@ import { h, missingList } from './ui/dom';
 import { RIVAL_NAMES } from './data/ranking';
 import { areaScore } from './sim/ranking';
 import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
-import { showPausedBadge, simRunning, type PauseInputs } from './ui/autopause';
+import { autoPauseStarted, showPausedBadge, simRunning, type PauseInputs } from './ui/autopause';
 
 export const MONTH_MS = 8000;
 /** First year the 4x speed is allowed. */
@@ -85,6 +85,8 @@ export class App {
   private pace: Exclude<Speed, 0> = 1;
   private acc = 0;
   private last = performance.now();
+  /** True on the previous frame, so the first auto-paused frame can reset the partial month. */
+  private wasRunning = false;
   private modalQueue: (Notice & { fanfare?: boolean })[] = [];
   log: Notice[] = [];
   placing: string | null = null;
@@ -138,7 +140,14 @@ export class App {
   private frame(now: number): void {
     const dt = Math.min(250, now - this.last);
     this.last = now;
-    if (this.running) {
+    // A popup, sheet or build mode already froze time, but the partial month
+    // survived: a popup opened at 95% fired a tick the instant it closed.
+    // Resetting on auto-pause entry gives the player a full month after it.
+    const inputs = this.pauseInputs();
+    const running = simRunning(inputs);
+    if (autoPauseStarted(this.wasRunning, inputs)) this.acc = 0;
+    this.wasRunning = running;
+    if (running) {
       this.acc += dt * this.speed;
       while (this.acc >= MONTH_MS) {
         this.acc -= MONTH_MS;
