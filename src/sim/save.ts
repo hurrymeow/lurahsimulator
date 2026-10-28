@@ -15,6 +15,7 @@ export function deserialize(raw: string | null): GameState | null {
     if (!s || (s.version !== SAVE_VERSION && s.version !== 1)) return null;
     if (!Array.isArray(s.buildings) || !Array.isArray(s.residents) || typeof s.res?.rupiah !== 'number') return null;
     migrateSelokan(s);
+    mendPaths(s);
     if (!s.buildings.every((b) => hasDef(b.def))) return null;
     if (s.version === 1) migrateV1(s);
     // Saves from before stages: start at 0 stars. The first tick catches the stars up.
@@ -35,6 +36,14 @@ export function deserialize(raw: string | null): GameState | null {
     return s;
   } catch {
     return null;
+  }
+}
+
+/** Jalan Setapak no longer cracks. Saves from when it did get their broken paths back. */
+function mendPaths(s: GameState): void {
+  for (const b of [...s.buildings, ...(s.neighbours ?? []).flatMap((n) => n.buildings)]) {
+    if (b.def === 'jalan' && b.status === 'damaged') b.status = 'active';
+    delete (b as { crackedAt?: number }).crackedAt;
   }
 }
 

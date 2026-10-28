@@ -161,14 +161,6 @@ same look: flat fills, 1px rules, no gradients, no rounded corners.
 - Light and Dark use the same parts at the same sizes. Only the colour tokens change (GAME-DESIGN.md section 6, Themes).
 - Numbers use the body font, never the pixel font.
 
-### Broken Jalan Setapak
-
-- The whole tile greys out (grayscale, a little darker), and cracks run across all of it: a long
-  split corner to corner and three branches, a dark line over a light lip. They are mirrored per
-  tile so neighbours do not repeat.
-- Over that, a red tint and an orange outline breathe slowly (steady with reduce motion), and the
-  badge is orange instead of black. Other damaged buildings keep their brown tint and black badge.
-
 ## Lighting and atmosphere
 
 Layers, from the ground up (`src/render/map.ts`, `src/render/atmosphere.ts`):

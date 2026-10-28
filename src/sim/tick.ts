@@ -9,7 +9,6 @@ import { def, placeableDefs } from './content';
 import { EMAS } from '../data/ranking';
 import { eventSystem } from './events';
 import { first } from './firsts';
-import { pathDecaySystem } from './decay';
 import { camatCallSystem, lineSystem } from './lines';
 import { debtSystem, iuranFromNeighbours, neighboursSystem, neighboursYearEnd, stempelSystem } from './grow';
 import { inspectionSystem } from './inspection';
@@ -205,8 +204,6 @@ export function yearEnd(s: GameState, fx: Fx): void {
 
 /** Ordered list of monthly systems. Later milestones insert their systems here. */
 export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
-  // Paths crack before access is worked out, so a building cut off this month idles this month.
-  pathDecaySystem,
   accessSystem,
   advanceConstruction,
   accessSystem,

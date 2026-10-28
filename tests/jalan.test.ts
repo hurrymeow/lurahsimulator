@@ -4,7 +4,7 @@ import { refreshAccess } from '../src/sim/access';
 import { checkPlace, place } from '../src/sim/rules';
 import { score } from '../src/sim/ranking';
 import { addBuilding, buildingAt, newGame } from '../src/sim/state';
-import { buildingIncome } from '../src/sim/tick';
+import { SYSTEMS, buildingIncome } from '../src/sim/tick';
 import { GRID_H, GRID_W } from '../src/sim/types';
 
 describe('jalan', () => {
@@ -36,6 +36,27 @@ describe('jalan', () => {
     expect(l.buildings[0]).toMatchObject({ x: 5, y: 6 });
     expect(l.buildings[0].x).toBeLessThan(GRID_W);
     expect(l.buildings[0].y).toBeLessThan(GRID_H);
+  });
+});
+
+describe('path wear', () => {
+  it('never breaks in a long game, and a flood leaves paths alone', () => {
+    const s = newGame(3);
+    const p = addBuilding(s, 'jalan', 1, 0, 'active');
+    for (let m = 0; m < 600; m++) {
+      s.month = m;
+      for (const sys of SYSTEMS) sys(s, []);
+    }
+    expect(p.status).toBe('active');
+  });
+  it('restores broken paths from older saves', () => {
+    const s = newGame(4);
+    const p = addBuilding(s, 'jalan', 1, 0, 'damaged');
+    (p as { crackedAt?: number }).crackedAt = 20;
+    const back = deserialize(serialize(s))!;
+    const q = back.buildings.find((b) => b.uid === p.uid)!;
+    expect(q.status).toBe('active');
+    expect('crackedAt' in q).toBe(false);
   });
 });
 
