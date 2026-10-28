@@ -101,25 +101,27 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 
 #### 0★ Pak RT (start)
 
-- Open: warung, pos ronda, selokan, Kantor RT. Wifi at **8** residents.
+- Open: Rumah, Jalan Setapak, Kantor RT, Warung Sembako, Pos Ronda, Rumah Makan. Wifi at **8** residents.
+- **Problem unlocks** open when their trouble first shows up, with a notice saying why: Selokan after the first banjir; Gudang Material and Kebun Sayur when **3** warga have gone **6** months without work; Fotokopi when a permit queue forms. Pos Satpam moves to the first preman when preman exist.
 - **Goal for 1★:** **10** residents and **1** combo found.
 
 #### 1★ RT Rintisan
 
-- Unlocks Indomaret, Alfamart and Kos-kosan. Kantor RT can reach level 2. Harga cabai starts.
+- Unlocks IndoApril, BetaMart, Kos-kosan, Barbershop, Pohon Rindang, Sawah and Pos Satpam. Kantor RT can reach level 2. Harga cabai starts.
 - Their gate moves from a population count to this star.
 - Reward: **+1** Orang Dalam.
 - **Goal for 2★:** **25** residents, **1** ranking win and **2** combos.
 
 #### 2★ RT Berkembang
 
-- Unlocks Lapangan and Bank Sampah. Kantor RT can reach level 3.
+- Unlocks Lapangan, Bank Sampah, Bengkel, PAUD, Balai-balai Bambu and Kandang Ayam. Kantor RT can reach level 3.
 - The scenery edge thins, so the neighbours' roofs show.
 - **Goal for 3★:** **40** residents, **2** wins in a row, **3** combos and Sabar of at least **50**.
 
 #### 3★ RT Teladan
 
-- The SK to RW arrives.
+- Unlocks Apotek, Koperasi, Balai Warga, Lampu Jalan and Mural.
+- The SK to RW arrives. Kontrakan, Kolam Lele and Patung Ikon open at RW.
 
 #### New RT content
 
@@ -129,6 +131,9 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 - **Anak Kos** combo (Kos + Warung + Wifi): warung **x1.3**, **+1** Viral a month.
 - **Panjat Pinang** combo (Lapangan + Pos Ronda): Agustus prize **+50%**.
 - **Kali Bersih** combo (Bank Sampah + Selokan): banjir damage **20%** lower. The **80%** cap stays.
+- **Rumah Makan** merges Gerobak Bakso, Warkop and Warteg as levels 1 to 3. **Warung Sembako** is the warung; Toko Kelontong is its level 3. Old saves keep the retired buildings working, and combos count them as the building they joined.
+- **Decor** is five pieces, each with its own job: Pohon Rindang (+0.3 Popularitas a month), Balai-balai Bambu (shops within 2 tiles +6%), Lampu Jalan (shops within 2 tiles +6%), Mural (+1 Viral a month), Patung Ikon. Pot Bunga and Kolam Ikan Hias are cut; Taman Bermain and Air Mancur wait for the city act.
+- **Brands.** A building gets a brand only when its real-world version is a chain. Minimarkets are IndoApril and BetaMart: different ones side by side make Rivalitas Abadi (**x1.4**, **-2** Popularitas), the same one within **2** tiles makes both earn **15%** less. Wifi towers carry a provider (Telkomkesel, M4, Indosatset, XXL, Smartfriend, By.Utang): two different providers within **2** tiles make **Perang Kuota** (**x1.3**, **+2** Viral, **-1** Popularitas a month). Rumah Makan, Apotek, Bengkel and Barbershop are franchises: each other outlet of the same brand adds **8%**, up to **24%**, and **5%** of their income goes up as royalty with the Setoran. The brand can be changed in the inspector, and any building can be renamed.
 
 ### Stage 2: RW
 
@@ -288,7 +293,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - Satire targets how a system behaves, never who introduced it or when. Musrenbang and Dana Desa are fine. Flagship programs, the capital move and named slogans are out.
 - Swap test: if a joke would not work in any country's bureaucracy, or needs a headline to land, cut it. Example: "blusukan" is tied to one real person, so it is out.
 - Indonesia Emas 2045 stays the only real reference.
-- No new brand names. Indomaret and Alfamart stay. Chat apps stay generic ("Grup Chat Warga").
+- Brands are parodies of the name only, never a logo or brand colours, and only for chains (see the brands list in section 2). Indomaret and Alfamart are IndoApril and BetaMart. Chat apps stay generic ("Grup Chat Warga").
 
 ## 6. UI, art and tech rules
 

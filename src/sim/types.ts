@@ -123,7 +123,14 @@ export interface Neighbour {
 
 export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'petani' | 'peternak' | 'pengepul' | 'guru' | 'satpam' | 'tukang' | 'panitia' | 'kaderPosyandu' | 'calo' | 'honorer' | 'pendampingDesa';
 
+/** Trouble that has shown up at least once. Some buildings open only when their problem appears. */
+export type ProblemId = 'banjir' | 'jobless' | 'permitQueue' | 'preman';
+
 export interface Requirement {
+  /** Opens once this problem has shown up in the kampung, so the fix arrives with the trouble. */
+  problem?: ProblemId;
+  /** Opens once the player has reached this stage. */
+  stage?: StageId;
   population?: number;
   /** Needs at least this many stars in a stage. */
   stars?: { stage: StageId; n: number };
@@ -198,6 +205,10 @@ export interface Building {
   rot?: 0 | 1;
   /** A restarted project never freezes again. */
   restarted?: boolean;
+  /** Chain brand (wifi, rumah makan, apotek, bengkel, barbershop). Absent in old saves: picked from the uid. */
+  brand?: string;
+  /** Name the player gave it. Absent means the brand, a local name, or the building's own name. */
+  name?: string;
   /** No path links it to the Kantor RT, so it earns and attracts nothing. Set by refreshAccess. */
   noRoad?: boolean;
   /** Jalan Setapak only: the month it cracked. Neglect counts from here. */
@@ -216,6 +227,8 @@ export interface Resident {
   manual?: boolean;
   /** Months spent employed. Level comes from this (see levelFor in data/jobs.ts). Absent in older saves. */
   xp?: number;
+  /** Months in a row with no job. Long idleness is the jobless problem (and, later, preman). */
+  idle?: number;
 }
 
 export interface WacanaState {
@@ -294,6 +307,8 @@ export interface GameState {
   inflation: number;
   discovered: string[];
   unlocked: string[];
+  /** Problems that have shown up at least once, for the buildings they open. */
+  problems?: ProblemId[];
   wacana: WacanaState[];
   modifiers: Modifier[];
   ranking: RankingResult[];

@@ -1,3 +1,4 @@
+import { noteProblem } from './problems';
 import { eModLabel, eOutcome, eResult, t } from '../i18n';
 import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR_SABAR, EVENTS, POPUP_CHANCE, MIN_REPEAT_GAP, POPUP_GAP, REPAIR_FRACTION, eventDef, type EventChoice, type EventDef, type EventOutcome as OutcomeDef } from '../data/events';
 import { STAGE_EVENTS } from '../data/higher';
@@ -93,7 +94,8 @@ function crowded(s: GameState): boolean {
   const last = Object.values(s.lastEvent ?? {});
   if (last.length && s.month - Math.max(...last) < EVENT_CLEAR) return true;
   for (let k = 1; k < EVENT_CLEAR; k++) {
-    const due = EVENTS.some((e) => e.when.chance >= 1 && e.when.months?.includes((s.month + k) % 12) && (e.when.minMonth ?? 0) <= s.month + k);
+    // A yearly one on its month, or a one-off (no months list) on the month it first comes due.
+    const due = EVENTS.some((e) => e.when.chance >= 1 && (e.when.months ? e.when.months.includes((s.month + k) % 12) && (e.when.minMonth ?? 0) <= s.month + k : e.when.minMonth === s.month + k && !(s.lastEvent ?? {})[e.id]));
     if (due) return true;
     if (s.inspection && s.inspection.visitAt === undefined && s.inspection.warnAt === s.month + k) return true;
   }
@@ -131,6 +133,8 @@ export interface EventOutcome {
 }
 
 function floodDamage(s: GameState, fx: Fx): string {
+  // The first flood opens the Selokan, so the fix arrives with the water.
+  noteProblem(s, 'banjir');
   const protect = banjirProtection(s);
   const sabarHit = Math.round(BANJIR_SABAR * (1 - protect));
   gain(s, fx, 'sabar', -sabarHit);

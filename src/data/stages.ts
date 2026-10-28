@@ -10,9 +10,9 @@ export const STAGES: StageDef[] = [
     titles: ['Pak RT', 'RT Rintisan', 'RT Berkembang', 'RT Teladan'],
     next: 'rw',
     stars: [
-      { goals: [{ kind: 'residents', n: 10 }, { kind: 'combos', n: 1 }], unlocks: ['indomaret', 'alfamart', 'kosan'], reward: { orangDalam: 1 } },
-      { goals: [{ kind: 'residents', n: 25 }, { kind: 'rankWins', n: 1 }, { kind: 'combos', n: 2 }, { kind: 'sabar', n: 50 }], unlocks: ['lapangan', 'bankSampah'] },
-      { goals: [{ kind: 'residents', n: 40 }, { kind: 'winStreak', n: 2 }, { kind: 'combos', n: 3 }, { kind: 'sabar', n: 65 }], unlocks: [] },
+      { goals: [{ kind: 'residents', n: 10 }, { kind: 'combos', n: 1 }], unlocks: ['indomaret', 'alfamart', 'kosan', 'barbershop', 'pohonRindang', 'sawah', 'posSatpam'], reward: { orangDalam: 1 } },
+      { goals: [{ kind: 'residents', n: 25 }, { kind: 'rankWins', n: 1 }, { kind: 'combos', n: 2 }, { kind: 'sabar', n: 50 }], unlocks: ['lapangan', 'bankSampah', 'bengkel', 'paud', 'bangku', 'kandangAyam'] },
+      { goals: [{ kind: 'residents', n: 40 }, { kind: 'winStreak', n: 2 }, { kind: 'combos', n: 3 }, { kind: 'sabar', n: 65 }], unlocks: ['apotek', 'koperasi', 'balaiWarga', 'lampuTaman', 'mural'] },
     ],
   },
   ...HIGHER_STAGES,

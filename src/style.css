@@ -482,3 +482,10 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
   80% { opacity: 1; }
   100% { opacity: 0; }
 }
+
+/* Inspector: a building's own name, and its brand. */
+.name-row { display: flex; gap: 8px; align-items: stretch; }
+.name-input { flex: 1 1 auto; min-width: 0; min-height: var(--touch); padding: 0 10px; font: inherit; font-size: 16px; color: var(--text); background: var(--surface); border: 1px solid var(--muted); border-radius: 0; }
+.brand-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.brand-row .meta { margin: 0; }
+.insp-type { margin: 0 0 4px; }

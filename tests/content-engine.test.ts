@@ -63,13 +63,13 @@ describe('Orang Dalam cost', () => {
   it('blocks placing without enough Orang Dalam and spends it when placed', () => {
     const s = newGame(5);
     s.res.rupiah = 50_000_000;
-    s.stage.stars.rt = 2;
-    s.res.orangDalam = 1;
-    const no = checkPlace(s, 'patungIkon', 3, 3);
+    s.stage.stars.rt = 3;
+    s.res.orangDalam = 0.5;
+    const no = checkPlace(s, 'apotek', 3, 3);
     expect(no.ok).toBe(false);
     expect(no.ok ? [] : no.missing.join(' ')).toMatch(/Orang Inside/);
-    s.res.orangDalam = 2.5;
-    expect(place(s, 'patungIkon', 3, 3).ok).toBe(true);
+    s.res.orangDalam = 1.5;
+    expect(place(s, 'apotek', 3, 3).ok).toBe(true);
     expect(s.res.orangDalam).toBeCloseTo(0.5);
   });
 });
@@ -81,7 +81,7 @@ describe('unlock notices', () => {
     const fx: Fx = [];
     checkUnlocks(s, fx);
     expect(fx).toHaveLength(0);
-    expect(s.unlocked.length).toBeGreaterThan(6);
+    expect(s.unlocked.length).toBeGreaterThan(5);
   });
 
   it('batches several unlocks in one month into one notice', () => {

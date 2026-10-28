@@ -21,6 +21,10 @@ export interface ComboDef {
   agustusMult?: number;
   /** Plain-language effect line. */
   effect: string;
+  /** The members must carry different brands (a price war between providers). */
+  brands?: 'different';
+  /** Its buildings can no longer be built. It still works for saves that have them, and the Buku Combo lists it only once found. */
+  retired?: boolean;
 }
 
 // Add a combo by adding an object here. Nothing else to touch.

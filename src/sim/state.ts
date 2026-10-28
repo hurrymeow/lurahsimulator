@@ -54,7 +54,8 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
   laySetapak(s, cx, cy);
   refreshAccess(s);
   for (let i = 0; i < START_RESIDENTS; i++) addResident(s);
-  s.unlocked = ['rumah', 'warung', 'posRonda', 'biopori', 'jalan', 'kantorRT'];
+  s.unlocked = ['rumah', 'warung', 'posRonda', 'jalan', 'kantorRT'];
+  s.problems = [];
   return s;
 }
 

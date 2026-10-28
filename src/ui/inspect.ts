@@ -6,6 +6,8 @@ import { def } from '../sim/content';
 import { checkDemolish, checkSkipPermit, checkUpgrade, demolish, rotateBuilding, skipPermit, upgrade } from '../sim/rules';
 import { REFUND } from '../sim/balance';
 import { byUid, levelMult, pathMult, upgradeCost } from '../sim/state';
+import { brandKind, brandOf, displayName, hasBrand, hasOwnName, kanibal, nextBrand, rename, sisterOutlets } from '../sim/brands';
+import { FRANCHISE, KANIBAL, NAME_MAX } from '../data/brands';
 import { buildingIncome, buildingUpkeep } from '../sim/tick';
 import type { Building, CheckResult } from '../sim/types';
 import { spriteImg } from './build';
@@ -46,6 +48,27 @@ export function inspect(app: App, uid: number): void {
       ...Array.from({ length: d.maxLevel }, (_, k) => k + 1).map((lv) =>
         h('figure', { class: `lv${lv === b.level ? ' current' : ''}`, role: 'listitem', 'aria-current': lv === b.level ? 'true' : undefined }, spriteImg(d.sprite, 48, lv), h('figcaption', {}, t('res.level', { n: lv })))),
     ));
+  // A chain shows its brand and what the brand does here; any building can be given a name.
+  if (hasBrand(b.def)) {
+    const k = sisterOutlets(s, b);
+    lines.push(h('div', { class: 'row brand-row' },
+      h('p', { class: 'meta' }, t('insp.brand', { brand: brandOf(b)! })),
+      h('button', { class: 'btn', onclick: () => {
+        nextBrand(b);
+        app.tap(10);
+        done();
+      } }, t('insp.changeBrand')),
+    ));
+    if (brandKind(b.def) === 'franchise') lines.push(h('p', { class: 'meta' }, k ? t('insp.franchise', { n: k, pct: Math.round(Math.min(FRANCHISE.max, FRANCHISE.perOutlet * k) * 100), royalty: Math.round(FRANCHISE.royalty * 100) }) : t('insp.franchiseNone')));
+  }
+  if (kanibal(s, b)) lines.push(h('p', { class: 'meta warn' }, t('insp.kanibal', { pct: Math.round((1 - KANIBAL.mult) * 100) })));
+  const nameInput = h('input', { type: 'text', class: 'name-input', maxlength: String(NAME_MAX), value: b.name ?? '', placeholder: displayName(b), 'aria-label': t('insp.nameLabel') }) as HTMLInputElement;
+  lines.push(h('form', { class: 'row name-row', onsubmit: (e: Event) => {
+    e.preventDefault();
+    rename(b, nameInput.value);
+    app.tap(10);
+    done();
+  } }, nameInput, h('button', { class: 'btn', type: 'submit' }, t('insp.rename'))));
   const income = buildingIncome(s, b);
   const upkeep = buildingUpkeep(s, b);
   if (income || upkeep) lines.push(h('p', { class: 'meta' }, t('insp.money', { income: rupiah(income), upkeep: rupiah(upkeep) })));
@@ -94,7 +117,9 @@ export function inspect(app: App, uid: number): void {
     app.refresh();
     closeSheet();
   }));
-  openSheet(bName(d), lines, () => {
+  // A named building leads with its name; the type line under it keeps what it is.
+  if (hasOwnName(b)) lines.unshift(h('p', { class: 'meta insp-type' }, bName(d)));
+  openSheet(hasOwnName(b) ? displayName(b) : bName(d), lines, () => {
     app.view.selected = null;
   });
 }

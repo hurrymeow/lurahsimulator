@@ -1,4 +1,4 @@
-import { bBlock, bName, t } from '../i18n';
+import { bBlock, bName, t, type Key } from '../i18n';
 import { rupiah } from '../format';
 import { REFUND } from './balance';
 import { lotAt } from './area';
@@ -6,6 +6,7 @@ import { def, gateOf, hasDef } from './content';
 import { gateOpen } from './gate';
 import { neighbourAt } from './grow';
 import { stageTitle } from './stages';
+import { hasProblem } from './problems';
 import { FLAT, refreshAccess } from './access';
 import { addBuilding, buildCost, count, covers, footprintOf, housing, inBounds, population, tilesOf, upgradeCost, year } from './state';
 import type { Building, BuildingDef, CheckResult, GameState } from './types';
@@ -19,9 +20,13 @@ function moneyGap(s: GameState, cost: number, missing: string[]): void {
 }
 
 /** Requirements that do not depend on the tile. Every miss says exactly what is missing. */
+const STAGE_ORDER = ['rt', 'rw', 'kelurahan'];
+
 export function requirementGaps(s: GameState, d: BuildingDef, opts: { ignoreLimit?: boolean } = {}): string[] {
   const missing: string[] = [];
   const r = d.requires;
+  if (r?.problem && !hasProblem(s, r.problem)) missing.push(t(`sim.needProblem.${r.problem}` as Key));
+  if (r?.stage && STAGE_ORDER.indexOf(s.stage.current) < STAGE_ORDER.indexOf(r.stage)) missing.push(t('sim.needStage', { title: stageTitle(r.stage, 0) }));
   if (r?.population && population(s) < r.population) missing.push(t('sim.needPop', { n: r.population, have: population(s) }));
   if (r?.stars && s.stage.stars[r.stars.stage] < r.stars.n) missing.push(t('sim.needStars', { title: stageTitle(r.stars.stage, r.stars.n), n: r.stars.n }));
   for (const id of r?.buildings ?? []) if (count(s, id, true) === 0) missing.push(t('sim.needBuilding', { name: bName(def(id)) }));

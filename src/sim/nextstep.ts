@@ -1,6 +1,7 @@
 import { COMBOS } from '../data/combos';
 import { bName, cName, t } from '../i18n';
 import { def } from './content';
+import { parseNeed } from './combos';
 import { requirementGaps } from './rules';
 import { count, housing, population } from './state';
 import type { GameState } from './types';
@@ -12,7 +13,7 @@ export const COMBO_HINT_MONTH = 30;
 function easiestCombo(s: GameState) {
   let best: { name: string; pieces: string; cost: number } | null = null;
   for (const c of COMBOS) {
-    const defs = c.needs.map(def);
+    const defs = c.needs.map((n) => def(parseNeed(n).id));
     if (defs.some((d) => !d.placeable || requirementGaps(s, d, { ignoreLimit: true }).length)) continue;
     const cost = defs.reduce((sum, d) => sum + (count(s, d.id) ? 0 : d.cost), 0);
     if (!best || cost < best.cost) best = { name: cName(c), pieces: defs.map(bName).join(', '), cost };

@@ -22,7 +22,7 @@ describe('categories and sizes', () => {
     const at = { x: 7, y: 3 };
     addBuilding(s, 'lapangan', at.x, at.y, 'active');
     expect(buildingAt(s, at.x + 2, at.y + 2)?.def).toBe('lapangan');
-    expect(checkPlace(s, 'potBunga', at.x + 1, at.y + 1).ok).toBe(false);
-    expect(place(s, 'potBunga', at.x + 3, at.y).ok).toBe(true);
+    expect(checkPlace(s, 'pohonRindang', at.x + 1, at.y + 1).ok).toBe(false);
+    expect(place(s, 'pohonRindang', at.x + 3, at.y).ok).toBe(true);
   });
 });
