@@ -28,7 +28,7 @@ export const stepBody = (s: Step) => t(`how.${s.n}.body` as Key);
 
 // One card per idea: a picture row, one bold sentence, one short sentence.
 export const STEPS: Step[] = [
-  { id: 'build', n: 1, basic: true, pics: [{ word: 'how.pic.menu' }, { text: '›' }, { word: 'menu.build' }, { text: '›' }, { sprite: 'warung' }] },
+  { id: 'build', n: 1, basic: true, pics: [{ word: 'menu.build' }, { text: '›' }, { sprite: 'warung' }] },
   { id: 'time', n: 8, basic: true, pics: [{ text: '❚❚' }, { text: '1x' }, { text: '2x' }, { text: '4x' }] },
   // A one-month permit is over before a tip helps, so Orang Inside waits for a longer queue.
   { id: 'orang', n: 2, when: (s) => s.res.orangDalam >= 1 && s.buildings.some((b) => b.status === 'permit' && b.timer >= 2), pics: [{ word: 'how.pic.permit' }, { text: '›' }, { icon: 'orangDalam' }, { text: '›' }, { sprite: 'warung' }] },
