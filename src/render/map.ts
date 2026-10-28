@@ -91,6 +91,9 @@ export interface Ghost {
   tiles?: { x: number; y: number; ok: boolean; have: boolean }[];
   /** Draw the sprite mirrored, for a building that has been turned. */
   flip?: boolean;
+  /** A building being moved keeps its look: its house variant and its level. */
+  variant?: string;
+  level?: number;
 }
 
 interface Hit {
@@ -420,7 +423,7 @@ export class MapView {
     return c.x > -m && c.x < this.viewW + m && c.y > -m && c.y < this.viewH + m * 2;
   }
 
-  private variant(b: Building): string | undefined {
+  variant(b: Building): string | undefined {
     // Houses vary by roof colour, roof shape and wall colour, like a perumahan built over the years.
     if (b.def === 'rumah') return ROOF_COLOURS[b.uid % ROOF_COLOURS.length] + ROOF_SHAPES[Math.floor(b.uid / 5) % ROOF_SHAPES.length] + WALL_COLOURS[Math.floor(b.uid / 2) % WALL_COLOURS.length];
     if (b.def !== 'selokan' && b.def !== 'biopori') return undefined;
@@ -633,7 +636,7 @@ export class MapView {
         const breath = this.motion ? 0.5 + 0.5 * Math.sin(now / 260) : 0.5;
         ctx.globalAlpha = p.ok ? 0.72 + 0.2 * breath : 0.5;
         if (!p.ok) ctx.filter = 'grayscale(1) sepia(1) hue-rotate(-50deg) saturate(4)';
-        this.art(ctx, iso(g.sprite, undefined, n), p.x, p.y, 1, 0, n, g.flip);
+        this.art(ctx, iso(g.sprite, g.variant, n, g.level), p.x, p.y, 1, 0, n, g.flip);
         ctx.filter = 'none';
         ctx.globalAlpha = 1;
         this.diamond(ctx, p.x, p.y, 0, n);

@@ -248,7 +248,13 @@ export function sprite(name: string, recolor?: [string, string], set: Record<str
   return c;
 }
 
+const urls = new Map<string, string>();
+
+/** A data URL of an HUD icon. Cached, because the HUD asks for it on every refresh. */
 export function iconURL(name: string, scale = 4): string {
+  const key = `${name}:${scale}`;
+  const hit = urls.get(key);
+  if (hit) return hit;
   const src = sprite(name, undefined, ICONS);
   const c = document.createElement('canvas');
   c.width = src.width * scale;
@@ -256,7 +262,9 @@ export function iconURL(name: string, scale = 4): string {
   const ctx = c.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(src, 0, 0, c.width, c.height);
-  return c.toDataURL();
+  const url = c.toDataURL();
+  urls.set(key, url);
+  return url;
 }
 
 export const ROOF_COLOURS = ['o', 'p', 'G', 'l', 'R'];

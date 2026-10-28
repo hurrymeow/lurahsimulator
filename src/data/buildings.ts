@@ -18,9 +18,11 @@ const CORE_BUILDINGS: BuildingDef[] = [
     income: 0,
     attract: 1,
     housing: 3,
+    // Level 2 adds a teras, level 3 a second floor: 2 more beds each.
+    housingLevels: [3, 5, 7],
     permitMonths: 0,
     buildMonths: 0,
-    maxLevel: 1,
+    maxLevel: 3,
     placeable: true,
     removable: true,
     sprite: 'rumah',
