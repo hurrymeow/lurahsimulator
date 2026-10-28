@@ -38,12 +38,19 @@ class Audio {
     this.set(s);
     addEventListener('pointerdown', () => this.start(), { once: true, capture: true });
     addEventListener('keydown', () => this.start(), { once: true, capture: true });
+    document.addEventListener('click', (e) => this.onClick(e), true);
     document.addEventListener('visibilitychange', () => {
       if (!this.ctx) return;
       if (document.hidden) void this.ctx.suspend();
       else void this.ctx.resume();
       this.music();
     });
+  }
+
+  /** One tap sound for every enabled button, so no control needs its own call. */
+  private onClick(e: MouseEvent): void {
+    const el = e.target instanceof Element ? e.target.closest('button, [role="button"]') : null;
+    if (el && !el.matches(':disabled, [aria-disabled="true"]')) this.play('tap');
   }
 
   set(s: Settings): void {
@@ -84,7 +91,7 @@ class Audio {
   play(name: Sfx): void {
     if (!this.ctx || !this.sfxVol) return;
     switch (name) {
-      case 'tap': this.tone(660, 0, 0.06, 0.1, 'square'); break;
+      case 'tap': this.tone(660, 0, 0.06, 0.04, 'square'); break;
       case 'build': this.tone(392, 0, 0.1, 0.16); this.tone(523, 0.08, 0.16, 0.16); break;
       case 'event': this.tone(784, 0, 0.12, 0.14); this.tone(659, 0.1, 0.2, 0.14); break;
       case 'bad': this.tone(196, 0, 0.3, 0.18, 'sawtooth'); this.tone(147, 0.12, 0.35, 0.16, 'sawtooth'); break;
