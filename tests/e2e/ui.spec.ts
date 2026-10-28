@@ -783,7 +783,7 @@ test.describe('text is legible and never cut off', () => {
     await expectLegible(page, 'Menu');
     await page.locator('.sheet-head .btn').click();
 
-    const panels = [['build', 'Build'], ['warga', 'Residents'], ['wacana', 'Policies'], ['combo', 'Combo Book'], ['log', 'Log'], ['stats', 'Treasury & ranking'], ['settings', 'Settings']] as const;
+    const panels = [['build', 'Build'], ['warga', 'Residents'], ['wacana', 'Policies'], ['combo', 'Combo'], ['log', 'Log'], ['stats', 'Ranking'], ['settings', 'Settings']] as const;
     for (const [id, name] of panels) {
       await openPanel(page, id);
       await expect(page.locator('#sheet')).toBeVisible();
@@ -1408,7 +1408,7 @@ test.describe('RW stage', () => {
     await page.locator('#act-combo').click();
     await page.locator('.sheet .ls-tile').first().click();
     await expect(page.locator('.sheet').getByText(lang() === 'en' ? /Needs .* within/ : /Butuh .* dalam jarak/).first()).toBeVisible();
-    await expectLegible(page, 'RW Buku Combo');
+    await expectLegible(page, 'RW Combo');
     await page.locator('.sheet-head .btn').click();
 
     await page.locator('#dock-warga').click();

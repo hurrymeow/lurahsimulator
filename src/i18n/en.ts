@@ -76,13 +76,13 @@ export const EN = {
   'menu.game': 'Game',
   'menu.build': 'Build',
   'menu.log': 'Log',
-  'menu.stats': 'Treasury & ranking',
+  'menu.stats': 'Ranking',
   'menu.howto': 'How to play',
   'menu.settings': 'Settings',
   'menu.install': 'Install app',
   'menu.warga': 'Residents',
   'menu.wacana': 'Policies',
-  'menu.combo': 'Combo Book',
+  'menu.combo': 'Combo',
 
   // settings
   'set.title': 'Settings',
@@ -129,7 +129,7 @@ export const EN = {
   'how.2.head': 'Orang Inside skips the line.',
   'how.2.body': 'Tap a building that is waiting and spend 1 Orang Inside. You earn more, slowly, from the Kantor RT.',
   'how.4.head': 'Neighbours help each other.',
-  'how.4.body': 'Put buildings side by side. Hidden combos show up the first time they work, and get saved in Menu, Combo Book.',
+  'how.4.body': 'Put buildings side by side. Hidden combos show up the first time they work, and get saved in Menu, Combo.',
   'how.5.head': 'Residents pick their own work.',
   'how.5.body': 'They take jobs when a slot opens. Change one in Residents at the bottom. Ojol earn Rupiah. Influencers make Virality. Buzzers make fake Virality that collapses later.',
   'how.6.head': 'Policies cost something.',
@@ -447,7 +447,7 @@ export const EN = {
   'combo.ruleTrait': 'Also needs two neighbouring RTs with the same trait.',
   'combo.ruleJob': 'Also needs a resident working as {job}.',
   'combo.notice': 'Combo: {name}',
-  'combo.noticeBody': '{story} {effect} Logged in Combo Book.',
+  'combo.noticeBody': '{story} {effect} Logged in Combo.',
   'combo.perMonth': '/mo',
 
   // stats, log, notices
