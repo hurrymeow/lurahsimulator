@@ -1425,6 +1425,39 @@ test.describe('Kelurahan stage', () => {
 test.describe('home screen', () => {
   const W = { id: { start: 'Mulai', wipe: 'Hapus dan mulai ulang' }, en: { start: 'Start', wipe: 'Wipe and start over' } };
 
+  test('no How to Play or tip card covers it on launch, fresh or with a save', async ({ page }) => {
+    const nothingOver = async () => {
+      await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+      // Refresh runs the tip check, as the game loop does while home is open.
+      await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+      await expect(page.locator('#home')).toBeVisible();
+      await expect(page.locator('#howto')).toBeHidden();
+      await expect(page.locator('#modal')).toBeHidden();
+    };
+    await page.goto(`/?debug&lang=${lang()}`);
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await nothingOver();
+    // A save whose kampung is due the Warga-and-jobs tip, not yet seen.
+    await passHome(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const s = app.s;
+      s.month = 3;
+      s.buildings.push({ uid: s.nextUid++, def: 'wifi', x: 2, y: 3, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      for (let i = 0; i < 3; i++) s.residents.push({ id: s.nextResidentId++, name: 'Mbak Rizki Putri', job: 'none', pensiun: 0, fake: 0, arrived: 0 });
+      app.save();
+      localStorage.removeItem('pakrt.tips');
+    });
+    await page.reload();
+    await nothingOver();
+    // The tip waits for the map: it shows on the first refresh after the player continues.
+    await passHome(page);
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+    await expect(page.locator('#modal.tip-modal')).toBeVisible();
+  });
+
   test('shows the map, only Start and a gear, and asks Continue or New game', async ({ page }) => {
     await page.goto(`/?debug&lang=${lang()}`);
     await page.evaluate(() => localStorage.clear());
