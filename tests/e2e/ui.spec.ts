@@ -707,6 +707,40 @@ test.describe('slim HUD and one menu', () => {
     expect(await pk('a.running')).toBe(false);
   });
 
+  test('a popup queued while a sheet is open waits for the sheet to close', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await expect(page.locator('#sheet')).toBeVisible();
+    await page.evaluate(() => { (window as unknown as { pakrt: any }).pakrt.modal({ title: 'Queued', body: 'Wait', tone: 'info' }); });
+    await page.waitForTimeout(150);
+    await expect(page.locator('#modal')).toBeHidden();
+    await page.getByRole('button', { name: WORDS[lang()].close }).click();
+    await expect(page.locator('#modal')).toBeVisible();
+    await expect(page.locator('#modal h2')).toHaveText('Queued');
+    await page.locator('#modal').click();
+    await expect(page.locator('#modal')).toBeHidden();
+  });
+
+  test('tapping a walker opens their resident sheet, not the tile under them', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#pause-btn').click();
+    const info = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const w = app.view.crowd.people.find((p: any) => !p.away && p.id >= 0);
+      w.fx = 5.5;
+      w.fy = 5.5;
+      const g = app.view.project(w.fx, w.fy);
+      const r = document.getElementById('map')!.getBoundingClientRect();
+      const resident = app.s.residents.find((x: any) => x.id === w.id);
+      return { x: r.left + g.x, y: r.top + g.y, name: resident.name };
+    });
+    await page.mouse.click(info.x, info.y);
+    await expect(page.locator('#sheet')).toBeVisible();
+    await expect(page.locator('#sheet h2')).toHaveText(info.name);
+  });
+
   test('pause toggles and speed cycles 1x, 2x (4x only from year 10)', async ({ page }) => {
     await start(page);
     await dismissModals(page);
