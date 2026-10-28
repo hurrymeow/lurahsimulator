@@ -1674,6 +1674,26 @@ test.describe('zoom, big lots and the Warga list', () => {
   });
 });
 
+test.describe('map taps', () => {
+  test('a tap on a building hidden behind a taller one still opens it', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const at = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      const mk = (uid: number, def: string, x: number, y: number) => ({ uid, def, x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      // The Warung sits behind; a taller Kantor RT one tile down-screen of it covers its sprite.
+      app.s.buildings.push(mk(9101, 'warung', k.x - 5, k.y - 5), mk(9102, 'kantorRT', k.x - 4, k.y - 4));
+      app.refresh();
+      const r = document.getElementById('map')!.getBoundingClientRect();
+      const c = app.view.tileCentre(k.x - 5, k.y - 5);
+      return { x: r.left + c.x, y: r.top + c.y };
+    });
+    await page.mouse.click(at.x, at.y);
+    await expect(page.locator('#sheet h2').first()).toContainText(lang() === 'en' ? 'Warung' : 'Warung');
+  });
+});
+
 test.describe('path decay, level art and menu icons', () => {
   test('a cracked path offers a tile fix, a stretch fix and a favour, and the favour fixes the stretch', async ({ page }) => {
     await start(page);

@@ -651,7 +651,7 @@ export class App {
       down = null;
       if (wasDrag) return;
       const rect = canvas.getBoundingClientRect();
-      const tile = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top, !this.placing);
+      const tile = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top);
       if (!tile) return;
       if (this.placing) {
         this.tapPlacing(tile);
