@@ -38,7 +38,7 @@ export function openResidents(app: App, focus?: number): void {
   }
 }
 
-function openResident(app: App, id: number): void {
+export function openResident(app: App, id: number): void {
   const r = app.s.residents.find((x) => x.id === id);
   if (!r) return openResidents(app);
   const choices = (['none', ...liveJobs(app.s).map((j) => j.id)] as JobId[]).map((job) => {

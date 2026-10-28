@@ -10,6 +10,7 @@ import { openBuild } from './ui/build';
 import { h } from './ui/dom';
 import { ICON_PX, menuIconURL } from './ui/icons';
 import { inspect } from './ui/inspect';
+import { openResident } from './ui/panels';
 import { showHome } from './ui/home';
 import { showHowto } from './ui/howto';
 import { setupCoach } from './ui/coach';
@@ -26,6 +27,7 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 
 const app = new App();
 app.inspect = (uid) => inspect(app, uid);
+app.openResident = (id) => openResident(app, id);
 app.actions.push({ id: 'build', label: () => t('menu.build'), open: openBuild });
 registerSystems(app);
 app.actions.push(
