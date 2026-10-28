@@ -2,7 +2,7 @@ import { REALISASI } from '../data/realisasi';
 import { checkRealisasi, realisasiCost, startRealisasi } from '../sim/realisasi';
 import { rEffect, rLine, rName } from '../i18n';
 import { jBlurb, jName, t, wLine, wName, wTrade } from '../i18n';
-import { LEVEL_MONTHS, jobDef } from '../data/jobs';
+import { LEVEL_MONTHS, PNS_PAYOUT_PER_LEVEL, jobDef } from '../data/jobs';
 import { WACANA } from '../data/wacana';
 import type { App } from '../app';
 import { rupiah } from '../format';
@@ -11,7 +11,7 @@ import { checkRepair, repair, repairCost } from '../sim/events';
 import { checkRestart, checkRestartODn, RESTART_ODN, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
 import { announce, checkAnnounce, wacanaCost } from '../sim/wacana';
 import { iconURL } from '../render/sprites';
-import type { Building, JobId } from '../sim/types';
+import type { Building, JobId, Resident } from '../sim/types';
 import { actionButton } from './inspect';
 import { h } from './dom';
 import { openSheet } from './sheet';
@@ -19,6 +19,16 @@ import { openComboBook, openWargaList } from './lists';
 
 // ---------- Warga ----------
 /** focus: the resident just edited. The list opens scrolled to their row instead of the top. */
+/** Experience in plain words: months in the job and the bonus it brings. No stars: those are for staff. */
+function experienceLine(r: Resident, lv: number, next: number | undefined): string {
+  const j = jobDef(r.job);
+  if (!j) return t('res.xpNone');
+  const pct = Math.round((r.job === 'pns' ? PNS_PAYOUT_PER_LEVEL : j.perLevel.boost) * (lv - 1) * 100);
+  const months = r.xp ?? 0;
+  const base = pct ? t('res.xp', { months, pct }) : t('res.xpNew', { months });
+  return next === undefined ? `${base} ${t('res.xpTop')}` : `${base} ${t('res.xpNext', { left: next - months })}`;
+}
+
 export function openResidents(app: App, focus?: number): void {
   openWargaList(app, (id) => openResident(app, id));
   const row = focus === undefined ? null : document.querySelector<HTMLElement>(`#sheet [data-rid="${focus}"]`);
@@ -42,7 +52,7 @@ function openResident(app: App, id: number): void {
   });
   const lv = levelOf(r);
   const next = LEVEL_MONTHS[lv];
-  openSheet(r.name, [h('p', { class: 'meta' }, next === undefined ? t('res.levelMax', { n: lv }) : t('res.levelNext', { n: lv, left: next - (r.xp ?? 0) })), ...choices]);
+  openSheet(r.name, [h('p', { class: 'meta', id: 'res-xp' }, experienceLine(r, lv, next)), ...choices]);
 }
 
 // ---------- Wacana and Realisasi ----------

@@ -383,7 +383,7 @@ function gigDone(s: GameState, id: string, fx: Fx, level: number): void {
   const me = inem(s);
   if (me) me.level = Math.max(me.level, level);
   const g = GIGS.find((x) => x.id === id)!;
-  fx.push({ kind: 'notice', title: t('gig.doneTitle', { name: gName(g) }), body: gReward(g), tone: 'good', fanfare: true });
+  fx.push({ kind: 'notice', title: t('gig.doneTitle', { name: gName(g) }), body: gReward(g), tone: 'good', fanfare: true, inem: true });
 }
 
 /** Monthly: Inem's sub-goals. They never gate stars. */
