@@ -201,7 +201,6 @@ export interface Building {
   /** No path links it to the Kantor RT, so it earns and attracts nothing. Set by refreshAccess. */
   noRoad?: boolean;
   /** Jalan Setapak only: the month it cracked. Neglect counts from here. */
-  crackedAt?: number;
 }
 
 export interface Resident {

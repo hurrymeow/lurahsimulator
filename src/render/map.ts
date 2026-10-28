@@ -1,4 +1,3 @@
-import { PATH_DECAY } from '../sim/balance';
 import { rupiahShort } from '../format';
 import { def } from '../sim/content';
 import { footprintOf, tilesOf } from '../sim/state';
@@ -396,8 +395,6 @@ export class MapView {
   private variant(b: Building): string | undefined {
     // Houses vary by roof colour, roof shape and wall colour, like a perumahan built over the years.
     if (b.def === 'rumah') return ROOF_COLOURS[b.uid % ROOF_COLOURS.length] + ROOF_SHAPES[Math.floor(b.uid / 5) % ROOF_SHAPES.length] + WALL_COLOURS[Math.floor(b.uid / 2) % WALL_COLOURS.length];
-    // A cracked path shows its age: a split at first, potholes once it has been left for months.
-    if (b.def === 'jalan' && b.status === 'damaged') return this.clock - (b.crackedAt ?? this.clock) >= PATH_DECAY.potholeAfter ? 'rusak' : 'retak';
     if (b.def !== 'selokan' && b.def !== 'biopori') return undefined;
     const has = (dx: number, dy: number) => this.selokan.has((b.y + dy) * GRID_W + b.x + dx);
     return !has(1, 0) && !has(-1, 0) && (has(0, 1) || has(0, -1)) ? 'y' : undefined;

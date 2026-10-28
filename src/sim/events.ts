@@ -3,7 +3,6 @@ import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR
 import { STAGE_EVENTS } from '../data/higher';
 import { rupiah } from '../format';
 import { activeCombos } from './combos';
-import { isPath, tileRepairCost } from './decay';
 import { def, isCover } from './content';
 import { gateOpen } from './gate';
 import { banjirCut, wacanaNoReceipt } from './kel';
@@ -209,8 +208,6 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
 }
 
 export function repairCost(s: GameState, b: Building): number {
-  // A path costs nothing to lay, so it has its own repair price, and Virality does not waive it.
-  if (isPath(b)) return tileRepairCost(s);
   return s.res.viral >= VIRAL_REPAIR_AT ? 0 : price(s, def(b.def).cost * REPAIR_FRACTION);
 }
 
@@ -228,7 +225,6 @@ export function repair(s: GameState, b: Building): CheckResult {
   s.res.rupiah -= cost;
   s.stats.spent += cost;
   b.status = 'active';
-  delete b.crackedAt;
   return check;
 }
 

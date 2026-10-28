@@ -33,7 +33,9 @@ function play(seed: number, years: number, smart: boolean, starMonths: number[] 
         if (spot && s.res.rupiah > 2_000_000 && checkPlace(s, 'rumah', spot.x, spot.y).ok) place(s, 'rumah', spot.x, spot.y);
       }
       // The bot packs the middle of the map so leftover combo members stay in range.
-      for (const d of placeableDefs().filter((p) => !p.pathIncome && !p.housing)) {
+      // Tongkrongan's wifi costs more than the filler buildings, so stop buying filler until it is up.
+      const savingForWifi = s.month >= 12 && !s.buildings.some((b) => b.def === 'wifi');
+      for (const d of savingForWifi ? [] : placeableDefs().filter((p) => !p.pathIncome && !p.housing)) {
         const spot = emptyTiles(s).find((t) => t.y < 9);
         // Sensible player: keep a cash buffer and do not stack buildings that only cost upkeep.
         const have = s.buildings.filter((b) => b.def === d.id).length;

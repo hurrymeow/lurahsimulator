@@ -307,7 +307,6 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 - The satellite view hides while a building is being placed.
 - Light and Dark share one layout: every size, gap and position is the same, and only colours change. An e2e test compares the boxes in both themes.
 - On short phones (640px tall or less) the satellite view drops out and the goal pill spans the map's width.
-- A broken Jalan Setapak shows as a whole tile greyed and cracked, with a pulsing red tint, an orange outline and an orange "!" badge, so it reads at a glance (ART.md).
 - Sheets and modals keep their own dark look in both themes (see Themes below).
 - Clean pixel UI: 1px rules, square corners, dark green (`#2f6b45`) for primary actions. No drop shadows in the bars. No cluttered Windows-XP-style panels.
 - The rules in [UI.md](UI.md) apply to the frame, with rule 1's exception for the slim top rows and the goal pill (28px controls).

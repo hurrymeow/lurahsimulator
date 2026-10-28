@@ -1676,41 +1676,7 @@ test.describe('zoom, big lots and the Warga list', () => {
   });
 });
 
-test.describe('path decay, level art and menu icons', () => {
-  test('a cracked path offers a tile fix, a stretch fix and a favour, and the favour fixes the stretch', async ({ page }) => {
-    await start(page);
-    await dismissModals(page);
-    const uid = await page.evaluate(() => {
-      const app = (window as unknown as { pakrt: any }).pakrt;
-      const s = app.s;
-      s.month = 30;
-      s.res.orangDalam = 3;
-      const k = s.buildings.find((b: any) => b.def === 'kantorRT');
-      const ids: number[] = [];
-      for (let i = 0; i < 3; i++) {
-        const b = { uid: s.nextUid++, def: 'jalan', x: k.x - 3 + i, y: k.y - 3, level: 1, status: 'damaged', timer: 0, invested: 0, placedAt: 0, crackedAt: 20 };
-        s.buildings.push(b);
-        ids.push(b.uid);
-      }
-      app.refresh();
-      return ids[1];
-    });
-    // A tutorial tip can pop up over the map first. Clear it, then open the path.
-    await dismissModals(page);
-    await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.inspect(u), uid);
-    await dismissModals(page);
-    const sheet = page.locator('#sheet');
-    await expect(sheet).toBeVisible();
-    // Fix this tile, fix all 3 tiles, call a favour that fixes all 3.
-    await expect(sheet.locator('.action .btn', { hasText: /3 (tiles|petak)/ })).toHaveCount(2);
-    await expect(sheet.locator('.action .btn', { hasText: /Orang/ })).toHaveCount(1);
-    await expectLegible(page, 'cracked path inspector');
-    await sheet.locator('.action .btn', { hasText: /Orang/ }).click();
-    const left = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'jalan' && b.status === 'damaged').length);
-    expect(left).toBe(0);
-    expect(await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.s.buildings.find((b: any) => b.uid === u).status, uid)).toBe('active');
-  });
-
+test.describe('level art and menu icons', () => {
   test('the inspector shows every level of a building and marks the current one', async ({ page }) => {
     await start(page);
     await dismissModals(page);
