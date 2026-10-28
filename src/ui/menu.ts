@@ -2,7 +2,6 @@ import { t } from '../i18n';
 import type { App, ActionButton, MenuGroup } from '../app';
 import { iconURL } from '../render/sprites';
 import { h } from './dom';
-import { GLYPH_PX, glyphURL } from './glyphs';
 import { ICON_PX, menuIconURL } from './icons';
 import { openSheet } from './sheet';
 import { stageHeader } from './stage';
@@ -16,8 +15,7 @@ const GROUPS: { id: MenuGroup; title: () => string }[] = [
 function tileIcon(a: ActionButton): HTMLImageElement {
   const plate = menuIconURL(a.icon ?? a.id);
   if (plate) return h('img', { src: plate, alt: '', width: ICON_PX, height: ICON_PX, class: 'pixel' });
-  const src = glyphURL(a.icon ?? a.id) ?? iconURL(a.icon ?? 'people');
-  return h('img', { src, alt: '', width: GLYPH_PX, height: GLYPH_PX, class: 'pixel' });
+  return h('img', { src: iconURL(a.icon ?? 'people'), alt: '', width: 32, height: 32, class: 'pixel' });
 }
 
 /** One menu button opens every panel, sorted into categories. */

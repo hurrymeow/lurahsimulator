@@ -9,7 +9,6 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "icons": "node scripts/gen-icons.mjs",
     "e2e": "playwright test"
   },
   "devDependencies": {
