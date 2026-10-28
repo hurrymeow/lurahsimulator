@@ -578,28 +578,28 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#sheet input.slider').nth(1)).toHaveValue('0');
   });
 
-  test('defaults to English, switches live to Bahasa Indonesia, and remembers the choice', async ({ page }) => {
-    test.skip(lang() !== 'en', 'runs once, with no ?lang override');
+  test('defaults to Bahasa Indonesia, switches live to English, and remembers the choice', async ({ page }) => {
+    test.skip(lang() !== 'id', 'runs once, with no ?lang override');
     await page.goto('/?debug');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await passHome(page);
     await dismissModals(page);
-    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page.locator('#place-ok')).toHaveText('Place');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'id');
+    await expect(page.locator('#place-ok')).toHaveText('Pasang');
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
-    await page.locator('#sheet [data-lang="id"]').click();
-    await expect(page.locator('#sheet .sheet-head h2')).toHaveText('Pengaturan');
-    await expect(page.locator('#sheet [data-lang="id"]')).toHaveAttribute('aria-pressed', 'true');
-    await expectLegible(page, 'settings after switching to Indonesian');
+    await page.locator('#sheet [data-lang="en"]').click();
+    await expect(page.locator('#sheet .sheet-head h2')).toHaveText('Settings');
+    await expect(page.locator('#sheet [data-lang="en"]')).toHaveAttribute('aria-pressed', 'true');
+    await expectLegible(page, 'settings after switching to English');
     await page.locator('.sheet-head .btn').click();
-    await expect(page.locator('#place-ok')).toHaveText('Pasang');
-    await expect(page.locator('#pause-btn')).toHaveAttribute('aria-label', 'Jeda');
+    await expect(page.locator('#place-ok')).toHaveText('Place');
+    await expect(page.locator('#pause-btn')).toHaveAttribute('aria-label', 'Pause');
     await page.reload();
     await passHome(page);
-    await expect(page.locator('#place-ok')).toHaveText('Pasang');
-    await expect(page.locator('html')).toHaveAttribute('lang', 'id');
+    await expect(page.locator('#place-ok')).toHaveText('Place');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   });
 
   test('large text and high contrast stay legible on busy panels', async ({ page }) => {
