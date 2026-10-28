@@ -4,7 +4,8 @@
 // a dock of three equal buttons: Build, Warga and Menu. Settings picks a light or dark frame.
 import { t } from '../i18n';
 import type { App } from '../app';
-import { dateLabel } from '../format';
+import { dateLabel, rupiahHud } from '../format';
+import { damagedList, repairAll, repairCost } from '../sim/events';
 import { TH, TW } from '../render/iso';
 import { WORLD_OX, WORLD_OY } from '../render/scenery';
 import { GRID_H, GRID_W } from '../sim/types';
@@ -58,6 +59,18 @@ export function setupConsole(app: App): void {
   const satBox = h('figure', { class: 'cs-sat cs', id: 'cs-sat', role: 'button', tabindex: '0' }, sat);
   stage.append(satBox);
 
+  // Repair all: a small chip under the satellite view, only while something is broken.
+  const fixAll = h('button', { class: 'btn cs cs-fix', id: 'cs-fix', type: 'button', hidden: true, onclick: () => {
+    const { fixed, left, spent } = repairAll(app.s);
+    if (!fixed.length) return app.notice({ title: t('cs.fixNone'), body: t('cs.fixNoneBody'), tone: 'bad' });
+    for (const b of fixed) app.view.burst(b.x, b.y);
+    app.tap(15);
+    app.save();
+    app.refresh();
+    app.notice({ title: t('cs.fixDone', { n: fixed.length }), body: left ? t('cs.fixLeft', { n: left }) : t('cs.fixSpent', { cost: rupiahHud(spent) }), tone: left ? 'bad' : 'good' });
+  } });
+  stage.append(fixAll);
+
   // The date follows the month; the satellite label follows the language.
   app.refreshers.push(() => {
     date.textContent = dateLabel(app.s.month);
@@ -65,6 +78,11 @@ export function setupConsole(app: App): void {
     satBox.setAttribute('aria-label', t('cs.satHelp'));
     // Out of the way while a building is being placed.
     satBox.hidden = !document.getElementById('placebar')!.hidden;
+    const broken = damagedList(app.s);
+    const total = broken.reduce((n, b) => n + repairCost(app.s, b), 0);
+    fixAll.hidden = !broken.length || !document.getElementById('placebar')!.hidden || document.getElementById('app')!.classList.contains('home-open');
+    fixAll.textContent = total ? t('cs.fixAll', { n: broken.length, cost: rupiahHud(total) }) : t('cs.fixAllFree', { n: broken.length });
+    fixAll.classList.toggle('poor', total > app.s.res.rupiah);
   });
   app.refresh();
 

@@ -232,3 +232,16 @@ export function repair(s: GameState, b: Building): CheckResult {
   return check;
 }
 
+
+/** Every damaged building and cracked path (not Mangkrak, which restarts), cheapest first. */
+export const damagedList = (s: GameState): Building[] =>
+  s.buildings.filter((b) => b.status === 'damaged').sort((a, b) => repairCost(s, a) - repairCost(s, b));
+
+/** Repairs the damaged list cheapest first, as far as the Rupiah goes. Returns what it fixed and what is left. */
+export function repairAll(s: GameState): { fixed: Building[]; left: number; spent: number } {
+  const before = s.res.rupiah;
+  const fixed: Building[] = [];
+  const list = damagedList(s);
+  for (const b of list) if (repair(s, b).ok) fixed.push(b);
+  return { fixed, left: list.length - fixed.length, spent: before - s.res.rupiah };
+}
