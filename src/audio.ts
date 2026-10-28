@@ -91,7 +91,7 @@ class Audio {
   play(name: Sfx): void {
     if (!this.ctx || !this.sfxVol) return;
     switch (name) {
-      case 'tap': this.tone(660, 0, 0.06, 0.1, 'square'); break;
+      case 'tap': this.tone(660, 0, 0.06, 0.04, 'square'); break;
       case 'build': this.tone(392, 0, 0.1, 0.16); this.tone(523, 0.08, 0.16, 0.16); break;
       case 'event': this.tone(784, 0, 0.12, 0.14); this.tone(659, 0.1, 0.2, 0.14); break;
       case 'bad': this.tone(196, 0, 0.3, 0.18, 'sawtooth'); this.tone(147, 0.12, 0.35, 0.16, 'sawtooth'); break;
