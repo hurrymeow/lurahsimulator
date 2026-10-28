@@ -70,12 +70,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Show the word PAUSED near the bottom of the screen, and stop all sprite and scenery animation while paused. Check against the existing Paused pill (build mode only).
   - Source: Hari, 2026-10-28
   - `open · — · — · done when:` PAUSED shows near the bottom in play and build mode in EN and ID, no animation runs while paused, and an e2e test covers it.
-- [ ] **Play a sound on every menu click.**
-  - Problem: Not every menu control makes a sound.
-  - Why: Silent taps feel unresponsive. Kairosoft-style games click on every control.
-  - Suggested solution: Add a click sound to every menu button and tab in `src/audio.ts`, respecting the mute setting.
-  - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` every menu control plays a click sound, mute silences it, and nothing doubles up with existing sounds.
 - [ ] **Don't force-place the building in the centre after choosing it in Build.**
   - Problem: After picking a building in build mode it is placed at the screen centre.
   - Why: It blocks the view and invites mistaps.
@@ -133,7 +127,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
-Nothing yet.
+- [x] **Play a sound on every menu click.** Shipped in `progress/menu-click-sound.md`.
 
 ## Ideas
 
