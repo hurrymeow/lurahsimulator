@@ -51,7 +51,7 @@ export function inspect(app: App, uid: number): void {
   // A chain shows its brand and what the brand does here; any building can be given a name.
   if (hasBrand(b.def)) {
     const k = sisterOutlets(s, b);
-    lines.push(h('div', { class: 'row action-row brand-row' },
+    lines.push(h('div', { class: 'row brand-row' },
       h('p', { class: 'meta' }, t('insp.brand', { brand: brandOf(b)! })),
       h('button', { class: 'btn', onclick: () => {
         nextBrand(b);
@@ -63,7 +63,7 @@ export function inspect(app: App, uid: number): void {
   }
   if (kanibal(s, b)) lines.push(h('p', { class: 'meta warn' }, t('insp.kanibal', { pct: Math.round((1 - KANIBAL.mult) * 100) })));
   const nameInput = h('input', { type: 'text', class: 'name-input', maxlength: String(NAME_MAX), value: b.name ?? '', placeholder: displayName(b), 'aria-label': t('insp.nameLabel') }) as HTMLInputElement;
-  lines.push(h('form', { class: 'row action-row name-row', onsubmit: (e: Event) => {
+  lines.push(h('form', { class: 'row name-row', onsubmit: (e: Event) => {
     e.preventDefault();
     rename(b, nameInput.value);
     app.tap(10);
