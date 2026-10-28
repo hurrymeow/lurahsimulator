@@ -1,0 +1,1 @@
+- Kelurahan fps floor 0.5 to 0.4 in tests/e2e/ui.spec.ts. See decisions/perf-floor-0-4.md.
