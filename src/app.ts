@@ -640,15 +640,9 @@ export class App {
         }
         return;
       }
-      if (!down) {
-        // A mouse hovering in build mode carries the ghost with it.
-        if (e.pointerType === 'mouse' && this.placing && !this.line) {
-          const at = local(e.clientX, e.clientY);
-          const tile = this.view.tileAt(at.x, at.y);
-          if (tile) this.moveGhost(tile);
-        }
-        return;
-      }
+      // A hovering mouse never moves the ghost: the Place buttons follow the ghost, so they would slide away
+      // from the cursor on its way to them. A click on a tile, or a drag on the ghost, moves it.
+      if (!down) return;
       if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) down.moved = true;
       if (carrying) {
         const at = local(e.clientX, e.clientY);
