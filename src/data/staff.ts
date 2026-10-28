@@ -169,7 +169,7 @@ export const ROLE_FX = {
 };
 
 /** Inem: staff number 1, the Asisten. Fixed stats, a modest salary, and a dream. */
-export const INEM = { name: 'Inem', stats: { rajin: 55, lobi: 60, jujur: 70, gaul: 75 } as Record<StatId, number>, salary: 250_000 };
+export const INEM = { name: 'Inem', stats: { rajin: 55, lobi: 60, jujur: 70, gaul: 75 } as Record<StatId, number>, salary: 75_000 };
 
 export interface GigDef {
   id: string;

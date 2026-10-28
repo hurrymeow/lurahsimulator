@@ -243,7 +243,7 @@ export const ID: Record<Key, string> = {
   'staff.stat.lobi': 'Lobi',
   'staff.stat.jujur': 'Jujur',
   'staff.stat.gaul': 'Gaul',
-  'staff.roleLine': '{role} · {stars}★ · level {level}',
+  'staff.roleLine': '{role} · {stars}★',
   'gig.doneTitle': 'Inem manggung: {name}',
   'combo.atLevel': '{name} (level {n}+)',
   'sim.needStage': 'Terbuka saat jadi {title}',

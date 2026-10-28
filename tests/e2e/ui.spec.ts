@@ -1668,6 +1668,35 @@ test.describe('build mode', () => {
     await expectLegible(page, 'sejahtera card');
   });
 
+  test('the Staff panel shows Inem, posts a lowongan and hires an applicant, all legible', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.res.rupiah = 50_000_000;
+      app.s.stage.stars.rt = 1;
+      app.refresh();
+    });
+    await openPanel(page, 'staff');
+    await expect(page.locator('#sheet .staff-card.inem')).toBeVisible();
+    await expectLegible(page, 'staff panel');
+    await page.locator('#sheet .staff-role[data-role="hansip"] .btn').nth(1).click();
+    await expect(page.locator('#sheet .staff-req')).toBeVisible();
+    await page.locator('.sheet-head .btn').click();
+    // The applicants arrive after the wait; a month at a time, clearing any message on the way.
+    for (let i = 0; i < 3; i++) {
+      if (await page.evaluate(() => ((window as unknown as { pakrt: any }).pakrt.s.lowongan?.applicants?.length ?? 0) > 0)) break;
+      await runMonth(page);
+      await dismissModals(page);
+    }
+    await openPanel(page, 'staff');
+    await expect(page.locator('#sheet .staff-applicant').first()).toBeVisible();
+    await expectLegible(page, 'staff applicants');
+    await page.locator('#sheet .staff-applicant .btn-primary').first().click();
+    await expect(page.locator('#sheet .staff-card')).toHaveCount(2);
+    await expectLegible(page, 'staff after hire');
+  });
+
   test('a path takes a start tile, an end tile and Yes', async ({ page }) => {
     await start(page);
     await dismissModals(page);

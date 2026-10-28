@@ -248,7 +248,7 @@ export const EN = {
   'staff.stat.lobi': 'Lobi',
   'staff.stat.jujur': 'Jujur',
   'staff.stat.gaul': 'Gaul',
-  'staff.roleLine': '{role} · {stars}★ · level {level}',
+  'staff.roleLine': '{role} · {stars}★',
   'gig.doneTitle': 'Inem sang: {name}',
   'combo.atLevel': '{name} (level {n}+)',
   'sim.needStage': 'Opens as {title}',

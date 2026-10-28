@@ -46,7 +46,7 @@ function staffCard(app: App, x: Staff): HTMLElement {
   const role = roleDef(x.role);
   const parts: Node[] = [
     h('div', { class: 'card-title' }, h('strong', {}, x.name), h('span', { class: 'meta' }, t('staff.level', { n: x.level }))),
-    h('p', { class: 'meta' }, t('staff.roleLine', { role: roleName(role), stars: x.stars, level: x.level })),
+    h('p', { class: 'meta' }, t('staff.roleLine', { role: roleName(role), stars: x.stars })),
     h('p', {}, roleBlurb(role)),
     ...aboutLines(x),
     statBars(x.stats),
