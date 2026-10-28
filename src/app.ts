@@ -21,7 +21,7 @@ import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
 import { attractTarget, buildCost, buildingAt, byUid, footprintOf, newGame, population, housing, year } from './sim/state';
 import { tick } from './sim/tick';
-import type { Building, GameState, ResourceId, SimEffect } from './sim/types';
+import type { GameState, ResourceId, SimEffect } from './sim/types';
 import { audio } from './audio';
 import { loadSettings, saveSettings, type Settings } from './settings';
 import { storage } from './storage';
@@ -730,14 +730,9 @@ export class App {
     this.startPlacing(b.def);
     this.moving = uid;
     this.view.hidden = uid;
-    this.view.ghost = { x: b.x, y: b.y, ok: true, sprite: def(b.def).sprite, n: footprintOf(b.def), ...this.moverLook(b) };
+    this.view.ghost = { x: b.x, y: b.y, ok: true, ...this.view.look(b) };
     this.markValid();
     this.updatePlacing();
-  }
-
-  /** A moved building's ghost looks like the building itself, not a fresh level 1 one. */
-  private moverLook(b: Building): { flip: boolean; variant?: string; level: number } {
-    return { flip: b.rot === 1, variant: this.view.variant(b), level: b.level };
   }
 
   startPlacing(id: string): void {
@@ -811,7 +806,7 @@ export class App {
     if (g && g.x === gx && g.y === gy) return;
     const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
     const ok = mover ? checkMove(this.s, mover, gx, gy).ok : checkPlace(this.s, id, gx, gy).ok;
-    this.view.ghost = { x: gx, y: gy, ok, sprite: d.sprite, n, ...(mover ? this.moverLook(mover) : {}) };
+    this.view.ghost = { x: gx, y: gy, ok, sprite: d.sprite, n, ...(mover ? this.view.look(mover) : {}) };
     this.updatePlacing();
   }
 

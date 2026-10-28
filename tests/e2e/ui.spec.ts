@@ -1776,6 +1776,62 @@ test.describe('moving and turning', () => {
   });
 });
 
+test.describe('every building while it moves', () => {
+  test('every building, at every level, shows its own look and level pips on the map and while it is moved', async ({ page }) => {
+    test.setTimeout(240_000);
+    await start(page);
+    await dismissModals(page);
+    const bad = await page.evaluate(async () => {
+      const w = window as unknown as { pakrt: any; pakrtDefs: () => any[] };
+      const app = w.pakrt;
+      const view = app.view;
+      const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      // Record where level pips are drawn each frame.
+      const pips: string[] = [];
+      const real = view.levelPips.bind(view);
+      view.levelPips = (ctx: unknown, x: number, y: number, level: number) => {
+        pips.push(`${x},${y},${level}`);
+        real(ctx, x, y, level);
+      };
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      const out: string[] = [];
+      for (const d of w.pakrtDefs()) {
+        if (d.pathIncome) continue;
+        for (let level = 1; level <= d.maxLevel; level++) {
+          const b = { uid: app.s.nextUid++, def: d.id, x: k.x + 2, y: k.y + 2, level, status: 'active', timer: 0, invested: 0, placedAt: 0, rot: level % 2 };
+          app.s.buildings.push(b);
+          const want = view.look(b);
+          const n = want.n;
+          const tag = `${d.id} level ${level}`;
+          view.centreOn(b.x + (n - 1) / 2, b.y + (n - 1) / 2);
+          // Standing on the map: its pips show its level.
+          pips.length = 0;
+          await frame();
+          if (level > 1 && !pips.includes(`${b.x + n - 1},${b.y + n - 1},${level}`)) out.push(`${tag}: no level pips on the map`);
+          const same = (where: string) => {
+            const g = view.ghost;
+            for (const key of ['sprite', 'variant', 'n', 'level', 'flip'])
+              if (g?.[key] !== want[key]) out.push(`${tag} ${where}: ghost ${key} ${g?.[key]}, map ${want[key]}`);
+          };
+          // Picked up: the ghost is the same picture, and carries the same pips.
+          app.startMoving(b.uid);
+          same('picked up');
+          pips.length = 0;
+          await frame();
+          if (level > 1 && !pips.includes(`${b.x + n - 1},${b.y + n - 1},${level}`)) out.push(`${tag}: no level pips while moving`);
+          // Carried to another tile, it stays the same building.
+          app.moveGhost({ x: b.x + Math.floor((n - 1) / 2) + 1, y: b.y + Math.floor((n - 1) / 2) });
+          same('carried');
+          app.stopPlacing();
+          app.s.buildings = app.s.buildings.filter((o: any) => o !== b);
+        }
+      }
+      return out;
+    });
+    expect(bad).toEqual([]);
+  });
+});
+
 test.describe('zoom, big lots and the Warga list', () => {
   test('after picking a job, the Warga list stays on that resident', async ({ page }) => {
     await start(page);

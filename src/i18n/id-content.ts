@@ -135,7 +135,7 @@ export const ID_CONTENT: Record<string, string> = {
   'combo.wisataKolam.name': 'Wisata Kolam',
   'combo.wisataKolam.hint': 'Kolam alasan untuk berhenti, gerobak alasan untuk tinggal.',
   'combo.wisataKolam.story': 'Ikan koi daya tariknya. Bakso rencana bisnisnya.',
-  'combo.wisataKolam.effect': 'Pemasukan Gerobak Bakso x1,8.',
+  'combo.wisataKolam.effect': 'Pemasukan Rumah Makan x1,8.',
   'combo.muralPromo.name': 'Mural Promo',
   'combo.muralPromo.hint': 'Tembok dicat senada dengan papan toko.',
   'combo.muralPromo.story': 'Muralnya "hadiah warga". Logo warung ada di pojok, besar sekali.',

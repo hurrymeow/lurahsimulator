@@ -162,13 +162,14 @@ export const MORE_COMBOS: ComboDef[] = [
   {
     id: 'wisataKolam',
     name: 'Wisata Kolam',
-    needs: ['kolamIkan', 'gerobakBakso'],
+    // Gerobak Bakso joined Rumah Makan as its level 1, so the combo names Rumah Makan.
+    needs: ['kolamIkan', 'rumahMakan'],
     retired: true,
     radius: 1,
     hint: 'A pond is a reason to stop, and a cart is a reason to stay.',
     story: 'The koi are the attraction. The bakso is the business plan.',
-    incomeMult: { gerobakBakso: 1.8 },
-    effect: 'Gerobak Bakso income x1.8.',
+    incomeMult: { rumahMakan: 1.8 },
+    effect: 'Rumah Makan income x1.8.',
   },
   {
     id: 'muralPromo',

@@ -6,7 +6,7 @@ import { jobDef } from '../data/jobs';
 import { jName } from '../i18n';
 import { gateOpen } from './gate';
 import { gain, type Fx } from './gain';
-import { isWorking } from './state';
+import { footprintOf, isWorking } from './state';
 import { brandOf } from './brands';
 import type { Building, GameState, JobId } from './types';
 
@@ -44,7 +44,15 @@ export const needName = (n: string): string => {
   const name = bName(def(p.id));
   return p.level > 1 ? t('combo.atLevel', { name, n: p.level }) : name;
 };
-const near = (a: Building, b: Building, r: number) => Math.abs(a.x - b.x) <= r && Math.abs(a.y - b.y) <= r;
+/**
+ * Within r tiles, counted between the nearest edges of the two lots, so a 2x2 or 3x3 building is as
+ * close to its partner as its footprint looks. For two one-tile buildings it is plain Chebyshev distance.
+ */
+const near = (a: Building, b: Building, r: number) => {
+  const na = footprintOf(a.def);
+  const nb = footprintOf(b.def);
+  return Math.max(0, a.x - (b.x + nb - 1), b.x - (a.x + na - 1)) <= r && Math.max(0, a.y - (b.y + nb - 1), b.y - (a.y + na - 1)) <= r;
+};
 
 /** Combos that can fire now: the RT ones, plus later-stage ones whose gate is open. */
 export const liveCombos = (s: GameState): ComboDef[] => [...COMBOS, ...STAGE_COMBOS.filter((c) => gateOpen(s, c.gate))];
