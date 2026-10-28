@@ -55,7 +55,7 @@ export const levelMult = (boost: number, level: number): number => 1 + boost * (
 
 export const PENSIUN_MONTHS = 120;
 export const PENSIUN_PAYOUT = 1_500_000;
-export const EMPLOYED_SABAR = 0.08;
+export const EMPLOYED_SABAR = 0.04;
 export const BUZZER_FAKE_PER_MONTH = 6;
 export const BUZZER_EXPOSE_BASE = 0.05;
 export const BUZZER_EXPOSE_PER_FAKE = 0.004;

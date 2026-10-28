@@ -8,6 +8,7 @@ import { REFUND } from '../sim/balance';
 import { byUid, levelMult, pathMult, upgradeCost } from '../sim/state';
 import { brandKind, brandOf, displayName, hasBrand, hasOwnName, kanibal, nextBrand, rename, sisterOutlets } from '../sim/brands';
 import { FRANCHISE, KANIBAL, NAME_MAX } from '../data/brands';
+import { premanTake } from '../sim/needs';
 import { buildingIncome, buildingUpkeep } from '../sim/tick';
 import type { Building, CheckResult } from '../sim/types';
 import { spriteImg } from './build';
@@ -61,6 +62,8 @@ export function inspect(app: App, uid: number): void {
     ));
     if (brandKind(b.def) === 'franchise') lines.push(h('p', { class: 'meta' }, k ? t('insp.franchise', { n: k, pct: Math.round(Math.min(FRANCHISE.max, FRANCHISE.perOutlet * k) * 100), royalty: Math.round(FRANCHISE.royalty * 100) }) : t('insp.franchiseNone')));
   }
+  const take = premanTake(s, b);
+  if (take) lines.push(h('p', { class: 'meta warn' }, t('insp.premanTake', { pct: Math.round(take * 100) })));
   if (kanibal(s, b)) lines.push(h('p', { class: 'meta warn' }, t('insp.kanibal', { pct: Math.round((1 - KANIBAL.mult) * 100) })));
   const nameInput = h('input', { type: 'text', class: 'name-input', maxlength: String(NAME_MAX), value: b.name ?? '', placeholder: displayName(b), 'aria-label': t('insp.nameLabel') }) as HTMLInputElement;
   lines.push(h('form', { class: 'row action-row name-row', onsubmit: (e: Event) => {

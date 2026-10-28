@@ -184,7 +184,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     buildMonths: 1,
     maxLevel: 3,
     jobSlots: { satpam: 1 },
-    requires: { stars: { stage: 'rt', n: 1 } },
+    requires: { problem: 'preman' },
     sprite: 'posSatpam',
   },
   {
