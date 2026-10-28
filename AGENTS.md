@@ -35,6 +35,7 @@ Unsure whether it conflicts? Treat it as a conflict and ask.
 - After every push, check the PR for merge conflicts. A conflicted PR never starts CI. Merge main in and push again.
 - Before a push, run `npm run typecheck`, `npm test`, and only the e2e specs your change touches, for example `npx playwright test tests/e2e/ui.spec.ts`. Do not run the full `npm run e2e` (about 880 tests) locally. Text-only changes to docs or comments need no e2e run.
 - CI runs the full sharded e2e suite in id (the default language) at 320, 360, 412 and 430px on every PR. Let CI run it.
+- Batch small tweaks (text, sounds, small TODO items) into one PR. Each PR costs a full CI run. When claiming TODO items, claim several small related ones together.
 - English is not in CI. A change to English UI text or layout runs the touched specs in English before you push, for example `npx playwright test tests/e2e/ui.spec.ts --project=phone-412-en`.
 - [TODO.md](TODO.md) lists open tasks and ideas. Check it first. PRs never edit TODO.md, because it causes merge conflicts and CI reruns. Claim an item with a docs-only push straight to main (set owner and date). Move it to Done the same way once the PR merges. Add open work you find or leave behind the same way.
 - Log design decisions in `decisions/<pr-or-slug>.md` and shipped work in `progress/<pr-or-slug>.md`.
