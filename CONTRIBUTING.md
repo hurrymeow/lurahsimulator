@@ -56,6 +56,8 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 
 ## Workflow
 
+Batch small tweaks (text, sounds, small TODO items) into one PR. Each PR costs a full CI run. When claiming TODO items, claim several small related ones together.
+
 1. Branch from latest `origin/main`. Pick work from [TODO.md](TODO.md), and remove the item from it in your PR.
 2. Run `npm run typecheck`, `npm test` and only the e2e specs your change touches, locally. Don't run the full `npm run e2e`; CI runs it.
 3. Open a PR. Enable auto-merge: `gh pr merge --auto --squash <n>`. It merges when the required `ci` check is green.

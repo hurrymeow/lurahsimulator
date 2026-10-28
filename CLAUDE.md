@@ -9,4 +9,5 @@
 - Before a push, run `npm run typecheck`, `npm test`, and only the e2e specs your change touches (for example `npx playwright test tests/e2e/ui.spec.ts`). Do not run the full `npm run e2e` (about 880 tests) locally; CI runs the full sharded suite in Indonesian (id) at 320, 360, 412 and 430px on every PR. Docs and comments need no e2e run.
 - English is not in CI. For a change to English UI text or layout, run the touched specs with `--project=phone-<width>-en` (for example `--project=phone-412-en`) before you push.
 - Pick work from [TODO.md](TODO.md). When you start an item, remove it from the list in your PR. Add open work you find or leave behind.
+- Batch small tweaks (text, sounds, small TODO items) into one PR. Each PR costs a full CI run. When claiming TODO items, claim several small related ones together.
 - Log design decisions in a new file `decisions/<pr-or-slug>.md`, and shipped work in `progress/<pr-or-slug>.md`. Never edit `DECISIONS.md` or `PROGRESS.md` (frozen) or another PR's file. This stops merge conflicts between parallel PRs.
