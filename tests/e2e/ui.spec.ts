@@ -679,10 +679,15 @@ test.describe('slim HUD and one menu', () => {
     await expect(badge).toBeHidden();
     expect(await pk('a.running')).toBe(true);
 
+    // A partial month does not survive a popup: opening the menu at 7000ms
+    // into an 8000ms month resets it, so closing the menu cannot tick at once.
+    await pk('a.acc = 7000');
     await page.locator('#menu-btn').click();
     await expect(badge).toBeHidden();
     expect(await pk('a.running')).toBe(false);
     expect(await pk('a.speed')).toBe(1);
+    await page.waitForTimeout(150);
+    expect(await pk('a.acc')).toBe(0);
     await page.getByRole('button', { name: WORDS[lang()].close }).click();
     await expect(badge).toBeHidden();
     expect(await pk('a.running')).toBe(true);
