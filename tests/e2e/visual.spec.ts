@@ -25,6 +25,10 @@ async function open(page: Page): Promise<void> {
 async function play(page: Page): Promise<void> {
   await page.locator('#home-start').click();
   await page.locator('#home-new').click();
+  // Fixed names, so the screenshots never change with the dice.
+  await page.locator('#home-name').fill('Budi');
+  await page.locator('#home-kampung').fill('Kenanga');
+  await page.locator('#home-begin').click();
   await page.evaluate(() => {
     const app = (window as unknown as { pakrt: any }).pakrt;
     app.speed = 0;

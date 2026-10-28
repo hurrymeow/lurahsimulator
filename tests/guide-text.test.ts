@@ -12,3 +12,12 @@ describe('guide headings', () => {
     });
   }
 });
+
+// The combo tip shows the two buildings, not the word "Combo": the heading already says it.
+describe('combo tip picture', () => {
+  it('shows Warung + Pos Ronda and no word', async () => {
+    const { STEPS } = await import('../src/ui/howto');
+    const combo = STEPS.find((s) => s.id === 'combo')!;
+    expect(combo.pics).toEqual([{ sprite: 'warung' }, { text: '+' }, { sprite: 'posRonda' }]);
+  });
+});

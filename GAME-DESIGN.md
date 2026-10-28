@@ -17,6 +17,9 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 ## 1. Pitch and core loop
 
 - You are a village head. Build the kampung, keep the residents calm, and climb from Pak RT to Pak Lurah.
+- **The objective, said by Inem in the first minute:** make your own kampung sejahtera before Sidang Emas 2045. The player names themselves (Pak or Bu, a name) and their kampung on New Game; the names run through the goal, the SKs, the ranking and Inem's lines.
+- **Two scores.** The **Laporan** is what Pusat reads: reported residents, programs announced and carried out, Popularitas and ranking wins. Stars and SKs follow it. **Sejahtera** is what is true: the average of **Perut** (households fed), **Kerja** (warga in work) and **Aman** (safety), 0 to 100. The 2045 meter shows Sejahtera. Sidang Emas 2045 is the final review at the top act; it compares both scores for one of four endings (Pejabat Teladan, Pejabat Pencitraan, Pahlawan Tanpa SK, Dimutasi). The calendar stays Year 1, Year 2: "2045" names the review, not a date.
+- **Inem** is the assistant: an aspiring dangdut singer who took the job for the income. Her portrait and name sit on every message and event card and beside the opener. Now and then she flirts with Pak (never about her body, never at warga, never on bad news); with Bu those lines become cheeky best-friend lines (`.bu` string twins).
 - Every joke is a mechanic that moves a number. Flavour text alone gets cut.
 - The loop: build, residents arrive, money and Sabar (patience) move, events and combos fire, stars unlock more to build.
 - The player never runs for office. Promotion is a performance review and an SK, the promotion letter. See [section 5](#5-tone-and-politics-guardrails).
@@ -31,12 +34,16 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 
 - Unmet requirements always say exactly what is missing.
 - Discovered combos are auto-logged in the in-game Buku Combo.
+- The Buku Combo is a column of full-width cards, one per row, under filter buttons (All, ✓ active, ★ found, ? not yet, each with its count). A card shows the name, the buildings (greyed when missing, silhouettes before it is in town) and a state mark on one line, and the effect in two lines below. Tapping a card opens the whole entry below it: effect, conditions, status and, once discovered, the story (`src/ui/lists.ts`).
+- The Warga list opens on a summary line (headcount and what everyone makes a month) and filter buttons: By job (default), No job (with its count) and By level. People sit in boxes per job, headed by the workplace sprite, the headcount and the group's monthly output; each person is a chip with their name and level stars. No job comes first, marked red.
 - Speed control: pause, 1x, 2x, 4x.
 - Text advances on tap, never on a timer.
 
 ## 2. Stage ladder
 
 The full ladder runs RT, RW, Kelurahan or Desa, Kecamatan, Kabupaten/Kota, Provinsi and Pusat. Only stages 1 to 3 are specified. Kecamatan and above wait for a playtest of the Kelurahan. Approved by Hari on 2026-10-26.
+
+The ladder reads as three acts (approved by Hari, 2026-10-28): **Act 1 Kampung** (RT, RW, Lurah; pressure: Perut and Kerja), **Act 2 Kota** (Camat, Pj. Wali Kota, Pj. Gubernur; pressure: pinjol, judol and Aman), **Act 3 Pusat** (Pejabat Pusat; Laporan against what is real). City and province posts are Pj. (acting) posts given by SK, so the player still never runs for office. Only Act 1 is built.
 
 Status 2026-10-27: the map engine, RT stars, RW and Kelurahan are built. The Desa path is not. Live grid sizes are 13x17 (RT), 26x34 (RW) and 52x68 (Kelurahan), which replace the 9x13, 18x26 and 36x52 in the sketch below. See `decisions/growing-map-engine.md`.
 
@@ -99,25 +106,27 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 
 #### 0★ Pak RT (start)
 
-- Open: warung, pos ronda, selokan, Kantor RT. Wifi at **8** residents.
+- Open: Rumah, Jalan Setapak, Kantor RT, Warung Sembako, Pos Ronda, Rumah Makan. Wifi at **8** residents.
+- **Problem unlocks** open when their trouble first shows up, with a notice saying why: Selokan after the first banjir; Gudang Material and Kebun Sayur when **3** warga have gone **6** months without work; Fotokopi when a permit queue forms. Pos Satpam moves to the first preman when preman exist.
 - **Goal for 1★:** **10** residents and **1** combo found.
 
 #### 1★ RT Rintisan
 
-- Unlocks Indomaret, Alfamart and Kos-kosan. Kantor RT can reach level 2. Harga cabai starts.
+- Unlocks IndoApril, BetaMart, Kos-kosan, Barbershop, Pohon Rindang, Sawah and Pos Satpam. Kantor RT can reach level 2. Harga cabai starts.
 - Their gate moves from a population count to this star.
 - Reward: **+1** Orang Dalam.
 - **Goal for 2★:** **25** residents, **1** ranking win and **2** combos.
 
 #### 2★ RT Berkembang
 
-- Unlocks Lapangan and Bank Sampah. Kantor RT can reach level 3.
+- Unlocks Lapangan, Bank Sampah, Bengkel, PAUD, Balai-balai Bambu and Kandang Ayam. Kantor RT can reach level 3.
 - The scenery edge thins, so the neighbours' roofs show.
 - **Goal for 3★:** **40** residents, **2** wins in a row, **3** combos and Sabar of at least **50**.
 
 #### 3★ RT Teladan
 
-- The SK to RW arrives.
+- Unlocks Apotek, Koperasi, Balai Warga, Lampu Jalan and Mural.
+- The SK to RW arrives. Kontrakan, Kolam Lele and Patung Ikon open at RW.
 
 #### New RT content
 
@@ -127,6 +136,9 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 - **Anak Kos** combo (Kos + Warung + Wifi): warung **x1.3**, **+1** Viral a month.
 - **Panjat Pinang** combo (Lapangan + Pos Ronda): Agustus prize **+50%**.
 - **Kali Bersih** combo (Bank Sampah + Selokan): banjir damage **20%** lower. The **80%** cap stays.
+- **Rumah Makan** merges Gerobak Bakso, Warkop and Warteg as levels 1 to 3. **Warung Sembako** is the warung; Toko Kelontong is its level 3. Old saves keep the retired buildings working, and combos count them as the building they joined.
+- **Decor** is five pieces, each with its own job: Pohon Rindang (+0.3 Popularitas a month), Balai-balai Bambu (shops within 2 tiles +6%), Lampu Jalan (shops within 2 tiles +6%), Mural (+1 Viral a month), Patung Ikon. Pot Bunga and Kolam Ikan Hias are cut; Taman Bermain and Air Mancur wait for the city act.
+- **Brands.** A building gets a brand only when its real-world version is a chain. Minimarkets are IndoApril and BetaMart: different ones side by side make Rivalitas Abadi (**x1.4**, **-2** Popularitas), the same one within **2** tiles makes both earn **15%** less. Wifi towers carry a provider (Telkomkesel, M4, Indosatset, XXL, Smartfriend, By.Utang): two different providers within **2** tiles make **Perang Kuota** (**x1.3**, **+2** Viral, **-1** Popularitas a month). Rumah Makan, Apotek, Bengkel and Barbershop are franchises: each other outlet of the same brand adds **8%**, up to **24%**, and **5%** of their income goes up as royalty with the Setoran. The brand can be changed in the inspector, and any building can be renamed.
 
 ### Stage 2: RW
 
@@ -258,6 +270,21 @@ Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder
 
 How the numbers work, gathered from every stage. The numbers themselves live in `src/data/` and are tuned there. The tests in `tests/balance.test.ts` guard them.
 
+- **Perut:** a household is 3 residents. A Warung Sembako feeds 4, 7 or 10 households at levels 1 to 3 (an old Toko Kelontong feeds 10). Harga Sembako (the cabai event) cuts that by 25% while it lasts. Each unfed household costs **0.1** Popularitas a month.
+- **Kerja:** the share of residents in work, plus programs.
+- **Aman:** **70**, less **0.3** per resident above 15, **2** per resident idle 6 months or more and **4** per preman; plus **3** per Lampu Jalan and **2** per Pos Ronda, plus programs.
+- **Preman:** a resident idle **12** months, while Aman is under **60**, has a **5%** chance a month to turn (at most **15%** of residents). Each costs **0.2** Popularitas a month and takes **10%** of one shop's income as uang keamanan (up to **30%** a shop). Pos Satpam opens with the first preman; while a preman waits, Satpam posts are kept for him, and taking one turns him into the guard. Any job the player gives him does too.
+- **Wacana or Realisasi:** each policy has a real version (Wifi Gratis di Balai, Kerja Bakti Rutin, Biopori Massal, Pelatihan UMKM, Bansos Sembako). It costs Rp 1 to 3 juta, lands after 1 to 3 months and moves a meter for a time (Biopori for good). Announcing fills the Laporan as well as doing does; only doing moves Sejahtera.
+- **Popularitas soft cap:** above **80**, gains shrink toward nothing at 100, so a full kampung settles around 90 instead of sitting at the cap. Each employed resident gives **0.04** (was 0.08), each resident expects **0.14** (was 0.1), and a Satpam gives **0.5** (was 1).
+- **Staff** (`src/data/staff.ts`): the people the player manages, as Kairosoft's staff are; warga still pick their own jobs. Inem is staff number 1 (the Asisten: permits up to 40% faster) and never leaves. Slots: 1 at the start, 3 at RT 1★, 4 at RT 3★, 6 at RW, 8 at Kelurahan, never more than **10**.
+  - **Roles:** Hansip (Aman +2 per level, finds a preman work), Tukang Tagih Iuran (up to +50% iuran; a low Jujur keeps 10%), Petugas PU (repairs), Admin Grup WA (Viral), Supir (crews arrive sooner), Bendahara (upkeep down, halved if Jujur is low), Sekretaris (Orang Inside).
+  - **Stats:** Rajin, Lobi, Jujur, Gaul (1 to 99). Output = level x the role's stat / 50 x trait.
+  - **Rarity:** stars set only the stat total and salary: 2★ 120, 3★ 160, 4★ 210 (Act 1 tops out here), 5★ 270 (Act 2), 6★ 340 (Act 3). No paid pulls.
+  - **Lowongan:** one posting at a time. Grup WA RT is free, takes 2 months, and brings your own longest-idle warga (60/35/5% for 2/3/4★, 15% chance of a Titipan); Online costs Rp 500k, takes 1 month and brings outsiders at 30/50/20%. 3 to 5 applicants; they leave after 2 months. The requirement lines are flavour; every applicant is an adult.
+  - **Traits:** Titipan, Jam Karet, Rajin Lembur, Healing Mulu, Si Paling Grup WA, Mantan Preman, Fresh Graduate, Pensiunan PNS, Multitalenta, Baperan. **Specials** (4★, one each, 30% of 4★ Online applicants for their role) are types, never one real person: Pak Breaking, Mbak Gosip, Om Motivasi, Bro Kripto, Bu Sinetron, Mas Konten, Pak Purna.
+  - **Managing:** levels at 6, 18, 36 and 60 months; each asks for a 15% raise (refused: 10% a month to be poached, a Baperan leaves at once). Bimtek: Rp 2jt, +5 to the role stat, a month away. Pesangon: 2 months' salary. **Mutasi:** a 3★ at level 3 becomes Ketua RT of a neighbour, which takes their habit (Rajin, Hobi Wacana or Jarang Muncul), and the slot frees.
+  - **Inem's dream:** gigs as optional sub-goals that never gate stars: Panggung 17 Agustus (Lapangan, Popularitas 50 in August), Hajatan circuit (RW, Viral 30), Lomba Dangdut Kecamatan (a Piala Kelurahan win), then the city audition and the stage at Sidang Emas 2045. Each raises her level. Her wage is Rp 75k a month.
+
 - **Resources:** every resource has an icon and a colour. Names are translated, see `decisions/resource-names.md`. Orang Dalam is "Orang Inside" in EN on purpose.
 - **Growth gates:** stars gate content. Residents, wins and combos set the star goals. Stars never drop.
 - **Kas:** Kas RT becomes Kas RW, then Kas Kelurahan. AI areas pay iuran into it.
@@ -274,7 +301,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 ### Satire
 
 - Satire targets systems and bureaucracy.
-- No real politicians, parties, ormas or officials.
+- No real politicians, parties, ormas or officials. Preman are generic and never coded as any ormas.
 - No ethnic, regional or religious jokes.
 - Every joke is a mechanic that moves a number (see section 1).
 - UI defaults to English, with Bahasa Indonesia as a Settings option. Players who saved a language keep it. Slang and proper names stay as they are in both languages (Sabar, Wacana, Warga, warung, ojol, Kampung Sebelah). Resource names are translated, see `decisions/resource-names.md`. Strings live in `src/i18n/`.
@@ -286,7 +313,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - Satire targets how a system behaves, never who introduced it or when. Musrenbang and Dana Desa are fine. Flagship programs, the capital move and named slogans are out.
 - Swap test: if a joke would not work in any country's bureaucracy, or needs a headline to land, cut it. Example: "blusukan" is tied to one real person, so it is out.
 - Indonesia Emas 2045 stays the only real reference.
-- No new brand names. Indomaret and Alfamart stay. Chat apps stay generic ("Grup Chat Warga").
+- Brands are parodies of the name only, never a logo or brand colours, and only for chains (see the brands list in section 2). Indomaret and Alfamart are IndoApril and BetaMart. Chat apps stay generic ("Grup Chat Warga").
 
 ## 6. UI, art and tech rules
 
@@ -298,17 +325,18 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 - Main screen is the console frame, after a 90s train-and-city builder (`src/ui/console.ts`, `src/ui/console.css`). It is kept to two slim rows on top and one dock below, so the map has the room. Top to bottom:
   - a time row: play/pause and speed (one size, side by side), the date, and the compact Indonesia Emas 2045 meter;
   - a money row: the five resources;
-  - the map, full width. A goal pill floats over its top-left corner ("Now: reach 6 residents"; tap for the next star), and a small satellite view over its top-right corner pans the map when tapped;
+  - the map, full width. A goal pill floats over its top-left corner (one line, "Now: reach 6 residents"; tap for the whole line and the next star), and a small satellite view over its top-right corner pans the map when tapped;
   - the month as a thin line along the top edge of the bottom bar;
   - a dock of three equal buttons, icon over label: Build, Warga, Menu.
 - Why this arrangement: time controls sit with the date, as in most city builders, and change speed without leaving the map. The resources get a row to themselves, so big numbers have room. The goal floats over the map, as quests do in mobile builders, so neither row wraps. Build and Warga are the panels used many times a minute, so they get their own buttons; the rest stay one tap away in Menu.
 - Build and Warga live only in the dock (`ActionButton.dock`), so the Menu does not list them twice. Every other panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game. A new panel registers an `ActionButton` with a `group` in the Menu. Don't add other main-screen buttons.
 - Notices are toasts, not a band: the latest one floats over the bottom of the map for 3 seconds, then fades. Tap it to open the Log. Every notice also stays in the Log (Menu > Log), so a missed toast is never lost. Important messages still use the pause-and-tap modal.
 - The satellite view hides while a building is being placed.
+- Picking a building puts its ghost on the map at once, on the best free spot (beside a connected road, nearest the middle of the view). Every free spot shows as a faint diamond, a pixel arrow bobs over the ghost, and a finger on the ghost drags it (a mouse just hovers). Place is ready straight away.
+- Build cards show how many of each the player owns. Buildings not yet seen carry an animated pixel NEW tag on the card, its tab and the dock's Build button.
 - Light and Dark share one layout: every size, gap and position is the same, and only colours change. An e2e test compares the boxes in both themes.
 - On short phones (640px tall or less) the satellite view drops out and the goal pill spans the map's width.
-- A broken Jalan Setapak shows as a whole tile greyed and cracked, with a pulsing red tint, an orange outline and an orange "!" badge, so it reads at a glance (ART.md).
-- Sheets and modals keep their own dark look in both themes (see Themes below).
+- Sheets, pop-ups, tips and the tutorial follow the theme too, so an open panel matches the frame behind it (see Themes below). The home screen keeps its dark look over the map in both themes.
 - Clean pixel UI: 1px rules, square corners, dark green (`#2f6b45`) for primary actions. No drop shadows in the bars. No cluttered Windows-XP-style panels.
 - The rules in [UI.md](UI.md) apply to the frame, with rule 1's exception for the slim top rows and the goal pill (28px controls).
 - The dev-only `mockup.html` (also at `/mockup.html` on the live site) is the reference render, with a build palette the game doesn't have. It is not linked from the game.
@@ -348,7 +376,7 @@ The artist's restyle is the reference ([ART.md](ART.md) has the full rules). New
 
 ### Themes
 
-Settings > Theme picks the frame's colours. Both themes share the same layout.
+Settings > Theme picks the colours of the frame and of every sheet and pop-up. Both themes share the same layout. Sheets and pop-ups take the same tokens (`src/ui/console.css`), with square corners and a 2px ink rule in Light.
 
 - **Light** (default): cream `#f3eed6` surfaces, `#e6dfbf` for the ticker, ink `#2a1810` text and rules, muted `#5e4e3a`. Resource numbers and warnings use ink-dark tones on cream: Rupiah `#1d6b35`, Sabar `#1f57a8`, Orang Dalam `#7a4f00`, Viral `#a52a66`, full housing `#8a4b00`, missing and warning text `#9b1c1c`.
 - **Dark** (Mono Dark): background `#0b0b0c`, surface `#18181b`, text `#f4f4f5`, muted `#a1a1aa`, rules `#52525b`. Resource numbers keep their bright colours.

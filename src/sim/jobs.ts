@@ -41,13 +41,17 @@ export function assign(s: GameState, r: Resident, job: JobId, manual = false): C
   if (r.job === 'buzzer' && job !== 'buzzer') r.fake = 0;
   if (r.job === 'pns' && job !== 'pns') r.pensiun = 0;
   r.job = job;
+  // Any job ends a preman's career.
+  if (job !== 'none') r.preman = false;
   if (manual) r.manual = true;
   return check;
 }
 
 /** Jobs with an open slot, each with its appeal as the odds of being picked. */
 export function openJobs(s: GameState): { job: Exclude<JobId, 'none'>; appeal: number }[] {
-  return liveJobs(s).filter((j) => j.appeal > 0 && used(s, j.id) < slots(s, j.id)).map((j) => ({ job: j.id, appeal: j.appeal }));
+  // While a preman waits, the Satpam posts are kept for him: it is the job that turns him.
+  const keepSatpam = s.residents.some((r) => r.preman);
+  return liveJobs(s).filter((j) => j.appeal > 0 && used(s, j.id) < slots(s, j.id) && !(keepSatpam && j.id === 'satpam')).map((j) => ({ job: j.id, appeal: j.appeal }));
 }
 
 /**
@@ -68,7 +72,8 @@ export function autoPick(s: GameState, salt = 0): Exclude<JobId, 'none'> | null 
 
 function autoAssign(s: GameState, fx: Fx): void {
   for (const r of s.residents) {
-    if (r.job !== 'none' || r.manual) continue;
+    // A preman will not take an ordinary job; only a Satpam post (see needs.ts) or the player's offer turns him.
+    if (r.job !== 'none' || r.manual || r.preman || r.staffId !== undefined) continue;
     const job = autoPick(s, r.id);
     if (!job) return;
     assign(s, r, job);

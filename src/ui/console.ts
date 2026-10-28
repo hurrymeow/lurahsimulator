@@ -4,12 +4,14 @@
 // a dock of three equal buttons: Build, Warga and Menu. Settings picks a light or dark frame.
 import { t } from '../i18n';
 import type { App } from '../app';
-import { dateLabel } from '../format';
+import { dateLabel, rupiahHud } from '../format';
+import { damagedList, repairAll, repairCost } from '../sim/events';
 import { TH, TW } from '../render/iso';
 import { WORLD_OX, WORLD_OY } from '../render/scenery';
 import { GRID_H, GRID_W } from '../sim/types';
 import { h } from './dom';
 import { menuIconURL } from './icons';
+import { newTag, unseenBuildings } from './build';
 import './console.css';
 
 /** Panels with their own dock button. The Menu stops listing them, so nothing appears twice. */
@@ -44,11 +46,22 @@ export function setupConsole(app: App): void {
     const icon = menuIconURL(id);
     const b = h('button', { class: 'btn cs-dock', id: `dock-${id}`, type: 'button', onclick: () => action.open(app) },
       icon ? h('img', { src: icon, alt: '', width: 24, height: 24, class: 'pixel' }) : null,
-      h('span', {}, ''),
+      h('span', { class: 'cs-dock-label' }, ''),
     );
     menuBtn.before(b);
     return { action, b };
   });
+  // Build carries the NEW tag while something new waits on the Build screen.
+  const buildBtn = dock.find((d) => d.action.id === 'build')?.b;
+  if (buildBtn) {
+    app.refreshers.push(() => {
+      const fresh = unseenBuildings(app.s).length > 0;
+      const tag = buildBtn.querySelector('[data-new]');
+      if (fresh && !tag) buildBtn.append(newTag(true));
+      else if (!fresh && tag) tag.remove();
+      buildBtn.classList.toggle('has-new', fresh);
+    });
+  }
   // Menu gets an icon too, so the three bottom buttons read as one set.
   menuBtn.replaceChildren(h('span', { class: 'cs-menu-icon', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), h('span', { 'data-i18n': 'page.menu' }, t('page.menu')));
   menuBtn.removeAttribute('data-i18n');
@@ -58,13 +71,30 @@ export function setupConsole(app: App): void {
   const satBox = h('figure', { class: 'cs-sat cs', id: 'cs-sat', role: 'button', tabindex: '0' }, sat);
   stage.append(satBox);
 
+  // Repair all: a small chip under the satellite view, only while something is broken.
+  const fixAll = h('button', { class: 'btn cs cs-fix', id: 'cs-fix', type: 'button', hidden: true, onclick: () => {
+    const { fixed, left, spent } = repairAll(app.s);
+    if (!fixed.length) return app.notice({ title: t('cs.fixNone'), body: t('cs.fixNoneBody'), tone: 'bad' });
+    for (const b of fixed) app.view.burst(b.x, b.y);
+    app.tap(15);
+    app.save();
+    app.refresh();
+    app.notice({ title: t('cs.fixDone', { n: fixed.length }), body: left ? t('cs.fixLeft', { n: left }) : t('cs.fixSpent', { cost: rupiahHud(spent) }), tone: left ? 'bad' : 'good' });
+  } });
+  stage.append(fixAll);
+
   // The date follows the month; the satellite label follows the language.
   app.refreshers.push(() => {
     date.textContent = dateLabel(app.s.month);
-    for (const { action, b } of dock) b.lastElementChild!.textContent = action.label();
+    for (const { action, b } of dock) b.querySelector('.cs-dock-label')!.textContent = action.label();
     satBox.setAttribute('aria-label', t('cs.satHelp'));
     // Out of the way while a building is being placed.
     satBox.hidden = !document.getElementById('placebar')!.hidden;
+    const broken = damagedList(app.s);
+    const total = broken.reduce((n, b) => n + repairCost(app.s, b), 0);
+    fixAll.hidden = !broken.length || !document.getElementById('placebar')!.hidden || document.getElementById('app')!.classList.contains('home-open');
+    fixAll.textContent = total ? t('cs.fixAll', { n: broken.length, cost: rupiahHud(total) }) : t('cs.fixAllFree', { n: broken.length });
+    fixAll.classList.toggle('poor', total > app.s.res.rupiah);
   });
   app.refresh();
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { placeableDefs } from '../src/sim/content';
 import { checkRepair, repair, resolveEvent } from '../src/sim/events';
-import { checkRestart, restart } from '../src/sim/projects';
+import { checkRestart, checkRestartODn, restart } from '../src/sim/projects';
 import { checkPlace, place, skipPermit, upgrade } from '../src/sim/rules';
 import { attractTarget, emptyTiles, housing, newGame, population } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
@@ -33,18 +33,30 @@ function play(seed: number, years: number, smart: boolean, starMonths: number[] 
         if (spot && s.res.rupiah > 2_000_000 && checkPlace(s, 'rumah', spot.x, spot.y).ok) place(s, 'rumah', spot.x, spot.y);
       }
       // The bot packs the middle of the map so leftover combo members stay in range.
-      for (const d of placeableDefs().filter((p) => !p.pathIncome && !p.housing)) {
-        const spot = emptyTiles(s).find((t) => t.y < 9);
+      // Tongkrongan's wifi costs more than the filler buildings, so stop buying filler until it is up.
+      const savingForWifi = s.month >= 12 && !s.buildings.some((b) => b.def === 'wifi');
+      for (const d of savingForWifi ? [] : placeableDefs().filter((p) => !p.pathIncome && !p.housing)) {
+        // The tiles saved for the combo pieces stay free, as a player planning a combo keeps them.
+        const saved = [{ x: k.x + 1, y: k.y }, { x: k.x + 1, y: k.y - 1 }, { x: k.x, y: k.y - 1 }];
+        const spot = emptyTiles(s).find((t) => t.y < 9 && !saved.some((p) => p.x === t.x && p.y === t.y));
         // Sensible player: keep a cash buffer and do not stack buildings that only cost upkeep.
         const have = s.buildings.filter((b) => b.def === d.id).length;
         const worthIt = d.income > d.upkeep || have === 0;
         if (spot && worthIt && have < 4 && checkPlace(s, d.id, spot.x, spot.y).ok && s.res.rupiah > d.cost * 3) place(s, d.id, spot.x, spot.y);
+      }
+      // Preman get a Satpam post each, as a player answers a preman with a Pos Satpam.
+      const preman = s.residents.filter((r) => r.preman).length;
+      if (preman && s.buildings.filter((b) => b.def === 'posSatpam').length < preman + 1) {
+        const spot = emptyTiles(s).find((t) => checkPlace(s, 'posSatpam', t.x, t.y).ok);
+        if (spot && s.res.rupiah > 2_000_000) place(s, 'posSatpam', spot.x, spot.y);
       }
       // A player watches Popularitas: when it sags and there is cash, announce a cheap policy.
       if (s.res.sabar < 55 && s.res.rupiah > 2_000_000 && s.month % 3 === 0) announce(s, 'hijau');
       for (const b of s.buildings) {
         if (b.status === 'permit') skipPermit(s, b);
         else if (b.status === 'damaged' && checkRepair(s, b).ok) repair(s, b);
+        // A stalled project restarts with a favour when there are favours to spare, otherwise with rupiah.
+        else if (b.status === 'mangkrak' && checkRestartODn(s, b).ok) restart(s, b, true);
         else if (b.status === 'mangkrak' && checkRestart(s, b).ok) restart(s, b);
         else if (b.status === 'active' && b.level < 2 && s.res.rupiah > 12_000_000) upgrade(s, b);
       }

@@ -474,7 +474,7 @@ type ArtFn = (p: Painter, variant?: string, level?: number) => void;
 const ROOF_KEYS: Record<string, RoofShape> = { h: 'hip', g: 'gable', y: 'gableY', s: 'shed', f: 'flat' };
 
 /** Sprites that draw their own level progression. Everything else gets the upgrade kit. */
-const LEVELLED = new Set(['warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart']);
+const LEVELLED = new Set(['warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart', 'rumahMakan']);
 /** Ground pieces and the tukang parkir level up without a fence round them. */
 const NO_KIT = new Set(['parkir', 'biopori', 'drain', 'kebunSayur', 'sawah', 'kolamLele', 'kolamIkan', 'taman', 'sawahIrigasi', 'embung', 'aspalUlang', 'jalan', 'selokan']);
 
@@ -654,28 +654,12 @@ const ART: Record<string, ArtFn> = {
     });
   },
   // Paving stones. Bare, so neighbouring path tiles join up without an outline between them.
-  // Paving stones. A cracked path ('retak') gets a dark split across it; left for months it turns
-  // into potholes ('rusak') with a puddle and loose stones.
-  jalan: (p, v) => {
+  jalan: (p) => {
     p.bare = true;
     p.ground((a, b) => {
       if (a < 0.03 || a > 0.97 || b < 0.03 || b > 0.97) return 'n';
       const row = Math.floor(b * 4);
       const seam = Math.abs(((a * 4 + (row % 2) * 0.5) % 1) - 0.5) > 0.46 || (b * 4) % 1 < 0.1;
-      if (v === 'retak' || v === 'rusak') {
-        // A zigzag split from one edge to the other, two straight steps so it reads as a crack.
-        const line = a < 0.5 ? 0.3 + a * 0.5 : 0.8 - (a - 0.5) * 0.6;
-        if (Math.abs(b - line) < 0.035) return '#4a3424';
-      }
-      if (v === 'rusak') {
-        // Two potholes: a dark rim, muddy water, a glint of sky. Stones kicked out lie around them.
-        for (const [ca, cb, r] of [[0.33, 0.62, 0.17], [0.7, 0.3, 0.12]]) {
-          const d = Math.hypot(a - ca, (b - cb) * 1.1) / r;
-          if (d < 0.55) return d < 0.25 && a < ca ? '#a9c6d6' : '#6f7f86';
-          if (d < 1) return '#5b4030';
-          if (d < 1.35 && (Math.floor(a * 23) + Math.floor(b * 17)) % 4 === 0) return 's';
-        }
-      }
       return seam ? 's' : 't';
     });
   },

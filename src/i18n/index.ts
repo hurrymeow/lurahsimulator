@@ -26,10 +26,22 @@ export function setLang(l: Lang): void {
   if (typeof document !== 'undefined') document.documentElement.lang = l;
 }
 
-/** UI and message strings. `{name}` placeholders are filled from `vars`. */
+/** The player, for {pt} (Pak or Bu), {pn} (their name) and {pk} (their kampung) in any string. */
+let player = { title: 'Pak', name: 'RT', kampung: 'Kampung Kenanga' };
+export function setPlayer(p: { title: string; name: string; kampung: string } | undefined): void {
+  player = p ? { ...p } : { title: 'Pak', name: 'RT', kampung: 'Kampung Kenanga' };
+}
+export const playerTitle = (): string => player.title;
+
+/**
+ * UI and message strings. `{name}` placeholders are filled from `vars`; {pt}, {pn} and {pk} from the player.
+ * A key with a `.bu` twin uses the twin when the player is Bu, so Inem's lines can change their tone.
+ */
 export function t(key: Key, vars?: Record<string, string | number>): string {
-  const raw = (lang === 'id' ? ID : EN)[key];
-  return vars ? raw.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`)) : raw;
+  const table = (lang === 'id' ? ID : EN) as Record<string, string>;
+  const raw = (player.title === 'Bu' && table[`${key}.bu`]) || table[key];
+  const all: Record<string, string | number> = { pt: player.title, pn: player.name, pk: player.kampung, ...vars };
+  return raw.replace(/\{(\w+)\}/g, (_, k: string) => String(all[k] ?? `{${k}}`));
 }
 
 /** Data-file strings: English inline in the data, Indonesian looked up by key. */
@@ -53,6 +65,20 @@ export const wTrade = (w: { id: string; trade: string }) => tr(`wacana.${w.id}.t
 export const wLine = (w: { id: string; line: string }) => tr(`wacana.${w.id}.line`, w.line);
 export const lName = (l: { id: string; name: string }) => tr(`line.${l.id}.name`, l.name);
 export const lLine = (l: { id: string; line: string }) => tr(`line.${l.id}.line`, l.line);
+export const gName = (g: { id: string; name: string }) => tr(`gig.${g.id}.name`, g.name);
+export const gNeeds = (g: { id: string; needs: string }) => tr(`gig.${g.id}.needs`, g.needs);
+export const gReward = (g: { id: string; reward: string }) => tr(`gig.${g.id}.reward`, g.reward);
+export const roleName = (r: { id: string; name: string }) => tr(`staff.role.${r.id}.name`, r.name);
+export const roleBlurb = (r: { id: string; blurb: string }) => tr(`staff.role.${r.id}.blurb`, r.blurb);
+export const chName = (c: { id: string; name: string }) => tr(`staff.ch.${c.id}.name`, c.name);
+export const chBlurb = (c: { id: string; blurb: string }) => tr(`staff.ch.${c.id}.blurb`, c.blurb);
+export const traitName = (x: { id: string; name: string }) => tr(`staff.trait.${x.id}.name`, x.name);
+export const traitEffect = (x: { id: string; effect: string }) => tr(`staff.trait.${x.id}.effect`, x.effect);
+export const spType = (x: { id: string; type: string }) => tr(`staff.sp.${x.id}.type`, x.type);
+export const spQuirk = (x: { id: string; quirk: string }) => tr(`staff.sp.${x.id}.quirk`, x.quirk);
+export const rName = (r: { id: string; name: string }) => tr(`real.${r.id}.name`, r.name);
+export const rLine = (r: { id: string; line: string }) => tr(`real.${r.id}.line`, r.line);
+export const rEffect = (r: { id: string; effect: string }) => tr(`real.${r.id}.effect`, r.effect);
 export const eName = (e: { id: string; name: string }) => tr(`event.${e.id}.name`, e.name);
 export const eBody = (e: { id: string; body: string }) => tr(`event.${e.id}.body`, e.body);
 export const eLabel = (e: { id: string }, i: number, c: { label: string }) => tr(`event.${e.id}.c${i}.label`, c.label);

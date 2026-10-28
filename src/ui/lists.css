@@ -1,0 +1,56 @@
+/* The Buku Combo grid and the Warga job groups. Theme tokens only, so Light and Dark both work.
+   Text 16px or more, every control 48px or more, icons on the right on one 8px spacing. */
+.ls-sprite { width: 32px; height: 32px; object-fit: contain; image-rendering: pixelated; }
+.ls-members { display: inline-flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+.ls-member img.missing { filter: grayscale(1) opacity(0.45); }
+.ls-plus { font-weight: 700; color: var(--muted); padding: 0 2px; }
+.ls-out { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; justify-content: flex-end; margin-left: auto; }
+.ls-amt { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: 16px; color: var(--c); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ls-amt.neg { color: var(--danger); }
+.ls-stars { color: var(--orang); font-size: 16px; letter-spacing: 1px; white-space: nowrap; }
+.ls-stars .off { color: var(--line); opacity: 0.35; }
+.ls-progress { display: flex; flex-direction: column; gap: 4px; color: var(--muted); }
+.ls-progress .meter > div { background: var(--accent); }
+.ls-tabs .tab { min-width: 64px; }
+.ls-empty { grid-column: 1 / -1; margin: 8px 0; }
+.ls-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; font-size: 16px; font-weight: 700; border: 1px solid currentColor; }
+.ls-badge b { font-family: var(--font-pixel); }
+.ls-badge.active { color: var(--rupiah); }
+.ls-badge.found { color: var(--orang); }
+.ls-badge.todo { color: var(--muted); }
+.missing-line { color: var(--danger); }
+.story { font-style: italic; }
+
+/* Buku Combo: one full-width card per row. */
+.ls-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.ls-tile { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-height: 48px; padding: 8px 10px; font: inherit; color: var(--text); text-align: left; background: var(--surface-2); border: 1px solid var(--line); cursor: pointer; }
+.ls-tile.active { border: 2px solid var(--rupiah); padding: 7px 9px; }
+.ls-tile[aria-expanded='true'] { outline: 3px solid var(--accent); outline-offset: -3px; }
+.ls-tile.todo .ls-sprite { filter: brightness(0) opacity(0.35); }
+.ls-tile-top { display: flex; align-items: center; gap: 8px; min-height: 28px; }
+/* Up to three buildings stay on one line, even on a 320px phone. */
+.ls-tile .ls-members { flex-wrap: nowrap; min-width: 0; }
+.ls-tile .ls-plus { padding: 0; }
+.ls-tile .ls-sprite { width: 24px; height: 24px; }
+.ls-tile-name { flex: 1; min-width: 0; font-size: 16px; line-height: 1.2; }
+/* The effect keeps to two lines; the tile opens the whole entry. UI.md rule 5 exception. */
+.ls-desc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; color: var(--muted); font-size: 16px; line-height: 1.25; }
+.ls-corner { flex: none; display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; font-family: var(--font-pixel); font-weight: 700; font-size: 16px; color: var(--on-accent); background: var(--muted); }
+.ls-corner.active { background: var(--rupiah); }
+.ls-corner.found { background: var(--orang); }
+.ls-detail { grid-column: 1 / -1; padding: 10px 12px; background: var(--surface); border: 2px solid var(--line); }
+.ls-detail p { margin: 6px 0 0; }
+.ls-detail-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Warga: a summary line, then one box per job. */
+.ls-sum { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--surface-2); border: 1px solid var(--line); }
+.ls-sum-n { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
+html:not(.theme-dark) .ls-sum-n img { filter: brightness(0.18); }
+.ls-group { margin-bottom: 12px; border: 1px solid var(--line); background: var(--surface-2); }
+.ls-group.idle { border-left: 6px solid var(--danger); }
+.ls-group-head { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-height: 52px; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+.ls-group-head .ls-sprite { width: 40px; height: 40px; }
+.ls-group-name { font-size: 16px; }
+.ls-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; }
+.ls-chip { display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: center; min-height: 48px; min-width: 48px; padding: 2px 10px; font: inherit; font-weight: 700; color: var(--text); background: var(--surface); border: 1px solid var(--line); cursor: pointer; line-height: 1.15; }
+.ls-job { color: var(--muted); font-weight: 400; }

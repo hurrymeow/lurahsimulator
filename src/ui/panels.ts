@@ -1,12 +1,12 @@
-import { cEffect, cName, cStory, jBlurb, jName, t, wLine, wName, wTrade } from '../i18n';
+import { REALISASI } from '../data/realisasi';
+import { checkRealisasi, realisasiCost, startRealisasi } from '../sim/realisasi';
+import { rEffect, rLine, rName } from '../i18n';
+import { jBlurb, jName, t, wLine, wName, wTrade } from '../i18n';
 import { LEVEL_MONTHS, jobDef } from '../data/jobs';
 import { WACANA } from '../data/wacana';
 import type { App } from '../app';
 import { rupiah } from '../format';
-import { bookCombos, comboConditions, comboStatus, comboStatusText } from '../sim/combos';
 import { checkAssign, assign, levelOf, liveJobs } from '../sim/jobs';
-import { PATH_DECAY } from '../sim/balance';
-import { checkRepairPath, isPath, neglect, repairPath, repairPathCost, stretchOf, type RepairWay } from '../sim/decay';
 import { checkRepair, repair, repairCost } from '../sim/events';
 import { checkRestart, checkRestartODn, RESTART_ODN, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
 import { announce, checkAnnounce, wacanaCost } from '../sim/wacana';
@@ -15,21 +15,12 @@ import type { Building, JobId } from '../sim/types';
 import { actionButton } from './inspect';
 import { h } from './dom';
 import { openSheet } from './sheet';
+import { openComboBook, openWargaList } from './lists';
 
 // ---------- Warga ----------
 /** focus: the resident just edited. The list opens scrolled to their row instead of the top. */
 export function openResidents(app: App, focus?: number): void {
-  const s = app.s;
-  const rows = s.residents.map((r) =>
-    h('button', { class: 'card-btn slim', 'data-rid': String(r.id), onclick: () => openResident(app, r.id) },
-      h('div', { class: 'card-text' },
-        h('div', { class: 'card-title' }, h('strong', {}, r.name), h('span', { class: 'meta' }, `${jobDef(r.job) ? jName(jobDef(r.job)!) : t('res.noJob')} · ${t('res.level', { n: levelOf(r) })}`)),
-        r.job === 'pns' ? h('p', { class: 'meta' }, t('res.pensiun', { n: Math.round(r.pensiun) })) : null,
-        r.job === 'buzzer' ? h('p', { class: 'meta' }, t('res.fake', { n: Math.round(r.fake) })) : null,
-      ),
-    ),
-  );
-  openSheet(t('menu.warga'), [h('p', { class: 'meta' }, t('res.hint')), ...rows]);
+  openWargaList(app, (id) => openResident(app, id));
   const row = focus === undefined ? null : document.querySelector<HTMLElement>(`#sheet [data-rid="${focus}"]`);
   if (row) {
     row.scrollIntoView({ block: 'center' });
@@ -54,7 +45,31 @@ function openResident(app: App, id: number): void {
   openSheet(r.name, [h('p', { class: 'meta' }, next === undefined ? t('res.levelMax', { n: lv }) : t('res.levelNext', { n: lv, left: next - (r.xp ?? 0) })), ...choices]);
 }
 
-// ---------- Wacana ----------
+// ---------- Wacana and Realisasi ----------
+/** The real version of a policy under its announcement: what it does, its state, and the button to do it. */
+function realisasiPart(app: App, wacanaId: string): Node[] {
+  const s = app.s;
+  const d = REALISASI.find((r) => r.wacana === wacanaId);
+  if (!d) return [];
+  const run = (s.realisasi ?? []).filter((r) => r.id === d.id).at(-1);
+  const state = !run || s.month >= run.endsAt ? null : run.landsAt > s.month ? t('wac.landsIn', { n: run.landsAt - s.month }) : run.endsAt === Infinity ? t('wac.lasting') : t('wac.workingFor', { n: run.endsAt - s.month });
+  return [
+    h('div', { class: 'realisasi' },
+      h('p', {}, h('strong', {}, t('wac.realHead', { name: rName(d) }))),
+      h('p', { class: 'meta' }, rLine(d)),
+      h('p', { class: 'meta' }, rEffect(d)),
+      state ? h('p', { class: 'meta good' }, state) : null,
+      actionButton(t('wac.realisasi', { cost: rupiah(realisasiCost(s, d)) }), checkRealisasi(s, d.id), () => {
+        startRealisasi(s, d.id);
+        app.tap(15);
+        app.save();
+        app.refresh();
+        openWacana(app);
+      }, true),
+    ),
+  ];
+}
+
 export function openWacana(app: App): void {
   const s = app.s;
   const rows = WACANA.map((w) => {
@@ -76,6 +91,7 @@ export function openWacana(app: App): void {
           app.refresh();
           openWacana(app);
         }),
+        ...realisasiPart(app, w.id),
       ),
     );
   });
@@ -84,23 +100,7 @@ export function openWacana(app: App): void {
 
 // ---------- Buku Combo ----------
 export function openBukuCombo(app: App): void {
-  const s = app.s;
-  const combos = bookCombos(s);
-  const found = combos.filter((c) => s.discovered.includes(c.id)).length;
-  const rows = combos.map((c) => {
-    const known = s.discovered.includes(c.id);
-    const st = comboStatus(s, c);
-    return h('div', { class: `card-btn static ${st.state === 'active' ? '' : 'locked'}` },
-      h('div', { class: 'card-text' },
-        h('div', { class: 'card-title' }, h('strong', {}, cName(c)), h('span', { class: 'meta' }, known ? t('combo.discovered') : t('combo.hidden'))),
-        h('p', {}, comboConditions(c)),
-        h('p', {}, cEffect(c)),
-        h('p', { class: 'meta' }, comboStatusText(st)),
-        known ? h('p', { class: 'meta' }, cStory(c)) : null,
-      ),
-    );
-  });
-  openSheet(t('menu.combo'), [h('p', { class: 'meta' }, t('combo.count', { found, total: combos.length })), ...rows]);
+  openComboBook(app);
 }
 
 // ---------- Inspector extras ----------
@@ -134,28 +134,8 @@ export function parkirExtras(app: App, b: Building): Node[] {
   return [h('p', { class: 'meta' }, t('insp.parkir', { shop: owner ? t('insp.parkirShop') : t('insp.parkirOld'), level: b.level }))];
 }
 
-/** A cracked path: fix the tile, fix the whole stretch, or call a favour for the stretch. */
-function pathExtras(app: App, b: Building): Node[] {
-  const s = app.s;
-  const stretch = stretchOf(s, b);
-  const fix = (way: RepairWay) => () => {
-    for (const o of repairPath(s, b, way)) app.view.burst(o.x, o.y);
-    app.tap(15);
-    app.save();
-    app.refresh();
-    app.inspect(b.uid);
-  };
-  return [
-    h('p', { class: 'meta' }, t('insp.pathCracked', { months: neglect(s, stretch), every: PATH_DECAY.spreadEvery })),
-    actionButton(t('insp.pathFixTile', { cost: rupiah(repairPathCost(s, b, 'tile')) }), checkRepairPath(s, b, 'tile'), fix('tile'), true),
-    stretch.length > 1 ? actionButton(t('insp.pathFixStretch', { n: stretch.length, cost: rupiah(repairPathCost(s, b, 'stretch')) }), checkRepairPath(s, b, 'stretch'), fix('stretch')) : null,
-    actionButton(t('insp.pathFavour', { n: PATH_DECAY.favour, tiles: stretch.length }), checkRepairPath(s, b, 'favour'), fix('favour')),
-  ].filter((n): n is HTMLElement => n !== null);
-}
-
 export function damagedExtras(app: App, b: Building): Node[] {
   if (b.status !== 'damaged') return [];
-  if (isPath(b)) return pathExtras(app, b);
   const s = app.s;
   const cost = repairCost(s, b);
   return [

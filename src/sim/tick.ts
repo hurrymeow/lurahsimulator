@@ -1,4 +1,4 @@
-import { bBlurb, bName, t } from '../i18n';
+import { bBlurb, bName, t, type Key } from '../i18n';
 import {
   ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
   EXPECT_PER_RESIDENT, NOVELTY_GAP, QUEUE_SABAR_DRAIN, SETORAN_RATE, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, TUKANG_MAX, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
@@ -9,7 +9,6 @@ import { def, placeableDefs } from './content';
 import { EMAS } from '../data/ranking';
 import { eventSystem } from './events';
 import { first } from './firsts';
-import { pathDecaySystem } from './decay';
 import { camatCallSystem, lineSystem } from './lines';
 import { debtSystem, iuranFromNeighbours, neighboursSystem, neighboursYearEnd, stempelSystem } from './grow';
 import { inspectionSystem } from './inspection';
@@ -23,6 +22,11 @@ import { wacanaSystem } from './wacana';
 import { chance, pick, randInt } from './rng';
 import { noteNet, quarterSystem, snapshot } from './report';
 import { requirementGaps } from './rules';
+import { brandMult, royaltyRate } from './brands';
+import { problemSystem } from './problems';
+import { needsSystem, premanTake } from './needs';
+import { buildBoost, permitCut, staffSystem, upkeepCut } from './staff';
+import { realisasiSystem, realisasiWarungMult } from './realisasi';
 import { addBuilding, addResident, attractTarget, decorMult, emptyTiles, housing, isWorking, levelMult, neighbours, pathMult, population } from './state';
 import { gain, type Fx } from './gain';
 import type { Building, GameState, ResourceId } from './types';
@@ -41,13 +45,13 @@ export function incomeMult(s: GameState, b: Building): number {
 export function buildingIncome(s: GameState, b: Building): number {
   if (!isWorking(b)) return 0;
   const d = def(b.def);
-  return Math.round(d.income * levelMult(b.level) * incomeMult(s, b) * pathMult(s, b) * decorMult(s, b) * burstMult(s, b));
+  return Math.round(d.income * levelMult(b.level) * incomeMult(s, b) * pathMult(s, b) * decorMult(s, b) * burstMult(s, b) * brandMult(s, b) * (1 - premanTake(s, b)) * (b.def === 'warung' ? realisasiWarungMult(s) : 1));
 }
 
 export function buildingUpkeep(s: GameState, b: Building): number {
   const d = def(b.def);
   if (b.status === 'mangkrak') return 0;
-  return Math.round(d.upkeep * levelMult(b.level) * s.inflation * comboUpkeepMult(s, b));
+  return Math.round(d.upkeep * levelMult(b.level) * s.inflation * comboUpkeepMult(s, b) * (1 - upkeepCut(s)));
 }
 
 function clampResources(s: GameState): void {
@@ -66,6 +70,9 @@ export function advanceConstruction(s: GameState, fx: Fx): void {
   for (const b of s.buildings) {
     if (b.status !== 'permit' && b.status !== 'building') continue;
     b.timer -= b.status === 'building' && (s.month + b.uid) % 4 < crew ? 2 : 1;
+    // Inem's paperwork speeds permits; a Supir gets crews to site sooner. A share of months count twice.
+    const extra = b.status === 'permit' ? permitCut(s) : buildBoost(s);
+    if (extra && ((s.month * 7 + b.uid * 3) % 10) / 10 < extra) b.timer--;
     if (b.status === 'permit') {
       gain(s, fx, 'sabar', -QUEUE_SABAR_DRAIN, b);
       if (b.timer <= 0) {
@@ -84,9 +91,11 @@ export function advanceConstruction(s: GameState, fx: Fx): void {
 
 export function collectIncome(s: GameState, fx: Fx): void {
   let gross = 0;
+  let royalty = 0;
   for (const b of s.buildings) {
     const d = def(b.def);
     gross += buildingIncome(s, b);
+    royalty += buildingIncome(s, b) * royaltyRate(s, b);
     const net = buildingIncome(s, b) - buildingUpkeep(s, b);
     gain(s, fx, 'rupiah', net, b);
     noteNet(s, b.uid, net);
@@ -97,7 +106,8 @@ export function collectIncome(s: GameState, fx: Fx): void {
   const kantor = s.buildings.find((b) => b.def === 'kantorRT');
   gain(s, fx, 'rupiah', population(s) * IURAN, kantor);
   iuranFromNeighbours(s, fx);
-  const setoran = Math.round(gross * SETORAN_RATE);
+  // A franchise's royalty goes up the chain with the setoran.
+  const setoran = Math.round(gross * SETORAN_RATE + royalty);
   if (setoran > 0) {
     s.res.rupiah -= setoran;
     s.stats.spent += setoran;
@@ -169,12 +179,21 @@ export function residentsMove(s: GameState, fx: Fx): void {
 
 /** One notice per month, however many buildings opened: a star can unlock a dozen and they must not queue a dozen pop-ups. */
 export function checkUnlocks(s: GameState, fx: Fx): void {
-  const opened = placeableDefs().filter((d) => !s.unlocked.includes(d.id) && requirementGaps(s, d, { ignoreLimit: true }).length === 0);
+  let opened = placeableDefs().filter((d) => !s.unlocked.includes(d.id) && requirementGaps(s, d, { ignoreLimit: true }).length === 0);
   if (!opened.length) return;
   for (const d of opened) s.unlocked.push(d.id);
   novelty(s);
   // The first month's batch is the starting menu, not a reward, and it would land on top of the opener.
   if (s.month <= 1) return;
+  // A building that opens with its problem says why: the trouble is the lesson.
+  const byProblem = new Map<string, typeof opened>();
+  for (const d of opened) if (d.requires?.problem) byProblem.set(d.requires.problem, [...(byProblem.get(d.requires.problem) ?? []), d]);
+  for (const [problem, defs] of byProblem) {
+    const list = defs.map((d) => bName(d)).join(', ');
+    fx.push({ kind: 'notice', title: t('sim.unlockedTitle', { name: list }), body: t(`problem.${problem}` as Key, { list }), tone: 'good', fanfare: true });
+  }
+  opened = opened.filter((d) => !d.requires?.problem);
+  if (!opened.length) return;
   if (opened.length === 1) {
     const d = opened[0];
     fx.push({ kind: 'notice', title: t('sim.unlockedTitle', { name: bName(d) }), body: bBlurb(d), tone: 'good', fanfare: true });
@@ -205,8 +224,6 @@ export function yearEnd(s: GameState, fx: Fx): void {
 
 /** Ordered list of monthly systems. Later milestones insert their systems here. */
 export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
-  // Paths crack before access is worked out, so a building cut off this month idles this month.
-  pathDecaySystem,
   accessSystem,
   advanceConstruction,
   accessSystem,
@@ -217,6 +234,9 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   neighboursSystem,
   stempelSystem,
   jobsSystem,
+  realisasiSystem,
+  staffSystem,
+  needsSystem,
   wacanaSystem,
   mangkrakSystem,
   expectations,
@@ -225,6 +245,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   debtSystem,
   residentsMove,
   stageSystem,
+  problemSystem,
   checkUnlocks,
   inspectionSystem,
   eventSystem,

@@ -1,7 +1,8 @@
 import { layRoads } from './access';
-import { hasDef } from './content';
+import { allDefs, hasDef } from './content';
+import { ensureStaff } from './staff';
 import { SAVE_VERSION, newStageState } from './state';
-import { OLD_GRID_H, OLD_GRID_W, RT_H, RT_W, setGrid, type GameState } from './types';
+import { OLD_GRID_H, OLD_GRID_W, RT_H, RT_W, setGrid, type GameState, type ProblemId } from './types';
 
 export function serialize(s: GameState): string {
   return JSON.stringify(s);
@@ -15,6 +16,7 @@ export function deserialize(raw: string | null): GameState | null {
     if (!s || (s.version !== SAVE_VERSION && s.version !== 1)) return null;
     if (!Array.isArray(s.buildings) || !Array.isArray(s.residents) || typeof s.res?.rupiah !== 'number') return null;
     migrateSelokan(s);
+    mendPaths(s);
     if (!s.buildings.every((b) => hasDef(b.def))) return null;
     if (s.version === 1) migrateV1(s);
     // Saves from before stages: start at 0 stars. The first tick catches the stars up.
@@ -28,6 +30,9 @@ export function deserialize(raw: string | null): GameState | null {
       ...(s.stats.arrived > 0 ? (['resident'] as const) : []),
       ...(s.stage.stars.rt > 0 ? (['star'] as const) : []),
     ];
+    // Saves from before problem unlocks: what the player could already build stays open.
+    s.problems ??= problemsFromSave(s);
+    ensureStaff(s);
     s.rw ??= { kaderDecay: 0 };
     s.kel ??= { budget: 0, spentBase: 0, serapanRun: 0, cleanAudits: 0 };
     setGrid(s.stage.current);
@@ -35,6 +40,24 @@ export function deserialize(raw: string | null): GameState | null {
     return s;
   } catch {
     return null;
+  }
+}
+
+/** Problems a save from before problem unlocks counts as met: those of every building it already had open or built. */
+function problemsFromSave(s: GameState): ProblemId[] {
+  const out = new Set<ProblemId>();
+  for (const d of allDefs()) {
+    const p = d.requires?.problem;
+    if (p && (s.unlocked?.includes(d.id) || s.buildings.some((b) => b.def === d.id))) out.add(p);
+  }
+  return [...out];
+}
+
+/** Jalan Setapak no longer cracks. Saves from when it did get their broken paths back. */
+function mendPaths(s: GameState): void {
+  for (const b of [...s.buildings, ...(s.neighbours ?? []).flatMap((n) => n.buildings)]) {
+    if (b.def === 'jalan' && b.status === 'damaged') b.status = 'active';
+    delete (b as { crackedAt?: number }).crackedAt;
   }
 }
 

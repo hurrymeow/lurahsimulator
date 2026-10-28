@@ -20,7 +20,7 @@ export const SPRAWL_STEP = 0.03;
 /** Share of building income that goes up the chain as "setoran". Paying is the choice, so the kas never snowballs. */
 export const SETORAN_RATE = 0.1;
 /** Popularitas lost each month per resident: bigger kampung, bigger expectations. */
-export const EXPECT_PER_RESIDENT = 0.1;
+export const EXPECT_PER_RESIDENT = 0.14;
 /** Months without anything new before the pacing director steps in. */
 export const NOVELTY_GAP = 8;
 /** Each Viral point adds this fraction to shop income. */
@@ -73,24 +73,6 @@ export const STEMPEL = {
   sabarPerLetter: 0.5,
   /** Letters a build sends. Jarang Muncul sends double. */
   perBuild: 1,
-};
-
-/** Jalan Setapak wears out. Cracked paths are not road, so buildings past them lose access until fixed. */
-export const PATH_DECAY = {
-  /** No cracks in year 1. */
-  safeMonths: 12,
-  /** Chance a working path cracks in a month. About one crack every 8 months on a 30-tile network. */
-  crackChance: 0.004,
-  /** A damaged stretch left alone this many months grows once. */
-  spreadEvery: 6,
-  /** Each growth adds this share of the stretch's size, and always at least one tile. */
-  spreadRate: 0.1,
-  /** Months unrepaired before a crack turns into potholes. Looks only. */
-  potholeAfter: 6,
-  /** Rupiah to fix one tile, before inflation. */
-  repairPerTile: 150_000,
-  /** Orang Dalam to have a whole stretch fixed through a connection. */
-  favour: 1,
 };
 
 /** Most extra income decorations can add to one building, however many stand nearby. */

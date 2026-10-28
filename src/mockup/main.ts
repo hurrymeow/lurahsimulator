@@ -178,7 +178,7 @@ canvas.addEventListener('pointermove', (e) => {
 canvas.addEventListener('pointerup', (e) => {
   if (drag && drag.moved < 8) {
     const r = canvas.getBoundingClientRect();
-    const tile = view.tileAt(e.clientX - r.left, e.clientY - r.top, true);
+    const tile = view.tileAt(e.clientX - r.left, e.clientY - r.top);
     const b = tile ? buildingAt(s, tile.x, tile.y) : undefined;
     view.selected = b && b.def !== 'jalan' ? b.uid : null;
     drawStatus();

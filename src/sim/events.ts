@@ -1,9 +1,11 @@
+import { noteProblem } from './problems';
+import { realisasiBanjir } from './realisasi';
+import { afterEventStaff } from './staff';
 import { eModLabel, eOutcome, eResult, t } from '../i18n';
 import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR_SABAR, EVENTS, POPUP_CHANCE, MIN_REPEAT_GAP, POPUP_GAP, REPAIR_FRACTION, eventDef, type EventChoice, type EventDef, type EventOutcome as OutcomeDef } from '../data/events';
 import { STAGE_EVENTS } from '../data/higher';
 import { rupiah } from '../format';
 import { activeCombos } from './combos';
-import { isPath, tileRepairCost } from './decay';
 import { def, isCover } from './content';
 import { gateOpen } from './gate';
 import { banjirCut, wacanaNoReceipt } from './kel';
@@ -45,7 +47,7 @@ export function banjirProtection(s: GameState): number {
   const combos = activeCombos(s).reduce((n, a) => n + (a.combo.banjirProtect ?? 0), 0);
   // Kerja Bakti makes the biopori work harder for a while.
   const boost = s.modifiers.filter((m) => m.target === 'biopori').reduce((m, x) => m * x.incomeMult, 1);
-  return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL * boost + combos + banjirCut(s));
+  return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL * boost + combos + banjirCut(s) + realisasiBanjir(s));
 }
 
 /** Lapangan doubles the 17 Agustus prize. Panjat Pinang adds half again. */
@@ -94,7 +96,8 @@ function crowded(s: GameState): boolean {
   const last = Object.values(s.lastEvent ?? {});
   if (last.length && s.month - Math.max(...last) < EVENT_CLEAR) return true;
   for (let k = 1; k < EVENT_CLEAR; k++) {
-    const due = EVENTS.some((e) => e.when.chance >= 1 && e.when.months?.includes((s.month + k) % 12) && (e.when.minMonth ?? 0) <= s.month + k);
+    // A yearly one on its month, or a one-off (no months list) on the month it first comes due.
+    const due = EVENTS.some((e) => e.when.chance >= 1 && (e.when.months ? e.when.months.includes((s.month + k) % 12) && (e.when.minMonth ?? 0) <= s.month + k : e.when.minMonth === s.month + k && !(s.lastEvent ?? {})[e.id]));
     if (due) return true;
     if (s.inspection && s.inspection.visitAt === undefined && s.inspection.warnAt === s.month + k) return true;
   }
@@ -132,6 +135,8 @@ export interface EventOutcome {
 }
 
 function floodDamage(s: GameState, fx: Fx): string {
+  // The first flood opens the Selokan, so the fix arrives with the water.
+  noteProblem(s, 'banjir');
   const protect = banjirProtection(s);
   const sabarHit = Math.round(BANJIR_SABAR * (1 - protect));
   gain(s, fx, 'sabar', -sabarHit);
@@ -202,6 +207,7 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
   if (c.modifier) s.modifiers.push({ id: `${e.id}-${s.month}`, label: eModLabel(e, choiceIdx, c.modifier.label), target: c.modifier.target, incomeMult: c.modifier.incomeMult, monthsLeft: c.modifier.months });
   const text = c.special === 'banjir' ? floodDamage(s, fx) : rolled ? eOutcome(e, choiceIdx, c.outcomes!.indexOf(rolled), rolled) : eResult(e, choiceIdx, c);
   s.pendingEvent = null;
+  afterEventStaff(s);
   const delta: Partial<Resources> = {};
   for (const k of Object.keys(before) as (keyof Resources)[]) if (s.res[k] !== before[k]) delta[k] = s.res[k] - before[k];
   const mod = c.modifier && { label: eModLabel(e, choiceIdx, c.modifier.label), incomeMult: c.modifier.incomeMult, months: c.modifier.months };
@@ -209,8 +215,6 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
 }
 
 export function repairCost(s: GameState, b: Building): number {
-  // A path costs nothing to lay, so it has its own repair price, and Virality does not waive it.
-  if (isPath(b)) return tileRepairCost(s);
   return s.res.viral >= VIRAL_REPAIR_AT ? 0 : price(s, def(b.def).cost * REPAIR_FRACTION);
 }
 
@@ -228,7 +232,19 @@ export function repair(s: GameState, b: Building): CheckResult {
   s.res.rupiah -= cost;
   s.stats.spent += cost;
   b.status = 'active';
-  delete b.crackedAt;
   return check;
 }
 
+
+/** Every damaged building and cracked path (not Mangkrak, which restarts), cheapest first. */
+export const damagedList = (s: GameState): Building[] =>
+  s.buildings.filter((b) => b.status === 'damaged').sort((a, b) => repairCost(s, a) - repairCost(s, b));
+
+/** Repairs the damaged list cheapest first, as far as the Rupiah goes. Returns what it fixed and what is left. */
+export function repairAll(s: GameState): { fixed: Building[]; left: number; spent: number } {
+  const before = s.res.rupiah;
+  const fixed: Building[] = [];
+  const list = damagedList(s);
+  for (const b of list) if (repair(s, b).ok) fixed.push(b);
+  return { fixed, left: list.length - fixed.length, spent: before - s.res.rupiah };
+}

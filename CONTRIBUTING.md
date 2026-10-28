@@ -26,7 +26,7 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 - Main screen: the console frame (a time row and a money row on top, the full-width map with a goal pill and a small satellite view, a dock of Build, Warga and Menu). Notices are toasts over the map. See [GAME-DESIGN.md](GAME-DESIGN.md#touch-and-layout).
 - Settings > Theme switches the frame between Light (default) and Dark. Both share one layout; only colours change. Check new UI in both.
 - New panel? Register an `ActionButton` with a `group` in the Menu. Never add a main-screen button. Build and Warga are the only docked panels, and the Menu does not list them twice.
-- Text never cuts off. No ellipsis, text wraps, panels scroll. Body font 16px or more.
+- Text never cuts off. No ellipsis, text wraps, panels scroll. The one exception is a clamped line inside a button that opens the whole text (UI.md rule 5). Body font 16px or more.
 - Touch targets 48px or more, except the slim top rows and the goal pill (28px). See UI.md rule 1.
 - New panel or message needs a scan in `tests/e2e/ui.spec.ts`.
 
