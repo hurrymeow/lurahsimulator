@@ -2,7 +2,7 @@ import { connectedRoad, FLAT, hasRoadBeside } from './sim/access';
 import { eBody, eLabel, eName, bName, jName, getLang, initialLang, setLang, t, type Key, type Lang } from './i18n';
 import { jobDef } from './data/jobs';
 import { dateLabel, rupiah, rupiahHud } from './format';
-import { MapView, RES_COLOUR } from './render/map';
+import { MapView, RES_VAR } from './render/map';
 import { iconURL } from './render/sprites';
 import { def } from './sim/content';
 import { eventDef } from './data/events';
@@ -296,7 +296,7 @@ export class App {
       .map((id) => {
         const v = out.delta![id]!;
         const amt = id === 'rupiah' ? rupiah(Math.abs(v)) : String(Math.round(Math.abs(v) * 10) / 10);
-        return h('div', { class: `outcome-chip ${v < 0 ? 'negative' : 'positive'}`, style: `--c:${RES_COLOUR[id]}`, role: 'text', 'aria-label': `${RES_META[id].label()} ${v < 0 ? '-' : '+'}${amt}` },
+        return h('div', { class: `outcome-chip ${v < 0 ? 'negative' : 'positive'}`, style: `--c:${RES_VAR[id]}`, role: 'text', 'aria-label': `${RES_META[id].label()} ${v < 0 ? '-' : '+'}${amt}` },
           h('img', { src: iconURL(RES_META[id].icon), alt: '', width: 24, height: 24 }),
           h('span', { class: 'outcome-name' }, RES_META[id].label()),
           h('span', { class: 'outcome-value' }, `${v < 0 ? '▼ -' : '▲ +'}${amt}`),
@@ -431,7 +431,7 @@ export class App {
   private buildHud(): void {
     const hud = document.getElementById('hud')!;
     const chip = (id: ResourceId | 'pop', icon: Node, label: string) =>
-      h('button', { class: 'chip', type: 'button', id: `chip-${id}`, 'aria-label': label, style: `--c:${id === 'pop' ? '#f4f4f5' : RES_COLOUR[id]}`, onclick: () => this.explain(id) },
+      h('button', { class: 'chip', type: 'button', id: `chip-${id}`, 'aria-label': label, style: `--c:${id === 'pop' ? 'var(--text)' : RES_VAR[id]}`, onclick: () => this.explain(id) },
         icon,
         h('span', { class: 'chip-value' }, ''),
       );
@@ -450,7 +450,7 @@ export class App {
     this.tap();
     const row = (kind: 'up' | 'down' | 'edge') =>
       h('p', { class: `exp-row exp-${kind}` }, h('strong', {}, `${{ up: '▲', down: '▼', edge: '■' }[kind]} ${t(`exp.${kind}`)}`), ` ${t(`exp.${id}.${kind}` as Key)}`);
-    const colour = id === 'pop' ? '#f4f4f5' : id === 'emas' ? '#fbbf24' : RES_COLOUR[id];
+    const colour = id === 'pop' ? 'var(--text)' : id === 'emas' ? 'var(--orang)' : RES_VAR[id];
     const icon = id === 'emas' ? h('span', { class: 'chip-text' }, 'Emas') : h('img', { src: iconURL(id === 'pop' ? 'people' : RES_META[id].icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
     const title = id === 'pop' ? t('res.warga') : id === 'emas' ? t('stats.emasTitle') : RES_META[id].label();
     const body = id === 'pop'

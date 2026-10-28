@@ -13,10 +13,18 @@ import type { Building, JobId } from '../sim/types';
 import { actionButton } from './inspect';
 import { h } from './dom';
 import { openSheet } from './sheet';
+import { listLook, openComboLook, openWargaLook } from './lists';
 
 // ---------- Warga ----------
 /** focus: the resident just edited. The list opens scrolled to their row instead of the top. */
 export function openResidents(app: App, focus?: number): void {
+  const look = listLook();
+  if (look) {
+    openWargaLook(app, look, (id) => openResident(app, id));
+    const row = focus === undefined ? null : document.querySelector<HTMLElement>(`#sheet [data-rid="${focus}"]`);
+    row?.scrollIntoView({ block: 'center' });
+    return;
+  }
   const s = app.s;
   const rows = s.residents.map((r) =>
     h('button', { class: 'card-btn slim', 'data-rid': String(r.id), onclick: () => openResident(app, r.id) },
@@ -82,6 +90,8 @@ export function openWacana(app: App): void {
 
 // ---------- Buku Combo ----------
 export function openBukuCombo(app: App): void {
+  const look = listLook();
+  if (look) return openComboLook(app, look);
   const s = app.s;
   const combos = bookCombos(s);
   const found = combos.filter((c) => s.discovered.includes(c.id)).length;

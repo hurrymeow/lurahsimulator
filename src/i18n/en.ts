@@ -308,6 +308,8 @@ export const EN = {
   'res.pensiun': 'Pensiun {n}%',
   'res.fake': 'Fake Virality pumped: {n}',
   'res.hint': 'Tap a resident to change their job.',
+  'ls.byJob': 'By job',
+  'ls.byLevel': 'By level',
   'pop.full': 'Rumah full. Build another house so more people can move in.',
   'res.current': '{label} (current)',
 

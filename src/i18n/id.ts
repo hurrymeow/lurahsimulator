@@ -300,6 +300,8 @@ export const ID: Record<Key, string> = {
   'sim.levelUp': '{name} naik ke Lv {n}',
   'res.pensiun': 'Pensiun {n}%',
   'res.fake': 'Viral palsu terkumpul: {n}',
+  'ls.byJob': 'Per kerja',
+  'ls.byLevel': 'Per level',
   'res.hint': 'Ketuk warga untuk ganti kerja.',
   'pop.full': 'Rumah penuh. Bangun rumah lagi supaya warga baru bisa pindah.',
   'res.current': '{label} (sekarang)',
