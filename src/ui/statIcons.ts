@@ -38,7 +38,10 @@ const WORDS: Record<'id' | 'en', [string, StatId][]> = {
 };
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const wordRe = (lang: 'id' | 'en') => new RegExp(`\\b(${WORDS[lang].map(([w]) => esc(w)).join('|')})\\b`, 'g');
+const RE_CACHE: Partial<Record<'id' | 'en', RegExp>> = {};
+// One compiled regex per language: the observer runs on every HUD text update.
+// Global flag is safe: matchAll clones the regex and search ignores lastIndex.
+const wordRe = (lang: 'id' | 'en') => (RE_CACHE[lang] ??= new RegExp(`\\b(${WORDS[lang].map(([w]) => esc(w)).join('|')})\\b`, 'g'));
 const wordFor = (lang: 'id' | 'en', word: string): StatId => WORDS[lang].find(([w]) => w === word)![1];
 
 export type StatSegment =
@@ -77,11 +80,11 @@ export function splitStatText(str: string, lang: 'id' | 'en' = getLang()): StatS
 /** True when a string contains a stat word or a plain escape. The fast path for the observer. */
 export const hasStatWord = (str: string, lang: 'id' | 'en' = getLang()): boolean =>
   // No /g here: RegExp.test with a global flag is stateful and would skip every other call.
-  /\{plain:[^}]+\}/.test(str) || wordRe(lang).test(str);
+  /\{plain:[^}]+\}/.test(str) || str.search(wordRe(lang)) >= 0;
 
 /** A number token at the end of a text chunk, or at the start, with its sign and separator. */
-const TRAILING_NUM = /([+-]?(?:x)?\d[\d.,]*)\s*$/;
-const LEADING_NUM = /^\s*([+-]?(?:x)?\d[\d.,]*)/;
+const TRAILING_NUM = /([+-]?(?:x)?\d(?:[\d.,]*\d)?)\s*$/;
+const LEADING_NUM = /^\s*([+-]?(?:x)?\d(?:[\d.,]*\d)?)/;
 
 export type GroupedSegment =
   | { kind: 'text'; text: string }

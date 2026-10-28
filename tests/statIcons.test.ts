@@ -55,3 +55,11 @@ describe('stat word replacement', () => {
     expect(after.filter((g) => g.kind === 'pair')).toEqual([{ kind: 'pair', before: '', stat: 'viral', after: '30' }]);
   });
 });
+
+describe('number grouping ignores sentence punctuation', () => {
+  it('does not pull a trailing full stop into the pair', () => {
+    const g = groupStatSegments(splitStatText('Dapat 5. Viral naik', 'id'));
+    const pair = g.find((s) => s.kind === 'pair') as { before: string };
+    expect(pair.before).toBe('');
+  });
+});
