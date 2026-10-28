@@ -25,6 +25,7 @@ import { requirementGaps } from './rules';
 import { brandMult, royaltyRate } from './brands';
 import { problemSystem } from './problems';
 import { needsSystem, premanTake } from './needs';
+import { buildBoost, permitCut, staffSystem, upkeepCut } from './staff';
 import { realisasiSystem, realisasiWarungMult } from './realisasi';
 import { addBuilding, addResident, attractTarget, decorMult, emptyTiles, housing, isWorking, levelMult, neighbours, pathMult, population } from './state';
 import { gain, type Fx } from './gain';
@@ -50,7 +51,7 @@ export function buildingIncome(s: GameState, b: Building): number {
 export function buildingUpkeep(s: GameState, b: Building): number {
   const d = def(b.def);
   if (b.status === 'mangkrak') return 0;
-  return Math.round(d.upkeep * levelMult(b.level) * s.inflation * comboUpkeepMult(s, b));
+  return Math.round(d.upkeep * levelMult(b.level) * s.inflation * comboUpkeepMult(s, b) * (1 - upkeepCut(s)));
 }
 
 function clampResources(s: GameState): void {
@@ -69,6 +70,9 @@ export function advanceConstruction(s: GameState, fx: Fx): void {
   for (const b of s.buildings) {
     if (b.status !== 'permit' && b.status !== 'building') continue;
     b.timer -= b.status === 'building' && (s.month + b.uid) % 4 < crew ? 2 : 1;
+    // Inem's paperwork speeds permits; a Supir gets crews to site sooner. A share of months count twice.
+    const extra = b.status === 'permit' ? permitCut(s) : buildBoost(s);
+    if (extra && ((s.month * 7 + b.uid * 3) % 10) / 10 < extra) b.timer--;
     if (b.status === 'permit') {
       gain(s, fx, 'sabar', -QUEUE_SABAR_DRAIN, b);
       if (b.timer <= 0) {
@@ -231,6 +235,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   stempelSystem,
   jobsSystem,
   realisasiSystem,
+  staffSystem,
   needsSystem,
   wacanaSystem,
   mangkrakSystem,

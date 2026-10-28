@@ -18,7 +18,7 @@ export function noteProblem(s: GameState, id: ProblemId): void {
  * year, as met. Banjir is noted by the flood itself.
  */
 export function problemSystem(s: GameState): void {
-  for (const r of s.residents) r.idle = r.job === 'none' ? (r.idle ?? 0) + 1 : 0;
+  for (const r of s.residents) r.idle = r.job === 'none' && r.staffId === undefined ? (r.idle ?? 0) + 1 : 0;
   if (s.buildings.some((b) => b.status === 'permit')) noteProblem(s, 'permitQueue');
   if (s.residents.filter((r) => (r.idle ?? 0) >= JOBLESS_MONTHS).length >= JOBLESS_PROBLEM) noteProblem(s, 'jobless');
 }

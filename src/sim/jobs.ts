@@ -73,7 +73,7 @@ export function autoPick(s: GameState, salt = 0): Exclude<JobId, 'none'> | null 
 function autoAssign(s: GameState, fx: Fx): void {
   for (const r of s.residents) {
     // A preman will not take an ordinary job; only a Satpam post (see needs.ts) or the player's offer turns him.
-    if (r.job !== 'none' || r.manual || r.preman) continue;
+    if (r.job !== 'none' || r.manual || r.preman || r.staffId !== undefined) continue;
     const job = autoPick(s, r.id);
     if (!job) return;
     assign(s, r, job);
