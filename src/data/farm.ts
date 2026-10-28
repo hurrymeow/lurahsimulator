@@ -17,6 +17,7 @@ export const FARM_BUILDINGS: BuildingDef[] = [
     placeable: true,
     removable: true,
     jobSlots: { petani: 1 },
+    requires: { problem: 'jobless' },
     sprite: 'kebunSayur',
   },
   {
@@ -32,8 +33,8 @@ export const FARM_BUILDINGS: BuildingDef[] = [
     maxLevel: 3,
     placeable: true,
     removable: true,
-    requires: { population: 8 },
     jobSlots: { petani: 2 },
+    requires: { stars: { stage: 'rt', n: 1 } },
     sprite: 'sawah',
   },
   {
@@ -50,8 +51,8 @@ export const FARM_BUILDINGS: BuildingDef[] = [
     maxLevel: 3,
     placeable: true,
     removable: true,
-    requires: { buildings: ['warung'] },
     jobSlots: { peternak: 1 },
+    requires: { stars: { stage: 'rt', n: 2 } },
     sprite: 'kandangAyam',
   },
   {
@@ -67,8 +68,8 @@ export const FARM_BUILDINGS: BuildingDef[] = [
     maxLevel: 3,
     placeable: true,
     removable: true,
-    requires: { stars: { stage: 'rt', n: 1 } },
     jobSlots: { peternak: 1 },
+    requires: { stage: 'rw' },
     sprite: 'kolamLele',
   },
 ];

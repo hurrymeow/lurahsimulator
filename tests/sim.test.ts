@@ -47,7 +47,7 @@ describe('placing buildings', () => {
     if (!r.ok) expect(r.missing).toContain('Need 8 residents (have 4)');
     const idm = checkPlace(s, 'indomaret', 0, 0);
     if (!idm.ok) {
-      expect(idm.missing).toContain('Need a working Warung');
+      expect(idm.missing).toContain('Need a working Warung Sembako');
       expect(idm.missing.some((m) => m.startsWith('Need Rp 2.000.000 more'))).toBe(true);
     }
   });
@@ -64,6 +64,7 @@ describe('placing buildings', () => {
 
   it('lets Orang Dalam skip the permit queue', () => {
     const s = newGame(5);
+    s.problems = ['banjir'];
     const r = place(s, 'biopori', 0, 0);
     const b = byUid(s, r.uid!)!;
     expect(skipPermit(s, b).ok).toBe(true);

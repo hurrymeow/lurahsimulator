@@ -1,7 +1,7 @@
 import { layRoads } from './access';
-import { hasDef } from './content';
+import { allDefs, hasDef } from './content';
 import { SAVE_VERSION, newStageState } from './state';
-import { OLD_GRID_H, OLD_GRID_W, RT_H, RT_W, setGrid, type GameState } from './types';
+import { OLD_GRID_H, OLD_GRID_W, RT_H, RT_W, setGrid, type GameState, type ProblemId } from './types';
 
 export function serialize(s: GameState): string {
   return JSON.stringify(s);
@@ -29,6 +29,8 @@ export function deserialize(raw: string | null): GameState | null {
       ...(s.stats.arrived > 0 ? (['resident'] as const) : []),
       ...(s.stage.stars.rt > 0 ? (['star'] as const) : []),
     ];
+    // Saves from before problem unlocks: what the player could already build stays open.
+    s.problems ??= problemsFromSave(s);
     s.rw ??= { kaderDecay: 0 };
     s.kel ??= { budget: 0, spentBase: 0, serapanRun: 0, cleanAudits: 0 };
     setGrid(s.stage.current);
@@ -37,6 +39,16 @@ export function deserialize(raw: string | null): GameState | null {
   } catch {
     return null;
   }
+}
+
+/** Problems a save from before problem unlocks counts as met: those of every building it already had open or built. */
+function problemsFromSave(s: GameState): ProblemId[] {
+  const out = new Set<ProblemId>();
+  for (const d of allDefs()) {
+    const p = d.requires?.problem;
+    if (p && (s.unlocked?.includes(d.id) || s.buildings.some((b) => b.def === d.id))) out.add(p);
+  }
+  return [...out];
 }
 
 /** Jalan Setapak no longer cracks. Saves from when it did get their broken paths back. */

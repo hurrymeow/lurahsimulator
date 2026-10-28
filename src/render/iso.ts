@@ -474,7 +474,7 @@ type ArtFn = (p: Painter, variant?: string, level?: number) => void;
 const ROOF_KEYS: Record<string, RoofShape> = { h: 'hip', g: 'gable', y: 'gableY', s: 'shed', f: 'flat' };
 
 /** Sprites that draw their own level progression. Everything else gets the upgrade kit. */
-const LEVELLED = new Set(['warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart']);
+const LEVELLED = new Set(['warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart', 'rumahMakan']);
 /** Ground pieces and the tukang parkir level up without a fence round them. */
 const NO_KIT = new Set(['parkir', 'biopori', 'drain', 'kebunSayur', 'sawah', 'kolamLele', 'kolamIkan', 'taman', 'sawahIrigasi', 'embung', 'aspalUlang', 'jalan', 'selokan']);
 

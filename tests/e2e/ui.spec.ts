@@ -1614,6 +1614,30 @@ test.describe('build mode', () => {
     await expect(page.locator('#dock-build .new-tag')).toHaveCount(0);
   });
 
+  test('a chain building shows its brand, a franchise line, and can be renamed', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const uid = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      app.s.res.rupiah = 50_000_000;
+      app.startPlacing('rumahMakan');
+      app.confirmPlace();
+      return app.s.buildings.filter((b: any) => b.def === 'rumahMakan').at(-1)?.uid ?? (k && null);
+    });
+    expect(uid).not.toBeNull();
+    await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.inspect(u), uid);
+    await expect(page.locator('.brand-row')).toBeVisible();
+    await expectLegible(page, 'inspector with brand and name');
+    const before = await page.locator('#sheet h2').textContent();
+    await page.locator('#sheet .brand-row .btn').click();
+    await expect(page.locator('#sheet h2')).not.toHaveText(before ?? '');
+    await page.locator('.name-input').fill('Warung Kenangan');
+    await page.locator('.name-row .btn').click();
+    await expect(page.locator('#sheet h2')).toHaveText('Warung Kenangan');
+    await expectLegible(page, 'inspector after rename');
+  });
+
   test('a path takes a start tile, an end tile and Yes', async ({ page }) => {
     await start(page);
     await dismissModals(page);

@@ -8,6 +8,23 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
   // ---- Shops ----
   {
     ...base,
+    id: 'rumahMakan',
+    name: 'Rumah Makan',
+    blurb: 'Starts as a bakso cart, grows into a warkop, then a full rumah makan. Same brand twice earns more.',
+    cost: 800_000,
+    upkeep: 15_000,
+    income: 150_000,
+    attract: 1,
+    permitMonths: 0,
+    buildMonths: 0,
+    maxLevel: 3,
+    category: 'shops',
+    sprite: 'rumahMakan',
+  },
+  // Retired: Gerobak Bakso, Warkop and Warteg merged into Rumah Makan (levels 1 to 3), and Toko Kelontong
+  // into the Warung's level 3. Old saves keep theirs working; combos count them as the building they joined.
+  {
+    ...base,
     id: 'gerobakBakso',
     name: 'Gerobak Bakso',
     blurb: 'A cart with a bell. Cheap, instant, and a steady little income.',
@@ -16,6 +33,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     permitMonths: 0,
     buildMonths: 0,
     maxLevel: 3,
+    placeable: false,
     sprite: 'gerobakBakso',
   },
   {
@@ -32,6 +50,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     maxLevel: 3,
     shop: true,
     requires: { buildings: ['warung'] },
+    placeable: false,
     sprite: 'warteg',
   },
   {
@@ -49,6 +68,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     maxLevel: 3,
     shop: true,
     requires: { stars: { stage: 'rt', n: 1 } },
+    placeable: false,
     sprite: 'warkop',
   },
   {
@@ -66,6 +86,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     shop: true,
     mangkrakChance: 0.15,
     requires: { stars: { stage: 'rt', n: 1 } },
+    placeable: false,
     sprite: 'tokoKelontong',
   },
   {
@@ -80,7 +101,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     permitMonths: 1,
     buildMonths: 1,
     maxLevel: 3,
-    requires: { buildings: ['kantorRT'], population: 6 },
+    requires: { problem: 'permitQueue', buildings: ['kantorRT'] },
     sprite: 'fotokopi',
   },
   {
@@ -95,7 +116,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     permitMonths: 1,
     buildMonths: 1,
     maxLevel: 3,
-    requires: { population: 6 },
+    requires: { stars: { stage: 'rt', n: 1 } },
     sprite: 'barbershop',
   },
   {
@@ -111,8 +132,8 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     buildMonths: 1,
     maxLevel: 3,
     shop: true,
-    requires: { stars: { stage: 'rt', n: 1 } },
     jobSlots: { ojol: 2 },
+    requires: { stars: { stage: 'rt', n: 2 } },
     sprite: 'bengkel',
   },
   {
@@ -129,7 +150,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     buildMonths: 1,
     maxLevel: 3,
     orangDalamCost: 1,
-    requires: { stars: { stage: 'rt', n: 2 } },
+    requires: { stars: { stage: 'rt', n: 3 } },
     sprite: 'apotek',
   },
   {
@@ -147,7 +168,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     mangkrakChance: 0.2,
     maxCount: 1,
     orangDalamCost: 1,
-    requires: { stars: { stage: 'rt', n: 2 } },
+    requires: { stars: { stage: 'rt', n: 3 } },
     sprite: 'koperasi',
   },
   // ---- Facilities ----
@@ -162,8 +183,8 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     permitMonths: 1,
     buildMonths: 1,
     maxLevel: 3,
-    requires: { population: 6 },
     jobSlots: { satpam: 1 },
+    requires: { stars: { stage: 'rt', n: 1 } },
     sprite: 'posSatpam',
   },
   {
@@ -177,8 +198,8 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     permitMonths: 2,
     buildMonths: 2,
     maxLevel: 3,
-    requires: { stars: { stage: 'rt', n: 1 } },
     jobSlots: { guru: 2 },
+    requires: { stars: { stage: 'rt', n: 2 } },
     sprite: 'paud',
   },
   {
@@ -194,8 +215,8 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     buildMonths: 2,
     maxLevel: 3,
     maxCount: 1,
-    requires: { stars: { stage: 'rt', n: 1 } },
     jobSlots: { panitia: 2 },
+    requires: { stars: { stage: 'rt', n: 3 } },
     sprite: 'balaiWarga',
   },
   {
@@ -209,8 +230,8 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     permitMonths: 1,
     buildMonths: 1,
     maxLevel: 3,
-    requires: { stars: { stage: 'rt', n: 1 } },
     jobSlots: { tukang: 2 },
+    requires: { problem: 'jobless' },
     sprite: 'gudangMaterial',
   },
   // ---- Housing ----
@@ -228,7 +249,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     buildMonths: 1,
     maxLevel: 2,
     maxCount: 6,
-    requires: { stars: { stage: 'rt', n: 1 } },
+    requires: { stage: 'rw' },
     sprite: 'kontrakan',
   },
 ];
