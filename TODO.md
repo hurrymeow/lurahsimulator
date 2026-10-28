@@ -12,6 +12,10 @@ Open tasks and ideas that are not done yet. When you start one, remove it from t
 - **Range checks from top corners.** Combos now measure range edge to edge (`decisions/combo-range-and-move-look.md`), but the minimarket Kanibal penalty (`src/sim/brands.ts`) and decoration boosts (`src/sim/state.ts`) still measure from each lot's top corner, so a 2x2 or 3x3 neighbour counts as farther than it looks. Switch them to the same edge-to-edge rule.
 - **Flaky walkers e2e.** `walkers and effects › residents walk the map and ojol riders join them` (`tests/e2e/ui.spec.ts`) fails about 1 run in 4 locally on main too, at 320px id and 430px en. Find the race and make it robust.
 
+- **Say why the population stalls.** Arrivals need population below attraction (`attractTarget` in `src/sim/state.ts`). The HUD chip shows beds (`13/15`), so a stall at attraction 12 looks like a bug. When population is at or above attraction, `shortGoal` (`src/sim/nextstep.ts`) should say what to add, for example a Warung. Keep it out of the 320px chip. Source: 16-min playtest, 2026-10-28.
+- **Explain big drops in the 2045 meter.** The meter is the average of Perut, Kerja and Aman (`src/sim/needs.ts`). A Warung that loses its road or gets damaged leaves `isWorking`, so Perut falls and the meter jumps (58 to 22 in the playtest). Show a toast naming the cause when the meter drops 10 points or more. Not verified against a replay. Source: 16-min playtest, 2026-10-28.
+- **Force the update with a full-screen screen.** The update banner (`src/pwa/update.ts`) stays all session unless clicked. Hari wants a forced update: a full-screen "Update now" screen with one button, not a dismissible banner. Decide when it shows (home only, so play never reloads mid-session). Source: 16-min playtest, 2026-10-28.
+
 ## Ideas
 
 - **English e2e on a schedule.** CI now runs Indonesian only (`decisions/default-lang-id.md`). A nightly or weekly workflow could run the `-en` projects so English clipping is still caught without slowing PRs.
