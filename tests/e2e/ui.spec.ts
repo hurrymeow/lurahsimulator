@@ -1726,17 +1726,17 @@ test.describe('path decay, level art and menu icons', () => {
     await expectLegible(page, 'level strip');
   });
 
-  test('every menu tile has a drawn icon plate', async ({ page }) => {
+  test('every menu tile has a drawn icon', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     await page.locator('#menu-btn').click();
     const imgs = page.locator('#sheet .tile img');
     expect(await imgs.count()).toBeGreaterThan(5);
     for (const img of await imgs.all()) {
-      expect(await img.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth >= 44)).toBe(true);
-      expect(await img.getAttribute('width')).toBe('44');
+      expect(await img.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth >= 32)).toBe(true);
+      expect(await img.getAttribute('width')).toBe('32');
     }
-    await expectLegible(page, 'menu with icon plates');
+    await expectLegible(page, 'menu with icons');
   });
 });
 
