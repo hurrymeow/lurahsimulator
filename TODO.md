@@ -4,12 +4,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Tasks
 
-- [ ] **Desa ring.**
-  - Problem: The sawah and kebun ring on the Desa path is not built.
-  - Why: The Desa path is specified but not playable without its ring, so the stage ladder has a gap.
-  - Suggested solution: Build the ring as GAME-DESIGN.md section 7 describes.
-  - Source: GAME-DESIGN.md section 7, `progress/desa-path.md`, `progress/kelurahan-playable.md`
-  - `open · — · — · done when:` the sawah and kebun ring is built on the Desa path.
 - [ ] **Kelurahan 2★ and 3★ balance.**
   - Problem: `tests/kel-bot.test.ts` only checks 1★.
   - Why: Without bot runs, 2★ and 3★ may be unreachable or trivial and nobody would know.
@@ -34,12 +28,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Switch both to the same edge-to-edge rule.
   - Source: `decisions/combo-range-and-move-look.md`
   - `open · — · — · done when:` the Kanibal penalty and decoration boosts use the edge-to-edge rule.
-- [ ] **Flaky walkers e2e.**
-  - Problem: `walkers and effects › residents walk the map and ojol riders join them` (`tests/e2e/ui.spec.ts`) fails about 1 run in 4 locally on main too, at 320px id and 430px en.
-  - Why: A flaky test trains everyone to ignore red CI and can block auto-merge.
-  - Suggested solution: Find the race and make the test robust.
-  - Source: local runs
-  - `open · — · — · done when:` the walkers e2e passes reliably on main at 320px id and 430px en.
 - [ ] **Say why the population stalls.**
   - Problem: Arrivals need population below attraction (`attractTarget` in `src/sim/state.ts`). The HUD chip shows beds (`13/15`), so a stall at attraction 12 looks like a bug.
   - Why: The player cannot tell why no one arrives.
