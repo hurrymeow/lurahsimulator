@@ -152,7 +152,7 @@ export const ID: Record<Key, string> = {
   'goal.short.house': 'Kini: bangun Rumah pertama.',
   'goal.short.combo': 'Kini: coba combo {name}. Taruh {pieces} berdampingan.',
   'goal.short.wait': 'Kini: tunggu {name} buka.',
-  'goal.short.beds': 'Kini: bangun Rumah untuk tambah kamar.',
+  'goal.short.beds': 'Kini: bangun Rumah untuk menampung warga.',
   'goal.short.pop': 'Kini: capai {n} warga.',
   'build.new': 'Baru',
   'build.owned': '{n} dimiliki',
@@ -439,6 +439,7 @@ export const ID: Record<Key, string> = {
   'combo.ruleJob': 'Juga butuh warga yang bekerja sebagai {job}.',
   'combo.notice': 'Combo: {name}',
   'combo.noticeBody': '{story} {effect} Tercatat di Buku Combo.',
+  'combo.perMonth': '/bln',
 
   'stats.title': 'Kas, warga, peringkat',
   'stats.intro': 'Rupiah bayar bangunan. Popularitas di bawah 25 hentikan warga baru, di bawah 15 pergi. Orang Dalam lewati antrean izin. Viral menaikkan toko, turun 10% sebulan.',

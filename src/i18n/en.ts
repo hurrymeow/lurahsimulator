@@ -157,7 +157,7 @@ export const EN = {
   'goal.short.house': 'Now: build your first Rumah.',
   'goal.short.combo': 'Now: try combo {name}. Place {pieces} side by side.',
   'goal.short.wait': 'Now: wait for {name} to open.',
-  'goal.short.beds': 'Now: build a Rumah for more beds.',
+  'goal.short.beds': 'Now: build a Rumah to house more residents.',
   'goal.short.pop': 'Now: reach {n} residents.',
   'build.new': 'New',
   'build.owned': '{n} owned',
@@ -448,6 +448,7 @@ export const EN = {
   'combo.ruleJob': 'Also needs a resident working as {job}.',
   'combo.notice': 'Combo: {name}',
   'combo.noticeBody': '{story} {effect} Logged in Combo Book.',
+  'combo.perMonth': '/mo',
 
   // stats, log, notices
   'stats.title': 'Kas, warga, ranking',

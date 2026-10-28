@@ -4,6 +4,19 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Tasks
 
+- [ ] **Stat icons PR 2.**
+  - Problem: After the stat-icon renderer in `progress/stat-icons.md`, buildings, inspector, events, jobs, staff, mangkrak, calo, Wacana and Realisasi still need verification and fixes.
+  - Why: The renderer iconifies stat words everywhere, so sentences that read oddly with an icon noun, and slang uses that must stay words, will leak until they are checked.
+  - Suggested solution: Verify and fix those screens, reword icon-noun sentences, and check the "Lubang Viral" / "Viral Pothole" title.
+  - Source: `decisions/stat-icons.md`
+  - `open · — · — · done when:` those screens are verified in ID, with no icon-noun leaks and no slang replaced.
+- [ ] **Stat icons PR 3.**
+  - Problem: Stage goals, Kelurahan and RW goals, stats explainer, How to play and report card still need the stat-icon check.
+  - Why: Those screens carry stat words in goals and explanations, where an icon alone can lose meaning.
+  - Suggested solution: Check those screens, keeping one word-plus-icon legend in the stats explainer.
+  - Source: `decisions/stat-icons.md`
+  - `open · — · — · done when:` those screens are verified in ID, with the explainer legend kept.
+
 - [ ] **Kelurahan 2★ and 3★ balance.**
   - Problem: `tests/kel-bot.test.ts` only checks 1★.
   - Why: Without bot runs, 2★ and 3★ may be unreachable or trivial and nobody would know.
@@ -64,12 +77,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Constrain the dialogue to the game column width and remove the Skip button from tip cards.
   - Source: Hari, 2026-10-28
   - `open · — · — · done when:` the dialogue fits the game column at desktop widths, has no Skip button, and an e2e test at a desktop viewport covers it.
-- [ ] **Move Jalan Setapak into the Decor tab.**
-  - Problem: Jalan Setapak leads the first Build tab (`src/ui/build.ts`).
-  - Why: Hari says it can just sit in Decor, which would clear the first tab for real buildings. The paced tutorial relies on it being first, so check `decisions/` for Selokan and Jalan Setapak.
-  - Suggested solution: Move it to Decor and update the tutorial pointer.
-  - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` Jalan Setapak is listed under Decor, the tutorial still points the player to it, and EN and ID e2e pass.
 - [ ] **Make the pause state obvious, and freeze animation when paused.**
   - Problem: In build mode especially, pause is easy to miss. Trees still move while paused.
   - Why: The player can think the game is running, or think it is broken.
@@ -100,12 +107,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Replace the month tests with the action that makes the tip matter, and say the reason in the tip.
   - Source: Hari, 2026-10-28
   - `open · — · — · done when:` no tip fires on month alone, each fires from a player action or a state it explains, and says what the player gains. Check against GAME-DESIGN.md section 3.
-- [ ] **Reword "Bangun Rumah untuk tambah kamar" in the goal strip.**
-  - Problem: The line (`goal.short.beds`) makes no sense in Indonesian. EN is "Now: build a Rumah for more beds."
-  - Why: The player does not learn that houses raise the population cap and attract residents.
-  - Suggested solution: Reword in `src/i18n/id.ts` and `en.ts` to say build a house to raise the population cap or attract residents. Keep it short at 320px.
-  - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` the beds goal reads clearly in ID and EN and fits at 320px.
 - [ ] **Rename the menu entry "Kas & peringkat" to "Peringkat".**
   - Problem: `menu.stats` in `src/i18n/id.ts` is too long.
   - Why: Longer labels clip and add noise.
@@ -133,6 +134,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- **Reword the goal strip's beds line.** Done in the house-goal reword PR: `goal.short.beds` now says a Rumah houses more residents, in EN and ID. See `progress/house-goal-reword.md`.
 - [x] **Play a sound on every menu click.** Shipped in `progress/menu-click-sound.md`.
 
 ## Ideas
