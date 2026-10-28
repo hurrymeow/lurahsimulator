@@ -152,7 +152,7 @@ export const ID: Record<Key, string> = {
   'goal.short.house': 'Kini: bangun Rumah pertama.',
   'goal.short.combo': 'Kini: coba combo {name}. Taruh {pieces} berdampingan.',
   'goal.short.wait': 'Kini: tunggu {name} buka.',
-  'goal.short.beds': 'Kini: bangun Rumah untuk tambah kamar.',
+  'goal.short.beds': 'Kini: bangun Rumah untuk menampung warga.',
   'goal.short.pop': 'Kini: capai {n} warga.',
   'build.new': 'Baru',
   'build.owned': '{n} dimiliki',
