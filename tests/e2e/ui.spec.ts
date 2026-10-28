@@ -115,6 +115,13 @@ async function seed(page: Page): Promise<void> {
     app.runTick();
   });
   await dismissModals(page);
+  // A busy kampung makes several tips due at once, and each refresh shows the next one. Drain them
+  // here, or one lands mid-test and swallows a tap (seen at 430px).
+  for (let i = 0; i < 20; i++) {
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+    if (!(await page.locator('#modal').isVisible())) break;
+    await dismissModals(page);
+  }
 }
 
 test.describe('opener', () => {
