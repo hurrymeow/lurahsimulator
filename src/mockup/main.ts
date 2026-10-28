@@ -15,7 +15,7 @@ import { def } from '../sim/content';
 import { addBuilding, addResident, buildingAt, byUid, housing, newGame } from '../sim/state';
 import { GRID_H, GRID_W, type GameState } from '../sim/types';
 
-const lang = new URLSearchParams(location.search).get('lang') === 'id' ? 'id' : 'en';
+const lang = new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : 'id';
 setLang(lang);
 
 const WORDS = {

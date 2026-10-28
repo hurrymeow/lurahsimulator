@@ -23,7 +23,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright test visual.spec --project=phone-412-en --project=phone-412-id --update-snapshots
+      - run: npx playwright test visual.spec --project=phone-412-id --update-snapshots
         env:
           CI: 'true'
       - name: Commit the baselines

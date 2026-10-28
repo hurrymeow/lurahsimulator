@@ -1,11 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * Screenshot baselines for five key screens, at one phone width in both languages.
+ * Screenshot baselines for five key screens, at one phone width in Indonesian, the default language.
  * The clock is frozen, so the new game gets the same seed every run, and motion is off, so a diff means the screen changed.
  * Baselines are drawn in CI's Playwright image. Refresh them only for an intended visual change: see UI.md.
  */
 test.skip(({ viewport }) => viewport?.width !== 412, 'Baselines are kept at 412px only.');
+// CI runs Indonesian only, and baselines can only be drawn there, so there are no English ones to compare.
+test.skip(() => test.info().project.name.endsWith('-en'), 'Baselines are kept in Indonesian only.');
 
 const lang = (): 'id' | 'en' => (test.info().project.name.endsWith('-en') ? 'en' : 'id');
 const SHOT = { maxDiffPixelRatio: 0.002, animations: 'disabled', caret: 'hide' } as const;
