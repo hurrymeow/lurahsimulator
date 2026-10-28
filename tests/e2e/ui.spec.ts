@@ -38,10 +38,17 @@ async function openPanel(page: Page, id: string): Promise<void> {
 async function dismissModals(page: Page): Promise<void> {
   if (await page.locator('#howto').isVisible()) await page.locator('#howtoGo').click();
   for (let i = 0; i < 12; i++) {
-    if (!(await page.locator('#modal').isVisible())) return;
+    if (!(await page.locator('#modal').isVisible())) {
+      // A dismissed card waits 500ms before the next queued card appears,
+      // so check the queue before giving up on a hidden modal.
+      const queued = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.modalQueue?.length ?? 0);
+      if (!queued) return;
+      await page.waitForTimeout(650);
+      continue;
+    }
     if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click();
     else await page.locator('#modal').click();
-    await page.waitForTimeout(60);
+    await page.waitForTimeout(650);
   }
 }
 
@@ -719,6 +726,21 @@ test.describe('slim HUD and one menu', () => {
     await page.waitForTimeout(150);
     await expect(page.locator('#modal')).toBeHidden();
     await page.getByRole('button', { name: WORDS[lang()].close }).click();
+    await expect(page.locator('#modal')).toBeVisible();
+    await expect(page.locator('#modal h2')).toHaveText('Queued');
+    await page.locator('#modal').click();
+    await expect(page.locator('#modal')).toBeHidden();
+  });
+
+  test('a popup queued during a tap waits until the player is idle', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    // Tap first, then queue a card at once: the card must not appear under that tap.
+    await page.locator('#speed-btn').click();
+    await page.evaluate(() => { (window as unknown as { pakrt: any }).pakrt.modal({ title: 'Queued', body: 'Wait', tone: 'info' }); });
+    await page.waitForTimeout(200);
+    await expect(page.locator('#modal')).toBeHidden();
+    await page.waitForTimeout(600);
     await expect(page.locator('#modal')).toBeVisible();
     await expect(page.locator('#modal h2')).toHaveText('Queued');
     await page.locator('#modal').click();

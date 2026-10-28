@@ -31,6 +31,7 @@ import { RIVAL_NAMES } from './data/ranking';
 import { areaScore } from './sim/ranking';
 import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
 import { autoPauseStarted, showPausedBadge, simRunning, type PauseInputs } from './ui/autopause';
+import { canShowQueued, type PopupQueueState } from './ui/popupQueue';
 
 export const MONTH_MS = 8000;
 /** First year the 4x speed is allowed. */
@@ -88,6 +89,8 @@ export class App {
   /** True on the previous frame, so the first auto-paused frame can reset the partial month. */
   private wasRunning = false;
   private modalQueue: (Notice & { fanfare?: boolean })[] = [];
+  /** Last pointer or key input, so a queued popup never appears under a tap. */
+  private lastInputAt = 0;
   log: Notice[] = [];
   placing: string | null = null;
   private storageOk: boolean;
@@ -107,6 +110,10 @@ export class App {
     setLang(initialLang(this.settings.lang));
     this.applyStaticText();
     this.view = new MapView(document.getElementById('map') as HTMLCanvasElement);
+    const markInput = () => { this.lastInputAt = Date.now(); };
+    document.addEventListener('pointerdown', markInput, { passive: true });
+    document.addEventListener('pointerup', markInput, { passive: true });
+    document.addEventListener('keydown', markInput);
     this.view.regrid();
     audio.init(this.settings);
     this.applySettings();
@@ -147,11 +154,13 @@ export class App {
     const running = simRunning(inputs);
     if (autoPauseStarted(this.wasRunning, inputs)) this.acc = 0;
     this.wasRunning = running;
-    // A popup queued while a sheet was open waits for the sheet to close,
-    // instead of covering the sheet the player is reading. The next frame
-    // after close shows it, so no queued popup is lost.
+    // A queued popup waits for a quiet moment, not just the next frame:
+    // no sheet, no placing, no home or how-to, and 500ms since the last
+    // tap, so it cannot appear under a tap on speed, Build or the map and
+    // steal that tap. Nothing is lost: the queue is checked every frame.
+    // This is the only place a queued popup or event card appears.
     const modalEl = document.getElementById('modal');
-    if (modalEl && modalEl.hidden && !sheetOpen()) {
+    if (modalEl && this.canShowQueued()) {
       if (this.modalQueue.length > 0) this.showModal();
       else if (this.s.pendingEvent) this.showEvent();
     }
@@ -218,16 +227,11 @@ export class App {
       } else if (f.kind === 'event') {
         this.haptic(25);
         audio.play('event');
-        this.showEventSoon = true;
+        // No direct show: the frame loop shows the event card at a quiet
+        // moment, behind any queued popup, instead of stealing a tap.
       }
     }
-    if (this.showEventSoon) {
-      this.showEventSoon = false;
-      if (this.modalQueue.length === 0 && !sheetOpen()) this.showEvent();
-    }
   }
-
-  private showEventSoon = false;
 
   /** Where coins land: the money chip, which bumps as each one arrives. Null with effects off. */
   private coinTarget(): { to: { x: number; y: number }; land: () => void } | null {
@@ -428,9 +432,21 @@ export class App {
   modal(n: Notice & { fanfare?: boolean }): void {
     this.log.unshift(n);
     this.modalQueue.push(n);
-    // A card over an open sheet would block the sheet, so a first card
-    // queued while a sheet is open waits for the frame loop after close.
-    if (this.modalQueue.length === 1 && !sheetOpen()) this.showModal();
+    // Queued only, never shown here: the frame loop shows it at a quiet
+    // moment, so a tap in progress is never stolen by a new card.
+  }
+
+  /** The frame loop's gate for queued popups and event cards. */
+  private canShowQueued(): boolean {
+    const state: PopupQueueState = {
+      modalHidden: document.getElementById('modal')?.hidden ?? true,
+      sheetOpen: sheetOpen(),
+      placing: !!this.placing,
+      // The home screen is removed from the DOM once the game starts, so a missing element means closed.
+      homeOpen: !!document.getElementById('home') && !document.getElementById('home')!.hidden,
+      howtoOpen: !!document.getElementById('howto') && !document.getElementById('howto')!.hidden,
+    };
+    return canShowQueued(Date.now(), this.lastInputAt, state);
   }
 
   /** True when a tip can show without stacking on another message. Never while the home screen is open. */
@@ -470,7 +486,10 @@ export class App {
     }
     el.onclick = () => {
       this.modalQueue.shift();
-      this.showModal();
+      // Hide at once, so the dismiss tap gets instant feedback. The next
+      // queued card waits for the frame loop's quiet moment, at least
+      // 500ms after this tap, instead of landing on the player's next tap.
+      el.hidden = true;
     };
   }
 
