@@ -65,6 +65,17 @@ export const wTrade = (w: { id: string; trade: string }) => tr(`wacana.${w.id}.t
 export const wLine = (w: { id: string; line: string }) => tr(`wacana.${w.id}.line`, w.line);
 export const lName = (l: { id: string; name: string }) => tr(`line.${l.id}.name`, l.name);
 export const lLine = (l: { id: string; line: string }) => tr(`line.${l.id}.line`, l.line);
+export const gName = (g: { id: string; name: string }) => tr(`gig.${g.id}.name`, g.name);
+export const gNeeds = (g: { id: string; needs: string }) => tr(`gig.${g.id}.needs`, g.needs);
+export const gReward = (g: { id: string; reward: string }) => tr(`gig.${g.id}.reward`, g.reward);
+export const roleName = (r: { id: string; name: string }) => tr(`staff.role.${r.id}.name`, r.name);
+export const roleBlurb = (r: { id: string; blurb: string }) => tr(`staff.role.${r.id}.blurb`, r.blurb);
+export const chName = (c: { id: string; name: string }) => tr(`staff.ch.${c.id}.name`, c.name);
+export const chBlurb = (c: { id: string; blurb: string }) => tr(`staff.ch.${c.id}.blurb`, c.blurb);
+export const traitName = (x: { id: string; name: string }) => tr(`staff.trait.${x.id}.name`, x.name);
+export const traitEffect = (x: { id: string; effect: string }) => tr(`staff.trait.${x.id}.effect`, x.effect);
+export const spType = (x: { id: string; type: string }) => tr(`staff.sp.${x.id}.type`, x.type);
+export const spQuirk = (x: { id: string; quirk: string }) => tr(`staff.sp.${x.id}.quirk`, x.quirk);
 export const rName = (r: { id: string; name: string }) => tr(`real.${r.id}.name`, r.name);
 export const rLine = (r: { id: string; line: string }) => tr(`real.${r.id}.line`, r.line);
 export const rEffect = (r: { id: string; effect: string }) => tr(`real.${r.id}.effect`, r.effect);

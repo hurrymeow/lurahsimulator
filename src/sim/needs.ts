@@ -6,6 +6,7 @@ import { gain, type Fx } from './gain';
 import { slots, used } from './jobs';
 import { noteProblem } from './problems';
 import { realisasiDone, realisasiSum } from './realisasi';
+import { hansipAman } from './staff';
 import { isWorking, population } from './state';
 import type { Building, GameState, Meters, Resident } from './types';
 
@@ -57,13 +58,13 @@ export function meters(s: GameState): Meters {
   const pop = population(s);
   const hh = households(s);
   const perut = hh ? (Math.min(hh, fed(s)) / hh) * 100 : 100;
-  const employed = s.residents.filter((r) => r.job !== 'none').length;
+  const employed = s.residents.filter((r) => r.job !== 'none' || r.staffId !== undefined).length;
   const kerja = (pop ? (employed / pop) * 100 : 100) + realisasiSum(s, 'kerja');
   const working = (id: string) => s.buildings.filter((b) => b.def === id && isWorking(b)).length;
   const a = NEEDS.aman;
   const idle = s.residents.filter((r) => !r.preman && (r.idle ?? 0) >= a.idleMonths).length;
   const crowd = Math.max(0, pop - a.crowdFrom) * a.perResident;
-  const aman = a.base - crowd - a.perIdle * idle - a.perPreman * premanList(s).length + a.perLamp * working('lampuTaman') + a.perPosRonda * working('posRonda') + realisasiSum(s, 'aman');
+  const aman = a.base - crowd - a.perIdle * idle - a.perPreman * premanList(s).length + a.perLamp * working('lampuTaman') + a.perPosRonda * working('posRonda') + realisasiSum(s, 'aman') + hansipAman(s);
   return { perut: clamp(perut), kerja: clamp(kerja), aman: clamp(aman) };
 }
 
@@ -130,7 +131,7 @@ export function needsSystem(s: GameState, fx: Fx): void {
   const cap = Math.floor(s.residents.length * p.maxShare);
   for (const r of s.residents) {
     if (premanList(s).length >= cap || now.aman >= p.belowAman) break;
-    if (r.preman || r.job !== 'none' || (r.idle ?? 0) < p.idle || roll(s, r.id) >= p.chance) continue;
+    if (r.preman || r.job !== 'none' || r.staffId !== undefined || (r.idle ?? 0) < p.idle || roll(s, r.id) >= p.chance) continue;
     r.preman = true;
     noteProblem(s, 'preman');
     const shop = turfOf(s, r);

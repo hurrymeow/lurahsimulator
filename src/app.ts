@@ -2,6 +2,7 @@ import { connectedRoad, FLAT, hasRoadBeside } from './sim/access';
 import { eBody, eLabel, eName, bName, jName, getLang, initialLang, setLang, setPlayer, t, type Key, type Lang } from './i18n';
 import { households, fed, laporan, meters, premanList, sejahtera } from './sim/needs';
 import { inemURL } from './render/inem';
+import { ensureStaff } from './sim/staff';
 import type { PlayerInfo } from './sim/types';
 import { jobDef } from './data/jobs';
 import { dateLabel, rupiah, rupiahHud } from './format';
@@ -95,6 +96,7 @@ export class App {
   constructor() {
     const loaded = deserialize(storage.get(SAVE_KEY));
     this.s = loaded ?? newGame();
+    ensureStaff(this.s);
     setPlayer(this.s.player);
     this.storageOk = storage.set('pakrt.probe', '1');
     this.settings = loadSettings();
@@ -349,6 +351,7 @@ export class App {
   newGame(player?: PlayerInfo): void {
     this.s = newGame();
     if (player) this.s.player = player;
+    ensureStaff(this.s);
     setPlayer(this.s.player);
     this.view.regrid();
     this.log = [];

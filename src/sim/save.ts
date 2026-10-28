@@ -1,5 +1,6 @@
 import { layRoads } from './access';
 import { allDefs, hasDef } from './content';
+import { ensureStaff } from './staff';
 import { SAVE_VERSION, newStageState } from './state';
 import { OLD_GRID_H, OLD_GRID_W, RT_H, RT_W, setGrid, type GameState, type ProblemId } from './types';
 
@@ -31,6 +32,7 @@ export function deserialize(raw: string | null): GameState | null {
     ];
     // Saves from before problem unlocks: what the player could already build stays open.
     s.problems ??= problemsFromSave(s);
+    ensureStaff(s);
     s.rw ??= { kaderDecay: 0 };
     s.kel ??= { budget: 0, spentBase: 0, serapanRun: 0, cleanAudits: 0 };
     setGrid(s.stage.current);

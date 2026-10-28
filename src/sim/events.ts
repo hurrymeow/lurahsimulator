@@ -1,5 +1,6 @@
 import { noteProblem } from './problems';
 import { realisasiBanjir } from './realisasi';
+import { afterEventStaff } from './staff';
 import { eModLabel, eOutcome, eResult, t } from '../i18n';
 import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR_SABAR, EVENTS, POPUP_CHANCE, MIN_REPEAT_GAP, POPUP_GAP, REPAIR_FRACTION, eventDef, type EventChoice, type EventDef, type EventOutcome as OutcomeDef } from '../data/events';
 import { STAGE_EVENTS } from '../data/higher';
@@ -206,6 +207,7 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
   if (c.modifier) s.modifiers.push({ id: `${e.id}-${s.month}`, label: eModLabel(e, choiceIdx, c.modifier.label), target: c.modifier.target, incomeMult: c.modifier.incomeMult, monthsLeft: c.modifier.months });
   const text = c.special === 'banjir' ? floodDamage(s, fx) : rolled ? eOutcome(e, choiceIdx, c.outcomes!.indexOf(rolled), rolled) : eResult(e, choiceIdx, c);
   s.pendingEvent = null;
+  afterEventStaff(s);
   const delta: Partial<Resources> = {};
   for (const k of Object.keys(before) as (keyof Resources)[]) if (s.res[k] !== before[k]) delta[k] = s.res[k] - before[k];
   const mod = c.modifier && { label: eModLabel(e, choiceIdx, c.modifier.label), incomeMult: c.modifier.incomeMult, months: c.modifier.months };
