@@ -1733,6 +1733,22 @@ test.describe('build mode', () => {
     await expectLegible(page, 'staff after hire');
   });
 
+  test('a mouse crossing the map to Place reaches it, and the building goes up', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const count = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'rumah').length);
+    const before = await count();
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
+    const map = (await page.locator('#map').boundingBox())!;
+    await page.mouse.move(map.x + 20, map.y + map.height - 20);
+    const ok = (await page.locator('#place-ok').boundingBox())!;
+    // The cursor sweeps over many tiles on its way; the button must not run from it.
+    await page.mouse.move(ok.x + ok.width / 2, ok.y + ok.height / 2, { steps: 25 });
+    expect(await page.locator('#place-ok').boundingBox()).toEqual(ok);
+    await page.mouse.click(ok.x + ok.width / 2, ok.y + ok.height / 2);
+    expect(await count()).toBe(before + 1);
+  });
+
   test('a path takes a start tile, an end tile and Yes', async ({ page }) => {
     await start(page);
     await dismissModals(page);
