@@ -4,6 +4,41 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Tasks
 
+- [ ] **HIGH PRIORITY: Lowongan applicants vanish before the player can pick one.**
+  - Problem: Posting a lowongan never seems to give a selectable pelamar. In the sim the applicants do arrive (3 to 5, with a notice), but they leave `APPLICANTS.keepMonths` = 2 months later (`src/data/staff.ts`, expiry in `staffSystem` in `src/sim/staff.ts`). That is about 16 s at 1x and 4 s at 4x. The arrival notice is only a toast, and an open Staff sheet does not refresh. So in play they are gone before the player opens Staff.
+  - Why: Hiring is the whole staff system; if it cannot be used, staff never grow past Inem.
+  - Suggested solution: Keep applicants until the player hires or takes the posting down (or at least 12 months). Make the arrival a tap-to-continue message with a button that opens Staff. Show the applicant count on the Staff tile in the Menu. Refresh an open Staff sheet each month. Add an e2e test that posts, runs months at 1x through the UI and hires.
+  - Source: Julian playtest, 2026-10-29
+  - `open · — · — · done when:` a posted lowongan shows pickable applicants in the Staff panel until the player acts, the arrival opens Staff in one tap, and an e2e test hires through the UI in ID.
+- [ ] **Rename only shops and facilities that are buildings.**
+  - Problem: The inspector's rename form (`nameInput`, `rename` in `src/ui/inspect.ts`) shows on every building, including Kolam Lele, Portal, Pos Satpam, Bank Sampah and Lapangan, where a name makes no sense.
+  - Why: A name only matters for a place people know by its name, such as a warung, a rumah makan or a kos. Elsewhere it is clutter and a misclick risk.
+  - Suggested solution: Allow renaming only for shops (`category: 'shops'`) and for facilities that are a building with a sign: kos-kosan, kontrakan, balai warga, PAUD, koperasi, fotokopi, apotek, bengkel, barbershop. Not for flat pieces, farms, ponds, posts, gates, decor or Lapangan. Keep one list in `src/data/brands.ts` beside `LOCAL_NAMES`, and hide the form elsewhere. Combine with the pencil-icon item ("Make renaming a building hard to trigger by mistake").
+  - Source: Julian, 2026-10-29
+  - `open · — · — · done when:` the rename form shows only for the listed shops and facilities, Kolam Lele, Portal, Pos Satpam, Bank Sampah and Lapangan have none, and a unit test checks the list.
+- [ ] **Rethink the tukang parkir liar.**
+  - Problem: Every shop that opens spawns a tukang parkir on its own tile, 100% of the time (`spawnParkir` in `src/sim/projects.ts`). It is `removable: false` (`src/data/buildings.ts`), so a growing kampung fills with tiles the player cannot clear.
+  - Why: It eats space and takes control away from the player, which hurts the core build loop more than the joke helps.
+  - Suggested solution: Pick one or two, then playtest. (a) Spawn less: a chance per shop (for example 30%), a cap per RT, never on a tile next to the Kantor. (b) Let the player clear one: Pos Satpam or a Hansip "tertibkan" action, or 1 Orang Dalam, with a chance he comes back. (c) Turn him legit: a Juru Parkir Resmi job, as with the preman. Keep the inspection penalty in `src/sim/inspection.ts` in step, and log the pick in `decisions/`.
+  - Source: Julian, 2026-10-29
+  - `open · — · — · done when:` tukang parkir spawn less often and the player has at least one way to deal with one, the balance tests pass, and the choice is logged in `decisions/`.
+- [ ] **Later buildings cost more, do more and look bigger.**
+  - Problem: Most buildings are 1x1 at any stage, and late unlocks are not clearly pricier, stronger or more distinct than early ones. Related: "Add more buildings bigger than 1x1, starting with Balai RW at 2x2".
+  - Why: Each star should feel like a step up you can see on the map, as in Kairosoft's builders.
+  - Suggested solution: Set a ladder by unlock tier: start 1x1 and cheap, RT stars 1x1 to 2x2, RW 2x2, Kelurahan 2x2 to 3x3, with cost and effect rising per tier (for example x2 cost, x1.5 effect per tier). Audit every building's cost, effect and footprint against the ladder in one table, and pick changes with Hari before building. New art per ART.md at the real footprint; never overwrite the artist's sprites. Check `tests/footprint.test.ts`, `tests/content-footprint.test.ts` and the balance tests.
+  - Source: Julian, 2026-10-29
+  - `open · — · — · done when:` a table of every building's tier, cost, effect and size is agreed with Hari, the changes ship with art per ART.md, and the footprint and balance tests pass.
+- [ ] **One big yearly event the player cannot just click away.**
+  - Problem: Events are single pop-ups with a choice, closed in one tap. There is no big yearly moment to aim for.
+  - Why: Kairosoft games give each year a big event as a short-term goal, often with a small mini-game. It should use the staff's stats and the kampung's stats, so building and hiring pay off.
+  - Suggested solution: Pick one with Hari, then build it as its own screen. Ideas:
+    1. **Lomba Agustusan (August):** a 3-month prep window to pick contests and set up a stage. On the day, short tap mini-games (panjat pinang timing, balap karung). Staff Gaul and Rajin set the odds, Popularitas sets turnout, a Lapangan is needed, and Inem headlines the stage (her gig). Prize: Virality, rupiah, a trophy on the map.
+    2. **Penilaian Kampung Bersih (the Kecamatan judges' visit):** a 3-month warning, then a budget to spend on looks (paint, banners, pot plants) or on real fixes. The judges score the Laporan, Sejahtera and what they see on the map. Staff Lobi and Admin Grup WA help. The satire: dressing up for the visit.
+    3. **Musim Banjir Besar (January):** prep before (biopori, Kerja Bakti), then a 30-second mini-game where the player taps to send sandbags along the map's low edge. Petugas PU and Hansip stats, Aman and Perut set the damage.
+    4. **Festival Kuliner (once a year):** every Rumah Makan and warung competes, with a quick order-rush mini-game. Franchises and brands matter; the winner draws visitors for months.
+  - Keep the tone rules: no real politicians or elections, and no religious or ethnic jokes, so holiday events stay about logistics (for example THR and mudik), never the faith. Log the pick in `decisions/`, and fit it to the popup spacing in GAME-DESIGN.md section 3.
+  - Source: Julian, 2026-10-29
+  - `open · — · — · done when:` one yearly event with a prep window and a short mini-game ships, uses at least one staff stat and one kampung meter, cannot be closed in one tap, and works in ID at 320px with an e2e test.
 - [ ] **Stat icons PR 2.**
   - Problem: After the stat-icon renderer in `progress/stat-icons.md`, buildings, inspector, events, jobs, staff, mangkrak, calo, Wacana and Realisasi still need verification and fixes.
   - Why: The renderer iconifies stat words everywhere, so sentences that read oddly with an icon noun, and slang uses that must stay words, will leak until they are checked.
