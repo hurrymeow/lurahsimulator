@@ -485,6 +485,8 @@ test.describe('events, ranking, settings', () => {
           app.showEvent();
         }, [id, broke] as const);
         await expect(page.locator('#modal .card.event')).toBeVisible();
+        // Events are Inem's: her portrait brings them.
+        await expect(page.locator('#modal .card.event .inem-head')).toBeVisible();
         await expectLegible(page, `event ${id}`);
         await expectCentred(page, `event ${id}`);
         // The cost shows once, as a number and icon, never also spelled out in the label.
@@ -1664,7 +1666,8 @@ test.describe('build mode', () => {
     await page.locator('.sheet-head .btn').click();
     await page.locator('#emas').click();
     await expect(page.locator('#modal .card')).toContainText('Perut');
-    await expect(page.locator('#modal .inem-head')).toBeVisible();
+    // Inem only brings events and her own news, not every card.
+    await expect(page.locator('#modal .inem-head')).toHaveCount(0);
     await expectLegible(page, 'sejahtera card');
   });
 
@@ -1844,9 +1847,12 @@ test.describe('zoom, big lots and the Warga list', () => {
     await page.locator('#sheet [data-filter="idle"]').click();
     await expect(page.locator('#sheet .ls-group')).toHaveCount(1);
     await expect(page.locator('#sheet .ls-chip', { hasText: 'Pak Idle' })).toBeVisible();
-    await page.locator('#sheet [data-filter="level"]').click();
-    await expect(page.locator('#sheet .ls-chip')).toHaveCount(people);
-    await expectLegible(page, 'Warga by level');
+    // Warga carry no stars: those belong to staff. Experience is a line in a resident's own sheet.
+    await expect(page.locator('#sheet [data-filter="level"]')).toHaveCount(0);
+    await expect(page.locator('#sheet .ls-stars')).toHaveCount(0);
+    await page.locator('#sheet .ls-chip').first().click();
+    await expect(page.locator('#res-xp')).toBeVisible();
+    await expectLegible(page, 'resident experience line');
   });
 
   test('a long goal keeps to one line and opens in full on tap', async ({ page }) => {

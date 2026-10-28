@@ -49,6 +49,8 @@ interface Notice {
   extra?: Node;
   /** Extra class on the card. */
   cls?: string;
+  /** Inem brings this one: her portrait sits on the card. Only events and her own news. */
+  inem?: boolean;
 }
 
 type ExplainId = ResourceId | 'pop' | 'emas';
@@ -296,7 +298,7 @@ export class App {
     document.getElementById('modal')!.hidden = true;
     this.handleFx(fx);
     // The event card bypasses the queue, so show the outcome now, ahead of anything waiting.
-    const n: Notice = { title: t('event.result'), body: out.text, tone: 'info', extra: this.outcomeChips(out) };
+    const n: Notice = { title: t('event.result'), body: out.text, tone: 'info', extra: this.outcomeChips(out), inem: true };
     this.log.unshift(n);
     this.modalQueue.unshift(n);
     this.showModal();
@@ -426,7 +428,7 @@ export class App {
     el.replaceChildren(
       h('div', { class: `card ${n.fanfare ? 'fanfare' : ''} ${n.cls ?? ''}`, role: 'dialog', 'aria-live': 'polite' },
         n.fanfare ? h('div', { class: 'fanfare-tag' }, t('modal.new')) : null,
-        inemHead(),
+        n.inem ? inemHead() : null,
         h('h2', {}, n.title),
         h('p', {}, n.body),
         n.extra,

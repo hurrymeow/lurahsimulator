@@ -2,7 +2,7 @@
 // the Buku Combo is a column of cards, the Warga list groups people by job. Icons are the game's own
 // art: building sprites, resource icons, and a job's workplace sprite.
 import { cEffect, cName, cStory, jName, t } from '../i18n';
-import { jobDef, levelMult, MAX_LEVEL } from '../data/jobs';
+import { jobDef, levelMult } from '../data/jobs';
 import type { App } from '../app';
 import { rupiahShort } from '../format';
 import { bookCombos, comboConditions, comboStatus, comboStatusText, needName, parseNeed, type ComboStatus } from '../sim/combos';
@@ -50,7 +50,6 @@ const amount = (res: ResourceId, v: number) => (res === 'rupiah' ? rupiahShort(v
 /** Resource amounts, icon first, on one standard 8px spacing. */
 const outChips = (pairs: [ResourceId, number][]) =>
   h('span', { class: 'ls-out' }, ...pairs.map(([res, v]) => h('span', { class: `ls-amt ${v < 0 ? 'neg' : ''}`, style: `--c:var(--${res === 'orangDalam' ? 'orang' : res})` }, resIcon(res), amount(res, v))));
-const stars = (lv: number) => h('span', { class: 'ls-stars', 'aria-label': t('res.level', { n: lv }) }, '★'.repeat(lv), h('span', { class: 'off' }, '★'.repeat(Math.max(0, MAX_LEVEL - lv))));
 
 /** A row of filter buttons. One is pressed; pressing another redraws the list. */
 function filterBar<K extends string>(keys: readonly K[], start: K, label: (k: K) => string, aria: (k: K) => string, pick: (k: K) => void): HTMLElement {
@@ -140,34 +139,30 @@ export function openComboBook(app: App): void {
 }
 
 // ---------- Warga ----------
-type WargaFilter = 'job' | 'idle' | 'level';
+type WargaFilter = 'job' | 'idle';
 
 /** People grouped by job under a summary line and filter buttons. Each group shows the workplace, the
- * headcount and what the group makes a month; each person is a chip with their name and level stars. */
+ * headcount and what the group makes a month; each person is a chip with their name. Warga have no rating:
+ * stars belong to staff. Experience shows as a line in a resident's own sheet. */
 export function openWargaList(app: App, openOne: (id: number) => void): void {
   const s = app.s;
   const idle = s.residents.filter((r) => r.job === 'none');
   const sum = h('div', { class: 'ls-sum' }, h('span', { class: 'ls-sum-n', 'aria-label': t('res.pop') }, resIcon('people', 18), String(s.residents.length)), outChips(totals(s.residents)));
   const list = h('div', { class: 'ls-groups' });
-  const chip = (r: Resident, sub: Node) => h('button', { class: 'ls-chip', type: 'button', 'data-rid': String(r.id), onclick: () => openOne(r.id) }, h('span', {}, r.name), sub);
-  const group = (key: string, icon: Node, title: string, people: Resident[], sub: (r: Resident) => Node, warn = false) =>
+  const chip = (r: Resident) => h('button', { class: 'ls-chip', type: 'button', 'data-rid': String(r.id), onclick: () => openOne(r.id) }, h('span', {}, r.name));
+  const group = (key: string, icon: Node, title: string, people: Resident[], warn = false) =>
     h('section', { class: `ls-group ${warn ? 'idle' : ''}`, 'data-group': key },
       h('div', { class: 'ls-group-head' }, icon, h('strong', { class: 'ls-group-name' }, `${title} · ${people.length}`), outChips(totals(people))),
-      h('div', { class: 'ls-chips' }, ...people.map((r) => chip(r, sub(r)))),
+      h('div', { class: 'ls-chips' }, ...people.map((r) => chip(r))),
     );
   const draw = (k: WargaFilter) => {
-    if (k === 'level') {
-      const lvs = [...new Set(s.residents.map(levelOf))].sort((a, b) => b - a);
-      list.replaceChildren(...lvs.map((lv) => group(`lv${lv}`, stars(lv), t('res.level', { n: lv }), s.residents.filter((r) => levelOf(r) === lv), (r) => h('span', { class: 'ls-job' }, jobLabel(r.job)))));
-      return;
-    }
     const jobs = k === 'idle' ? (idle.length ? ['none' as JobId] : []) : [...new Set(s.residents.map((r) => r.job))].sort((a, b) => (a === 'none' ? -1 : b === 'none' ? 1 : jobLabel(a).localeCompare(jobLabel(b))));
-    list.replaceChildren(...jobs.map((job) => group(job, sprite(jobPlace(job), 40), jobLabel(job), s.residents.filter((r) => r.job === job), (r) => stars(levelOf(r)), job === 'none')));
+    list.replaceChildren(...jobs.map((job) => group(job, sprite(jobPlace(job), 40), jobLabel(job), s.residents.filter((r) => r.job === job), job === 'none')));
     if (!jobs.length) list.append(h('p', { class: 'meta ls-empty' }, t('ls.allWork')));
   };
-  const bar = filterBar<WargaFilter>(['job', 'idle', 'level'], 'job',
-    (k) => (k === 'job' ? t('ls.byJob') : k === 'idle' ? `${t('res.noJob')} ${idle.length}` : t('ls.byLevel')),
-    (k) => (k === 'idle' ? `${t('res.noJob')}: ${idle.length}` : k === 'job' ? t('ls.byJob') : t('ls.byLevel')), draw);
+  const bar = filterBar<WargaFilter>(['job', 'idle'], 'job',
+    (k) => (k === 'job' ? t('ls.byJob') : `${t('res.noJob')} ${idle.length}`),
+    (k) => (k === 'idle' ? `${t('res.noJob')}: ${idle.length}` : t('ls.byJob')), draw);
   draw('job');
   openSheet(t('menu.warga'), [sum, bar, h('p', { class: 'meta' }, t('res.hint')), list]);
 }
