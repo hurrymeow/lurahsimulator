@@ -172,6 +172,8 @@ test.describe('opener', () => {
     await page.locator('#dock-build').click();
     const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
     await expect(rumah).toHaveClass(/coach-pulse/);
+    // On a short phone Rumah sits below the fold of the Housing list. The note must not point at a card nobody can see.
+    await expect(rumah).toBeInViewport({ ratio: 1 });
     await expectCoachClear(page, ['#sheet .tabs', '#sheet > p', '#sheet .card-btn.coach-pulse'], 'Pick step');
     await expectLegible(page, 'opener, Pick step');
     await rumah.click();

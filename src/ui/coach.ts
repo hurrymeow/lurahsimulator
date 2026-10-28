@@ -94,6 +94,13 @@ export function setupCoach(app: App): void {
       marked?.classList.remove('coach-pulse');
       target?.classList.add('coach-pulse');
       marked = target;
+      // On a short phone the sheet can list Rumah below the fold. Bring it up, or the note points at nothing.
+      const sheet = document.getElementById('sheet');
+      if (target && sheet?.contains(target)) {
+        const r = target.getBoundingClientRect();
+        const s = sheet.getBoundingClientRect();
+        if (r.top < s.top || r.bottom > Math.min(s.bottom, innerHeight)) target.scrollIntoView({ block: 'center' });
+      }
     }
     dock(target as HTMLElement | null);
   };
