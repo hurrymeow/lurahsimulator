@@ -25,6 +25,6 @@ describe('short goal', () => {
     const s = newGame(1);
     addBuilding(s, 'rumah', 5, 5, 'active');
     addBuilding(s, 'warung', 6, 5, 'permit').timer = 1;
-    expect(shortGoal(s)).toBe('Now: wait for Warung to open.');
+    expect(shortGoal(s)).toBe('Now: wait for Warung Sembako to open.');
   });
 });

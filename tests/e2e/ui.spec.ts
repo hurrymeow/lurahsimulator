@@ -17,7 +17,10 @@ async function passHome(page: Page): Promise<void> {
   await page.locator('#home-start').click();
   const cont = page.locator('#home-continue');
   if (await cont.isVisible()) await cont.click();
-  else await page.locator('#home-new').click();
+  else {
+    await page.locator('#home-new').click();
+    await page.locator('#home-begin').click();
+  }
   await expect(page.locator('#home')).toHaveCount(0);
 }
 
@@ -172,6 +175,8 @@ test.describe('opener', () => {
     await page.locator('#dock-build').click();
     const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
     await expect(rumah).toHaveClass(/coach-pulse/);
+    // On a short phone Rumah sits below the fold of the Housing list. The note must not point at a card nobody can see.
+    await expect(rumah).toBeInViewport({ ratio: 1 });
     await expectCoachClear(page, ['#sheet .tabs', '#sheet > p', '#sheet .card-btn.coach-pulse'], 'Pick step');
     await expectLegible(page, 'opener, Pick step');
     await rumah.click();
@@ -524,7 +529,8 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#sheet')).toContainText('Kampung Sebelah');
     await expect(page.locator('#sheet')).toContainText('Indonesia Emas 2045');
     await expectLegible(page, 'stats with ranking');
-    await expect(page.locator('#emas-value')).toHaveText(/^\d+\.\d{2}%$/);
+    // The 2045 meter shows Sejahtera, a whole percent.
+    await expect(page.locator('#emas-value')).toHaveText(/^\d{1,3}%$/);
   });
 
   test('every setting flips, saves, and leaves the game readable', async ({ page }) => {
@@ -1437,7 +1443,16 @@ test.describe('home screen', () => {
     await expect(page.locator('#home-continue')).toHaveCount(0);
     await expectLegible(page, 'home choice, no save');
     await page.locator('#home-new').click();
+    // New game asks who the player is first; the dice fill both names.
+    await expect(page.locator('#home-name')).not.toHaveValue('');
+    await expect(page.locator('#home-kampung')).not.toHaveValue('');
+    await expectLegible(page, 'home naming');
+    await page.locator('[data-title="Bu"]').click();
+    await page.locator('#home-name').fill('Sari');
+    await page.locator('#home-kampung').fill('Melati');
+    await page.locator('#home-begin').click();
     await expect(page.locator('#home')).toHaveCount(0);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.player)).toEqual({ title: 'Bu', name: 'Sari', kampung: 'Kampung Melati' });
     await expect(page.locator('#howto')).toBeVisible();
   });
 
@@ -1466,6 +1481,7 @@ test.describe('home screen', () => {
     await page.locator('#home-start').click();
     await page.locator('#home-new').click();
     await page.locator('#home-wipe').click();
+    await page.locator('#home-begin').click();
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.res.rupiah)).not.toBe(777_000);
     await expect(page.locator('#howto')).toBeVisible();
   });
@@ -1529,7 +1545,9 @@ test.describe('build mode', () => {
     await start(page);
     await dismissModals(page);
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
-    await expect(page.locator('#place-float')).toBeHidden();
+    // The building shows on a free spot at once, with Place ready, so it is plain where it goes.
+    await expect(page.locator('#place-float')).toBeVisible();
+    await expect(page.locator('#place-ok')).toBeEnabled();
     const box = (await page.locator('#map').boundingBox())!;
     const at = await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
@@ -1551,6 +1569,103 @@ test.describe('build mode', () => {
     await page.locator('#place-ok').click();
     await expect(float).toBeHidden();
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'rumah').length)).toBe(3);
+  });
+
+  test('picking a building shows its ghost at once on a free spot, and dragging it moves it', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
+    const g = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const v = app.view;
+      const lit = v.valid ? v.valid.reduce((n: number, x: number) => n + x, 0) : 0;
+      return { ghost: v.ghost, lit, inView: v.ghost ? v.inView(v.ghost.x, v.ghost.y, 0) : false };
+    });
+    expect(g.ghost).not.toBeNull();
+    expect(g.ghost.ok).toBe(true);
+    expect(g.inView).toBe(true);
+    expect(g.lit).toBeGreaterThan(0);
+    // Drag the ghost one tile along x: the map stays put and the ghost follows.
+    const box = (await page.locator('#map').boundingBox())!;
+    const pts = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const gh = app.view.ghost;
+      return { from: app.view.tileCentre(gh.x, gh.y), to: app.view.tileCentre(gh.x + 1, gh.y), start: { x: gh.x, y: gh.y } };
+    });
+    await page.mouse.move(box.x + pts.from.x, box.y + pts.from.y);
+    await page.mouse.down();
+    await page.mouse.move(box.x + (pts.from.x + pts.to.x) / 2, box.y + (pts.from.y + pts.to.y) / 2, { steps: 4 });
+    await page.mouse.move(box.x + pts.to.x, box.y + pts.to.y, { steps: 4 });
+    await page.mouse.up();
+    const moved = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ghost);
+    expect(moved.x).toBe(pts.start.x + 1);
+    expect(moved.y).toBe(pts.start.y);
+    await expectLegible(page, 'ghost on select');
+  });
+
+  test('build cards show how many are owned, and new buildings carry a NEW tag', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#dock-build').click();
+    await page.locator('#sheet .tab[data-tab="housing"]').click();
+    const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
+    const have = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'rumah').length);
+    await expect(rumah.locator('.owned')).toHaveText(lang() === 'en' ? `${have} owned` : `${have} dimiliki`);
+    await page.locator('.sheet-head .btn').click();
+    // Something opens: the dock's Build button and its card both say NEW.
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.stage.stars.rt = 1;
+      app.s.residents.push(...Array.from({ length: 12 }, (_, i) => ({ ...app.s.residents[0], id: 9000 + i })));
+      app.refresh();
+    });
+    await expect(page.locator('#dock-build .new-tag')).toBeVisible();
+    await expectLegible(page, 'dock NEW tag');
+    await page.locator('#dock-build').click();
+    await expect(page.locator('#sheet .new-tag').first()).toBeVisible();
+    await expectLegible(page, 'build sheet with NEW tags');
+    await page.locator('.sheet-head .btn').click();
+    await expect(page.locator('#dock-build .new-tag')).toHaveCount(0);
+  });
+
+  test('a chain building shows its brand, a franchise line, and can be renamed', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const uid = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      app.s.res.rupiah = 50_000_000;
+      app.startPlacing('rumahMakan');
+      app.confirmPlace();
+      return app.s.buildings.filter((b: any) => b.def === 'rumahMakan').at(-1)?.uid ?? (k && null);
+    });
+    expect(uid).not.toBeNull();
+    await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.inspect(u), uid);
+    await expect(page.locator('.brand-row')).toBeVisible();
+    await expectLegible(page, 'inspector with brand and name');
+    const before = await page.locator('#sheet h2').textContent();
+    await page.locator('#sheet .brand-row .btn').click();
+    await expect(page.locator('#sheet h2')).not.toHaveText(before ?? '');
+    await page.locator('.name-input').fill('Warung Kenangan');
+    await page.locator('.name-row .btn').click();
+    await expect(page.locator('#sheet h2')).toHaveText('Warung Kenangan');
+    await expectLegible(page, 'inspector after rename');
+  });
+
+  test('each policy offers Wacana and Realisasi, and the 2045 meter explains Sejahtera', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => { (window as unknown as { pakrt: any }).pakrt.s.res.rupiah = 50_000_000; });
+    await openPanel(page, 'wacana');
+    await expect(page.locator('#sheet .realisasi')).toHaveCount(5);
+    await expectLegible(page, 'wacana and realisasi');
+    await page.locator('#sheet .realisasi .btn-primary').last().click();
+    await expect(page.locator('#sheet .realisasi .good').last()).toBeVisible();
+    await page.locator('.sheet-head .btn').click();
+    await page.locator('#emas').click();
+    await expect(page.locator('#modal .card')).toContainText('Perut');
+    await expect(page.locator('#modal .inem-head')).toBeVisible();
+    await expectLegible(page, 'sejahtera card');
   });
 
   test('a path takes a start tile, an end tile and Yes', async ({ page }) => {

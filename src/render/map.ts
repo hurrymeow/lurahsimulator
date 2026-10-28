@@ -169,6 +169,8 @@ export class MapView {
   private world: HTMLCanvasElement | null = null;
   private hits: Hit[] = [];
   ghost: Ghost | null = null;
+  /** While placing: 1 for every tile a valid footprint can cover, so the free spots light up. */
+  valid: Uint8Array | null = null;
   /** A building being moved is hidden from its old spot while its ghost shows the new one. */
   hidden: number | null = null;
   selected: number | null = null;
@@ -254,6 +256,23 @@ export class MapView {
     this.panX += dx;
     this.panY += dy;
     this.clampPan();
+  }
+
+  /** The ground tile at the middle of the view, or null when it is off the grid. */
+  centreTile(): { x: number; y: number } | null {
+    return this.tileAt(this.viewW / 2, this.viewH / 2);
+  }
+
+  /** True when a tile's centre is inside the view with a margin, so the ghost is not born off screen. */
+  inView(x: number, y: number, margin = 48): boolean {
+    const c = this.tileCentre(x, y);
+    return c.x > margin && c.y > margin && c.x < this.viewW - margin && c.y < this.viewH - margin;
+  }
+
+  /** Pans so a tile sits in the middle of the view. */
+  centreOn(x: number, y: number): void {
+    const c = this.tileCentre(x, y);
+    this.panBy(this.viewW / 2 - c.x, this.viewH / 2 - c.y);
   }
 
   /** True when the map is bigger than the view, so dragging pans. */
@@ -372,6 +391,22 @@ export class MapView {
     ctx.closePath();
   }
 
+  /** A pixel arrow bobbing over the ghost, so the building in hand is found at a glance. */
+  private ghostArrow(ctx: CanvasRenderingContext2D, x: number, y: number, n: number, sprite: string, now: number): void {
+    const top = this.artTop(x, y, iso(sprite, undefined, n), n);
+    const c = this.tileCentre(x + (n - 1) / 2, y + (n - 1) / 2);
+    const u = Math.max(2, Math.round(this.scale));
+    const bob = this.motion ? (Math.floor(now / 300) % 2) * u : 0;
+    const ax = Math.round(c.x);
+    const ay = Math.round(top - 6 * u + bob);
+    // A 7-pixel-wide chevron in mustard with a dark amber rim, art-pixel steps only.
+    const rows = [7, 5, 3, 1];
+    ctx.fillStyle = '#8a4f12';
+    rows.forEach((w, i) => ctx.fillRect(ax - ((w + 2) * u) / 2, ay + (i - 1) * u, (w + 2) * u, u * 2));
+    ctx.fillStyle = '#f4b935';
+    rows.forEach((w, i) => ctx.fillRect(ax - (w * u) / 2, ay + (i - 1) * u, w * u, u));
+  }
+
   /** Top of a tile's art, in CSS pixels, for badges and pops. */
   private artTop(x: number, y: number, art: Art | null, n = 1): number {
     return this.tileCentre(x + (n - 1) / 2, y + (n - 1) / 2).y - (art ? (art.height * n) / art.n : 0) * this.scale;
@@ -444,6 +479,28 @@ export class MapView {
       this.diamond(ctx, sel.x, sel.y, 0, footprintOf(sel.def));
       ctx.fillStyle = 'rgba(244, 244, 245, 0.25)';
       ctx.fill();
+    }
+    if (this.valid && this.ghost && !this.ghost.tiles) {
+      // Every free spot gets a faint diamond, so it is plain the building goes on the grid.
+      ctx.beginPath();
+      const hw = (TW * sc) / 2;
+      const hh = (TH * sc) / 2;
+      for (let y = 0; y < GRID_H; y++)
+        for (let x = 0; x < GRID_W; x++) {
+          if (!this.valid[y * GRID_W + x]) continue;
+          const c = this.tileCentre(x, y);
+          if (c.x < -hw || c.y < -hh || c.x > this.viewW + hw || c.y > this.viewH + hh) continue;
+          ctx.moveTo(c.x, c.y - hh + 2);
+          ctx.lineTo(c.x + hw - 4, c.y);
+          ctx.lineTo(c.x, c.y + hh - 2);
+          ctx.lineTo(c.x - hw + 4, c.y);
+          ctx.closePath();
+        }
+      ctx.fillStyle = 'rgba(246, 236, 212, 0.26)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(246, 236, 212, 0.55)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
     if (this.ghost) {
       for (const g of this.ghost.tiles ?? [this.ghost]) {
@@ -575,12 +632,17 @@ export class MapView {
       for (const p of g.tiles ?? [g]) {
         if ('have' in p && p.have) continue;
         const n = g.tiles ? 1 : g.n;
-        ctx.globalAlpha = 0.6;
-        if (p.ok) this.art(ctx, iso(g.sprite, g.variant, n, g.level), p.x, p.y, 1, 0, n, g.flip);
+        // The ghost breathes, so the eye finds it at once. Steady with reduce motion.
+        const breath = this.motion ? 0.5 + 0.5 * Math.sin(now / 260) : 0.5;
+        ctx.globalAlpha = p.ok ? 0.72 + 0.2 * breath : 0.5;
+        if (!p.ok) ctx.filter = 'grayscale(1) sepia(1) hue-rotate(-50deg) saturate(4)';
+        this.art(ctx, iso(g.sprite, g.variant, n, g.level), p.x, p.y, 1, 0, n, g.flip);
+        ctx.filter = 'none';
         ctx.globalAlpha = 1;
         this.diamond(ctx, p.x, p.y, 0, n);
         ctx.strokeStyle = p.ok ? '#4ade80' : '#f87171';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = p.ok ? 2 + Math.round(breath) : 2;
+        if (!g.tiles) this.ghostArrow(ctx, p.x, p.y, n, g.sprite, now);
         ctx.setLineDash(p.ok ? [] : [4, 3]);
         ctx.stroke();
         ctx.setLineDash([]);

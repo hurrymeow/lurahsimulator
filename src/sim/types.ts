@@ -123,7 +123,35 @@ export interface Neighbour {
 
 export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'petani' | 'peternak' | 'pengepul' | 'guru' | 'satpam' | 'tukang' | 'panitia' | 'kaderPosyandu' | 'calo' | 'honorer' | 'pendampingDesa';
 
+/** Trouble that has shown up at least once. Some buildings open only when their problem appears. */
+export type ProblemId = 'banjir' | 'jobless' | 'permitQueue' | 'preman';
+
+export interface PlayerInfo {
+  title: 'Pak' | 'Bu';
+  name: string;
+  kampung: string;
+}
+
+/** What is true for the warga: fed, in work, safe. Sejahtera is their average. */
+export interface Meters {
+  perut: number;
+  kerja: number;
+  aman: number;
+}
+
+export interface RealisasiState {
+  id: string;
+  /** Month the program starts to work. */
+  landsAt: number;
+  /** Month it stops working. Infinity for a lasting one. */
+  endsAt: number;
+}
+
 export interface Requirement {
+  /** Opens once this problem has shown up in the kampung, so the fix arrives with the trouble. */
+  problem?: ProblemId;
+  /** Opens once the player has reached this stage. */
+  stage?: StageId;
   population?: number;
   /** Needs at least this many stars in a stage. */
   stars?: { stage: StageId; n: number };
@@ -198,6 +226,10 @@ export interface Building {
   rot?: 0 | 1;
   /** A restarted project never freezes again. */
   restarted?: boolean;
+  /** Chain brand (wifi, rumah makan, apotek, bengkel, barbershop). Absent in old saves: picked from the uid. */
+  brand?: string;
+  /** Name the player gave it. Absent means the brand, a local name, or the building's own name. */
+  name?: string;
   /** No path links it to the Kantor RT, so it earns and attracts nothing. Set by refreshAccess. */
   noRoad?: boolean;
   /** Jalan Setapak only: the month it cracked. Neglect counts from here. */
@@ -216,6 +248,10 @@ export interface Resident {
   manual?: boolean;
   /** Months spent employed. Level comes from this (see levelFor in data/jobs.ts). Absent in older saves. */
   xp?: number;
+  /** Months in a row with no job. Long idleness is the jobless problem, and can make a preman. */
+  idle?: number;
+  /** Idle too long while the kampung felt unsafe. Takes uang keamanan from a shop until given a job. */
+  preman?: boolean;
 }
 
 export interface WacanaState {
@@ -294,6 +330,14 @@ export interface GameState {
   inflation: number;
   discovered: string[];
   unlocked: string[];
+  /** Problems that have shown up at least once, for the buildings they open. */
+  problems?: ProblemId[];
+  /** Who the player is and what their first kampung is called. Absent in old saves: the defaults. */
+  player?: PlayerInfo;
+  /** Perut, Kerja and Aman, 0 to 100, as of the last month. Absent until the first month passes. */
+  meters?: Meters;
+  /** Programs actually carried out (Realisasi), each with the month it lands and the month it ends. */
+  realisasi?: RealisasiState[];
   wacana: WacanaState[];
   modifiers: Modifier[];
   ranking: RankingResult[];

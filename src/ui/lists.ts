@@ -1,11 +1,11 @@
 // The Buku Combo and the Warga list. Both open on a row of filter buttons over a picture-first view:
 // the Buku Combo is a column of cards, the Warga list groups people by job. Icons are the game's own
 // art: building sprites, resource icons, and a job's workplace sprite.
-import { bName, cEffect, cName, cStory, jName, t } from '../i18n';
+import { cEffect, cName, cStory, jName, t } from '../i18n';
 import { jobDef, levelMult, MAX_LEVEL } from '../data/jobs';
 import type { App } from '../app';
 import { rupiahShort } from '../format';
-import { bookCombos, comboConditions, comboStatus, comboStatusText, type ComboStatus } from '../sim/combos';
+import { bookCombos, comboConditions, comboStatus, comboStatusText, needName, parseNeed, type ComboStatus } from '../sim/combos';
 import { allDefs, def } from '../sim/content';
 import { levelOf } from '../sim/jobs';
 import { isoURL } from '../render/iso';
@@ -19,10 +19,10 @@ import './lists.css';
 const RES: ResourceId[] = ['rupiah', 'sabar', 'orangDalam', 'viral'];
 
 // ---------- icons ----------
-const sprite = (id: string, size = 32) => {
+const sprite = (id: string, size = 32, level = 1) => {
   let src = '';
   try {
-    src = isoURL(def(id).sprite, 2);
+    src = isoURL(def(id).sprite, 2, level);
   } catch {
     src = isoURL('rumah', 2);
   }
@@ -73,11 +73,12 @@ const badge = (st: ComboStatus) => h('span', { class: `ls-badge ${st.state}` }, 
 const members = (c: ComboDef, st: ComboStatus, size = 32) => {
   const missing = new Set(st.missing);
   const parts: Node[] = [];
-  c.needs.forEach((id, i) => {
+  c.needs.forEach((need, i) => {
     if (i) parts.push(h('span', { class: 'ls-plus', 'aria-hidden': 'true' }, '+'));
-    const img = sprite(id, size);
-    if (missing.has(bName(def(id)))) img.classList.add('missing');
-    parts.push(h('span', { class: 'ls-member', title: bName(def(id)) }, img));
+    const { id, level } = parseNeed(need);
+    const img = sprite(id, size, level);
+    if (missing.has(needName(need))) img.classList.add('missing');
+    parts.push(h('span', { class: 'ls-member', title: needName(need) }, img));
   });
   return h('span', { class: 'ls-members' }, ...parts);
 };

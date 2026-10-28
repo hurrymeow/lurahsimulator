@@ -24,7 +24,10 @@ const shopfront = (wall: string, roof: string, awning: string, opts: { height?: 
   p.roofShape(shape, inset, height, shape === 'shed' ? Math.max(3, rise - 1) : rise, roof, wall);
 };
 
-export const CONTENT_ART: Record<string, (p: Painter, variant?: string) => void> = {
+export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: number) => void> = {
+  // Rumah Makan grows from a bakso cart to a warkop to a rumah makan, each the existing art for that stage.
+  // Level 2 is a lower warkop, drawn here beside the artist's, so the step from the cart stays within one storey.
+  rumahMakan: (p, v, level = 1) => (level === 2 ? shopfront('N', 'r', 'y', { shape: 'shed', height: 7 })(p) : CONTENT_ART[level >= 3 ? 'warteg' : 'gerobakBakso'](p, v)),
   // Selokan: a concrete channel across the tile, edge to edge so neighbours line up, with a plank bridge over it.
   // Bare, so the kerbs and their ink line are drawn here.
   drain: (p, v) => {

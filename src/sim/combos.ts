@@ -7,6 +7,7 @@ import { jName } from '../i18n';
 import { gateOpen } from './gate';
 import { gain, type Fx } from './gain';
 import { isWorking } from './state';
+import { brandOf } from './brands';
 import type { Building, GameState, JobId } from './types';
 
 export interface ActiveCombo {
@@ -15,13 +16,41 @@ export interface ActiveCombo {
 }
 
 const ORDER = ['rt', 'rw', 'kelurahan'];
+
+/** Retired buildings still count as the one they merged into, at the level they stood for. */
+const LEGACY: Record<string, { def: string; level: number }> = {
+  gerobakBakso: { def: 'rumahMakan', level: 1 },
+  warkop: { def: 'rumahMakan', level: 2 },
+  warteg: { def: 'rumahMakan', level: 3 },
+  tokoKelontong: { def: 'warung', level: 3 },
+};
+/** The building a placed one counts as, for combos. */
+export const baseDef = (b: Building): string => LEGACY[b.def]?.def ?? b.def;
+const levelAs = (b: Building): number => Math.max(b.level, LEGACY[b.def]?.level ?? 0);
+
+/** One member of a combo: a building id, and the level it must reach. Written 'rumahMakan@2'. */
+export interface Need {
+  id: string;
+  level: number;
+}
+export const parseNeed = (n: string): Need => {
+  const [id, lv] = n.split('@');
+  return { id, level: lv ? Number(lv) : 1 };
+};
+const fits = (b: Building, n: Need) => baseDef(b) === n.id && levelAs(b) >= n.level;
+/** "Rumah Makan" or "Rumah Makan (level 2+)". */
+export const needName = (n: string): string => {
+  const p = parseNeed(n);
+  const name = bName(def(p.id));
+  return p.level > 1 ? t('combo.atLevel', { name, n: p.level }) : name;
+};
 const near = (a: Building, b: Building, r: number) => Math.abs(a.x - b.x) <= r && Math.abs(a.y - b.y) <= r;
 
 /** Combos that can fire now: the RT ones, plus later-stage ones whose gate is open. */
 export const liveCombos = (s: GameState): ComboDef[] => [...COMBOS, ...STAGE_COMBOS.filter((c) => gateOpen(s, c.gate))];
 
 /** Combos the Buku Combo lists: the RT ones, plus every combo of a stage the player has reached. */
-export const bookCombos = (s: GameState): ComboDef[] => [...COMBOS, ...STAGE_COMBOS.filter((c) => gateOpen(s, { ...c.gate, stars: 0 }))];
+export const bookCombos = (s: GameState): ComboDef[] => [...COMBOS.filter((c) => !c.retired || s.discovered.includes(c.id)), ...STAGE_COMBOS.filter((c) => gateOpen(s, { ...c.gate, stars: 0 }))];
 
 /** Two AI RTs in the area share a trait. */
 const sameTraitNeighbours = (s: GameState): boolean => s.neighbours.some((n, i) => s.neighbours.some((o, j) => j > i && o.trait === n.trait));
@@ -37,7 +66,7 @@ const cache = new WeakMap<GameState, { key: number; out: ActiveCombo[] }>();
 function layoutKey(s: GameState): number {
   let h = ORDER.indexOf(s.stage.current) * 31 + s.stage.stars.rt * 7 + s.stage.stars.rw * 11 + s.stage.stars.kelurahan * 13 + (s.stage.path?.length ?? 0);
   for (const n of s.neighbours) h = (Math.imul(h, 31) + n.trait.charCodeAt(0)) | 0;
-  for (const b of s.buildings) h = (Math.imul(h, 31) + b.uid * 977 + b.x * 61 + b.y * 17 + b.status.charCodeAt(0) + (b.noRoad ? 5 : 0)) | 0;
+  for (const b of s.buildings) h = (Math.imul(h, 31) + b.uid * 977 + b.x * 61 + b.y * 17 + b.level * 7919 + b.status.charCodeAt(0) + (b.noRoad ? 5 : 0) + (b.brand ? b.brand.charCodeAt(0) * 131 + b.brand.length : 0)) | 0;
   return h;
 }
 
@@ -54,17 +83,18 @@ function findCombos(s: GameState): ActiveCombo[] {
   const working = s.buildings.filter(isWorking);
   const out: ActiveCombo[] = [];
   for (const combo of liveCombos(s)) {
-    const [anchorId, ...rest] = combo.needs;
+    const [anchorNeed, ...rest] = combo.needs.map(parseNeed);
     const { rule, needsJob } = combo as Partial<StageComboDef>;
     if (needsJob && !s.residents.some((r) => r.job === needsJob)) continue;
-    for (const anchor of working.filter((b) => b.def === anchorId)) {
+    for (const anchor of working.filter((b) => fits(b, anchorNeed))) {
       if (rule === 'sameTraitNeighbours') {
         if (sameTraitNeighbours(s)) out.push({ combo, members: [anchor] });
         continue;
       }
       const members = [anchor];
-      for (const id of rest) {
-        const hit = working.find((b) => b.def === id && near(anchor, b, combo.radius) && !members.includes(b));
+      for (const need of rest) {
+        // A price war needs a different brand on every member.
+        const hit = working.find((b) => fits(b, need) && near(anchor, b, combo.radius) && !members.includes(b) && (combo.brands !== 'different' || members.every((m) => brandOf(m) !== brandOf(b))));
         if (!hit) break;
         members.push(hit);
       }
@@ -77,7 +107,7 @@ function findCombos(s: GameState): ActiveCombo[] {
 /** Income multiplier a building gets from the combos it belongs to. */
 export function comboIncomeMult(s: GameState, b: Building): number {
   let m = 1;
-  for (const a of activeCombos(s)) if (a.members.includes(b)) m *= a.combo.incomeMult?.[b.def] ?? 1;
+  for (const a of activeCombos(s)) if (a.members.includes(b)) m *= a.combo.incomeMult?.[b.def] ?? a.combo.incomeMult?.[baseDef(b)] ?? 1;
   return m;
 }
 
@@ -110,7 +140,7 @@ export function comboSystem(s: GameState, fx: Fx): void {
   discoverCombos(s, fx);
 }
 
-export const comboMemberNames = (c: ComboDef) => c.needs.map((id) => bName(def(id)));
+export const comboMemberNames = (c: ComboDef) => c.needs.map(needName);
 
 export interface ComboStatus {
   /** active: working in town now. found: seen before but not working now. todo: never seen. */
@@ -126,9 +156,9 @@ export function comboStatus(s: GameState, c: ComboDef): ComboStatus {
   const pool = [...working];
   const missing: string[] = [];
   for (const id of c.needs) {
-    const i = pool.findIndex((b) => b.def === id);
+    const i = pool.findIndex((b) => fits(b, parseNeed(id)));
     if (i >= 0) pool.splice(i, 1);
-    else missing.push(bName(def(id)));
+    else missing.push(needName(id));
   }
   const job = (c as Partial<StageComboDef>).needsJob;
   if (job && !s.residents.some((r) => r.job === job)) {
