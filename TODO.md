@@ -131,6 +131,12 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: At month end, if Popularitas fell versus last month, show one warning toast naming the biggest cause (queue, expectations, or broke). Show it once per game so it teaches without nagging; after that only the HUD number changes. Reuse the toast path in `src/app.ts` and the cause tracking from the 2045-meter toast item. Add EN and ID text and keep it short at 320px.
   - Source: Hari, 2026-10-28
   - `open · — · — · done when:` the first monthly Popularitas drop shows a one-time warning with the cause, it never repeats in that save, the flag is saved, and EN and ID are checked at 320px.
+- [ ] **Give the player levers to speed up neighbour RT stars.**
+  - Problem: Neighbour RTs earn stars by the same checklist as the player (`src/sim/grow.ts`, `stageDef('rt').stars`), but the player only controls Dana. An RT builds at most once per `NEIGHBOUR.buildEvery` months (3, or 2 for Rajin) however much is funded, and holds at most `fundMax` (3) banked builds. Funding more does not make stars come sooner, so waiting feels helpless. Hari, 2026-10-28.
+  - Why: RW needs 2 AI RTs at their stars (RW 2★ and 3★), so the player's own progress stalls on RTs they cannot influence. It is also unclear which star each RT is missing.
+  - Suggested solution: Pick one or two, then playtest. (a) Show each RT's missing star goal on the Neighbours screen, so the player knows what to fix. (b) Let a bigger or repeat Dana shorten the gap to the next build, with diminishing returns. (c) Let the player send a building or a Posyandu to an RT (`NEIGHBOUR.sabarPerPosyandu` already feeds their Sabar). (d) Add a monthly "Bantu" action with a cooldown that gives the nearest-to-star RT one free build. Tie in the auto-fund item: auto-funding only keeps Dana banked, so it does not solve speed alone. Check balance against `tests/rw-bot.test.ts` and the RW 3★ pacing, and log the pick in `decisions/`.
+  - Source: Hari, 2026-10-28. Related: "Auto-fund the neighbouring RTs".
+  - `open · — · — · done when:` the player has at least one lever that visibly speeds an RT toward its next star, the Neighbours screen shows what each RT lacks, the bot tests still pass, and EN and ID are checked at 320px.
 
 ## Done
 
