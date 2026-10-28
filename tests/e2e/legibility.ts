@@ -71,11 +71,13 @@ export async function scanLegibility(page: Page): Promise<Problem[]> {
       const size = parseFloat(cs.fontSize);
       if (size < 15.99) problems.push({ rule: 'font-size', text: label(el), detail: `${size}px` });
 
-      if (cs.textOverflow === 'ellipsis') problems.push({ rule: 'ellipsis', text: label(el), detail: 'text-overflow: ellipsis' });
+      // UI.md rule 5 exception: a clamped line inside a button that opens the whole text.
+      const clamped = !!el.closest('[data-clamp]') && !!el.closest('button, [role="button"]');
+      if (cs.textOverflow === 'ellipsis' && !clamped) problems.push({ rule: 'ellipsis', text: label(el), detail: 'text-overflow: ellipsis' });
 
       const clipsX = cs.overflowX !== 'visible';
       const clipsY = cs.overflowY !== 'visible';
-      if ((clipsX && el.scrollWidth > el.clientWidth + 1) || (clipsY && el.scrollHeight > el.clientHeight + 1)) {
+      if (!clamped && ((clipsX && el.scrollWidth > el.clientWidth + 1) || (clipsY && el.scrollHeight > el.clientHeight + 1))) {
         problems.push({ rule: 'clipped', text: label(el), detail: `scroll ${el.scrollWidth}x${el.scrollHeight} > client ${el.clientWidth}x${el.clientHeight}` });
       }
       // Text spilling out of its own box (no overflow clipping, but wider than the box).

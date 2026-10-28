@@ -152,5 +152,41 @@ html:not(.theme-dark) :is(#hud, #bottombar, #goal, #ticker) :is(.missing, .warn)
 #goal.cs-goal-float { position: absolute; top: 6px; left: 6px; right: 104px; z-index: 6; background: var(--cs-cream); border: 1px solid var(--cs-line); box-shadow: 2px 2px 0 var(--cs-shadow); }
 .cs-goal-float .goal-now { min-height: 30px; padding: 2px 8px; line-height: 1.2; }
 .cs-goal-float .goal-star { padding: 0 8px 6px; }
+/* One line, cut with an ellipsis; tapping the pill opens the whole line. UI.md rule 5 exception. */
+.cs-goal-float .goal-now { display: flex; align-items: center; gap: 4px; width: 100%; }
+.cs-goal-float .goal-text { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.cs-goal-float .goal-now::after { flex: none; }
+#goal.cs-goal-float.open .goal-text { white-space: normal; overflow: visible; }
 @media (max-height: 640px) { .cs-goal-float { right: 6px; } }
 #dof { z-index: 1; }
+
+/* ---------- light theme everywhere: sheets, pop-ups, the tutorial and tips share the frame's cream and ink ---------- */
+html:not(.theme-dark) {
+  --bg: #e6dfbf;
+  --surface: #f3eed6;
+  --surface-2: #ebe4c6;
+  --line: #2a1810;
+  --text: #2a1810;
+  --muted: #5e4e3a;
+  --accent: #2f6b45;
+  --on-accent: #f6f2dc;
+  --rupiah: #1d6b35;
+  --sabar: #1f57a8;
+  --orang: #7a4f00;
+  --viral: #a52a66;
+  --danger: #b42318;
+}
+html.high-contrast:not(.theme-dark) { --muted: #3d3226; }
+/* Square corners and 1px ink rules, like the frame. */
+/* Both themes: square corners, like the frame, so Light and Dark share one shape. */
+:is(.sheet, .modal .card, .card-btn, .tile, .btn, .coach, .first-burst, .home-warn, .stage-head) { border-radius: 0; }
+html:not(.theme-dark) .sheet { border-top: 2px solid var(--line); box-shadow: 0 -4px 0 rgba(42, 24, 16, 0.18); }
+html:not(.theme-dark) .modal .card { border: 2px solid var(--line); box-shadow: 4px 4px 0 rgba(42, 24, 16, 0.35); }
+/* Bright accents from the dark theme, in ink-dark tones on cream. */
+html:not(.theme-dark) .missing { color: #9b1c1c; }
+html:not(.theme-dark) :is(.new-dot, .fanfare-tag, .report-grade) { color: #8a4b00; }
+html:not(.theme-dark) .first-burst { color: #8a4b00; border-color: #c27c0e; }
+html:not(.theme-dark) .modal .card.fanfare { border-color: #c27c0e; }
+html:not(.theme-dark) .chip.full .chip-value { color: #8a4b00; }
+/* The home screen keeps its dark look over the map in both themes (GAME-DESIGN.md section 6, Themes). */
+html:not(.theme-dark) #home { --bg: #0b0b0c; --surface: #18181b; --surface-2: #27272a; --line: #3f3f46; --text: #f4f4f5; --muted: #a1a1aa; --accent: #f4f4f5; --on-accent: #0b0b0c; --danger: #f87171; color: var(--text); }

@@ -115,6 +115,13 @@ async function seed(page: Page): Promise<void> {
     app.runTick();
   });
   await dismissModals(page);
+  // A busy kampung makes several tips due at once, and each refresh shows the next one. Drain them
+  // here, or one lands mid-test and swallows a tap (seen at 430px).
+  for (let i = 0; i < 20; i++) {
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+    if (!(await page.locator('#modal').isVisible())) break;
+    await dismissModals(page);
+  }
 }
 
 test.describe('opener', () => {
@@ -1347,12 +1354,13 @@ test.describe('RW stage', () => {
 
     await page.locator('#menu-btn').click();
     await page.locator('#act-combo').click();
+    await page.locator('.sheet .ls-tile').first().click();
     await expect(page.locator('.sheet').getByText(lang() === 'en' ? /Needs .* within/ : /Butuh .* dalam jarak/).first()).toBeVisible();
     await expectLegible(page, 'RW Buku Combo');
     await page.locator('.sheet-head .btn').click();
 
     await page.locator('#dock-warga').click();
-    await page.locator('.sheet .card-btn').first().click();
+    await page.locator('.sheet .ls-chip').first().click();
     await expect(page.locator('.sheet').getByText('Kader Posyandu').first()).toBeVisible();
     await expectLegible(page, 'RW job picker');
   });
@@ -1620,6 +1628,77 @@ test.describe('zoom, big lots and the Warga list', () => {
     await expect(back).toBeInViewport();
     await expect(back).toBeFocused();
     expect(await page.locator('#sheet').evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  });
+
+  test('the Buku Combo filters its grid and a tile opens the whole entry; Warga groups and filters people', async ({ page }) => {
+    await start(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.residents.push({ id: app.s.nextResidentId++, name: 'Pak Idle', job: 'none', pensiun: 0, fake: 0, arrived: 0 });
+    });
+    await dismissModals(page);
+    await openPanel(page, 'combo');
+    const tiles = page.locator('#sheet .ls-tile');
+    const all = await tiles.count();
+    expect(all).toBeGreaterThan(4);
+    // One card per row, the full width of the sheet.
+    const [a, b] = [(await tiles.nth(0).boundingBox())!, (await tiles.nth(1).boundingBox())!];
+    expect(b.y).toBeGreaterThan(a.y + a.height - 1);
+    expect(Math.abs(a.x - b.x)).toBeLessThan(1);
+    expect(a.width).toBeGreaterThan(page.viewportSize()!.width * 0.8);
+    // The effect keeps to two lines on the tile.
+    const desc = tiles.first().locator('.ls-desc');
+    const lines = await desc.evaluate((el) => Math.round(el.clientHeight / parseFloat(getComputedStyle(el).lineHeight)));
+    expect(lines).toBeLessThanOrEqual(2);
+    // A card opens the whole entry below it, and again closes it.
+    await tiles.first().click();
+    await expect(page.locator('#sheet .ls-detail')).toBeVisible();
+    expect(await tiles.first().evaluate((el) => el.nextElementSibling?.classList.contains('ls-detail'))).toBe(true);
+    await expect(tiles.first()).toHaveAttribute('aria-expanded', 'true');
+    await expectLegible(page, 'Buku Combo entry');
+    await tiles.first().click();
+    await expect(page.locator('#sheet .ls-detail')).toBeHidden();
+    // Each filter shows only its state, and the counts add up.
+    let sum = 0;
+    for (const k of ['active', 'found', 'todo']) {
+      await page.locator(`#sheet [data-filter="${k}"]`).click();
+      await expect(page.locator(`#sheet [data-filter="${k}"]`)).toHaveAttribute('aria-pressed', 'true');
+      const n = await tiles.count();
+      if (n) expect(await page.locator(`#sheet .ls-tile:not(.${k})`).count()).toBe(0);
+      sum += n;
+    }
+    expect(sum).toBe(all);
+    await page.locator('.sheet-head .btn').click();
+
+    await openPanel(page, 'warga');
+    const people = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.residents.length);
+    await expect(page.locator('#sheet .ls-chip')).toHaveCount(people);
+    await expect(page.locator('#sheet .ls-group.idle')).toHaveCount(1);
+    await page.locator('#sheet [data-filter="idle"]').click();
+    await expect(page.locator('#sheet .ls-group')).toHaveCount(1);
+    await expect(page.locator('#sheet .ls-chip', { hasText: 'Pak Idle' })).toBeVisible();
+    await page.locator('#sheet [data-filter="level"]').click();
+    await expect(page.locator('#sheet .ls-chip')).toHaveCount(people);
+    await expectLegible(page, 'Warga by level');
+  });
+
+  test('a long goal keeps to one line and opens in full on tap', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const text = page.locator('#goal .goal-text');
+    await page.evaluate(() => { document.querySelector<HTMLElement>('#goal .goal-text')!.textContent = 'x '.repeat(200); });
+    const lh = await text.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight));
+    expect((await text.boundingBox())!.height).toBeLessThan(lh * 1.5);
+    expect(await text.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+    // Back to the real goal: it opens to the whole line and the next star.
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+    const now = page.locator('#goal-now');
+    await expect(now).toHaveAttribute('data-more', 'true');
+    await now.click();
+    await expect(now).toHaveAttribute('aria-expanded', 'true');
+    expect(await text.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+    await now.click();
+    await expect(now).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('wheel and pinch zoom in and out in whole steps, and a pinch is not a tap', async ({ page }) => {

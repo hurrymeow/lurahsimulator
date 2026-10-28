@@ -1,6 +1,6 @@
 import { bName, t, type Key } from '../i18n';
 import { rupiah } from '../format';
-import { RES_COLOUR } from '../render/map';
+import { RES_VAR } from '../render/map';
 import { iconURL } from '../render/sprites';
 import { def } from '../sim/content';
 import { nextStarChecklist, stageTitle, starsOf } from '../sim/stages';
@@ -23,10 +23,10 @@ function chip(colour: string, icon: string | null, name: string, value: string, 
 export function reportExtra(s: GameState, r: QuarterReport): { title: string; body: string; extra: Node } {
   const rows: Node[] = [
     h('div', { class: 'report-grade' }, t('report.grade', { g: r.grade })),
-    chip(RES_COLOUR.rupiah, 'rupiah', t('report.income'), rupiah(r.income), r.prevIncome === null ? 0 : r.income - r.prevIncome),
+    chip(RES_VAR.rupiah, 'rupiah', t('report.income'), rupiah(r.income), r.prevIncome === null ? 0 : r.income - r.prevIncome),
     h('p', { class: 'meta' }, r.prevIncome === null ? t('report.first') : t('report.vsLast', { amt: rupiah(r.prevIncome) })),
-    chip('#a1a1aa', null, t('report.residents', { n: r.residents }), String(Math.abs(r.residentsDelta)), r.residentsDelta),
-    ...RES.map((id) => chip(RES_COLOUR[id], id, t(`res.${id}` as Key), num(r[`${id}Delta` as 'sabarDelta']), r[`${id}Delta` as 'sabarDelta'])),
+    chip('var(--muted)', null, t('report.residents', { n: r.residents }), String(Math.abs(r.residentsDelta)), r.residentsDelta),
+    ...RES.map((id) => chip(RES_VAR[id], id, t(`res.${id}` as Key), num(r[`${id}Delta` as 'sabarDelta']), r[`${id}Delta` as 'sabarDelta'])),
     h('div', { class: 'outcome-mod' }, r.bestDef ? t('report.best', { name: bName(def(r.bestDef)) }) : t('report.bestNone')),
   ];
   const stars = starsOf(s);

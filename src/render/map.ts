@@ -12,6 +12,10 @@ import { placeBadge, type BadgeBox } from './badge';
 import { buildWorld, clouds, decoAt, farRoofs, layoutWorld, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
 import { ICONS, ROOF_COLOURS, ROOF_SHAPES, WALL_COLOURS, sprite } from './sprites';
 
+/** Resource colours for page elements: CSS variables, so they follow the Light or Dark theme. */
+export const RES_VAR: Record<ResourceId, string> = { rupiah: 'var(--rupiah)', sabar: 'var(--sabar)', orangDalam: 'var(--orang)', viral: 'var(--viral)' };
+
+/** Resource colours for the canvas, where text sits on its own dark box. */
 export const RES_COLOUR: Record<ResourceId, string> = {
   rupiah: '#4ade80',
   sabar: '#60a5fa',
