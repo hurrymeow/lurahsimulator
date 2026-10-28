@@ -37,6 +37,6 @@ Unsure whether it conflicts? Treat it as a conflict and ask.
 - CI runs the full sharded e2e suite in id (the default language) at 320, 360, 412 and 430px on every PR. Let CI run it.
 - Batch small tweaks (text, sounds, small TODO items) into one PR. Each PR costs a full CI run. When claiming TODO items, claim several small related ones together.
 - English is not in CI. A change to English UI text or layout runs the touched specs in English before you push, for example `npx playwright test tests/e2e/ui.spec.ts --project=phone-412-en`.
-- [TODO.md](TODO.md) lists open tasks and ideas. Check it first, claim an item by setting its owner and date, then open a PR. Move it to Done when it merges. Add open work you find or leave behind.
+- [TODO.md](TODO.md) lists open tasks and ideas. Check it first. Code PRs never edit TODO.md, because it causes merge conflicts and CI reruns. Claim an item (set owner and date), move it to Done after the PR merges, and add open work you find in a separate docs-only change. Push it straight to main if you are allowed to, otherwise open a docs-only PR. Docs-only PRs skip e2e, so they are cheap.
 - Log design decisions in `decisions/<pr-or-slug>.md` and shipped work in `progress/<pr-or-slug>.md`.
 - Never edit `DECISIONS.md` or `PROGRESS.md` (frozen), or another PR's log file.
