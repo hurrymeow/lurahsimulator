@@ -412,9 +412,9 @@ export class App {
     if (this.modalQueue.length === 1) this.showModal();
   }
 
-  /** True when a tip can show without stacking on another message. */
+  /** True when a tip can show without stacking on another message. Never while the home screen is open. */
   get idle(): boolean {
-    return this.modalQueue.length === 0 && !this.s.pendingEvent && !sheetOpen() && document.getElementById('howto')!.hidden;
+    return !document.getElementById('home') && this.modalQueue.length === 0 && !this.s.pendingEvent && !sheetOpen() && document.getElementById('howto')!.hidden;
   }
 
   private showModal(): void {

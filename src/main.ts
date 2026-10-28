@@ -52,7 +52,6 @@ setupInstall(installBtn, (text) => app.modal({ title: t('install.title'), body: 
 app.refresh();
 setupGoal(app);
 setupCoach(app);
-setupTips(app);
 setupConsole(app);
 // Second install button on the home screen. Hidden when installed or not offered.
 const homeInstall = h('button', { class: 'btn home-install', id: 'home-install', hidden: true }, t('menu.install'));
@@ -61,6 +60,8 @@ setupInstall(homeInstall, (text) => app.modal({ title: t('install.title'), body:
 const homeUpdate = h('button', { class: 'btn home-update', id: 'home-update', hidden: true }, t('home.update'));
 setupUpdates($('update-banner'), $<HTMLButtonElement>('update-btn'), homeUpdate);
 showHome(app, homeInstall, homeUpdate);
+// After home is up: a refresh before it (setupConsole makes one) would show a due tip over the home screen.
+setupTips(app);
 
 // ?debug exposes the app for play-testing from the console.
 if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { pakrt: app, pakrtDefs: allDefs });
