@@ -14,6 +14,7 @@ import type { ComboDef } from '../data/combos';
 import type { JobId, Resident, ResourceId } from '../sim/types';
 import { h } from './dom';
 import { openSheet } from './sheet';
+import { getLang } from '../i18n';
 import './lists.css';
 
 const RES: ResourceId[] = ['rupiah', 'sabar', 'orangDalam', 'viral'];
@@ -66,6 +67,45 @@ function filterBar<K extends string>(keys: readonly K[], start: K, label: (k: K)
 }
 
 // ---------- Buku Combo ----------
+/** A number in the current language: 1,5 in ID, 1.5 in EN, no trailing .0. */
+const fmtNum = (v: number): string => {
+  const s = (Math.round(v * 10) / 10).toString();
+  return getLang() === 'id' ? s.replace('.', ',') : s;
+};
+
+/**
+ * Data-driven combo effect chips. Income: [member shop icon(s)] [coin] x1,5.
+ * Per month: [stat icon] +n /bln, or -n for a drain, with the minus sign
+ * never colour alone. Falls back to the effect text when a combo has
+ * neither perMonth nor incomeMult (17 Agustus prize, banjir protection).
+ */
+const comboChips = (c: ComboDef): Node[] => {
+  const chips: Node[] = [];
+  if (c.incomeMult) {
+    for (const [id, mult] of Object.entries(c.incomeMult)) {
+      const shop = (() => {
+        try {
+          return sprite(id, 24, 1);
+        } catch {
+          return sprite('warung', 24, 1);
+        }
+      })();
+      chips.push(h('span', { class: 'ls-amt' }, shop, resIcon('rupiah'), `x${fmtNum(mult)}`));
+    }
+  }
+  if (c.perMonth) {
+    for (const [res, v] of Object.entries(c.perMonth) as [ResourceId, number][]) {
+      const amt = res === 'rupiah' ? rupiahShort(v) : `${v > 0 ? '+' : ''}${fmtNum(v)}`;
+      chips.push(h('span', { class: `ls-amt ${v < 0 ? 'neg' : ''}`, style: `--c:var(--${res === 'orangDalam' ? 'orang' : res})` }, resIcon(res), `${amt}${t('combo.perMonth')}`));
+    }
+  }
+  return chips;
+};
+const comboEffect = (c: ComboDef): Node[] => {
+  const chips = comboChips(c);
+  return chips.length ? chips : [document.createTextNode(cEffect(c))];
+};
+
 const STATE_ICON: Record<ComboStatus['state'], string> = { active: '✓', found: '★', todo: '?' };
 const stateName = (st: ComboStatus['state']) => t(`combo.state.${st}` as 'combo.state.active');
 const badge = (st: ComboStatus) => h('span', { class: `ls-badge ${st.state}` }, h('b', { 'aria-hidden': 'true' }, STATE_ICON[st.state]), stateName(st.state));
@@ -97,9 +137,9 @@ export function openComboBook(app: App): void {
   let open: string | null = null;
 
   const tile = ({ c, st }: (typeof combos)[number]) => {
-    const b = h('button', { class: `ls-tile ${st.state}`, type: 'button', 'data-combo': c.id, 'aria-expanded': 'false' },
+    const b = h('button', { class: `ls-tile ${st.state}`, type: 'button', 'data-combo': c.id, 'aria-expanded': 'false', 'aria-label': `${cName(c)}. ${cEffect(c)}` },
       h('span', { class: 'ls-tile-top' }, h('strong', { class: 'ls-tile-name' }, cName(c)), members(c, st, 24), h('span', { class: `ls-corner ${st.state}`, title: stateName(st.state) }, STATE_ICON[st.state])),
-      h('span', { class: 'ls-desc', 'data-clamp': '2' }, cEffect(c)),
+      h('span', { class: 'ls-desc ls-chips', 'data-clamp': '2' }, ...comboEffect(c)),
     );
     b.addEventListener('click', () => show(b, c, st));
     return b;

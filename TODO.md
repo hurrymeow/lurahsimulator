@@ -4,6 +4,19 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Tasks
 
+- [ ] **Stat icons PR 2.**
+  - Problem: After the stat-icon renderer in `progress/stat-icons.md`, buildings, inspector, events, jobs, staff, mangkrak, calo, Wacana and Realisasi still need verification and fixes.
+  - Why: The renderer iconifies stat words everywhere, so sentences that read oddly with an icon noun, and slang uses that must stay words, will leak until they are checked.
+  - Suggested solution: Verify and fix those screens, reword icon-noun sentences, and check the "Lubang Viral" / "Viral Pothole" title.
+  - Source: `decisions/stat-icons.md`
+  - `open · — · — · done when:` those screens are verified in ID, with no icon-noun leaks and no slang replaced.
+- [ ] **Stat icons PR 3.**
+  - Problem: Stage goals, Kelurahan and RW goals, stats explainer, How to play and report card still need the stat-icon check.
+  - Why: Those screens carry stat words in goals and explanations, where an icon alone can lose meaning.
+  - Suggested solution: Check those screens, keeping one word-plus-icon legend in the stats explainer.
+  - Source: `decisions/stat-icons.md`
+  - `open · — · — · done when:` those screens are verified in ID, with the explainer legend kept.
+
 - [ ] **Kelurahan 2★ and 3★ balance.**
   - Problem: `tests/kel-bot.test.ts` only checks 1★.
   - Why: Without bot runs, 2★ and 3★ may be unreachable or trivial and nobody would know.
