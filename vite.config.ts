@@ -11,7 +11,7 @@ function serviceWorker(): Plugin {
     generateBundle(_opts, bundle) {
       // Skip .woff fallbacks: every browser that runs a service worker supports woff2.
       const files = Object.keys(bundle).filter((f) => !f.endsWith('.map') && !f.endsWith('.woff'));
-      const publicFiles = ['manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.svg'];
+      const publicFiles = ['manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.png'];
       const precache = ['./', ...files, ...publicFiles];
       const hash = createHash('sha256');
       for (const f of files) {

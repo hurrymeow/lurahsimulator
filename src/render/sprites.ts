@@ -1,10 +1,13 @@
 // Placeholder pixel sprites, drawn from text maps at runtime. No external art.
 // Warm storybook palette (terracotta, mustard, teal, cream, olive) kept punchy enough for a party
 // game, read against a dark brown ink.
+import { ICON_ART } from './icon-art';
+
 export const PALETTE: Record<string, string> = {
   k: '#2a1810', w: '#f6ecd4', r: '#df4a2c', R: '#a8321f', y: '#f4b935', b: '#3d72b4', B: '#27427c',
   g: '#86b84c', G: '#527f34', o: '#e57d2e', n: '#a8652f', N: '#603620', s: '#bdb4a3', S: '#6d635a',
   c: '#93d8cb', p: '#e57a9c', t: '#eac58f', a: '#f2b43a', l: '#82bfdc',
+  d: '#0b0b0c', e: '#f4f4f5', f: '#a1a1aa', h: '#e8b04a', j: '#e5484d', m: '#f08a24',
 };
 
 export const SPRITES: Record<string, string[]> = {
@@ -206,13 +209,14 @@ export const SPRITES: Record<string, string[]> = {
   ],
 };
 
-/** 8x8 HUD icons. Each is the shape people already know from their phone: coin, heart, key, flame, person. */
+/** HUD icons, 16x16. Each is the shape people already know from their phone: coin, heart, key, flame, person. */
 export const ICONS: Record<string, string[]> = {
-  rupiah: ['..oooo..', '.oyyyyo.', 'oywyyyyo', 'oywaayyo', 'oyyaaayo', 'oyyyyyyo', '.oyyyyo.', '..oooo..'],
-  sabar: ['.rr..rr.', 'rwrrrrrr', 'rrrrrrrR', 'rrrrrrrR', '.rrrrrR.', '..rrrR..', '...rR...', '........'],
-  orangDalam: ['........', '.yyy....', 'y...y...', 'y...yyyy', 'y...y.y.', '.yyy..y.', '........', '........'],
-  viral: ['...r....', '...rr...', '..rorr..', '.rooorr.', '.royyor.', '.royyor.', '..ryyr..', '...rr...'],
-  people: ['..wwww..', '.wwwwww.', '.wwwwww.', '..wwww..', '........', '.wwwwws.', 'wwwwwwws', 'wwwwwwws'],
+  ...ICON_ART,
+  rupiah: ICON_ART.coin,
+  sabar: ICON_ART.heart,
+  orangDalam: ICON_ART.key,
+  viral: ICON_ART.flame,
+  people: ICON_ART.person,
 };
 
 const cache = new Map<string, HTMLCanvasElement>();
