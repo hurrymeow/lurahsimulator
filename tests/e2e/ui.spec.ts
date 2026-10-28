@@ -1009,7 +1009,9 @@ test.describe('walkers and effects', () => {
     const insideNow = () =>
       page.evaluate(() => {
         const app = (window as unknown as { pakrt: any }).pakrt;
-        const solid = app.s.buildings.filter((b: any) => !['biopori', 'parkir', 'jalan'].includes(b.def));
+        // The seed can drop a building on a tile the auto-jobs later pave, so a road under a building still counts as a road.
+        const paved = new Set(app.s.buildings.filter((b: any) => b.def === 'jalan').map((b: any) => `${b.x},${b.y}`));
+        const solid = app.s.buildings.filter((b: any) => !['biopori', 'parkir', 'jalan'].includes(b.def) && !paved.has(`${b.x},${b.y}`));
         return app.view.crowd.people.filter((p: any) => solid.some((b: any) => b.x === Math.floor(p.fx) && b.y === Math.floor(p.fy))).map((p: any) => p.id as number);
       });
     const first = await insideNow();
