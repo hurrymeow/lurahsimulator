@@ -3,6 +3,7 @@ import '@fontsource/atkinson-hyperlegible/latin-400.css';
 import '@fontsource/atkinson-hyperlegible/latin-700.css';
 import './style.css';
 import { App } from './app';
+import { allDefs } from './sim/content';
 import { setupInstall } from './pwa/install';
 import { setupUpdates } from './pwa/update';
 import { openBuild } from './ui/build';
@@ -62,4 +63,4 @@ setupUpdates($('update-banner'), $<HTMLButtonElement>('update-btn'), homeUpdate)
 showHome(app, homeInstall, homeUpdate);
 
 // ?debug exposes the app for play-testing from the console.
-if (new URLSearchParams(location.search).has('debug')) (window as unknown as { pakrt: App }).pakrt = app;
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { pakrt: app, pakrtDefs: allDefs });

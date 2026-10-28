@@ -423,6 +423,11 @@ export class MapView {
     return c.x > -m && c.x < this.viewW + m && c.y > -m && c.y < this.viewH + m * 2;
   }
 
+  /** How a building is drawn. The map and the ghost of a building being moved both use it, so they always match. */
+  look(b: Building): { sprite: string; variant?: string; n: number; level: number; flip: boolean } {
+    return { sprite: def(b.def).sprite, variant: this.variant(b), n: footprintOf(b.def), level: b.level, flip: b.rot === 1 };
+  }
+
   variant(b: Building): string | undefined {
     // Houses vary by roof colour, roof shape and wall colour, like a perumahan built over the years.
     if (b.def === 'rumah') return ROOF_COLOURS[b.uid % ROOF_COLOURS.length] + ROOF_SHAPES[Math.floor(b.uid / 5) % ROOF_SHAPES.length] + WALL_COLOURS[Math.floor(b.uid / 2) % WALL_COLOURS.length];
@@ -539,10 +544,8 @@ export class MapView {
     this.crowd.begin();
     const drawOne = (b: Building): void => {
       if (!this.onScreen(b.x, b.y) || b.uid === this.hidden) return;
-      const d = def(b.def);
-      const n = footprintOf(b.def);
-      const art = iso(d.sprite, this.variant(b), n, b.level);
-      const flip = b.rot === 1;
+      const { sprite, variant, n, level, flip } = this.look(b);
+      const art = iso(sprite, variant, n, level);
       if (ai.has(b.uid)) {
         this.art(ctx, art, b.x, b.y, 1, 0, n, flip);
         tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, art, n));
@@ -639,6 +642,8 @@ export class MapView {
         this.art(ctx, iso(g.sprite, g.variant, n, g.level), p.x, p.y, 1, 0, n, g.flip);
         ctx.filter = 'none';
         ctx.globalAlpha = 1;
+        // A building being moved shows its level pips too, as it does standing on the map.
+        if (!g.tiles && (g.level ?? 1) > 1) this.levelPips(ctx, p.x + n - 1, p.y + n - 1, g.level!);
         this.diamond(ctx, p.x, p.y, 0, n);
         ctx.strokeStyle = p.ok ? '#4ade80' : '#f87171';
         ctx.lineWidth = p.ok ? 2 + Math.round(breath) : 2;
