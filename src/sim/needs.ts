@@ -19,7 +19,7 @@ export const NEEDS = {
   /** Harga Sembako Naik (the cabai event) cuts what the warung can feed. */
   priceCut: 0.25,
   /** Aman falls as the kampung crowds and as idle warga hang about; lamps, ronda and Hansip lift it. */
-  aman: { base: 70, perPreman: 4, perLamp: 3, perPosRonda: 2, crowdFrom: 10, perResident: 0.5, idleMonths: 6, perIdle: 2 },
+  aman: { base: 70, perPreman: 4, perLamp: 3, perPosRonda: 2, crowdFrom: 15, perResident: 0.3, idleMonths: 6, perIdle: 2 },
   preman: {
     /** Months idle before a resident can turn. */
     idle: 12,

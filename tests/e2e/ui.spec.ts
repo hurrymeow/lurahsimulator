@@ -1651,6 +1651,22 @@ test.describe('build mode', () => {
     await expectLegible(page, 'inspector after rename');
   });
 
+  test('each policy offers Wacana and Realisasi, and the 2045 meter explains Sejahtera', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => { (window as unknown as { pakrt: any }).pakrt.s.res.rupiah = 50_000_000; });
+    await openPanel(page, 'wacana');
+    await expect(page.locator('#sheet .realisasi')).toHaveCount(5);
+    await expectLegible(page, 'wacana and realisasi');
+    await page.locator('#sheet .realisasi .btn-primary').last().click();
+    await expect(page.locator('#sheet .realisasi .good').last()).toBeVisible();
+    await page.locator('.sheet-head .btn').click();
+    await page.locator('#emas').click();
+    await expect(page.locator('#modal .card')).toContainText('Perut');
+    await expect(page.locator('#modal .inem-head')).toBeVisible();
+    await expectLegible(page, 'sejahtera card');
+  });
+
   test('a path takes a start tile, an end tile and Yes', async ({ page }) => {
     await start(page);
     await dismissModals(page);

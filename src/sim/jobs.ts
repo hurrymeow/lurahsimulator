@@ -49,7 +49,9 @@ export function assign(s: GameState, r: Resident, job: JobId, manual = false): C
 
 /** Jobs with an open slot, each with its appeal as the odds of being picked. */
 export function openJobs(s: GameState): { job: Exclude<JobId, 'none'>; appeal: number }[] {
-  return liveJobs(s).filter((j) => j.appeal > 0 && used(s, j.id) < slots(s, j.id)).map((j) => ({ job: j.id, appeal: j.appeal }));
+  // While a preman waits, the Satpam posts are kept for him: it is the job that turns him.
+  const keepSatpam = s.residents.some((r) => r.preman);
+  return liveJobs(s).filter((j) => j.appeal > 0 && used(s, j.id) < slots(s, j.id) && !(keepSatpam && j.id === 'satpam')).map((j) => ({ job: j.id, appeal: j.appeal }));
 }
 
 /**

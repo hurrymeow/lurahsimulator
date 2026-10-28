@@ -20,7 +20,7 @@ export const SPRAWL_STEP = 0.03;
 /** Share of building income that goes up the chain as "setoran". Paying is the choice, so the kas never snowballs. */
 export const SETORAN_RATE = 0.1;
 /** Popularitas lost each month per resident: bigger kampung, bigger expectations. */
-export const EXPECT_PER_RESIDENT = 0.1;
+export const EXPECT_PER_RESIDENT = 0.14;
 /** Months without anything new before the pacing director steps in. */
 export const NOVELTY_GAP = 8;
 /** Each Viral point adds this fraction to shop income. */
