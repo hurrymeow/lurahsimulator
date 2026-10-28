@@ -529,7 +529,8 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#sheet')).toContainText('Kampung Sebelah');
     await expect(page.locator('#sheet')).toContainText('Indonesia Emas 2045');
     await expectLegible(page, 'stats with ranking');
-    await expect(page.locator('#emas-value')).toHaveText(/^\d+\.\d{2}%$/);
+    // The 2045 meter shows Sejahtera, a whole percent.
+    await expect(page.locator('#emas-value')).toHaveText(/^\d{1,3}%$/);
   });
 
   test('every setting flips, saves, and leaves the game readable', async ({ page }) => {
