@@ -372,6 +372,20 @@ function inTri(x: number, y: number, a: number[], b: number[], c: number[]): boo
 
 const within = (v: number, lo: number, hi: number) => v >= lo && v < hi;
 
+/** A flat polygon in one-tile art pixels from the ground centre (up is negative), as one shape. */
+function slab(p: Painter, pts: number[][], colour: string): void {
+  p.id++;
+  const xs = pts.map((q) => q[0]);
+  const ys = pts.map((q) => q[1]);
+  for (let y = Math.floor(Math.min(...ys)); y <= Math.ceil(Math.max(...ys)); y++)
+    for (let x = Math.floor(Math.min(...xs)); x <= Math.ceil(Math.max(...xs)); x++)
+      for (let k = 1; k + 1 < pts.length; k++)
+        if (inTri(x + 0.5, y + 0.5, pts[0], pts[k], pts[k + 1])) {
+          p.set(TW / 2 + x, TOP + TH / 2 + y, colour);
+          break;
+        }
+}
+
 /**
  * A soft transition from a flat piece to the grass round it: a half-transparent checker of the edge
  * colour on the ground just outside the silhouette, instead of a hard stair-stepped stop. Runs after
@@ -474,7 +488,7 @@ type ArtFn = (p: Painter, variant?: string, level?: number) => void;
 const ROOF_KEYS: Record<string, RoofShape> = { h: 'hip', g: 'gable', y: 'gableY', s: 'shed', f: 'flat' };
 
 /** Sprites that draw their own level progression. Everything else gets the upgrade kit. */
-const LEVELLED = new Set(['warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart', 'rumahMakan']);
+const LEVELLED = new Set(['rumah', 'warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart', 'rumahMakan']);
 /** Ground pieces and the tukang parkir level up without a fence round them. */
 const NO_KIT = new Set(['parkir', 'biopori', 'drain', 'kebunSayur', 'sawah', 'kolamLele', 'kolamIkan', 'taman', 'sawahIrigasi', 'embung', 'aspalUlang', 'jalan', 'selokan']);
 
@@ -483,16 +497,19 @@ const ART: Record<string, ArtFn> = {
   // y pelana, s shed, f flat dak) and wall colour. Every house has a band of roster vents under the
   // eave and weep holes along its base; the minimalis ones (shed, flat) get batu alam cladding, and a
   // flat roof carries the tandon.
-  rumah: (p, v = 'o') => {
+  rumah: (p, v = 'o', level = 1) => {
     const roof = v[0] ?? 'o';
     const shape = ROOF_KEYS[v[1]] ?? 'hip';
     const wall = v[2] ?? 't';
     const modern = shape === 'shed' || shape === 'flat';
+    // Level 3 is a rumah tingkat: a lower ground floor, then an upper floor set one pixel in.
+    const tall = level >= 3;
+    const ground = tall ? 7 : 8;
     p.shadow(3);
-    p.box(3, 8, wall, (face, u, j, i) => {
+    p.box(3, ground, wall, (face, u, j, i) => {
       if (face === 'T') return undefined;
       // Roster: a band of ventilation blocks under the eave, open and solid in turn.
-      if (j === 7 && (face === 'R' || within(u, 0.12, 0.45))) return i % 2 ? 'S' : 'w';
+      if (!tall && j === 7 && (face === 'R' || within(u, 0.12, 0.45))) return i % 2 ? 'S' : 'w';
       if (face === 'L' && within(u, 0.6, 0.82) && j < 6) return modern ? 'k' : 'N';
       if (face === 'L' && within(u, 0.15, 0.4) && within(j, 3, 6)) return j === 5 && modern ? 'S' : 'l';
       if (face === 'R' && (within(u, 0.2, 0.42) || within(u, 0.6, 0.82)) && within(j, 3, 6)) return 'l';
@@ -502,10 +519,36 @@ const ART: Record<string, ArtFn> = {
       if (j === 1 && i % 5 === 2) return 'S';
       return undefined;
     });
+    if (tall) {
+      p.box(4, 6, wall, (face, u, j, i) => {
+        if (face === 'T') return undefined;
+        if (j === 5 && (face === 'R' || within(u, 0.12, 0.45))) return i % 2 ? 'S' : 'w';
+        if (face === 'L' && (within(u, 0.15, 0.4) || within(u, 0.6, 0.85)) && within(j, 1, 4)) return 'l';
+        if (face === 'R' && within(u, 0.3, 0.7) && within(j, 1, 4)) return 'l';
+        return undefined;
+      }, ground);
+      // A balcony rail along the front of the upper floor.
+      p.id++;
+      for (let x = -11; x <= -2; x++) p.set(TW / 2 + x, TOP + TH / 2 - ground - 2 + Math.round((x + 11) / 2), x & 1 ? 'S' : 'w');
+    }
+    const top = tall ? ground + 6 : 8;
+    const inset = tall ? 4 : 3;
     // Rises keep every shape at or under the hipped roof's apex, so no house hides its neighbour.
-    p.roofShape(shape, 3, 8, shape === 'shed' ? 2 : shape === 'hip' ? 8 : 5, roof, wall);
+    p.roofShape(shape, inset, top, shape === 'shed' ? 2 : shape === 'hip' ? (tall ? 7 : 8) : tall ? 4 : 5, roof, wall);
     // A tandon air on the deck of a flat roof, orange or blue.
-    if (shape === 'flat') p.box(6, 3, roof === 'l' || roof === 'G' ? 'b' : 'o', (face) => (face === 'T' ? 'w' : undefined), 10);
+    if (shape === 'flat') p.box(6, 3, roof === 'l' || roof === 'G' ? 'b' : 'o', (face) => (face === 'T' ? 'w' : undefined), top + 2);
+    if (level === 2) {
+      // A teras: a canopy in the roof colour out from the front-left wall over the door, on two posts.
+      const at = (u: number, up: number) => [-10 + 10 * u, 5 * u - up];
+      const out = (q: number[], k: number) => [q[0] - 2 * k, q[1] + k];
+      const w1 = at(0.4, 7);
+      const w2 = at(1, 7);
+      const o1 = out(at(0.4, 5), 3);
+      const o2 = out(at(1, 5), 3);
+      p.stroke(o1[0], o1[1], o1[0], o1[1] + 5, 1, 'N');
+      p.stroke(o2[0], o2[1], o2[0], o2[1] + 5, 1, 'N');
+      slab(p, [w1, w2, o2, o1], roof);
+    }
   },
   kantorRT: (p, _v, level = 1) => {
     if (level <= 1) {
@@ -681,48 +724,41 @@ const ART: Record<string, ArtFn> = {
     const ay = TOP + TH / 2 - 32;
     for (const [dx, dy] of [[-4, -1], [-5, -3], [-4, -5], [4, -1], [5, -3], [4, -5], [-7, -3], [7, -3], [0, -2], [0, -3]]) p.set(ax + dx, ay + dy, dx === 0 ? 'r' : 'c');
   },
-  // Kos-kosan. Level 1 is one long row of rooms; level 2 adds a floor, a balcony rail and a jemuran.
+  // Kos-kosan: tall and narrow from day one, with a steel stair up the outside. Level 1 is two floors
+  // of rooms under a pelana; level 2 adds a third floor, a flat dak with a tandon and a jemuran on it.
   kosan: (p, _v, level = 1) => {
-    if (level <= 1) {
-      p.shadow(1);
-      p.box(1, 8, 'o', (face, _u, j, i) => {
-        if (face === 'T') return undefined;
-        if (j < 1) return 'S';
-        // A door every six pixels, each with its own small window.
-        if (face === 'L' && i % 6 >= 2 && i % 6 < 4 && j < 6) return 'k';
-        if (face === 'L' && i % 6 === 5 && within(j, 3, 5)) return 'l';
-        if (face === 'R' && within(j, 3, 6) && i % 5 >= 2) return 'l';
-        return undefined;
-      });
-      p.roof(1, 8, 5, 'R');
-      return;
-    }
-    p.shadow(1);
-    p.box(1, 15, 'o', (face, u, j, i) => {
+    const top = level >= 2;
+    const H = (top ? 3 : 2) * 6 + 1;
+    p.shadow(2);
+    p.box(2, H, 'o', (face, _u, j, i) => {
       if (face === 'T') return undefined;
       if (j < 1) return 'S';
-      if (face === 'L' && within(u, 0.42, 0.6) && j < 5) return 'k';
-      if ((j >= 7 && j < 10) || (j >= 2 && j < 4 && !(face === 'L' && within(u, 0.36, 0.66)))) return i % 5 >= 2 ? 'l' : undefined;
-      // Roster blocks under the roof slab, for the corridor's air.
-      if (j === 12) return i % 2 ? 'S' : 'w';
+      const f = (j - 1) % 6;
+      // A door and a small window per room, a floor slab line between floors.
+      if (face === 'L' && f === 5) return 'S';
+      if (face === 'L' && i % 6 >= 2 && i % 6 < 4 && f < 4) return 'k';
+      if (face === 'L' && i % 6 === 5 && within(f, 1, 3)) return 'l';
+      if (face === 'R' && within(f, 1, 4) && i % 5 >= 3) return 'l';
       return undefined;
     });
-    // A modern kost: flat dak beton with a parapet, and the tandon on the deck.
-    p.roofShape('flat', 1, 15, 0, 'R', 'o');
-    p.box(6, 2, 'b', (face) => (face === 'T' ? 'w' : undefined), 17);
-    // Balcony rail along the upper floor.
+    // The outside stair: a steel flight up the side wall.
+    p.stroke(3, 5, 11, -5, 1, 'S');
+    p.stroke(4, 3, 12, -7, 1, 'k', false);
+    if (!top) {
+      p.roofShape('gableY', 2, H, 5, 'R', 'o');
+      return;
+    }
+    // A modern kost: flat dak beton with a parapet, the tandon and a jemuran on the deck.
+    p.roofShape('flat', 2, H, 0, 'R', 'o');
+    p.box(6, 3, 'b', (face) => (face === 'T' ? 'w' : undefined), H + 1);
+    p.stroke(-9, -H - 2, -9, -H - 6, 1, 'S');
+    p.stroke(-3, -H + 1, -3, -H - 3, 1, 'S');
     p.id++;
-    for (let x = -14; x <= -1; x++) p.set(TW / 2 + x, TOP + TH / 2 - 10 + Math.round((x + 14) / 2), (x & 1) ? 'S' : 'w');
-    // A jemuran in front of the side wall: laundry in every colour in the kampung.
-    p.stroke(5, 7, 5, -3, 1, 'S');
-    p.stroke(13, 3, 13, -7, 1, 'S');
-    p.id++;
-    ['p', 'b', 'y', 'w', 'r', 'g', 'o'].forEach((c, k) => {
-      const x = TW / 2 + 6 + k;
-      const y = TOP + TH / 2 - 3 - Math.round(k / 2);
+    ['p', 'y', 'w', 'r', 'g'].forEach((c, k) => {
+      const x = TW / 2 - 8 + k;
+      const y = TOP + TH / 2 - H - 5 + Math.round(k / 2);
       p.set(x, y, c);
       p.set(x, y + 1, c);
-      if (k % 2 === 0) p.set(x, y + 2, c);
     });
   },
   // Open field: grass with chalk lines and a goalpost.

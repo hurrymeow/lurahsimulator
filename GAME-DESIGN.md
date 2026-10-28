@@ -108,6 +108,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 
 - Open: Rumah, Jalan Setapak, Kantor RT, Warung Sembako, Pos Ronda, Rumah Makan. Wifi at **8** residents.
 - **Problem unlocks** open when their trouble first shows up, with a notice saying why: Selokan after the first banjir; Gudang Material and Kebun Sayur when **3** warga have gone **6** months without work; Fotokopi when a permit queue forms. Pos Satpam moves to the first preman when preman exist.
+- **Rumah** levels up like any building: level 2 adds a teras and houses **5**, level 3 is a rumah tingkat and houses **7** (level 1 houses **3**). An upgrade costs the build price times the current level, so a house grows without a new lot.
 - **Goal for 1★:** **10** residents and **1** combo found.
 
 #### 1★ RT Rintisan

@@ -107,9 +107,9 @@ describe('level progressions', () => {
 });
 
 describe('rumah roof shapes', () => {
-  const draw = (v: string) => {
+  const draw = (v: string, level = 1) => {
     const p = new Painter();
-    paint(p, 'rumah', v);
+    paint(p, 'rumah', v, level);
     return p.pixels();
   };
   const top = (d: Uint8ClampedArray) => {
@@ -117,15 +117,17 @@ describe('rumah roof shapes', () => {
     return 0;
   };
 
-  it('every roof shape draws differently, and none is taller than the hipped house', () => {
-    const hip = draw('oht');
-    const seen = new Set<string>();
-    for (const shape of ['h', 'g', 'y', 's', 'f']) {
-      const d = draw(`o${shape}t`);
-      seen.add(d.join(','));
-      expect(top(d), shape).toBeGreaterThanOrEqual(top(hip));
+  it('at every level, every roof shape draws differently, and none is taller than the hipped house', () => {
+    for (const level of [1, 2, 3]) {
+      const hip = draw('oht', level);
+      const seen = new Set<string>();
+      for (const shape of ['h', 'g', 'y', 's', 'f']) {
+        const d = draw(`o${shape}t`, level);
+        seen.add(d.join(','));
+        expect(top(d), `${shape} level ${level}`).toBeGreaterThanOrEqual(top(hip));
+      }
+      expect(seen.size).toBe(5);
     }
-    expect(seen.size).toBe(5);
   });
 
   it('a one-letter variant still means a hipped roof in that colour, as old saves and icons use it', () => {

@@ -121,8 +121,14 @@ export function count(s: GameState, id: string, activeOnly = false): number {
   return s.buildings.filter((b) => b.def === id && (!activeOnly || isWorking(b))).length;
 }
 
+/** Beds in one building at its level. */
+export function bedsOf(b: Building): number {
+  const d = def(b.def);
+  return d.housingLevels?.[b.level - 1] ?? d.housing ?? 0;
+}
+
 export function housing(s: GameState): number {
-  return s.buildings.reduce((n, b) => n + (b.noRoad ? 0 : (def(b.def).housing ?? 0)), 0);
+  return s.buildings.reduce((n, b) => n + (b.noRoad ? 0 : bedsOf(b)), 0);
 }
 
 export function attractTarget(s: GameState): number {
