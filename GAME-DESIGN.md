@@ -307,6 +307,8 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 - Build and Warga live only in the dock (`ActionButton.dock`), so the Menu does not list them twice. Every other panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game. A new panel registers an `ActionButton` with a `group` in the Menu. Don't add other main-screen buttons.
 - Notices are toasts, not a band: the latest one floats over the bottom of the map for 3 seconds, then fades. Tap it to open the Log. Every notice also stays in the Log (Menu > Log), so a missed toast is never lost. Important messages still use the pause-and-tap modal.
 - The satellite view hides while a building is being placed.
+- Picking a building puts its ghost on the map at once, on the best free spot (beside a connected road, nearest the middle of the view). Every free spot shows as a faint diamond, a pixel arrow bobs over the ghost, and a finger on the ghost drags it (a mouse just hovers). Place is ready straight away.
+- Build cards show how many of each the player owns. Buildings not yet seen carry an animated pixel NEW tag on the card, its tab and the dock's Build button.
 - Light and Dark share one layout: every size, gap and position is the same, and only colours change. An e2e test compares the boxes in both themes.
 - On short phones (640px tall or less) the satellite view drops out and the goal pill spans the map's width.
 - Sheets, pop-ups, tips and the tutorial follow the theme too, so an open panel matches the frame behind it (see Themes below). The home screen keeps its dark look over the map in both themes.

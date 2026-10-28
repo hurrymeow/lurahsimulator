@@ -12,7 +12,7 @@ import { checkMove, checkPlace, moveBuilding, place } from './sim/rules';
 import { linePath, placeLine, type LineTile } from './sim/line';
 import { lotAt } from './sim/area';
 import { promote } from './sim/grow';
-import { RT_H, RT_W, type FirstKind } from './sim/types';
+import { GRID_H, GRID_W, RT_H, RT_W, type FirstKind } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
 import { attractTarget, buildCost, buildingAt, byUid, footprintOf, newGame, population, housing, year } from './sim/state';
@@ -481,6 +481,8 @@ export class App {
     const emasBar = document.getElementById('emas-fill');
     if (emasBar) emasBar.style.width = `${Math.max(0.5, this.s.emas)}%`;
     document.getElementById('date')!.textContent = dateLabel(this.s.month);
+    // Money and buildings change under build mode, so the free spots are marked again.
+    if (this.placing && !this.line) this.markValid();
     this.updatePlacing();
     for (const fn of this.refreshers) fn(this);
   }
@@ -570,6 +572,7 @@ export class App {
     // Every finger on the map. Two make a pinch: spreading them zooms in a whole step at a time.
     const fingers = new Map<number, { x: number; y: number }>();
     let pinch: { dist: number; midX: number; midY: number } | null = null;
+    let carrying = false;
     const local = (x: number, y: number) => {
       const r = canvas.getBoundingClientRect();
       return { x: x - r.left, y: y - r.top };
@@ -587,7 +590,13 @@ export class App {
         if (down) down.moved = true;
         return;
       }
-      if (fingers.size === 1) down = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, moved: false };
+      if (fingers.size === 1) {
+        down = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, moved: false };
+        const at = local(e.clientX, e.clientY);
+        const tile = this.view.tileAt(at.x, at.y);
+        // A finger on the ghost carries it: the map stays put and the building follows.
+        carrying = !!tile && this.onGhost(tile);
+      }
     });
     canvas.addEventListener('pointermove', (e) => {
       if (fingers.has(e.pointerId)) fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -606,9 +615,21 @@ export class App {
         }
         return;
       }
-      if (!down) return;
+      if (!down) {
+        // A mouse hovering in build mode carries the ghost with it.
+        if (e.pointerType === 'mouse' && this.placing && !this.line) {
+          const at = local(e.clientX, e.clientY);
+          const tile = this.view.tileAt(at.x, at.y);
+          if (tile) this.moveGhost(tile);
+        }
+        return;
+      }
       if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) down.moved = true;
-      if (down.moved) this.view.panBy(e.clientX - down.lastX, e.clientY - down.lastY);
+      if (carrying) {
+        const at = local(e.clientX, e.clientY);
+        const tile = this.view.tileAt(at.x, at.y);
+        if (tile) this.moveGhost(tile);
+      } else if (down.moved) this.view.panBy(e.clientX - down.lastX, e.clientY - down.lastY);
       down.lastX = e.clientX;
       down.lastY = e.clientY;
     });
@@ -687,6 +708,7 @@ export class App {
     this.moving = uid;
     this.view.hidden = uid;
     this.view.ghost = { x: b.x, y: b.y, ok: true, sprite: def(b.def).sprite, n: footprintOf(b.def), flip: b.rot === 1 };
+    this.markValid();
     this.updatePlacing();
   }
 
@@ -700,10 +722,80 @@ export class App {
     this.view.selected = null;
     document.getElementById('mainbar')!.hidden = true;
     document.getElementById('placebar')!.hidden = false;
+    // The building shows on the map straight away, on a good free spot, so it is plain where it goes.
+    if (!def(id).pathIncome) this.suggestSpot();
     this.updatePlacing();
   }
 
+  /** Marks every tile a valid footprint of the building in hand can cover. */
+  private markValid(): Uint8Array {
+    const id = this.placing!;
+    const n = footprintOf(id);
+    const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
+    const out = new Uint8Array(GRID_W * GRID_H);
+    for (let y = 0; y <= GRID_H - n; y++)
+      for (let x = 0; x <= GRID_W - n; x++) {
+        const ok = mover ? checkMove(this.s, mover, x, y).ok : checkPlace(this.s, id, x, y).ok;
+        if (!ok) continue;
+        for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) out[(y + dy) * GRID_W + x + dx] = 1;
+      }
+    this.view.valid = out;
+    return out;
+  }
+
+  /**
+   * Puts the ghost on the best free spot: beside a connected road first, then nearest the middle of the
+   * view (or the Kantor). Off screen, the map pans to it.
+   */
+  private suggestSpot(): void {
+    const id = this.placing!;
+    const d = def(id);
+    const n = footprintOf(id);
+    this.markValid();
+    const kantor = this.s.buildings.find((b) => b.def.startsWith('kantor'));
+    const mid = this.view.centreTile() ?? (kantor ? { x: kantor.x, y: kantor.y } : { x: 0, y: 0 });
+    const needsRoad = !FLAT.has(d.id) && !d.id.startsWith('kantor') && (d.scope ?? 'rt') === 'rt';
+    const road = needsRoad ? connectedRoad(this.s) : null;
+    let best: { x: number; y: number; score: number } | null = null;
+    for (let y = 0; y <= GRID_H - n; y++)
+      for (let x = 0; x <= GRID_W - n; x++) {
+        if (!checkPlace(this.s, id, x, y).ok) continue;
+        const cx = x + (n - 1) / 2;
+        const cy = y + (n - 1) / 2;
+        const far = Math.hypot(cx - mid.x, cy - mid.y);
+        const score = far + (road && !hasRoadBeside(road, { def: id, x, y }) ? 1000 : 0);
+        if (!best || score < best.score) best = { x, y, score };
+      }
+    if (!best) return;
+    this.view.ghost = { x: best.x, y: best.y, ok: true, sprite: d.sprite, n };
+    if (!this.view.inView(best.x + (n - 1) / 2, best.y + (n - 1) / 2)) this.view.centreOn(best.x + (n - 1) / 2, best.y + (n - 1) / 2);
+  }
+
+  /** Moves the ghost so its middle sits on a tile. Used by taps, drags and the mouse. */
+  moveGhost(tile: { x: number; y: number }): void {
+    const id = this.placing;
+    if (!id || this.line) return;
+    const d = def(id);
+    const n = footprintOf(id);
+    const gx = tile.x - Math.floor((n - 1) / 2);
+    const gy = tile.y - Math.floor((n - 1) / 2);
+    const g = this.view.ghost;
+    if (g && g.x === gx && g.y === gy) return;
+    const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
+    const ok = mover ? checkMove(this.s, mover, gx, gy).ok : checkPlace(this.s, id, gx, gy).ok;
+    this.view.ghost = { x: gx, y: gy, ok, sprite: d.sprite, n, flip: mover?.rot === 1 };
+    this.updatePlacing();
+  }
+
+  /** True when a tile is under the ghost's footprint, so a drag there carries the ghost instead of the map. */
+  onGhost(tile: { x: number; y: number }): boolean {
+    const g = this.view.ghost;
+    if (!g || g.tiles || !this.placing || this.line) return false;
+    return tile.x >= g.x && tile.y >= g.y && tile.x < g.x + g.n && tile.y < g.y + g.n;
+  }
+
   stopPlacing(): void {
+    this.view.valid = null;
     this.placing = null;
     this.moving = null;
     this.view.hidden = null;
@@ -726,13 +818,7 @@ export class App {
       return;
     }
     // The tapped tile is the middle of a big footprint, not its corner.
-    const n = footprintOf(id);
-    const gx = tile.x - Math.floor((n - 1) / 2);
-    const gy = tile.y - Math.floor((n - 1) / 2);
-    const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
-    const ok = mover ? checkMove(this.s, mover, gx, gy).ok : checkPlace(this.s, id, gx, gy).ok;
-    this.view.ghost = { x: gx, y: gy, ok, sprite: d.sprite, n, flip: mover?.rot === 1 };
-    this.updatePlacing();
+    this.moveGhost(tile);
   }
 
   private refreshLine(): void {

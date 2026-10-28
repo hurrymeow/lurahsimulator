@@ -11,6 +11,7 @@ import { WORLD_OX, WORLD_OY } from '../render/scenery';
 import { GRID_H, GRID_W } from '../sim/types';
 import { h } from './dom';
 import { menuIconURL } from './icons';
+import { newTag, unseenBuildings } from './build';
 import './console.css';
 
 /** Panels with their own dock button. The Menu stops listing them, so nothing appears twice. */
@@ -45,11 +46,22 @@ export function setupConsole(app: App): void {
     const icon = menuIconURL(id);
     const b = h('button', { class: 'btn cs-dock', id: `dock-${id}`, type: 'button', onclick: () => action.open(app) },
       icon ? h('img', { src: icon, alt: '', width: 24, height: 24, class: 'pixel' }) : null,
-      h('span', {}, ''),
+      h('span', { class: 'cs-dock-label' }, ''),
     );
     menuBtn.before(b);
     return { action, b };
   });
+  // Build carries the NEW tag while something new waits on the Build screen.
+  const buildBtn = dock.find((d) => d.action.id === 'build')?.b;
+  if (buildBtn) {
+    app.refreshers.push(() => {
+      const fresh = unseenBuildings(app.s).length > 0;
+      const tag = buildBtn.querySelector('[data-new]');
+      if (fresh && !tag) buildBtn.append(newTag(true));
+      else if (!fresh && tag) tag.remove();
+      buildBtn.classList.toggle('has-new', fresh);
+    });
+  }
   // Menu gets an icon too, so the three bottom buttons read as one set.
   menuBtn.replaceChildren(h('span', { class: 'cs-menu-icon', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), h('span', { 'data-i18n': 'page.menu' }, t('page.menu')));
   menuBtn.removeAttribute('data-i18n');
@@ -74,7 +86,7 @@ export function setupConsole(app: App): void {
   // The date follows the month; the satellite label follows the language.
   app.refreshers.push(() => {
     date.textContent = dateLabel(app.s.month);
-    for (const { action, b } of dock) b.lastElementChild!.textContent = action.label();
+    for (const { action, b } of dock) b.querySelector('.cs-dock-label')!.textContent = action.label();
     satBox.setAttribute('aria-label', t('cs.satHelp'));
     // Out of the way while a building is being placed.
     satBox.hidden = !document.getElementById('placebar')!.hidden;

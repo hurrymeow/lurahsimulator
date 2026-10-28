@@ -105,8 +105,15 @@ html.no-effects #dof { display: none; }
 .goal[hidden] { display: none; }
 .goal [hidden] { display: none; }
 .goal-now { font-weight: 700; }
-.new-tag { margin-left: 8px; padding: 0 6px; font-size: 16px; font-weight: 700; color: #0b0b0c; background: #fbbf24; border-radius: 6px; }
-.new-dot { color: #fbbf24; }
+/* NEW: a pixel sticker that hops a pixel and sparkles, so a fresh building is found at a glance. */
+.new-tag { position: relative; display: inline-block; margin-left: 8px; padding: 1px 4px 0; font-family: var(--font-pixel); font-size: 16px; line-height: 17px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #2a1810; background: #f4b935; border: 1px solid #8a4f12; border-radius: 0; box-shadow: 2px 2px 0 #2a1810; vertical-align: 2px; animation: new-hop 0.9s steps(1) infinite; }
+.new-tag::after { content: ''; position: absolute; top: -6px; right: 3px; width: 2px; height: 2px; background: #fffbe8; box-shadow: 0 -2px #fffbe8, 0 2px #fffbe8, -2px 0 #fffbe8, 2px 0 #fffbe8; animation: new-spark 0.9s steps(1) infinite; }
+.new-tag.small { position: absolute; top: -9px; right: 8px; margin: 0; z-index: 2; pointer-events: none; }
+.tabs .tab, .cs-dock { position: relative; overflow: visible; }
+@keyframes new-hop { 0% { transform: translateY(0); background: #f4b935; } 50% { transform: translateY(-2px); background: #fcd46a; } }
+@keyframes new-spark { 0% { opacity: 1; } 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .new-tag, .new-tag::after { animation: none; } }
+.card-btn .owned { margin: 0; font-size: 16px; font-weight: 700; color: var(--muted); }
 .coach { position: fixed; left: 12px; right: 12px; z-index: 25; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; background: var(--surface); border: 2px solid #fbbf24; border-radius: var(--radius); }
 .coach[hidden] { display: none; }
 .coach { pointer-events: none; }
