@@ -119,6 +119,18 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Add a short step: place two buildings side by side, see the combo trigger, find it in the Combo list. Tie it to an action.
   - Source: Hari, 2026-10-28
   - `open · — · — · done when:` a new player is shown how to make a combo by doing one, the step fires after an action, has no Skip, and is covered in EN and ID.
+- [ ] **Auto-fund the neighbouring RTs.**
+  - Problem: AI-run RTs (Kampung Sebelah) build only while the player funds them. Each Dana pays for one build, max banked is `NEIGHBOUR.fundMax` (`fundNeighbour` in `src/sim/grow.ts`, button in `src/ui/neighbours.ts`). The player must open the screen and tap Fund again and again.
+  - Why: Repeated manual funding is chores. RW needs 2 AI RTs, so it multiplies. A neighbour that stalls ("Stalled. Needs funding.") also drags the stage stars.
+  - Suggested solution: Add an Auto-fund toggle per RT (or one for all). Each month, if on and `checkFund` passes, call `fundNeighbour` while keeping a cash floor the player sets or a fixed reserve, so it never drains the kas to zero. Show the monthly spend in the Neighbours screen, and keep manual funding as is. Check the economy: auto-funding must not make the bailout or the Rupiah squeeze trivial (`src/sim/balance.ts`). Log the floor rule in `decisions/`.
+  - Source: Hari, 2026-10-28
+  - `open · — · — · done when:` each RT has an Auto-fund toggle that keeps funding it while the kas stays above the floor, the monthly spend is visible, the setting is saved, and it works in EN and ID at 320px.
+- [ ] **Warn once when monthly Popularitas drops.**
+  - Problem: Popularitas (`sabar`) can fall every month from queue wear, resident expectations or being broke (`src/sim/tick.ts`), and nothing tells the player. Residents leave below 15.
+  - Why: The player sees the loss only when residents leave, which is too late to react.
+  - Suggested solution: At month end, if Popularitas fell versus last month, show one warning toast naming the biggest cause (queue, expectations, or broke). Show it once per game so it teaches without nagging; after that only the HUD number changes. Reuse the toast path in `src/app.ts` and the cause tracking from the 2045-meter toast item. Add EN and ID text and keep it short at 320px.
+  - Source: Hari, 2026-10-28
+  - `open · — · — · done when:` the first monthly Popularitas drop shows a one-time warning with the cause, it never repeats in that save, the flag is saved, and EN and ID are checked at 320px.
 
 ## Done
 
