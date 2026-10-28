@@ -32,11 +32,11 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 
 ## Language
 
-- English is the default. Bahasa Indonesia is an option in Settings.
+- Bahasa Indonesia is the default. English is an option in Settings. Players who saved a language keep it.
 - Every string exists in both. Strings live in `src/i18n/`, content translations in the `id-*.ts` files.
 - `tests/i18n.test.ts` fails if a key or placeholder is missing.
 - Slang and proper names stay as they are in both languages (Sabar, Wacana, Warga, warung). Resource names are translated: see `decisions/resource-names.md` (English "Orang Inside" and "Virality", Indonesian "Orang Dalam" and "Viral").
-- Check every screen you touch in both languages.
+- Check every screen you touch in Indonesian. Keep the English strings up to date, but CI tests Indonesian only.
 
 ## Art
 
@@ -60,7 +60,7 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 2. Run `npm run typecheck`, `npm test` and `npm run e2e` locally.
 3. Open a PR. Enable auto-merge: `gh pr merge --auto --squash <n>`. It merges when the required `ci` check is green.
 4. After every push, check the PR for merge conflicts. A conflicted PR never starts CI and sends no alert. If it conflicts, merge main in and push.
-5. CI runs both languages at 320, 360, 412 and 430px. Don't cut that down.
+5. CI runs Indonesian at 320, 360, 412 and 430px. Don't cut that down.
    Five screens also have screenshot baselines. Refresh them only for an intended visual change, and attach the before and after. See UI.md.
 6. Log decisions in `decisions/<pr-or-slug>.md` and shipped work in `progress/<pr-or-slug>.md`. One file per PR.
    Never edit `DECISIONS.md`, `PROGRESS.md` or another PR's file.

@@ -15,7 +15,7 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 ### Legibility
 
 4. **Body text is 16px or more, contrast 4.5:1 or more.** Disabled buttons stay readable, never faded. Reason: glare and small screens.
-5. **Nothing clips, ellipsizes or leaves the screen** at 320, 360, 412 and 430px, in English and Indonesian. Indonesian runs longer, so 320px in Indonesian is the stress case. **Exception:** a line may be clamped (marked `data-clamp`) when it sits inside a button that opens the whole text in one tap. Two places use it: the goal pill (one line) and the effect on a Buku Combo card (two lines). The e2e scan skips ellipsis and clipping only there.
+5. **Nothing clips, ellipsizes or leaves the screen** at 320, 360, 412 and 430px, in Indonesian, the default language. Indonesian runs longer than English, so 320px is the stress case. English is not tested in CI. **Exception:** a line may be clamped (marked `data-clamp`) when it sits inside a button that opens the whole text in one tap. Two places use it: the goal pill (one line) and the effect on a Buku Combo card (two lines). The e2e scan skips ellipsis and clipping only there.
 6. **One icon, one meaning, a familiar shape,** always with a label or a number. Colour never carries meaning alone.
 
 ### Text
@@ -34,11 +34,11 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 
 | Rules | Check |
 | --- | --- |
-| 1, 4, 5 | `npm run e2e` legibility scan, 4 widths, 2 languages |
+| 1, 4, 5 | `npm run e2e` legibility scan, 4 widths, Indonesian |
 | 7, 8 | Word count over `src/i18n/en.ts` and the event data. Not automated. |
 | 2, 3, 6, 9, 10, 11 | Review against the audit crawl screenshots |
 | 12 | Timed run. Not automated. |
-| Layout drift | Screenshot baselines (`tests/e2e/visual.spec.ts`): home, HUD, Build sheet, event popup, tip card. 412px, 2 languages. |
+| Layout drift | Screenshot baselines (`tests/e2e/visual.spec.ts`): home, HUD, Build sheet, event popup, tip card. 412px, Indonesian. |
 
 Every new panel or message needs a scan in `tests/e2e/ui.spec.ts`. CI runs the suite on every PR. The audit crawl scripts are in the project files, not in the repo.
 

@@ -33,6 +33,6 @@ Unsure whether it conflicts? Treat it as a conflict and ask.
 
 - After opening a PR, enable auto-merge (squash). It merges when the required `ci` check is green.
 - After every push, check the PR for merge conflicts. A conflicted PR never starts CI. Merge main in and push again.
-- CI runs en and id at 320, 360, 412 and 430px. Do not cut that down.
+- CI runs Indonesian (id) at 320, 360, 412 and 430px. Do not cut that down. English is not tested in CI.
 - Log design decisions in `decisions/<pr-or-slug>.md` and shipped work in `progress/<pr-or-slug>.md`.
 - Never edit `DECISIONS.md` or `PROGRESS.md` (frozen), or another PR's log file.

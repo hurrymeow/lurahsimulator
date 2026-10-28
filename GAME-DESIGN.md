@@ -304,7 +304,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - No real politicians, parties, ormas or officials. Preman are generic and never coded as any ormas.
 - No ethnic, regional or religious jokes.
 - Every joke is a mechanic that moves a number (see section 1).
-- UI defaults to English, with Bahasa Indonesia as a Settings option. Players who saved a language keep it. Slang and proper names stay as they are in both languages (Sabar, Wacana, Warga, warung, ojol, Kampung Sebelah). Resource names are translated, see `decisions/resource-names.md`. Strings live in `src/i18n/`.
+- UI defaults to Bahasa Indonesia, with English as a Settings option. Players who saved a language keep it. CI tests Indonesian only. Slang and proper names stay as they are in both languages (Sabar, Wacana, Warga, warung, ojol, Kampung Sebelah). Resource names are translated, see `decisions/resource-names.md`. Strings live in `src/i18n/`.
 
 ### Staying out of real politics
 

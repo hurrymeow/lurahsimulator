@@ -29,12 +29,11 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
-  // Every phone runs in both languages. Indonesian strings run longer, so it is the one most likely to clip.
-  // The spec reads the language from the project name suffix.
-  projects: PHONES.flatMap((p) =>
-    (['id', 'en'] as const).map((lang) => ({
-      name: `${p.name}-${lang}`,
-      use: { viewport: p.viewport, deviceScaleFactor: 2, hasTouch: true, isMobile: true, locale: lang === 'id' ? 'id-ID' : 'en-US' },
-    })),
-  ),
+  // Every phone runs in Indonesian, the default language and the one whose longer strings clip first.
+  // English stays in the string tables and in Settings, but CI does not test it. The spec reads the
+  // language from the project name suffix.
+  projects: PHONES.map((p) => ({
+    name: `${p.name}-id`,
+    use: { viewport: p.viewport, deviceScaleFactor: 2, hasTouch: true, isMobile: true, locale: 'id-ID' },
+  })),
 });

@@ -8,7 +8,7 @@ export const LANGS: { id: Lang; label: string }[] = [
   { id: 'id', label: 'Bahasa Indonesia' },
   { id: 'en', label: 'English' },
 ];
-export const DEFAULT_LANG: Lang = 'en';
+export const DEFAULT_LANG: Lang = 'id';
 
 let lang: Lang = DEFAULT_LANG;
 
