@@ -40,3 +40,6 @@
   covers stage goals, Kelurahan and RW goals, the stats explainer
   (which keeps one word-plus-icon legend), How to play and the
   report card.
+
+## Result rows (review fix)
+The event-result e2e check used to need visible text in `.outcome-name`. A stat word there is now an icon, so the check accepts the icon's `aria-label` as the name. The row still shows icon plus number, which meets UI.md rule 6.

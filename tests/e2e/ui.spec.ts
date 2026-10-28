@@ -452,7 +452,10 @@ test.describe('events, ranking, settings', () => {
       await expectLegible(page, `event ${id}`);
       await card.locator('.btn').last().click();
       for (const chip of await page.locator('#modal .outcome-chip').all()) {
-        expect((await chip.locator('.outcome-name').textContent())?.trim(), `${id} result row has no word`).toBeTruthy();
+        // A stat word is now an icon that carries the name in aria-label, with the number beside it (UI.md rule 6).
+        const name = chip.locator('.outcome-name');
+        const word = ((await name.textContent())?.trim() || (await name.locator('[data-stat]').first().getAttribute('aria-label'))) ?? '';
+        expect(word, `${id} result row has no word`).toBeTruthy();
       }
       await expectLegible(page, `result of ${id}`);
       await page.locator('#modal .tap-hint').click();
