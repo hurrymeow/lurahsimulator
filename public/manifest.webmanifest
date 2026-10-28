@@ -1,7 +1,8 @@
 {
   "name": "Pak Pejabat",
   "short_name": "Pak Pejabat",
-  "description": "A satirical kampung management sim. Every joke moves a number.",
+  "description": "Sim manajemen kampung yang satir. Setiap lelucon menggerakkan angka.",
+  "lang": "id",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

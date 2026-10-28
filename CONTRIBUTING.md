@@ -56,7 +56,7 @@ Read the decision log with `node scripts/logs.mjs decisions`.
 
 ## Workflow
 
-1. Branch from latest `origin/main`.
+1. Branch from latest `origin/main`. Pick work from [TODO.md](TODO.md), and remove the item from it in your PR.
 2. Run `npm run typecheck`, `npm test` and `npm run e2e` locally.
 3. Open a PR. Enable auto-merge: `gh pr merge --auto --squash <n>`. It merges when the required `ci` check is green.
 4. After every push, check the PR for merge conflicts. A conflicted PR never starts CI and sends no alert. If it conflicts, merge main in and push.
