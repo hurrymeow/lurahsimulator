@@ -1,3 +1,4 @@
+import type { ChannelId, RoleId, TraitId } from '../data/staff';
 // Core simulation types. Nothing in src/sim may touch the DOM.
 
 export type ResourceId = 'rupiah' | 'sabar' | 'orangDalam' | 'viral';
@@ -139,6 +140,53 @@ export interface Meters {
   aman: number;
 }
 
+export interface StaffStats {
+  rajin: number;
+  lobi: number;
+  jujur: number;
+  gaul: number;
+}
+
+export interface Applicant {
+  id: number;
+  name: string;
+  stars: number;
+  stats: StaffStats;
+  trait?: TraitId;
+  special?: string;
+  salary: number;
+  /** A warga who applied through the Grup WA. */
+  fromResident?: number;
+}
+
+export interface Staff extends Applicant {
+  role: RoleId;
+  /** Inem: staff number 1, never leaves. */
+  inem?: boolean;
+  /** Months worked, after trait speed. */
+  xp: number;
+  level: number;
+  hiredAt: number;
+  /** Months away (Bimtek, healing). Away staff do nothing. */
+  away?: number;
+  /** Asked for a raise at the last level up and not answered yet. */
+  raiseAsked?: boolean;
+  /** A raise was refused: Kampung Sebelah may poach them. */
+  refused?: boolean;
+  /** Month of the last raise, for Rajin Lembur. */
+  lastRaise?: number;
+}
+
+export interface Lowongan {
+  role: RoleId;
+  channel: ChannelId;
+  /** Which requirement line the posting shows. */
+  req: number;
+  postedAt: number;
+  arriveAt: number;
+  applicants: Applicant[];
+}
+
 export interface RealisasiState {
   id: string;
   /** Month the program starts to work. */
@@ -254,6 +302,8 @@ export interface Resident {
   idle?: number;
   /** Idle too long while the kampung felt unsafe. Takes uang keamanan from a shop until given a job. */
   preman?: boolean;
+  /** Hired onto the staff: counts as in work, never picks a job of their own. */
+  staffId?: number;
 }
 
 export interface WacanaState {
@@ -340,6 +390,13 @@ export interface GameState {
   meters?: Meters;
   /** Programs actually carried out (Realisasi), each with the month it lands and the month it ends. */
   realisasi?: RealisasiState[];
+  /** The staff the player manages, Inem first. Absent in old saves until loaded. */
+  staff?: Staff[];
+  nextStaffId?: number;
+  /** The open job posting, if any. */
+  lowongan?: Lowongan | null;
+  /** Inem's gigs done, by id. */
+  gigs?: string[];
   wacana: WacanaState[];
   modifiers: Modifier[];
   ranking: RankingResult[];
