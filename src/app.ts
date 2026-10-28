@@ -392,10 +392,9 @@ export class App {
     }
   }
 
-  /** Haptic plus a UI click for button presses. */
+  /** Haptic for button presses. The click sound comes from audio.init. */
   tap(ms = 15): void {
     this.haptic(ms);
-    audio.play('tap');
   }
 
   notice(n: Notice): void {
