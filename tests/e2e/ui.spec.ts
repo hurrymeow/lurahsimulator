@@ -1607,6 +1607,29 @@ test.describe('moving and turning', () => {
     expect(await pk<number>(`a.s.buildings.find((b) => b.uid === ${uid}).y`)).toBe(k.y - 1);
     expect(await pk<number>('a.s.res.rupiah')).toBe(cash);
   });
+
+  test('a levelled house keeps its own sprite while it is being moved', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const pk = <T,>(code: string) => page.evaluate((c) => new Function('a', `return ${c}`)((window as unknown as { pakrt: unknown }).pakrt), code) as Promise<T>;
+    const uid = await pk<number>("(() => { const b = a.s.buildings.find((o) => o.def === 'rumah'); b.level = 3; return b.uid; })()");
+    const look = () => pk<{ level: number; variant: string; want: string }>(`(() => { const g = a.view.ghost; return { level: g.level, variant: g.variant, want: a.view.variant(a.s.buildings.find((b) => b.uid === ${uid})) }; })()`);
+    await pk(`a.startMoving(${uid})`);
+    let g = await look();
+    expect(g.level).toBe(3);
+    expect(g.variant).toBe(g.want);
+    // Still the same house after the ghost is tapped onto a new tile.
+    const box = (await page.locator('#map').boundingBox())!;
+    const at = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      return app.view.tileCentre(k.x, k.y - 1);
+    });
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    g = await look();
+    expect(g.level).toBe(3);
+    expect(g.variant).toBe(g.want);
+  });
 });
 
 test.describe('zoom, big lots and the Warga list', () => {
