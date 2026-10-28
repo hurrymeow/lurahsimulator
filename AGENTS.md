@@ -34,6 +34,6 @@ Unsure whether it conflicts? Treat it as a conflict and ask.
 - After opening a PR, enable auto-merge (squash). It merges when the required `ci` check is green.
 - After every push, check the PR for merge conflicts. A conflicted PR never starts CI. Merge main in and push again.
 - CI runs id (the default language) at 320, 360, 412 and 430px. Local `npm run e2e` adds en at the same widths. Do not cut either down.
-- [TODO.md](TODO.md) lists open tasks and ideas. Pick work from it. When you start an item, remove it from TODO.md in your PR. Add open work you find or leave behind.
+- [TODO.md](TODO.md) lists open tasks and ideas. Check it first, claim an item by setting its owner and date, then open a PR. Move it to Done when it merges. Add open work you find or leave behind.
 - Log design decisions in `decisions/<pr-or-slug>.md` and shipped work in `progress/<pr-or-slug>.md`.
 - Never edit `DECISIONS.md` or `PROGRESS.md` (frozen), or another PR's log file.
