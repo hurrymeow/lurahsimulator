@@ -310,6 +310,9 @@ export const EN = {
   'res.hint': 'Tap a resident to change their job.',
   'ls.byJob': 'By job',
   'ls.byLevel': 'By level',
+  'ls.all': 'All',
+  'ls.empty': 'Nothing here yet.',
+  'ls.allWork': 'Everyone has a job.',
   'pop.full': 'Rumah full. Build another house so more people can move in.',
   'res.current': '{label} (current)',
 

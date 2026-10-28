@@ -31,6 +31,8 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 
 - Unmet requirements always say exactly what is missing.
 - Discovered combos are auto-logged in the in-game Buku Combo.
+- The Buku Combo is a collection grid under filter buttons (All, ✓ active, ★ found, ? not yet, each with its count). A tile shows the buildings (greyed when missing, silhouettes before it is in town), a state mark in its corner, the name and the effect in two lines. Tapping a tile opens the whole entry below its row: effect, conditions, status and, once discovered, the story (`src/ui/lists.ts`).
+- The Warga list opens on a summary line (headcount and what everyone makes a month) and filter buttons: By job (default), No job (with its count) and By level. People sit in boxes per job, headed by the workplace sprite, the headcount and the group's monthly output; each person is a chip with their name and level stars. No job comes first, marked red.
 - Speed control: pause, 1x, 2x, 4x.
 - Text advances on tap, never on a timer.
 
@@ -298,7 +300,7 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 - Main screen is the console frame, after a 90s train-and-city builder (`src/ui/console.ts`, `src/ui/console.css`). It is kept to two slim rows on top and one dock below, so the map has the room. Top to bottom:
   - a time row: play/pause and speed (one size, side by side), the date, and the compact Indonesia Emas 2045 meter;
   - a money row: the five resources;
-  - the map, full width. A goal pill floats over its top-left corner ("Now: reach 6 residents"; tap for the next star), and a small satellite view over its top-right corner pans the map when tapped;
+  - the map, full width. A goal pill floats over its top-left corner (one line, "Now: reach 6 residents"; tap for the whole line and the next star), and a small satellite view over its top-right corner pans the map when tapped;
   - the month as a thin line along the top edge of the bottom bar;
   - a dock of three equal buttons, icon over label: Build, Warga, Menu.
 - Why this arrangement: time controls sit with the date, as in most city builders, and change speed without leaving the map. The resources get a row to themselves, so big numbers have room. The goal floats over the map, as quests do in mobile builders, so neither row wraps. Build and Warga are the panels used many times a minute, so they get their own buttons; the rest stay one tap away in Menu.
@@ -307,7 +309,7 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 - The satellite view hides while a building is being placed.
 - Light and Dark share one layout: every size, gap and position is the same, and only colours change. An e2e test compares the boxes in both themes.
 - On short phones (640px tall or less) the satellite view drops out and the goal pill spans the map's width.
-- Sheets and modals keep their own dark look in both themes (see Themes below).
+- Sheets, pop-ups, tips and the tutorial follow the theme too, so an open panel matches the frame behind it (see Themes below).
 - Clean pixel UI: 1px rules, square corners, dark green (`#2f6b45`) for primary actions. No drop shadows in the bars. No cluttered Windows-XP-style panels.
 - The rules in [UI.md](UI.md) apply to the frame, with rule 1's exception for the slim top rows and the goal pill (28px controls).
 - The dev-only `mockup.html` (also at `/mockup.html` on the live site) is the reference render, with a build palette the game doesn't have. It is not linked from the game.
@@ -347,7 +349,7 @@ The artist's restyle is the reference ([ART.md](ART.md) has the full rules). New
 
 ### Themes
 
-Settings > Theme picks the frame's colours. Both themes share the same layout.
+Settings > Theme picks the colours of the frame and of every sheet and pop-up. Both themes share the same layout. Sheets and pop-ups take the same tokens (`src/ui/console.css`), with square corners and a 2px ink rule in Light.
 
 - **Light** (default): cream `#f3eed6` surfaces, `#e6dfbf` for the ticker, ink `#2a1810` text and rules, muted `#5e4e3a`. Resource numbers and warnings use ink-dark tones on cream: Rupiah `#1d6b35`, Sabar `#1f57a8`, Orang Dalam `#7a4f00`, Viral `#a52a66`, full housing `#8a4b00`, missing and warning text `#9b1c1c`.
 - **Dark** (Mono Dark): background `#0b0b0c`, surface `#18181b`, text `#f4f4f5`, muted `#a1a1aa`, rules `#52525b`. Resource numbers keep their bright colours.

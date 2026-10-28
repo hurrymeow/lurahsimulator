@@ -15,7 +15,7 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 ### Legibility
 
 4. **Body text is 16px or more, contrast 4.5:1 or more.** Disabled buttons stay readable, never faded. Reason: glare and small screens.
-5. **Nothing clips, ellipsizes or leaves the screen** at 320, 360, 412 and 430px, in English and Indonesian. Indonesian runs longer, so 320px in Indonesian is the stress case.
+5. **Nothing clips, ellipsizes or leaves the screen** at 320, 360, 412 and 430px, in English and Indonesian. Indonesian runs longer, so 320px in Indonesian is the stress case. **Exception:** a line may be clamped (marked `data-clamp`) when it sits inside a button that opens the whole text in one tap. Two places use it: the goal pill (one line) and the effect on a Buku Combo tile (two lines). The e2e scan skips ellipsis and clipping only there.
 6. **One icon, one meaning, a familiar shape,** always with a label or a number. Colour never carries meaning alone.
 
 ### Text

@@ -1,9 +1,8 @@
-import { cEffect, cName, cStory, jBlurb, jName, t, wLine, wName, wTrade } from '../i18n';
+import { jBlurb, jName, t, wLine, wName, wTrade } from '../i18n';
 import { LEVEL_MONTHS, jobDef } from '../data/jobs';
 import { WACANA } from '../data/wacana';
 import type { App } from '../app';
 import { rupiah } from '../format';
-import { bookCombos, comboConditions, comboStatus, comboStatusText } from '../sim/combos';
 import { checkAssign, assign, levelOf, liveJobs } from '../sim/jobs';
 import { checkRepair, repair, repairCost } from '../sim/events';
 import { checkRestart, checkRestartODn, RESTART_ODN, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
@@ -13,29 +12,12 @@ import type { Building, JobId } from '../sim/types';
 import { actionButton } from './inspect';
 import { h } from './dom';
 import { openSheet } from './sheet';
-import { listLook, openComboLook, openWargaLook } from './lists';
+import { openComboBook, openWargaList } from './lists';
 
 // ---------- Warga ----------
 /** focus: the resident just edited. The list opens scrolled to their row instead of the top. */
 export function openResidents(app: App, focus?: number): void {
-  const look = listLook();
-  if (look) {
-    openWargaLook(app, look, (id) => openResident(app, id));
-    const row = focus === undefined ? null : document.querySelector<HTMLElement>(`#sheet [data-rid="${focus}"]`);
-    row?.scrollIntoView({ block: 'center' });
-    return;
-  }
-  const s = app.s;
-  const rows = s.residents.map((r) =>
-    h('button', { class: 'card-btn slim', 'data-rid': String(r.id), onclick: () => openResident(app, r.id) },
-      h('div', { class: 'card-text' },
-        h('div', { class: 'card-title' }, h('strong', {}, r.name), h('span', { class: 'meta' }, `${jobDef(r.job) ? jName(jobDef(r.job)!) : t('res.noJob')} · ${t('res.level', { n: levelOf(r) })}`)),
-        r.job === 'pns' ? h('p', { class: 'meta' }, t('res.pensiun', { n: Math.round(r.pensiun) })) : null,
-        r.job === 'buzzer' ? h('p', { class: 'meta' }, t('res.fake', { n: Math.round(r.fake) })) : null,
-      ),
-    ),
-  );
-  openSheet(t('menu.warga'), [h('p', { class: 'meta' }, t('res.hint')), ...rows]);
+  openWargaList(app, (id) => openResident(app, id));
   const row = focus === undefined ? null : document.querySelector<HTMLElement>(`#sheet [data-rid="${focus}"]`);
   if (row) {
     row.scrollIntoView({ block: 'center' });
@@ -90,25 +72,7 @@ export function openWacana(app: App): void {
 
 // ---------- Buku Combo ----------
 export function openBukuCombo(app: App): void {
-  const look = listLook();
-  if (look) return openComboLook(app, look);
-  const s = app.s;
-  const combos = bookCombos(s);
-  const found = combos.filter((c) => s.discovered.includes(c.id)).length;
-  const rows = combos.map((c) => {
-    const known = s.discovered.includes(c.id);
-    const st = comboStatus(s, c);
-    return h('div', { class: `card-btn static ${st.state === 'active' ? '' : 'locked'}` },
-      h('div', { class: 'card-text' },
-        h('div', { class: 'card-title' }, h('strong', {}, cName(c)), h('span', { class: 'meta' }, known ? t('combo.discovered') : t('combo.hidden'))),
-        h('p', {}, comboConditions(c)),
-        h('p', {}, cEffect(c)),
-        h('p', { class: 'meta' }, comboStatusText(st)),
-        known ? h('p', { class: 'meta' }, cStory(c)) : null,
-      ),
-    );
-  });
-  openSheet(t('menu.combo'), [h('p', { class: 'meta' }, t('combo.count', { found, total: combos.length })), ...rows]);
+  openComboBook(app);
 }
 
 // ---------- Inspector extras ----------
