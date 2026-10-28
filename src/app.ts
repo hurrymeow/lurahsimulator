@@ -442,8 +442,9 @@ export class App {
       modalHidden: document.getElementById('modal')?.hidden ?? true,
       sheetOpen: sheetOpen(),
       placing: !!this.placing,
-      homeOpen: !document.getElementById('home')?.hidden,
-      howtoOpen: !document.getElementById('howto')?.hidden,
+      // The home screen is removed from the DOM once the game starts, so a missing element means closed.
+      homeOpen: !!document.getElementById('home') && !document.getElementById('home')!.hidden,
+      howtoOpen: !!document.getElementById('howto') && !document.getElementById('howto')!.hidden,
     };
     return canShowQueued(Date.now(), this.lastInputAt, state);
   }
