@@ -53,7 +53,16 @@ async function dismissModals(page: Page): Promise<void> {
     await page.waitForTimeout(650);
   }
   // Twelve cards in a row means one is not going away. Name them, rather than run into the test timeout.
-  if (await page.locator('#modal').isVisible()) throw new Error(`cards keep coming: ${seen.join(' | ')}`);
+  if (await page.locator('#modal').isVisible()) {
+    const dbg = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const el = document.getElementById('modal')!;
+      const b = el.getBoundingClientRect();
+      const hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+      return JSON.stringify({ queue: app.modalQueue.map((n: any) => n.title), hasOnclick: !!el.onclick, hit: hit?.id || hit?.className || hit?.tagName, pending: !!app.s.pendingEvent, tips: localStorage.getItem('pakrt.tips') });
+    });
+    throw new Error(`cards keep coming: ${seen.join(' | ')} ${dbg}`);
+  }
 }
 
 /**
