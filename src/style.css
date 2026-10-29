@@ -494,6 +494,8 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .brand-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .brand-row .meta { margin: 0; }
 .insp-type { margin: 0 0 4px; }
+.insp-title { display: inline-flex; align-items: center; gap: 8px; }
+.insp-pencil { display: inline-flex; align-items: center; justify-content: center; min-width: var(--touch); min-height: var(--touch); padding: 0; border: 0; background: none; cursor: pointer; }
 
 /* Inem, the assistant: her portrait plate on message and event cards, and beside the coach's words. */
 .inem-head { float: left; display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 0 12px 6px 0; padding: 4px 4px 2px; background: #eac58f; border: 1px solid #a8652f; }
