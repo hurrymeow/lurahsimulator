@@ -95,7 +95,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatan',
     name: 'Kecamatan Inspection',
-    body: 'An inspector comes in 2 months to score drainage, Popularitas, abandoned projects and parkir liar. Good scores earn Orang Inside. Bad ones cost Popularitas.',
+    body: 'The Kampung Bersih team from the Kecamatan comes in 2 months to score drainage, Popularitas, abandoned projects and parkir liar. Good scores earn Orang Inside. Bad ones cost Popularitas.',
     // Raised by the inspection system on its own schedule, never at random.
     when: { chance: 0 },
     choices: [
@@ -111,6 +111,70 @@ export const EVENTS: EventDef[] = [
         cost: { orangDalam: 1 },
         inspectPrep: 12,
         result: 'The rombongan will leave with full stomachs and generous scores.',
+      },
+    ],
+  },
+  // The other inspections: the same visit with another team, other criteria and other shortcuts.
+  {
+    id: 'kecamatanTertib',
+    name: 'Ketertiban Inspection',
+    body: 'A Satpol PP team comes in 2 months to score parkir liar, abandoned projects, Aman and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
+    when: { chance: 0 },
+    choices: [
+      { label: 'Carry on as usual', result: 'The team will see the kampung as it is.' },
+      {
+        label: 'Spanduk "Kampung Tertib" · Rp 600.000',
+        cost: { rupiah: 600_000 },
+        inspectPrep: 18,
+        result: 'A banner now says the kampung is orderly. It is very large.',
+      },
+      {
+        label: 'Ask the jukir to take the day off · 1 Orang Inside',
+        cost: { orangDalam: 1 },
+        inspectPrep: 14,
+        result: 'The tukang parkir agreed to a day off. Paid, of course.',
+      },
+    ],
+  },
+  {
+    id: 'kecamatanSehat',
+    name: 'Kampung Sehat Inspection',
+    body: 'A Puskesmas team comes in 2 months to score drainage, Perut, health posts and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
+    when: { chance: 0 },
+    choices: [
+      { label: 'Carry on as usual', result: 'The team will see the kampung as it is.' },
+      {
+        label: 'Senam pagi, with photos · Rp 500.000',
+        cost: { rupiah: 500_000 },
+        inspectPrep: 16,
+        result: 'Fifty warga will do senam pagi once, for the camera.',
+      },
+      {
+        label: 'Borrow a tensimeter for the visit · 1 Orang Inside',
+        cost: { orangDalam: 1 },
+        inspectPrep: 14,
+        result: 'A borrowed tensimeter will sit on a table with a tablecloth.',
+      },
+    ],
+  },
+  {
+    id: 'kecamatanDigital',
+    name: 'Kampung Digital Inspection',
+    body: 'A Diskominfo team comes in 2 months to score WiFi, Viral, abandoned projects and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
+    when: { chance: 0 },
+    choices: [
+      { label: 'Carry on as usual', result: 'The team will see the kampung as it is.' },
+      {
+        label: 'QR codes on every pole · Rp 400.000',
+        cost: { rupiah: 400_000 },
+        inspectPrep: 18,
+        result: 'Every pole has a QR code now. They all open the same PDF.',
+      },
+      {
+        label: 'A kampung TikTok account · 1 Orang Inside',
+        cost: { orangDalam: 1 },
+        inspectPrep: 12,
+        result: 'The account has one video, made the night before.',
       },
     ],
   },
@@ -142,4 +206,20 @@ export const INSPECTION = {
   goodReward: { orangDalam: 2, sabar: 5 },
   okReward: { orangDalam: 1, sabar: 0 },
   badReward: { orangDalam: 0, sabar: -4 },
+  wifiPoints: 10,
+  healthPoints: 10,
+  /** Viral that scores full marks. */
+  viralFull: 30,
 };
+
+/** What each inspection scores, four criteria worth up to `perCriterion` each. The first visit is always Kampung Bersih. */
+export const INSPECTIONS = {
+  kecamatan: ['selokan', 'sabar', 'tertib', 'parkir'],
+  kecamatanTertib: ['parkir', 'tertib', 'aman', 'sabar'],
+  kecamatanSehat: ['selokan', 'perut', 'sehat', 'sabar'],
+  kecamatanDigital: ['wifi', 'viral', 'tertib', 'sabar'],
+} as const;
+export type InspectionId = keyof typeof INSPECTIONS;
+export type Criterion = (typeof INSPECTIONS)[InspectionId][number];
+/** Buildings that count for the Kampung Sehat criterion. */
+export const HEALTH_POSTS = ['apotek', 'posyandu', 'puskesmasPembantu'];

@@ -507,7 +507,7 @@ test.describe('events, ranking, settings', () => {
     await dismissModals(page);
     await skipTips(page);
     await seed(page);
-    const ids = ['guntingPita', 'banjir', 'cabai', 'kecamatan', 'partTime', 'cctv', 'kkn', 'startupPilot', 'hajatan', 'pasarMalam', 'sisaAnggaran', 'magang', 'pungli', 'pangkalanOjol', 'lesGratis', 'padam', 'rapatWarga', 'hibah', 'lombaKampung', 'truckSampah', 'lubangViral', 'sembako', 'pbb', 'festivalKuliner'];
+    const ids = ['guntingPita', 'banjir', 'cabai', 'kecamatan', 'kecamatanTertib', 'kecamatanSehat', 'kecamatanDigital', 'partTime', 'cctv', 'kkn', 'startupPilot', 'hajatan', 'pasarMalam', 'sisaAnggaran', 'magang', 'pungli', 'pangkalanOjol', 'lesGratis', 'padam', 'rapatWarga', 'hibah', 'lombaKampung', 'truckSampah', 'lubangViral', 'sembako', 'pbb', 'festivalKuliner'];
     for (const id of ids) {
       await page.evaluate((i) => {
         const app = (window as unknown as { pakrt: any }).pakrt;
@@ -550,7 +550,7 @@ test.describe('events, ranking, settings', () => {
     await expectCentred(page, 'event after a tip');
   });
 
-  for (const id of ['guntingPita', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga', 'partTime', 'padam', 'hibah']) {
+  for (const id of ['guntingPita', 'banjir', 'cabai', 'kecamatan', 'kecamatanTertib', 'kecamatanSehat', 'kecamatanDigital', 'kerjaBakti', 'musimPindahan', 'pendataanWarga', 'partTime', 'padam', 'hibah']) {
     for (const broke of [false, true]) {
       test(`event ${id}${broke ? ' while broke' : ''} is legible and has a free choice`, async ({ page }) => {
         await start(page);
@@ -575,7 +575,7 @@ test.describe('events, ranking, settings', () => {
         await page.locator('#modal .card.event .btn').first().click();
         // The outcome is a tap-to-dismiss popup with the stat changes.
         await expect(page.locator('#modal .card h2')).toHaveText({ id: 'Hasil kejadian', en: 'Event result' }[lang()]);
-        if (id !== 'banjir' && id !== 'kecamatan') await expect(page.locator('#modal .outcome-chip, #modal .outcome-mod').first()).toBeVisible();
+        if (id !== 'banjir' && !id.startsWith('kecamatan')) await expect(page.locator('#modal .outcome-chip, #modal .outcome-mod').first()).toBeVisible();
         await expectLegible(page, `outcome ${id}`);
         await expectCentred(page, `outcome ${id}`);
         await page.locator('#modal .tap-hint').click();

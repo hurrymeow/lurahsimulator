@@ -464,7 +464,8 @@ export interface GameState {
   /** Month a resident last moved in. Drives the perantau safety valve. */
   lastArrival?: number;
   /** Kecamatan inspections. Absent in older saves. */
-  inspection?: { warnAt: number; visitAt?: number; prep: number };
+  /** theme: the inspection warned of. last: the one that visited last, so the next team differs. */
+  inspection?: { warnAt: number; visitAt?: number; prep: number; theme?: string; last?: string };
   /** Quarterly report bookkeeping. Absent in older saves and on a fresh game. */
   quarter?: QuarterTrack;
   stats: { earned: number; spent: number; arrived: number; left: number };
