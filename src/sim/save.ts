@@ -1,9 +1,9 @@
 import { layRoads } from './access';
-import { setPlayerCells } from './area';
+import { setPlayerCells, ungapTile } from './area';
 import { allDefs, def, hasDef } from './content';
 import { ensureStaff } from './staff';
 import { SAVE_VERSION, newStageState } from './state';
-import { OLD_GRID_H, OLD_GRID_W, RT_H, RT_W, setGrid, type GameState, type ProblemId } from './types';
+import { OLD_GRID_H, OLD_GRID_W, RT_H, RT_W, STAGE_SPAN, setGrid, type GameState, type ProblemId } from './types';
 
 export function serialize(s: GameState): string {
   return JSON.stringify(s);
@@ -38,6 +38,7 @@ export function deserialize(raw: string | null): GameState | null {
     // Saves from before the rarer tukang parkir: any open shop means the first one has already come.
     s.parkirSeen ??= s.buildings.some((b) => b.def === 'parkir' || (def(b.def).shop && b.status === 'active'));
     s.kel ??= { budget: 0, spentBase: 0, serapanRun: 0, cleanAudits: 0 };
+    if (!s.gapped) ungap(s);
     setGrid(s.stage.current);
     setPlayerCells(s.neighbours.filter((n) => n.run === 'player'));
     if (!s.roadsLaid) layRoads(s);
@@ -74,6 +75,18 @@ function migrateV1(s: GameState): void {
     b.y += dy;
   }
   s.version = SAVE_VERSION;
+}
+
+/** The seams used to take each RT's last row and column. They now sit between cells, so a grown map moves its tiles apart. */
+function ungap(s: GameState): void {
+  const span = STAGE_SPAN[s.stage.current];
+  if (span > 1) {
+    for (const b of [...s.buildings, ...s.neighbours.flatMap((n) => n.buildings)]) {
+      b.x = ungapTile(b.x, RT_W, span);
+      b.y = ungapTile(b.y, RT_H, span);
+    }
+  }
+  s.gapped = true;
 }
 
 /** The selokan became the biopori, at the same level. Old saves swap it over, including unlocks and Kerja Bakti. */

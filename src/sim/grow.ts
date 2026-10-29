@@ -3,7 +3,7 @@ import { t } from '../i18n';
 import { RIVAL_BASE, RIVAL_PER_YEAR } from '../data/ranking';
 import { IURAN, NEIGHBOUR, STEMPEL } from './balance';
 import { inCell, viewOf } from './neighbourView';
-import { cellOf, isSeam, neighbourCells, rwOf, setPlayerCells } from './area';
+import { cellOf, cellOrigin, isSeam, neighbourCells, rwOf, setPlayerCells } from './area';
 import { FLAT, layRoads, refreshAccess, ring } from './access';
 import { activeCombos } from './combos';
 import type { Fx } from './gain';
@@ -13,7 +13,7 @@ import { pick } from './rng';
 import { score } from './ranking';
 import { stageDef, goalProgress } from './stages';
 import { addResident, bedsOf, covers, footprintOf, housing, price } from './state';
-import { GRID_W, RT_H, RT_W, setGrid, type Building, type GameState, type Neighbour, type RtTrait, type StageId } from './types';
+import { RT_H, RT_W, mapSpan, setGrid, type Building, type GameState, type Neighbour, type RtTrait, type StageId } from './types';
 
 /** The ladder this engine climbs. Matches `next` in the stage data. */
 const NEXT: Partial<Record<StageId, StageId>> = { rt: 'rw', rw: 'kelurahan' };
@@ -44,8 +44,9 @@ export const lotFull = (n: Neighbour): boolean => freeTiles(n).length === 0;
 function freeTiles(n: Neighbour): { x: number; y: number }[] {
   const taken = new Set(n.buildings.map((b) => `${b.x},${b.y}`));
   const out: { x: number; y: number }[] = [];
-  for (let y = n.cy * RT_H; y < (n.cy + 1) * RT_H; y++)
-    for (let x = n.cx * RT_W; x < (n.cx + 1) * RT_W; x++) if (!isSeam(x, y) && !taken.has(`${x},${y}`)) out.push({ x, y });
+  const o = cellOrigin(n.cx, n.cy);
+  for (let y = o.y; y < o.y + RT_H; y++)
+    for (let x = o.x; x < o.x + RT_W; x++) if (!isSeam(x, y) && !taken.has(`${x},${y}`)) out.push({ x, y });
   return out;
 }
 
@@ -64,7 +65,7 @@ export const builtBy = (n: Neighbour): Building[] => n.buildings.filter((b) => b
  */
 export function layAiPath(s: GameState, n: Neighbour, b: Building): boolean {
   const key = (x: number, y: number) => y * 100_000 + x;
-  const inside = (x: number, y: number) => Math.floor(x / RT_W) === n.cx && Math.floor(y / RT_H) === n.cy && !isSeam(x, y);
+  const inside = (x: number, y: number) => cellOf(x, y).cx === n.cx && cellOf(x, y).cy === n.cy && !isSeam(x, y);
   const taken = new Set<number>();
   const roads = new Set<number>();
   for (const o of n.buildings) {
@@ -106,8 +107,8 @@ function linkAll(s: GameState, n: Neighbour): void {
 
 function newNeighbour(s: GameState, cx: number, cy: number): Neighbour {
   const n: Neighbour = { cx, cy, trait: pick(s, TRAITS), buildings: [], pop: NEIGHBOUR.startPop, stars: 0, funded: 0, everFunded: false, lastBuild: s.month, turns: 0, discovered: [], ranking: [] };
-  const mx = cx * RT_W + Math.floor(RT_W / 2);
-  const my = cy * RT_H + Math.floor(RT_H / 2);
+  const mx = cellOrigin(cx, cy).x + Math.floor(RT_W / 2);
+  const my = cellOrigin(cx, cy).y + Math.floor(RT_H / 2);
   addTo(s, n, 'kantorRT', mx, my);
   addTo(s, n, 'rumah', mx - 1, my + 1);
   linkAll(s, n);
@@ -296,7 +297,7 @@ export function neighboursSystem(s: GameState, fx: Fx): void {
       const goals = stageDef('rt').stars[n.stars as 0 | 1 | 2].goals;
       if (!goals.every((g) => goalProgress(viewOf(s, n), g).have >= g.n)) break;
       n.stars++;
-      fx.push({ kind: 'notice', title: t('grow.rtStar', { cell: cellName(n), n: n.stars }), body: t('grow.rtStarBody'), tone: 'info', x: n.cx * RT_W + 4, y: n.cy * RT_H + 6 });
+      fx.push({ kind: 'notice', title: t('grow.rtStar', { cell: cellName(n), n: n.stars }), body: t('grow.rtStarBody'), tone: 'info', x: cellOrigin(n.cx, n.cy).x + 4, y: cellOrigin(n.cx, n.cy).y + 6 });
     }
   }
 }
@@ -336,7 +337,7 @@ export function neighboursYearEnd(s: GameState, year: number): void {
   }
 }
 
-export const cellName = (n: Neighbour): string => `RT ${n.cy * (GRID_W / RT_W) + n.cx + 1}`;
+export const cellName = (n: Neighbour): string => `RT ${n.cy * mapSpan() + n.cx + 1}`;
 
 /** Moves the player up a stage: the map grows and the new cells fill with AI RTs. Everything the player built stays where it is. */
 export function promote(s: GameState, fx: Fx): boolean {
