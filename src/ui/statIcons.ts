@@ -166,6 +166,8 @@ export function statIcon(stat: StatId): HTMLElement {
   img.className = 'pixel';
   span.append(img);
   span.addEventListener('click', (e) => {
+    // Inside a button or link the tap belongs to the control: a price on a button must still press it.
+    if (span.closest('button, a, [role="button"], label, summary')) return;
     e.stopPropagation();
     showStatToast(stat, label);
   });

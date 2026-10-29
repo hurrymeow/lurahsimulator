@@ -26,3 +26,7 @@
 | Building, combo, job and wacana blurbs with amounts | Rp text | coin |
 | Map number pops (canvas) | coin already | unchanged |
 | aria-labels | Rp text | unchanged, on purpose |
+
+## Icons inside buttons
+
+- An icon's tap shows "[icon] = name" and stopped the click there. With prices now on buttons, a tap on the coin in "Dana ×6 [coin] 6.000.000" (or on the key in "Take over · 3 [key]") did nothing. Inside a button, link or label the icon now leaves the tap to the control; the name toast is for icons in plain text.
