@@ -184,13 +184,23 @@ export function emptyTiles(s: GameState): { x: number; y: number }[] {
 }
 
 /** Income multiplier from decorations standing near a working income building. Capped, and never on a decoration or path itself. */
+/**
+ * Within r tiles, counted between the nearest edges of two lots, so a big building is as close as its footprint
+ * looks. For two one-tile buildings it is plain Chebyshev distance. Combos, Kanibal and decoration all use it.
+ */
+export function withinEdges(a: Pick<Building, 'def' | 'x' | 'y'>, b: Pick<Building, 'def' | 'x' | 'y'>, r: number): boolean {
+  const na = footprintOf(a.def);
+  const nb = footprintOf(b.def);
+  return Math.max(0, a.x - (b.x + nb - 1), b.x - (a.x + na - 1)) <= r && Math.max(0, a.y - (b.y + nb - 1), b.y - (a.y + na - 1)) <= r;
+}
+
 export function decorMult(s: GameState, b: Building): number {
   const d = def(b.def);
   if (!d.income || d.boost || d.pathIncome) return 1;
   let bonus = 0;
   for (const o of s.buildings) {
     const od = def(o.def);
-    if (od.boost && isWorking(o) && Math.abs(o.x - b.x) <= od.boost.radius && Math.abs(o.y - b.y) <= od.boost.radius) bonus += od.boost.bonus;
+    if (od.boost && isWorking(o) && withinEdges(o, b, od.boost.radius)) bonus += od.boost.bonus;
   }
   return 1 + Math.min(DECOR_CAP, bonus);
 }

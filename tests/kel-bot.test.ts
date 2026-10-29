@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { checkRepair, repair, resolveEvent } from '../src/sim/events';
 import { checkRestart, restart } from '../src/sim/projects';
-import { fundNeighbour, promote } from '../src/sim/grow';
+import { fundNeighbour, promote, setAutoFund } from '../src/sim/grow';
 import { lotAt } from '../src/sim/area';
 import { placeableDefs } from '../src/sim/content';
 import { checkPlace, checkUpgrade, place, skipPermit, upgrade } from '../src/sim/rules';
@@ -12,14 +12,16 @@ import { GRID_H, GRID_W, setGrid, type GameState } from '../src/sim/types';
 afterEach(() => setGrid('rt'));
 
 /** A Kelurahan bot: funds every RT, builds each Kelurahan building once on a seam lot, takes the free event choice. */
-function playKel(seed: number, years: number): GameState {
+function playKel(seed: number, years: number, auto = false): GameState {
   const s = newGame(seed);
   s.stage.stars.rt = 3;
+  if (auto) s.discovered = ['tongkrongan', 'rapatMalam', 'perangKuota'];
   promote(s, []);
   s.stage.stars.rw = 3;
   promote(s, []);
   s.stage.path = 'kelurahan';
   s.res.rupiah = 60_000_000;
+  if (auto) for (const n of s.neighbours) setAutoFund(n, 6);
   const seam: { x: number; y: number }[] = [];
   const all: { x: number; y: number }[] = [];
   for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) {
@@ -29,7 +31,7 @@ function playKel(seed: number, years: number): GameState {
   let best = 0;
   for (let m = 0; m < years * 12; m++) {
     if (s.pendingEvent) resolveEvent(s, [], 0);
-    for (const n of s.neighbours) if (s.res.rupiah > 3_000_000) fundNeighbour(s, n);
+    if (!auto) for (const n of s.neighbours) if (s.res.rupiah > 3_000_000) fundNeighbour(s, n);
     for (const id of ['kantorKel', 'pasar', 'terminal', 'taman', 'studiBanding', 'embung']) {
       const anchor = s.buildings.find((x) => lotAt(x.x, x.y) === 'kel') ?? seam[0];
       const spot = seam.filter((p) => checkPlace(s, id, p.x, p.y).ok).sort((p, q) => Math.abs(p.x - anchor.x) + Math.abs(p.y - anchor.y) - Math.abs(q.x - anchor.x) - Math.abs(q.y - anchor.y))[0];
@@ -64,4 +66,13 @@ describe('Kelurahan bot', () => {
     expect(got.filter((g) => g.built > 0).length, JSON.stringify(got)).toBe(3);
     expect(got.filter((g) => g.stars >= 1).length, JSON.stringify(got)).toBeGreaterThanOrEqual(2);
   }, 30_000);
+
+  it('reaches 2 stars within 8 years and 3 stars within 10 on Auto-dana, with a yearly Tim Audit', () => {
+    const got = [1, 2, 3].map((seed) => {
+      const s = playKel(seed, 10, true);
+      return { seed, stars: s.stage.stars.kelurahan, audits: s.kel.cleanAudits, rts: s.neighbours.map((n) => n.stars).join('') };
+    });
+    expect(got.filter((g) => g.stars >= 2).length, JSON.stringify(got)).toBe(3);
+    expect(got.filter((g) => g.stars === 3).length, JSON.stringify(got)).toBeGreaterThanOrEqual(2);
+  }, 120_000);
 });

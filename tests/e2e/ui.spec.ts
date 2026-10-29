@@ -37,6 +37,7 @@ async function openPanel(page: Page, id: string): Promise<void> {
 /** Taps through every queued message. */
 async function dismissModals(page: Page): Promise<void> {
   if (await page.locator('#howto').isVisible()) await page.locator('#howtoGo').click();
+  const seen: string[] = [];
   for (let i = 0; i < 12; i++) {
     if (!(await page.locator('#modal').isVisible())) {
       // A dismissed card waits 500ms before the next queued card appears,
@@ -46,10 +47,13 @@ async function dismissModals(page: Page): Promise<void> {
       await page.waitForTimeout(650);
       continue;
     }
-    if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click();
-    else await page.locator('#modal').click();
+    seen.push(`${await page.locator('#modal').getAttribute('class')}: ${(await page.locator('#modal h2').first().textContent({ timeout: 1000 }).catch(() => '?'))}`);
+    if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click({ timeout: 5000 });
+    else await page.locator('#modal').click({ timeout: 5000 });
     await page.waitForTimeout(650);
   }
+  // Twelve cards in a row means one is not going away. Name them, rather than run into the test timeout.
+  if (await page.locator('#modal').isVisible()) throw new Error(`cards keep coming: ${seen.join(' | ')}`);
 }
 
 /**
@@ -110,6 +114,9 @@ async function expectLegible(page: Page, where: string): Promise<void> {
 /** Fills the kampung with content so every panel has real text in it. */
 async function seed(page: Page): Promise<void> {
   await page.evaluate(() => {
+    // A busy kampung makes most tips due at once. None of these tests is about tips, and tapping through them
+    // all is slow on a CI runner, so they are marked seen first.
+    (window as unknown as { pakrtTips: { seeAll: () => void } }).pakrtTips.seeAll();
     const app = (window as unknown as { pakrt: any }).pakrt;
     const s = app.s;
     s.res.rupiah = 1_234_567_890;
@@ -125,8 +132,7 @@ async function seed(page: Page): Promise<void> {
     app.runTick();
   });
   await dismissModals(page);
-  // A busy kampung makes several tips due at once, and each refresh shows the next one. Drain them
-  // here, or one lands mid-test and swallows a tap (seen at 430px).
+  // Anything still due (a tip added later, or a queued card) is drained here, or it lands mid-test and swallows a tap (seen at 430px).
   for (let i = 0; i < 20; i++) {
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
     if (!(await page.locator('#modal').isVisible())) break;
@@ -206,6 +212,21 @@ test.describe('opener', () => {
     await expect(page.locator('#coach')).toBeHidden();
   });
 
+  test('on a desktop the opener note sits inside the game column', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(`/?debug&coach&lang=${lang()}`);
+    await passHome(page);
+    await expect(page.locator('#coach')).toBeVisible();
+    const note = (await page.locator('#coach').boundingBox())!;
+    const col = (await page.locator('#app').boundingBox())!;
+    expect(note.x).toBeGreaterThanOrEqual(col.x);
+    expect(note.x + note.width).toBeLessThanOrEqual(col.x + col.width);
+    // The arrow still points at Build.
+    const build = (await page.locator('#dock-build').boundingBox())!;
+    const ax = await page.locator('#coach').evaluate((el) => parseFloat(getComputedStyle(el).getPropertyValue('--ax')));
+    expect(Math.abs(note.x + ax + 12 - (build.x + build.width / 2))).toBeLessThan(30);
+  });
+
   test('the first month passes without a pop-up over the opener', async ({ page }) => {
     await page.goto(`/?debug&coach&lang=${lang()}`);
     await passHome(page);
@@ -252,7 +273,8 @@ test.describe('tips', () => {
     await page.evaluate(() => {
       const a = (window as unknown as { pakrt: any }).pakrt;
       a.s.lastEvent = { banjir: 0 };
-      a.s.month = 9;
+      // The first yearly ranking is the report card tip's trigger, not the month.
+      a.s.ranking.push({ year: 1, us: 90, them: 80, won: true });
       a.refresh();
     });
     // One tip at a time: tap through whatever is due until the report card tip.
@@ -275,6 +297,50 @@ test.describe('tips', () => {
     await expect(page.locator('#modal')).toBeVisible();
     await page.locator('#modal .tap-hint').click();
     await expect(page.locator('#modal')).toBeHidden();
+  });
+});
+
+test.describe('combo tutorial', () => {
+  test('the first shop names a combo to build, and the first combo points at the Combo list', async ({ page }) => {
+    const HEAD = { id: 'Tetangga saling membantu.', en: 'Neighbours help each other.' }[lang()];
+    const SAVED = { id: 'Combo tersimpan.', en: 'Combo saved.' }[lang()];
+    await start(page);
+    await page.locator('#howtoGo').click();
+    // Opening a shop is the trigger, not the month.
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      const k = a.s.buildings.find((b: any) => b.def === 'kantorRT');
+      a.s.buildings.push({ uid: a.s.nextUid++, def: 'warung', x: k.x - 1, y: k.y + 3, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      a.refresh();
+    });
+    const head = page.locator('#modal .card h2');
+    for (let i = 0; i < 6; i++) {
+      await expect(page.locator('#modal')).toBeVisible();
+      if ((await head.textContent()) === HEAD) break;
+      await page.locator('#modal .tap-hint').click();
+      await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+    }
+    await expect(head).toHaveText(HEAD);
+    // The body names the combo and its pieces, and the picture row shows them joined by "+".
+    await expect(page.locator('#modal .card')).toContainText('combo');
+    expect(await page.locator('#modal .pics img').count()).toBeGreaterThanOrEqual(2);
+    await expect(page.locator('#modal .tip-skip')).toHaveCount(0);
+    await expectLegible(page, 'combo tip');
+    await page.locator('#modal .tap-hint').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    // The combo is made: the next tip says where it is kept.
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.s.discovered.push('tongkrongan');
+      a.refresh();
+    });
+    await expect(head).toHaveText(SAVED);
+    await expect(page.locator('#modal .tip-skip')).toHaveCount(0);
+    await expectLegible(page, 'combo saved tip');
+    await page.locator('#modal .tap-hint').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    await openPanel(page, 'combo');
+    await expect(page.locator('#sheet')).toBeVisible();
   });
 });
 
@@ -636,6 +702,8 @@ test.describe('events, ranking, settings', () => {
   });
 
   test('with effects off the game still plays and shows numbers', async ({ page }) => {
+    // Each month can bring a card to tap away, so this runs close to the 60s limit on a busy CI runner.
+    test.slow();
     await start(page);
     await dismissModals(page);
     await page.evaluate(() => {
@@ -660,8 +728,10 @@ test.describe('slim HUD and one menu', () => {
     const ids = await page.evaluate(() =>
       [...document.querySelectorAll('button')].filter((b) => b.getClientRects().length && b.id !== 'ticker').map((b) => b.id),
     );
-    // Top: play, speed and the resources. The goal line only expands the next star. Bottom: the dock.
-    expect(ids).toEqual(['pause-btn', 'speed-btn', 'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'goal-now', 'dock-build', 'dock-warga', 'menu-btn']);
+    // Top: play, speed and the resources. The goal line only expands the next star. On phones tall enough for the
+    // satellite view, its fold button belongs to it. Bottom: the dock.
+    const sat = (page.viewportSize()?.height ?? 0) > 640 ? ['cs-sat-toggle'] : [];
+    expect(ids).toEqual(['pause-btn', 'speed-btn', 'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'goal-now', ...sat, 'dock-build', 'dock-warga', 'menu-btn']);
     const hud = (await page.locator('#hud').boundingBox())!;
     expect(hud.height).toBeLessThanOrEqual(80);
   });
@@ -715,6 +785,32 @@ test.describe('slim HUD and one menu', () => {
     await page.getByRole('button', { name: WORDS[lang()].close }).click();
     expect(await pk('a.speed')).toBe(0);
     expect(await pk('a.running')).toBe(false);
+  });
+
+  test('a manual pause shows PAUSED near the bottom and stops the world from moving', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const badge = page.locator('#auto-pause');
+    await expect(badge).toBeHidden();
+    await page.locator('#pause-btn').click();
+    await expect(badge).toBeVisible();
+    await expect(badge).toHaveText(WORDS[lang()].paused);
+    // Near the bottom of the map, clear of the HUD.
+    const box = (await badge.boundingBox())!;
+    const stage = (await page.locator('#stage').boundingBox())!;
+    expect(box.y).toBeGreaterThan(stage.y + stage.height / 2);
+    await expectLegible(page, 'paused pill');
+    // The world clock stands still: walkers do not move while paused.
+    const where = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.crowd.people.map((p: any) => `${p.fx.toFixed(3)},${p.fy.toFixed(3)}`).join('|'));
+    const before = await where();
+    await page.waitForTimeout(1200);
+    expect(await where()).toBe(before);
+    // Build mode shows it too, and play resumes on the play button.
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
+    await expect(badge).toBeVisible();
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.stopPlacing());
+    await page.locator('#pause-btn').click();
+    await expect(badge).toBeHidden();
   });
 
   test('a popup queued while a sheet is open waits for the sheet to close', async ({ page }) => {
@@ -900,6 +996,8 @@ test.describe('text is legible and never cut off', () => {
   });
 
   test('a long idle run never breaks the layout', async ({ page }) => {
+    // Each month can bring a card to tap away, so this runs close to the 60s limit on a busy CI runner.
+    test.slow();
     await start(page);
     await dismissModals(page);
     for (let i = 0; i < 40; i++) {
@@ -1675,7 +1773,8 @@ test.describe('home screen', () => {
       const s = app.s;
       s.month = 3;
       s.buildings.push({ uid: s.nextUid++, def: 'wifi', x: 2, y: 3, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
-      for (let i = 0; i < 3; i++) s.residents.push({ id: s.nextResidentId++, name: 'Mbak Rizki Putri', job: 'none', pensiun: 0, fake: 0, arrived: 0 });
+      // One has taken a wifi job: the tip's trigger.
+      for (let i = 0; i < 3; i++) s.residents.push({ id: s.nextResidentId++, name: 'Mbak Rizki Putri', job: i ? 'none' : 'ojol', pensiun: 0, fake: 0, arrived: 0 });
       app.save();
       localStorage.removeItem('pakrt.tips');
     });
@@ -2012,6 +2111,60 @@ test.describe('build mode', () => {
     await expect(page.locator('#sheet .staff-card')).toHaveCount(2);
     await page.locator('.sheet-head .btn').click();
     await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
+  });
+
+  test('a building waiting for a permit shows its Orang Dalam button without scrolling', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const uid = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.res.orangDalam = 3;
+      app.s.stage.stars.rt = 2;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      const uid = app.s.nextUid++;
+      app.s.buildings.push({ uid, def: 'kosan', x: k.x + 2, y: k.y + 1, level: 1, status: 'permit', timer: 3, invested: 0, placedAt: 0 });
+      app.refresh();
+      app.inspect(uid);
+      return uid;
+    });
+    const skip = page.locator('#sheet .btn-primary').first();
+    await expect(skip).toBeInViewport({ ratio: 1 });
+    await expectLegible(page, 'permit panel');
+    await skip.click();
+    expect(await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.s.buildings.find((b: any) => b.uid === u).status, uid)).toBe('building');
+  });
+
+  test('the satellite view folds away to a small button, and the choice survives a reload', async ({ page }) => {
+    // Below 640px tall the satellite view is not shown at all, so use a phone tall enough for it.
+    await page.setViewportSize({ width: page.viewportSize()!.width, height: 760 });
+    await start(page);
+    await dismissModals(page);
+    const sat = page.locator('#cs-sat');
+    const fold = page.locator('#cs-sat-toggle');
+    await expect(sat).toBeVisible();
+    await fold.click();
+    await expect(sat).toBeHidden();
+    await expect(fold).toBeVisible();
+    await expect(fold).toHaveAttribute('aria-pressed', 'true');
+    await expectLegible(page, 'satellite folded');
+    await page.reload();
+    await passHome(page);
+    await dismissModals(page);
+    await expect(page.locator('#cs-sat')).toBeHidden();
+    await page.locator('#cs-sat-toggle').click();
+    await expect(page.locator('#cs-sat')).toBeVisible();
+  });
+
+  test('a combo pop-up shows the buildings that made it', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    // Feed a real combo notice through the fx path, as a month would.
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.handleFx([{ kind: 'notice', title: 'Combo: Rapat Malam', body: 'Story. Effect.', tone: 'good', fanfare: true, pics: [{ def: 'kantorRT', level: 1 }, { def: 'posRonda', level: 1 }] }]);
+    });
+    await expect(page.locator('#modal .combo-pics img')).toHaveCount(2);
+    await expectLegible(page, 'combo pop-up with buildings');
   });
 
   test('a tukang parkir can be tertibkan from his panel with Orang Dalam', async ({ page }) => {

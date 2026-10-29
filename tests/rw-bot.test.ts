@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { checkRepair, repair, resolveEvent } from '../src/sim/events';
 import { checkRestart, restart } from '../src/sim/projects';
-import { fundNeighbour, promote } from '../src/sim/grow';
+import { fundNeighbour, promote, setAutoFund } from '../src/sim/grow';
 import { lotAt } from '../src/sim/area';
 import { checkPlace, place, skipPermit } from '../src/sim/rules';
 import { newGame } from '../src/sim/state';
@@ -11,17 +11,21 @@ import { GRID_H, GRID_W, setGrid, type GameState } from '../src/sim/types';
 afterEach(() => setGrid('rt'));
 
 /** An RW bot: funds every RT, builds each RW building once on a seam lot, takes the free event choice. */
-function playRw(seed: number, years: number): GameState {
+function playRw(seed: number, years: number, auto = false): GameState {
   const s = newGame(seed);
   s.stage.stars.rt = 3;
+  // The player's RT reached 3 stars, which takes 3 combos.
+  if (auto) s.discovered = ['tongkrongan', 'rapatMalam', 'perangKuota'];
   promote(s, []);
   s.stage.current = 'rw';
   s.res.rupiah = 30_000_000;
+  // A player who found Auto-dana keeps every RT funded six builds ahead.
+  if (auto) for (const n of s.neighbours) setAutoFund(n, 6);
   const seam: { x: number; y: number }[] = [];
   for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (lotAt(x, y) === 'rw') seam.push({ x, y });
   for (let m = 0; m < years * 12; m++) {
     if (s.pendingEvent) resolveEvent(s, [], 0);
-    for (const n of s.neighbours) if (s.res.rupiah > 3_000_000) fundNeighbour(s, n);
+    if (!auto) for (const n of s.neighbours) if (s.res.rupiah > 3_000_000) fundNeighbour(s, n);
     for (const id of ['balaiRW', 'posyandu', 'portal', 'pasarKaget', 'gapura']) {
       // Build close together: combos need their members within a few tiles.
       const anchor = s.buildings.find((x) => lotAt(x.x, x.y) === 'rw') ?? seam[0];
@@ -48,4 +52,12 @@ describe('RW bot', () => {
     expect(got.filter((g) => g.stars >= 2).length, JSON.stringify(got)).toBeGreaterThanOrEqual(4);
     for (const g of got) expect(g.combos.length, `seed ${g.seed}`).toBeGreaterThanOrEqual(2);
   }, 30_000);
+
+  it('reaches 3 stars on Auto-dana within 9 years: 4 RTs at 2 stars and 2 at 3', () => {
+    const got = [1, 2, 3, 4, 5].map((seed) => {
+      const s = playRw(seed, 9, true);
+      return { seed, stars: s.stage.stars.rw, rts: s.neighbours.map((n) => n.stars).join('') };
+    });
+    expect(got.filter((g) => g.stars === 3).length, JSON.stringify(got)).toBeGreaterThanOrEqual(4);
+  }, 60_000);
 });

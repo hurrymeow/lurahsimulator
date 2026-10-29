@@ -122,7 +122,7 @@ html.no-effects #dof { display: none; }
 .tile, #menu-btn { position: relative; }
 .count-tag { min-width: 20px; text-align: center; letter-spacing: 0; }
 .card-btn .owned { margin: 0; font-size: 16px; font-weight: 700; color: var(--muted); }
-.coach { position: fixed; left: 12px; right: 12px; z-index: 25; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; background: var(--surface); border: 2px solid #fbbf24; border-radius: var(--radius); }
+.coach { position: fixed; left: max(12px, calc(50% - 268px)); right: max(12px, calc(50% - 268px)); z-index: 25; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; background: var(--surface); border: 2px solid #fbbf24; border-radius: var(--radius); }
 .coach[hidden] { display: none; }
 .coach { pointer-events: none; }
 .coach .btn { pointer-events: auto; }
@@ -166,7 +166,9 @@ html.no-effects #dof { display: none; }
 #speed-btn { min-width: 56px; padding: 0 8px; font-weight: 700; font-variant-numeric: tabular-nums; }
 #pause-btn { font-size: 18px; }
 #pause-btn[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
-#auto-pause { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 5; padding: 4px 12px; border-radius: 12px; background: var(--surface-2); color: var(--text); font-size: 16px; font-weight: 700; pointer-events: none; }
+/* Paused: a pixel pill near the bottom of the map, in play and build mode. Hidden under a toast, which sits there too. */
+#auto-pause { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 5; padding: 4px 14px; border: 2px solid var(--text); border-radius: 0; background: var(--surface-2); color: var(--text); font-family: var(--font-pixel); font-size: 16px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; box-shadow: 2px 2px 0 var(--text); pointer-events: none; }
+#stage:has(#ticker:not([hidden])) #auto-pause { visibility: hidden; }
 #auto-pause[hidden] { display: none; }
 #menu-btn { padding: 0 20px; }
 .date-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }

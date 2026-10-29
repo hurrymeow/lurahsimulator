@@ -451,6 +451,10 @@ export interface GameState {
   lomba?: LombaState;
   /** The month the 17 Agustus trophy leaves the Kantor RT. */
   pialaUntil?: number;
+  /** The three needs meters at the end of last month, for the 2045-drop toast. Missing in older saves. */
+  lastMeters?: Meters;
+  /** One-time warnings already shown in this game, such as 'sabar'. */
+  warned?: string[];
   /** Cleared tukang parkir due back at their shop: shop uid and month. Missing in older saves. */
   parkirBack?: { shop: number; at: number }[];
   /** A tukang parkir has turned up at least once. The first shop always draws one. */
@@ -470,7 +474,7 @@ export type FirstKind = 'house' | 'resident' | 'star';
 
 export type SimEffect =
   | { kind: 'pop'; x: number; y: number; res: ResourceId; amount: number }
-  | { kind: 'notice'; title: string; body: string; tone: 'good' | 'bad' | 'info'; fanfare?: boolean; x?: number; y?: number; inem?: boolean; card?: boolean; open?: string }
+  | { kind: 'notice'; title: string; body: string; tone: 'good' | 'bad' | 'info'; fanfare?: boolean; x?: number; y?: number; inem?: boolean; card?: boolean; open?: string; pics?: { def: string; level: number }[] }
   | { kind: 'job'; x: number; y: number; name: string; job: Exclude<JobId, 'none'> }
   | { kind: 'level'; x: number; y: number; name: string; level: number }
   | { kind: 'event'; eventId: string }

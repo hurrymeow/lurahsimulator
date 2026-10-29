@@ -16,6 +16,8 @@ export interface Settings {
   sfxVol: number;
   musicVol: number;
   lang: Lang;
+  /** The satellite view is folded away to a small button. */
+  satMin?: boolean;
 }
 
 const KEY = 'pakrt.settings';

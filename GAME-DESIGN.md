@@ -232,7 +232,7 @@ The player picks a path at promotion. Kelurahan is dense and shop-heavy. Desa ma
 - **Wisata Edukasi** combo (Desa Wisata + Sawah Irigasi): **+4** Viral, **-1** Sabar a month.
 - **Honorer** job: does PNS work for half the pay. After **5** years, **20%** a year chance of becoming PNS.
 - **Pendamping Desa** job: Dana Desa only pays out with one employed.
-- **Tim Audit** event: each wacana with no receipt costs **2** Sabar.
+- **Tim Audit** event: comes every March once the Kelurahan has 1★, so the 2★ goal never waits on luck. Each wacana with no receipt costs **2** Sabar; with none missing (or a paid rapi-rapi) the audit is clean.
 - **Lomba Kelurahan** event: paint spending raises the score for one month.
 - **Kunjungan** event: one month warning before a visit.
 
@@ -345,7 +345,12 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 - Why this arrangement: time controls sit with the date, as in most city builders, and change speed without leaving the map. The resources get a row to themselves, so big numbers have room. The goal floats over the map, as quests do in mobile builders, so neither row wraps. Build and Warga are the panels used many times a minute, so they get their own buttons; the rest stay one tap away in Menu.
 - Build and Warga live only in the dock (`ActionButton.dock`), so the Menu does not list them twice. Every other panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game. A new panel registers an `ActionButton` with a `group` in the Menu. Don't add other main-screen buttons.
 - Notices are toasts, not a band: the latest one floats over the bottom of the map for 3 seconds, then fades. Tap it to open the Log. Every notice also stays in the Log (Menu > Log), so a missed toast is never lost. Important messages still use the pause-and-tap modal.
-- The satellite view hides while a building is being placed.
+- The satellite view hides while a building is being placed. A small square under it folds it away to a button in its corner, and back; the choice is saved in settings. The square is drawn 28px inside a 48px tap area.
+- While time stands still with the map in view (the player's pause, or build mode), a pixel **JEDA / PAUSED** pill shows near the bottom of the map. It hides under a toast. Ambient motion stops while paused (scenery, walkers, idle buildings, weather); feedback for what the player does (the ghost, bursts, coins) keeps moving.
+- The goal pill's "Now" line, in order: the first house; a combo, from month 30 if none is found, or as soon as a combo is all the next star still needs (it leads over beds); waiting on a build; beds; and when beds are free but nobody comes (residents at the attraction limit), the building that draws the most residents for its price; otherwise the next resident step.
+- Warnings that explain a fall, as toasts: when the 2045 meter drops **10** points or more in a month, the toast names the meter that fell most, and the shut warung if Perut fell. The first month Popularitas falls by **1** or more (from month 6, after the opener), one toast names the biggest cause (permit queue, expectations, broke, hunger or preman, or buildings that drain it). It shows once per game.
+- A building waiting for a permit leads its panel with the Orang Dalam button, above the fold.
+- Combo pop-ups show the buildings that made the combo, at their levels, under the title.
 - Picking a building puts its ghost on the map at once, on the best free spot (beside a connected road, nearest the middle of the view). Every free spot shows as a faint diamond, a pixel arrow bobs over the ghost, and a finger or mouse on the ghost drags it (a hovering mouse does not move it, or the Place buttons would slide away from the cursor). Place is ready straight away.
 - Build cards show how many of each the player owns. Buildings not yet seen carry an animated pixel NEW tag on the card, its tab and the dock's Build button.
 - Light and Dark share one layout: every size, gap and position is the same, and only colours change. An e2e test compares the boxes in both themes.

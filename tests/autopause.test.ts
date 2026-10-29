@@ -37,6 +37,9 @@ describe('auto-pause', () => {
   it('shows the Paused pill only over a visible map', () => {
     expect(showPausedBadge(idle)).toBe(false);
     expect(showPausedBadge({ ...idle, placing: true })).toBe(true);
+    // The player's own pause shows it too.
+    expect(showPausedBadge({ ...idle, speed: 0 })).toBe(true);
+    expect(showPausedBadge({ ...idle, speed: 0, sheetOpen: true })).toBe(false);
     for (const patch of [{ sheetOpen: true }, { modals: 1 }, { pendingEvent: true }, { howtoOpen: true }, { held: true }]) {
       expect(showPausedBadge({ ...idle, ...patch })).toBe(false);
     }

@@ -1,7 +1,7 @@
 // The Buku Combo and the Warga list. Both open on a row of filter buttons over a picture-first view:
 // the Buku Combo is a column of cards, the Warga list groups people by job. Icons are the game's own
 // art: building sprites, resource icons, and a job's workplace sprite.
-import { cEffect, cName, cStory, jName, t } from '../i18n';
+import { bName, cEffect, cName, cStory, jName, t } from '../i18n';
 import { jobDef, levelMult } from '../data/jobs';
 import type { App } from '../app';
 import { rupiahShort } from '../format';
@@ -109,6 +109,16 @@ const comboEffect = (c: ComboDef): Node[] => {
 const STATE_ICON: Record<ComboStatus['state'], string> = { active: '✓', found: '★', todo: '?' };
 const stateName = (st: ComboStatus['state']) => t(`combo.state.${st}` as 'combo.state.active');
 const badge = (st: ComboStatus) => h('span', { class: `ls-badge ${st.state}` }, h('b', { 'aria-hidden': 'true' }, STATE_ICON[st.state]), stateName(st.state));
+/** The buildings that made a combo, joined by "+", for the combo pop-up. */
+export const comboPics = (pics: { def: string; level: number }[], size = 56): HTMLElement => {
+  const parts: Node[] = [];
+  pics.forEach((p, i) => {
+    if (i) parts.push(h('span', { class: 'ls-plus', 'aria-hidden': 'true' }, '+'));
+    parts.push(h('span', { class: 'ls-member', title: bName(def(p.def)) }, sprite(p.def, size, p.level)));
+  });
+  return h('div', { class: 'ls-members combo-pics' }, ...parts);
+};
+
 const members = (c: ComboDef, st: ComboStatus, size = 32) => {
   const missing = new Set(st.missing);
   const parts: Node[] = [];

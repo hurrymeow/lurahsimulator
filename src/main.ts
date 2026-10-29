@@ -15,7 +15,7 @@ import { showHome } from './ui/home';
 import { showHowto } from './ui/howto';
 import { setupCoach } from './ui/coach';
 import { setupGoal } from './ui/goal';
-import { setupTips } from './ui/tips';
+import { seeAllTips, setupTips } from './ui/tips';
 import { openSettings } from './ui/settings';
 import { openNeighbours } from './ui/neighbours';
 import { openMenu } from './ui/menu';
@@ -68,4 +68,4 @@ showHome(app, homeInstall, homeUpdate);
 setupTips(app);
 
 // ?debug exposes the app for play-testing from the console.
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { pakrt: app, pakrtDefs: allDefs });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { pakrt: app, pakrtDefs: allDefs, pakrtTips: { seeAll: seeAllTips } });
