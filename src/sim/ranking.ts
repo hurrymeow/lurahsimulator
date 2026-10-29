@@ -16,8 +16,8 @@ export function score(s: GameState): number {
   );
 }
 
-/** The score of the whole area being ranked: the player's RT plus every AI RT in it. */
-export const areaScore = (s: GameState): number => Math.round((score(s) + popReportBonus(s, population(s)) + s.neighbours.reduce((sum, n) => sum + score(viewOf(s, n)), 0)) * lombaMult(s));
+/** The score of the whole area being ranked: the player's RT plus every AI RT in it. RTs the player runs are already in the player's score. */
+export const areaScore = (s: GameState): number => Math.round((score(s) + popReportBonus(s, population(s)) + s.neighbours.reduce((sum, n) => sum + (n.run === 'player' ? 0 : score(viewOf(s, n))), 0)) * lombaMult(s));
 
 export function addEmas(s: GameState, amount: number): void {
   s.emas = Math.max(0, s.emas + amount);

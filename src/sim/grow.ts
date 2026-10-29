@@ -2,8 +2,9 @@
 import { t } from '../i18n';
 import { RIVAL_BASE, RIVAL_PER_YEAR } from '../data/ranking';
 import { IURAN, NEIGHBOUR, STEMPEL } from './balance';
-import { viewOf } from './neighbourView';
-import { cellOf, isSeam, neighbourCells } from './area';
+import { inCell, viewOf } from './neighbourView';
+import { cellOf, isSeam, neighbourCells, rwOf, setPlayerCells } from './area';
+import { layRoads, refreshAccess } from './access';
 import { activeCombos } from './combos';
 import type { Fx } from './gain';
 import { gain } from './gain';
@@ -11,7 +12,7 @@ import { letterMult } from './rw';
 import { pick } from './rng';
 import { score } from './ranking';
 import { stageDef, goalProgress } from './stages';
-import { covers, housing, price } from './state';
+import { addResident, bedsOf, covers, housing, price } from './state';
 import { GRID_W, RT_H, RT_W, setGrid, type Building, type GameState, type Neighbour, type RtTrait, type StageId } from './types';
 
 /** The ladder this engine climbs. Matches `next` in the stage data. */
@@ -61,6 +62,7 @@ export const fundCost = (s: GameState) => price(s, NEIGHBOUR.fundCost);
 const room = (n: Neighbour, count: number) => Math.max(0, Math.min(count, NEIGHBOUR.fundMax - n.funded));
 
 export function checkFund(s: GameState, n: Neighbour, count = 1): string | null {
+  if (n.run === 'player') return t('grow.takeoverAlready');
   const k = room(n, count);
   if (!k) return t('grow.fundFull', { n: NEIGHBOUR.fundMax });
   if (s.res.rupiah < fundCost(s) * k) return t('grow.fundMoney', { amt: fundCost(s) * k - Math.floor(s.res.rupiah) });
@@ -97,9 +99,74 @@ export const autoFloor = (s: GameState) => price(s, NEIGHBOUR.autoFloor);
 export const autoMonthly = (s: GameState, n: Neighbour): number =>
   n.autoKeep ? Math.round((fundCost(s) * (1 + NEIGHBOUR.boostMax * (1 - NEIGHBOUR.boostDecay ** (n.autoKeep - 1)))) / buildEvery(n)) : 0;
 
+// ---------- player-run RTs ----------
+
+/** Keeps the lot map in step with which RTs the player runs. Call after loading, promotion, takeover and hand-back. */
+export const syncArea = (s: GameState): void => setPlayerCells(s.neighbours.filter((n) => n.run === 'player'));
+
+/** Why this RT cannot be taken over now, or null. Only RTs in the player's own RW, and it costs Orang Dalam. */
+export function checkTakeover(s: GameState, n: Neighbour): string | null {
+  if (n.run === 'player') return t('grow.takeoverAlready');
+  const { rx, ry } = rwOf(n.cx, n.cy);
+  if (rx || ry) return t('grow.takeoverOwnRw');
+  if (s.res.orangDalam < NEIGHBOUR.takeoverOd) return t('grow.takeoverOd', { n: NEIGHBOUR.takeoverOd });
+  return null;
+}
+
+/**
+ * The player takes an RT over: its buildings join the player's, its warga become the player's residents, and any
+ * banked Dana comes back to the kas. Its stars, ranking and combos stay with the RT.
+ */
+export function takeover(s: GameState, n: Neighbour): string | null {
+  const why = checkTakeover(s, n);
+  if (why) return why;
+  s.res.orangDalam -= NEIGHBOUR.takeoverOd;
+  s.res.rupiah += fundCost(s) * n.funded;
+  s.buildings.push(...n.buildings);
+  for (let i = 0; i < n.pop; i++) addResident(s);
+  n.buildings = [];
+  n.pop = 0;
+  n.funded = 0;
+  n.autoKeep = 0;
+  n.progress = 0;
+  n.run = 'player';
+  syncArea(s);
+  // Its buildings were laid out by the AI, so link any that a path does not reach.
+  s.roadsLaid = false;
+  layRoads(s);
+  return null;
+}
+
+/**
+ * Hands a player-run RT back to the AI: every building in its cell goes back, finished as it stands, and as many
+ * warga as its houses hold leave the player's list with it. Staff stay with the player.
+ */
+export function handBack(s: GameState, n: Neighbour): void {
+  if (n.run !== 'player') return;
+  const mine = s.buildings.filter((b) => inCell(n, b));
+  s.buildings = s.buildings.filter((b) => !inCell(n, b));
+  for (const b of mine) {
+    b.status = 'active';
+    b.timer = 0;
+    delete b.noRoad;
+  }
+  n.buildings = mine;
+  const beds = mine.reduce((sum, b) => sum + bedsOf(b), 0);
+  const leaving = s.residents.filter((r) => r.staffId === undefined).slice(-beds);
+  const gone = new Set(leaving.map((r) => r.id));
+  s.residents = s.residents.filter((r) => !gone.has(r.id));
+  n.pop = leaving.length;
+  n.progress = 0;
+  n.lastBuild = s.month;
+  delete n.run;
+  syncArea(s);
+  refreshAccess(s);
+}
+
 /** Each month, auto-dana tops every RT that has it on back up to its level, while the kas stays above the floor. */
 function autoFund(s: GameState): void {
   for (const n of s.neighbours) {
+    if (n.run === 'player') continue;
     while (n.autoKeep && n.funded < n.autoKeep && s.res.rupiah - fundCost(s) >= autoFloor(s)) fundNeighbour(s, n);
   }
 }
@@ -129,7 +196,7 @@ function build(s: GameState, n: Neighbour): void {
 export function neighboursSystem(s: GameState, fx: Fx): void {
   autoFund(s);
   for (const n of s.neighbours) {
-    if (n.funded > 0) {
+    if (n.run !== 'player' && n.funded > 0) {
       // Progress toward the next build: one build every `buildEvery` months, faster with more Dana banked.
       n.progress = (n.progress ?? 0) + (1 + boostOf(n)) / buildEvery(n);
       if (n.progress >= 1) {
@@ -201,6 +268,7 @@ export function promote(s: GameState, fx: Fx): boolean {
   if (!next) return false;
   s.stage.current = next;
   setGrid(next);
+  syncArea(s);
   for (const c of neighbourCells()) if (!s.neighbours.some((n) => n.cx === c.cx && n.cy === c.cy)) s.neighbours.push(newNeighbour(s, c.cx, c.cy));
   // Grup Chat Warga needs two RTs that think alike, so the draw never leaves every trait different.
   if (s.neighbours.length > 1 && new Set(s.neighbours.map((n) => n.trait)).size === s.neighbours.length) s.neighbours[s.neighbours.length - 1].trait = s.neighbours[0].trait;

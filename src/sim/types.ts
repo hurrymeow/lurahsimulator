@@ -122,6 +122,8 @@ export interface Neighbour {
   progress?: number;
   /** Auto-dana: tops the bank back up to this many builds each month. 0 or missing is off. */
   autoKeep?: number;
+  /** 'player' when the player took this RT over: its buildings sit in the player's own list. Missing is AI-run. */
+  run?: 'player';
   discovered: string[];
   ranking: RankingResult[];
 }

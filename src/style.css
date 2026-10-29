@@ -417,7 +417,7 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .nb-fund .btn { flex: 1 1 0; }
 .nb-fund .price, .nb-boost { white-space: nowrap; }
 .nb-auto .row .btn { flex: 1 1 56px; padding-left: 4px; padding-right: 4px; }
-.nb-auto { margin-top: var(--gap); }
+.nb-auto, .nb-take { margin-top: var(--gap); }
 
 /* stage header in the Menu */
 .stage-head {

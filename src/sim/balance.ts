@@ -59,6 +59,8 @@ export const NEIGHBOUR = {
   /** Auto-dana tops an RT back up to the level the player picks, and never spends the kas below this floor. */
   autoLevels: [3, 6, 12],
   autoFloor: 5_000_000,
+  /** Orang Dalam a takeover costs: a word with Pak RW. Handing an RT back is free. */
+  takeoverOd: 3,
   /** Months between builds at no boost. Rajin builds faster. */
   buildEvery: 3,
   buildEveryRajin: 2,

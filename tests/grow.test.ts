@@ -2,12 +2,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { lotAt } from '../src/sim/area';
 import { goalProgress, nextStarChecklist } from '../src/sim/stages';
 import { viewOf } from '../src/sim/neighbourView';
-import { autoFloor, autoMonthly, boostOf, checkFund, fundCost, fundNeighbour, promote, setAutoFund } from '../src/sim/grow';
+import { autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, promote, setAutoFund, takeover } from '../src/sim/grow';
 import { NEIGHBOUR } from '../src/sim/balance';
 import { checkPlace } from '../src/sim/rules';
 import { areaScore } from '../src/sim/ranking';
 import { deserialize, serialize } from '../src/sim/save';
-import { emptyTiles, newGame } from '../src/sim/state';
+import { addBuilding, addResident, emptyTiles, newGame, population } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
 import { GRID_H, GRID_W, RT_H, RT_W, setGrid } from '../src/sim/types';
 
@@ -355,6 +355,101 @@ describe('combos count across RTs', () => {
         expect(n.stars, `seed ${seed}`).toBe(3);
       }
     }
+  });
+});
+
+describe('player-run RTs', () => {
+  /** An empty tile inside a neighbour's cell, away from its buildings. */
+  const spotIn = (s: ReturnType<typeof grown>, i: number, id = 'rumah') => {
+    const n = s.neighbours[i];
+    for (let y = n.cy * RT_H + 2; y < (n.cy + 1) * RT_H - 2; y++)
+      for (let x = n.cx * RT_W + 2; x < (n.cx + 1) * RT_W - 2; x++) if (checkPlace(s, id, x, y).ok) return { x, y };
+    throw new Error('no spot');
+  };
+
+  it('a takeover costs Orang Dalam, moves the RT into the player list, and opens its lots to build on', () => {
+    const s = grown();
+    s.stage.current = 'rw';
+    const n = s.neighbours[0];
+    s.res.orangDalam = 0;
+    expect(checkTakeover(s, n)).toContain('Orang Dalam');
+    s.res.orangDalam = NEIGHBOUR.takeoverOd + 1;
+    s.res.rupiah = 1e9;
+    fundNeighbour(s, n, 6);
+    const kas = s.res.rupiah;
+    const theirs = n.buildings.map((b) => b.uid);
+    const pop = population(s);
+    const warga = n.pop;
+    expect(lotAt(n.buildings[0].x, n.buildings[0].y)).toBe('other');
+    expect(takeover(s, n)).toBeNull();
+    expect(s.res.orangDalam).toBe(1);
+    expect(s.res.rupiah).toBe(kas + fundCost(s) * 6);
+    expect(n.run).toBe('player');
+    expect(n.buildings).toHaveLength(0);
+    for (const uid of theirs) expect(s.buildings.some((b) => b.uid === uid)).toBe(true);
+    expect(population(s)).toBe(pop + warga);
+    const p = spotIn(s, 0);
+    expect(lotAt(p.x, p.y)).toBe('rt');
+    expect(checkFund(s, n)).not.toBeNull();
+    expect(checkTakeover(s, n)).not.toBeNull();
+  });
+
+  it('a player-run RT earns its stars from its own lots', () => {
+    const s = grown();
+    s.stage.current = 'rw';
+    s.discovered = ['tongkrongan'];
+    s.res.orangDalam = 10;
+    const n = s.neighbours[0];
+    takeover(s, n);
+    for (let i = 0; i < 4; i++) {
+      const p = spotIn(s, 0);
+      addBuilding(s, 'rumah', p.x, p.y, 'active');
+    }
+    while (population(s) < 60) addResident(s);
+    step(s);
+    expect(n.stars).toBeGreaterThanOrEqual(1);
+  });
+
+  it('hands back to the AI with its buildings and warga, keeps staff, and the save keeps who runs what', () => {
+    const s = grown();
+    s.stage.current = 'rw';
+    s.res.orangDalam = 10;
+    const n = s.neighbours[0];
+    takeover(s, n);
+    const p = spotIn(s, 0);
+    addBuilding(s, 'rumah', p.x, p.y, 'active');
+    // Round trip while player-run: the lots stay the player's.
+    const back = deserialize(serialize(s))!;
+    expect(back.neighbours[0].run).toBe('player');
+    expect(lotAt(p.x, p.y)).toBe('rt');
+    const mine = s.buildings.length;
+    const pop = population(s);
+    handBack(s, n);
+    expect(n.run).toBeUndefined();
+    expect(n.buildings.some((b) => b.x === p.x && b.y === p.y)).toBe(true);
+    expect(s.buildings.length).toBeLessThan(mine);
+    expect(population(s) + n.pop).toBe(pop);
+    expect(lotAt(p.x, p.y)).toBe('other');
+    expect(s.residents.every((r) => r.staffId === undefined || s.staff?.some((x) => x.id === r.staffId))).toBe(true);
+  });
+
+  it('only RTs in the player own RW can be taken over', () => {
+    const s = grown('kelurahan');
+    s.res.orangDalam = 99;
+    const far = s.neighbours.find((n) => n.cx >= 2 || n.cy >= 2)!;
+    const near = s.neighbours.find((n) => n.cx < 2 && n.cy < 2)!;
+    expect(checkTakeover(s, far)).not.toBeNull();
+    expect(checkTakeover(s, near)).toBeNull();
+  });
+
+  it('counts a player-run RT once in the area score', () => {
+    const s = grown();
+    s.stage.current = 'rw';
+    s.res.orangDalam = 10;
+    const before = areaScore(s);
+    takeover(s, s.neighbours[0]);
+    // Its buildings and warga moved into the player's score; the RT itself adds nothing on top.
+    expect(areaScore(s)).toBeLessThan(before * 1.5);
   });
 });
 

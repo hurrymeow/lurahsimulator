@@ -1,4 +1,5 @@
 import { layRoads } from './access';
+import { setPlayerCells } from './area';
 import { allDefs, hasDef } from './content';
 import { ensureStaff } from './staff';
 import { SAVE_VERSION, newStageState } from './state';
@@ -36,6 +37,7 @@ export function deserialize(raw: string | null): GameState | null {
     s.rw ??= { kaderDecay: 0 };
     s.kel ??= { budget: 0, spentBase: 0, serapanRun: 0, cleanAudits: 0 };
     setGrid(s.stage.current);
+    setPlayerCells(s.neighbours.filter((n) => n.run === 'player'));
     if (!s.roadsLaid) layRoads(s);
     return s;
   } catch {
