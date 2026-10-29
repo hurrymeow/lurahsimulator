@@ -812,6 +812,8 @@ export class App {
 
   /** Uid of the building being moved, or null while placing something new. */
   private moving: number | null = null;
+  /** Facing of the building in hand: 1 is turned, as `Building.rot`. Kept when it is placed. */
+  private placeRot: 0 | 1 = 0;
 
   /** Picks a placed building up. Moving is free, and the building keeps its level and timers. */
   startMoving(uid: number): void {
@@ -819,6 +821,7 @@ export class App {
     if (!b) return;
     this.startPlacing(b.def);
     this.moving = uid;
+    this.placeRot = b.rot === 1 ? 1 : 0;
     this.view.hidden = uid;
     this.view.ghost = { x: b.x, y: b.y, ok: true, ...this.view.look(b) };
     this.markValid();
@@ -828,6 +831,7 @@ export class App {
   startPlacing(id: string): void {
     closeSheet();
     this.moving = null;
+    this.placeRot = 0;
     this.view.hidden = null;
     this.placing = id;
     this.line = null;
@@ -908,8 +912,16 @@ export class App {
     if (g && g.x === gx && g.y === gy) return;
     const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
     const ok = mover ? checkMove(this.s, mover, gx, gy).ok : checkPlace(this.s, id, gx, gy).ok;
-    this.view.ghost = { x: gx, y: gy, ok, sprite: d.sprite, n, ...(mover ? this.view.look(mover) : {}) };
+    this.view.ghost = { x: gx, y: gy, ok, sprite: d.sprite, n, ...(mover ? this.view.look(mover) : {}), flip: this.placeRot === 1 };
     this.updatePlacing();
+  }
+
+  /** Turns the building in hand before it is placed. Free, as turning a placed one is. */
+  rotatePlacing(): void {
+    if (!this.placing || this.line) return;
+    this.placeRot = this.placeRot ? 0 : 1;
+    if (this.view.ghost) this.view.ghost.flip = this.placeRot === 1;
+    this.haptic(10);
   }
 
   /** True when a tile is under the ghost's footprint, so a drag there carries the ghost instead of the map. */
@@ -976,6 +988,7 @@ export class App {
     const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
     if (mover) {
       if (!moveBuilding(this.s, mover, g.x, g.y).ok) return;
+      mover.rot = this.placeRot;
       const fx: SimEffect[] = [];
       discoverCombos(this.s, fx);
       this.handleFx(fx);
@@ -989,6 +1002,8 @@ export class App {
     }
     const r = place(this.s, this.placing, g.x, g.y);
     if (r.ok) {
+      const b = r.uid === undefined ? undefined : byUid(this.s, r.uid);
+      if (b && this.placeRot) b.rot = 1;
       this.view.burst(g.x, g.y);
       const cost = buildCost(this.s, d);
       if (cost) this.view.pop(g.x, g.y, 'rupiah', -cost);
@@ -1011,6 +1026,7 @@ export class App {
     const title = h('strong', {}, mover ? t('build.moveTitle', { name: bName(d) }) : `${bName(d)} · ${rupiah(buildCost(this.s, d))}`);
     float.hidden = !g;
     document.getElementById('place-exit')!.hidden = !!g;
+    document.getElementById('place-rot')!.hidden = !!d.pathIncome;
     if (this.line && g?.tiles) {
       const fresh = this.lineTiles.filter((p) => p.ok && !p.have).length;
       const blocked = this.lineTiles.filter((p) => !p.ok).length;
