@@ -6,6 +6,8 @@ import { inCell, viewOf } from './neighbourView';
 import { cellOf, cellOrigin, isSeam, neighbourCells, rwOf, setPlayerCells } from './area';
 import { FLAT, layRoads, refreshAccess, ring } from './access';
 import { activeCombos } from './combos';
+import { COMBOS } from '../data/combos';
+import { def } from './content';
 import type { Fx } from './gain';
 import { gain } from './gain';
 import { letterMult } from './rw';
@@ -20,12 +22,44 @@ const NEXT: Partial<Record<StageId, StageId>> = { rt: 'rw', rw: 'kelurahan' };
 
 const TRAITS: RtTrait[] = ['rajin', 'hobi', 'jarang'];
 
-/** What each trait builds next, in order. It repeats once the list runs out. */
-const WANTS: Record<RtTrait, string[]> = {
-  rajin: ['warung', 'indomaret', 'alfamart', 'warung', 'biopori'],
-  hobi: ['posRonda', 'wifi', 'warung', 'posRonda', 'biopori'],
-  jarang: ['warung', 'posRonda', 'wifi', 'biopori', 'indomaret'],
+/**
+ * What each trait builds, in its order of taste. All one-tile buildings, each unlocked by the RT's own stars as the
+ * player's are. Every list can form at least 3 combos at level 1 (Tongkrongan, Rapat Malam with the Kantor RT, and
+ * more), so no trait gets stuck on its combo goal.
+ */
+export const WANTS: Record<RtTrait, string[]> = {
+  // Business-minded: shops and minimarkets, then the services that pair with them.
+  rajin: ['warung', 'indomaret', 'posRonda', 'alfamart', 'rumahMakan', 'wifi', 'barbershop', 'kandangAyam', 'bengkel', 'biopori', 'koperasi', 'apotek', 'posSatpam'],
+  // Loves a wacana: social spots, greenery and the things a rapat needs.
+  hobi: ['posRonda', 'wifi', 'warung', 'pohonRindang', 'biopori', 'rumahMakan', 'bankSampah', 'bangku', 'kebunSayur', 'mural', 'lampuTaman'],
+  // Shows up on time: a bit of everything, nothing fancy.
+  jarang: ['warung', 'posRonda', 'wifi', 'biopori', 'indomaret', 'rumahMakan', 'kebunSayur', 'barbershop', 'pohonRindang', 'bankSampah', 'kandangAyam', 'koperasi'],
 };
+
+/** RT stars a building needs before an AI RT builds it, read from the player's own unlock rule. */
+const starsFor = (id: string): number => {
+  const st = def(id).requires?.stars;
+  return st && (st.stage ?? 'rt') === 'rt' ? st.n : 0;
+};
+
+/**
+ * The next thing an AI RT builds. First, the missing piece of a level-1 combo it has half built and not found yet,
+ * so partners go up one after the other and can stand side by side. Otherwise, of what its stars allow, the kind it
+ * has least of, first in its taste on a tie.
+ */
+export function nextWant(n: Neighbour): string {
+  const open = WANTS[n.trait].filter((id) => starsFor(id) <= n.stars);
+  const have = (id: string) => n.buildings.filter((b) => b.def === id).length;
+  for (const c of COMBOS) {
+    if (n.discovered.includes(c.id) || c.needs.some((need) => need.includes('@'))) continue;
+    // A pair of the same kind (two wifi) needs two of it.
+    const need = (id: string) => c.needs.filter((x) => x === id).length;
+    const missing = c.needs.filter((id) => have(id) < need(id));
+    const started = c.needs.some((id) => have(id) > 0 && id !== 'kantorRT');
+    if (started && missing.length && missing.every((id) => open.includes(id))) return missing[0];
+  }
+  return open.reduce((best, id) => (have(id) < have(best) ? id : best), open[0]);
+}
 
 export const neighbourAt = (s: GameState, x: number, y: number): Building | undefined => {
   const { cx, cy } = cellOf(x, y);
@@ -247,16 +281,27 @@ function build(s: GameState, n: Neighbour): void {
   // Houses and shops take turns, or a full RT would only ever add houses and never find a combo.
   if (n.pop >= housing(v) && built.at(-1)?.def !== 'rumah') id = 'rumah';
   else {
-    const list = WANTS[n.trait];
-    id = list[built.filter((b) => b.def !== 'rumah' && b.def !== 'kantorRT').length % list.length];
+    id = nextWant(n);
   }
   // Settle next to what is already there, like the player's kampung does.
   const near = free.filter((f) => built.some((b) => Math.abs(b.x - f.x) <= 1 && Math.abs(b.y - f.y) <= 1));
   // Shops go where they have the most different neighbours, which is how combos happen. Ties are drawn.
   const mix = (f: { x: number; y: number }) => new Set(built.filter((b) => b.def !== 'rumah' && Math.abs(b.x - f.x) <= 1 && Math.abs(b.y - f.y) <= 1).map((b) => b.def)).size;
   const pool = near.length ? near : free;
+  // A spot that completes a combo it has not found wins outright: the AI looks for combos as a player would.
+  const combosHere = () => activeCombos(viewOf(s, n)).filter((a) => !n.discovered.includes(a.combo.id)).length;
+  const fresh = id === 'rumah' ? [] : (() => {
+    const base = combosHere();
+    const out: { x: number; y: number }[] = [];
+    for (const f of pool) {
+      addTo(s, n, id, f.x, f.y);
+      if (combosHere() > base) out.push(f);
+      n.buildings.pop();
+    }
+    return out;
+  })();
   const best = id === 'rumah' ? 0 : Math.max(...pool.map(mix));
-  const first = pick(s, id === 'rumah' ? pool : pool.filter((f) => mix(f) === best));
+  const first = fresh.length ? pick(s, fresh) : pick(s, id === 'rumah' ? pool : pool.filter((f) => mix(f) === best));
   // Like the player, the AI needs a path to the Kantor: try the chosen spot, then the rest of the pool, then anywhere free.
   const tries = [first, ...pool.filter((f) => f !== first), ...free.filter((f) => !pool.includes(f))];
   for (const spot of tries.slice(0, 40)) {
@@ -329,10 +374,16 @@ export function iuranFromNeighbours(s: GameState, fx: Fx): void {
 }
 
 /** Yearly: AI RTs are ranked on the same formula, and the RW or Kelurahan score is the sum. */
+/** The score an AI RT must beat at the year end of `year` (1 at the end of the first year). */
+export const rivalTarget = (year: number): number => RIVAL_BASE + RIVAL_PER_YEAR * year;
+
+/** The next year-end ranking: which year it closes, and how many months away. */
+export const nextRanking = (s: GameState) => ({ year: Math.floor(s.month / 12) + 1, months: 12 - (s.month % 12) });
+
 export function neighboursYearEnd(s: GameState, year: number): void {
   for (const n of s.neighbours) {
     const us = score(viewOf(s, n));
-    const them = RIVAL_BASE + RIVAL_PER_YEAR * year;
+    const them = rivalTarget(year);
     n.ranking.push({ year, us, them, won: us > them });
   }
 }

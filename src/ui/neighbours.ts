@@ -2,9 +2,10 @@ import { t } from '../i18n';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { NEIGHBOUR } from '../sim/balance';
-import { autoFloor, autoMonthly, boostOf, builtBy, cellName, lotFull, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, setAutoFund, takeover } from '../sim/grow';
+import { autoFloor, autoMonthly, boostOf, builtBy, cellName, lotFull, nextRanking, rivalTarget, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, setAutoFund, takeover } from '../sim/grow';
 import { viewOf } from '../sim/neighbourView';
 import { starChecklist } from '../sim/stages';
+import { scoreParts } from '../sim/ranking';
 import type { Neighbour } from '../sim/types';
 import { h } from './dom';
 import { openSheet } from './sheet';
@@ -16,6 +17,22 @@ function missing(app: App, n: Neighbour): Node {
   return h('div', {},
     h('p', { class: 'meta' }, t('grow.nextStar', { n: n.stars + 1 })),
     h('ul', { class: 'checklist' }, ...lines.map((l) => h('li', { class: l.done ? 'done' : '' }, h('span', { 'aria-hidden': 'true' }, l.done ? '✓' : '○'), ' ', l.text))),
+  );
+}
+
+/**
+ * The yearly ranking an RT's stars count: its score now against the target it must beat at the year end, what the
+ * score is made of, and what raises it.
+ */
+function rankLine(app: App, n: Neighbour): Node {
+  const s = app.s;
+  const p = scoreParts(viewOf(s, n));
+  const next = nextRanking(s);
+  const target = rivalTarget(next.year);
+  const wins = n.ranking.filter((r) => r.won).length;
+  return h('div', { class: 'nb-rank' },
+    h('p', { class: `meta${p.total > target ? '' : ' warn'}` }, t('grow.rank', { score: p.total, target, n: next.months, wins })),
+    h('p', { class: 'meta' }, t('grow.rankParts', { residents: p.residents, buildings: p.buildings, combos: p.combos, sabar: p.sabar })),
   );
 }
 
@@ -68,6 +85,7 @@ export function openNeighbours(app: App): void {
         h('p', { class: 'meta' }, t('grow.row', { cell: cellName(n), stars: n.stars, pop: viewOf(s, n).residents.length, n: viewOf(s, n).buildings.filter((b) => b.def !== 'jalan').length })),
         h('p', { class: 'meta nb-status' }, t('grow.playerRun')),
         missing(app, n),
+        rankLine(app, n),
         h('button', { class: 'btn', 'data-handback': '1', onclick: () => {
           handBack(s, n);
           // Say what happens next: building resumes only with Dana banked.
@@ -88,6 +106,7 @@ export function openNeighbours(app: App): void {
       h('p', { class: 'meta' }, t(`grow.trait.${n.trait}`)),
       h('p', { class: `meta nb-status${boost ? ' boosted' : ''}` }, lotFull(n) ? t('grow.lotFull') : n.funded > 0 ? t('grow.funded', { n: n.funded }) : t('grow.stalled'), boost ? h('strong', { class: 'nb-boost' }, ` ${t('grow.boost', { n: boost })}`) : null),
       missing(app, n),
+      rankLine(app, n),
       h('div', { class: 'row nb-fund' },
         h('button', { class: 'btn', 'data-fund': '1', disabled: !!one, onclick: () => fund(n, 1) }, t('grow.fund', { n: 1 }), ' ', h('span', { class: 'price' }, rupiah(fundCost(s)))),
         h('button', { class: 'btn', 'data-fund': String(NEIGHBOUR.fundBulk), disabled: !!bulk, onclick: () => fund(n, NEIGHBOUR.fundBulk) }, t('grow.fund', { n: bulkN }), ' ', h('span', { class: 'price' }, rupiah(fundCost(s) * bulkN))),
@@ -109,6 +128,7 @@ export function openNeighbours(app: App): void {
     h('p', { class: 'meta' }, t('grow.modes')),
     h('p', { class: 'meta' }, t('grow.boostHelp')),
     h('p', { class: 'meta' }, t('grow.combosShared')),
+    h('p', { class: 'meta' }, t('grow.rankHelp')),
     ...(rows.length ? rows : [h('p', { class: 'meta' }, t('grow.none'))]),
   ]);
 }
