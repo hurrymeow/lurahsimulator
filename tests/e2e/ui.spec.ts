@@ -49,29 +49,12 @@ async function dismissModals(page: Page): Promise<void> {
     }
     seen.push(`${await page.locator('#modal').getAttribute('class')}: ${(await page.locator('#modal h2').first().textContent({ timeout: 1000 }).catch(() => '?'))}`);
     if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click({ timeout: 5000 });
-    else {
-      await page.evaluate(() => {
-        const w = window as unknown as { __clicks?: number; __q?: number };
-        w.__clicks = 0;
-        document.getElementById('modal')!.addEventListener('click', () => { w.__clicks = (w.__clicks ?? 0) + 1; w.__q = (window as any).pakrt.modalQueue.length; }, { capture: true, once: true });
-      });
-      await page.locator('#modal').click({ timeout: 5000 });
-      const after = await page.evaluate(() => ({ clicks: (window as any).__clicks, qAtClick: (window as any).__q, q: (window as any).pakrt.modalQueue.length, hidden: document.getElementById('modal')!.hidden }));
-      seen.push(JSON.stringify(after));
-    }
+    // Tap the dim corner: the card's own stat icons answer a tap with their name instead of closing the card, and on a slow runner one can sit at the centre.
+    else await page.locator('#modal').click({ position: { x: 8, y: 8 }, timeout: 5000 });
     await page.waitForTimeout(650);
   }
   // Twelve cards in a row means one is not going away. Name them, rather than run into the test timeout.
-  if (await page.locator('#modal').isVisible()) {
-    const dbg = await page.evaluate(() => {
-      const app = (window as unknown as { pakrt: any }).pakrt;
-      const el = document.getElementById('modal')!;
-      const b = el.getBoundingClientRect();
-      const hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
-      return JSON.stringify({ queue: app.modalQueue.map((n: any) => n.title), hasOnclick: !!el.onclick, hit: hit?.id || hit?.className || hit?.tagName, pending: !!app.s.pendingEvent, tips: localStorage.getItem('pakrt.tips') });
-    });
-    throw new Error(`cards keep coming: ${seen.join(' | ')} ${dbg}`);
-  }
+  if (await page.locator('#modal').isVisible()) throw new Error(`cards keep coming: ${seen.join(' | ')}`);
 }
 
 /**
