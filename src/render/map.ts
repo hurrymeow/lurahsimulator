@@ -627,6 +627,16 @@ export class MapView {
       const label = b.status === 'permit' || b.status === 'building' ? `${b.timer}` : b.status === 'mangkrak' ? '80%' : b.status === 'damaged' ? '!' : b.noRoad ? t('map.noRoad') : null;
       if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label, badges, b.status === 'damaged');
     }
+    // A clean sweep at the 17 Agustus lomba: the trophy stands on the Kantor RT for a year.
+    if ((s.pialaUntil ?? -1) > s.month) {
+      const k = s.buildings.find((b) => b.def === 'kantorRT');
+      const top = k && tops.get(k.y * GRID_W + k.x);
+      if (k && top !== undefined) {
+        const cup = sprite('piala');
+        const w = cup.width * this.scale;
+        ctx.drawImage(cup, this.tileCentre(k.x, k.y).x - w / 2, top - w + 2 * this.scale, w, w);
+      }
+    }
     // Speech bubbles go last of all, above buildings, window lights, weather and badges.
     this.crowd.drawBubbles(ctx);
 

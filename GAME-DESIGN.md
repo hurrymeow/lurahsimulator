@@ -138,7 +138,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 #### New RT content
 
 - **Kos-kosan:** houses **6**, costs **1** Sabar a month for the noise.
-- **Lapangan:** doubles the 17 Agustus rewards.
+- **Lapangan:** doubles the Lomba Agustusan prizes, and is needed for Panjat Pinang.
 - **Bank Sampah:** earns up to **Rp 40rb** a month.
 - **Anak Kos** combo (Kos + Warung + Wifi): warung **x1.3**, **+1** Viral a month.
 - **Panjat Pinang** combo (Lapangan + Pos Ronda): Agustus prize **+50%**.
@@ -282,6 +282,12 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - **Aman:** **70**, less **0.3** per resident above 15, **2** per resident idle 6 months or more and **4** per preman; plus **3** per Lampu Jalan and **2** per Pos Ronda, plus programs.
 - **Preman:** a resident idle **12** months, while Aman is under **60**, has a **5%** chance a month to turn (at most **15%** of residents). Each costs **0.2** Popularitas a month and takes **10%** of one shop's income as uang keamanan (up to **30%** a shop). Pos Satpam opens with the first preman; while a preman waits, Satpam posts are kept for him, and taking one turns him into the guard. Any job the player gives him does too.
 - **Tukang parkir liar:** the first shop always draws one; after that each new shop has a **30%** chance, never more than **4** on the map, and never beside the Kantor. Stage buildings that spawn them (Pasar Kaget) still do, up to the cap. Each pays a little retribusi and costs Popularitas. He cannot be demolished, but he can be **tertibkan** from his panel: free with a Hansip on duty, otherwise **1** Orang Dalam. A cleared one has a **30%** chance to return to the same shop **3** to **6** months later.
+- **Lomba Agustusan** (the big yearly event, from year 2): the panitia forms in **May** with a card that opens its panel (Menu, 17 Agustus). Until the day the player picks up to **3** contests (paid when picked, refunded if dropped), a stage and a ketua panitia from the staff.
+  - Contests: **Panjat Pinang** (needs a Lapangan; a timing mini-game: tap while the marker is in the green band, 3 grips before 3 slips), **Balap Karung** (tap 30 times in 5 seconds), **Makan Kerupuk** and **Tarik Tambang** (decided by the odds, shown first).
+  - Stage: none, Terpal (×1.2 turnout), Panggung (×1.45), Dangdut (×1.75, Inem headlines and her Panggung 17 Agustus gig completes).
+  - Staff stats: the ketua's **Rajin** widens the grip band; **Gaul** cuts the taps and lifts the odds. Kampung meters: **Aman** lifts the odds, and below **40** the day turns ricuh (Popularitas −5). **Popularitas** sets turnout (0.5 at 0, 1.5 at 100).
+  - On **17 Agustus** time stops for a full-screen day: one contest at a time, then the prizes. It cannot be closed in one tap. Prizes per win are scaled by turnout and the 17 Agustus combos (Lapangan ×2 and the rest). Any win brings a crowd: income **×1.2** for 2 months. Winning every contest (2 or more) puts a trophy on the Kantor RT for a year. No contests picked: Popularitas −8.
+  - Random events keep 3 months clear of the day, as they did of the old one-tap 17 Agustus event, which this replaces.
 - **Wacana or Realisasi:** each policy has a real version (Wifi Gratis di Balai, Kerja Bakti Rutin, Biopori Massal, Pelatihan UMKM, Bansos Sembako). It costs Rp 1 to 3 juta, lands after 1 to 3 months and moves a meter for a time (Biopori for good). Announcing fills the Laporan as well as doing does; only doing moves Sejahtera.
 - **Popularitas soft cap:** above **80**, gains shrink toward nothing at 100, so a full kampung settles around 90 instead of sitting at the cap. Each employed resident gives **0.04** (was 0.08), each resident expects **0.14** (was 0.1), and a Satpam gives **0.5** (was 1).
 - **Staff** (`src/data/staff.ts`): the people the player manages, as Kairosoft's staff are; warga still pick their own jobs. Inem is staff number 1 (the Asisten: permits up to 40% faster) and never leaves. Slots: 1 at the start, 3 at RT 1★, 4 at RT 3★, 6 at RW, 8 at Kelurahan, never more than **10**.

@@ -24,6 +24,7 @@ import { noteNet, quarterSystem, snapshot } from './report';
 import { requirementGaps } from './rules';
 import { brandMult, royaltyRate } from './brands';
 import { problemSystem } from './problems';
+import { lombaSystem } from './lomba';
 import { parkirSystem } from './parkir';
 import { needsSystem, premanTake } from './needs';
 import { buildBoost, permitCut, staffSystem, upkeepCut } from './staff';
@@ -250,6 +251,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   problemSystem,
   checkUnlocks,
   inspectionSystem,
+  lombaSystem,
   eventSystem,
   lineSystem,
   camatCallSystem,
@@ -260,6 +262,8 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
 export function tick(s: GameState): Fx {
   const fx: Fx = [];
   if (s.pendingEvent) return fx;
+  // 17 Agustus is being played: time waits for the day screen.
+  if (s.lomba?.due) return fx;
   s.quarter ??= snapshot(s);
   s.month++;
   for (const system of SYSTEMS) system(s, fx);

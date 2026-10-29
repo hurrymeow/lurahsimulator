@@ -22,7 +22,7 @@ const run = (s: GameState, n: number) => {
 };
 
 describe('events', () => {
-  it('opens with Gunting Pita at month 6, then 17 Agustus waits for August of year 2', () => {
+  it('opens with Gunting Pita at month 6, once', () => {
     const s = newGame(1);
     const raised: [string, number][] = [];
     for (let i = 0; i < 20; i++) {
@@ -32,7 +32,6 @@ describe('events', () => {
     }
     expect(raised[0]).toEqual(['guntingPita', 6]);
     expect(raised.filter(([id]) => id === 'guntingPita')).toHaveLength(1);
-    expect(raised.find(([id]) => id === 'agustusan')?.[1]).toBe(19);
   });
 
   it('Gunting Pita never punishes and its second choice clearly wins', () => {
@@ -56,7 +55,7 @@ describe('events', () => {
 
   it('a pending event blocks the tick until resolved', () => {
     const s = newGame(2);
-    s.pendingEvent = 'agustusan';
+    s.pendingEvent = 'cabai';
     const month = s.month;
     expect(tick(s)).toEqual([]);
     expect(s.month).toBe(month);
@@ -75,23 +74,10 @@ describe('events', () => {
   it('says what is missing when a paid choice is unaffordable', () => {
     const s = newGame(4);
     s.res.rupiah = 100;
-    const c = eventDef('agustusan')!.choices[1];
+    const c = eventDef('cabai')!.choices.find((x) => x.cost?.rupiah)!;
     const r = checkChoice(s, c);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.missing[0]).toMatch(/^Need Rp .* more/);
-  });
-
-  it('funding the lomba costs Rupiah and gives Sabar, Viral and a timed income boost', () => {
-    const s = newGame(5);
-    s.pendingEvent = 'agustusan';
-    s.res.sabar = 50;
-    const before = s.res.rupiah;
-    expect(resolveEvent(s, [], 1).ok).toBe(true);
-    expect(s.res.rupiah).toBeLessThan(before);
-    expect(s.res.sabar).toBe(65);
-    expect(s.res.viral).toBe(10);
-    expect(s.modifiers.length).toBe(1);
-    expect(s.pendingEvent).toBeNull();
   });
 
   it('harga cabai cuts warung income for a few months', () => {
@@ -159,7 +145,7 @@ describe('more events', () => {
         s.res.sabar = 60;
         s.res.rupiah = Math.max(s.res.rupiah, 1_000_000);
         if (fx.some((f) => f.kind === 'event')) {
-          if (!['guntingPita', 'agustusan', 'banjir', 'kecamatan'].includes(s.pendingEvent!)) months.push(s.month);
+          if (!['guntingPita', 'banjir', 'kecamatan'].includes(s.pendingEvent!)) months.push(s.month);
           s.pendingEvent = null;
         }
       }

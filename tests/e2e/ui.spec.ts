@@ -440,7 +440,7 @@ test.describe('events, ranking, settings', () => {
     await dismissModals(page);
     await skipTips(page);
     await seed(page);
-    const ids = ['guntingPita', 'agustusan', 'banjir', 'cabai', 'kecamatan', 'partTime', 'cctv', 'kkn', 'startupPilot', 'hajatan', 'pasarMalam', 'sisaAnggaran', 'magang', 'pungli', 'pangkalanOjol', 'lesGratis', 'padam', 'rapatWarga', 'hibah', 'lombaKampung', 'truckSampah', 'lubangViral', 'sembako', 'pbb', 'festivalKuliner'];
+    const ids = ['guntingPita', 'banjir', 'cabai', 'kecamatan', 'partTime', 'cctv', 'kkn', 'startupPilot', 'hajatan', 'pasarMalam', 'sisaAnggaran', 'magang', 'pungli', 'pangkalanOjol', 'lesGratis', 'padam', 'rapatWarga', 'hibah', 'lombaKampung', 'truckSampah', 'lubangViral', 'sembako', 'pbb', 'festivalKuliner'];
     for (const id of ids) {
       await page.evaluate((i) => {
         const app = (window as unknown as { pakrt: any }).pakrt;
@@ -476,14 +476,14 @@ test.describe('events, ranking, settings', () => {
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.modal({ title: 'Tip', body: 'A tip', tone: 'info', tip: { pics: null, skip: () => {} } });
-      app.s.pendingEvent = 'agustusan';
+      app.s.pendingEvent = 'cabai';
       app.showEvent();
     });
     await expect(page.locator('#modal .card.event')).toBeVisible();
     await expectCentred(page, 'event after a tip');
   });
 
-  for (const id of ['guntingPita', 'agustusan', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga', 'partTime', 'padam', 'hibah']) {
+  for (const id of ['guntingPita', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga', 'partTime', 'padam', 'hibah']) {
     for (const broke of [false, true]) {
       test(`event ${id}${broke ? ' while broke' : ''} is legible and has a free choice`, async ({ page }) => {
         await start(page);
@@ -1460,6 +1460,89 @@ test.describe('growing map', () => {
     await page.locator('.sheet .nb-mine [data-handback]').click();
     await expect(page.locator('.sheet .nb-row.nb-mine')).toHaveCount(0);
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].run)).toBeUndefined();
+  });
+});
+
+test.describe('Lomba Agustusan', () => {
+  test('the panitia card opens the panel; on 17 Agustus the mini-games play through to the prizes', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const app = (fn: string) => page.evaluate(`(() => { const a = window.pakrt; return ${fn}; })()`);
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.s.res.rupiah = 50_000_000;
+      a.s.res.sabar = 60;
+      const k = a.s.buildings.find((b: any) => b.def === 'kantorRT');
+      a.s.buildings.push({ uid: a.s.nextUid++, def: 'lapangan', x: k.x - 4, y: k.y + 3, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      a.s.month = 15;
+      a.s.pendingEvent = null;
+      a.runTick();
+    });
+    // The panitia's card, with a button straight to the panel.
+    const open = page.locator('#modal .modal-open[data-open="lomba"]');
+    for (let i = 0; i < 12 && !(await open.isVisible()); i++) {
+      await page.waitForTimeout(650);
+      if (!(await page.locator('#modal').isVisible()) || (await open.isVisible())) continue;
+      if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click();
+      else await page.locator('#modal').click();
+    }
+    await expect(open).toBeVisible();
+    await expectLegible(page, 'panitia card');
+    await open.click();
+    await expect(page.locator('#sheet .lomba-contest')).toHaveCount(4);
+    for (const id of ['panjatPinang', 'balapKarung', 'makanKerupuk']) await page.locator(`#sheet [data-contest="${id}"] .btn`).click();
+    await page.locator('#sheet [data-stage="dangdut"]').click();
+    await expect(page.locator('#sheet [data-stage="dangdut"]')).toHaveAttribute('aria-pressed', 'true');
+    await expectLegible(page, 'lomba panel');
+    await page.locator('.sheet-head .btn').click();
+    // Months pass to 17 Agustus; then time waits for the day screen.
+    for (let i = 0; i < 3; i++) await page.evaluate(() => { const a = (window as unknown as { pakrt: any }).pakrt; a.s.pendingEvent = null; a.runTick(); });
+    expect(await app('a.s.lomba.due')).toBe(true);
+    const day = page.locator('#lomba-day');
+    for (let i = 0; i < 20 && !(await day.isVisible()); i++) {
+      await page.waitForTimeout(400);
+      if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click();
+      else if (await page.locator('#modal').isVisible()) await page.locator('#modal').click();
+    }
+    await expect(day).toBeVisible();
+    await expect(day.locator('.inem-head')).toBeVisible();
+    await expectLegible(page, 'lomba day');
+    await day.locator('.lomba-go').click();
+    // Panjat Pinang: tap when the marker is inside the green band, as a player would.
+    await expect(page.locator('#lomba-climb')).toBeVisible();
+    await expectLegible(page, 'panjat pinang');
+    await page.evaluate(() => new Promise<void>((done) => {
+      const step = () => {
+        const btn = document.getElementById('lomba-climb') as HTMLButtonElement | null;
+        if (!btn) return done();
+        const pos = Number(btn.dataset.pos);
+        const lo = Number(btn.dataset.lo);
+        const hi = Number(btn.dataset.hi);
+        if (pos > lo + 0.02 && pos < hi - 0.02) btn.click();
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }));
+    await expect(day.locator('.lomba-outcome.win')).toBeVisible();
+    await day.locator('.lomba-go').click();
+    // Balap Karung: tap fast.
+    await expect(page.locator('#lomba-mash')).toBeVisible();
+    for (let i = 0; i < 40; i++) await page.locator('#lomba-mash').click({ delay: 0 });
+    await expect(day.locator('.lomba-outcome')).toBeVisible({ timeout: 8000 });
+    await day.locator('.lomba-go').click();
+    // Makan Kerupuk: the odds decide.
+    await page.locator('#lomba-roll').click();
+    await expect(day.locator('.lomba-outcome')).toBeVisible();
+    await day.locator('.lomba-go').click();
+    await expect(page.locator('#lomba-done')).toBeVisible();
+    await expectLegible(page, 'lomba prizes');
+    await page.locator('#lomba-done').click();
+    await expect(day).toHaveCount(0);
+    expect(await app('a.s.lomba.held')).toBe(true);
+    expect(await app('a.s.gigs.includes("agustus")')).toBe(true);
+    // Inem's gig card follows (she headlined); after it, time runs again.
+    await dismissModals(page);
+    expect(await app('a.running')).toBe(true);
   });
 });
 

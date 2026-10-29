@@ -382,6 +382,12 @@ export function staffSystem(s: GameState, fx: Fx): void {
 
 // ---------- Inem's dream ----------
 
+/** Inem headlined the 17 Agustus dangdut stage: her Panggung 17 Agustus gig, if not done yet. */
+export function inemHeadlined(s: GameState, fx: Fx): void {
+  ensureStaff(s);
+  if (!s.gigs!.includes('agustus')) gigDone(s, 'agustus', fx, 2);
+}
+
 function gigDone(s: GameState, id: string, fx: Fx, level: number): void {
   s.gigs!.push(id);
   const me = inem(s);

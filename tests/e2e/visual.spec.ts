@@ -75,7 +75,7 @@ test.describe('visual baselines', () => {
     await play(page);
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
-      app.s.pendingEvent = 'agustusan';
+      app.s.pendingEvent = 'cabai';
       app.showEvent();
     });
     await settle(page);
