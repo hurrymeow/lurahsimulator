@@ -675,8 +675,10 @@ test.describe('slim HUD and one menu', () => {
     const ids = await page.evaluate(() =>
       [...document.querySelectorAll('button')].filter((b) => b.getClientRects().length && b.id !== 'ticker').map((b) => b.id),
     );
-    // Top: play, speed and the resources. The goal line only expands the next star. Bottom: the dock.
-    expect(ids).toEqual(['pause-btn', 'speed-btn', 'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'goal-now', 'dock-build', 'dock-warga', 'menu-btn']);
+    // Top: play, speed and the resources. The goal line only expands the next star. On phones tall enough for the
+    // satellite view, its fold button belongs to it. Bottom: the dock.
+    const sat = (page.viewportSize()?.height ?? 0) > 640 ? ['cs-sat-toggle'] : [];
+    expect(ids).toEqual(['pause-btn', 'speed-btn', 'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'goal-now', ...sat, 'dock-build', 'dock-warga', 'menu-btn']);
     const hud = (await page.locator('#hud').boundingBox())!;
     expect(hud.height).toBeLessThanOrEqual(80);
   });
