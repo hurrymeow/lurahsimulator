@@ -10,12 +10,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Keep applicants until the player hires or takes the posting down (or at least 12 months). Make the arrival a tap-to-continue message with a button that opens Staff. Show the applicant count on the Staff tile in the Menu. Refresh an open Staff sheet each month. Add an e2e test that posts, runs months at 1x through the UI and hires.
   - Source: Julian playtest, 2026-10-29
   - `open · — · — · done when:` a posted lowongan shows pickable applicants in the Staff panel until the player acts, the arrival opens Staff in one tap, and an e2e test hires through the UI in ID.
-- [ ] **Rename only shops and facilities that are buildings.**
-  - Problem: The inspector's rename form (`nameInput`, `rename` in `src/ui/inspect.ts`) shows on every building, including Kolam Lele, Portal, Pos Satpam, Bank Sampah and Lapangan, where a name makes no sense.
-  - Why: A name only matters for a place people know by its name, such as a warung, a rumah makan or a kos. Elsewhere it is clutter and a misclick risk.
-  - Suggested solution: Allow renaming only for shops (`category: 'shops'`) and for facilities that are a building with a sign: kos-kosan, kontrakan, balai warga, PAUD, koperasi, fotokopi, apotek, bengkel, barbershop. Not for flat pieces, farms, ponds, posts, gates, decor or Lapangan. Keep one list in `src/data/brands.ts` beside `LOCAL_NAMES`, and hide the form elsewhere. Combine with the pencil-icon item ("Make renaming a building hard to trigger by mistake").
-  - Source: Julian, 2026-10-29
-  - `claimed · claude · 2026-10-29 · done when:` the rename form shows only for the listed shops and facilities, Kolam Lele, Portal, Pos Satpam, Bank Sampah and Lapangan have none, and a unit test checks the list.
 - [ ] **Rethink the tukang parkir liar.**
   - Problem: Every shop that opens spawns a tukang parkir on its own tile, 100% of the time (`spawnParkir` in `src/sim/projects.ts`). It is `removable: false` (`src/data/buildings.ts`), so a growing kampung fills with tiles the player cannot clear.
   - Why: It eats space and takes control away from the player, which hurts the core build loop more than the joke helps.
@@ -130,12 +124,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Find why it was missed (tap target, panel not opening for permit buildings, or the button hidden) and fix that first.
   - Source: Hari, 2026-10-28
   - `open · — · — · done when:` tapping a permit building opens a panel with a clear Orang Dalam button that skips the permit, in EN and ID.
-- [ ] **Make renaming a building hard to trigger by mistake.**
-  - Problem: Renaming (ganti nama) is easy to hit by accident (`nameInput`, `rename` in `src/ui/inspect.ts`).
-  - Why: Misclicks open the keyboard and break the flow.
-  - Suggested solution: Show a pencil icon next to the building name. Only tapping it opens the rename field and keyboard. Follow ART.md for the icon.
-  - Source: Hari, 2026-10-28
-  - `claimed · claude · 2026-10-29 · done when:` the name is plain text with a pencil icon beside it, only the icon opens the rename field and keyboard.
 - [ ] **Tie tutorial tips to an action, not to a timer.**
   - Problem: Hari finds the guide pop-ups random. In `src/ui/howto.ts` some tips fire from actions (first permit queue, first arrival), but house, combo, jobs, wacana and ranking use `s.month >= 3` or `>= 9`.
   - Why: Without a visible trigger the tip has no "so what".
@@ -218,15 +206,12 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: A nightly or weekly workflow runs the `-en` projects without slowing PRs.
   - Source: `decisions/default-lang-id.md`
   - `open · — · — · done when:` a scheduled workflow runs the en projects and reports failures.
-- [ ] **Skip screenshot baselines outside CI's image.**
-  - Problem: Local `npm run e2e` always fails `visual.spec.ts` because fonts render differently.
-  - Why: The noise hides real failures.
-  - Suggested solution: Skip it unless `CI` is set, or say so in the run output.
-  - Source: local runs
-  - `claimed · claude · 2026-10-29 · done when:` local `npm run e2e` no longer fails on visual baselines.
 - [ ] **Tune `GRADE_BONUS`.**
   - Problem: The economy may feel thin after grade bonuses went half-yearly.
   - Why: Less income per year than before.
   - Suggested solution: Playtest, then adjust `GRADE_BONUS` if it feels thin.
   - Source: `decisions/41-half-year-report-night-tint.md`
   - `open · — · — · done when:` the economy is playtested and `GRADE_BONUS` is kept or tuned, with a note in `decisions/`.
+- [x] **Rename only shops and facilities that are buildings.** Shipped in PR #142, see `progress/rename-gate-and-pencil.md`.
+- [x] **Make renaming a building hard to trigger by mistake.** Shipped in PR #142: a pencil beside the name opens the rename field. See `progress/rename-gate-and-pencil.md`.
+- [x] **Skip screenshot baselines outside CI's image.** Shipped in PR #142: visual baselines run only when `CI` is set. See `progress/rename-gate-and-pencil.md`.
