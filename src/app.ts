@@ -27,6 +27,7 @@ import { loadSettings, saveSettings, type Settings } from './settings';
 import { storage } from './storage';
 import { reportExtra } from './ui/report';
 import { h, missingList } from './ui/dom';
+import { lombaDayOpen, openLombaDay } from './ui/lomba';
 import { comboPics } from './ui/lists';
 import { RIVAL_NAMES } from './data/ranking';
 import { areaScore } from './sim/ranking';
@@ -143,7 +144,7 @@ export class App {
       held: this.held,
       sheetOpen: sheetOpen(),
       modals: this.modalQueue.length,
-      pendingEvent: !!this.s.pendingEvent,
+      pendingEvent: !!this.s.pendingEvent || !!this.s.lomba?.due,
       placing: !!this.placing,
       howtoOpen: !document.getElementById('howto')!.hidden,
     };
@@ -172,6 +173,8 @@ export class App {
     if (modalEl && this.canShowQueued()) {
       if (this.modalQueue.length > 0) this.showModal();
       else if (this.s.pendingEvent) this.showEvent();
+      // 17 Agustus: the day screen opens at a quiet moment, like an event card.
+      else if (this.s.lomba?.due && !lombaDayOpen()) openLombaDay(this);
     }
     if (running) {
       this.acc += dt * this.speed;
@@ -476,7 +479,7 @@ export class App {
 
   /** True when a tip can show without stacking on another message. Never while the home screen is open. */
   get idle(): boolean {
-    return !document.getElementById('home') && this.modalQueue.length === 0 && !this.s.pendingEvent && !sheetOpen() && document.getElementById('howto')!.hidden;
+    return !document.getElementById('home') && this.modalQueue.length === 0 && !this.s.pendingEvent && !this.s.lomba?.due && !sheetOpen() && document.getElementById('howto')!.hidden;
   }
 
   private showModal(): void {

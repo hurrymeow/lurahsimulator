@@ -144,6 +144,22 @@ export interface PlayerInfo {
 }
 
 /** What is true for the warga: fed, in work, safe. Sejahtera is their average. */
+/** The Lomba Agustusan being prepared or just held. */
+export interface LombaState {
+  /** Game year (month / 12) it belongs to. */
+  year: number;
+  /** Contest ids picked, paid for already. */
+  contests: string[];
+  /** Index into the stage list; 0 is none. */
+  stage: number;
+  /** The staff member running it. */
+  ketua?: number;
+  /** 17 Agustus has come: time stops until the player plays the day. */
+  due?: boolean;
+  held?: boolean;
+  result?: { wins: string[]; viral: number; sabar: number; rupiah: number; ricuh: boolean; trophy: boolean; inem: boolean };
+}
+
 export interface Meters {
   perut: number;
   kerja: number;
@@ -433,6 +449,10 @@ export interface GameState {
   kel: KelState;
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
+  /** This year's Lomba Agustusan, from the panitia's card in May to the day. Missing until the first one. */
+  lomba?: LombaState;
+  /** The month the 17 Agustus trophy leaves the Kantor RT. */
+  pialaUntil?: number;
   /** The three needs meters at the end of last month, for the 2045-drop toast. Missing in older saves. */
   lastMeters?: Meters;
   /** One-time warnings already shown in this game, such as 'sabar'. */

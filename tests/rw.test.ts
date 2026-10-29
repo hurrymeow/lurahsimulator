@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { eventDef } from '../src/data/events';
 import { activeCombos } from '../src/sim/combos';
-import { banjirProtection, resolveEvent } from '../src/sim/events';
+import { agustusMult, banjirProtection, resolveEvent } from '../src/sim/events';
 import { acceptSK, canPromote, nextStarChecklist, stageTitle } from '../src/sim/stages';
 import { promote } from '../src/sim/grow';
 import { liveJobs, assign } from '../src/sim/jobs';
@@ -135,15 +134,12 @@ describe('RW combos', () => {
     expect(pasar.def).toBe('pasarKaget');
   });
 
-  it('doubles the 17 Agustus prize again with Agustusan Akbar', () => {
+  it('doubles the Lomba Agustusan prizes again with Agustusan Akbar', () => {
     const s = rw(2);
     put(s, 'lapangan', 13, 3);
     put(s, 'gapura', 14, 4);
-    s.pendingEvent = 'agustusan';
-    s.res.sabar = 10;
-    const outcome = resolveEvent(s, [], 1);
-    const base = eventDef('agustusan')!.choices[1].res!.sabar!;
-    expect(outcome.delta!.sabar).toBe(base * 4);
+    // Lapangan doubles them, Agustusan Akbar doubles them again.
+    expect(agustusMult(s)).toBe(4);
   });
 });
 

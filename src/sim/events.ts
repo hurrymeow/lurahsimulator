@@ -8,6 +8,7 @@ import { rupiah } from '../format';
 import { activeCombos } from './combos';
 import { def, isCover } from './content';
 import { gateOpen } from './gate';
+import { LOMBA } from '../data/lomba';
 import { banjirCut, wacanaNoReceipt } from './kel';
 import type { StageEventChoice } from '../data/higher';
 import { gain, type Fx } from './gain';
@@ -50,7 +51,7 @@ export function banjirProtection(s: GameState): number {
   return Math.min(BANJIR_MAX_PROTECT, levels * BANJIR_PROTECT_PER_LEVEL * boost + combos + banjirCut(s) + realisasiBanjir(s));
 }
 
-/** Lapangan doubles the 17 Agustus prize. Panjat Pinang adds half again. */
+/** Lapangan doubles the Lomba Agustusan prizes. The 17 Agustus combos add more. */
 export function agustusMult(s: GameState): number {
   let m = s.buildings.some((b) => b.def === 'lapangan' && b.status === 'active') ? 2 : 1;
   for (const a of activeCombos(s)) m *= a.combo.agustusMult ?? 1;
@@ -95,6 +96,11 @@ export const EVENT_CLEAR = 3;
 function crowded(s: GameState): boolean {
   const last = Object.values(s.lastEvent ?? {});
   if (last.length && s.month - Math.max(...last) < EVENT_CLEAR) return true;
+  // 17 Agustus is a popup too: random events keep clear of the Lomba day, before and after.
+  const m = s.month % 12;
+  const toDay = (LOMBA.day - m + 12) % 12;
+  const sinceDay = (m - LOMBA.day + 12) % 12;
+  if (s.month + toDay >= LOMBA.fromMonth && (toDay < EVENT_CLEAR || sinceDay < EVENT_CLEAR)) return true;
   for (let k = 1; k < EVENT_CLEAR; k++) {
     // A yearly one on its month, or a one-off (no months list) on the month it first comes due.
     const due = EVENTS.some((e) => e.when.chance >= 1 && (e.when.months ? e.when.months.includes((s.month + k) % 12) && (e.when.minMonth ?? 0) <= s.month + k : e.when.minMonth === s.month + k && !(s.lastEvent ?? {})[e.id]));
@@ -110,7 +116,7 @@ function crowded(s: GameState): boolean {
  * picked by weight, so a longer list adds variety and not more interruptions.
  */
 export function eventSystem(s: GameState, fx: Fx): void {
-  if (s.pendingEvent) return;
+  if (s.pendingEvent || s.lomba?.due) return;
   const all = [...EVENTS, ...STAGE_EVENTS.filter((x) => gateOpen(s, x.gate))].filter((e) => eligible(s, e));
   const scheduled = all.find((e) => e.when.chance >= 1);
   if (scheduled) return raise(s, fx, scheduled);
@@ -191,7 +197,7 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
   // Advice: the outcome is rolled now and revealed in the result popup.
   const rolled = c.outcomes ? rollOutcome(s, c.outcomes) : undefined;
   if (rolled) applyOutcome(s, rolled);
-  for (const [k, v] of Object.entries(c.res ?? {})) s.res[k as 'sabar'] += e.id === 'agustusan' && (v as number) > 0 ? Math.round((v as number) * agustusMult(s)) : (v as number);
+  for (const [k, v] of Object.entries(c.res ?? {})) s.res[k as 'sabar'] += v as number;
   if (c.inspectPrep && s.inspection) s.inspection.prep += c.inspectPrep;
   const efx = (c as StageEventChoice).fx;
   if (efx?.letterMult) s.rw.letterMult = { mult: efx.letterMult, until: s.month + (efx.months ?? 1) };

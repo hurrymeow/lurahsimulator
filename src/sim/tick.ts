@@ -24,6 +24,7 @@ import { noteNet, quarterSystem, snapshot } from './report';
 import { requirementGaps } from './rules';
 import { brandMult, royaltyRate } from './brands';
 import { problemSystem } from './problems';
+import { lombaSystem } from './lomba';
 import { monthWarnings, type SabarCause } from './warnings';
 import { parkirSystem } from './parkir';
 import { needsSystem, premanTake } from './needs';
@@ -251,6 +252,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   problemSystem,
   checkUnlocks,
   inspectionSystem,
+  lombaSystem,
   eventSystem,
   lineSystem,
   camatCallSystem,
@@ -270,6 +272,8 @@ const SABAR_CAUSE = new Map<(s: GameState, fx: Fx) => void, SabarCause>([
 export function tick(s: GameState): Fx {
   const fx: Fx = [];
   if (s.pendingEvent) return fx;
+  // 17 Agustus is being played: time waits for the day screen.
+  if (s.lomba?.due) return fx;
   s.quarter ??= snapshot(s);
   s.month++;
   // What each system did to Popularitas, so a first fall can name its cause.

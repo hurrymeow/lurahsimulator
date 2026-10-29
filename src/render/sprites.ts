@@ -193,6 +193,21 @@ export const SPRITES: Record<string, string[]> = {
     '............',
     '............',
   ],
+  // The 17 Agustus trophy: a gold cup with two handles, a red-and-white ribbon and a wooden base.
+  piala: [
+    '............',
+    '..aaaaaaaa..',
+    '.yawyyyyyay.',
+    'y.awyyyyya.y',
+    'y.ayyyyyya.y',
+    '.yayyyyyay..',
+    '...ayyyya...',
+    '....rrww....',
+    '.....yy.....',
+    '....nnnn....',
+    '...NNNNNN...',
+    '............',
+  ],
   scaffold: [
     'y.y.y.y.y.y.',
     'SSSSSSSSSSSS',
