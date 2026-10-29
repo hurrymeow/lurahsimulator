@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EVENTS, eventDef } from '../src/data/events';
+import { EVENTS, INSPECTIONS, eventDef } from '../src/data/events';
 import { LINES } from '../src/data/lines';
 import { RIVAL_BASE, RIVAL_PER_YEAR, RIVAL_JITTER } from '../src/data/ranking';
 import { banjirProtection, checkChoice, checkRepair, eventCost, repair, resolveEvent } from '../src/sim/events';
@@ -145,7 +145,7 @@ describe('more events', () => {
         s.res.sabar = 60;
         s.res.rupiah = Math.max(s.res.rupiah, 1_000_000);
         if (fx.some((f) => f.kind === 'event')) {
-          if (!['guntingPita', 'banjir', 'kecamatan'].includes(s.pendingEvent!)) months.push(s.month);
+          if (!['guntingPita', 'banjir', ...Object.keys(INSPECTIONS)].includes(s.pendingEvent!)) months.push(s.month);
           s.pendingEvent = null;
         }
       }
@@ -337,6 +337,47 @@ describe('kecamatan inspection', () => {
     const out = next(s);
     expect(out.some((f) => f.kind === 'notice' && f.title.startsWith('Kecamatan'))).toBe(true);
     expect(s.inspection?.warnAt).toBe(27);
+  });
+
+  it('sends Kampung Bersih first, then a different team each time, each scoring its own four criteria', () => {
+    const { s } = warn();
+    expect(s.inspection?.theme).toBe('kecamatan');
+    const seen = new Set<string>(['kecamatan']);
+    let last = 'kecamatan';
+    for (let visit = 0; visit < 12; visit++) {
+      s.pendingEvent = null;
+      while (s.inspection?.visitAt !== undefined) next(s);
+      while (s.inspection?.visitAt === undefined) next(s);
+      const theme = s.inspection!.theme!;
+      expect(theme).not.toBe(last);
+      expect(s.pendingEvent).toBe(theme);
+      expect(inspectionScore(s).parts.map((p) => p.id)).toEqual([...INSPECTIONS[theme as keyof typeof INSPECTIONS]]);
+      seen.add(theme);
+      last = theme;
+    }
+    expect(seen.size).toBe(4);
+  });
+
+  it('scores the new criteria from the kampung', () => {
+    const s = newGame(5);
+    s.inspection = { warnAt: 0, prep: 0, theme: 'kecamatanDigital' };
+    const before = inspectionScore(s).parts.find((p) => p.id === 'wifi')!.points;
+    addBuilding(s, 'wifi', 1, 1, 'active');
+    expect(inspectionScore(s).parts.find((p) => p.id === 'wifi')!.points).toBe(before + 10);
+    s.res.viral = 30;
+    expect(inspectionScore(s).parts.find((p) => p.id === 'viral')!.points).toBe(25);
+    s.inspection.theme = 'kecamatanSehat';
+    addBuilding(s, 'apotek', 2, 1, 'active');
+    expect(inspectionScore(s).parts.find((p) => p.id === 'sehat')!.points).toBeGreaterThanOrEqual(10);
+  });
+
+  it('every inspection has a free choice and two paid shortcuts that inflate the score', () => {
+    for (const id of Object.keys(INSPECTIONS)) {
+      const e = eventDef(id)!;
+      expect(e.when.chance).toBe(0);
+      expect(e.choices[0].cost).toBeUndefined();
+      expect(e.choices.slice(1).every((c) => (c.inspectPrep ?? 0) > 0)).toBe(true);
+    }
   });
 
   it('cat ulang inflates the score for one visit only', () => {
