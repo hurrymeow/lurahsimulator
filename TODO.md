@@ -65,57 +65,26 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: One game, one money look. The top bar uses the coin with short numbers (`rupiahHud`), but panels and buttons still print "Rp" text, which is long at 320px and breaks the icon-first rule.
   - Suggested solution: Add one helper that returns the coin icon plus the number (full or short), and use it instead of the `rupiah()` string wherever a Node is allowed. Then audit every screen, in ID and EN, for stat words and money still written as text. Spots found by grep: Neighbours (`neighbours.ts`: Dana buttons, auto-dana line), Staff (`staff.ts`: salary, raise, bimtek, pesangon, hire and post costs), Report card (`report.ts`: income and vs-last lines), Inspector (`inspect.ts`: income and upkeep, upgrade, demolish refund), Wacana and mangkrak and repair (`panels.ts`: realisasi, announce, restart, repair), Build list (`build.ts`: need-more line), Build and move bar and price pop (`app.ts`: title cost, line-go, number pop), Stats totals (`app.ts`), and event texts with `Rp {amt}` in `src/i18n/en.ts`, `id.ts` and `id-content.ts` (anggaran, gapura, kader, panen, rush, staff blurbs, a Kelurahan harvest effect). Also fix "1 stars" to the singular. Buttons are the hard part: keep the label readable at 320px and keep the button's accessible name spelled out. Follow UI.md and the Stat icons PR 2 and PR 3 items so the audits do not overlap.
   - Source: Hari, 2026-10-29. Related: "Stat icons PR 2" and "Stat icons PR 3".
-  - `open · — · — · done when:` money in panels, buttons and notices uses the coin icon, event and notice text with `Rp {amt}` is converted or kept as words on purpose and logged in `decisions/`, an audit table lists any other text spots left, nothing clips at 320px in ID and EN, and the plural of "star" is right.
-- [ ] **Add a rotate button while placing a building.**
-  - Problem: Rotating exists only on the inspector of a placed building (`rotateBuilding` in `src/sim/rules.ts`, button in `src/ui/inspect.ts`). The placement bar has no rotate.
-  - Why: The player has to place first, then open the building, rotate, and possibly move it again.
-  - Suggested solution: Add a rotate button to the placement bar in `src/app.ts` that turns the ghost before Place, keeps the choice for the placed building, and works at 320px. Reuse the same rotate rule and icon.
-  - Source: Hari, 2026-10-29
-  - `open · — · — · done when:` the placement bar has a rotate button, the placed building keeps that facing, and an e2e test covers it.
+  - `claimed · voidinside99 (Julian) · 2026-10-30 · done when:` money in panels, buttons and notices uses the coin icon, event and notice text with `Rp {amt}` is converted or kept as words on purpose and logged in `decisions/`, an audit table lists any other text spots left, nothing clips at 320px in ID and EN, and the plural of "star" is right.
 - [ ] **Add more buildings that raise Popularitas, so it is not just Pos Ronda.**
   - Problem: Few buildings give Popularitas (hearts) each month. In `src/data/buildings.ts` Pos Ronda is the clear source (`perMonth: {{ sabar: 2 }}`), and a few combos add some (`src/data/combos.ts`). Not a full audit.
   - Why: The player builds Pos Ronda again and again for hearts, so the town looks the same and choices are not interesting. Popularitas gates arrivals and stars.
   - Suggested solution: List every building's Popularitas per month, then add a handful of social buildings (for example a mosque or langgar, a posyandu-like clinic, a small park) with different size, cost and side effects. Keep the 25-word blurbs and follow ART.md (the artist's sprites stay). Rebalance with the economy and bot tests, and pick the set with Hari first.
   - Source: Hari, 2026-10-29
   - `open · — · — · done when:` at least 3 new buildings give Popularitas with different costs or trade-offs, Pos Ronda is no longer the only good source, the economy and bot tests pass, and new art follows ART.md.
-- [ ] **HIGH PRIORITY: Let AI RTs build many more kinds of building.**
-  - Problem: AI RTs build from a short fixed list per trait (`WANTS` in `src/sim/grow.ts`): Warung, Indomaret, Alfamart, Pos Ronda, wifi, Biopori. A Rajin RT can form only one combo (see the combos item).
-  - Why: Neighbours look samey and cannot earn the combos their stars need, so they stall.
-  - Suggested solution: Widen each trait's list across shops, facilities and decor, using what the player has unlocked. Prefer picks that form combos with what is already there (the `mix` rule in `build`). Keep the cost: more kinds means more art on the AI lots, so reuse existing sprites. Check against the global-combo item, which may reduce the need.
-  - Source: Hari, 2026-10-29
-  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` each trait builds at least 10 different buildings, AI RTs can form 3 combos, bot tests pass, and the Neighbours screen still reads clearly.
 - [ ] **Vary the Kecamatan inspection by merging it into the other events.**
   - Problem: The Kecamatan inspection (`src/sim/inspection.ts`) fires on a warn and visit cycle with the same four criteria each time (selokan, Popularitas, tertib, parkir).
   - Why: It is getting stale: the player sees the same warning and the same score card.
   - Suggested solution: Fold the inspection into the normal event pool, with different inspectors, themes and criteria per visit, and a few variants of the result text. Keep the lead-time warning and the prep action, and the old criteria as a base. Check `src/data/events*.ts` and the tone rules in GAME-DESIGN.md.
   - Source: Hari, 2026-10-29
-  - `open · — · — · done when:` the inspection comes as part of the event pool with at least 4 variants, the warning and prep still work, and its tests pass.
+  - In PR #168 (`decisions/inspect-variants.md`).
+  - `claimed · voidinside99 (Julian) · 2026-10-30 · done when:` the inspection comes as part of the event pool with at least 4 variants, the warning and prep still work, and its tests pass.
 - [ ] **Redo the staff page UI so it has far fewer buttons.**
   - Problem: The staff page (`src/ui/staff.ts`, about 150 lines) shows many buttons per person and per channel: raise, bimtek, fire, hire, post by channel.
   - Why: Hari finds it overwhelming, and says Kairosoft handles staff with one card per person and one main action.
   - Suggested solution: Study the Kairosoft staff screen, then show one card per person with a single main button and put the other actions behind a detail view. Follow UI.md. Draft the layout with Hari before building.
   - Source: Hari, 2026-10-29
   - `open · — · — · done when:` the staff page has one primary action per card, rare actions sit in a detail view, nothing clips at 320px in ID and EN, and an e2e test covers hire, raise and fire.
-- [ ] **Check why the first RT's map looks smaller and its brown road looks wider after expansion.**
-  - Problem: Hari says that after the RT expands to the RW, the original RT map looks reduced and the brown middle road gets bigger (screenshot, 2026-10-29: a small built area inside big grass lots, cut by wide dirt bands). The seams between cells are two-tile bands (`seam` in `src/sim/area.ts`), so a likely cause is that the bands now draw as wide roads and the camera is zoomed out for the larger map. Not verified.
-  - Why: The player's kampung looks lost on the bigger map, and the dirt bands look odd.
-  - Suggested solution: Compare the RT view before and after promotion, then check whether any RT tile is lost to the seams, how the bands are drawn, and the zoom. Fix the cause: thinner or better-drawn seams, keep the RT's size, or centre the camera on it.
-  - Source: Hari, 2026-10-29
-  - In PR #165 (seams now sit between RTs, `decisions/seam-gap.md`).
-  - `claimed · voidinside99 (Julian) · 2026-10-30 · done when:` the RT looks the same size before and after expansion, the seam roads look intentional, and a screenshot check at 390px confirms it.
-- [ ] **Allow RW and higher buildings inside the RT too, not only at the seams.**
-  - Problem: RW and Kelurahan buildings can only stand on the seam lots between cells (`lotAt`, scope `rw` and `kel` in `src/sim/area.ts`), which Hari reads as building only at intersections.
-  - Why: It feels arbitrary. Hari wants to place them at RT places too.
-  - Suggested solution: Let buildings with scope `rw` or `kel` go on RT lots as well, and keep the seams as a place for them. Check the road-access and crowding rules, the scope rules on `BuildingDef`, the lot colours drawn on the map, and the RW and Kelurahan bot tests. This changes the stage design, so update GAME-DESIGN.md and add a `decisions/` note.
-  - Source: Hari, 2026-10-29
-  - In PR #165 (`decisions/seam-gap.md`).
-  - `claimed · voidinside99 (Julian) · 2026-10-30 · done when:` RW and Kelurahan buildings can be placed on RT lots, the seam rule is documented, and the RW and Kelurahan bot tests pass.
-- [ ] **Explain how another RT wins the yearly competition and gains a rank level.**
-  - Problem: The RT star goal 'Ranking wins' (`rankWins` in `src/sim/stages.ts`) needs yearly wins, but an AI RT wins only if its score beats a rival formula that rises each year (`neighboursYearEnd` in `src/sim/grow.ts`, `RIVAL_BASE` and `RIVAL_PER_YEAR`). The panel shows 'Ranking wins: 0 of 1' and nothing about how to win.
-  - Why: The player cannot influence the score and does not know what it is made of, so the goal feels random.
-  - Suggested solution: On the Neighbours screen show each RT's current score against the rival target for this year, and the main parts of the score. Say what helps it (more residents, combos, Popularitas). Tie in the speed-up levers.
-  - Source: Hari, 2026-10-29. Related: "Give the player levers to speed up neighbour RT stars"
-  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` the Neighbours screen shows each RT's score against the target with the parts that help, and EN and ID are checked at 320px.
 - [ ] **Replace 'Kini: do xx' with the pending goals for the next star.**
   - Problem: The goal strip (`shortGoal` in `src/sim/nextstep.ts`) shows one 'Kini: ...' action. Hari does not like it and would rather see what is left for the next star (screenshot: 'Kini: capai 60 warga.').
   - Why: A single line hides the star checklist, and it sometimes names a minor step. The player wants to see the real target.
@@ -125,6 +94,9 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- [x] **HIGH PRIORITY: Let AI RTs build many more kinds of building** and **Explain how another RT wins the yearly competition.** Each trait wants 11 to 13 kinds, partners of half-built combos first; every trait finds 4 or more combos and reaches 3★. The Neighbours row shows each RT's score against this year's target and its parts. #162.
+- [x] **Check why the first RT's map looks smaller after expansion** and **Allow RW and higher buildings inside the RT too.** The seams took each RT's edge row and column; they now sit between the RTs, so the RT keeps its 13x17. RW and Kelurahan buildings may stand on the player's RT lots. #165, `decisions/seam-gap.md`.
+- [x] **Add a rotate button while placing a building.** Cancel, Rotate, Place under the ghost; the building keeps that facing. #167, `decisions/place-rotate.md`.
 - [x] **One big yearly event the player cannot just click away.** Lomba Agustusan: a 3-month prep window (contests, stage, ketua panitia), then the day with a panjat pinang timing climb, a balap karung tap race and rolled contests. Staff stats set the odds, Popularitas the turnout; prize Viral, rupiah and a trophy on the Kantor. #152, `decisions/lomba-agustusan.md`.
 - [x] **Don't force-place the building in the centre after choosing it in Build.** Build mode waits for a tap: free spots glow and the first tap places it. #161, `decisions/place-on-tap.md`.
 - [x] **HIGH PRIORITY: Fix an RT that never builds again after the player takes it over and hands it back.** It came back unfunded with auto-dana off; hand-back now restores auto-dana, and a toast and the panel say what it needs. #160, `decisions/handback-funding.md`.
