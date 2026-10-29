@@ -5,7 +5,11 @@ import { def } from '../src/sim/content';
 import { assign, checkAssign, slots } from '../src/sim/jobs';
 import { checkRestart, checkRestartODn, RESTART_ODN, restart, restartCost } from '../src/sim/projects';
 import { checkDemolish, checkUpgrade, upgrade } from '../src/sim/rules';
-import { addBuilding, addResident, byUid, count, newGame } from '../src/sim/state';
+import { addBuilding, addResident, byUid, count, emptyTiles, newGame } from '../src/sim/state';
+import { checkTertibkan, parkirSystem, spawnParkir, tertibkan } from '../src/sim/parkir';
+import { PARKIR } from '../src/sim/balance';
+import { ensureStaff } from '../src/sim/staff';
+import type { Fx } from '../src/sim/gain';
 import { tick } from '../src/sim/tick';
 import { announce } from '../src/sim/wacana';
 import type { GameState } from '../src/sim/types';
@@ -93,6 +97,52 @@ describe('tukang parkir liar', () => {
     expect(upgrade(s, p).ok).toBe(true);
     expect(p.level).toBe(2);
     expect(checkUpgrade(s, p).ok).toBe(true);
+  });
+
+  it('after the first, only some shops draw one; never past the cap or beside the Kantor', () => {
+    let drawn = 0;
+    for (let seed = 1; seed <= 20; seed++) {
+      const s = newGame(seed);
+      s.parkirSeen = true;
+      const spot = emptyTiles(s).find((t) => !s.buildings.some((k) => k.def === 'kantorRT' && Math.abs(k.x - t.x) <= 2 && Math.abs(k.y - t.y) <= 2))!;
+      const shop = addBuilding(s, 'warung', spot.x, spot.y, 'building');
+      shop.timer = 1;
+      tick(s);
+      drawn += count(s, 'parkir');
+    }
+    expect(drawn).toBeGreaterThan(0);
+    expect(drawn).toBeLessThan(12);
+    const s = newGame(3);
+    const fx: Fx = [];
+    const shop = s.buildings.find((b) => b.def === 'kantorRT')!;
+    for (let i = 0; i < 10; i++) spawnParkir(s, fx, shop, true);
+    expect(count(s, 'parkir')).toBe(PARKIR.cap);
+    for (const p of s.buildings.filter((b) => b.def === 'parkir')) expect(Math.abs(p.x - shop.x) > 1 || Math.abs(p.y - shop.y) > 1).toBe(true);
+  });
+
+  it('can be tertibkan by a Hansip for free or for Orang Dalam, and may come back', () => {
+    const s = newGame(5);
+    const shop = addBuilding(s, 'warung', 0, 0, 'active');
+    const p = spawnParkir(s, [], shop, true)!;
+    s.res.orangDalam = 0;
+    expect(checkTertibkan(s, p).ok).toBe(false);
+    s.res.orangDalam = PARKIR.orangDalam;
+    expect(tertibkan(s, p)).toBe(true);
+    expect(s.res.orangDalam).toBe(0);
+    expect(count(s, 'parkir')).toBe(0);
+    // With a Hansip on duty it costs nothing.
+    ensureStaff(s);
+    s.staff!.push({ id: 99, name: 'Pak Hansip', role: 'hansip', stars: 2, stats: { rajin: 50, lobi: 30, jujur: 50, gaul: 30 }, salary: 300_000, xp: 0, level: 1, hiredAt: 0 });
+    const q = spawnParkir(s, [], shop, true)!;
+    expect(tertibkan(s, q)).toBe(true);
+    expect(s.res.orangDalam).toBe(0);
+    // A comeback is due: he returns beside the same shop.
+    s.parkirBack = [{ shop: shop.uid, at: s.month + 1 }];
+    s.month++;
+    const fx: Fx = [];
+    parkirSystem(s, fx);
+    expect(count(s, 'parkir')).toBe(1);
+    expect(s.parkirBack).toHaveLength(0);
   });
 
   it('spawns one per shop, not for non-shops', () => {

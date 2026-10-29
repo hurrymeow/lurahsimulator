@@ -2,11 +2,12 @@ import { bName, t } from '../i18n';
 import { rupiah } from '../format';
 import { def, stageFx } from './content';
 import { studiBanding } from './kel';
+import { spawnParkir } from './parkir';
 import { gain, type Fx } from './gain';
 import { chance } from './rng';
 import { EMAS } from '../data/ranking';
 import { addEmas } from './ranking';
-import { addBuilding, buildCost, emptyTiles } from './state';
+import { buildCost } from './state';
 import type { Building, CheckResult, GameState } from './types';
 
 export const MANGKRAK_AT = '80%';
@@ -34,26 +35,10 @@ export function onBuildingFinished(s: GameState, fx: Fx, b: Building): 'ok' | 'm
     return 'mangkrak';
   }
   if (stageFx(d)?.randomWacana) studiBanding(s, fx, b);
-  if (d.shop) for (let i = 0; i < (stageFx(d)?.spawns?.count ?? 1); i++) spawnParkir(s, fx, b);
+  // Ordinary shops sometimes draw a tukang parkir. Stage buildings that always bring them still do, up to the cap.
+  const spawns = stageFx(d)?.spawns?.count;
+  if (d.shop) for (let i = 0; i < (spawns ?? 1); i++) spawnParkir(s, fx, b, spawns !== undefined);
   return 'ok';
-}
-
-function spawnParkir(s: GameState, fx: Fx, shop: Building): void {
-  const empty = emptyTiles(s);
-  if (!empty.length) return;
-  const next = empty.filter((t) => Math.abs(t.x - shop.x) <= 1 && Math.abs(t.y - shop.y) <= 1);
-  const spot = (next.length ? next : empty).sort((a, b) => Math.abs(a.x - shop.x) + Math.abs(a.y - shop.y) - (Math.abs(b.x - shop.x) + Math.abs(b.y - shop.y)))[0];
-  const p = addBuilding(s, 'parkir', spot.x, spot.y, 'active');
-  p.owner = shop.uid;
-  fx.push({ kind: 'built', uid: p.uid });
-  fx.push({
-    kind: 'notice',
-    title: t('sim.parkirTitle'),
-    body: t('sim.parkirBody', { name: bName(def(shop.def)) }),
-    tone: 'bad',
-    x: p.x,
-    y: p.y,
-  });
 }
 
 export function restartCost(s: GameState, b: Building): number {

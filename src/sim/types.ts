@@ -435,6 +435,10 @@ export interface GameState {
   lastMeters?: Meters;
   /** One-time warnings already shown in this game, such as 'sabar'. */
   warned?: string[];
+  /** Cleared tukang parkir due back at their shop: shop uid and month. Missing in older saves. */
+  parkirBack?: { shop: number; at: number }[];
+  /** A tukang parkir has turned up at least once. The first shop always draws one. */
+  parkirSeen?: boolean;
   /** Month a resident last moved in. Drives the perantau safety valve. */
   lastArrival?: number;
   /** Kecamatan inspections. Absent in older saves. */

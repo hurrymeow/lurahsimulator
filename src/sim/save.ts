@@ -1,6 +1,6 @@
 import { layRoads } from './access';
 import { setPlayerCells } from './area';
-import { allDefs, hasDef } from './content';
+import { allDefs, def, hasDef } from './content';
 import { ensureStaff } from './staff';
 import { SAVE_VERSION, newStageState } from './state';
 import { OLD_GRID_H, OLD_GRID_W, RT_H, RT_W, setGrid, type GameState, type ProblemId } from './types';
@@ -35,6 +35,8 @@ export function deserialize(raw: string | null): GameState | null {
     s.problems ??= problemsFromSave(s);
     ensureStaff(s);
     s.rw ??= { kaderDecay: 0 };
+    // Saves from before the rarer tukang parkir: any open shop means the first one has already come.
+    s.parkirSeen ??= s.buildings.some((b) => b.def === 'parkir' || (def(b.def).shop && b.status === 'active'));
     s.kel ??= { budget: 0, spentBase: 0, serapanRun: 0, cleanAudits: 0 };
     setGrid(s.stage.current);
     setPlayerCells(s.neighbours.filter((n) => n.run === 'player'));
