@@ -1,7 +1,7 @@
 import { bBlock, bName, t, type Key } from '../i18n';
 import { rupiah } from '../format';
 import { REFUND } from './balance';
-import { lotAt } from './area';
+import { lotAt, type Lot } from './area';
 import { def, gateOf, hasDef } from './content';
 import { gateOpen } from './gate';
 import { neighbourAt } from './grow';
@@ -48,6 +48,9 @@ function clearPaths(s: GameState, d: BuildingDef, x: number, y: number, ignore?:
   s.buildings = s.buildings.filter((o) => o.uid === ignore || !(pathUnder(o, d) && tiles.some((p) => covers(o, p.x, p.y))));
 }
 
+/** Lots each scope may stand on. RW and Kelurahan buildings go inside the player's RTs too, or on their own seams; RT buildings never on a seam. */
+const LOTS: Record<'rt' | 'rw' | 'kel', Lot[]> = { rt: ['rt'], rw: ['rt', 'rw'], kel: ['rt', 'kel'] };
+
 /** What is wrong with standing a building on this spot: off the map, in the way, or on the wrong lot. `ignore` is a building that is moving, so it never blocks itself. */
 export function siteGaps(s: GameState, d: BuildingDef, x: number, y: number, ignore?: number): string[] {
   const missing: string[] = [];
@@ -58,7 +61,7 @@ export function siteGaps(s: GameState, d: BuildingDef, x: number, y: number, ign
   if (off) missing.push(t('sim.offMap'));
   else if (hit) missing.push(t('sim.tileHas', { name: bName(def(hit.def)) }));
   else if (lots.includes('other')) missing.push(t('sim.notYours'));
-  else if (lots.some((l) => l !== (d.scope ?? 'rt'))) missing.push(t(d.scope && d.scope !== 'rt' ? 'sim.needLot' : 'sim.needRtLot'));
+  else if (lots.some((l) => !LOTS[d.scope ?? 'rt'].includes(l))) missing.push(t(d.scope === 'kel' ? 'sim.needKelLot' : d.scope === 'rw' ? 'sim.needLot' : 'sim.needRtLot'));
   return missing;
 }
 

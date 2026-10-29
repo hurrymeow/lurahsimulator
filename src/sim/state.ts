@@ -41,6 +41,7 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
     lastArrival: 0,
     stats: { earned: 0, spent: 0, arrived: 0, left: 0 },
     roadsLaid: true,
+    gapped: true,
   };
   setGrid('rt');
   setPlayerCells([]);

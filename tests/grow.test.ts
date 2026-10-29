@@ -1,16 +1,17 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { lotAt } from '../src/sim/area';
+import { cellOf, cellOrigin, lotAt, ungapTile } from '../src/sim/area';
 import { goalProgress, nextStarChecklist } from '../src/sim/stages';
 import { viewOf } from '../src/sim/neighbourView';
 import { FLAT, connectedRoad, hasRoadBeside } from '../src/sim/access';
 import { nextWant, rivalTarget, lotFull, builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, promote, setAutoFund, takeover } from '../src/sim/grow';
 import { NEIGHBOUR } from '../src/sim/balance';
-import { checkPlace } from '../src/sim/rules';
+import { checkPlace, siteGaps } from '../src/sim/rules';
+import { def } from '../src/sim/content';
 import { areaScore, scoreParts } from '../src/sim/ranking';
 import { deserialize, serialize } from '../src/sim/save';
 import { addBuilding, addResident, emptyTiles, newGame, population } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
-import { GRID_H, GRID_W, RT_H, RT_W, setGrid } from '../src/sim/types';
+import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, SEAM, setGrid } from '../src/sim/types';
 
 afterEach(() => setGrid('rt'));
 
@@ -36,10 +37,10 @@ describe('growing map', () => {
     const before = s.buildings.map((b) => [b.x, b.y]);
     expect([GRID_W, GRID_H]).toEqual([RT_W, RT_H]);
     promote(s, []);
-    expect([GRID_W, GRID_H]).toEqual([RT_W * 2, RT_H * 2]);
+    expect([GRID_W, GRID_H]).toEqual([RT_W * 2 + SEAM, RT_H * 2 + SEAM]);
     expect(s.neighbours).toHaveLength(3);
     promote(s, []);
-    expect([GRID_W, GRID_H]).toEqual([RT_W * 4, RT_H * 4]);
+    expect([GRID_W, GRID_H]).toEqual([RT_W * 4 + 3 * SEAM, RT_H * 4 + 3 * SEAM]);
     expect(s.neighbours).toHaveLength(15);
     expect(s.buildings.map((b) => [b.x, b.y])).toEqual(before);
   });
@@ -67,26 +68,49 @@ describe('lots', () => {
   it('gives the RW seams to RW buildings and the other RTs to the AI', () => {
     grown();
     expect(lotAt(2, 2)).toBe('rt');
+    // The RT keeps its edge rows: the seam starts just past them.
+    expect(lotAt(RT_W - 1, 2)).toBe('rt');
+    expect(lotAt(2, RT_H - 1)).toBe('rt');
     expect(lotAt(RT_W, 2)).toBe('rw');
-    expect(lotAt(2, RT_H - 1)).toBe('rw');
-    expect(lotAt(RT_W + 3, 3)).toBe('other');
+    expect(lotAt(RT_W + 1, 2)).toBe('rw');
+    expect(lotAt(2, RT_H)).toBe('rw');
+    expect(lotAt(CELL_W, 3)).toBe('other');
+    expect(lotAt(CELL_W + 3, 3)).toBe('other');
   });
 
   it('puts the RW boundary on the Kelurahan lots', () => {
     grown('kelurahan');
-    expect(lotAt(2 * RT_W, 3)).toBe('kel');
+    expect(lotAt(2 * CELL_W - SEAM, 3)).toBe('kel');
+    expect(lotAt(2 * CELL_W - 1, 3)).toBe('kel');
     expect(lotAt(RT_W, 3)).toBe('rw');
-    expect(lotAt(3 * RT_W, 3)).toBe('other');
-    expect(lotAt(3 * RT_W - 1, 2 * RT_H + 3)).toBe('other');
+    expect(lotAt(3 * CELL_W - SEAM, 3)).toBe('other');
+    expect(lotAt(2 * CELL_W + RT_W, 2 * CELL_H + 3)).toBe('other');
   });
 
   it('refuses to build in an AI RT or on a seam with an RT building', () => {
     const s = grown();
     s.res.rupiah = 50_000_000;
-    expect(checkPlace(s, 'warung', RT_W + 3, 3)).toEqual({ ok: false, missing: ['That is another RT. Fund it and it builds there itself.'] });
+    expect(checkPlace(s, 'warung', CELL_W + 3, 3)).toEqual({ ok: false, missing: ['That is another RT. Fund it and it builds there itself.'] });
     const seam = checkPlace(s, 'warung', RT_W, 3);
     expect(seam.ok).toBe(false);
     expect(checkPlace(s, 'warung', 2, 2)).toEqual({ ok: true });
+  });
+
+  it('lets RW and Kelurahan buildings stand inside the RT as well as on their own seams', () => {
+    const s = grown('kelurahan');
+    const free = (id: string, ok: (x: number, y: number) => boolean) => {
+      for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (ok(x, y) && siteGaps(s, def(id), x, y).length === 0) return { x, y };
+      return null;
+    };
+    const inRt = (x: number, y: number) => x < RT_W - 1 && y < RT_H - 1;
+    expect(free('balaiRW', inRt)).not.toBeNull();
+    expect(free('balaiDesa', inRt)).not.toBeNull();
+    expect(free('balaiRW', (x, y) => lotAt(x, y) === 'rw')).not.toBeNull();
+    // Each keeps to its own seam: an RW building never on the Kelurahan seam, nor the other way round.
+    expect(siteGaps(s, def('balaiRW'), 2 * CELL_W - SEAM, 3)).toEqual(['Goes inside your RT or on a seam lot between your RTs.']);
+    expect(siteGaps(s, def('balaiDesa'), RT_W, 3)).toEqual(['Goes inside your RT or on the wide seam between the RWs.']);
+    // RT buildings still stay off the seams.
+    expect(siteGaps(s, def('warung'), RT_W, 3)).toHaveLength(1);
   });
 
   it('refuses a tile an AI building holds', () => {
@@ -133,8 +157,7 @@ describe('AI neighbours', () => {
     for (const n of s.neighbours) {
       expect(n.buildings.length).toBeGreaterThan(2);
       for (const b of n.buildings) {
-        expect(Math.floor(b.x / RT_W)).toBe(n.cx);
-        expect(Math.floor(b.y / RT_H)).toBe(n.cy);
+        expect(cellOf(b.x, b.y)).toEqual({ cx: n.cx, cy: n.cy });
         expect(lotAt(b.x, b.y)).toBe('other');
       }
       expect(new Set(n.buildings.map((b) => `${b.x},${b.y}`)).size).toBe(n.buildings.length);
@@ -235,7 +258,30 @@ describe('save', () => {
     const back = deserialize(raw)!;
     expect(back.stage.current).toBe('rw');
     expect(back.neighbours).toHaveLength(3);
-    expect([GRID_W, GRID_H]).toEqual([RT_W * 2, RT_H * 2]);
+    expect([GRID_W, GRID_H]).toEqual([RT_W * 2 + SEAM, RT_H * 2 + SEAM]);
+  });
+
+  it('moves an old grown map apart so the seams sit between the RTs', () => {
+    const s = grown();
+    const raw = JSON.parse(serialize(s));
+    delete raw.gapped;
+    // Old layout: the seam was the RT's own last column (12) and the next cell's first (13).
+    raw.buildings.push({ uid: 9001, def: 'warung', x: 5, y: 5, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+    raw.buildings.push({ uid: 9002, def: 'warung', x: RT_W - 1, y: 4, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+    raw.neighbours[0].buildings = [{ uid: 9003, def: 'warung', x: RT_W + 4, y: 4, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 }];
+    setGrid('rt');
+    const back = deserialize(JSON.stringify(raw))!;
+    const at = (uid: number) => back.buildings.concat(back.neighbours.flatMap((n) => n.buildings)).find((b) => b.uid === uid)!;
+    expect([at(9001).x, at(9001).y]).toEqual([5, 5]);
+    expect([at(9002).x, at(9002).y]).toEqual([RT_W, 4]);
+    expect(lotAt(at(9002).x, at(9002).y)).toBe('rw');
+    expect([at(9003).x, at(9003).y]).toEqual([CELL_W + 4, 4]);
+    expect(back.gapped).toBe(true);
+  });
+
+  it('maps old seam tiles onto the new seam band', () => {
+    expect([12, 13].map((v) => ungapTile(v, RT_W, 2))).toEqual([RT_W, RT_W + 1]);
+    expect([0, 11, 14, 25].map((v) => ungapTile(v, RT_W, 2))).toEqual([0, 11, CELL_W + 1, CELL_W + 12]);
   });
 
   it('adds an empty neighbour list to an older save', () => {
@@ -362,8 +408,8 @@ describe('player-run RTs', () => {
   /** An empty tile inside a neighbour's cell, away from its buildings. */
   const spotIn = (s: ReturnType<typeof grown>, i: number, id = 'rumah') => {
     const n = s.neighbours[i];
-    for (let y = n.cy * RT_H + 2; y < (n.cy + 1) * RT_H - 2; y++)
-      for (let x = n.cx * RT_W + 2; x < (n.cx + 1) * RT_W - 2; x++) if (checkPlace(s, id, x, y).ok) return { x, y };
+    for (let y = cellOrigin(n.cx, n.cy).y + 2; y < cellOrigin(n.cx, n.cy).y + RT_H - 2; y++)
+      for (let x = cellOrigin(n.cx, n.cy).x + 2; x < cellOrigin(n.cx, n.cy).x + RT_W - 2; x++) if (checkPlace(s, id, x, y).ok) return { x, y };
     throw new Error('no spot');
   };
 
@@ -530,7 +576,7 @@ describe('AI RT variety', () => {
     n.trait = 'hobi';
     n.stars = 2;
     n.discovered = [];
-    n.buildings.push({ uid: s.nextUid++, def: 'bankSampah', x: n.cx * RT_W + 2, y: n.cy * RT_H + 2, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+    n.buildings.push({ uid: s.nextUid++, def: 'bankSampah', x: cellOrigin(n.cx, n.cy).x + 2, y: cellOrigin(n.cx, n.cy).y + 2, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
     // Kali Bersih needs Bank Sampah and Biopori: the Biopori comes next.
     expect(nextWant(n)).toBe('biopori');
   });
@@ -584,8 +630,9 @@ describe('handing an RT back', () => {
     const s = taken();
     const n = s.neighbours[0];
     expect(lotFull(n)).toBe(false);
-    for (let y = n.cy * RT_H; y < (n.cy + 1) * RT_H; y++)
-      for (let x = n.cx * RT_W; x < (n.cx + 1) * RT_W; x++)
+    const o = cellOrigin(n.cx, n.cy);
+    for (let y = o.y; y < o.y + RT_H; y++)
+      for (let x = o.x; x < o.x + RT_W; x++)
         if (!n.buildings.some((b) => b.x === x && b.y === y)) n.buildings.push({ uid: s.nextUid++, def: 'rumah', x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
     expect(lotFull(n)).toBe(true);
   });

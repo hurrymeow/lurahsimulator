@@ -1,13 +1,13 @@
 // Who owns each tile of the growing map. The player's RT is always the top-left cell.
-import { GRID_H, GRID_W, RT_H, RT_W } from './types';
+// RT cells are RT_W x RT_H and sit SEAM tiles apart; the bands between them are the seams.
+import { CELL_H, CELL_W, RT_H, RT_W, SEAM, mapSpan } from './types';
 
 /** rt: inside the player's RT, or an RT they took over. rw and kel: seam lots for RW and Kelurahan buildings. other: an AI-run RT. */
 export type Lot = 'rt' | 'rw' | 'kel' | 'other';
 
-/** The seam a coordinate sits on, as the boundary index between two cells, or -1. A seam is the two tiles either side of the boundary. */
-function seam(v: number, size: number, span: number): number {
-  for (let b = 0; b < span - 1; b++) if (v === (b + 1) * size - 1 || v === (b + 1) * size) return b;
-  return -1;
+/** The seam a coordinate sits on, as the index of the cell before it, or -1 inside a cell. */
+function seam(v: number, pitch: number, size: number): number {
+  return v % pitch >= size ? Math.floor(v / pitch) : -1;
 }
 
 /** RT cells the player has taken over, as "cx,cy". Their lots are the player's to build on. */
@@ -21,25 +21,32 @@ export function setPlayerCells(cells: { cx: number; cy: number }[]): void {
   areaVersion++;
 }
 
+/** The RT cell holding a tile, counted from the player's at (0,0). A seam tile counts with the cell before it. */
+export const cellOf = (x: number, y: number) => ({ cx: Math.floor(x / CELL_W), cy: Math.floor(y / CELL_H) });
+
+/** The top-left tile of an RT cell. */
+export const cellOrigin = (cx: number, cy: number) => ({ x: cx * CELL_W, y: cy * CELL_H });
+
 export function lotAt(x: number, y: number): Lot {
-  const span = GRID_W / RT_W;
-  const sx = seam(x, RT_W, span);
-  const sy = seam(y, RT_H, span);
-  if (sx < 0 && sy < 0) return (x < RT_W && y < RT_H) || playerCells.has(`${Math.floor(x / RT_W)},${Math.floor(y / RT_H)}`) ? 'rt' : 'other';
+  const span = mapSpan();
+  const sx = seam(x, CELL_W, RT_W);
+  const sy = seam(y, CELL_H, RT_H);
+  if (sx < 0 && sy < 0) {
+    const c = cellOf(x, y);
+    return (c.cx === 0 && c.cy === 0) || playerCells.has(`${c.cx},${c.cy}`) ? 'rt' : 'other';
+  }
   // The middle boundary of a four-RT-wide map separates two RWs.
   if ((span === 4 && sx === 1) || (span === 4 && sy === 1)) return 'kel';
   // Other seams belong to the RW, but only inside the player's own.
   const own = span === 4 ? 2 : span;
-  return x < own * RT_W && y < own * RT_H ? 'rw' : 'other';
+  return x < own * CELL_W - SEAM && y < own * CELL_H - SEAM ? 'rw' : 'other';
 }
-
-/** The RT cell holding a tile, counted from the player's at (0,0). */
-export const cellOf = (x: number, y: number) => ({ cx: Math.floor(x / RT_W), cy: Math.floor(y / RT_H) });
 
 /** Every RT cell on the map except the player's. */
 export function neighbourCells(): { cx: number; cy: number }[] {
   const out: { cx: number; cy: number }[] = [];
-  for (let cy = 0; cy < GRID_H / RT_H; cy++) for (let cx = 0; cx < GRID_W / RT_W; cx++) if (cx || cy) out.push({ cx, cy });
+  const span = mapSpan();
+  for (let cy = 0; cy < span; cy++) for (let cx = 0; cx < span; cx++) if (cx || cy) out.push({ cx, cy });
   return out;
 }
 
@@ -47,4 +54,16 @@ export function neighbourCells(): { cx: number; cy: number }[] {
 export const rwOf = (cx: number, cy: number) => ({ rx: Math.floor(cx / 2), ry: Math.floor(cy / 2) });
 
 /** True on the two-tile bands between cells. */
-export const isSeam = (x: number, y: number) => seam(x, RT_W, GRID_W / RT_W) >= 0 || seam(y, RT_H, GRID_H / RT_H) >= 0;
+export const isSeam = (x: number, y: number) => seam(x, CELL_W, RT_W) >= 0 || seam(y, CELL_H, RT_H) >= 0;
+
+/**
+ * Moves a tile from the old layout, where the seams took each cell's edge rows, to the gapped one.
+ * Seam tiles stay on the seam band, and tiles inside a cell keep their place in it.
+ */
+export function ungapTile(v: number, size: number, span: number): number {
+  const c = Math.floor(v / size);
+  const r = v % size;
+  if (r === size - 1 && c < span - 1) return c * (size + SEAM) + size;
+  if (r === 0 && c > 0) return c * (size + SEAM) - 1;
+  return c * (size + SEAM) + r;
+}

@@ -1,13 +1,13 @@
 import { NEIGHBOUR } from './balance';
-import { isSeam } from './area';
+import { cellOf, isSeam } from './area';
 import { housing, population } from './state';
-import { RT_H, RT_W, type Building, type GameState, type Neighbour, type Resident } from './types';
+import { type Building, type GameState, type Neighbour, type Resident } from './types';
 
 const SOCIAL = new Set(['posRonda', 'wifi', 'biopori']);
 
 /** True for a building inside this RT's cell, not on the seams around it. */
 export const inCell = (n: Pick<Neighbour, 'cx' | 'cy'>, b: Pick<Building, 'x' | 'y'>): boolean =>
-  Math.floor(b.x / RT_W) === n.cx && Math.floor(b.y / RT_H) === n.cy && !isSeam(b.x, b.y);
+  cellOf(b.x, b.y).cx === n.cx && cellOf(b.x, b.y).cy === n.cy && !isSeam(b.x, b.y);
 
 /** The best combo count among all RTs, which every RT's combos goal uses. */
 const comboShare = (s: GameState): number => Math.max(s.discovered.length, ...s.neighbours.map((o) => o.discovered.length));

@@ -10,18 +10,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Set a ladder by unlock tier: start 1x1 and cheap, RT stars 1x1 to 2x2, RW 2x2, Kelurahan 2x2 to 3x3, with cost and effect rising per tier (for example x2 cost, x1.5 effect per tier). Audit every building's cost, effect and footprint against the ladder in one table, and pick changes with Hari before building. New art per ART.md at the real footprint; never overwrite the artist's sprites. Check `tests/footprint.test.ts`, `tests/content-footprint.test.ts` and the balance tests.
   - Source: Julian, 2026-10-29
   - `open · — · — · done when:` a table of every building's tier, cost, effect and size is agreed with Hari, the changes ship with art per ART.md, and the footprint and balance tests pass.
-- [ ] **One big yearly event the player cannot just click away.**
-  - Problem: Events are single pop-ups with a choice, closed in one tap. There is no big yearly moment to aim for.
-  - Why: Kairosoft games give each year a big event as a short-term goal, often with a small mini-game. It should use the staff's stats and the kampung's stats, so building and hiring pay off.
-  - Suggested solution: Pick one with Hari, then build it as its own screen. Ideas:
-    1. **Lomba Agustusan (August):** a 3-month prep window to pick contests and set up a stage. On the day, short tap mini-games (panjat pinang timing, balap karung). Staff Gaul and Rajin set the odds, Popularitas sets turnout, a Lapangan is needed, and Inem headlines the stage (her gig). Prize: Virality, rupiah, a trophy on the map.
-    2. **Penilaian Kampung Bersih (the Kecamatan judges' visit):** a 3-month warning, then a budget to spend on looks (paint, banners, pot plants) or on real fixes. The judges score the Laporan, Sejahtera and what they see on the map. Staff Lobi and Admin Grup WA help. The satire: dressing up for the visit.
-    3. **Musim Banjir Besar (January):** prep before (biopori, Kerja Bakti), then a 30-second mini-game where the player taps to send sandbags along the map's low edge. Petugas PU and Hansip stats, Aman and Perut set the damage.
-    4. **Festival Kuliner (once a year):** every Rumah Makan and warung competes, with a quick order-rush mini-game. Franchises and brands matter; the winner draws visitors for months.
-  - Keep the tone rules: no real politicians or elections, and no religious or ethnic jokes, so holiday events stay about logistics (for example THR and mudik), never the faith. Log the pick in `decisions/`, and fit it to the popup spacing in GAME-DESIGN.md section 3.
-  - Julian, 2026-10-29: picked 1, Lomba Agustusan.
-  - Source: Julian, 2026-10-29
-  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` one yearly event with a prep window and a short mini-game ships, uses at least one staff stat and one kampung meter, cannot be closed in one tap, and works in ID at 320px with an e2e test.
 - [ ] **Stat icons PR 2.**
   - Problem: After the stat-icon renderer in `progress/stat-icons.md`, buildings, inspector, events, jobs, staff, mangkrak, calo, Wacana and Realisasi still need verification and fixes.
   - Why: The renderer iconifies stat words everywhere, so sentences that read oddly with an icon noun, and slang uses that must stay words, will leak until they are checked.
@@ -66,12 +54,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Source: Hari, 2026-10-28
   - #151 fitted the opener note to the 560px game column (desktop e2e added). Skip was kept, because UI.md rule 10 gives the multi-step first-build tutorial a Skip; Hari to choose: 1) keep Skip, or 2) remove it and update UI.md. See `decisions/ui-batch-oct29.md`.
   - `open · — · — · done when:` the dialogue fits the game column at desktop widths, has no Skip button, and an e2e test at a desktop viewport covers it.
-- [ ] **Don't force-place the building in the centre after choosing it in Build.**
-  - Problem: After picking a building in build mode it is placed at the screen centre.
-  - Why: It blocks the view and invites mistaps.
-  - Suggested solution: Place where the player taps, or start the target off the main view.
-  - Source: Hari, 2026-10-28
-  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` choosing a building does not drop it in the centre, the target does not cover the map, and mistaps drop at 320px. e2e covers it.
 - [ ] **Add more buildings bigger than 1x1, starting with Balai RW at 2x2.**
   - Problem: Few buildings are bigger than one tile. Today only Lapangan (3x3) and Sawah, Taman Bermain, Balai Warga, PAUD and Gudang Material (2x2) are (`FOOTPRINT` in `src/data/buildings.ts`). RW buildings such as Balai RW (`src/data/higher/rw.ts`) are still 1x1. Hari, 2026-10-28.
   - Why: A town hall the size of a house does not read as a bigger stage. Larger footprints also make map space and placement matter, which is the Kairosoft feel GAME-DESIGN.md aims at.
@@ -84,12 +66,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Add one helper that returns the coin icon plus the number (full or short), and use it instead of the `rupiah()` string wherever a Node is allowed. Then audit every screen, in ID and EN, for stat words and money still written as text. Spots found by grep: Neighbours (`neighbours.ts`: Dana buttons, auto-dana line), Staff (`staff.ts`: salary, raise, bimtek, pesangon, hire and post costs), Report card (`report.ts`: income and vs-last lines), Inspector (`inspect.ts`: income and upkeep, upgrade, demolish refund), Wacana and mangkrak and repair (`panels.ts`: realisasi, announce, restart, repair), Build list (`build.ts`: need-more line), Build and move bar and price pop (`app.ts`: title cost, line-go, number pop), Stats totals (`app.ts`), and event texts with `Rp {amt}` in `src/i18n/en.ts`, `id.ts` and `id-content.ts` (anggaran, gapura, kader, panen, rush, staff blurbs, a Kelurahan harvest effect). Also fix "1 stars" to the singular. Buttons are the hard part: keep the label readable at 320px and keep the button's accessible name spelled out. Follow UI.md and the Stat icons PR 2 and PR 3 items so the audits do not overlap.
   - Source: Hari, 2026-10-29. Related: "Stat icons PR 2" and "Stat icons PR 3".
   - `open · — · — · done when:` money in panels, buttons and notices uses the coin icon, event and notice text with `Rp {amt}` is converted or kept as words on purpose and logged in `decisions/`, an audit table lists any other text spots left, nothing clips at 320px in ID and EN, and the plural of "star" is right.
-- [ ] **HIGH PRIORITY: Fix an RT that never builds again after the player takes it over and hands it back.**
-  - Problem: After taking an RT over and then handing it back to the AI, the AI builds nothing. Hari, 2026-10-29. Not reproduced. Reading the code, the likely cause is state that `takeover` zeroes and `handBack` does not restore (`src/sim/grow.ts`): `takeover` sets `funded = 0` and `autoKeep = 0`, and `handBack` only resets `progress`, `lastBuild`, `pathsLaid` and `pop`. So the RT comes back unfunded, with auto-dana off, and `neighboursSystem` builds only while `funded > 0`, so it sits at "Stalled. Needs funding". If funding does not help, check the next suspects: `freeTiles(n)` and `builtBy(n)` after the buildings come back, `linkAll` with `pathsLaid = false`, and the lot map (`syncArea`, `inCell`).
-  - Why: Handing back is meant to return an RT to the AI. If it dies silently, the player loses a star source, and RW 2★ and 3★ need those RTs.
-  - Suggested solution: Reproduce first with a unit test: take over, build, hand back, fund it, run 6 months, and expect a new build. Fix what the test shows. If the cause is only the zeroed Dana, say so on the hand-back button and the Neighbours screen ("Funded 0, fund it") and consider restoring the previous `autoKeep`. Also make sure a handed-back RT never reads as stalled for any other reason.
-  - Source: Hari, 2026-10-29. Related: "Let the player run an adjacent RT, or leave it to the AI and just fund it".
-  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` a test proves a handed-back, funded RT builds again, the cause is fixed, and the Neighbours screen explains the funded state after hand-back in EN and ID.
 - [ ] **Add a rotate button while placing a building.**
   - Problem: Rotating exists only on the inspector of a placed building (`rotateBuilding` in `src/sim/rules.ts`, button in `src/ui/inspect.ts`). The placement bar has no rotate.
   - Why: The player has to place first, then open the building, rotate, and possibly move it again.
@@ -108,12 +84,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Widen each trait's list across shops, facilities and decor, using what the player has unlocked. Prefer picks that form combos with what is already there (the `mix` rule in `build`). Keep the cost: more kinds means more art on the AI lots, so reuse existing sprites. Check against the global-combo item, which may reduce the need.
   - Source: Hari, 2026-10-29
   - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` each trait builds at least 10 different buildings, AI RTs can form 3 combos, bot tests pass, and the Neighbours screen still reads clearly.
-- [ ] **Make the permit and build phases clear, with cranes while building.**
-  - Problem: A new building waiting for a permit and one under construction do not look different enough, and the player cannot tell the two phases apart on the map. Not checked in the renderer yet (`src/render/`).
-  - Why: Players cannot tell what is happening or when to use Orang Dalam, and it feels like the building is stuck.
-  - Suggested solution: Show a clear permit marker (sign or paperwork) and, for the build phase, a crane over the building (see the existing crane or scaffold art, or draw a new one per ART.md). Keep the progress readable at 320px.
-  - Source: Hari, 2026-10-29. Related: "Let the player use Orang Dalam from the building panel while it waits for a permit"
-  - `open · — · — · done when:` permit and build phases look different on the map, the build phase shows a crane, and the sprites follow ART.md.
 - [ ] **Vary the Kecamatan inspection by merging it into the other events.**
   - Problem: The Kecamatan inspection (`src/sim/inspection.ts`) fires on a warn and visit cycle with the same four criteria each time (selokan, Popularitas, tertib, parkir).
   - Why: It is getting stale: the player sees the same warning and the same score card.
@@ -131,13 +101,15 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: The player's kampung looks lost on the bigger map, and the dirt bands look odd.
   - Suggested solution: Compare the RT view before and after promotion, then check whether any RT tile is lost to the seams, how the bands are drawn, and the zoom. Fix the cause: thinner or better-drawn seams, keep the RT's size, or centre the camera on it.
   - Source: Hari, 2026-10-29
-  - `open · — · — · done when:` the RT looks the same size before and after expansion, the seam roads look intentional, and a screenshot check at 390px confirms it.
+  - In PR #165 (seams now sit between RTs, `decisions/seam-gap.md`).
+  - `claimed · voidinside99 (Julian) · 2026-10-30 · done when:` the RT looks the same size before and after expansion, the seam roads look intentional, and a screenshot check at 390px confirms it.
 - [ ] **Allow RW and higher buildings inside the RT too, not only at the seams.**
   - Problem: RW and Kelurahan buildings can only stand on the seam lots between cells (`lotAt`, scope `rw` and `kel` in `src/sim/area.ts`), which Hari reads as building only at intersections.
   - Why: It feels arbitrary. Hari wants to place them at RT places too.
   - Suggested solution: Let buildings with scope `rw` or `kel` go on RT lots as well, and keep the seams as a place for them. Check the road-access and crowding rules, the scope rules on `BuildingDef`, the lot colours drawn on the map, and the RW and Kelurahan bot tests. This changes the stage design, so update GAME-DESIGN.md and add a `decisions/` note.
   - Source: Hari, 2026-10-29
-  - `open · — · — · done when:` RW and Kelurahan buildings can be placed on RT lots, the seam rule is documented, and the RW and Kelurahan bot tests pass.
+  - In PR #165 (`decisions/seam-gap.md`).
+  - `claimed · voidinside99 (Julian) · 2026-10-30 · done when:` RW and Kelurahan buildings can be placed on RT lots, the seam rule is documented, and the RW and Kelurahan bot tests pass.
 - [ ] **Explain how another RT wins the yearly competition and gains a rank level.**
   - Problem: The RT star goal 'Ranking wins' (`rankWins` in `src/sim/stages.ts`) needs yearly wins, but an AI RT wins only if its score beats a rival formula that rises each year (`neighboursYearEnd` in `src/sim/grow.ts`, `RIVAL_BASE` and `RIVAL_PER_YEAR`). The panel shows 'Ranking wins: 0 of 1' and nothing about how to win.
   - Why: The player cannot influence the score and does not know what it is made of, so the goal feels random.
@@ -153,6 +125,10 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- [x] **One big yearly event the player cannot just click away.** Lomba Agustusan: a 3-month prep window (contests, stage, ketua panitia), then the day with a panjat pinang timing climb, a balap karung tap race and rolled contests. Staff stats set the odds, Popularitas the turnout; prize Viral, rupiah and a trophy on the Kantor. #152, `decisions/lomba-agustusan.md`.
+- [x] **Don't force-place the building in the centre after choosing it in Build.** Build mode waits for a tap: free spots glow and the first tap places it. #161, `decisions/place-on-tap.md`.
+- [x] **HIGH PRIORITY: Fix an RT that never builds again after the player takes it over and hands it back.** It came back unfunded with auto-dana off; hand-back now restores auto-dana, and a toast and the panel say what it needs. #160, `decisions/handback-funding.md`.
+- [x] **Make the permit and build phases clear, with cranes while building.** A staked plot under the permit sign, then a tower crane over the scaffold. #164, `decisions/crane-phases.md`.
 - [x] **Add a developer test mode that jumps to a seeded higher-level game.** Settings, Developer: RT 3★, RW 3★ and Kelurahan seeds, two taps to confirm. #158, `decisions/dev-seeds.md`.
 - [x] **Tie tutorial tips to an action, not to a timer** and **Teach the combo mechanic in the tutorial.** No tip reads the month; the first shop names a combo to build beside it, and the first combo points at Menu, Combo. #156, `decisions/tutorial-tips-actions.md`.
 - [x] **Rethink the tukang parkir liar.** Spawn less (first shop always, then 30%, at most 4, never beside a Kantor) and tertibkan with a Hansip or 1 Orang Dalam. #150, `decisions/parkir-rethink.md`.
