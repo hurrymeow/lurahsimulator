@@ -144,7 +144,7 @@ export const ID: Record<Key, string> = {
   'grow.rank': 'Peringkat dalam {n} bulan: skor {score}, harus lebih dari {target}. Menang sejauh ini: {wins}.',
   'grow.rankHelp': 'Tiap tahun setiap RT dinilai terhadap target yang naik tiap tahun. Lebih banyak warga, bangunan yang berjalan dan combo menaikkan skornya; Popularitas juga, dari Pos Ronda, wifi, Biopori dan Posyandu-mu.',
   'grow.rankParts': 'Skor: warga {residents} · bangunan {buildings} · combo {combos} · Popularitas {sabar}',
-  'grow.row': '{cell} · {stars} bintang · {pop} warga · {n} bangunan',
+  'grow.row': '{cell} · {stars}★ · warga {pop} · bangunan {n}',
   'grow.rtStar': '{cell} dapat bintang',
   'grow.rtStarBody': 'RT sebelah berkembang sendiri.',
   'grow.stalled': 'Macet. Butuh dana.',

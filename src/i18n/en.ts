@@ -143,7 +143,7 @@ export const EN = {
   'grow.rank': 'Ranking in {n} month(s): score {score}, needs more than {target}. Wins so far: {wins}.',
   'grow.rankHelp': 'Each year every RT is ranked against a target that rises yearly. More warga, working buildings and combos raise its score; so does Popularitas, from Pos Ronda, wifi, Biopori and your Posyandu.',
   'grow.rankParts': 'Score: warga {residents} · buildings {buildings} · combos {combos} · Popularitas {sabar}',
-  'grow.row': '{cell} · {stars} stars · {pop} residents · {n} buildings',
+  'grow.row': '{cell} · {stars}★ · residents {pop} · buildings {n}',
   'grow.rtStar': '{cell} earned a star',
   'grow.rtStarBody': 'The RT next door is growing by itself.',
   'grow.stalled': 'Stalled. Needs funding.',

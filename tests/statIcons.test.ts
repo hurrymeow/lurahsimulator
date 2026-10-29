@@ -19,10 +19,17 @@ describe('stat word replacement', () => {
     expect(stats('Fake Virality collapsed', 'en')).toEqual(['viral']);
   });
 
-  it('leaves Rp amounts untouched', () => {
-    expect(stats('Menguras Rp 40rb sebulan', 'id')).toEqual([]);
-    expect(stats('Rp 500.000 untuk cat', 'id')).toEqual([]);
-    expect(hasStatWord('Rp 40rb', 'id')).toBe(false);
+  it('turns Rp amounts into the coin and the signed amount', () => {
+    const money = (str: string) => segs(str, 'id').filter((s) => s.kind === 'money').map((s) => (s as { amount: string }).amount);
+    expect(money('Menguras Rp 40rb sebulan')).toEqual(['40rb']);
+    expect(money('Rp 500.000 untuk cat.')).toEqual(['500.000']);
+    expect(money('+0,5 Orang Dalam dan -Rp 50rb per bulan.')).toEqual(['-50rb']);
+    expect(money('+Rp 100rb per bulan')).toEqual(['+100rb']);
+    expect(money('for Rp 50 juta.')).toEqual(['50 juta']);
+    expect(hasStatWord('Rp 40rb', 'id')).toBe(true);
+    expect(hasStatWord('RPG 40', 'id')).toBe(false);
+    const grouped = groupStatSegments(segs('Dana ×6 Rp 8.064.000', 'id'));
+    expect(grouped).toEqual([{ kind: 'text', text: 'Dana ×6 ' }, { kind: 'pair', before: '', stat: 'rupiah', after: '8.064.000' }]);
   });
 
   it('honours the plain escape', () => {
