@@ -2,7 +2,7 @@ import { t } from '../i18n';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { NEIGHBOUR } from '../sim/balance';
-import { autoFloor, autoMonthly, boostOf, cellName, checkFund, fundCost, fundNeighbour, setAutoFund } from '../sim/grow';
+import { autoFloor, autoMonthly, boostOf, cellName, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, setAutoFund, takeover } from '../sim/grow';
 import { viewOf } from '../sim/neighbourView';
 import { starChecklist } from '../sim/stages';
 import type { Neighbour } from '../sim/types';
@@ -54,7 +54,25 @@ export function openNeighbours(app: App): void {
     app.refresh();
     openNeighbours(app);
   };
+  const redo = () => {
+    app.tap(15);
+    app.save();
+    app.refresh();
+    openNeighbours(app);
+  };
   const rows = s.neighbours.map((n) => {
+    // A player-run RT: its checklist and the way back to the AI.
+    if (n.run === 'player') {
+      return h('div', { class: 'action nb-row nb-mine', 'data-rt': cellName(n) },
+        h('strong', {}, cellName(n)),
+        h('p', { class: 'meta' }, t('grow.row', { cell: cellName(n), stars: n.stars, pop: viewOf(s, n).residents.length, n: viewOf(s, n).buildings.length })),
+        h('p', { class: 'meta nb-status' }, t('grow.playerRun')),
+        missing(app, n),
+        h('button', { class: 'btn', 'data-handback': '1', onclick: () => { handBack(s, n); redo(); } }, t('grow.handBack')),
+        h('p', { class: 'meta' }, t('grow.handBackHelp', { n: NEIGHBOUR.takeoverOd })),
+      );
+    }
+    const take = checkTakeover(s, n);
     const boost = Math.round(boostOf(n) * 100);
     const one = checkFund(s, n, 1);
     const bulk = checkFund(s, n, NEIGHBOUR.fundBulk);
@@ -71,10 +89,19 @@ export function openNeighbours(app: App): void {
       ),
       one ? h('p', { class: 'meta' }, one) : null,
       autoRow(app, n),
+      h('div', { class: 'nb-take' },
+        h('button', { class: 'btn', 'data-takeover': '1', disabled: !!take, onclick: () => {
+          takeover(s, n);
+          app.notice({ title: t('grow.tookOver', { cell: cellName(n) }), body: t('grow.playerRun'), tone: 'good' });
+          redo();
+        } }, t('grow.takeover', { n: NEIGHBOUR.takeoverOd })),
+        h('p', { class: 'meta' }, take ?? t('grow.takeoverHelp')),
+      ),
     );
   });
   openSheet(t('grow.title'), [
     h('p', { class: 'meta' }, t('grow.intro')),
+    h('p', { class: 'meta' }, t('grow.modes')),
     h('p', { class: 'meta' }, t('grow.boostHelp')),
     h('p', { class: 'meta' }, t('grow.combosShared')),
     ...(rows.length ? rows : [h('p', { class: 'meta' }, t('grow.none'))]),

@@ -3,7 +3,7 @@ import { EMAS } from '../data/ranking';
 import { BASE_ATTRACT, DECOR_CAP, LEVEL_BONUS, SPRAWL_FREE, SPRAWL_STEP, START, START_RESIDENTS } from './balance';
 import { def, footprintFor } from './content';
 import { pick } from './rng';
-import { lotAt } from './area';
+import { lotAt, setPlayerCells } from './area';
 import { refreshAccess } from './access';
 import { GRID_H, GRID_W, setGrid, type Building, type BuildingDef, type GameState, type Resident, type StageState } from './types';
 
@@ -43,6 +43,7 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
     roadsLaid: true,
   };
   setGrid('rt');
+  setPlayerCells([]);
   const cx = Math.floor(GRID_W / 2);
   const cy = Math.floor(GRID_H / 2);
   addBuilding(s, 'kantorRT', cx, cy, 'active');

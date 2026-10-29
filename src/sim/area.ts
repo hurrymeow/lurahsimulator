@@ -1,7 +1,7 @@
 // Who owns each tile of the growing map. The player's RT is always the top-left cell.
 import { GRID_H, GRID_W, RT_H, RT_W } from './types';
 
-/** rt: inside the player's RT. rw and kel: seam lots for RW and Kelurahan buildings. other: an AI-run RT. */
+/** rt: inside the player's RT, or an RT they took over. rw and kel: seam lots for RW and Kelurahan buildings. other: an AI-run RT. */
 export type Lot = 'rt' | 'rw' | 'kel' | 'other';
 
 /** The seam a coordinate sits on, as the boundary index between two cells, or -1. A seam is the two tiles either side of the boundary. */
@@ -10,11 +10,22 @@ function seam(v: number, size: number, span: number): number {
   return -1;
 }
 
+/** RT cells the player has taken over, as "cx,cy". Their lots are the player's to build on. */
+let playerCells = new Set<string>();
+/** Bumps whenever the player's cells change, so caches of the lot map know to rebuild. */
+export let areaVersion = 0;
+
+/** Sets which RT cells the player runs, besides their own at (0,0). Call after loading, promotion, takeover and hand-back. */
+export function setPlayerCells(cells: { cx: number; cy: number }[]): void {
+  playerCells = new Set(cells.map((c) => `${c.cx},${c.cy}`));
+  areaVersion++;
+}
+
 export function lotAt(x: number, y: number): Lot {
   const span = GRID_W / RT_W;
   const sx = seam(x, RT_W, span);
   const sy = seam(y, RT_H, span);
-  if (sx < 0 && sy < 0) return x < RT_W && y < RT_H ? 'rt' : 'other';
+  if (sx < 0 && sy < 0) return (x < RT_W && y < RT_H) || playerCells.has(`${Math.floor(x / RT_W)},${Math.floor(y / RT_H)}`) ? 'rt' : 'other';
   // The middle boundary of a four-RT-wide map separates two RWs.
   if ((span === 4 && sx === 1) || (span === 4 && sy === 1)) return 'kel';
   // Other seams belong to the RW, but only inside the player's own.

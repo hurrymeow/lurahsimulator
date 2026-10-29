@@ -1,7 +1,7 @@
 // Residents walking between buildings, ojol riders, and the tukang parkir's wave. Purely visual:
 // nothing here touches the simulation.
 import { FLAT, ring, roadTiles } from '../sim/access';
-import { lotAt } from '../sim/area';
+import { areaVersion, lotAt } from '../sim/area';
 import { t } from '../i18n';
 import type { Key } from '../i18n';
 import { GRID_H, GRID_W, type GameState, type JobId } from '../sim/types';
@@ -154,6 +154,7 @@ export class Crowd {
   private cursor = 0;
   /** Tiles that belong to another RT. Walkers stay in their own. Rebuilt when the map grows. */
   private foreign = new Uint8Array(0);
+  private areaSeen = -1;
   /** Walkable ground: active paths and seams. Nobody walks anywhere else. */
   private onPath: Uint8Array = new Uint8Array(GRID_W * GRID_H);
   private last = 0;
@@ -188,7 +189,8 @@ export class Crowd {
     this.night = night;
     const dt = Math.min(100, this.last ? now - this.last : 0);
     this.last = now;
-    if (this.foreign.length !== GRID_W * GRID_H) {
+    if (this.foreign.length !== GRID_W * GRID_H || this.areaSeen !== areaVersion) {
+      this.areaSeen = areaVersion;
       this.foreign = new Uint8Array(GRID_W * GRID_H);
       for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (lotAt(x, y) === 'other') this.foreign[y * GRID_W + x] = 1;
       this.onPath = new Uint8Array(GRID_W * GRID_H);

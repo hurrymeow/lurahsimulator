@@ -1393,6 +1393,48 @@ test.describe('growing map', () => {
     await expect(page.locator('.sheet')).toBeVisible();
     await expect(page.locator('.sheet .action')).toHaveCount(3);
   });
+
+  test('taking an RT over makes its lots the player own, and it can be handed back', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.promote();
+      app.s.res.orangDalam = 5;
+      app.refresh();
+    });
+    await dismissModals(page);
+    await openPanel(page, 'neighbours');
+    const first = page.locator('.sheet .nb-row').first();
+    await first.locator('[data-takeover]').click();
+    await expect(page.locator('.sheet .nb-row.nb-mine')).toHaveCount(1);
+    await expect(page.locator('.sheet .nb-mine .checklist li').first()).toBeVisible();
+    await expectLegible(page, 'neighbours with a player-run RT');
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].run)).toBe('player');
+    await page.locator('.sheet-head .btn').click();
+    await dismissModals(page);
+    // A tap on its Kantor RT now opens the building, not the Neighbours panel.
+    const at = await page.evaluate(async () => {
+      const v = (window as unknown as { pakrt: any }).pakrt.view;
+      const { w, h } = (window as unknown as { pakrt: any }).pakrt.rt;
+      const c = v.project(w + w / 2, h / 2);
+      v.panBy(v.viewW / 2 - c.x, v.viewH / 2 - c.y);
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const p = v.project(w + w / 2, h / 2);
+      return { x: p.x, y: p.y };
+    });
+    const box = (await page.locator('#map').boundingBox())!;
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    await expect(page.locator('.sheet')).toBeVisible();
+    await expect(page.locator('.sheet .nb-row')).toHaveCount(0);
+    await page.locator('.sheet-head .btn').first().click();
+    // Hand it back: the AI runs it again.
+    await openPanel(page, 'neighbours');
+    await page.locator('.sheet .nb-mine [data-handback]').click();
+    await expect(page.locator('.sheet .nb-row.nb-mine')).toHaveCount(0);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].run)).toBeUndefined();
+  });
 });
 
 test.describe('RW stage', () => {
