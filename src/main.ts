@@ -42,7 +42,7 @@ app.actions.push(
 // Lives in the Menu's Game group. Hidden until the browser offers an install.
 const installBtn = h('button', { class: 'tile', id: 'install-btn', hidden: true }, h('img', { src: menuIconURL('install')!, alt: '', width: ICON_PX, height: ICON_PX, class: 'pixel' }), h('span', { id: 'install-label' }, t('menu.install')));
 
-$('menu-btn').addEventListener('click', () => openMenu(app, [installBtn]));
+$('menu-btn').addEventListener('click', () => openMenu(app, [updateTile, installBtn]));
 $('hud').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') app.openStats();
 });
@@ -61,10 +61,20 @@ observeStatIcons();
 // Second install button on the home screen. Hidden when installed or not offered.
 const homeInstall = h('button', { class: 'btn home-install', id: 'home-install', hidden: true }, t('menu.install'));
 setupInstall(homeInstall, (text) => app.modal({ title: t('install.title'), body: text, tone: 'info' }));
-// Update button on the home screen. Hidden until a new version is waiting.
-const homeUpdate = h('button', { class: 'btn home-update', id: 'home-update', hidden: true }, t('home.update'));
-setupUpdates($('update-banner'), $<HTMLButtonElement>('update-btn'), homeUpdate);
-showHome(app, homeInstall, homeUpdate);
+// A waiting version: a full-screen card on the home screen only, and during play a dot on Menu and an Update tile in it.
+const updateButton = h('button', { class: 'btn btn-primary', id: 'update-go' }, t('update.go'));
+const updateScreen = h('div', { id: 'update-screen', class: 'update-screen', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'update-title', hidden: true },
+  h('div', { class: 'update-card' }, h('h2', { id: 'update-title' }, t('update.title')), h('p', {}, t('update.body')), updateButton));
+$('app').append(updateScreen);
+const updateTile = h('button', { class: 'tile', id: 'update-tile', hidden: true }, h('img', { src: menuIconURL('install')!, alt: '', width: ICON_PX, height: ICON_PX, class: 'pixel' }), h('span', {}, t('update.tile')));
+setupUpdates({
+  screen: updateScreen,
+  screenButton: updateButton,
+  menuTile: updateTile,
+  onReady: () => $('menu-btn').append(h('span', { class: 'update-dot', role: 'img', 'aria-label': t('update.title') })),
+  beforeReload: () => app.save(),
+});
+showHome(app, homeInstall);
 // After home is up: a refresh before it (setupConsole makes one) would show a due tip over the home screen.
 setupTips(app);
 

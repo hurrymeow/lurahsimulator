@@ -398,7 +398,7 @@ The artist's restyle is the reference ([ART.md](ART.md) has the full rules). New
 - Buildings, combos, jobs and events live in data files under `src/data/`.
 - Placeholder pixel sprites are generated in code. No third-party game assets or names.
 - Save to localStorage inside try/catch. The game runs without storage.
-- PWA ships an install button and an update banner. Icons and the manifest follow Mono Dark; the page theme-color follows the theme.
+- PWA ships an install button and a forced update: a waiting version takes the whole home screen with one button, Perbarui sekarang (save, then reload). During play it never interrupts: the Menu button carries a dot and Menu lists a Perbarui tile. Icons and the manifest follow Mono Dark; the page theme-color follows the theme.
 
 ### Themes
 
