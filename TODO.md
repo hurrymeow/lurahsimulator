@@ -191,6 +191,12 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Give each adjacent RT two modes the player picks, switchable: (1) AI-run, where the player just funds it (add auto-fund from the other item); (2) Player-run, where the player takes it over and builds there with the normal Build flow, on that RT's lot, using its own stars checklist. Decide what a takeover costs and whether the player can hand it back. Check that RT stars still use the same checklist (`goalProgress` on `viewOf`), the map lots in `src/sim/area.ts`, and that the RW and Kelurahan bot tests still pass. Log the rule in `decisions/` and update GAME-DESIGN.md in the same change if the stage ladder text changes (AGENTS.md conformance).
   - Source: Hari, 2026-10-29. Related: "Give the player levers to speed up neighbour RT stars" and "Auto-fund the neighbouring RTs".
   - `open · — · — · done when:` each adjacent RT can be AI-run (funded) or taken over by the player, the choice is saved, a player-run RT can earn its stars, the Neighbours screen explains both modes, and EN and ID are checked at 320px.
+- [ ] **Add a small button to minimize the satellite view.**
+  - Problem: The satellite view (minimap) in the top-right of the map (`src/ui/console.ts`, `src/ui/console.css`) always shows. Tapping it moves the camera, and there is no way to hide it. Hari, 2026-10-29.
+  - Why: It covers part of the map, especially at 320px and in build mode, and a Repair all chip sits under it. Hari wants the space back when he does not need it. Hari kept the satellite view in #105, so this is a minimize, not a removal.
+  - Suggested solution: Add a small toggle button on the satellite view's corner that collapses it to a small icon and expands it again. Save the state in settings so it survives a reload. Keep the Repair all chip visible when collapsed, and make the button at least a comfortable tap size without blocking map taps. Follow UI.md and ART.md for the icon, and add EN and ID labels for the accessible name (`cs.satHelp` today).
+  - Source: Hari, 2026-10-29
+  - `open · — · — · done when:` a small button collapses and expands the satellite view, the choice persists, the Repair all chip and goal pill still fit at 320px, and an e2e test covers it.
 
 ## Done
 
