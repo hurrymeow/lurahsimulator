@@ -140,7 +140,7 @@ export const EN = {
   'grow.playerRun': 'You run this RT. Build on its lots like your own; its stars count from its own lots.',
   'grow.promoted': 'Promoted! The map grows.',
   'grow.promotedBody': 'The scenery pulls back and the neighbours appear. Fund each RT from Menu, Neighbours, or it stalls.',
-  'grow.row': '{cell} · {stars} stars · {pop} residents · {n} buildings',
+  'grow.row': '{cell} · {stars}★ · residents {pop} · buildings {n}',
   'grow.rtStar': '{cell} earned a star',
   'grow.rtStarBody': 'The RT next door is growing by itself.',
   'grow.stalled': 'Stalled. Needs funding.',

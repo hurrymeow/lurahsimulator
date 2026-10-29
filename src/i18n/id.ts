@@ -141,7 +141,7 @@ export const ID: Record<Key, string> = {
   'grow.playerRun': 'Kamu yang pegang RT ini. Bangun di lahannya seperti RT-mu; bintangnya dihitung dari lahannya sendiri.',
   'grow.promoted': 'Naik jabatan! Peta melebar.',
   'grow.promotedBody': 'Pemandangan mundur dan tetangga muncul. Danai tiap RT lewat Menu, Tetangga, atau macet.',
-  'grow.row': '{cell} · {stars} bintang · {pop} warga · {n} bangunan',
+  'grow.row': '{cell} · {stars}★ · warga {pop} · bangunan {n}',
   'grow.rtStar': '{cell} dapat bintang',
   'grow.rtStarBody': 'RT sebelah berkembang sendiri.',
   'grow.stalled': 'Macet. Butuh dana.',

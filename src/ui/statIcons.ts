@@ -18,7 +18,7 @@ export const statLabel = (stat: StatId): string => t(`res.${stat}` as 'res.rupia
  * Stat words, longest first, so "Orang Dalam" wins over a part of it and
  * "Virality" wins over "Viral" in English. Case-sensitive: lowercase
  * "viral" in flavour text (a video goes viral) is slang and stays a word.
- * "Rp 40rb" is a different token and is never in this list.
+ * Money amounts ("Rp 40rb") are matched separately, by MONEY.
  */
 const WORDS: Record<'id' | 'en', [string, StatId][]> = {
   id: [
@@ -44,9 +44,16 @@ const RE_CACHE: Partial<Record<'id' | 'en', RegExp>> = {};
 const wordRe = (lang: 'id' | 'en') => (RE_CACHE[lang] ??= new RegExp(`\\b(${WORDS[lang].map(([w]) => esc(w)).join('|')})\\b`, 'g'));
 const wordFor = (lang: 'id' | 'en', word: string): StatId => WORDS[lang].find(([w]) => w === word)![1];
 
+/**
+ * A money amount in running text: "Rp 1.344.000", "-Rp 50rb", "+Rp 100rb", "Rp 50 juta".
+ * It becomes the coin and the signed amount, as the money row shows it.
+ */
+const MONEY = /([+-]?)Rp ?(\d(?:[\d.,]*\d)?(?:rb|jt|k|M|\s(?:juta|miliar|million|billion))?)\b/g;
+
 export type StatSegment =
   | { kind: 'text'; text: string }
   | { kind: 'stat'; stat: StatId }
+  | { kind: 'money'; amount: string }
   | { kind: 'plain'; text: string };
 
 /**
@@ -56,7 +63,7 @@ export type StatSegment =
  */
 export function splitStatText(str: string, lang: 'id' | 'en' = getLang()): StatSegment[] {
   const out: StatSegment[] = [];
-  const pushText = (text: string) => {
+  const pushWords = (text: string) => {
     if (!text) return;
     const re = wordRe(lang);
     let last = 0;
@@ -66,6 +73,15 @@ export function splitStatText(str: string, lang: 'id' | 'en' = getLang()): StatS
       last = m.index + m[1].length;
     }
     if (last < text.length) out.push({ kind: 'text', text: text.slice(last) });
+  };
+  const pushText = (text: string) => {
+    let last = 0;
+    for (const m of text.matchAll(MONEY)) {
+      pushWords(text.slice(last, m.index));
+      out.push({ kind: 'money', amount: `${m[1]}${m[2]}` });
+      last = m.index + m[0].length;
+    }
+    pushWords(text.slice(last));
   };
   let last = 0;
   for (const m of str.matchAll(/\{plain:([^}]+)\}/g)) {
@@ -80,7 +96,7 @@ export function splitStatText(str: string, lang: 'id' | 'en' = getLang()): StatS
 /** True when a string contains a stat word or a plain escape. The fast path for the observer. */
 export const hasStatWord = (str: string, lang: 'id' | 'en' = getLang()): boolean =>
   // No /g here: RegExp.test with a global flag is stateful and would skip every other call.
-  /\{plain:[^}]+\}/.test(str) || str.search(wordRe(lang)) >= 0;
+  /\{plain:[^}]+\}/.test(str) || str.search(wordRe(lang)) >= 0 || str.search(MONEY) >= 0;
 
 /** A number token at the end of a text chunk, or at the start, with its sign and separator. */
 const TRAILING_NUM = /([+-]?(?:x)?\d(?:[\d.,]*\d)?)\s*$/;
@@ -100,6 +116,11 @@ export function groupStatSegments(segs: StatSegment[]): GroupedSegment[] {
   const out: GroupedSegment[] = [];
   for (let i = 0; i < segs.length; i++) {
     const seg = segs[i];
+    // Money is the coin, then the amount with its sign, as the money row reads.
+    if (seg.kind === 'money') {
+      out.push({ kind: 'pair', before: '', stat: 'rupiah', after: seg.amount });
+      continue;
+    }
     if (seg.kind !== 'stat') {
       out.push(seg);
       continue;
