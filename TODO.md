@@ -47,13 +47,13 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: Without bot runs, 2★ and 3★ may be unreachable or trivial and nobody would know.
   - Suggested solution: Add bot runs for 2★ and 3★ and tune until they pass.
   - Source: `progress/kelurahan-playable.md`
-  - `open · — · — · done when:` `tests/kel-bot.test.ts` has bot runs for 2★ and 3★ and they pass.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` `tests/kel-bot.test.ts` has bot runs for 2★ and 3★ and they pass.
 - [ ] **RW 3★ balance.**
   - Problem: RW 3★ is unchecked, because it needs 2 AI RTs at 3★.
   - Why: An unmeasured star may be unreachable or too easy.
   - Suggested solution: Run a bot with 2 AI RTs at 3★ and tune until it passes.
   - Source: `progress/rw-playable.md`
-  - `open · — · — · done when:` RW 3★ is checked with 2 AI RTs at 3★ and tuned to pass.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` RW 3★ is checked with 2 AI RTs at 3★ and tuned to pass.
 - [ ] **Playtest the Kelurahan, then decide on Kecamatan and above.**
   - Problem: Only stages 1 to 3 are specified.
   - Why: Nothing past the Kelurahan is designed, and the Kelurahan has not been played end to end.
@@ -125,7 +125,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: Without a visible trigger the tip has no "so what".
   - Suggested solution: Replace the month tests with the action that makes the tip matter, and say the reason in the tip.
   - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` no tip fires on month alone, each fires from a player action or a state it explains, and says what the player gains. Check against GAME-DESIGN.md section 3.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` no tip fires on month alone, each fires from a player action or a state it explains, and says what the player gains. Check against GAME-DESIGN.md section 3.
 - [ ] **Put the combo goal ahead of "build a house" in the goal strip.**
   - Problem: `shortGoal` (`src/sim/nextstep.ts`) shows the combo goal only while `discovered.length === 0` after `COMBO_HINT_MONTH`, and the beds goal can win before that.
   - Why: Hari asks why "Kini: bangun Rumah untuk tambah kamar" outranks finding a combo, when the 1★ needs a combo.
@@ -137,7 +137,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: Combos earn the 1★ and the player is not shown how to make one.
   - Suggested solution: Add a short step: place two buildings side by side, see the combo trigger, find it in the Combo list. Tie it to an action.
   - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` a new player is shown how to make a combo by doing one, the step fires after an action, has no Skip, and is covered in EN and ID.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` a new player is shown how to make a combo by doing one, the step fires after an action, has no Skip, and is covered in EN and ID.
 - [ ] **Warn once when monthly Popularitas drops.**
   - Problem: Popularitas (`sabar`) can fall every month from queue wear, resident expectations or being broke (`src/sim/tick.ts`), and nothing tells the player. Residents leave below 15.
   - Why: The player sees the loss only when residents leave, which is too late to react.
