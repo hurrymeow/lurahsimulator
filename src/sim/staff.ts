@@ -309,13 +309,17 @@ export function afterEventStaff(s: GameState): void {
 export function staffSystem(s: GameState, fx: Fx): void {
   ensureStaff(s);
   const kantor = s.buildings.find((b) => b.def.startsWith('kantor'));
-  // Applicants arrive when the posting has waited long enough; unanswered ones go home.
+  // Applicants arrive when the posting has waited long enough, as a card with a button to the Staff panel.
+  // They wait there until the player hires one or cancels.
   const lw = s.lowongan;
   if (lw && s.month === lw.arriveAt) {
     lw.applicants = rollApplicants(s);
-    fx.push({ kind: 'notice', title: t('staff.applicantsTitle', { n: lw.applicants.length }), body: t('staff.applicantsBody'), tone: 'good' });
-    if (!lw.applicants.length) s.lowongan = null;
-  } else if (lw && s.month >= lw.arriveAt + APPLICANTS.keepMonths) s.lowongan = null;
+    if (lw.applicants.length) fx.push({ kind: 'notice', title: t('staff.applicantsTitle', { n: lw.applicants.length }), body: t('staff.applicantsBody'), tone: 'good', card: true, open: 'staff' });
+    else {
+      fx.push({ kind: 'notice', title: t('staff.noApplicants'), body: t('staff.noApplicantsBody'), tone: 'bad' });
+      s.lowongan = null;
+    }
+  }
 
   let wages = 0;
   for (const x of [...s.staff!]) {

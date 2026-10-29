@@ -436,7 +436,7 @@ export type FirstKind = 'house' | 'resident' | 'star';
 
 export type SimEffect =
   | { kind: 'pop'; x: number; y: number; res: ResourceId; amount: number }
-  | { kind: 'notice'; title: string; body: string; tone: 'good' | 'bad' | 'info'; fanfare?: boolean; x?: number; y?: number; inem?: boolean }
+  | { kind: 'notice'; title: string; body: string; tone: 'good' | 'bad' | 'info'; fanfare?: boolean; x?: number; y?: number; inem?: boolean; card?: boolean; open?: string }
   | { kind: 'job'; x: number; y: number; name: string; job: Exclude<JobId, 'none'> }
   | { kind: 'level'; x: number; y: number; name: string; level: number }
   | { kind: 'event'; eventId: string }
