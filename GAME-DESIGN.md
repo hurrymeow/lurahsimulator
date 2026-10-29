@@ -95,7 +95,8 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 
 #### AI neighbours
 
-- Every **3** months each AI RT places one building from the RT list. Its trait decides which one.
+- Every **3** months each AI RT places one building from its trait's list of 11 to 13 one-tile buildings (shops, facilities, farms and decor), each unlocked by the RT's own stars as the player's are. It builds the kind it has least of, but first the missing partner of a combo it has half built, and puts a new piece where it completes a combo when it can. Every trait can form 3 or more combos at level 1.
+- The Neighbours screen shows each RT's yearly ranking: its score against the target it must beat at the year end (rising each year), what the score is made of (warga, working buildings, combos, Popularitas), and its wins so far.
 - An AI RT only builds when you have funded it. An unfunded RT visibly stalls.
 - Like the player, an AI RT lays **Jalan Setapak** from each new building to its Kantor RT or an earlier path, inside its own lot, and picks a spot a path can reach. Up to **3** of its warga walk its paths (at most **24** across the map), never onto the player's lots. When the player takes an RT over, its paths come with it.
 - Each Dana pays for one build, and an RT banks up to **12**. Dana comes **x1** or **x6** at a time. Banked Dana speeds the RT up with diminishing returns: boost = 1 − 0.8^(banked − 1), so 3 banked is **+36%**, 6 is **+67%** and 12 is **+91%**. The Neighbours screen shows it as "+N% boost".
@@ -288,6 +289,11 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
   - Staff stats: the ketua's **Rajin** widens the grip band; **Gaul** cuts the taps and lifts the odds. Kampung meters: **Aman** lifts the odds, and below **40** the day turns ricuh (Popularitas −5). **Popularitas** sets turnout (0.5 at 0, 1.5 at 100).
   - On **17 Agustus** time stops for a full-screen day: one contest at a time, then the prizes. It cannot be closed in one tap. Prizes per win are scaled by turnout and the 17 Agustus combos (Lapangan ×2 and the rest). Any win brings a crowd: income **×1.2** for 2 months. Winning every contest (2 or more) puts a trophy on the Kantor RT for a year. No contests picked: Popularitas −8.
   - Random events keep 3 months clear of the day, as they did of the old one-tap 17 Agustus event, which this replaces.
+- **Inspections** (from month 15, then 10 months after each visit): a warning event 2 months ahead, then the visit scores 4 criteria of **25** points each. **70** pays 2 Orang Dalam and +5 Popularitas, **45** pays 1 Orang Dalam, less costs 4 Popularitas. Each warning offers a free choice and two shortcuts (Rupiah or 1 Orang Dalam) that add points for that visit only; a pass carried by shortcuts gets its own line. The first visit is Kampung Bersih; after that any other team, never the same twice in a row:
+  - Kampung Bersih (Kecamatan): drainage, Popularitas, tertib (no mangkrak or damaged buildings), parkir liar.
+  - Ketertiban (Satpol PP): parkir liar, tertib, Aman, Popularitas.
+  - Kampung Sehat (Puskesmas): drainage, Perut, health posts (Apotek, Posyandu, Puskesmas Pembantu), Popularitas.
+  - Kampung Digital (Diskominfo): WiFi, Viral, tertib, Popularitas.
 - **Wacana or Realisasi:** each policy has a real version (Wifi Gratis di Balai, Kerja Bakti Rutin, Biopori Massal, Pelatihan UMKM, Bansos Sembako). It costs Rp 1 to 3 juta, lands after 1 to 3 months and moves a meter for a time (Biopori for good). Announcing fills the Laporan as well as doing does; only doing moves Sejahtera.
 - **Popularitas soft cap:** above **80**, gains shrink toward nothing at 100, so a full kampung settles around 90 instead of sitting at the cap. Each employed resident gives **0.04** (was 0.08), each resident expects **0.14** (was 0.1), and a Satpam gives **0.5** (was 1).
 - **Staff** (`src/data/staff.ts`): the people the player manages, as Kairosoft's staff are; warga still pick their own jobs. Inem is staff number 1 (the Asisten: permits up to 40% faster) and never leaves. Slots: 1 at the start, 3 at RT 1★, 4 at RT 3★, 6 at RW, 8 at Kelurahan, never more than **10**.
