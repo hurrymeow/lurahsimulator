@@ -97,6 +97,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 
 - Every **3** months each AI RT places one building from the RT list. Its trait decides which one.
 - An AI RT only builds when you have funded it. An unfunded RT visibly stalls.
+- Like the player, an AI RT lays **Jalan Setapak** from each new building to its Kantor RT or an earlier path, inside its own lot, and picks a spot a path can reach. Up to **3** of its warga walk its paths (at most **24** across the map), never onto the player's lots. When the player takes an RT over, its paths come with it.
 - Each Dana pays for one build, and an RT banks up to **12**. Dana comes **x1** or **x6** at a time. Banked Dana speeds the RT up with diminishing returns: boost = 1 − 0.8^(banked − 1), so 3 banked is **+36%**, 6 is **+67%** and 12 is **+91%**. The Neighbours screen shows it as "+N% boost".
 - **Auto-dana** per RT: Off, or keep **3**, **6** or **12** banked. Each month it tops the bank back up, and never spends the kas below **Rp 5jt** (with inflation). The screen shows about what it costs a month.
 - The Neighbours screen lists what each RT still needs for its next star, as the same checklist the player's own RT uses.

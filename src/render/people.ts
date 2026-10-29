@@ -20,6 +20,10 @@ const SAY_MS = 1800;
 /** Buildings with lines in en.ts as `say.<def>.<n>`. Others stay quiet. */
 const LINES: Record<string, number> = { rumah: 6, warung: 7, posRonda: 6, wifi: 6, indomaret: 6, alfamart: 6, kantorRT: 6, kosan: 6, lapangan: 6, bankSampah: 6 };
 const VIP_ID = -1;
+/** AI RTs' warga walk too: a few per RT, and a cap across the map for the frame rate. Ids count down from here. */
+const AI_ID_BASE = -100;
+export const AI_WALKERS_PER_RT = 3;
+export const AI_WALKERS_MAX = 24;
 const WALK_SPEED = 0.9;
 const OJOL_SPEED = 2.8;
 
@@ -211,6 +215,8 @@ export class Crowd {
 
     const residents = s.residents.slice(0, MAX_WALKERS);
     const ids = new Set(residents.map((r) => r.id));
+    const ai = this.aiPlan(s);
+    for (const g of ai) for (const id of g.ids) ids.add(id);
     // The inspector walks the map during the last month before the visit.
     const vip = s.inspection?.visitAt !== undefined && s.inspection.visitAt - s.month <= 1;
     if (vip) ids.add(VIP_ID);
@@ -236,6 +242,60 @@ export class Crowd {
       if (motion) this.move(p, dt, sites, now);
       else if (p.away && this.night > NIGHT_ABOVE) p.away = false;
     }
+    // AI RTs: their warga walk their own Jalan Setapak, never onto the player's lots.
+    const own = this.onPath;
+    for (const g of ai) {
+      this.onPath = g.mask;
+      for (const id of g.ids) {
+        let p = this.people.find((o) => o.id === id);
+        if (!p) {
+          const start = this.pick(this.pick(g.homes.length ? g.homes : g.sites)!.doors)!;
+          p = { id, kind: 'none', shirt: CASUAL[-id % CASUAL.length], fx: start.x + 0.5, fy: start.y + 0.5, path: [], wait: 400 + Math.random() * 2500, face: Math.random() < 0.5 ? 1 : -1, stride: 0 };
+          this.people.push(p);
+        }
+        if (motion) this.move(p, dt, g.sites, now);
+      }
+    }
+    this.onPath = own;
+  }
+
+  /** For each AI-run RT with paths: the walkable tiles (its own paths only), its doors, and its walkers' ids. */
+  private aiPlan(s: GameState): { mask: Uint8Array; sites: Site[]; homes: Site[]; ids: number[] }[] {
+    // Rebuilt only when an AI RT changes: its buildings, warga or who runs it.
+    const key = `${GRID_W}|${s.neighbours.map((n) => `${n.buildings.length}.${n.pop}.${n.run ?? ''}`).join(',')}`;
+    if (key === this.aiKey) return this.aiCache;
+    this.aiKey = key;
+    this.aiCache = this.buildAiPlan(s);
+    return this.aiCache;
+  }
+
+  private aiKey = '';
+  private aiCache: { mask: Uint8Array; sites: Site[]; homes: Site[]; ids: number[] }[] = [];
+
+  private buildAiPlan(s: GameState): { mask: Uint8Array; sites: Site[]; homes: Site[]; ids: number[] }[] {
+    const out: { mask: Uint8Array; sites: Site[]; homes: Site[]; ids: number[] }[] = [];
+    let budget = AI_WALKERS_MAX;
+    s.neighbours.forEach((n, i) => {
+      if (n.run === 'player' || budget <= 0) return;
+      const count = Math.min(AI_WALKERS_PER_RT, n.pop, budget);
+      if (count <= 0) return;
+      const mask = new Uint8Array(GRID_W * GRID_H);
+      for (const b of n.buildings) if (b.def === 'jalan' && b.status === 'active') mask[b.y * GRID_W + b.x] = 1;
+      const sites: Site[] = [];
+      const homes: Site[] = [];
+      for (const b of n.buildings) {
+        if (FLAT.has(b.def)) continue;
+        const doors = ring(b).filter(([x, y]) => x >= 0 && y >= 0 && x < GRID_W && y < GRID_H && mask[y * GRID_W + x]).map(([x, y]) => ({ x, y }));
+        if (!doors.length) continue;
+        const site = { def: b.def, doors };
+        sites.push(site);
+        if (b.def === 'rumah') homes.push(site);
+      }
+      if (!sites.length) return;
+      budget -= count;
+      out.push({ mask, sites, homes, ids: Array.from({ length: count }, (_, k) => AI_ID_BASE - i * AI_WALKERS_PER_RT - k) });
+    });
+    return out;
   }
 
   private pick<T>(list: T[]): T | undefined {

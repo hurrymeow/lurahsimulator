@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { lotAt } from '../src/sim/area';
 import { goalProgress, nextStarChecklist } from '../src/sim/stages';
 import { viewOf } from '../src/sim/neighbourView';
-import { autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, promote, setAutoFund, takeover } from '../src/sim/grow';
+import { FLAT, connectedRoad, hasRoadBeside } from '../src/sim/access';
+import { builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, promote, setAutoFund, takeover } from '../src/sim/grow';
 import { NEIGHBOUR } from '../src/sim/balance';
 import { checkPlace } from '../src/sim/rules';
 import { areaScore } from '../src/sim/ranking';
@@ -450,6 +451,44 @@ describe('player-run RTs', () => {
     takeover(s, s.neighbours[0]);
     // Its buildings and warga moved into the player's score; the RT itself adds nothing on top.
     expect(areaScore(s)).toBeLessThan(before * 1.5);
+  });
+});
+
+describe('AI paths', () => {
+  it('every AI RT lays Jalan Setapak so its buildings reach the Kantor RT, as the player must', () => {
+    for (const seed of [1, 2, 3]) {
+      const s = newGame(seed);
+      s.stage.stars.rt = 3;
+      s.discovered = ['tongkrongan', 'rapatMalam', 'perangKuota'];
+      promote(s, []);
+      s.stage.current = 'rw';
+      s.neighbours.forEach((n) => setAutoFund(n, 6));
+      for (let m = 0; m < 5 * 12; m++) {
+        s.res.rupiah = 1e9;
+        step(s);
+      }
+      for (const n of s.neighbours) {
+        const v = viewOf(s, n);
+        const conn = connectedRoad(v);
+        const need = builtBy(n).filter((b) => b.def !== 'kantorRT' && !FLAT.has(b.def));
+        const linked = need.filter((b) => hasRoadBeside(conn, b));
+        expect(n.buildings.some((b) => b.def === 'jalan'), `seed ${seed}`).toBe(true);
+        expect(linked.length / need.length, `seed ${seed} ${n.trait}`).toBeGreaterThanOrEqual(0.95);
+        // Paths are not buildings: the RT's build order and count ignore them.
+        expect(builtBy(n).every((b) => b.def !== 'jalan')).toBe(true);
+      }
+    }
+  });
+
+  it('links an old save whose AI RT has no paths, once', () => {
+    const s = grown();
+    const n = s.neighbours[0];
+    n.buildings = n.buildings.filter((b) => b.def !== 'jalan');
+    delete n.pathsLaid;
+    step(s);
+    expect(n.pathsLaid).toBe(true);
+    expect(n.buildings.some((b) => b.def === 'jalan')).toBe(true);
+    expect(layAiPath(s, n, n.buildings.find((b) => b.def === 'rumah')!)).toBe(true);
   });
 });
 
