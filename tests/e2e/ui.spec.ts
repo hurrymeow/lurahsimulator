@@ -110,6 +110,9 @@ async function expectLegible(page: Page, where: string): Promise<void> {
 /** Fills the kampung with content so every panel has real text in it. */
 async function seed(page: Page): Promise<void> {
   await page.evaluate(() => {
+    // A busy kampung makes most tips due at once. None of these tests is about tips, and tapping through them
+    // all is slow on a CI runner, so they are marked seen first.
+    (window as unknown as { pakrtTips: { seeAll: () => void } }).pakrtTips.seeAll();
     const app = (window as unknown as { pakrt: any }).pakrt;
     const s = app.s;
     s.res.rupiah = 1_234_567_890;
@@ -125,8 +128,7 @@ async function seed(page: Page): Promise<void> {
     app.runTick();
   });
   await dismissModals(page);
-  // A busy kampung makes several tips due at once, and each refresh shows the next one. Drain them
-  // here, or one lands mid-test and swallows a tap (seen at 430px).
+  // Anything still due (a tip added later, or a queued card) is drained here, or it lands mid-test and swallows a tap (seen at 430px).
   for (let i = 0; i < 20; i++) {
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
     if (!(await page.locator('#modal').isVisible())) break;

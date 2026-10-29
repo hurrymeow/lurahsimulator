@@ -29,6 +29,13 @@ export function resetTips(): void {
   if (shared) Object.assign(shared, { seen: [] });
 }
 
+/** Marks every tip seen, for play-testing a busy kampung without its lessons (?debug). */
+export function seeAllTips(): void {
+  const st = (shared ??= load());
+  st.seen = STEPS.map((s) => s.id);
+  storage.set(KEY, JSON.stringify(st));
+}
+
 /**
  * Teaches each mechanic the first time it matters. A tip is a tap-to-advance modal,
  * never on a timer, and saved as seen the moment it shows.
