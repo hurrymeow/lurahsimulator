@@ -74,7 +74,8 @@ export const CHANNELS: ChannelDef[] = [
   { id: 'online', name: 'Online (LokerJalan)', blurb: 'Rp 500k and quick. Better odds, but outsiders: no help for your jobless.', cost: 500_000, wait: 1, odds: { 2: 30, 3: 50, 4: 20 }, local: false, titipan: 0 },
 ];
 
-export const APPLICANTS = { min: 3, max: 5, keepMonths: 2 };
+/** Applicants wait until the player hires one or cancels the lowongan: they never go home on their own. */
+export const APPLICANTS = { min: 3, max: 5 };
 
 /** Job-ad requirement lines. Flavour only: every applicant is an adult. Keys in i18n: staff.req.N. */
 export const REQUIREMENTS = 10;
