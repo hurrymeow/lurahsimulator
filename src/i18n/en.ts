@@ -33,7 +33,7 @@ export const EN = {
   'build.permit': 'Permit {permit} mo · build {build} mo',
   'build.permitShort': 'Permit {permit} mo, build {build} mo.',
   'build.size': '{n}×{n} tiles',
-  'build.tapTile': 'Drag it, or tap a tile to move it.',
+  'build.tapToPlace': 'Tap a glowing free tile to put it there.',
   'build.title': 'Build',
   'coach.done': "Well done, Pak. You're good at this, ya. More beds, more residents. Time runs now: pause or speed up above.",
   'coach.done.bu': 'Well done, Bu! We make a good team. More beds, more residents. Time runs now: pause or speed up above.',

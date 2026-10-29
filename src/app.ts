@@ -815,8 +815,14 @@ export class App {
     this.view.selected = null;
     document.getElementById('mainbar')!.hidden = true;
     document.getElementById('placebar')!.hidden = false;
-    // The building shows on the map straight away, on a good free spot, so it is plain where it goes.
-    if (!def(id).pathIncome) this.suggestSpot();
+    // Nothing lands under the thumb: every free spot glows, and the first tap on one puts the building there.
+    // If none is in view, the map pans to the best one.
+    if (!def(id).pathIncome) {
+      this.markValid();
+      const best = this.bestSpot();
+      const n = footprintOf(id);
+      if (best && !this.validInView()) this.view.centreOn(best.x + (n - 1) / 2, best.y + (n - 1) / 2);
+    }
     this.updatePlacing();
   }
 
@@ -836,15 +842,23 @@ export class App {
     return out;
   }
 
+  /** True when at least one tile the building could cover is on screen. */
+  private validInView(): boolean {
+    const v = this.view.valid;
+    if (!v) return false;
+    for (let k = 0; k < v.length; k++) if (v[k] && this.view.inView(k % GRID_W, Math.floor(k / GRID_W), 0)) return true;
+    return false;
+  }
+
   /**
-   * Puts the ghost on the best free spot: beside a connected road first, then nearest the middle of the
-   * view (or the Kantor). Off screen, the map pans to it.
+   * The best free spot for the building in hand: beside a connected road first, then nearest the middle of the
+   * view (or the Kantor). Only a hint: build mode no longer drops the building there by itself.
    */
-  private suggestSpot(): void {
-    const id = this.placing!;
+  bestSpot(): { x: number; y: number } | null {
+    const id = this.placing;
+    if (!id) return null;
     const d = def(id);
     const n = footprintOf(id);
-    this.markValid();
     const kantor = this.s.buildings.find((b) => b.def.startsWith('kantor'));
     const mid = this.view.centreTile() ?? (kantor ? { x: kantor.x, y: kantor.y } : { x: 0, y: 0 });
     const needsRoad = !FLAT.has(d.id) && !d.id.startsWith('kantor') && (d.scope ?? 'rt') === 'rt';
@@ -859,9 +873,7 @@ export class App {
         const score = far + (road && !hasRoadBeside(road, { def: id, x, y }) ? 1000 : 0);
         if (!best || score < best.score) best = { x, y, score };
       }
-    if (!best) return;
-    this.view.ghost = { x: best.x, y: best.y, ok: true, sprite: d.sprite, n };
-    if (!this.view.inView(best.x + (n - 1) / 2, best.y + (n - 1) / 2)) this.view.centreOn(best.x + (n - 1) / 2, best.y + (n - 1) / 2);
+    return best ? { x: best.x, y: best.y } : null;
   }
 
   /** Moves the ghost so its middle sits on a tile. Used by taps, drags and the mouse. */
@@ -996,7 +1008,7 @@ export class App {
     }
     btn.textContent = t('page.place');
     if (!g) {
-      info.replaceChildren(title, h('span', {}, d.pathIncome ? t('build.lineStart') : t('build.tapTile')));
+      info.replaceChildren(title, h('span', {}, d.pathIncome ? t('build.lineStart') : t('build.tapToPlace')));
       btn.disabled = true;
       return;
     }
