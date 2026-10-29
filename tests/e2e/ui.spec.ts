@@ -49,7 +49,8 @@ async function dismissModals(page: Page): Promise<void> {
     }
     seen.push(`${await page.locator('#modal').getAttribute('class')}: ${(await page.locator('#modal h2').first().textContent({ timeout: 1000 }).catch(() => '?'))}`);
     if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click({ timeout: 5000 });
-    else await page.locator('#modal').click({ timeout: 5000 });
+    // Tap the dim corner: the card's own stat icons answer a tap with their name instead of closing the card, and on a slow runner one can sit at the centre.
+    else await page.locator('#modal').click({ position: { x: 8, y: 8 }, timeout: 5000 });
     await page.waitForTimeout(650);
   }
   // Twelve cards in a row means one is not going away. Name them, rather than run into the test timeout.
