@@ -118,6 +118,10 @@ export interface Neighbour {
   lastBuild: number;
   /** Builds attempted, for Hobi Wacana's skipped turns. */
   turns: number;
+  /** Progress toward the next build, 0 to 1. Grows faster with more Dana banked. Missing in old saves. */
+  progress?: number;
+  /** Auto-dana: tops the bank back up to this many builds each month. 0 or missing is off. */
+  autoKeep?: number;
   discovered: string[];
   ranking: RankingResult[];
 }
@@ -381,6 +385,8 @@ export interface GameState {
   /** Cost multiplier. Grows a little every year. */
   inflation: number;
   discovered: string[];
+  /** Only on an AI RT's view: the most combos any RT has found, which the combos star goal counts for every RT. */
+  comboShare?: number;
   unlocked: string[];
   /** Problems that have shown up at least once, for the buildings they open. */
   problems?: ProblemId[];

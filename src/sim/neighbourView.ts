@@ -12,6 +12,8 @@ export function viewOf(s: GameState, n: Neighbour): GameState {
     buildings: n.buildings,
     residents: Array.from({ length: n.pop }) as Resident[],
     discovered: n.discovered,
+    // Combos count across RTs: every RT's combos goal uses the best count among all of them, the player's included.
+    comboShare: Math.max(s.discovered.length, ...s.neighbours.map((o) => o.discovered.length)),
     ranking: n.ranking,
     emas: 0,
     res: { ...s.res, sabar: Math.min(NEIGHBOUR.sabarMax, NEIGHBOUR.sabarBase + NEIGHBOUR.sabarPerSocial * social + NEIGHBOUR.sabarPerPosyandu * posyandu) },

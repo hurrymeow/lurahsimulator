@@ -38,7 +38,7 @@ function rwStars(s: GameState): number[] {
 /** One check per goal kind. The mapped type makes a missing kind a compile error. */
 const GOAL_CHECKS: { [K in Goal['kind']]: (s: GameState, g: Extract<Goal, { kind: K }>) => number } = {
   residents: (s) => population(s),
-  combos: (s) => s.discovered.length,
+  combos: (s) => Math.max(s.discovered.length, s.comboShare ?? 0),
   rankWins: (s) => s.ranking.filter((r) => r.won).length,
   winStreak: (s) => {
     let n = 0;
@@ -88,7 +88,11 @@ export interface ChecklistLine {
 
 /** The checklist for the next star, or null at 3 stars. */
 export function nextStarChecklist(s: GameState, id: StageId = s.stage.current): ChecklistLine[] | null {
-  const stars = starsOf(s, id);
+  return starChecklist(s, id, starsOf(s, id));
+}
+
+/** The checklist for the star after `stars`, read from `s`, which can be an AI RT's view. Null at 3 stars. */
+export function starChecklist(s: GameState, id: StageId, stars: Stars): ChecklistLine[] | null {
   if (stars === 3) return null;
   return stageDef(id).stars[stars].goals.map((goal) => {
     const { have, need } = goalProgress(s, goal);

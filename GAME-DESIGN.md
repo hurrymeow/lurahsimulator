@@ -97,6 +97,10 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 
 - Every **3** months each AI RT places one building from the RT list. Its trait decides which one.
 - An AI RT only builds when you have funded it. An unfunded RT visibly stalls.
+- Each Dana pays for one build, and an RT banks up to **12**. Dana comes **x1** or **x6** at a time. Banked Dana speeds the RT up with diminishing returns: boost = 1 − 0.8^(banked − 1), so 3 banked is **+36%**, 6 is **+67%** and 12 is **+91%**. The Neighbours screen shows it as "+N% boost".
+- **Auto-dana** per RT: Off, or keep **3**, **6** or **12** banked. Each month it tops the bank back up, and never spends the kas below **Rp 5jt** (with inflation). The screen shows about what it costs a month.
+- The Neighbours screen lists what each RT still needs for its next star, as the same checklist the player's own RT uses.
+- **Combos count across RTs.** For an AI RT's combos goal, the count is the most combos any RT has found, the player's included. Residents, wins and Sabar stay per RT. The player's own RT still counts only its own combos. Without this, a Rajin RT finds only one combo and never passes 1★.
 - Ketua RT traits:
   - Rajin builds every **2** months and earns **x1.2**.
   - Hobi Wacana skips one build in three to hold a wacana.
@@ -169,7 +173,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 #### New RW content
 
 - **Stempel:** refills **3** a month. Every Surat Pengantar from an RT needs one. Each unstamped letter drains **0.5** Sabar a month. The player is now the permit queue.
-- **Dana:** the new verb. You fund each RT, and it builds and levels only when funded.
+- **Dana:** the new verb. You fund each RT, and it builds and levels only when funded. More banked Dana builds faster, and Auto-dana keeps it funded (see AI neighbours).
 - **Balai RW:** **+1** Stempel a month, **2** PNS slots.
 - **Posyandu:** **+1** Sabar a month to neighbouring RTs.
 - **Pasar Kaget:** **x3** income one month in four. Spawns **2** tukang parkir.
