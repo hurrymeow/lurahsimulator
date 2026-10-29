@@ -1847,9 +1847,8 @@ test.describe('build mode', () => {
     await start(page);
     await dismissModals(page);
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
-    // The building shows on a free spot at once, with Place ready, so it is plain where it goes.
-    await expect(page.locator('#place-float')).toBeVisible();
-    await expect(page.locator('#place-ok')).toBeEnabled();
+    // Nothing is dropped under the thumb: no buttons float until a tile is tapped.
+    await expect(page.locator('#place-float')).toBeHidden();
     const box = (await page.locator('#map').boundingBox())!;
     const at = await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
@@ -1873,7 +1872,7 @@ test.describe('build mode', () => {
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'rumah').length)).toBe(3);
   });
 
-  test('picking a building shows its ghost at once on a free spot, and dragging it moves it', async ({ page }) => {
+  test('picking a building drops nothing until a free tile is tapped; then the ghost can be dragged', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
@@ -1881,14 +1880,22 @@ test.describe('build mode', () => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       const v = app.view;
       const lit = v.valid ? v.valid.reduce((n: number, x: number) => n + x, 0) : 0;
-      return { ghost: v.ghost, lit, inView: v.ghost ? v.inView(v.ghost.x, v.ghost.y, 0) : false };
+      return { ghost: v.ghost, lit, best: app.bestSpot() };
     });
-    expect(g.ghost).not.toBeNull();
-    expect(g.ghost.ok).toBe(true);
-    expect(g.inView).toBe(true);
+    // No ghost in the middle of the view: the free spots glow, and the bar says to tap one.
+    expect(g.ghost).toBeNull();
     expect(g.lit).toBeGreaterThan(0);
-    // Drag the ghost one tile along x: the map stays put and the ghost follows.
+    await expect(page.locator('#place-info')).toContainText(lang() === 'en' ? 'Tap a glowing free tile' : 'Ketuk petak kosong');
+    await expect(page.locator('#place-float')).toBeHidden();
+    await expectLegible(page, 'build mode before a tap');
+    // A tap on a free tile puts it there.
     const box = (await page.locator('#map').boundingBox())!;
+    const tap = await page.evaluate((b) => (window as unknown as { pakrt: any }).pakrt.view.tileCentre(b.x, b.y), g.best);
+    await page.mouse.click(box.x + tap.x, box.y + tap.y);
+    const placed = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ghost);
+    expect({ x: placed.x, y: placed.y, ok: placed.ok }).toEqual({ x: g.best.x, y: g.best.y, ok: true });
+    await expect(page.locator('#place-ok')).toBeEnabled();
+    // Drag the ghost one tile along x: the map stays put and the ghost follows.
     const pts = await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       const gh = app.view.ghost;
@@ -1902,7 +1909,7 @@ test.describe('build mode', () => {
     const moved = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ghost);
     expect(moved.x).toBe(pts.start.x + 1);
     expect(moved.y).toBe(pts.start.y);
-    await expectLegible(page, 'ghost on select');
+    await expectLegible(page, 'ghost after a tap');
   });
 
   test('build cards show how many are owned, and new buildings carry a NEW tag', async ({ page }) => {
@@ -1938,6 +1945,7 @@ test.describe('build mode', () => {
       const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
       app.s.res.rupiah = 50_000_000;
       app.startPlacing('rumahMakan');
+      app.moveGhost(app.bestSpot());
       app.confirmPlace();
       return app.s.buildings.filter((b: any) => b.def === 'rumahMakan').at(-1)?.uid ?? (k && null);
     });
@@ -2134,6 +2142,9 @@ test.describe('build mode', () => {
     const before = await count();
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
     const map = (await page.locator('#map').boundingBox())!;
+    // Put the building on a tile first: nothing is placed until a tap.
+    const tap = await page.evaluate(() => { const a = (window as unknown as { pakrt: any }).pakrt; const b = a.bestSpot(); return a.view.tileCentre(b.x, b.y); });
+    await page.mouse.click(map.x + tap.x, map.y + tap.y);
     await page.mouse.move(map.x + 20, map.y + map.height - 20);
     const ok = (await page.locator('#place-ok').boundingBox())!;
     // The cursor sweeps over many tiles on its way; the button must not run from it.

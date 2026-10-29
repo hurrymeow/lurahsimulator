@@ -34,7 +34,7 @@ export const ID: Record<Key, string> = {
   'build.permit': 'Izin {permit} bln · bangun {build} bln',
   'build.permitShort': 'Izin {permit} bln, bangun {build} bln.',
   'build.size': '{n}×{n} petak',
-  'build.tapTile': 'Geser, atau ketuk petak untuk memindahkannya.',
+  'build.tapToPlace': 'Ketuk petak kosong yang menyala untuk menaruhnya.',
   'build.title': 'Bangun',
   'coach.done': 'Mantap, Pak. Bapak jago, ya. Tambah tempat, tambah warga. Waktu jalan sendiri: jeda atau percepat di atas.',
   'coach.done.bu': 'Mantap, Bu! Kita tim yang hebat. Tambah tempat, tambah warga. Waktu jalan sendiri: jeda atau percepat di atas.',
