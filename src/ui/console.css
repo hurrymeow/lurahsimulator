@@ -87,10 +87,19 @@ html:not(.theme-dark) #chip-pop img { filter: brightness(0.18); }
 .cs-sat { position: absolute; top: 6px; right: 6px; z-index: 3; margin: 0; display: flex; align-items: center; background: var(--cs-cream); color: var(--cs-ink); border: 1px solid var(--cs-line); box-shadow: 2px 2px 0 var(--cs-shadow); cursor: crosshair; }
 .cs-sat[hidden] { display: none; }
 /* Repair all: under the satellite view, or bottom-right where that is hidden. */
-.cs-fix { position: absolute; top: 74px; right: 6px; z-index: 3; min-height: 48px; padding: 4px 12px; font-size: 16px; font-weight: 700; background: var(--cs-cream); color: var(--cs-ink); border: 1px solid var(--cs-line); border-left: 4px solid #d9791c; box-shadow: 2px 2px 0 var(--cs-shadow); }
+.cs-fix { position: absolute; top: 112px; right: 6px; z-index: 3; min-height: 48px; padding: 4px 12px; font-size: 16px; font-weight: 700; background: var(--cs-cream); color: var(--cs-ink); border: 1px solid var(--cs-line); border-left: 4px solid #d9791c; box-shadow: 2px 2px 0 var(--cs-shadow); }
 .cs-fix[hidden] { display: none; }
 .cs-fix.poor { opacity: 0.7; }
 @media (max-width: 359px) { .cs-fix { top: auto; bottom: 8px; } }
+/* The fold button: a small 28px square under the satellite view (or alone in its place when folded), inside a
+   48px tap area (UI.md rule 1). The tap area is transparent, so it hides little of the map. */
+.cs-sat-toggle { position: absolute; top: 62px; right: 0; z-index: 3; width: 48px; height: 48px; padding: 0; display: flex; align-items: center; justify-content: center; background: none; border: 0; cursor: pointer; }
+.cs-sat-toggle > span { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-family: var(--font-pixel); font-size: 18px; line-height: 1; background: var(--cs-cream); color: var(--cs-ink); border: 1px solid var(--cs-line); box-shadow: 2px 2px 0 var(--cs-shadow); }
+.cs-sat-toggle[hidden] { display: none; }
+#stage.sat-min .cs-sat { display: none; }
+#stage.sat-min .cs-sat-toggle { top: 0; }
+#stage.sat-min .cs-fix { top: 50px; }
+#stage.sat-min #goal.cs-goal-float { right: 50px; }
 #cs-sat-map { display: block; width: 88px; height: 60px; image-rendering: pixelated; }
 
 /* The home screen hides the frame with the rest of the HUD. */
@@ -107,7 +116,7 @@ html:not(.theme-dark) #chip-pop img { filter: brightness(0.18); }
 /* Short phones give the map every pixel: the title bar and satellite view drop out, and the date
    goes back to the bottom row. */
 @media (max-height: 640px) {
-  .cs-sat { display: none !important; }
+  .cs-sat, .cs-sat-toggle { display: none !important; }
 }
 
 /* Light theme: warning colours in ink-dark tones, so they keep their contrast on cream. */

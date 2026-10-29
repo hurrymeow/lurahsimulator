@@ -24,6 +24,7 @@ import { noteNet, quarterSystem, snapshot } from './report';
 import { requirementGaps } from './rules';
 import { brandMult, royaltyRate } from './brands';
 import { problemSystem } from './problems';
+import { monthWarnings, type SabarCause } from './warnings';
 import { needsSystem, premanTake } from './needs';
 import { buildBoost, permitCut, staffSystem, upkeepCut } from './staff';
 import { realisasiSystem, realisasiWarungMult } from './realisasi';
@@ -254,13 +255,31 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   quarterSystem,
 ];
 
+/** Systems whose Popularitas loss the first-drop warning can name. */
+const SABAR_CAUSE = new Map<(s: GameState, fx: Fx) => void, SabarCause>([
+  [advanceConstruction, 'queue'],
+  [expectations, 'expect'],
+  [safetyNet, 'broke'],
+  [needsSystem, 'needs'],
+  [collectIncome, 'buildings'],
+]);
+
 /** One month. Pure apart from mutating the state it is given. */
 export function tick(s: GameState): Fx {
   const fx: Fx = [];
   if (s.pendingEvent) return fx;
   s.quarter ??= snapshot(s);
   s.month++;
-  for (const system of SYSTEMS) system(s, fx);
+  // What each system did to Popularitas, so a first fall can name its cause.
+  const before = s.res.sabar;
+  const losses: Partial<Record<SabarCause, number>> = {};
+  for (const system of SYSTEMS) {
+    const was = s.res.sabar;
+    system(s, fx);
+    const cause = SABAR_CAUSE.get(system);
+    if (cause && s.res.sabar !== was) losses[cause] = (losses[cause] ?? 0) + s.res.sabar - was;
+  }
+  monthWarnings(s, fx, before, losses);
   decay(s);
   if (s.month % 12 === 0) yearEnd(s, fx);
   clampResources(s);

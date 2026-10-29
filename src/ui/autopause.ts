@@ -24,5 +24,9 @@ export const simRunning = (p: PauseInputs): boolean => p.speed > 0 && !autoPause
  */
 export const autoPauseStarted = (wasRunning: boolean, p: PauseInputs): boolean => wasRunning && p.speed > 0 && autoPaused(p);
 
-/** The Paused pill shows only while the map is in view. A sheet, card or popup already dims the map, so the pill would float over it. */
-export const showPausedBadge = (p: PauseInputs): boolean => !p.held && autoPaused(p) && !(p.sheetOpen || p.modals > 0 || p.pendingEvent || p.howtoOpen);
+/**
+ * The Paused pill shows whenever time is stopped with the map in view: build mode, or the player's own pause.
+ * A sheet, card or popup already dims the map, so the pill would float over it.
+ */
+export const showPausedBadge = (p: PauseInputs): boolean =>
+  !p.held && (autoPaused(p) || p.speed === 0) && !(p.sheetOpen || p.modals > 0 || p.pendingEvent || p.howtoOpen);

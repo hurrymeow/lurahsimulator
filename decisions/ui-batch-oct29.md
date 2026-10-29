@@ -1,0 +1,12 @@
+# Small UI batch (2026-10-29)
+
+TODO items claimed by Julian: pause state, the permit Orang Dalam button, the satellite fold, combo pop-up sprites, population stall, 2045 drops, the Popularitas warning, the combo goal order, range checks, and the desktop tutorial.
+
+- **Pause:** the existing pill now shows for the player's own pause too, moves to the bottom of the map, and uses the pixel font in capitals. It hides while a toast sits there. Ambient animation runs on a world clock that stops while time is stopped. Player feedback (ghost, bursts, pops) keeps real time, so build mode still feels alive under the finger.
+- **Permit + Orang Dalam:** the button already existed, but sat below the fold under the blurb, the level strip and the money lines. It now leads the panel, with a one-line help. Also fixed a "+-1 per bulan" sign bug in the per-month line.
+- **Satellite fold:** a 28px square drawn inside a 48px transparent tap area keeps UI.md rule 1 without a new exception. It is saved in settings (`satMin`). When folded, the goal pill and the Repair chip move up to use the space.
+- **Combo pop-up:** the members' sprites at their levels, joined by "+", sit under the title (`Notice.head`).
+- **Goal order:** the combo leads over beds as soon as it is all the next star still needs (`starWaitsOnCombo`), as well as from month 30. When residents reach the attraction limit with beds free, the line names the building that draws most per rupiah instead of "reach N". The 320px chip is unchanged.
+- **Warnings:** the tick records each system's effect on Popularitas (an explicit function-to-cause map, because minified names are unreliable). A 2045 drop of 10 or more names the meter that fell most, and the shut warung if it is Perut. The first Popularitas fall of 1 or more, from month 6 (the opener comes first), warns once per game (`warned`).
+- **Range:** Kanibal and decoration boosts now use the same nearest-edge rule as combos (`withinEdges` in state.ts). For 1x1 buildings nothing changes. Big decorations (Taman Bermain, 2x2) reach a little further.
+- **Desktop tutorial:** the opener note now fits the 560px game column, and its arrow is placed relative to the note. **Skip is kept:** UI.md rule 10 says only the multi-step first-build tutorial has Skip, and this is that tutorial. The TODO asked to remove it. That conflicts with UI.md, so it is left for Hari to decide (see the TODO item).

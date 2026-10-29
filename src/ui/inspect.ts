@@ -43,6 +43,15 @@ export function inspect(app: App, uid: number): void {
       h('p', {}, bBlurb(d)),
     )),
   ];
+  // A building waiting for a permit leads with the way out: Orang Dalam skips the queue. Above the fold.
+  if (b.status === 'permit') {
+    lines.push(actionButton([t('insp.skip'), ' ', h('img', { src: iconURL('orangDalam'), alt: t('res.orangDalam'), width: 18, height: 18, class: 'inline-icon' })], checkSkipPermit(s, b), () => {
+      skipPermit(s, b);
+      app.tap(15);
+      done();
+    }, true));
+    lines.push(h('p', { class: 'meta' }, t('insp.skipHelp')));
+  }
   // Every level side by side, like a building card: what it looks like now and what the next upgrade brings.
   if (d.maxLevel > 1)
     lines.push(h('div', { class: 'level-strip', role: 'list', 'aria-label': t('insp.levels') },
@@ -77,7 +86,10 @@ export function inspect(app: App, uid: number): void {
   const upkeep = buildingUpkeep(s, b);
   if (income || upkeep) lines.push(h('p', { class: 'meta' }, t('insp.money', { income: rupiah(income), upkeep: rupiah(upkeep) })));
   if (d.perMonth) {
-    const bits = Object.entries(d.perMonth).map(([k, v]) => `${t(`res.${k}` as Key)} +${Math.round(v * levelMult(b.level) * 100) / 100}`);
+    const bits = Object.entries(d.perMonth).map(([k, v]) => {
+      const n = Math.round(v * levelMult(b.level) * 100) / 100;
+      return `${t(`res.${k}` as Key)} ${n >= 0 ? '+' : ''}${n}`;
+    });
     lines.push(h('p', { class: 'meta' }, t('insp.perMonth', { bits: bits.join(' · ') })));
   }
   const popBits: string[] = [];
@@ -88,13 +100,6 @@ export function inspect(app: App, uid: number): void {
   if (b.noRoad) lines.push(h('p', { class: 'meta warn' }, t('insp.noRoad')));
   if (pm > 1 && b.status === 'active') lines.push(h('p', { class: 'meta' }, t('insp.pathBonus', { pct: Math.round((pm - 1) * 100) })));
   for (const extra of inspectExtras) lines.push(...extra(app, b));
-  if (b.status === 'permit') {
-    lines.push(actionButton([t('insp.skip'), ' ', h('img', { src: iconURL('orangDalam'), alt: t('res.orangDalam'), width: 18, height: 18, class: 'inline-icon' })], checkSkipPermit(s, b), () => {
-      skipPermit(s, b);
-      app.tap(15);
-      done();
-    }, true));
-  }
   if (d.maxLevel > 1) {
     lines.push(actionButton(b.level >= d.maxLevel ? t('insp.maxLevel') : t('insp.upgrade', { cost: rupiah(upgradeCost(s, b)) }), checkUpgrade(s, b), () => {
       upgrade(s, b);

@@ -3,7 +3,9 @@ import { bName, cName, t } from '../i18n';
 import { def } from './content';
 import { parseNeed } from './combos';
 import { requirementGaps } from './rules';
-import { count, housing, population } from './state';
+import { attractTarget, buildCost, count, housing, population } from './state';
+import { placeableDefs } from './content';
+import { nextStarChecklist } from './stages';
 import type { GameState } from './types';
 
 /** Game month when the first combo is pointed out by name: about 4 minutes at 1x (8s a month). */
@@ -21,13 +23,27 @@ function easiestCombo(s: GameState) {
   return best;
 }
 
+/** The building that draws the most residents for its price, among those the player can build now. */
+function bestDraw(s: GameState): string | null {
+  const open = placeableDefs().filter((d) => d.attract > 0 && !d.housing && requirementGaps(s, d, { ignoreLimit: true }).length === 0);
+  const best = open.sort((a, b) => b.attract / buildCost(s, b) - a.attract / buildCost(s, a))[0];
+  return best ? bName(best) : null;
+}
+
+/** True when the next star waits on a combo and every other goal on its list is already met. */
+function starWaitsOnCombo(s: GameState): boolean {
+  const open = nextStarChecklist(s)?.filter((l) => !l.done) ?? [];
+  return open.length > 0 && open.every((l) => l.goal.kind === 'combos');
+}
+
 /**
  * The goal for the next minute or less, so there is always a quick thing to do. The star goal is the long one.
- * Order: first house, then the first combo once it is time, then waiting on a build, beds, and residents.
+ * Order: first house; the first combo once it is time, or as soon as it is all the star still needs (it leads over
+ * beds); waiting on a build; beds; a reason to move in when residents stop coming; then residents.
  */
 export function shortGoal(s: GameState): string | null {
   if (!s.buildings.some((b) => b.def === 'rumah')) return t('goal.short.house');
-  if (s.month >= COMBO_HINT_MONTH && s.discovered.length === 0) {
+  if ((s.month >= COMBO_HINT_MONTH && s.discovered.length === 0) || starWaitsOnCombo(s)) {
     const c = easiestCombo(s);
     if (c) return t('goal.short.combo', { name: c.name, pieces: c.pieces });
   }
@@ -35,5 +51,10 @@ export function shortGoal(s: GameState): string | null {
   if (pending) return t('goal.short.wait', { name: bName(def(pending.def)) });
   const pop = population(s);
   if (pop >= housing(s)) return t('goal.short.beds');
+  // Beds are free but nobody comes: the kampung has no more pull. Say what draws people, not "reach N".
+  if (pop >= attractTarget(s)) {
+    const name = bestDraw(s);
+    if (name) return t('goal.short.draw', { name });
+  }
   return t('goal.short.pop', { n: (Math.floor(pop / 3) + 1) * 3 });
 }

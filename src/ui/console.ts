@@ -13,6 +13,7 @@ import { h } from './dom';
 import { menuIconURL } from './icons';
 import { newTag, unseenBuildings } from './build';
 import { countTag } from './menu';
+import { saveSettings } from '../settings';
 import './console.css';
 
 /** Panels with their own dock button. The Menu stops listing them, so nothing appears twice. */
@@ -79,6 +80,14 @@ export function setupConsole(app: App): void {
   const sat = h('canvas', { width: 88, height: 60, id: 'cs-sat-map' }) as HTMLCanvasElement;
   const satBox = h('figure', { class: 'cs-sat cs', id: 'cs-sat', role: 'button', tabindex: '0' }, sat);
   stage.append(satBox);
+  // A small button folds the satellite view away, and brings it back. The choice is saved.
+  const satToggle = h('button', { class: 'cs cs-sat-toggle', id: 'cs-sat-toggle', type: 'button', onclick: () => {
+    app.settings.satMin = !app.settings.satMin;
+    saveSettings(app.settings);
+    app.tap(10);
+    app.refresh();
+  } });
+  stage.append(satToggle);
 
   // Repair all: a small chip under the satellite view, only while something is broken.
   const fixAll = h('button', { class: 'btn cs cs-fix', id: 'cs-fix', type: 'button', hidden: true, onclick: () => {
@@ -98,7 +107,13 @@ export function setupConsole(app: App): void {
     for (const { action, b } of dock) b.querySelector('.cs-dock-label')!.textContent = action.label();
     satBox.setAttribute('aria-label', t('cs.satHelp'));
     // Out of the way while a building is being placed.
-    satBox.hidden = !document.getElementById('placebar')!.hidden;
+    const placing = !document.getElementById('placebar')!.hidden;
+    satBox.hidden = placing;
+    satToggle.hidden = placing;
+    stage.classList.toggle('sat-min', !!app.settings.satMin);
+    satToggle.replaceChildren(h('span', { 'aria-hidden': 'true' }, app.settings.satMin ? '▣' : '−'));
+    satToggle.setAttribute('aria-label', t(app.settings.satMin ? 'cs.satShow' : 'cs.satHide'));
+    satToggle.setAttribute('aria-pressed', String(!!app.settings.satMin));
     const broken = damagedList(app.s);
     const total = broken.reduce((n, b) => n + repairCost(app.s, b), 0);
     fixAll.hidden = !broken.length || !document.getElementById('placebar')!.hidden || document.getElementById('app')!.classList.contains('home-open');

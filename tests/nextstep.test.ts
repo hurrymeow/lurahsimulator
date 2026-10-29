@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { COMBO_HINT_MONTH, shortGoal } from '../src/sim/nextstep';
-import { addBuilding, newGame } from '../src/sim/state';
+import { addBuilding, addResident, attractTarget, housing, newGame, population } from '../src/sim/state';
 
 describe('short goal', () => {
   it('starts with the first house, then residents in steps of 3', () => {
@@ -26,5 +26,22 @@ describe('short goal', () => {
     addBuilding(s, 'rumah', 5, 5, 'active');
     addBuilding(s, 'warung', 6, 5, 'permit').timer = 1;
     expect(shortGoal(s)).toBe('Now: wait for Warung Sembako to open.');
+  });
+
+  it('leads with the combo before beds once the combo is all the star still needs', () => {
+    const s = newGame(1);
+    for (let i = 0; i < 3; i++) addBuilding(s, 'rumah', 3 + i, 12, 'active');
+    while (population(s) < Math.max(10, housing(s))) addResident(s);
+    // Full beds would say "build a Rumah", but 10 residents are in: the star waits only on a combo.
+    expect(shortGoal(s)).toMatch(/^Now: try combo /);
+  });
+
+  it('says what draws residents when beds are free but nobody comes', () => {
+    const s = newGame(1);
+    s.discovered.push('rapatMalam');
+    for (let i = 0; i < 4; i++) addBuilding(s, 'rumah', 3 + i, 12, 'active');
+    while (population(s) < attractTarget(s)) addResident(s);
+    expect(population(s)).toBeLessThan(housing(s));
+    expect(shortGoal(s)).toMatch(/^Now: nobody new is coming\. Build a .+ to draw residents\.$/);
   });
 });
