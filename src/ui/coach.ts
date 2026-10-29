@@ -86,7 +86,8 @@ export function setupCoach(app: App): void {
     const pointsDown = !!r && !inSheet && r.top >= b.bottom - 2;
     bar.classList.toggle('arrow-up', up);
     bar.classList.toggle('no-arrow', !(up || pointsDown || (inSheet && !!r && r.top >= b.bottom - 2)));
-    if (r) bar.style.setProperty('--ax', `${Math.min(Math.max(r.left + r.width / 2 - 12, 24), innerWidth - 24 - 24)}px`);
+    // The arrow is placed within the bar, which on a desktop sits inside the centred game column.
+    if (r) bar.style.setProperty('--ax', `${Math.min(Math.max(r.left + r.width / 2 - 12 - b.left, 24), b.width - 48)}px`);
   };
 
   const show = (key: Key, target: Element | null, label: Key = 'coach.skip') => {

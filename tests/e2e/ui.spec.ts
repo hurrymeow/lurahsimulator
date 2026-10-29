@@ -206,6 +206,21 @@ test.describe('opener', () => {
     await expect(page.locator('#coach')).toBeHidden();
   });
 
+  test('on a desktop the opener note sits inside the game column', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(`/?debug&coach&lang=${lang()}`);
+    await passHome(page);
+    await expect(page.locator('#coach')).toBeVisible();
+    const note = (await page.locator('#coach').boundingBox())!;
+    const col = (await page.locator('#app').boundingBox())!;
+    expect(note.x).toBeGreaterThanOrEqual(col.x);
+    expect(note.x + note.width).toBeLessThanOrEqual(col.x + col.width);
+    // The arrow still points at Build.
+    const build = (await page.locator('#dock-build').boundingBox())!;
+    const ax = await page.locator('#coach').evaluate((el) => parseFloat(getComputedStyle(el).getPropertyValue('--ax')));
+    expect(Math.abs(note.x + ax + 12 - (build.x + build.width / 2))).toBeLessThan(30);
+  });
+
   test('the first month passes without a pop-up over the opener', async ({ page }) => {
     await page.goto(`/?debug&coach&lang=${lang()}`);
     await passHome(page);
@@ -660,8 +675,10 @@ test.describe('slim HUD and one menu', () => {
     const ids = await page.evaluate(() =>
       [...document.querySelectorAll('button')].filter((b) => b.getClientRects().length && b.id !== 'ticker').map((b) => b.id),
     );
-    // Top: play, speed and the resources. The goal line only expands the next star. Bottom: the dock.
-    expect(ids).toEqual(['pause-btn', 'speed-btn', 'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'goal-now', 'dock-build', 'dock-warga', 'menu-btn']);
+    // Top: play, speed and the resources. The goal line only expands the next star. On phones tall enough for the
+    // satellite view, its fold button belongs to it. Bottom: the dock.
+    const sat = (page.viewportSize()?.height ?? 0) > 640 ? ['cs-sat-toggle'] : [];
+    expect(ids).toEqual(['pause-btn', 'speed-btn', 'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'goal-now', ...sat, 'dock-build', 'dock-warga', 'menu-btn']);
     const hud = (await page.locator('#hud').boundingBox())!;
     expect(hud.height).toBeLessThanOrEqual(80);
   });
@@ -715,6 +732,32 @@ test.describe('slim HUD and one menu', () => {
     await page.getByRole('button', { name: WORDS[lang()].close }).click();
     expect(await pk('a.speed')).toBe(0);
     expect(await pk('a.running')).toBe(false);
+  });
+
+  test('a manual pause shows PAUSED near the bottom and stops the world from moving', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const badge = page.locator('#auto-pause');
+    await expect(badge).toBeHidden();
+    await page.locator('#pause-btn').click();
+    await expect(badge).toBeVisible();
+    await expect(badge).toHaveText(WORDS[lang()].paused);
+    // Near the bottom of the map, clear of the HUD.
+    const box = (await badge.boundingBox())!;
+    const stage = (await page.locator('#stage').boundingBox())!;
+    expect(box.y).toBeGreaterThan(stage.y + stage.height / 2);
+    await expectLegible(page, 'paused pill');
+    // The world clock stands still: walkers do not move while paused.
+    const where = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.crowd.people.map((p: any) => `${p.fx.toFixed(3)},${p.fy.toFixed(3)}`).join('|'));
+    const before = await where();
+    await page.waitForTimeout(1200);
+    expect(await where()).toBe(before);
+    // Build mode shows it too, and play resumes on the play button.
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
+    await expect(badge).toBeVisible();
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.stopPlacing());
+    await page.locator('#pause-btn').click();
+    await expect(badge).toBeHidden();
   });
 
   test('a popup queued while a sheet is open waits for the sheet to close', async ({ page }) => {
@@ -1929,6 +1972,60 @@ test.describe('build mode', () => {
     await expect(page.locator('#sheet .staff-card')).toHaveCount(2);
     await page.locator('.sheet-head .btn').click();
     await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
+  });
+
+  test('a building waiting for a permit shows its Orang Dalam button without scrolling', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const uid = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.res.orangDalam = 3;
+      app.s.stage.stars.rt = 2;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      const uid = app.s.nextUid++;
+      app.s.buildings.push({ uid, def: 'kosan', x: k.x + 2, y: k.y + 1, level: 1, status: 'permit', timer: 3, invested: 0, placedAt: 0 });
+      app.refresh();
+      app.inspect(uid);
+      return uid;
+    });
+    const skip = page.locator('#sheet .btn-primary').first();
+    await expect(skip).toBeInViewport({ ratio: 1 });
+    await expectLegible(page, 'permit panel');
+    await skip.click();
+    expect(await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.s.buildings.find((b: any) => b.uid === u).status, uid)).toBe('building');
+  });
+
+  test('the satellite view folds away to a small button, and the choice survives a reload', async ({ page }) => {
+    // Below 640px tall the satellite view is not shown at all, so use a phone tall enough for it.
+    await page.setViewportSize({ width: page.viewportSize()!.width, height: 760 });
+    await start(page);
+    await dismissModals(page);
+    const sat = page.locator('#cs-sat');
+    const fold = page.locator('#cs-sat-toggle');
+    await expect(sat).toBeVisible();
+    await fold.click();
+    await expect(sat).toBeHidden();
+    await expect(fold).toBeVisible();
+    await expect(fold).toHaveAttribute('aria-pressed', 'true');
+    await expectLegible(page, 'satellite folded');
+    await page.reload();
+    await passHome(page);
+    await dismissModals(page);
+    await expect(page.locator('#cs-sat')).toBeHidden();
+    await page.locator('#cs-sat-toggle').click();
+    await expect(page.locator('#cs-sat')).toBeVisible();
+  });
+
+  test('a combo pop-up shows the buildings that made it', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    // Feed a real combo notice through the fx path, as a month would.
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.handleFx([{ kind: 'notice', title: 'Combo: Rapat Malam', body: 'Story. Effect.', tone: 'good', fanfare: true, pics: [{ def: 'kantorRT', level: 1 }, { def: 'posRonda', level: 1 }] }]);
+    });
+    await expect(page.locator('#modal .combo-pics img')).toHaveCount(2);
+    await expectLegible(page, 'combo pop-up with buildings');
   });
 
   test('a tukang parkir can be tertibkan from his panel with Orang Dalam', async ({ page }) => {

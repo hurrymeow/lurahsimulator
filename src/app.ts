@@ -27,6 +27,7 @@ import { loadSettings, saveSettings, type Settings } from './settings';
 import { storage } from './storage';
 import { reportExtra } from './ui/report';
 import { h, missingList } from './ui/dom';
+import { comboPics } from './ui/lists';
 import { RIVAL_NAMES } from './data/ranking';
 import { areaScore } from './sim/ranking';
 import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
@@ -48,6 +49,8 @@ interface Notice {
   tone: 'good' | 'bad' | 'info';
   /** Extra content under the body, such as the stat changes of an event. */
   extra?: Node;
+  /** Content right under the title, such as the buildings that made a combo. */
+  head?: Node;
   /** Extra class on the card. */
   cls?: string;
   /** Inem brings this one: her portrait sits on the card. Only events and her own news. */
@@ -223,7 +226,7 @@ export class App {
         this.celebrate(f.what, f.x ?? Math.floor(RT_W / 2), f.y ?? Math.floor(RT_H / 2));
       } else if (f.kind === 'notice') {
         if (f.fanfare) this.view.pulse();
-        if (f.fanfare || f.card) this.modal(f);
+        if (f.fanfare || f.card) this.modal(f.pics?.length ? { ...f, head: comboPics(f.pics) } : f);
         else this.notice(f);
       } else if (f.kind === 'report') {
         const r = reportExtra(this.s, f.report);
@@ -478,6 +481,7 @@ export class App {
         n.fanfare ? h('div', { class: 'fanfare-tag' }, t('modal.new')) : null,
         n.inem ? inemHead() : null,
         h('h2', {}, n.title),
+        n.head,
         h('p', {}, n.body),
         n.extra,
         n.tip?.pics,

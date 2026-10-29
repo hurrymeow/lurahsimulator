@@ -153,6 +153,9 @@ export class MapView {
   motion = true;
   /** Game time is held (manual or auto pause). Walkers stand still; weather and idle loops go on. */
   frozen = false;
+  /** Real ms spent paused, taken off the world clock so ambient motion stops, and when the last frame drew. */
+  private pausedFor = 0;
+  private lastDraw = 0;
   /** Game time in months, fractional, for day and night. */
   clock = 0;
   readonly crowd = new Crowd();
@@ -441,6 +444,11 @@ export class MapView {
     if (!ctx) return;
     const dpr = window.devicePixelRatio || 1;
     const now = performance.now();
+    // Ambient motion (scenery, walkers, idle buildings, weather) runs on a world clock that stops while time is
+    // paused. Feedback for what the player does (ghost, bursts, pops) keeps real time.
+    if (this.frozen && this.lastDraw) this.pausedFor += now - this.lastDraw;
+    this.lastDraw = now;
+    const world = now - this.pausedFor;
     const sc = this.scale;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = false;
@@ -457,7 +465,7 @@ export class MapView {
     const sw = Math.min(WORLD_W - sx, Math.ceil(this.viewW / sc) + 2);
     const sh = Math.min(WORLD_H - sy, Math.ceil(this.viewH / sc) + 2);
     if (sw > 0 && sh > 0) ctx.drawImage(this.drawWorld(), sx, sy, sw, sh, wx + sx * sc, wy + sy * sc, sw * sc, sh * sc);
-    this.drawBackdrop(ctx, wx, wy, now);
+    this.drawBackdrop(ctx, wx, wy, world);
 
     const sel = s.buildings.find((b) => b.uid === this.selected);
     // Ambient occlusion: a soft contact shadow pooled round the foot of every standing building.
@@ -540,7 +548,7 @@ export class MapView {
     this.night = this.effects ? darkness(this.clock) : 0;
     this.lights = [];
     this.crowd.bubbles = this.effects && !this.frozen;
-    this.crowd.update(s, now, this.motion && !this.frozen, darkness(this.clock));
+    this.crowd.update(s, world, this.motion && !this.frozen, darkness(this.clock));
     this.crowd.begin();
     const drawOne = (b: Building): void => {
       if (!this.onScreen(b.x, b.y) || b.uid === this.hidden) return;
@@ -561,7 +569,7 @@ export class MapView {
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.globalAlpha = 1;
         this.art(ctx, iso('scaffold', undefined, n), b.x, b.y, 1, 0, n, flip);
-        if (this.effects) this.fx.construct(b.x, b.y, now);
+        if (this.effects) this.fx.construct(b.x, b.y, world);
       } else if (b.status === 'mangkrak') {
         ctx.filter = 'grayscale(1) brightness(0.7)';
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
@@ -594,7 +602,7 @@ export class MapView {
         if (k >= 1) this.spawned.delete(b.uid);
         this.hits.push(this.art(ctx, art, b.x, b.y, 0.6 + 0.4 * (1 - (1 - k) ** 3), this.squash(b, now), n, flip));
         if (b.level > 1) this.levelPips(ctx, b.x + n - 1, b.y + n - 1, b.level);
-        this.idle(ctx, b, now);
+        this.idle(ctx, b, world);
       }
       tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' || b.status === 'mangkrak' ? iso('scaffold', undefined, n) : art, n));
     };
@@ -603,21 +611,21 @@ export class MapView {
     for (const b of ground) drawOne(b);
     for (const b of standing) {
       decoUntil(front(b), b.x);
-      this.crowd.drawUntil(ctx, front(b) + 1, this.project, sc, now, this.motion && !this.frozen);
+      this.crowd.drawUntil(ctx, front(b) + 1, this.project, sc, world, this.motion && !this.frozen);
       drawOne(b);
     }
 
     decoUntil(Infinity, 0);
-    this.crowd.drawUntil(ctx, Infinity, this.project, sc, now, this.motion && !this.frozen);
+    this.crowd.drawUntil(ctx, Infinity, this.project, sc, world, this.motion && !this.frozen);
     this.fx.drawPuffs(ctx, this.project, sc, now, (fx, fy) => {
       const k = Math.floor(fy) * GRID_W + Math.floor(fx);
       return this.project(fx, fy).y - (tops.get(k) ?? this.project(fx, fy).y);
     });
     if (this.effects) {
-      this.air.draw(ctx, this.viewW, this.viewH, now, this.night, dusk(this.clock), this.motion);
+      this.air.draw(ctx, this.viewW, this.viewH, world, this.night, dusk(this.clock), this.motion);
       drawTint(ctx, this.viewW, this.viewH, this.clock);
       this.drawLights(ctx);
-      this.weather.draw(ctx, this.viewW, this.viewH, sc, now, (x, y) => ({ x: wx + x * sc, y: wy + y * sc }), shorePoints());
+      this.weather.draw(ctx, this.viewW, this.viewH, sc, world, (x, y) => ({ x: wx + x * sc, y: wy + y * sc }), shorePoints());
     }
 
     // Badges sit above every building so a taller neighbour in front never hides them.

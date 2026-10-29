@@ -5,7 +5,7 @@ import { BRANDS, FRANCHISE, KANIBAL, LOCAL_NAMES, MINIMARKETS, NAME_MAX } from '
 import { NAMES } from '../data/names';
 import { bName } from '../i18n';
 import { def } from './content';
-import { isWorking } from './state';
+import { isWorking, withinEdges } from './state';
 import type { Building, GameState } from './types';
 
 /** A stable 0..n-1 pick from a building's uid, so old saves get a brand without touching the shared RNG. */
@@ -68,7 +68,7 @@ export function sisterOutlets(s: GameState, b: Building): number {
 /** True when another of the same minimarket stands within reach and eats this one's customers. */
 export function kanibal(s: GameState, b: Building): boolean {
   if (!MINIMARKETS.includes(b.def)) return false;
-  return s.buildings.some((o) => o !== b && o.def === b.def && isWorking(o) && Math.abs(o.x - b.x) <= KANIBAL.radius && Math.abs(o.y - b.y) <= KANIBAL.radius);
+  return s.buildings.some((o) => o !== b && o.def === b.def && isWorking(o) && withinEdges(o, b, KANIBAL.radius));
 }
 
 /** Income multiplier from brands: a franchise's sister outlets, or a minimarket eating its twin. */
