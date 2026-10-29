@@ -124,7 +124,7 @@ export function inspect(app: App, uid: number): void {
   // A named building leads with its name; the type line under it keeps what it is.
   if (hasOwnName(b)) lines.unshift(h('p', { class: 'meta insp-type' }, bName(d)));
   // Only the pencil opens the name field, so a stray tap on the title cannot start a rename.
-  const pencil = RENAMABLE.has(b.def) ? h('button', { class: 'btn insp-pencil', 'aria-label': t('insp.rename'), onclick: () => {
+  const pencil = RENAMABLE.has(b.def) ? h('button', { class: 'insp-pencil', 'aria-label': t('insp.rename'), onclick: () => {
     nameForm.hidden = false;
     nameInput.focus();
   } }, h('img', { src: iconURL('scroll', 2), alt: '', width: 16, height: 16, class: 'pixel' })) : null;
