@@ -16,7 +16,7 @@ import { checkMove, checkPlace, moveBuilding, place } from './sim/rules';
 import { linePath, placeLine, type LineTile } from './sim/line';
 import { lotAt } from './sim/area';
 import { promote } from './sim/grow';
-import { GRID_H, GRID_W, RT_H, RT_W, type FirstKind } from './sim/types';
+import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, type FirstKind } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
 import { attractTarget, buildCost, buildingAt, byUid, footprintOf, newGame, population, housing, year } from './sim/state';
@@ -105,7 +105,8 @@ export class App {
   private storageOk: boolean;
   actions: ActionButton[] = [];
   /** One RT's size in tiles. The map is 1, 2 or 4 of these across. */
-  readonly rt = { w: RT_W, h: RT_H };
+  /** One RT cell's pitch on the map: the RT plus the seam after it. */
+  readonly rt = { w: CELL_W, h: CELL_H };
   /** True while the home screen is up. The sim waits. */
   held = false;
   

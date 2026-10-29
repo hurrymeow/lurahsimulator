@@ -1559,12 +1559,15 @@ test.describe('growing map', () => {
     await dismissModals(page);
     // A tap on its Kantor RT now opens the building, not the Neighbours panel.
     const at = await page.evaluate(async () => {
-      const v = (window as unknown as { pakrt: any }).pakrt.view;
-      const { w, h } = (window as unknown as { pakrt: any }).pakrt.rt;
-      const c = v.project(w + w / 2, h / 2);
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const v = app.view;
+      // After the takeover its buildings are the player's, so look in both lists.
+      const n = app.s.neighbours[0];
+      const k = [...app.s.buildings, ...n.buildings].find((b: any) => b.def === 'kantorRT' && Math.floor(b.x / app.rt.w) === n.cx && Math.floor(b.y / app.rt.h) === n.cy);
+      const c = v.project(k.x + 0.5, k.y + 0.5);
       v.panBy(v.viewW / 2 - c.x, v.viewH / 2 - c.y);
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-      const p = v.project(w + w / 2, h / 2);
+      const p = v.project(k.x + 0.5, k.y + 0.5);
       return { x: p.x, y: p.y };
     });
     const box = (await page.locator('#map').boundingBox())!;

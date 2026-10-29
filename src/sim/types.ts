@@ -439,6 +439,8 @@ export interface GameState {
   warned?: string[];
   /** Cleared tukang parkir due back at their shop: shop uid and month. Missing in older saves. */
   parkirBack?: { shop: number; at: number }[];
+  /** Saved with RT cells SEAM tiles apart. Older RW and Kelurahan saves had the seams on each RT's edge rows. */
+  gapped?: boolean;
   /** A tukang parkir has turned up at least once. The first shop always draws one. */
   parkirSeen?: boolean;
   /** Month a resident last moved in. Drives the perantau safety valve. */
@@ -476,10 +478,19 @@ export let GRID_H = RT_H;
 /** RTs along each side of the map at a stage. */
 export const STAGE_SPAN: Record<StageId, number> = { rt: 1, rw: 2, kelurahan: 4 };
 
+/** Tiles of dirt road between two RT cells. The bands sit between cells, so every RT keeps its full size. */
+export const SEAM = 2;
+/** Distance from one RT cell's first tile to the next one's: the RT plus the seam after it. */
+export const CELL_W = RT_W + SEAM;
+export const CELL_H = RT_H + SEAM;
+
 export function setGrid(stage: StageId): void {
-  GRID_W = RT_W * STAGE_SPAN[stage];
-  GRID_H = RT_H * STAGE_SPAN[stage];
+  GRID_W = RT_W * STAGE_SPAN[stage] + SEAM * (STAGE_SPAN[stage] - 1);
+  GRID_H = RT_H * STAGE_SPAN[stage] + SEAM * (STAGE_SPAN[stage] - 1);
 }
+
+/** RT cells along each side of the current map. */
+export const mapSpan = (): number => (GRID_W + SEAM) / CELL_W;
 /** Grid size before the map was expanded (save v1). Old saves are centred in the new grid. */
 export const OLD_GRID_W = 9;
 export const OLD_GRID_H = 13;

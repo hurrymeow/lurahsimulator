@@ -45,7 +45,7 @@ The full ladder runs RT, RW, Kelurahan or Desa, Kecamatan, Kabupaten/Kota, Provi
 
 The ladder reads as three acts (approved by Hari, 2026-10-28): **Act 1 Kampung** (RT, RW, Lurah; pressure: Perut and Kerja), **Act 2 Kota** (Camat, Pj. Wali Kota, Pj. Gubernur; pressure: pinjol, judol and Aman), **Act 3 Pusat** (Pejabat Pusat; Laporan against what is real). City and province posts are Pj. (acting) posts given by SK, so the player still never runs for office. Only Act 1 is built.
 
-Status 2026-10-27: the map engine, RT stars, RW and Kelurahan are built. The Desa path is not. Live grid sizes are 13x17 (RT), 26x34 (RW) and 52x68 (Kelurahan), which replace the 9x13, 18x26 and 36x52 in the sketch below. See `decisions/growing-map-engine.md`.
+Status 2026-10-27: the map engine, RT stars, RW and Kelurahan are built. The Desa path is not. Live grid sizes are 13x17 (RT), 28x36 (RW) and 58x74 (Kelurahan): every RT is 13x17 and the seams are 2-tile dirt roads between them, outside the RTs. These replace the 9x13, 18x26 and 36x52 in the sketch below. See `decisions/growing-map-engine.md`.
 
 ### Rules for every stage
 
@@ -80,7 +80,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 
 - RW = 2x2 RTs, about 18x26 tiles. Kampung Sebelah is the RT next door.
 - Kelurahan = 2x2 RWs, about 36x52 tiles.
-- RW buildings go on lots along the seams between RTs. Kelurahan buildings go on lots along the seams between RWs.
+- RW buildings go inside the player's RTs (their own and any taken over) or on lots along the seams between RTs. Kelurahan buildings go inside the player's RTs or on lots along the seams between RWs. RT buildings stay inside an RT. The seams sit between the RTs, so promotion never takes tiles from the player's RT.
 - RW keeps today's 64x32 tiles. A pinch out gives a view-only overview, and a tap there zooms back in.
 - Kelurahan defaults to half-size tiles. Kelurahan buildings take a 2x2 footprint, so a lot still taps like one RT tile today.
 - This changes one rule in section 6: "tile diamonds ≥32px tall" becomes "tappable diamonds ≥32px tall".
