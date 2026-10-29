@@ -3,7 +3,7 @@ import { lotAt } from '../src/sim/area';
 import { goalProgress, nextStarChecklist } from '../src/sim/stages';
 import { viewOf } from '../src/sim/neighbourView';
 import { FLAT, connectedRoad, hasRoadBeside } from '../src/sim/access';
-import { builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, promote, setAutoFund, takeover } from '../src/sim/grow';
+import { lotFull, builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, promote, setAutoFund, takeover } from '../src/sim/grow';
 import { NEIGHBOUR } from '../src/sim/balance';
 import { checkPlace } from '../src/sim/rules';
 import { areaScore } from '../src/sim/ranking';
@@ -501,3 +501,52 @@ describe('AI RT views', () => {
     for (const r of v.residents) expect(r.job).toBe('none');
   });
 });
+
+describe('handing an RT back', () => {
+  const taken = () => {
+    const s = grown();
+    s.stage.current = 'rw';
+    s.res.orangDalam = 10;
+    s.res.rupiah = 1e9;
+    return s;
+  };
+  const months = (s: ReturnType<typeof grown>, k: number) => {
+    for (let m = 0; m < k; m++) step(s);
+  };
+
+  it('a handed-back RT builds again once it has Dana', () => {
+    const s = taken();
+    const n = s.neighbours[0];
+    takeover(s, n);
+    handBack(s, n);
+    expect(n.funded).toBe(0);
+    const before = builtBy(n).length;
+    fundNeighbour(s, n, 6);
+    months(s, 6);
+    expect(builtBy(n).length).toBeGreaterThan(before);
+  });
+
+  it('Auto-dana comes back on at its old level, so the RT keeps building without a tap', () => {
+    const s = taken();
+    const n = s.neighbours[0];
+    setAutoFund(n, 6);
+    takeover(s, n);
+    expect(n.autoKeep).toBe(0);
+    handBack(s, n);
+    expect(n.autoKeep).toBe(6);
+    const before = builtBy(n).length;
+    months(s, 6);
+    expect(builtBy(n).length).toBeGreaterThan(before);
+  });
+
+  it('says when the lot is full, the other reason an RT stops building', () => {
+    const s = taken();
+    const n = s.neighbours[0];
+    expect(lotFull(n)).toBe(false);
+    for (let y = n.cy * RT_H; y < (n.cy + 1) * RT_H; y++)
+      for (let x = n.cx * RT_W; x < (n.cx + 1) * RT_W; x++)
+        if (!n.buildings.some((b) => b.x === x && b.y === y)) n.buildings.push({ uid: s.nextUid++, def: 'rumah', x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+    expect(lotFull(n)).toBe(true);
+  });
+});
+
