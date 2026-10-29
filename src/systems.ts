@@ -9,7 +9,7 @@ export function registerSystems(app: App): void {
   app.actions.push(
     { id: 'warga', label: () => t('menu.warga'), open: openResidents },
     { id: 'wacana', label: () => t('menu.wacana'), open: openWacana },
-    { id: 'staff', label: () => t('menu.staff'), open: openStaff },
+    { id: 'staff', label: () => t('menu.staff'), open: openStaff, badge: (app) => app.s.lowongan?.applicants.length ?? 0 },
     { id: 'combo', label: () => t('menu.combo'), group: 'records', open: openBukuCombo },
   );
   inspectExtras.push(mangkrakExtras, parkirExtras, damagedExtras);

@@ -52,6 +52,8 @@ interface Notice {
   cls?: string;
   /** Inem brings this one: her portrait sits on the card. Only events and her own news. */
   inem?: boolean;
+  /** A Menu action id: the card gets a button that opens that panel. */
+  open?: string;
 }
 
 type ExplainId = ResourceId | 'pop' | 'emas';
@@ -67,7 +69,11 @@ export const RES_META: Record<ResourceId, { label: () => string; icon: string }>
 /** Extension points for later systems: extra action buttons and fx handlers. */
 export type MenuGroup = 'kampung' | 'records' | 'game';
 /** dock: the panel has its own button in the bottom dock, so the Menu does not list it again. */
-export type ActionButton = { id: string; label: () => string; open: (app: App) => void; group?: MenuGroup; icon?: string; show?: (app: App) => boolean; dock?: boolean };
+export type ActionButton = {
+  id: string; label: () => string; open: (app: App) => void; group?: MenuGroup; icon?: string; show?: (app: App) => boolean; dock?: boolean;
+  /** Things waiting in this panel, such as applicants. Shown as a count on its Menu tile and on the Menu button. */
+  badge?: (app: App) => number;
+};
 
 /** Inem, the assistant, beside every message she brings: her portrait and her name. */
 export function inemHead(): HTMLElement {
@@ -217,7 +223,7 @@ export class App {
         this.celebrate(f.what, f.x ?? Math.floor(RT_W / 2), f.y ?? Math.floor(RT_H / 2));
       } else if (f.kind === 'notice') {
         if (f.fanfare) this.view.pulse();
-        if (f.fanfare) this.modal(f);
+        if (f.fanfare || f.card) this.modal(f);
         else this.notice(f);
       } else if (f.kind === 'report') {
         const r = reportExtra(this.s, f.report);
@@ -475,6 +481,7 @@ export class App {
         h('p', {}, n.body),
         n.extra,
         n.tip?.pics,
+        n.open ? this.openButton(n.open) : null,
         h('p', { class: 'tap-hint' }, t('modal.tap')),
       ),
     );
@@ -491,6 +498,13 @@ export class App {
       // 500ms after this tap, instead of landing on the player's next tap.
       el.hidden = true;
     };
+  }
+
+  /** A card's button to a Menu panel. The tap also dismisses the card (it bubbles to the card's own handler). */
+  private openButton(id: string): HTMLElement | null {
+    const a = this.actions.find((x) => x.id === id);
+    if (!a) return null;
+    return h('button', { class: 'btn btn-primary modal-open', type: 'button', 'data-open': id, onclick: () => a.open(this) }, t('modal.open', { panel: a.label() }));
   }
 
   // ---------- HUD ----------

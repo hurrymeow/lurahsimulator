@@ -12,6 +12,7 @@ import { GRID_H, GRID_W } from '../sim/types';
 import { h } from './dom';
 import { menuIconURL } from './icons';
 import { newTag, unseenBuildings } from './build';
+import { countTag } from './menu';
 import './console.css';
 
 /** Panels with their own dock button. The Menu stops listing them, so nothing appears twice. */
@@ -62,6 +63,14 @@ export function setupConsole(app: App): void {
       buildBtn.classList.toggle('has-new', fresh);
     });
   }
+  // Menu carries a count while something waits in one of its panels, such as applicants in Staff.
+  app.refreshers.push(() => {
+    const n = app.actions.reduce((sum, a) => sum + (a.dock ? 0 : (a.badge?.(app) ?? 0)), 0);
+    const tag = menuBtn.querySelector<HTMLElement>('.count-tag');
+    if (n && tag?.dataset.count === String(n)) return;
+    tag?.remove();
+    if (n) menuBtn.append(countTag(n));
+  });
   // Menu gets an icon too, so the three bottom buttons read as one set.
   menuBtn.replaceChildren(h('span', { class: 'cs-menu-icon', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), h('span', { 'data-i18n': 'page.menu' }, t('page.menu')));
   menuBtn.removeAttribute('data-i18n');

@@ -1814,6 +1814,55 @@ test.describe('build mode', () => {
     await expectLegible(page, 'staff after hire');
   });
 
+  test('applicants arrive as a card that opens Staff, wait there, and show a count on the Menu', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.res.rupiah = 50_000_000;
+      app.s.stage.stars.rt = 1;
+      app.refresh();
+    });
+    await openPanel(page, 'staff');
+    // Online: the second channel, with the shorter wait.
+    await page.locator('#sheet .staff-role[data-role="hansip"] .btn').nth(1).click();
+    await page.locator('.sheet-head .btn').click();
+    const waiting = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.lowongan?.applicants?.length ?? 0);
+    for (let i = 0; i < 3 && !(await waiting()); i++) await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
+    expect(await waiting()).toBeGreaterThan(0);
+    // Tap through any other cards until the applicants' card, then use its button.
+    const open = page.locator('#modal .modal-open[data-open="staff"]');
+    for (let i = 0; i < 12 && !(await open.isVisible()); i++) {
+      await page.waitForTimeout(650);
+      if (!(await page.locator('#modal').isVisible())) continue;
+      if (await open.isVisible()) break;
+      if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click();
+      else await page.locator('#modal').click();
+    }
+    await expect(open).toBeVisible();
+    await expectLegible(page, 'applicants card');
+    await open.click();
+    await expect(page.locator('#modal')).toBeHidden();
+    await expect(page.locator('#sheet .staff-applicant').first()).toBeVisible();
+    const n = await waiting();
+    await page.locator('.sheet-head .btn').click();
+    // They wait: half a year later they are all still there, and the Menu shows how many.
+    for (let i = 0; i < 6; i++) {
+      await runMonth(page);
+      await dismissModals(page);
+    }
+    expect(await waiting()).toBe(n);
+    await expect(page.locator('#menu-btn .count-tag')).toHaveText(String(n));
+    await page.locator('#menu-btn').click();
+    await expect(page.locator('#act-staff .count-tag')).toHaveText(String(n));
+    await expectLegible(page, 'menu with applicants');
+    await page.locator('#act-staff').click();
+    await page.locator('#sheet .staff-applicant .btn-primary').first().click();
+    await expect(page.locator('#sheet .staff-card')).toHaveCount(2);
+    await page.locator('.sheet-head .btn').click();
+    await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
+  });
+
   test('a mouse crossing the map to Place reaches it, and the building goes up', async ({ page }) => {
     await start(page);
     await dismissModals(page);

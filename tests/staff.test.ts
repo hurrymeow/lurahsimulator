@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SLOTS, STAFF_CAP, STAR_TOTAL } from '../src/data/staff';
 import {
-  answerRaise, bimtek, checkFire, checkPost, ensureStaff, fire, hire, inem, iuranBonus, mutasi, postLowongan, rollApplicants, staffSlots, staffSystem, traitFrom,
+  answerRaise, bimtek, cancelLowongan, checkFire, checkPost, ensureStaff, fire, hire, inem, iuranBonus, mutasi, postLowongan, rollApplicants, staffSlots, staffSystem, traitFrom,
 } from '../src/sim/staff';
 import { deserialize, serialize } from '../src/sim/save';
 import { newGame } from '../src/sim/state';
@@ -45,6 +45,24 @@ describe('staff', () => {
     for (const a of apps) expect(a.stars).toBeLessThanOrEqual(4);
     const x = hire(s, apps[0].id)!;
     expect(x.role).toBe('hansip');
+    expect(s.lowongan).toBeNull();
+  });
+
+  it('brings applicants as a card that opens Staff, and keeps them until the player hires or cancels', () => {
+    const s = game(4);
+    s.stage.stars.rt = 1;
+    postLowongan(s, 'hansip', 'online');
+    s.month = s.lowongan!.arriveAt;
+    const fx: Parameters<typeof staffSystem>[1] = [];
+    staffSystem(s, fx);
+    const n = s.lowongan!.applicants.length;
+    expect(fx).toContainEqual(expect.objectContaining({ kind: 'notice', card: true, open: 'staff' }));
+    for (let i = 0; i < 24; i++) {
+      s.month++;
+      staffSystem(s, []);
+    }
+    expect(s.lowongan!.applicants).toHaveLength(n);
+    cancelLowongan(s);
     expect(s.lowongan).toBeNull();
   });
 
