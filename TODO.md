@@ -9,6 +9,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: Each star should feel like a step up you can see on the map, as in Kairosoft's builders.
   - Suggested solution: Set a ladder by unlock tier: start 1x1 and cheap, RT stars 1x1 to 2x2, RW 2x2, Kelurahan 2x2 to 3x3, with cost and effect rising per tier (for example x2 cost, x1.5 effect per tier). Audit every building's cost, effect and footprint against the ladder in one table, and pick changes with Hari before building. New art per ART.md at the real footprint; never overwrite the artist's sprites. Check `tests/footprint.test.ts`, `tests/content-footprint.test.ts` and the balance tests.
   - Source: Julian, 2026-10-29
+  - Hari approved the proposed ladder (Oct 30). First pass shipped in #173: Apotek, Koperasi, Bengkel, Pasar Kaget prices and sizes. Next: the rest of the table, then a balance pass.
   - `open · — · — · done when:` a table of every building's tier, cost, effect and size is agreed with Hari, the changes ship with art per ART.md, and the footprint and balance tests pass.
 - [ ] **Stat icons PR 2.**
   - Problem: After the stat-icon renderer in `progress/stat-icons.md`, buildings, inspector, events, jobs, staff, mangkrak, calo, Wacana and Realisasi still need verification and fixes.
@@ -29,37 +30,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Playtest the Kelurahan, then write up what Kecamatan and above should be.
   - Source: GAME-DESIGN.md section 1 and section 7
   - `open · — · — · done when:` the playtest is done and Hari has decided on Kecamatan and above.
-- [ ] **Force the update with a full-screen screen.**
-  - Problem: The update banner (`src/pwa/update.ts`) stays all session unless clicked.
-  - Why: Players stay on old builds. Hari wants a forced update, not a dismissible banner.
-  - Suggested solution: Show a full-screen "Update now" screen with one button. Decide when it shows (home only, so play never reloads mid-session).
-  - Source: 16-min playtest, 2026-10-28
-  - `open · — · — · done when:` a full-screen "Update now" screen replaces the banner, at a point Hari agrees.
-- [ ] **Review the Bahasa Indonesia UI text (not event content).**
-  - Problem: Untranslated English, stiff or awkward phrasing, inconsistent terms, clipped text and overlong labels in the ID UI.
-  - Why: The ID text is the default language and reads rough in places.
-  - Suggested solution: Suggest fixes in a table of current text, suggested text and why, and wait for Hari to pick before any code.
-    1. Run the app in `id` with Playwright, mobile portrait, at 320 and 412px. Reuse the crawl in `/mnt/project-files/audit/crawl/` (`audit.spec.ts`, `tut.spec.ts`).
-    2. Walk every screen: HUD, Menu, the 4 Build tabs, building and tile panels, Settings, Buku Combo, report card, tips and home. Skip event popups.
-    3. Dump each visible string with its screen and width. Flag clipped text by `scrollWidth > clientWidth` and by screenshot at 320px.
-    4. Cross-check the strings against `src/i18n` for English left in `id`, and against `decisions/resource-names.md`. Keep the deliberate names (for example Orang Dalam).
-    5. Skip stat words. The icons-for-stats plan (`/mnt/project-files/plans/icons-for-stats-plan.md`) replaces them with icons.
-    6. Return the table to Hari. After Hari picks, edit strings in one PR, run `npm run e2e` (id and en), and log the choices in `decisions/`.
-  - Source: playtest
-  - `open · — · — · done when:` Hari has picked fixes from the table and one PR with the string edits is merged, with `npm run e2e` (id and en) green.
-- [ ] **Fit the tutorial dialogue to the game column on desktop.**
-  - Problem: On a desktop browser the tutorial dialogue bar (Inem) spans the whole window instead of the centred game column. The screenshot also shows a Skip button, but tip cards have no Skip, only "Tap to continue".
-  - Why: The dialogue sits detached from the game and looks broken on PC. The Skip breaks the tip rule in AGENTS.md and UI.md.
-  - Suggested solution: Constrain the dialogue to the game column width and remove the Skip button from tip cards.
-  - Source: Hari, 2026-10-28
-  - #151 fitted the opener note to the 560px game column (desktop e2e added). Skip was kept, because UI.md rule 10 gives the multi-step first-build tutorial a Skip; Hari to choose: 1) keep Skip, or 2) remove it and update UI.md. See `decisions/ui-batch-oct29.md`.
-  - `open · — · — · done when:` the dialogue fits the game column at desktop widths, has no Skip button, and an e2e test at a desktop viewport covers it.
-- [ ] **Add more buildings bigger than 1x1, starting with Balai RW at 2x2.**
-  - Problem: Few buildings are bigger than one tile. Today only Lapangan (3x3) and Sawah, Taman Bermain, Balai Warga, PAUD and Gudang Material (2x2) are (`FOOTPRINT` in `src/data/buildings.ts`). RW buildings such as Balai RW (`src/data/higher/rw.ts`) are still 1x1. Hari, 2026-10-28.
-  - Why: A town hall the size of a house does not read as a bigger stage. Larger footprints also make map space and placement matter, which is the Kairosoft feel GAME-DESIGN.md aims at.
-  - Suggested solution: Make Balai RW 2x2 first. Then pick a few more from: Posyandu, Pasar Kaget and Portal (RW), Kantor RT, Indomaret and Alfamart, Kos-kosan, Bank Sampah, Parkir. Keep one size per stage tier so the ladder reads clearly. For each: set its footprint, redraw its sprite at the larger size per ART.md (draw at the real size with `new Painter(n)`, stay inside the footprint and the 40-pixel headroom), and re-check combo range, which already counts edge to edge. Never overwrite the artist's assets from #18; add new art or ask the artist. Check `tests/footprint.test.ts` and `content-footprint.test.ts`, and the road-access and crowding rules. Pick the candidates with Hari before building, and log them in `decisions/`.
-  - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` Balai RW is 2x2 with new art per ART.md, the agreed extra buildings are larger with art, the footprint tests and combo tests pass, nothing clips at 320px, and the artist's sprites are untouched.
 - [ ] **Add more buildings that raise Popularitas, so it is not just Pos Ronda.**
   - Problem: Few buildings give Popularitas (hearts) each month. In `src/data/buildings.ts` Pos Ronda is the clear source (`perMonth: {{ sabar: 2 }}`), and a few combos add some (`src/data/combos.ts`). Not a full audit.
   - Why: The player builds Pos Ronda again and again for hearts, so the town looks the same and choices are not interesting. Popularitas gates arrivals and stars.
@@ -81,6 +51,10 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- [x] **Add more buildings bigger than 1x1, starting with Balai RW at 2x2.** Reworked with Julian: 1x2 Kos-kosan, Bengkel, Posyandu, Pasar Kaget; 2x2 Koperasi and Balai RW; Lapangan 2x3 with year-round rent; Terminal the only 3x3. Long buildings turn 90 degrees. Square ones reuse their art at full size; long ones are built from the existing one-tile art, which is untouched. #173, `decisions/building-shapes.md`.
+- [x] **Force the update with a full-screen screen.** Option A: full screen on the home screen only, a dot and a Perbarui tile in Menu during play. #172, `decisions/id-text-and-update.md`.
+- [x] **Review the Bahasa Indonesia UI text (not event content).** Rows 1 to 15 of the proposals doc; row 16 stays Combo. #172.
+- [x] **Fit the tutorial dialogue to the game column on desktop.** Fitted in #151; Hari kept Skip on the first-build guide (UI.md rule 10 stands). `decisions/id-text-and-update.md`.
 - [x] **Vary the Kecamatan inspection by merging it into the other events.** Four teams as events (Kampung Bersih, Ketertiban, Kampung Sehat, Kampung Digital), each with its own criteria and shortcuts; never the same twice in a row. #168, `decisions/inspect-variants.md`.
 - [x] **Show money with the coin icon everywhere, and audit every screen for stat text.** The stat-icon renderer turns every "Rp" amount into the coin and the amount; icons inside buttons leave the tap to the button; the Neighbours row reads 1★. #170, `decisions/coin-icon.md` (audit table there).
 - [x] **HIGH PRIORITY: Let AI RTs build many more kinds of building** and **Explain how another RT wins the yearly competition.** Each trait wants 11 to 13 kinds, partners of half-built combos first; every trait finds 4 or more combos and reaches 3★. The Neighbours row shows each RT's score against this year's target and its parts. #162.
