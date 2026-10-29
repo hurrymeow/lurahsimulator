@@ -267,7 +267,8 @@ test.describe('tips', () => {
     await page.evaluate(() => {
       const a = (window as unknown as { pakrt: any }).pakrt;
       a.s.lastEvent = { banjir: 0 };
-      a.s.month = 9;
+      // The first yearly ranking is the report card tip's trigger, not the month.
+      a.s.ranking.push({ year: 1, us: 90, them: 80, won: true });
       a.refresh();
     });
     // One tip at a time: tap through whatever is due until the report card tip.
@@ -290,6 +291,50 @@ test.describe('tips', () => {
     await expect(page.locator('#modal')).toBeVisible();
     await page.locator('#modal .tap-hint').click();
     await expect(page.locator('#modal')).toBeHidden();
+  });
+});
+
+test.describe('combo tutorial', () => {
+  test('the first shop names a combo to build, and the first combo points at the Combo list', async ({ page }) => {
+    const HEAD = { id: 'Tetangga saling membantu.', en: 'Neighbours help each other.' }[lang()];
+    const SAVED = { id: 'Combo tersimpan.', en: 'Combo saved.' }[lang()];
+    await start(page);
+    await page.locator('#howtoGo').click();
+    // Opening a shop is the trigger, not the month.
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      const k = a.s.buildings.find((b: any) => b.def === 'kantorRT');
+      a.s.buildings.push({ uid: a.s.nextUid++, def: 'warung', x: k.x - 1, y: k.y + 3, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      a.refresh();
+    });
+    const head = page.locator('#modal .card h2');
+    for (let i = 0; i < 6; i++) {
+      await expect(page.locator('#modal')).toBeVisible();
+      if ((await head.textContent()) === HEAD) break;
+      await page.locator('#modal .tap-hint').click();
+      await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+    }
+    await expect(head).toHaveText(HEAD);
+    // The body names the combo and its pieces, and the picture row shows them joined by "+".
+    await expect(page.locator('#modal .card')).toContainText('combo');
+    expect(await page.locator('#modal .pics img').count()).toBeGreaterThanOrEqual(2);
+    await expect(page.locator('#modal .tip-skip')).toHaveCount(0);
+    await expectLegible(page, 'combo tip');
+    await page.locator('#modal .tap-hint').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    // The combo is made: the next tip says where it is kept.
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.s.discovered.push('tongkrongan');
+      a.refresh();
+    });
+    await expect(head).toHaveText(SAVED);
+    await expect(page.locator('#modal .tip-skip')).toHaveCount(0);
+    await expectLegible(page, 'combo saved tip');
+    await page.locator('#modal .tap-hint').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    await openPanel(page, 'combo');
+    await expect(page.locator('#sheet')).toBeVisible();
   });
 });
 
@@ -1635,7 +1680,8 @@ test.describe('home screen', () => {
       const s = app.s;
       s.month = 3;
       s.buildings.push({ uid: s.nextUid++, def: 'wifi', x: 2, y: 3, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
-      for (let i = 0; i < 3; i++) s.residents.push({ id: s.nextResidentId++, name: 'Mbak Rizki Putri', job: 'none', pensiun: 0, fake: 0, arrived: 0 });
+      // One has taken a wifi job: the tip's trigger.
+      for (let i = 0; i < 3; i++) s.residents.push({ id: s.nextResidentId++, name: 'Mbak Rizki Putri', job: i ? 'none' : 'ojol', pensiun: 0, fake: 0, arrived: 0 });
       app.save();
       localStorage.removeItem('pakrt.tips');
     });

@@ -45,11 +45,12 @@ export function setupTips(app: App): void {
     st.seen.push(next.id);
     lastShown = Date.now();
     save();
+    const own = next.tip?.(a.s);
     a.modal({
       title: stepHead(next),
-      body: stepBody(next),
+      body: own?.body ?? stepBody(next),
       tone: 'info',
-      tip: { pics: picRow(next) },
+      tip: { pics: picRow(own ? { ...next, pics: own.pics } : next) },
     });
   });
 }

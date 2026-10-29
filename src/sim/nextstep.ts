@@ -12,13 +12,13 @@ import type { GameState } from './types';
 export const COMBO_HINT_MONTH = 30;
 
 /** The cheapest combo the player could set up now, by the money still to spend on pieces they lack. */
-function easiestCombo(s: GameState) {
-  let best: { name: string; pieces: string; cost: number } | null = null;
+export function easiestCombo(s: GameState) {
+  let best: { name: string; pieces: string; ids: string[]; cost: number } | null = null;
   for (const c of COMBOS) {
     const defs = c.needs.map((n) => def(parseNeed(n).id));
     if (defs.some((d) => !d.placeable || requirementGaps(s, d, { ignoreLimit: true }).length)) continue;
     const cost = defs.reduce((sum, d) => sum + (count(s, d.id) ? 0 : d.cost), 0);
-    if (!best || cost < best.cost) best = { name: cName(c), pieces: defs.map(bName).join(', '), cost };
+    if (!best || cost < best.cost) best = { name: cName(c), pieces: defs.map(bName).join(', '), ids: defs.map((d) => d.id), cost };
   }
   return best;
 }
