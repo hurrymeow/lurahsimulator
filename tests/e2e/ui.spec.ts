@@ -1394,6 +1394,32 @@ test.describe('growing map', () => {
     await expect(page.locator('.sheet .action')).toHaveCount(3);
   });
 
+  test('AI RTs lay Jalan Setapak and their warga walk it, never onto the player lots', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.promote();
+      for (const n of app.s.neighbours) n.autoKeep = 6;
+      app.s.res.rupiah = 1e9;
+      for (let i = 0; i < 18; i++) { app.s.pendingEvent = null; app.runTick(); }
+      app.refresh();
+    });
+    await dismissModals(page);
+    const paths = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.buildings.filter((b: any) => b.def === 'jalan').length));
+    for (const n of paths) expect(n).toBeGreaterThan(0);
+    // Let a few frames run so the walkers appear and take a step.
+    await page.waitForTimeout(1500);
+    const walkers = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const rtW = app.rt.w;
+      const rtH = app.rt.h;
+      return app.view.crowd.people.filter((p: any) => p.id <= -100).map((p: any) => ({ cx: Math.floor(p.fx / rtW), cy: Math.floor(p.fy / rtH) }));
+    });
+    expect(walkers.length).toBeGreaterThan(0);
+    for (const w of walkers) expect(w.cx + w.cy).toBeGreaterThan(0);
+  });
+
   test('taking an RT over makes its lots the player own, and it can be handed back', async ({ page }) => {
     await start(page);
     await dismissModals(page);

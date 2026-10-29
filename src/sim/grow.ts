@@ -4,7 +4,7 @@ import { RIVAL_BASE, RIVAL_PER_YEAR } from '../data/ranking';
 import { IURAN, NEIGHBOUR, STEMPEL } from './balance';
 import { inCell, viewOf } from './neighbourView';
 import { cellOf, isSeam, neighbourCells, rwOf, setPlayerCells } from './area';
-import { layRoads, refreshAccess } from './access';
+import { FLAT, layRoads, refreshAccess, ring } from './access';
 import { activeCombos } from './combos';
 import type { Fx } from './gain';
 import { gain } from './gain';
@@ -12,7 +12,7 @@ import { letterMult } from './rw';
 import { pick } from './rng';
 import { score } from './ranking';
 import { stageDef, goalProgress } from './stages';
-import { addResident, bedsOf, covers, housing, price } from './state';
+import { addResident, bedsOf, covers, footprintOf, housing, price } from './state';
 import { GRID_W, RT_H, RT_W, setGrid, type Building, type GameState, type Neighbour, type RtTrait, type StageId } from './types';
 
 /** The ladder this engine climbs. Matches `next` in the stage data. */
@@ -46,12 +46,68 @@ function freeTiles(n: Neighbour): { x: number; y: number }[] {
   return out;
 }
 
+// ---------- Jalan Setapak ----------
+
+/** A path tile the AI lays, like the player's Jalan Setapak. */
+const PATH = 'jalan';
+/** Buildings that need a path to the Kantor, by the same rule as the player's (flat pieces and the Kantor do not). */
+const wantsPath = (b: Building) => !FLAT.has(b.def) && !b.def.startsWith('kantor');
+/** What the RT has built, leaving out its paths. */
+export const builtBy = (n: Neighbour): Building[] => n.buildings.filter((b) => b.def !== PATH);
+
+/**
+ * Lays Jalan Setapak from a building to the RT's network, as the player must: the tiles round its Kantor RT, or a path
+ * already laid. Shortest route over free tiles inside the RT's own cell. False when no route exists.
+ */
+export function layAiPath(s: GameState, n: Neighbour, b: Building): boolean {
+  const key = (x: number, y: number) => y * 100_000 + x;
+  const inside = (x: number, y: number) => Math.floor(x / RT_W) === n.cx && Math.floor(y / RT_H) === n.cy && !isSeam(x, y);
+  const taken = new Set<number>();
+  const roads = new Set<number>();
+  for (const o of n.buildings) {
+    if (o.def === PATH) roads.add(key(o.x, o.y));
+    else for (let dy = 0; dy < footprintOf(o.def); dy++) for (let dx = 0; dx < footprintOf(o.def); dx++) taken.add(key(o.x + dx, o.y + dy));
+  }
+  const door = new Set<number>();
+  for (const k of n.buildings.filter((o) => o.def.startsWith('kantor'))) for (const [x, y] of ring(k)) if (inside(x, y) && !taken.has(key(x, y))) door.add(key(x, y));
+  const goal = (k: number) => roads.has(k) || door.has(k);
+  const open = (x: number, y: number) => inside(x, y) && !taken.has(key(x, y));
+  const prev = new Map<number, number>();
+  const queue: [number, number][] = [];
+  for (const [x, y] of ring(b)) if (open(x, y) && !prev.has(key(x, y))) {
+    prev.set(key(x, y), -1);
+    queue.push([x, y]);
+  }
+  for (let i = 0; i < queue.length; i++) {
+    const [x, y] = queue[i];
+    if (goal(key(x, y))) {
+      for (let k = key(x, y); k >= 0; k = prev.get(k)!) if (!roads.has(k)) addTo(s, n, PATH, k % 100_000, Math.floor(k / 100_000));
+      return true;
+    }
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (!open(nx, ny) || prev.has(key(nx, ny))) continue;
+      prev.set(key(nx, ny), key(x, y));
+      queue.push([nx, ny]);
+    }
+  }
+  return false;
+}
+
+/** Old saves: link every building an AI RT already has. Runs once per RT. */
+function linkAll(s: GameState, n: Neighbour): void {
+  for (const b of builtBy(n)) if (wantsPath(b)) layAiPath(s, n, b);
+  n.pathsLaid = true;
+}
+
 function newNeighbour(s: GameState, cx: number, cy: number): Neighbour {
   const n: Neighbour = { cx, cy, trait: pick(s, TRAITS), buildings: [], pop: NEIGHBOUR.startPop, stars: 0, funded: 0, everFunded: false, lastBuild: s.month, turns: 0, discovered: [], ranking: [] };
   const mx = cx * RT_W + Math.floor(RT_W / 2);
   const my = cy * RT_H + Math.floor(RT_H / 2);
   addTo(s, n, 'kantorRT', mx, my);
   addTo(s, n, 'rumah', mx - 1, my + 1);
+  linkAll(s, n);
   return n;
 }
 
@@ -158,6 +214,8 @@ export function handBack(s: GameState, n: Neighbour): void {
   n.pop = leaving.length;
   n.progress = 0;
   n.lastBuild = s.month;
+  // The player may have built where the AI's paths ran: link everything again next month.
+  n.pathsLaid = false;
   delete n.run;
   syncArea(s);
   refreshAccess(s);
@@ -176,26 +234,36 @@ function build(s: GameState, n: Neighbour): void {
   const free = freeTiles(n);
   if (!free.length) return;
   let id: string;
+  const built = builtBy(n);
   // Houses and shops take turns, or a full RT would only ever add houses and never find a combo.
-  if (n.pop >= housing(v) && n.buildings.at(-1)?.def !== 'rumah') id = 'rumah';
+  if (n.pop >= housing(v) && built.at(-1)?.def !== 'rumah') id = 'rumah';
   else {
     const list = WANTS[n.trait];
-    id = list[n.buildings.filter((b) => b.def !== 'rumah' && b.def !== 'kantorRT').length % list.length];
+    id = list[built.filter((b) => b.def !== 'rumah' && b.def !== 'kantorRT').length % list.length];
   }
   // Settle next to what is already there, like the player's kampung does.
-  const near = free.filter((f) => n.buildings.some((b) => Math.abs(b.x - f.x) <= 1 && Math.abs(b.y - f.y) <= 1));
+  const near = free.filter((f) => built.some((b) => Math.abs(b.x - f.x) <= 1 && Math.abs(b.y - f.y) <= 1));
   // Shops go where they have the most different neighbours, which is how combos happen. Ties are drawn.
-  const mix = (f: { x: number; y: number }) => new Set(n.buildings.filter((b) => b.def !== 'rumah' && Math.abs(b.x - f.x) <= 1 && Math.abs(b.y - f.y) <= 1).map((b) => b.def)).size;
+  const mix = (f: { x: number; y: number }) => new Set(built.filter((b) => b.def !== 'rumah' && Math.abs(b.x - f.x) <= 1 && Math.abs(b.y - f.y) <= 1).map((b) => b.def)).size;
   const pool = near.length ? near : free;
   const best = id === 'rumah' ? 0 : Math.max(...pool.map(mix));
-  const spot = pick(s, id === 'rumah' ? pool : pool.filter((f) => mix(f) === best));
-  addTo(s, n, id, spot.x, spot.y);
+  const first = pick(s, id === 'rumah' ? pool : pool.filter((f) => mix(f) === best));
+  // Like the player, the AI needs a path to the Kantor: try the chosen spot, then the rest of the pool, then anywhere free.
+  const tries = [first, ...pool.filter((f) => f !== first), ...free.filter((f) => !pool.includes(f))];
+  for (const spot of tries.slice(0, 40)) {
+    const b = addTo(s, n, id, spot.x, spot.y);
+    if (!wantsPath(b) || layAiPath(s, n, b)) return;
+    n.buildings.pop();
+  }
+  // Boxed in everywhere: build anyway, so the RT never stalls on a full lot.
+  addTo(s, n, id, first.x, first.y);
 }
 
 /** Month by month: build when funded, grow, and earn stars by the same checklist the player uses. */
 export function neighboursSystem(s: GameState, fx: Fx): void {
   autoFund(s);
   for (const n of s.neighbours) {
+    if (n.run !== 'player' && !n.pathsLaid) linkAll(s, n);
     if (n.run !== 'player' && n.funded > 0) {
       // Progress toward the next build: one build every `buildEvery` months, faster with more Dana banked.
       n.progress = (n.progress ?? 0) + (1 + boostOf(n)) / buildEvery(n);
