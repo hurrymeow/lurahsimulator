@@ -968,6 +968,30 @@ test.describe('text is legible and never cut off', () => {
     await expectLegible(page, 'placement with missing requirements');
   });
 
+  test('the placement bar turns the building before it is placed, and it keeps that facing', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('warung'));
+    const box = (await page.locator('#map').boundingBox())!;
+    const at = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      return app.view.tileCentre(k.x - 1, k.y + 2);
+    });
+    await page.mouse.click(box.x + at.x, box.y + at.y);
+    await expect(page.locator('#place-rot')).toBeVisible();
+    await expectLegible(page, 'placement bar with rotate');
+    await page.locator('#place-rot').click();
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ghost.flip)).toBe(true);
+    await expect(page.locator('#place-ok')).toBeEnabled();
+    await page.locator('#place-ok').click();
+    const rot = await page.evaluate(() => {
+      const s = (window as unknown as { pakrt: any }).pakrt.s;
+      return s.buildings.filter((b: any) => b.def === 'warung').map((b: any) => b.rot);
+    });
+    expect(rot).toEqual([1]);
+  });
+
   test('map tiles stay big enough to tap', async ({ page }) => {
     await start(page);
     const tile = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.tile);

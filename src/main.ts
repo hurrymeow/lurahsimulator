@@ -48,6 +48,7 @@ $('hud').addEventListener('keydown', (e) => {
 });
 $('place-cancel').addEventListener('click', () => app.stopPlacing());
 $('place-exit').addEventListener('click', () => app.stopPlacing());
+$('place-rot').addEventListener('click', () => app.rotatePlacing());
 $('place-ok').addEventListener('click', () => app.confirmPlace());
 $('scrim').addEventListener('click', closeSheet);
 
