@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { BRANDS, FRANCHISE, KANIBAL } from '../src/data/brands';
+import { BRANDS, FRANCHISE, KANIBAL, RENAMABLE } from '../src/data/brands';
+import { BUILDINGS } from '../src/data/buildings';
 import { activeCombos } from '../src/sim/combos';
 import { brandMult, brandOf, displayName, kanibal, nextBrand, rename, sisterOutlets } from '../src/sim/brands';
 import { problemSystem, JOBLESS_MONTHS } from '../src/sim/problems';
@@ -93,5 +94,18 @@ describe('problem unlocks', () => {
     checkUnlocks(s, []);
     expect(start).toBeLessThanOrEqual(7);
     expect(s.unlocked.length).toBeLessThanOrEqual(16);
+  });
+});
+
+describe('renaming', () => {
+  it('lists only shops and building-like facilities, each a real building', () => {
+    const ids = new Set(BUILDINGS.map((d) => d.id));
+    for (const id of RENAMABLE) expect(ids.has(id), id).toBe(true);
+    for (const id of ['posSatpam', 'lapangan', 'kolamLele', 'portal', 'bankSampah', 'parkir', 'gudangMaterial']) {
+      expect(RENAMABLE.has(id), id).toBe(false);
+    }
+    for (const id of ['warung', 'rumahMakan', 'apotek', 'bengkel', 'barbershop', 'kosan', 'paud', 'balaiWarga']) {
+      expect(RENAMABLE.has(id), id).toBe(true);
+    }
   });
 });

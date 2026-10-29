@@ -1748,6 +1748,8 @@ test.describe('build mode', () => {
     const before = await page.locator('#sheet h2').textContent();
     await page.locator('#sheet .brand-row .btn').click();
     await expect(page.locator('#sheet h2')).not.toHaveText(before ?? '');
+    await expect(page.locator('.name-row')).toBeHidden();
+    await page.locator('.insp-pencil').click();
     await page.locator('.name-input').fill('Warung Kenangan');
     await page.locator('.name-row .btn').click();
     await expect(page.locator('#sheet h2')).toHaveText('Warung Kenangan');

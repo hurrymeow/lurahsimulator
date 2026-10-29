@@ -41,3 +41,13 @@ export const MINIMARKETS = ['indomaret', 'alfamart'];
 
 /** Longest name a player may give a building, so it fits the inspector title at 320px. */
 export const NAME_MAX = 24;
+
+/**
+ * Buildings a player may rename: the shops, and the facilities that are a building with a sign.
+ * Not for flat pieces, farms, ponds, posts, gates, decor, Lapangan or the tukang parkir.
+ */
+export const RENAMABLE = new Set<string>([
+  'warung', 'rumahMakan', 'gerobakBakso', 'warteg', 'warkop', 'tokoKelontong', 'indomaret', 'alfamart',
+  'fotokopi', 'barbershop', 'bengkel', 'apotek', 'koperasi',
+  'kosan', 'kontrakan', 'balaiWarga', 'paud',
+]);

@@ -7,7 +7,7 @@ import { checkDemolish, checkSkipPermit, checkUpgrade, demolish, rotateBuilding,
 import { REFUND } from '../sim/balance';
 import { bedsOf, byUid, levelMult, pathMult, upgradeCost } from '../sim/state';
 import { brandKind, brandOf, displayName, hasBrand, hasOwnName, kanibal, nextBrand, rename, sisterOutlets } from '../sim/brands';
-import { FRANCHISE, KANIBAL, NAME_MAX } from '../data/brands';
+import { FRANCHISE, KANIBAL, NAME_MAX, RENAMABLE } from '../data/brands';
 import { premanTake } from '../sim/needs';
 import { buildingIncome, buildingUpkeep } from '../sim/tick';
 import type { Building, CheckResult } from '../sim/types';
@@ -66,12 +66,13 @@ export function inspect(app: App, uid: number): void {
   if (take) lines.push(h('p', { class: 'meta warn' }, t('insp.premanTake', { pct: Math.round(take * 100) })));
   if (kanibal(s, b)) lines.push(h('p', { class: 'meta warn' }, t('insp.kanibal', { pct: Math.round((1 - KANIBAL.mult) * 100) })));
   const nameInput = h('input', { type: 'text', class: 'name-input', maxlength: String(NAME_MAX), value: b.name ?? '', placeholder: displayName(b), 'aria-label': t('insp.nameLabel') }) as HTMLInputElement;
-  lines.push(h('form', { class: 'row name-row', onsubmit: (e: Event) => {
+  const nameForm = h('form', { class: 'row name-row', hidden: true, onsubmit: (e: Event) => {
     e.preventDefault();
     rename(b, nameInput.value);
     app.tap(10);
     done();
-  } }, nameInput, h('button', { class: 'btn', type: 'submit' }, t('insp.rename'))));
+  } }, nameInput, h('button', { class: 'btn', type: 'submit' }, t('insp.rename')));
+  if (RENAMABLE.has(b.def)) lines.push(nameForm);
   const income = buildingIncome(s, b);
   const upkeep = buildingUpkeep(s, b);
   if (income || upkeep) lines.push(h('p', { class: 'meta' }, t('insp.money', { income: rupiah(income), upkeep: rupiah(upkeep) })));
@@ -122,7 +123,13 @@ export function inspect(app: App, uid: number): void {
   }));
   // A named building leads with its name; the type line under it keeps what it is.
   if (hasOwnName(b)) lines.unshift(h('p', { class: 'meta insp-type' }, bName(d)));
-  openSheet(hasOwnName(b) ? displayName(b) : bName(d), lines, () => {
+  // Only the pencil opens the name field, so a stray tap on the title cannot start a rename.
+  const pencil = h('button', { class: 'btn btn-icon insp-pencil', 'aria-label': t('insp.rename'), hidden: !RENAMABLE.has(b.def), onclick: () => {
+    nameForm.hidden = false;
+    nameInput.focus();
+  } }, h('img', { src: iconURL('scroll', 2), alt: '', width: 16, height: 16, class: 'pixel' }));
+  const title = h('span', { class: 'insp-title' }, hasOwnName(b) ? displayName(b) : bName(d), pencil);
+  openSheet(title, lines, () => {
     app.view.selected = null;
   });
 }
