@@ -15,7 +15,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: A name only matters for a place people know by its name, such as a warung, a rumah makan or a kos. Elsewhere it is clutter and a misclick risk.
   - Suggested solution: Allow renaming only for shops (`category: 'shops'`) and for facilities that are a building with a sign: kos-kosan, kontrakan, balai warga, PAUD, koperasi, fotokopi, apotek, bengkel, barbershop. Not for flat pieces, farms, ponds, posts, gates, decor or Lapangan. Keep one list in `src/data/brands.ts` beside `LOCAL_NAMES`, and hide the form elsewhere. Combine with the pencil-icon item ("Make renaming a building hard to trigger by mistake").
   - Source: Julian, 2026-10-29
-  - `open · — · — · done when:` the rename form shows only for the listed shops and facilities, Kolam Lele, Portal, Pos Satpam, Bank Sampah and Lapangan have none, and a unit test checks the list.
+  - `claimed · claude · 2026-10-29 · done when:` the rename form shows only for the listed shops and facilities, Kolam Lele, Portal, Pos Satpam, Bank Sampah and Lapangan have none, and a unit test checks the list.
 - [ ] **Rethink the tukang parkir liar.**
   - Problem: Every shop that opens spawns a tukang parkir on its own tile, 100% of the time (`spawnParkir` in `src/sim/projects.ts`). It is `removable: false` (`src/data/buildings.ts`), so a growing kampung fills with tiles the player cannot clear.
   - Why: It eats space and takes control away from the player, which hurts the core build loop more than the joke helps.
@@ -135,7 +135,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: Misclicks open the keyboard and break the flow.
   - Suggested solution: Show a pencil icon next to the building name. Only tapping it opens the rename field and keyboard. Follow ART.md for the icon.
   - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` the name is plain text with a pencil icon beside it, only the icon opens the rename field and keyboard.
+  - `claimed · claude · 2026-10-29 · done when:` the name is plain text with a pencil icon beside it, only the icon opens the rename field and keyboard.
 - [ ] **Tie tutorial tips to an action, not to a timer.**
   - Problem: Hari finds the guide pop-ups random. In `src/ui/howto.ts` some tips fire from actions (first permit queue, first arrival), but house, combo, jobs, wacana and ranking use `s.month >= 3` or `>= 9`.
   - Why: Without a visible trigger the tip has no "so what".
@@ -223,7 +223,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: The noise hides real failures.
   - Suggested solution: Skip it unless `CI` is set, or say so in the run output.
   - Source: local runs
-  - `open · — · — · done when:` local `npm run e2e` no longer fails on visual baselines.
+  - `claimed · claude · 2026-10-29 · done when:` local `npm run e2e` no longer fails on visual baselines.
 - [ ] **Tune `GRADE_BONUS`.**
   - Problem: The economy may feel thin after grade bonuses went half-yearly.
   - Why: Less income per year than before.
