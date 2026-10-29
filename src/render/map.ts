@@ -560,15 +560,16 @@ export class MapView {
         return;
       }
       if (b.status === 'permit') {
-        ctx.globalAlpha = 0.35;
-        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
-        ctx.globalAlpha = 1;
+        // Waiting for a permit: nothing is built yet. The plot is staked out with string, under the permit sign.
+        this.hits.push(this.art(ctx, iso('patok', undefined, n), b.x, b.y, 1, 0, n, flip));
         this.sign(ctx, 'permit', b.x, b.y);
       } else if (b.status === 'building') {
+        // Being built: the half-made building in its scaffold, with a crane over the site.
         ctx.globalAlpha = 0.5;
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.globalAlpha = 1;
         this.art(ctx, iso('scaffold', undefined, n), b.x, b.y, 1, 0, n, flip);
+        this.art(ctx, iso('crane', undefined, n), b.x, b.y, 1, 0, n, flip);
         if (this.effects) this.fx.construct(b.x, b.y, world);
       } else if (b.status === 'mangkrak') {
         ctx.filter = 'grayscale(1) brightness(0.7)';
@@ -604,7 +605,7 @@ export class MapView {
         if (b.level > 1) this.levelPips(ctx, b.x + n - 1, b.y + n - 1, b.level);
         this.idle(ctx, b, world);
       }
-      tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' || b.status === 'mangkrak' ? iso('scaffold', undefined, n) : art, n));
+      tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' ? iso('crane', undefined, n) : b.status === 'mangkrak' ? iso('scaffold', undefined, n) : b.status === 'permit' ? iso('patok', undefined, n) : art, n));
     };
     // Flat pieces are ground: paths, fields and ponds draw first, so no walker or building ever hides under them.
     const { ground, standing } = groundFirst(sorted);

@@ -51,7 +51,8 @@ No third-party art or names. Everything is drawn in code.
   face, contact shadows.
 - The sun's rim is a deep amber, `#8a4f12`. Selokan banks are a dark warm grey, `#4a4a44`.
 - Set `p.bare = true` to skip the ink pass for flat or lattice art: selokan (it draws its own
-  banks so neighbours join up), grass tufts, bamboo scaffolding.
+  banks so neighbours join up), grass tufts, bamboo scaffolding, the staked plot of a building
+  waiting for its permit.
 - Big buildings (2x2, 3x3) are drawn at their own size, not scaled up. `new Painter(n)` takes the
   same one-tile coordinates and rasterises every edge, diagonal and outline natively, so a 3x3's
   roofline is a smooth 1px 2:1 line like a warung's, never a scaled stair step. Paint callbacks get
