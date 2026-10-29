@@ -232,7 +232,7 @@ The player picks a path at promotion. Kelurahan is dense and shop-heavy. Desa ma
 - **Wisata Edukasi** combo (Desa Wisata + Sawah Irigasi): **+4** Viral, **-1** Sabar a month.
 - **Honorer** job: does PNS work for half the pay. After **5** years, **20%** a year chance of becoming PNS.
 - **Pendamping Desa** job: Dana Desa only pays out with one employed.
-- **Tim Audit** event: each wacana with no receipt costs **2** Sabar.
+- **Tim Audit** event: comes every March once the Kelurahan has 1★, so the 2★ goal never waits on luck. Each wacana with no receipt costs **2** Sabar; with none missing (or a paid rapi-rapi) the audit is clean.
 - **Lomba Kelurahan** event: paint spending raises the score for one month.
 - **Kunjungan** event: one month warning before a visit.
 
