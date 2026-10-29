@@ -113,7 +113,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
   {
     id: 'indomaret',
     name: 'IndoApril',
-    blurb: 'Big income. Spawns a tukang parkir. Next to a BetaMart: price war. Next to another IndoApril: they eat each other.',
+    blurb: 'Big income. May draw a tukang parkir. Next to a BetaMart: price war. Next to another IndoApril: they eat each other.',
     cost: 7_000_000,
     upkeep: 100_000,
     income: 800_000,
@@ -132,7 +132,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
   {
     id: 'alfamart',
     name: 'BetaMart',
-    blurb: 'Big income. Spawns a tukang parkir. Next to an IndoApril: price war. Next to another BetaMart: they eat each other.',
+    blurb: 'Big income. May draw a tukang parkir. Next to an IndoApril: price war. Next to another BetaMart: they eat each other.',
     cost: 6_500_000,
     upkeep: 100_000,
     income: 750_000,
@@ -225,7 +225,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
   {
     id: 'parkir',
     name: 'Tukang Parkir Liar',
-    blurb: 'Appears beside every new shop. Pays small retribusi to the kas, costs Popularitas. Upgrade it, you cannot remove it.',
+    blurb: 'Turns up beside some new shops. Pays small retribusi to the kas, costs Popularitas. Tertibkan him with a Hansip or Orang Dalam; he may come back.',
     cost: 300_000,
     upkeep: 0,
     income: 60_000,
@@ -236,7 +236,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
     maxLevel: 3,
     placeable: false,
     removable: false,
-    removeBlockedReason: 'Nobody remembers hiring him. Nobody can fire him.',
+    removeBlockedReason: 'Nobody remembers hiring him. Tertibkan him instead.',
     sprite: 'parkir',
   },
 ];

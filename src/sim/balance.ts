@@ -73,6 +73,20 @@ export const NEIGHBOUR = {
   startPop: 2,
 };
 
+/** The tukang parkir liar. */
+export const PARKIR = {
+  /** Chance a new ordinary shop draws one, after the first, which always does. */
+  chance: 0.3,
+  /** Never more than this many on the player's map at once. */
+  cap: 4,
+  /** Clearing one without a Hansip on duty costs this much Orang Dalam. */
+  orangDalam: 1,
+  /** Chance a cleared one comes back to the same shop, and when. */
+  comeback: 0.3,
+  backMin: 3,
+  backMax: 6,
+};
+
 /** Stempel, the RW's permit stamps. */
 export const STEMPEL = {
   /** Stamps a month with no Balai RW, and what each Balai RW adds. */

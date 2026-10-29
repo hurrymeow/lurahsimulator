@@ -24,6 +24,7 @@ import { noteNet, quarterSystem, snapshot } from './report';
 import { requirementGaps } from './rules';
 import { brandMult, royaltyRate } from './brands';
 import { problemSystem } from './problems';
+import { parkirSystem } from './parkir';
 import { needsSystem, premanTake } from './needs';
 import { buildBoost, permitCut, staffSystem, upkeepCut } from './staff';
 import { realisasiSystem, realisasiWarungMult } from './realisasi';
@@ -232,6 +233,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   rwSystem,
   kelSystem,
   neighboursSystem,
+  parkirSystem,
   stempelSystem,
   jobsSystem,
   realisasiSystem,

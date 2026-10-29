@@ -431,6 +431,10 @@ export interface GameState {
   kel: KelState;
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
+  /** Cleared tukang parkir due back at their shop: shop uid and month. Missing in older saves. */
+  parkirBack?: { shop: number; at: number }[];
+  /** A tukang parkir has turned up at least once. The first shop always draws one. */
+  parkirSeen?: boolean;
   /** Month a resident last moved in. Drives the perantau safety valve. */
   lastArrival?: number;
   /** Kecamatan inspections. Absent in older saves. */
