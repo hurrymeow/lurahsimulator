@@ -40,3 +40,4 @@ Unsure whether it conflicts? Treat it as a conflict and ask.
 - [TODO.md](TODO.md) lists open tasks and ideas. Check it first. Code PRs never edit TODO.md, because it causes merge conflicts and CI reruns. Claim an item (set owner and date), move it to Done after the PR merges, and add open work you find in a separate docs-only change. Push it straight to main if you are allowed to, otherwise open a docs-only PR. Docs-only PRs skip e2e, so they are cheap.
 - Log design decisions in `decisions/<pr-or-slug>.md` and shipped work in `progress/<pr-or-slug>.md`.
 - Never edit `DECISIONS.md` or `PROGRESS.md` (frozen), or another PR's log file.
+- To test a later stage, use Settings, Developer: it loads a seeded RT 3★, RW or Kelurahan game. See `decisions/dev-seeds.md`.

@@ -612,6 +612,24 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#emas-value')).toHaveText(/^\d{1,3}%$/);
   });
 
+  test('developer mode loads a seeded RW game after a second tap', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    const rw = page.locator('#sheet [data-seed="rw"]');
+    await rw.scrollIntoViewIfNeeded();
+    await rw.click();
+    await expect(rw).toHaveClass(/btn-danger/);
+    await expect(page.locator('#sheet')).toBeVisible();
+    await expectLegible(page, 'developer seed armed');
+    await rw.click();
+    await expect(page.locator('#sheet')).toBeHidden();
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('pakrt.save') ?? '{}'));
+    expect(saved.stage.current).toBe('rw');
+    expect(saved.stage.stars.rt).toBe(3);
+  });
+
   test('every setting flips, saves, and leaves the game readable', async ({ page }) => {
     await start(page);
     await dismissModals(page);
