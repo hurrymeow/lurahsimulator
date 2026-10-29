@@ -1905,6 +1905,28 @@ test.describe('build mode', () => {
     await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
   });
 
+  test('a tukang parkir can be tertibkan from his panel with Orang Dalam', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const uid = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      const uid = app.s.nextUid++;
+      app.s.buildings.push({ uid, def: 'parkir', x: k.x + 2, y: k.y + 2, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      app.s.res.orangDalam = 2;
+      app.refresh();
+      app.inspect(uid);
+      return uid;
+    });
+    const btn = page.locator('#sheet .btn', { hasText: /Tertibkan/ });
+    await expect(btn).toBeEnabled();
+    await expectLegible(page, 'tukang parkir panel');
+    await btn.click();
+    const left = await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.s.buildings.some((b: any) => b.uid === u), uid);
+    expect(left).toBe(false);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.res.orangDalam)).toBe(1);
+  });
+
   test('a mouse crossing the map to Place reaches it, and the building goes up', async ({ page }) => {
     await start(page);
     await dismissModals(page);

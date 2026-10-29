@@ -4,7 +4,8 @@ import { iconURL } from '../render/sprites';
 import { rupiah } from '../format';
 import { def } from '../sim/content';
 import { checkDemolish, checkSkipPermit, checkUpgrade, demolish, rotateBuilding, skipPermit, upgrade } from '../sim/rules';
-import { REFUND } from '../sim/balance';
+import { PARKIR, REFUND } from '../sim/balance';
+import { checkTertibkan, tertibkan, tertibkanFree } from '../sim/parkir';
 import { bedsOf, byUid, levelMult, pathMult, upgradeCost } from '../sim/state';
 import { brandKind, brandOf, displayName, hasBrand, hasOwnName, kanibal, nextBrand, rename, sisterOutlets } from '../sim/brands';
 import { FRANCHISE, KANIBAL, NAME_MAX, RENAMABLE } from '../data/brands';
@@ -88,6 +89,18 @@ export function inspect(app: App, uid: number): void {
   if (b.noRoad) lines.push(h('p', { class: 'meta warn' }, t('insp.noRoad')));
   if (pm > 1 && b.status === 'active') lines.push(h('p', { class: 'meta' }, t('insp.pathBonus', { pct: Math.round((pm - 1) * 100) })));
   for (const extra of inspectExtras) lines.push(...extra(app, b));
+  // The tukang parkir cannot be demolished, but he can be tertibkan.
+  if (b.def === 'parkir') {
+    lines.push(actionButton(tertibkanFree(s) ? t('insp.tertibkan') : [t('insp.tertibkan'), ' ', h('img', { src: iconURL('orangDalam'), alt: t('res.orangDalam'), width: 18, height: 18, class: 'inline-icon' })], checkTertibkan(s, b), () => {
+      tertibkan(s, b);
+      app.notice({ title: t('parkir.cleared'), body: t('parkir.clearedBody'), tone: 'good' });
+      app.tap(15);
+      app.save();
+      app.refresh();
+      closeSheet();
+    }, true));
+    lines.push(h('p', { class: 'meta' }, tertibkanFree(s) ? t('insp.tertibkanHansip') : t('insp.tertibkanOd', { n: PARKIR.orangDalam })));
+  }
   if (b.status === 'permit') {
     lines.push(actionButton([t('insp.skip'), ' ', h('img', { src: iconURL('orangDalam'), alt: t('res.orangDalam'), width: 18, height: 18, class: 'inline-icon' })], checkSkipPermit(s, b), () => {
       skipPermit(s, b);
