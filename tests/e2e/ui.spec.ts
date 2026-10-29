@@ -37,6 +37,7 @@ async function openPanel(page: Page, id: string): Promise<void> {
 /** Taps through every queued message. */
 async function dismissModals(page: Page): Promise<void> {
   if (await page.locator('#howto').isVisible()) await page.locator('#howtoGo').click();
+  const seen: string[] = [];
   for (let i = 0; i < 12; i++) {
     if (!(await page.locator('#modal').isVisible())) {
       // A dismissed card waits 500ms before the next queued card appears,
@@ -46,10 +47,13 @@ async function dismissModals(page: Page): Promise<void> {
       await page.waitForTimeout(650);
       continue;
     }
-    if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click();
-    else await page.locator('#modal').click();
+    seen.push(`${await page.locator('#modal').getAttribute('class')}: ${(await page.locator('#modal h2').first().textContent({ timeout: 1000 }).catch(() => '?'))}`);
+    if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click({ timeout: 5000 });
+    else await page.locator('#modal').click({ timeout: 5000 });
     await page.waitForTimeout(650);
   }
+  // Twelve cards in a row means one is not going away. Name them, rather than run into the test timeout.
+  if (await page.locator('#modal').isVisible()) throw new Error(`cards keep coming: ${seen.join(' | ')}`);
 }
 
 /**
