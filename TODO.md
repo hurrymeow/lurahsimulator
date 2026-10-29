@@ -72,18 +72,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Place where the player taps, or start the target off the main view.
   - Source: Hari, 2026-10-28
   - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` choosing a building does not drop it in the centre, the target does not cover the map, and mistaps drop at 320px. e2e covers it.
-- [ ] **Tie tutorial tips to an action, not to a timer.**
-  - Problem: Hari finds the guide pop-ups random. In `src/ui/howto.ts` some tips fire from actions (first permit queue, first arrival), but house, combo, jobs, wacana and ranking use `s.month >= 3` or `>= 9`.
-  - Why: Without a visible trigger the tip has no "so what".
-  - Suggested solution: Replace the month tests with the action that makes the tip matter, and say the reason in the tip.
-  - Source: Hari, 2026-10-28
-  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` no tip fires on month alone, each fires from a player action or a state it explains, and says what the player gains. Check against GAME-DESIGN.md section 3.
-- [ ] **Teach the combo mechanic in the tutorial.**
-  - Problem: There is one combo tip (`how.4`, id `combo` in `src/ui/howto.ts`) and no guided step.
-  - Why: Combos earn the 1★ and the player is not shown how to make one.
-  - Suggested solution: Add a short step: place two buildings side by side, see the combo trigger, find it in the Combo list. Tie it to an action.
-  - Source: Hari, 2026-10-28
-  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` a new player is shown how to make a combo by doing one, the step fires after an action, has no Skip, and is covered in EN and ID.
 - [ ] **Add more buildings bigger than 1x1, starting with Balai RW at 2x2.**
   - Problem: Few buildings are bigger than one tile. Today only Lapangan (3x3) and Sawah, Taman Bermain, Balai Warga, PAUD and Gudang Material (2x2) are (`FOOTPRINT` in `src/data/buildings.ts`). RW buildings such as Balai RW (`src/data/higher/rw.ts`) are still 1x1. Hari, 2026-10-28.
   - Why: A town hall the size of a house does not read as a bigger stage. Larger footprints also make map space and placement matter, which is the Kairosoft feel GAME-DESIGN.md aims at.
@@ -93,6 +81,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- [x] **Tie tutorial tips to an action, not to a timer** and **Teach the combo mechanic in the tutorial.** No tip reads the month; the first shop names a combo to build beside it, and the first combo points at Menu, Combo. #156, `decisions/tutorial-tips-actions.md`.
 - [x] **Rethink the tukang parkir liar.** Spawn less (first shop always, then 30%, at most 4, never beside a Kantor) and tertibkan with a Hansip or 1 Orang Dalam. #150, `decisions/parkir-rethink.md`.
 - [x] **Kelurahan 2★ and 3★ balance.** Bot runs for 2★ and 3★ in `tests/kel-bot.test.ts` pass. #154, `progress/balance-bots-rw3-kel.md`.
 - [x] **RW 3★ balance.** Bot run with 2 AI RTs at 3★ passes. #154, `progress/balance-bots-rw3-kel.md`.
