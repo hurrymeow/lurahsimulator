@@ -89,13 +89,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: Handing back is meant to return an RT to the AI. If it dies silently, the player loses a star source, and RW 2★ and 3★ need those RTs.
   - Suggested solution: Reproduce first with a unit test: take over, build, hand back, fund it, run 6 months, and expect a new build. Fix what the test shows. If the cause is only the zeroed Dana, say so on the hand-back button and the Neighbours screen ("Funded 0, fund it") and consider restoring the previous `autoKeep`. Also make sure a handed-back RT never reads as stalled for any other reason.
   - Source: Hari, 2026-10-29. Related: "Let the player run an adjacent RT, or leave it to the AI and just fund it".
-  - `open · — · — · done when:` a test proves a handed-back, funded RT builds again, the cause is fixed, and the Neighbours screen explains the funded state after hand-back in EN and ID.
-- [ ] **Add a developer test mode that jumps to a seeded higher-level game.**
-  - Problem: Testing RW, Kelurahan and RT 3★ means playing from the start, which takes hours. Tests build state by hand (`tests/rw-helpers.ts`, `tests/kel-bot.test.ts`), and the only dev switch is `?debug` for tips and the opener (`src/ui/tips.ts`, `src/ui/coach.ts`). Hari, 2026-10-29.
-  - Why: Higher stages, neighbour RTs and the late economy are now the hardest to check, and Hari keeps hitting them by hand (the neighbour RT items). A seed would make every playtest and e2e of those stages quick.
-  - Suggested solution: Add a Dev section in Settings with a few buttons that load a seeded save: RT with 3★ and many buildings, RW with 4 RTs at 1★ and 2★, and Kelurahan with buildings and stars. Build the seeds with the same helpers the tests use, save them through `serialize` (`src/sim/save.ts`), and ask before they overwrite the current save (or load into a separate slot). Visible in the public build on purpose (Hari tests on the live site), with a two-tap confirm so nobody loses a game by mistake. Let e2e tests use the same seeds. Log the rule in `decisions/` and say in `AGENTS.md` how to use it.
-  - Source: Hari, 2026-10-29
-  - `in progress · Claude · 2026-10-29 · #158 · done when:` Settings has a Developer section, each button loads a seeded RT 3★, RW and Kelurahan state with buildings and stars, it never overwrites a real save without asking, and an e2e test uses a seed.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` a test proves a handed-back, funded RT builds again, the cause is fixed, and the Neighbours screen explains the funded state after hand-back in EN and ID.
 - [ ] **Add a rotate button while placing a building.**
   - Problem: Rotating exists only on the inspector of a placed building (`rotateBuilding` in `src/sim/rules.ts`, button in `src/ui/inspect.ts`). The placement bar has no rotate.
   - Why: The player has to place first, then open the building, rotate, and possibly move it again.
@@ -113,7 +107,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: Neighbours look samey and cannot earn the combos their stars need, so they stall.
   - Suggested solution: Widen each trait's list across shops, facilities and decor, using what the player has unlocked. Prefer picks that form combos with what is already there (the `mix` rule in `build`). Keep the cost: more kinds means more art on the AI lots, so reuse existing sprites. Check against the global-combo item, which may reduce the need.
   - Source: Hari, 2026-10-29
-  - `open · — · — · done when:` each trait builds at least 10 different buildings, AI RTs can form 3 combos, bot tests pass, and the Neighbours screen still reads clearly.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` each trait builds at least 10 different buildings, AI RTs can form 3 combos, bot tests pass, and the Neighbours screen still reads clearly.
 - [ ] **Make the permit and build phases clear, with cranes while building.**
   - Problem: A new building waiting for a permit and one under construction do not look different enough, and the player cannot tell the two phases apart on the map. Not checked in the renderer yet (`src/render/`).
   - Why: Players cannot tell what is happening or when to use Orang Dalam, and it feels like the building is stuck.
@@ -149,7 +143,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: The player cannot influence the score and does not know what it is made of, so the goal feels random.
   - Suggested solution: On the Neighbours screen show each RT's current score against the rival target for this year, and the main parts of the score. Say what helps it (more residents, combos, Popularitas). Tie in the speed-up levers.
   - Source: Hari, 2026-10-29. Related: "Give the player levers to speed up neighbour RT stars"
-  - `open · — · — · done when:` the Neighbours screen shows each RT's score against the target with the parts that help, and EN and ID are checked at 320px.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` the Neighbours screen shows each RT's score against the target with the parts that help, and EN and ID are checked at 320px.
 - [ ] **Replace 'Kini: do xx' with the pending goals for the next star.**
   - Problem: The goal strip (`shortGoal` in `src/sim/nextstep.ts`) shows one 'Kini: ...' action. Hari does not like it and would rather see what is left for the next star (screenshot: 'Kini: capai 60 warga.').
   - Why: A single line hides the star checklist, and it sometimes names a minor step. The player wants to see the real target.
@@ -159,6 +153,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- [x] **Add a developer test mode that jumps to a seeded higher-level game.** Settings, Developer: RT 3★, RW 3★ and Kelurahan seeds, two taps to confirm. #158, `decisions/dev-seeds.md`.
 - [x] **Tie tutorial tips to an action, not to a timer** and **Teach the combo mechanic in the tutorial.** No tip reads the month; the first shop names a combo to build beside it, and the first combo points at Menu, Combo. #156, `decisions/tutorial-tips-actions.md`.
 - [x] **Rethink the tukang parkir liar.** Spawn less (first shop always, then 30%, at most 4, never beside a Kantor) and tertibkan with a Hansip or 1 Orang Dalam. #150, `decisions/parkir-rethink.md`.
 - [x] **Kelurahan 2★ and 3★ balance.** Bot runs for 2★ and 3★ in `tests/kel-bot.test.ts` pass. #154, `progress/balance-bots-rw3-kel.md`.

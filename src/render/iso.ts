@@ -829,6 +829,46 @@ const ART: Record<string, ArtFn> = {
       return j % 4 === 0 ? 'n' : null;
     });
   },
+  // Build phase: a tower crane at the back corner, its jib over the site and a hook on a cable.
+  crane: (p) => {
+    p.shadow(10);
+    // Concrete foot, then the lattice mast: yellow rails with dark cross-ties every few pixels.
+    p.box(11, 2, 'S', undefined, 0);
+    for (let k = 2; k < 40; k++) {
+      p.set(TW / 2 + 7, TOP + TH / 2 - k, k % 4 === 0 ? 'N' : 'y');
+      p.set(TW / 2 + 9, TOP + TH / 2 - k, k % 4 === 2 ? 'N' : 'a');
+      if (k % 4 === 1) p.set(TW / 2 + 8, TOP + TH / 2 - k, 'N');
+    }
+    // Operator's cab under the jib.
+    p.stroke(6, -40, 10, -40, 3, 'r');
+    p.set(TW / 2 + 9, TOP + TH / 2 - 41, 'l');
+    // The jib reaching over the site, the counter-jib and its concrete weight behind.
+    p.stroke(-12, -44, 8, -44, 2, 'y');
+    p.stroke(8, -44, 14, -44, 2, 'a');
+    p.stroke(13, -43, 15, -43, 3, 'S');
+    // Cable and hook, hanging over the middle of the site.
+    for (let k = 42; k > 24; k--) p.set(TW / 2 - 6, TOP + TH / 2 - k, 'S');
+    p.set(TW / 2 - 6, TOP + TH / 2 - 24, 'k');
+    p.set(TW / 2 - 7, TOP + TH / 2 - 23, 'k');
+    p.set(TW / 2 - 5, TOP + TH / 2 - 23, 'k');
+  },
+  // Permit phase: the plot is staked out with string, nothing built yet. Bare, so the string stays one pixel thin.
+  patok: (p) => {
+    p.bare = true;
+    const corners: [number, number][] = [[-12, 0], [0, -6], [12, 0], [0, 6]];
+    // String round the plot, a little above the ground.
+    for (let c = 0; c < 4; c++) {
+      const [x0, y0] = corners[c];
+      const [x1, y1] = corners[(c + 1) % 4];
+      const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+      for (let k = 0; k <= steps; k++) p.set(TW / 2 + Math.round(x0 + ((x1 - x0) * k) / steps), TOP + TH / 2 + Math.round(y0 + ((y1 - y0) * k) / steps) - 2, 'w');
+    }
+    // Wooden stakes at the corners, with a red-painted tip.
+    for (const [x, y] of corners) {
+      for (let k = 0; k < 4; k++) p.set(TW / 2 + x, TOP + TH / 2 + y - k, k === 3 ? 'r' : 'n');
+      p.set(TW / 2 + x + 1, TOP + TH / 2 + y, 'N');
+    }
+  },
   // Scenery. These never go in the tap list, so the tile under them stays buildable.
   bush: (p) => {
     p.shadow(5);

@@ -507,7 +507,7 @@ test.describe('events, ranking, settings', () => {
     await dismissModals(page);
     await skipTips(page);
     await seed(page);
-    const ids = ['guntingPita', 'agustusan', 'banjir', 'cabai', 'kecamatan', 'partTime', 'cctv', 'kkn', 'startupPilot', 'hajatan', 'pasarMalam', 'sisaAnggaran', 'magang', 'pungli', 'pangkalanOjol', 'lesGratis', 'padam', 'rapatWarga', 'hibah', 'lombaKampung', 'truckSampah', 'lubangViral', 'sembako', 'pbb', 'festivalKuliner'];
+    const ids = ['guntingPita', 'banjir', 'cabai', 'kecamatan', 'partTime', 'cctv', 'kkn', 'startupPilot', 'hajatan', 'pasarMalam', 'sisaAnggaran', 'magang', 'pungli', 'pangkalanOjol', 'lesGratis', 'padam', 'rapatWarga', 'hibah', 'lombaKampung', 'truckSampah', 'lubangViral', 'sembako', 'pbb', 'festivalKuliner'];
     for (const id of ids) {
       await page.evaluate((i) => {
         const app = (window as unknown as { pakrt: any }).pakrt;
@@ -543,14 +543,14 @@ test.describe('events, ranking, settings', () => {
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.modal({ title: 'Tip', body: 'A tip', tone: 'info', tip: { pics: null, skip: () => {} } });
-      app.s.pendingEvent = 'agustusan';
+      app.s.pendingEvent = 'cabai';
       app.showEvent();
     });
     await expect(page.locator('#modal .card.event')).toBeVisible();
     await expectCentred(page, 'event after a tip');
   });
 
-  for (const id of ['guntingPita', 'agustusan', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga', 'partTime', 'padam', 'hibah']) {
+  for (const id of ['guntingPita', 'banjir', 'cabai', 'kecamatan', 'kerjaBakti', 'musimPindahan', 'pendataanWarga', 'partTime', 'padam', 'hibah']) {
     for (const broke of [false, true]) {
       test(`event ${id}${broke ? ' while broke' : ''} is legible and has a free choice`, async ({ page }) => {
         await start(page);
@@ -610,6 +610,24 @@ test.describe('events, ranking, settings', () => {
     await expectLegible(page, 'stats with ranking');
     // The 2045 meter shows Sejahtera, a whole percent.
     await expect(page.locator('#emas-value')).toHaveText(/^\d{1,3}%$/);
+  });
+
+  test('developer mode loads a seeded RW game after a second tap', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    const rw = page.locator('#sheet [data-seed="rw"]');
+    await rw.scrollIntoViewIfNeeded();
+    await rw.click();
+    await expect(rw).toHaveClass(/btn-danger/);
+    await expect(page.locator('#sheet')).toBeVisible();
+    await expectLegible(page, 'developer seed armed');
+    await rw.click();
+    await expect(page.locator('#sheet')).toBeHidden();
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('pakrt.save') ?? '{}'));
+    expect(saved.stage.current).toBe('rw');
+    expect(saved.stage.stars.rt).toBe(3);
   });
 
   test('every setting flips, saves, and leaves the game readable', async ({ page }) => {
@@ -1558,7 +1576,92 @@ test.describe('growing map', () => {
     await openPanel(page, 'neighbours');
     await page.locator('.sheet .nb-mine [data-handback]').click();
     await expect(page.locator('.sheet .nb-row.nb-mine')).toHaveCount(0);
+    // The toast says what happens next: it builds only with Dana banked.
+    await expect(page.locator('#ticker')).toContainText(lang() === 'en' ? 'back with the AI' : 'kembali dijalankan AI');
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].run)).toBeUndefined();
+  });
+});
+
+test.describe('Lomba Agustusan', () => {
+  test('the panitia card opens the panel; on 17 Agustus the mini-games play through to the prizes', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const app = (fn: string) => page.evaluate(`(() => { const a = window.pakrt; return ${fn}; })()`);
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.s.res.rupiah = 50_000_000;
+      a.s.res.sabar = 60;
+      const k = a.s.buildings.find((b: any) => b.def === 'kantorRT');
+      a.s.buildings.push({ uid: a.s.nextUid++, def: 'lapangan', x: k.x - 4, y: k.y + 3, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      a.s.month = 15;
+      a.s.pendingEvent = null;
+      a.runTick();
+    });
+    // The panitia's card, with a button straight to the panel.
+    const open = page.locator('#modal .modal-open[data-open="lomba"]');
+    for (let i = 0; i < 12 && !(await open.isVisible()); i++) {
+      await page.waitForTimeout(650);
+      if (!(await page.locator('#modal').isVisible()) || (await open.isVisible())) continue;
+      if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click();
+      else await page.locator('#modal').click();
+    }
+    await expect(open).toBeVisible();
+    await expectLegible(page, 'panitia card');
+    await open.click();
+    await expect(page.locator('#sheet .lomba-contest')).toHaveCount(4);
+    for (const id of ['panjatPinang', 'balapKarung', 'makanKerupuk']) await page.locator(`#sheet [data-contest="${id}"] .btn`).click();
+    await page.locator('#sheet [data-stage="dangdut"]').click();
+    await expect(page.locator('#sheet [data-stage="dangdut"]')).toHaveAttribute('aria-pressed', 'true');
+    await expectLegible(page, 'lomba panel');
+    await page.locator('.sheet-head .btn').click();
+    // Months pass to 17 Agustus; then time waits for the day screen.
+    for (let i = 0; i < 3; i++) await page.evaluate(() => { const a = (window as unknown as { pakrt: any }).pakrt; a.s.pendingEvent = null; a.runTick(); });
+    expect(await app('a.s.lomba.due')).toBe(true);
+    const day = page.locator('#lomba-day');
+    for (let i = 0; i < 20 && !(await day.isVisible()); i++) {
+      await page.waitForTimeout(400);
+      if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click();
+      else if (await page.locator('#modal').isVisible()) await page.locator('#modal').click();
+    }
+    await expect(day).toBeVisible();
+    await expect(day.locator('.inem-head')).toBeVisible();
+    await expectLegible(page, 'lomba day');
+    await day.locator('.lomba-go').click();
+    // Panjat Pinang: tap when the marker is inside the green band, as a player would.
+    await expect(page.locator('#lomba-climb')).toBeVisible();
+    await expectLegible(page, 'panjat pinang');
+    await page.evaluate(() => new Promise<void>((done) => {
+      const step = () => {
+        const btn = document.getElementById('lomba-climb') as HTMLButtonElement | null;
+        if (!btn) return done();
+        const pos = Number(btn.dataset.pos);
+        const lo = Number(btn.dataset.lo);
+        const hi = Number(btn.dataset.hi);
+        if (pos > lo + 0.02 && pos < hi - 0.02) btn.click();
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }));
+    await expect(day.locator('.lomba-outcome.win')).toBeVisible();
+    await day.locator('.lomba-go').click();
+    // Balap Karung: tap fast.
+    await expect(page.locator('#lomba-mash')).toBeVisible();
+    for (let i = 0; i < 40; i++) await page.locator('#lomba-mash').click({ delay: 0 });
+    await expect(day.locator('.lomba-outcome')).toBeVisible({ timeout: 8000 });
+    await day.locator('.lomba-go').click();
+    // Makan Kerupuk: the odds decide.
+    await page.locator('#lomba-roll').click();
+    await expect(day.locator('.lomba-outcome')).toBeVisible();
+    await day.locator('.lomba-go').click();
+    await expect(page.locator('#lomba-done')).toBeVisible();
+    await expectLegible(page, 'lomba prizes');
+    await page.locator('#lomba-done').click();
+    await expect(day).toHaveCount(0);
+    expect(await app('a.s.lomba.held')).toBe(true);
+    expect(await app('a.s.gigs.includes("agustus")')).toBe(true);
+    // Inem's gig card follows (she headlined); after it, time runs again.
+    await dismissModals(page);
+    expect(await app('a.running')).toBe(true);
   });
 });
 
@@ -1827,9 +1930,8 @@ test.describe('build mode', () => {
     await start(page);
     await dismissModals(page);
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
-    // The building shows on a free spot at once, with Place ready, so it is plain where it goes.
-    await expect(page.locator('#place-float')).toBeVisible();
-    await expect(page.locator('#place-ok')).toBeEnabled();
+    // Nothing is dropped under the thumb: no buttons float until a tile is tapped.
+    await expect(page.locator('#place-float')).toBeHidden();
     const box = (await page.locator('#map').boundingBox())!;
     const at = await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
@@ -1853,7 +1955,7 @@ test.describe('build mode', () => {
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'rumah').length)).toBe(3);
   });
 
-  test('picking a building shows its ghost at once on a free spot, and dragging it moves it', async ({ page }) => {
+  test('picking a building drops nothing until a free tile is tapped; then the ghost can be dragged', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
@@ -1861,14 +1963,22 @@ test.describe('build mode', () => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       const v = app.view;
       const lit = v.valid ? v.valid.reduce((n: number, x: number) => n + x, 0) : 0;
-      return { ghost: v.ghost, lit, inView: v.ghost ? v.inView(v.ghost.x, v.ghost.y, 0) : false };
+      return { ghost: v.ghost, lit, best: app.bestSpot() };
     });
-    expect(g.ghost).not.toBeNull();
-    expect(g.ghost.ok).toBe(true);
-    expect(g.inView).toBe(true);
+    // No ghost in the middle of the view: the free spots glow, and the bar says to tap one.
+    expect(g.ghost).toBeNull();
     expect(g.lit).toBeGreaterThan(0);
-    // Drag the ghost one tile along x: the map stays put and the ghost follows.
+    await expect(page.locator('#place-info')).toContainText(lang() === 'en' ? 'Tap a glowing free tile' : 'Ketuk petak kosong');
+    await expect(page.locator('#place-float')).toBeHidden();
+    await expectLegible(page, 'build mode before a tap');
+    // A tap on a free tile puts it there.
     const box = (await page.locator('#map').boundingBox())!;
+    const tap = await page.evaluate((b) => (window as unknown as { pakrt: any }).pakrt.view.tileCentre(b.x, b.y), g.best);
+    await page.mouse.click(box.x + tap.x, box.y + tap.y);
+    const placed = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ghost);
+    expect({ x: placed.x, y: placed.y, ok: placed.ok }).toEqual({ x: g.best.x, y: g.best.y, ok: true });
+    await expect(page.locator('#place-ok')).toBeEnabled();
+    // Drag the ghost one tile along x: the map stays put and the ghost follows.
     const pts = await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       const gh = app.view.ghost;
@@ -1882,7 +1992,7 @@ test.describe('build mode', () => {
     const moved = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.ghost);
     expect(moved.x).toBe(pts.start.x + 1);
     expect(moved.y).toBe(pts.start.y);
-    await expectLegible(page, 'ghost on select');
+    await expectLegible(page, 'ghost after a tap');
   });
 
   test('build cards show how many are owned, and new buildings carry a NEW tag', async ({ page }) => {
@@ -1918,6 +2028,7 @@ test.describe('build mode', () => {
       const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
       app.s.res.rupiah = 50_000_000;
       app.startPlacing('rumahMakan');
+      app.moveGhost(app.bestSpot());
       app.confirmPlace();
       return app.s.buildings.filter((b: any) => b.def === 'rumahMakan').at(-1)?.uid ?? (k && null);
     });
@@ -2114,6 +2225,9 @@ test.describe('build mode', () => {
     const before = await count();
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
     const map = (await page.locator('#map').boundingBox())!;
+    // Put the building on a tile first: nothing is placed until a tap.
+    const tap = await page.evaluate(() => { const a = (window as unknown as { pakrt: any }).pakrt; const b = a.bestSpot(); return a.view.tileCentre(b.x, b.y); });
+    await page.mouse.click(map.x + tap.x, map.y + tap.y);
     await page.mouse.move(map.x + 20, map.y + map.height - 20);
     const ok = (await page.locator('#place-ok').boundingBox())!;
     // The cursor sweeps over many tiles on its way; the button must not run from it.

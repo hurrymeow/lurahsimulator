@@ -65,24 +65,6 @@ export const POPUP_CHANCE = 0.4;
 // Rupiah costs here are base prices. The engine applies inflation.
 export const EVENTS: EventDef[] = [
   {
-    id: 'agustusan',
-    name: '17 Agustus: Lomba',
-    body: 'Panjat pinang, balap karung and kerupuk. The panitia wants a budget, and the kampung wants a prize.',
-    // The first popup is Gunting Pita at month 6, so the lomba waits for year 2 and never lands within 3 months of it.
-    when: { months: [7], minMonth: 8, chance: 1 },
-    choices: [
-      { label: 'Skip the lomba', res: { sabar: -8 }, result: 'Nobody won anything.' },
-      {
-        label: 'Fund it · Rp 1.000.000',
-        cost: { rupiah: 1_000_000 },
-        res: { sabar: 15, viral: 10 },
-        modifier: { label: 'Lomba crowd', target: '*', incomeMult: 1.2, months: 2 },
-        result: 'The kampung got a proper lomba.',
-      },
-      { label: 'Ask a sponsor · 1 Orang Inside', cost: { orangDalam: 1 }, res: { sabar: 10 }, result: 'A "sponsor" appeared.' },
-    ],
-  },
-  {
     id: 'banjir',
     name: 'Banjir',
     body: 'Heavy rain for three days. Selokan level decides how much of the kampung floats. Each selokan level cuts the damage by 20%.',

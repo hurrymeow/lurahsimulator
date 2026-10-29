@@ -85,6 +85,32 @@ function sliderRow(app: App, v: (typeof SLIDERS)[number]): Node {
   return h('div', { class: 'action' }, h('label', { class: 'slider-row' }, h('span', {}, t(v.label)), out), input, h('p', { class: 'meta' }, t(v.help)));
 }
 
+const SEEDS: { id: 'rt3' | 'rw' | 'kel'; label: Key }[] = [
+  { id: 'rt3', label: 'dev.rt3' },
+  { id: 'rw', label: 'dev.rw' },
+  { id: 'kel', label: 'dev.kel' },
+];
+
+/** Developer test mode: jump to a seeded higher-stage game. Two taps, because it replaces the current save. */
+function devRow(app: App): Node {
+  let armed: string | null = null;
+  const btns = SEEDS.map((sd) => {
+    const b = h('button', { class: 'btn', 'data-seed': sd.id }, t(sd.label));
+    b.addEventListener('click', async () => {
+      if (armed !== sd.id) {
+        armed = sd.id;
+        for (const o of btns) { o.classList.remove('btn-danger'); o.textContent = t(SEEDS[btns.indexOf(o)].label); }
+        b.classList.add('btn-danger');
+        b.textContent = t('dev.armed');
+        return;
+      }
+      if (await app.loadSeed(sd.id)) closeSheet();
+    });
+    return b;
+  });
+  return h('div', { class: 'action' }, h('strong', {}, t('dev.title')), h('div', { class: 'dev-seeds' }, ...btns), h('p', { class: 'meta' }, t('dev.help')));
+}
+
 export function openSettings(app: App): void {
   let armed = false;
   const reset = h('button', { class: 'btn' }, t('set.newGame'));
@@ -104,6 +130,7 @@ export function openSettings(app: App): void {
     ...SLIDERS.map((v) => sliderRow(app, v)),
     ...TOGGLES.map((tg) => toggleRow(app, tg)),
     ...settingsExtras.flatMap((fn) => fn(app)),
+    devRow(app),
     h('div', { class: 'action' }, reset),
     h('p', { class: 'meta' }, t('set.satire')),
   ]);
