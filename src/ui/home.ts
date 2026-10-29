@@ -18,7 +18,7 @@ const hasSave = () => deserialize(storage.get(SAVE_KEY)) !== null;
  * settings gear. Start asks Continue or New game, and New game confirms before it
  * overwrites a save. The first-launch tutorial follows New game.
  */
-export function showHome(app: App, install: HTMLButtonElement, update: HTMLButtonElement): void {
+export function showHome(app: App, install: HTMLButtonElement): void {
   const root = document.getElementById('app')!;
   const el = h('div', { id: 'home', class: 'home' });
   const leave = () => {
@@ -44,7 +44,7 @@ export function showHome(app: App, install: HTMLButtonElement, update: HTMLButto
 
   const start = h('button', { class: 'btn btn-primary home-start', id: 'home-start' }, t('home.start'));
   const gear = h('button', { class: 'btn btn-icon home-gear', id: 'home-gear', 'aria-label': t('menu.settings'), onclick: () => openSettings(app) }, '⚙');
-  const front = () => el.replaceChildren(h('h1', { class: 'home-title' }, document.title), gear, h('div', { class: 'home-actions' }, update, start, install));
+  const front = () => el.replaceChildren(h('h1', { class: 'home-title' }, document.title), gear, h('div', { class: 'home-actions' }, start, install));
   const choose = () => {
     const saved = hasSave();
     el.replaceChildren(

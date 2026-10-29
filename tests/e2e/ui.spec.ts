@@ -1051,34 +1051,35 @@ test.describe('text is legible and never cut off', () => {
   });
 });
 
-test.describe('update banner', () => {
-  test('Menu button stays on screen and tappable while the banner shows', async ({ page }) => {
-    await start(page);
-    await dismissModals(page);
-    await page.evaluate(() => ((document.getElementById('update-banner') as HTMLElement).hidden = false));
-    const box = await page.locator('#menu-btn').boundingBox();
-    const vh = page.viewportSize()!.height;
-    expect(box && box.y >= 0 && box.y + box.height <= vh, `menu at ${JSON.stringify(box)} in ${vh}px`).toBe(true);
-    await page.locator('#menu-btn').click();
-    await expect(page.locator('.sheet:not([hidden])')).toBeVisible();
-
-  });
-});
-test.describe('home update button', () => {
-  test('stays hidden until an update waits, then shows above Start inside the screen', async ({ page }) => {
+test.describe('update', () => {
+  test('a waiting version takes the whole home screen, with one button', async ({ page }) => {
     await page.goto(`/?debug&lang=${lang()}`);
     await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
-    await expect(page.locator('#home-update')).toBeHidden();
-    await page.evaluate(() => ((document.getElementById('home-update') as HTMLElement).hidden = false));
-    const vh = page.viewportSize()!.height;
-    const up = (await page.locator('#home-update').boundingBox())!;
-    const st = (await page.locator('#home-start').boundingBox())!;
-    expect(up.y).toBeGreaterThanOrEqual(0);
-    expect(up.y + up.height).toBeLessThanOrEqual(st.y);
-    expect(st.y + st.height).toBeLessThanOrEqual(vh);
-    expect(up.height).toBeGreaterThanOrEqual(44);
-    await expect(page.locator('#home-update')).toHaveText(lang() === 'id' ? 'Pembaruan tersedia' : 'Update available');
-    await expectLegible(page, 'home with update');
+    await expect(page.locator('#update-screen')).toBeHidden();
+    await page.evaluate(() => (window as unknown as { pakrtUpdate: () => void }).pakrtUpdate());
+    await expect(page.locator('#update-screen')).toBeVisible();
+    await expect(page.locator('#update-screen .btn')).toHaveCount(1);
+    await expect(page.locator('#update-go')).toHaveText(lang() === 'id' ? 'Perbarui sekarang' : 'Update now');
+    // Nothing on the home screen is reachable behind it.
+    const hit = await page.evaluate(() => {
+      const b = document.getElementById('home-start')!.getBoundingClientRect();
+      return document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2)?.closest('#update-screen') !== null;
+    });
+    expect(hit).toBe(true);
+    await expectLegible(page, 'update screen');
+  });
+
+  test('during play a version waits quietly: a dot on Menu and an Update tile, never a screen', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => (window as unknown as { pakrtUpdate: () => void }).pakrtUpdate());
+    await expect(page.locator('#update-screen')).toBeHidden();
+    await expect(page.locator('#menu-btn .update-dot')).toBeVisible();
+    const box = (await page.locator('#menu-btn').boundingBox())!;
+    expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height);
+    await page.locator('#menu-btn').click();
+    await expect(page.locator('#update-tile')).toBeVisible();
+    await expectLegible(page, 'menu with update tile');
   });
 });
 test.describe('home map preview', () => {
@@ -1501,7 +1502,7 @@ test.describe('growing map', () => {
     const row = page.locator('.sheet .nb-row').first();
     await row.locator('[data-fund="6"]').click();
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].funded)).toBe(before[0] + 7);
-    await expect(page.locator('.sheet .nb-row').first().locator('.nb-boost')).toHaveText(/\+\d+% boost/);
+    await expect(page.locator('.sheet .nb-row').first().locator('.nb-boost')).toHaveText(lang() === 'en' ? /\+\d+% boost/ : /\+\d+% lebih cepat/);
     // Auto-dana: pick a level, and it is saved on the RT.
     await page.locator('.sheet .nb-row').first().locator('[data-auto="6"]').click();
     await expect(page.locator('.sheet .nb-row').first().locator('[data-auto="6"]')).toHaveAttribute('aria-pressed', 'true');

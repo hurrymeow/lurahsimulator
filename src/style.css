@@ -450,7 +450,13 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .checklist li.done { color: var(--muted); text-decoration: line-through; }
 
 /* Home screen: the map shows through, the HUD hides, one Start button sits in the bottom third. */
-#app.home-open :is(#hud, #emas, #goal, #ticker, #bottombar, #update-banner) { visibility: hidden; }
+#app.home-open :is(#hud, #emas, #goal, #ticker, #bottombar) { visibility: hidden; }
+/* A waiting version takes the whole home screen; during play only a dot on Menu says so. */
+.update-screen { display: none; }
+#app.home-open .update-screen:not([hidden]) { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--bg); }
+.update-card { display: flex; flex-direction: column; gap: 16px; align-items: stretch; max-width: 360px; width: 100%; text-align: center; }
+.update-card .btn { min-height: 48px; }
+.update-dot { position: absolute; top: 6px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--danger); border: 2px solid var(--surface); }
 .home {
   position: fixed;
   inset: 0;
