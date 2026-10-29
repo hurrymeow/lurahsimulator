@@ -8,8 +8,9 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Problem: Every shop that opens spawns a tukang parkir on its own tile, 100% of the time (`spawnParkir` in `src/sim/projects.ts`). It is `removable: false` (`src/data/buildings.ts`), so a growing kampung fills with tiles the player cannot clear.
   - Why: It eats space and takes control away from the player, which hurts the core build loop more than the joke helps.
   - Suggested solution: Pick one or two, then playtest. (a) Spawn less: a chance per shop (for example 30%), a cap per RT, never on a tile next to the Kantor. (b) Let the player clear one: Pos Satpam or a Hansip "tertibkan" action, or 1 Orang Dalam, with a chance he comes back. (c) Turn him legit: a Juru Parkir Resmi job, as with the preman. Keep the inspection penalty in `src/sim/inspection.ts` in step, and log the pick in `decisions/`.
+  - Julian, 2026-10-29: picked (a) spawn less and (b) a tertibkan action.
   - Source: Julian, 2026-10-29
-  - `open · — · — · done when:` tukang parkir spawn less often and the player has at least one way to deal with one, the balance tests pass, and the choice is logged in `decisions/`.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` tukang parkir spawn less often and the player has at least one way to deal with one, the balance tests pass, and the choice is logged in `decisions/`.
 - [ ] **Later buildings cost more, do more and look bigger.**
   - Problem: Most buildings are 1x1 at any stage, and late unlocks are not clearly pricier, stronger or more distinct than early ones. Related: "Add more buildings bigger than 1x1, starting with Balai RW at 2x2".
   - Why: Each star should feel like a step up you can see on the map, as in Kairosoft's builders.
@@ -25,8 +26,9 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
     3. **Musim Banjir Besar (January):** prep before (biopori, Kerja Bakti), then a 30-second mini-game where the player taps to send sandbags along the map's low edge. Petugas PU and Hansip stats, Aman and Perut set the damage.
     4. **Festival Kuliner (once a year):** every Rumah Makan and warung competes, with a quick order-rush mini-game. Franchises and brands matter; the winner draws visitors for months.
   - Keep the tone rules: no real politicians or elections, and no religious or ethnic jokes, so holiday events stay about logistics (for example THR and mudik), never the faith. Log the pick in `decisions/`, and fit it to the popup spacing in GAME-DESIGN.md section 3.
+  - Julian, 2026-10-29: picked 1, Lomba Agustusan.
   - Source: Julian, 2026-10-29
-  - `open · — · — · done when:` one yearly event with a prep window and a short mini-game ships, uses at least one staff stat and one kampung meter, cannot be closed in one tap, and works in ID at 320px with an e2e test.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` one yearly event with a prep window and a short mini-game ships, uses at least one staff stat and one kampung meter, cannot be closed in one tap, and works in ID at 320px with an e2e test.
 - [ ] **Stat icons PR 2.**
   - Problem: After the stat-icon renderer in `progress/stat-icons.md`, buildings, inspector, events, jobs, staff, mangkrak, calo, Wacana and Realisasi still need verification and fixes.
   - Why: The renderer iconifies stat words everywhere, so sentences that read oddly with an icon noun, and slang uses that must stay words, will leak until they are checked.
@@ -63,19 +65,19 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: A 2x2 or 3x3 neighbour counts as farther than it looks, so the rules feel inconsistent.
   - Suggested solution: Switch both to the same edge-to-edge rule.
   - Source: `decisions/combo-range-and-move-look.md`
-  - `open · — · — · done when:` the Kanibal penalty and decoration boosts use the edge-to-edge rule.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` the Kanibal penalty and decoration boosts use the edge-to-edge rule.
 - [ ] **Say why the population stalls.**
   - Problem: Arrivals need population below attraction (`attractTarget` in `src/sim/state.ts`). The HUD chip shows beds (`13/15`), so a stall at attraction 12 looks like a bug.
   - Why: The player cannot tell why no one arrives.
   - Suggested solution: When population is at or above attraction, `shortGoal` (`src/sim/nextstep.ts`) should say what to add, for example a Warung. Keep it out of the 320px chip.
   - Source: 16-min playtest, 2026-10-28
-  - `open · — · — · done when:` `shortGoal` says what to add when population is at or above attraction, and the 320px chip is unchanged.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` `shortGoal` says what to add when population is at or above attraction, and the 320px chip is unchanged.
 - [ ] **Explain big drops in the 2045 meter.**
   - Problem: The meter is the average of Perut, Kerja and Aman (`src/sim/needs.ts`). A Warung that loses its road or gets damaged leaves `isWorking`, so Perut falls and the meter jumps (58 to 22 in the playtest). Not verified against a replay.
   - Why: A big silent drop feels like a bug and the player cannot act on it.
   - Suggested solution: Show a toast naming the cause when the meter drops 10 points or more.
   - Source: 16-min playtest, 2026-10-28
-  - `open · — · — · done when:` a toast names the cause when the meter drops 10 points or more.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` a toast names the cause when the meter drops 10 points or more.
 - [ ] **Force the update with a full-screen screen.**
   - Problem: The update banner (`src/pwa/update.ts`) stays all session unless clicked.
   - Why: Players stay on old builds. Hari wants a forced update, not a dismissible banner.
@@ -99,13 +101,13 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: The dialogue sits detached from the game and looks broken on PC. The Skip breaks the tip rule in AGENTS.md and UI.md.
   - Suggested solution: Constrain the dialogue to the game column width and remove the Skip button from tip cards.
   - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` the dialogue fits the game column at desktop widths, has no Skip button, and an e2e test at a desktop viewport covers it.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` the dialogue fits the game column at desktop widths, has no Skip button, and an e2e test at a desktop viewport covers it.
 - [ ] **Make the pause state obvious, and freeze animation when paused.**
   - Problem: In build mode especially, pause is easy to miss. Trees still move while paused.
   - Why: The player can think the game is running, or think it is broken.
   - Suggested solution: Show the word PAUSED near the bottom of the screen, and stop all sprite and scenery animation while paused. Check against the existing Paused pill (build mode only).
   - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` PAUSED shows near the bottom in play and build mode in EN and ID, no animation runs while paused, and an e2e test covers it.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` PAUSED shows near the bottom in play and build mode in EN and ID, no animation runs while paused, and an e2e test covers it.
 - [ ] **Don't force-place the building in the centre after choosing it in Build.**
   - Problem: After picking a building in build mode it is placed at the screen centre.
   - Why: It blocks the view and invites mistaps.
@@ -117,7 +119,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: Orang Dalam is a core mechanic and the player cannot find it.
   - Suggested solution: Find why it was missed (tap target, panel not opening for permit buildings, or the button hidden) and fix that first.
   - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` tapping a permit building opens a panel with a clear Orang Dalam button that skips the permit, in EN and ID.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` tapping a permit building opens a panel with a clear Orang Dalam button that skips the permit, in EN and ID.
 - [ ] **Tie tutorial tips to an action, not to a timer.**
   - Problem: Hari finds the guide pop-ups random. In `src/ui/howto.ts` some tips fire from actions (first permit queue, first arrival), but house, combo, jobs, wacana and ranking use `s.month >= 3` or `>= 9`.
   - Why: Without a visible trigger the tip has no "so what".
@@ -129,7 +131,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: Hari asks why "Kini: bangun Rumah untuk tambah kamar" outranks finding a combo, when the 1★ needs a combo.
   - Suggested solution: Decide what leads when both apply, likely the combo, and log it in `decisions/`. Check against the Now and Next ★ strip and GAME-DESIGN.md section 3.
   - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` when both apply the strip leads with the combo that earns the 1★, the order is logged in `decisions/`, and the pacing e2e passes. Both languages checked.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` when both apply the strip leads with the combo that earns the 1★, the order is logged in `decisions/`, and the pacing e2e passes. Both languages checked.
 - [ ] **Teach the combo mechanic in the tutorial.**
   - Problem: There is one combo tip (`how.4`, id `combo` in `src/ui/howto.ts`) and no guided step.
   - Why: Combos earn the 1★ and the player is not shown how to make one.
@@ -141,7 +143,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: The player sees the loss only when residents leave, which is too late to react.
   - Suggested solution: At month end, if Popularitas fell versus last month, show one warning toast naming the biggest cause (queue, expectations, or broke). Show it once per game so it teaches without nagging; after that only the HUD number changes. Reuse the toast path in `src/app.ts` and the cause tracking from the 2045-meter toast item. Add EN and ID text and keep it short at 320px.
   - Source: Hari, 2026-10-28
-  - `open · — · — · done when:` the first monthly Popularitas drop shows a one-time warning with the cause, it never repeats in that save, the flag is saved, and EN and ID are checked at 320px.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` the first monthly Popularitas drop shows a one-time warning with the cause, it never repeats in that save, the flag is saved, and EN and ID are checked at 320px.
 - [ ] **Add more buildings bigger than 1x1, starting with Balai RW at 2x2.**
   - Problem: Few buildings are bigger than one tile. Today only Lapangan (3x3) and Sawah, Taman Bermain, Balai Warga, PAUD and Gudang Material (2x2) are (`FOOTPRINT` in `src/data/buildings.ts`). RW buildings such as Balai RW (`src/data/higher/rw.ts`) are still 1x1. Hari, 2026-10-28.
   - Why: A town hall the size of a house does not read as a bigger stage. Larger footprints also make map space and placement matter, which is the Kairosoft feel GAME-DESIGN.md aims at.
@@ -154,19 +156,19 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: The player cannot see what triggered the combo, so it is hard to learn or repeat. A picture of the buildings teaches it at a glance.
   - Suggested solution: Add the members' sprites in a row under the title, joined by "+", at the level they stand (for example Warung + Koperasi). Reuse `members()` from the Buku Combo in `src/ui/lists.ts` and pass it as the notice's `extra` (the combo fx needs the combo id or the member defs and levels). Sprites only, no new art. Keep the card within UI.md rules 5 and 8 at 320px.
   - Source: Julian, 2026-10-29
-  - `open · — · — · done when:` every combo pop-up shows its member buildings as sprites under the title, nothing clips at 320px in ID, and an e2e test covers it.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` every combo pop-up shows its member buildings as sprites under the title, nothing clips at 320px in ID, and an e2e test covers it.
 - [ ] **Add a small button to minimize the satellite view.**
   - Problem: The satellite view (minimap) in the top-right of the map (`src/ui/console.ts`, `src/ui/console.css`) always shows. Tapping it moves the camera, and there is no way to hide it. Hari, 2026-10-29.
   - Why: It covers part of the map, especially at 320px and in build mode, and a Repair all chip sits under it. Hari wants the space back when he does not need it. Hari kept the satellite view in #105, so this is a minimize, not a removal.
   - Suggested solution: Add a small toggle button on the satellite view's corner that collapses it to a small icon and expands it again. Save the state in settings so it survives a reload. Keep the Repair all chip visible when collapsed, and make the button at least a comfortable tap size without blocking map taps. Follow UI.md and ART.md for the icon, and add EN and ID labels for the accessible name (`cs.satHelp` today).
   - Source: Hari, 2026-10-29
-  - `open · — · — · done when:` a small button collapses and expands the satellite view, the choice persists, the Repair all chip and goal pill still fit at 320px, and an e2e test covers it.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` a small button collapses and expands the satellite view, the choice persists, the Repair all chip and goal pill still fit at 320px, and an e2e test covers it.
 - [ ] **HIGH PRIORITY: Make AI RTs lay Jalan Setapak and show their residents walking.**
   - Problem: AI RTs place only the buildings in their `WANTS` list (`build` in `src/sim/grow.ts`) and never lay Jalan Setapak, so their buildings have no path. Their residents are a head count (`n.pop`, `viewOf` in `src/sim/neighbourView.ts`), so no walkers appear on their lot (`src/render/people.ts`). Hari, 2026-10-29.
   - Why: The player cannot take over an RT that has no paths and no people, because the road-access rule (`src/sim/access.ts`) expects a connected path, and the lot looks dead. It also makes the "AI-run" mode feel fake next to the player's busy RT.
   - Suggested solution: Have the AI lay Jalan Setapak from its Kantor RT to each new building, as the player must, so its buildings connect (`hasRoadBeside`). Then draw walkers for AI residents on those paths, capped by the walker limit in `src/render/people.ts` and the Kelurahan fps floor. Check that AI buildings with a road earn the path bonus the same way (`pathMult`), and that the bot tests (`tests/kel-bot.test.ts`, `tests/rw-bot.test.ts`) and the big-map fps e2e still pass. Only visible tiles may cost per frame (the perf rule in the map engine).
   - Source: Hari, 2026-10-29. Related: the RT takeover (#146), which links unreached buildings with free paths in the meantime.
-  - `open · — · — · done when:` each AI RT lays Jalan Setapak so its buildings have road access, its residents walk its paths, the player can take over an RT and build on the existing paths, and the bot tests and big-map fps e2e pass.
+  - `claimed · voidinside99 (Julian) · 2026-10-29 · done when:` each AI RT lays Jalan Setapak so its buildings have road access, its residents walk its paths, the player can take over an RT and build on the existing paths, and the bot tests and big-map fps e2e pass.
 
 ## Done
 
