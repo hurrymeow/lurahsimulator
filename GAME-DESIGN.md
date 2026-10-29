@@ -95,7 +95,8 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 
 #### AI neighbours
 
-- Every **3** months each AI RT places one building from the RT list. Its trait decides which one.
+- Every **3** months each AI RT places one building from its trait's list of 11 to 13 one-tile buildings (shops, facilities, farms and decor), each unlocked by the RT's own stars as the player's are. It builds the kind it has least of, but first the missing partner of a combo it has half built, and puts a new piece where it completes a combo when it can. Every trait can form 3 or more combos at level 1.
+- The Neighbours screen shows each RT's yearly ranking: its score against the target it must beat at the year end (rising each year), what the score is made of (warga, working buildings, combos, Popularitas), and its wins so far.
 - An AI RT only builds when you have funded it. An unfunded RT visibly stalls.
 - Like the player, an AI RT lays **Jalan Setapak** from each new building to its Kantor RT or an earlier path, inside its own lot, and picks a spot a path can reach. Up to **3** of its warga walk its paths (at most **24** across the map), never onto the player's lots. When the player takes an RT over, its paths come with it.
 - Each Dana pays for one build, and an RT banks up to **12**. Dana comes **x1** or **x6** at a time. Banked Dana speeds the RT up with diminishing returns: boost = 1 − 0.8^(banked − 1), so 3 banked is **+36%**, 6 is **+67%** and 12 is **+91%**. The Neighbours screen shows it as "+N% boost".

@@ -9,6 +9,18 @@ import { randInt } from './rng';
 import { isWorking, population } from './state';
 import type { GameState } from './types';
 
+/** The parts of a score, for screens that explain it: what residents, working buildings, combos and Popularitas add. */
+export function scoreParts(s: GameState): { residents: number; buildings: number; combos: number; sabar: number; total: number } {
+  const working = s.buildings.filter((b) => isWorking(b) && b.def !== 'rumah' && b.def !== 'parkir' && !isCover(def(b.def))).length;
+  const parts = {
+    residents: Math.round(population(s) * SCORE.perResident),
+    buildings: Math.round(working * SCORE.perBuilding),
+    combos: Math.round(s.discovered.length * SCORE.perCombo),
+    sabar: Math.round(s.res.sabar * SCORE.perSabar),
+  };
+  return { ...parts, total: score(s) };
+}
+
 export function score(s: GameState): number {
   const working = s.buildings.filter((b) => isWorking(b) && b.def !== 'rumah' && b.def !== 'parkir' && !isCover(def(b.def))).length;
   return Math.round(

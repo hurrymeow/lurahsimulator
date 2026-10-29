@@ -3,10 +3,10 @@ import { lotAt } from '../src/sim/area';
 import { goalProgress, nextStarChecklist } from '../src/sim/stages';
 import { viewOf } from '../src/sim/neighbourView';
 import { FLAT, connectedRoad, hasRoadBeside } from '../src/sim/access';
-import { builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, promote, setAutoFund, takeover } from '../src/sim/grow';
+import { nextWant, rivalTarget, builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, promote, setAutoFund, takeover } from '../src/sim/grow';
 import { NEIGHBOUR } from '../src/sim/balance';
 import { checkPlace } from '../src/sim/rules';
-import { areaScore } from '../src/sim/ranking';
+import { areaScore, scoreParts } from '../src/sim/ranking';
 import { deserialize, serialize } from '../src/sim/save';
 import { addBuilding, addResident, emptyTiles, newGame, population } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
@@ -338,7 +338,7 @@ describe('combos count across RTs', () => {
     expect(goalProgress(s, combos).have).toBe(0);
   });
 
-  it('a Rajin RT, which only ever finds one combo, reaches 3 stars on auto-dana', () => {
+  it('an all-Rajin RW reaches 3 stars on auto-dana', () => {
     for (const seed of [1, 2, 3]) {
       const s = newGame(seed);
       s.stage.stars.rt = 3;
@@ -352,7 +352,6 @@ describe('combos count across RTs', () => {
         step(s);
       }
       for (const n of s.neighbours) {
-        expect(n.discovered.length, `seed ${seed}`).toBeLessThanOrEqual(1);
         expect(n.stars, `seed ${seed}`).toBe(3);
       }
     }
@@ -499,5 +498,47 @@ describe('AI RT views', () => {
     const v = viewOf(s, s.neighbours[0]);
     expect(v.residents.length).toBe(s.neighbours[0].pop);
     for (const r of v.residents) expect(r.job).toBe('none');
+  });
+});
+
+describe('AI RT variety', () => {
+  it('each trait builds at least 10 kinds of building and finds 3 combos or more, reaching 3 stars', () => {
+    for (const trait of ['rajin', 'hobi', 'jarang'] as const) {
+      for (const seed of [1, 2, 3]) {
+        const s = newGame(seed);
+        s.stage.stars.rt = 3;
+        s.discovered = ['tongkrongan', 'rapatMalam', 'perangKuota'];
+        promote(s, []);
+        s.stage.current = 'rw';
+        s.neighbours.forEach((n) => { n.trait = trait; setAutoFund(n, 6); });
+        for (let m = 0; m < 10 * 12; m++) {
+          s.res.rupiah = 1e9;
+          step(s);
+        }
+        const n = s.neighbours[0];
+        const kinds = new Set(builtBy(n).map((b) => b.def).filter((d) => d !== 'rumah' && d !== 'kantorRT'));
+        expect(kinds.size, `${trait} ${seed}`).toBeGreaterThanOrEqual(10);
+        expect(n.discovered.length, `${trait} ${seed}`).toBeGreaterThanOrEqual(3);
+        expect(n.stars, `${trait} ${seed}`).toBe(3);
+      }
+    }
+  }, 60_000);
+
+  it('builds the missing partner of a combo it has half built', () => {
+    const s = grown();
+    const n = s.neighbours[0];
+    n.trait = 'hobi';
+    n.stars = 2;
+    n.discovered = [];
+    n.buildings.push({ uid: s.nextUid++, def: 'bankSampah', x: n.cx * RT_W + 2, y: n.cy * RT_H + 2, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+    // Kali Bersih needs Bank Sampah and Biopori: the Biopori comes next.
+    expect(nextWant(n)).toBe('biopori');
+  });
+
+  it('explains a score by its parts', () => {
+    const s = grown();
+    const p = scoreParts(viewOf(s, s.neighbours[0]));
+    expect(Math.abs(p.residents + p.buildings + p.combos + p.sabar - p.total)).toBeLessThanOrEqual(2);
+    expect(rivalTarget(2)).toBeGreaterThan(rivalTarget(1));
   });
 });
