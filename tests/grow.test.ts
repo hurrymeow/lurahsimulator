@@ -492,3 +492,12 @@ describe('AI paths', () => {
   });
 });
 
+
+describe('AI RT views', () => {
+  it('stand in a resident with no job for every warga, so job combos never read a hole', () => {
+    const s = grown();
+    const v = viewOf(s, s.neighbours[0]);
+    expect(v.residents.length).toBe(s.neighbours[0].pop);
+    for (const r of v.residents) expect(r.job).toBe('none');
+  });
+});

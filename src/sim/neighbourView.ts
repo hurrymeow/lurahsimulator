@@ -31,7 +31,8 @@ export function viewOf(s: GameState, n: Neighbour): GameState {
   return {
     ...s,
     buildings: n.buildings,
-    residents: Array.from({ length: n.pop }) as Resident[],
+    // A head count, not people: each stands in as a resident with no job, so code that reads residents never meets a hole.
+    residents: Array.from({ length: n.pop }, (_, i) => ({ id: -1 - i, name: '', job: 'none', pensiun: 0, fake: 0, arrived: 0 })) as Resident[],
     discovered: n.discovered,
     // Combos count across RTs: every RT's combos goal uses the best count among all of them, the player's included.
     comboShare: comboShare(s),
