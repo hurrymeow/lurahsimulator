@@ -1,9 +1,10 @@
 import { layRoads } from './access';
-import { setPlayerCells, ungapTile } from './area';
+import { lotAt, setPlayerCells, ungapTile } from './area';
 import { allDefs, def, hasDef } from './content';
 import { ensureStaff } from './staff';
-import { SAVE_VERSION, newStageState } from './state';
-import { OLD_GRID_H, OLD_GRID_W, RT_H, RT_W, STAGE_SPAN, setGrid, type GameState, type ProblemId } from './types';
+import { SAVE_VERSION, covers, inBounds, newStageState, tilesOf } from './state';
+import { neighbourAt } from './grow';
+import { OLD_GRID_H, OLD_GRID_W, RT_H, RT_W, STAGE_SPAN, setGrid, type Building, type GameState, type ProblemId } from './types';
 
 export function serialize(s: GameState): string {
   return JSON.stringify(s);
@@ -41,6 +42,7 @@ export function deserialize(raw: string | null): GameState | null {
     if (!s.gapped) ungap(s);
     setGrid(s.stage.current);
     setPlayerCells(s.neighbours.filter((n) => n.run === 'player'));
+    if (!s.sized) growBuildings(s);
     if (!s.roadsLaid) layRoads(s);
     return s;
   } catch {
@@ -87,6 +89,32 @@ function ungap(s: GameState): void {
     }
   }
   s.gapped = true;
+}
+
+/** Square sizes before the Oct 30 sizes: buildings that grew. Lapangan shrank to 2x3, which always fits. */
+const GREW_FROM: Record<string, number> = { kosan: 1, koperasi: 1, bengkel: 1, balaiRW: 1, posyandu: 1, pasarKaget: 1, terminal: 2 };
+
+/**
+ * Buildings that grew keep their spot. Each takes its new footprint if it fits, turned if that is what fits;
+ * otherwise it keeps its old square size (`small`) until the player moves it. Nothing is demolished or refunded.
+ */
+function growBuildings(s: GameState): void {
+  const fitsAt = (b: Building, list: Building[], rot: 0 | 1) => {
+    const tiles = tilesOf({ def: b.def, x: b.x, y: b.y, rot });
+    const ownLots = list === s.buildings;
+    return tiles.every((p) => inBounds(p.x, p.y) && (!ownLots || lotAt(p.x, p.y) !== 'other') && !list.some((o) => o !== b && covers(o, p.x, p.y)) && !(ownLots && neighbourAt(s, p.x, p.y)));
+  };
+  for (const list of [s.buildings, ...s.neighbours.map((n) => n.buildings)])
+    for (const b of list) {
+      const was = GREW_FROM[b.def];
+      if (was === undefined) continue;
+      const rot = b.rot ?? 0;
+      if (fitsAt(b, list, rot)) continue;
+      const other: 0 | 1 = rot ? 0 : 1;
+      if (fitsAt(b, list, other)) b.rot = other;
+      else b.small = was;
+    }
+  s.sized = true;
 }
 
 /** The selokan became the biopori, at the same level. Old saves swap it over, including unlocks and Kerja Bakti. */

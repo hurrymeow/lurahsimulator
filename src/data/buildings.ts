@@ -171,12 +171,12 @@ const CORE_BUILDINGS: BuildingDef[] = [
   {
     id: 'kosan',
     name: 'Kos-kosan',
-    blurb: 'Houses 6 and pays rent. The noise costs 1 Popularitas a month.',
+    blurb: 'A row of rooms: houses 8 and pays rent. The noise costs 1 Popularitas a month.',
     cost: 4_000_000,
     upkeep: 80_000,
     income: 200_000,
     attract: 2,
-    housing: 6,
+    housing: 8,
     perMonth: { sabar: -1 },
     permitMonths: 2,
     buildMonths: 2,
@@ -190,11 +190,12 @@ const CORE_BUILDINGS: BuildingDef[] = [
   {
     id: 'lapangan',
     name: 'Lapangan',
-    blurb: 'Open field for badminton and upacara. Doubles the 17 Agustus rewards.',
+    blurb: 'Open field for badminton, futsal and upacara. Rent pays its upkeep, +0.5 Popularitas a month, and it doubles the 17 Agustus rewards.',
     cost: 6_000_000,
     upkeep: 100_000,
-    income: 0,
+    income: 120_000,
     attract: 2,
+    perMonth: { sabar: 0.5 },
     permitMonths: 3,
     buildMonths: 2,
     maxLevel: 1,
@@ -253,7 +254,8 @@ const CATEGORY: Record<string, BuildCategory> = {
 };
 
 /** Tiles on each side for the buildings bigger than one tile. A lapangan should dwarf a house. */
-const FOOTPRINT: Record<string, number> = { lapangan: 3, sawah: 2, tamanBermain: 2, balaiWarga: 2, paud: 2, gudangMaterial: 2 };
+/** Sizes other than 1x1. [w, h] is w tiles along the map's x axis and h along its y axis; turning swaps them. */
+const FOOTPRINT: Record<string, number | [number, number]> = { lapangan: [2, 3], sawah: 2, tamanBermain: 2, balaiWarga: 2, paud: 2, gudangMaterial: 2, kosan: [2, 1], koperasi: 2, bengkel: [2, 1] };
 
 /** Every RT building: the core set, then each content wave in turn, with its Build tab and size. */
 export const BUILDINGS: BuildingDef[] = [...CORE_BUILDINGS, ...SHOP_BUILDINGS, ...FARM_BUILDINGS, ...DECOR_BUILDINGS].map((d) => ({

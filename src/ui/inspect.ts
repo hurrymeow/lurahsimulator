@@ -3,7 +3,7 @@ import type { App } from '../app';
 import { iconURL } from '../render/sprites';
 import { rupiah } from '../format';
 import { def } from '../sim/content';
-import { checkDemolish, checkSkipPermit, checkUpgrade, demolish, rotateBuilding, skipPermit, upgrade } from '../sim/rules';
+import { checkDemolish, checkRotate, checkSkipPermit, checkUpgrade, demolish, rotateBuilding, skipPermit, upgrade } from '../sim/rules';
 import { PARKIR, REFUND } from '../sim/balance';
 import { checkTertibkan, tertibkan, tertibkanFree } from '../sim/parkir';
 import { bedsOf, byUid, levelMult, pathMult, upgradeCost } from '../sim/state';
@@ -123,14 +123,17 @@ export function inspect(app: App, uid: number): void {
   }
   // Moving and turning a building cost nothing. Paths are tiles, so they just get demolished.
   if (!d.pathIncome) {
+    // A long building swings round its top corner when turned, so it needs the room; say what is in the way.
+    const turn = checkRotate(s, b);
     lines.push(h('div', { class: 'row action-row' },
       h('button', { class: 'btn', onclick: () => app.startMoving(uid) }, t('insp.move')),
-      h('button', { class: 'btn', onclick: () => {
-        rotateBuilding(b);
+      h('button', { class: 'btn', disabled: !turn.ok, onclick: () => {
+        if (!rotateBuilding(s, b).ok) return;
         app.tap(15);
         done();
       } }, t('insp.rotate')),
     ));
+    if (!turn.ok) lines.push(missingList(turn.missing));
   }
   const dem = checkDemolish(s, b);
   lines.push(actionButton(dem.ok ? t('insp.demolishRefund', { amt: rupiah(Math.round((b.invested * REFUND) / 1000) * 1000) }) : t('insp.demolish'), dem, () => {

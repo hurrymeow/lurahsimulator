@@ -6,7 +6,7 @@ import { ensureStaff } from './sim/staff';
 import type { PlayerInfo } from './sim/types';
 import { jobDef } from './data/jobs';
 import { dateLabel, rupiah, rupiahHud } from './format';
-import { MapView, RES_VAR } from './render/map';
+import { MapView, RES_VAR, shapeOf } from './render/map';
 import { iconURL } from './render/sprites';
 import { def } from './sim/content';
 import { eventDef } from './data/events';
@@ -19,7 +19,7 @@ import { promote } from './sim/grow';
 import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, type FirstKind } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
-import { attractTarget, buildCost, buildingAt, byUid, footprintOf, newGame, population, housing, year } from './sim/state';
+import { attractTarget, buildCost, buildingAt, byUid, newGame, population, housing, sizeOf, year } from './sim/state';
 import { tick } from './sim/tick';
 import type { GameState, ResourceId, SimEffect } from './sim/types';
 import { audio } from './audio';
@@ -815,6 +815,11 @@ export class App {
   /** Facing of the building in hand: 1 is turned, as `Building.rot`. Kept when it is placed. */
   private placeRot: 0 | 1 = 0;
 
+  /** Tiles the building in hand covers at its facing: a long one swaps its sides when turned. */
+  private handSize(): { w: number; h: number } {
+    return sizeOf({ def: this.placing!, rot: this.placeRot });
+  }
+
   /** Picks a placed building up. Moving is free, and the building keeps its level and timers. */
   startMoving(uid: number): void {
     const b = byUid(this.s, uid);
@@ -823,7 +828,8 @@ export class App {
     this.moving = uid;
     this.placeRot = b.rot === 1 ? 1 : 0;
     this.view.hidden = uid;
-    this.view.ghost = { x: b.x, y: b.y, ok: true, ...this.view.look(b) };
+    // Picked up, a building kept small from an old save shows its full size: that is what it becomes when placed.
+    this.view.ghost = { x: b.x, y: b.y, ok: checkMove(this.s, b, b.x, b.y).ok, ...this.view.look(b), ...shapeOf({ def: b.def, x: b.x, y: b.y, rot: b.rot }) };
     this.markValid();
     this.updatePlacing();
   }
@@ -844,8 +850,8 @@ export class App {
     if (!def(id).pathIncome) {
       this.markValid();
       const best = this.bestSpot();
-      const n = footprintOf(id);
-      if (best && !this.validInView()) this.view.centreOn(best.x + (n - 1) / 2, best.y + (n - 1) / 2);
+      const { w, h } = this.handSize();
+      if (best && !this.validInView()) this.view.centreOn(best.x + (w - 1) / 2, best.y + (h - 1) / 2);
     }
     this.updatePlacing();
   }
@@ -853,14 +859,15 @@ export class App {
   /** Marks every tile a valid footprint of the building in hand can cover. */
   private markValid(): Uint8Array {
     const id = this.placing!;
-    const n = footprintOf(id);
+    const { w, h } = this.handSize();
+    const rot = this.placeRot;
     const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
     const out = new Uint8Array(GRID_W * GRID_H);
-    for (let y = 0; y <= GRID_H - n; y++)
-      for (let x = 0; x <= GRID_W - n; x++) {
-        const ok = mover ? checkMove(this.s, mover, x, y).ok : checkPlace(this.s, id, x, y).ok;
+    for (let y = 0; y <= GRID_H - h; y++)
+      for (let x = 0; x <= GRID_W - w; x++) {
+        const ok = mover ? checkMove(this.s, mover, x, y, rot).ok : checkPlace(this.s, id, x, y, rot).ok;
         if (!ok) continue;
-        for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) out[(y + dy) * GRID_W + x + dx] = 1;
+        for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) out[(y + dy) * GRID_W + x + dx] = 1;
       }
     this.view.valid = out;
     return out;
@@ -882,45 +889,54 @@ export class App {
     const id = this.placing;
     if (!id) return null;
     const d = def(id);
-    const n = footprintOf(id);
+    const { w, h } = this.handSize();
+    const rot = this.placeRot;
     const kantor = this.s.buildings.find((b) => b.def.startsWith('kantor'));
     const mid = this.view.centreTile() ?? (kantor ? { x: kantor.x, y: kantor.y } : { x: 0, y: 0 });
     const needsRoad = !FLAT.has(d.id) && !d.id.startsWith('kantor') && (d.scope ?? 'rt') === 'rt';
     const road = needsRoad ? connectedRoad(this.s) : null;
     let best: { x: number; y: number; score: number } | null = null;
-    for (let y = 0; y <= GRID_H - n; y++)
-      for (let x = 0; x <= GRID_W - n; x++) {
-        if (!checkPlace(this.s, id, x, y).ok) continue;
-        const cx = x + (n - 1) / 2;
-        const cy = y + (n - 1) / 2;
+    for (let y = 0; y <= GRID_H - h; y++)
+      for (let x = 0; x <= GRID_W - w; x++) {
+        if (!checkPlace(this.s, id, x, y, rot).ok) continue;
+        const cx = x + (w - 1) / 2;
+        const cy = y + (h - 1) / 2;
         const far = Math.hypot(cx - mid.x, cy - mid.y);
-        const score = far + (road && !hasRoadBeside(road, { def: id, x, y }) ? 1000 : 0);
+        const score = far + (road && !hasRoadBeside(road, { def: id, x, y, rot }) ? 1000 : 0);
         if (!best || score < best.score) best = { x, y, score };
       }
     return best ? { x: best.x, y: best.y } : null;
   }
 
   /** Moves the ghost so its middle sits on a tile. Used by taps, drags and the mouse. */
-  moveGhost(tile: { x: number; y: number }): void {
+  moveGhost(tile: { x: number; y: number }, force = false): void {
     const id = this.placing;
     if (!id || this.line) return;
     const d = def(id);
-    const n = footprintOf(id);
-    const gx = tile.x - Math.floor((n - 1) / 2);
-    const gy = tile.y - Math.floor((n - 1) / 2);
+    const rot = this.placeRot;
+    const { w, h } = this.handSize();
+    const gx = tile.x - Math.floor((w - 1) / 2);
+    const gy = tile.y - Math.floor((h - 1) / 2);
     const g = this.view.ghost;
-    if (g && g.x === gx && g.y === gy) return;
+    if (!force && g && g.x === gx && g.y === gy) return;
     const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
-    const ok = mover ? checkMove(this.s, mover, gx, gy).ok : checkPlace(this.s, id, gx, gy).ok;
-    this.view.ghost = { x: gx, y: gy, ok, sprite: d.sprite, n, ...(mover ? this.view.look(mover) : {}), flip: this.placeRot === 1 };
+    const ok = mover ? checkMove(this.s, mover, gx, gy, rot).ok : checkPlace(this.s, id, gx, gy, rot).ok;
+    // A moved building keeps its look, at its full size and the facing in hand.
+    const shape = shapeOf({ def: id, x: gx, y: gy, rot });
+    this.view.ghost = { x: gx, y: gy, ok, sprite: d.sprite, ...(mover ? this.view.look(mover) : {}), ...shape, flip: rot === 1 };
     this.updatePlacing();
   }
 
-  /** Turns the building in hand before it is placed. Free, as turning a placed one is. */
+  /** Turns the building in hand before it is placed. Free, as turning a placed one is. A long one swaps its sides. */
   rotatePlacing(): void {
     if (!this.placing || this.line) return;
+    const g = this.view.ghost;
+    // Keep the ghost's middle where it is, so a long building swings round its centre tile.
+    const mid = g ? { x: g.x + Math.floor(((g.w ?? g.n) - 1) / 2), y: g.y + Math.floor(((g.h ?? g.n) - 1) / 2) } : null;
     this.placeRot = this.placeRot ? 0 : 1;
-    if (this.view.ghost) this.view.ghost.flip = this.placeRot === 1;
+    const long = sizeOf({ def: this.placing, rot: 0 }).w !== sizeOf({ def: this.placing, rot: 0 }).h;
+    if (long) this.markValid();
+    if (mid) this.moveGhost(mid, true);
     this.haptic(10);
   }
 
@@ -928,7 +944,7 @@ export class App {
   onGhost(tile: { x: number; y: number }): boolean {
     const g = this.view.ghost;
     if (!g || g.tiles || !this.placing || this.line) return false;
-    return tile.x >= g.x && tile.y >= g.y && tile.x < g.x + g.n && tile.y < g.y + g.n;
+    return tile.x >= g.x && tile.y >= g.y && tile.x < g.x + (g.w ?? g.n) && tile.y < g.y + (g.h ?? g.n);
   }
 
   stopPlacing(): void {
@@ -987,8 +1003,7 @@ export class App {
     }
     const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
     if (mover) {
-      if (!moveBuilding(this.s, mover, g.x, g.y).ok) return;
-      mover.rot = this.placeRot;
+      if (!moveBuilding(this.s, mover, g.x, g.y, this.placeRot).ok) return;
       const fx: SimEffect[] = [];
       discoverCombos(this.s, fx);
       this.handleFx(fx);
@@ -1000,10 +1015,8 @@ export class App {
       this.refresh();
       return;
     }
-    const r = place(this.s, this.placing, g.x, g.y);
+    const r = place(this.s, this.placing, g.x, g.y, this.placeRot);
     if (r.ok) {
-      const b = r.uid === undefined ? undefined : byUid(this.s, r.uid);
-      if (b && this.placeRot) b.rot = 1;
       this.view.burst(g.x, g.y);
       const cost = buildCost(this.s, d);
       if (cost) this.view.pop(g.x, g.y, 'rupiah', -cost);
@@ -1048,11 +1061,11 @@ export class App {
       btn.disabled = true;
       return;
     }
-    const check = mover ? checkMove(this.s, mover, g.x, g.y) : checkPlace(this.s, this.placing, g.x, g.y);
+    const check = mover ? checkMove(this.s, mover, g.x, g.y, this.placeRot) : checkPlace(this.s, this.placing, g.x, g.y, this.placeRot);
     g.ok = check.ok;
     btn.disabled = !check.ok;
     const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
-    const noRoad = check.ok && !FLAT.has(d.id) && !d.id.startsWith('kantor') && (d.scope ?? 'rt') === 'rt' && !hasRoadBeside(connectedRoad(this.s), { def: d.id, x: g.x, y: g.y });
+    const noRoad = check.ok && !FLAT.has(d.id) && !d.id.startsWith('kantor') && (d.scope ?? 'rt') === 'rt' && !hasRoadBeside(connectedRoad(this.s), { def: d.id, x: g.x, y: g.y, rot: this.placeRot });
     info.replaceChildren(title, check.ok ? h('span', noRoad ? { class: 'warn' } : {}, noRoad ? t('build.noRoad') : mover ? t('build.moveFree') : instant ? t('build.noPermit') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
   }
 

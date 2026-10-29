@@ -269,8 +269,11 @@ export interface BuildingDef {
   sprite: string;
   /** Which lots it may stand on. RT buildings go inside an RT, RW buildings on RW seams. Defaults to 'rt'. */
   scope?: 'rt' | 'rw' | 'kel';
-  /** Tiles on each side. A building covers footprint x footprint tiles from its top corner. Defaults to 1. */
-  footprint?: number;
+  /**
+   * Tiles it covers from its top corner. A number is a square (2 is 2x2); [w, h] is w tiles along the map's
+   * x axis and h along its y axis, before any turn. Turning swaps them. Defaults to 1.
+   */
+  footprint?: number | [number, number];
   /** Which Build tab it sits under. Defaults to 'facilities'. */
   category?: BuildCategory;
   /** Free tile that never works on its own. Buildings beside it earn this fraction more income. Tune it here. */
@@ -298,8 +301,10 @@ export interface Building {
   placedAt: number;
   /** Uid of the shop a tukang parkir belongs to. */
   owner?: number;
-  /** 1 draws the building mirrored. Free to turn, no effect on play. */
+  /** 1 is turned: drawn mirrored, and a non-square footprint swaps its sides. Free to turn. */
   rot?: 0 | 1;
+  /** Square size kept from a save made before this building grew, when the bigger footprint did not fit. Moving it drops this. */
+  small?: number;
   /** A restarted project never freezes again. */
   restarted?: boolean;
   /** Chain brand (wifi, rumah makan, apotek, bengkel, barbershop). Absent in old saves: picked from the uid. */
@@ -459,6 +464,8 @@ export interface GameState {
   warned?: string[];
   /** Cleared tukang parkir due back at their shop: shop uid and month. Missing in older saves. */
   parkirBack?: { shop: number; at: number }[];
+  /** Saved after the Oct 30 building sizes: grown buildings were fitted or kept small on load. */
+  sized?: boolean;
   /** Saved with RT cells SEAM tiles apart. Older RW and Kelurahan saves had the seams on each RT's edge rows. */
   gapped?: boolean;
   /** A tukang parkir has turned up at least once. The first shop always draws one. */

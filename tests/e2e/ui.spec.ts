@@ -2369,16 +2369,18 @@ test.describe('every building while it moves', () => {
           const b = { uid: app.s.nextUid++, def: d.id, x: k.x + 2, y: k.y + 2, level, status: 'active', timer: 0, invested: 0, placedAt: 0, rot: level % 2 };
           app.s.buildings.push(b);
           const want = view.look(b);
-          const n = want.n;
+          // A long building is w x h on the map; its pips sit on its far corner.
+          const fw = want.w;
+          const fh = want.h;
           const tag = `${d.id} level ${level}`;
-          view.centreOn(b.x + (n - 1) / 2, b.y + (n - 1) / 2);
+          view.centreOn(b.x + (fw - 1) / 2, b.y + (fh - 1) / 2);
           // Standing on the map: its pips show its level.
           pips.length = 0;
           await frame();
-          if (level > 1 && !pips.includes(`${b.x + n - 1},${b.y + n - 1},${level}`)) out.push(`${tag}: no level pips on the map`);
+          if (level > 1 && !pips.includes(`${b.x + fw - 1},${b.y + fh - 1},${level}`)) out.push(`${tag}: no level pips on the map`);
           const same = (where: string) => {
             const g = view.ghost;
-            for (const key of ['sprite', 'variant', 'n', 'level', 'flip'])
+            for (const key of ['sprite', 'variant', 'n', 'w', 'h', 'level', 'flip'])
               if (g?.[key] !== want[key]) out.push(`${tag} ${where}: ghost ${key} ${g?.[key]}, map ${want[key]}`);
           };
           // Picked up: the ghost is the same picture, and carries the same pips.
@@ -2386,9 +2388,9 @@ test.describe('every building while it moves', () => {
           same('picked up');
           pips.length = 0;
           await frame();
-          if (level > 1 && !pips.includes(`${b.x + n - 1},${b.y + n - 1},${level}`)) out.push(`${tag}: no level pips while moving`);
+          if (level > 1 && !pips.includes(`${b.x + fw - 1},${b.y + fh - 1},${level}`)) out.push(`${tag}: no level pips while moving`);
           // Carried to another tile, it stays the same building.
-          app.moveGhost({ x: b.x + Math.floor((n - 1) / 2) + 1, y: b.y + Math.floor((n - 1) / 2) });
+          app.moveGhost({ x: b.x + Math.floor((fw - 1) / 2) + 1, y: b.y + Math.floor((fh - 1) / 2) });
           same('carried');
           app.stopPlacing();
           app.s.buildings = app.s.buildings.filter((o: any) => o !== b);

@@ -32,7 +32,7 @@ export const EN = {
   'build.ownedOf': '{n}/{max} owned',
   'build.permit': 'Permit {permit} mo · build {build} mo',
   'build.permitShort': 'Permit {permit} mo, build {build} mo.',
-  'build.size': '{n}×{n} tiles',
+  'build.size': '{w}×{h} tiles',
   'build.tapToPlace': 'Tap a glowing free tile to put it there.',
   'build.title': 'Build',
   'coach.done': "Well done, Pak. You're good at this, ya. More beds, more residents. Time runs now: pause or speed up above.",

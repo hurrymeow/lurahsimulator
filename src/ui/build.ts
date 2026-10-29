@@ -3,9 +3,9 @@ import type { App } from '../app';
 import { rupiah } from '../format';
 import { CATEGORIES, categoryOf } from '../data/categories';
 import { isoURL } from '../render/iso';
-import { placeableDefs } from '../sim/content';
+import { placeableDefs, sizeFor } from '../sim/content';
 import { requirementGaps } from '../sim/rules';
-import { attractTarget, buildCost, footprintOf, housing, population } from '../sim/state';
+import { attractTarget, buildCost, housing, population } from '../sim/state';
 import { nextStarChecklist } from '../sim/stages';
 import type { BuildCategory, GameState } from '../sim/types';
 import { h, missingList } from './dom';
@@ -72,7 +72,7 @@ export function openBuild(app: App): void {
     if (s.res.rupiah < cost) missing.push(t('build.needMore', { amt: rupiah(cost - s.res.rupiah) }));
     const ok = missing.length === 0;
     const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
-    const meta = [t('build.size', { n: footprintOf(d.id) }), instant ? t('build.noPermit') : t('build.permit', { permit: d.permitMonths, build: d.buildMonths }), ...populationBits(d)];
+    const meta = [t('build.size', { w: sizeFor(d.id)[0], h: sizeFor(d.id)[1] }), instant ? t('build.noPermit') : t('build.permit', { permit: d.permitMonths, build: d.buildMonths }), ...populationBits(d)];
     return h('button', { class: `card-btn ${ok ? '' : 'locked'}`, 'aria-disabled': String(!ok), onclick: () => (ok ? app.startPlacing(d.id) : undefined) },
       spriteImg(d.sprite),
       h('div', { class: 'card-text' },

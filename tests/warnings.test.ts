@@ -57,6 +57,8 @@ describe('range from the nearest edge', () => {
     const a = { def: 'indomaret', x: 0, y: 0 };
     expect(withinEdges(a, { def: 'indomaret', x: 2, y: 2 }, 2)).toBe(true);
     expect(withinEdges(a, { def: 'indomaret', x: 3, y: 0 }, 2)).toBe(false);
-    expect(withinEdges({ def: 'lapangan', x: 0, y: 0 }, { def: 'warung', x: 4, y: 4 }, 2)).toBe(true);
+    // Lapangan is 2x3: its far corner is (1,2), so a warung at (3,4) is 2 tiles from its edges.
+    expect(withinEdges({ def: 'lapangan', x: 0, y: 0 }, { def: 'warung', x: 3, y: 4 }, 2)).toBe(true);
+    expect(withinEdges({ def: 'lapangan', x: 0, y: 0 }, { def: 'warung', x: 4, y: 4 }, 2)).toBe(false);
   });
 });

@@ -2,13 +2,13 @@ import { bBlock, bName, t, type Key } from '../i18n';
 import { rupiah } from '../format';
 import { REFUND } from './balance';
 import { lotAt, type Lot } from './area';
-import { def, gateOf, hasDef } from './content';
+import { def, gateOf, hasDef, sizeFor } from './content';
 import { gateOpen } from './gate';
 import { neighbourAt } from './grow';
 import { stageTitle } from './stages';
 import { hasProblem } from './problems';
 import { FLAT, refreshAccess } from './access';
-import { addBuilding, bedsOf, buildCost, count, covers, footprintOf, housing, inBounds, population, tilesOf, upgradeCost, year } from './state';
+import { addBuilding, bedsOf, buildCost, count, covers, housing, inBounds, population, tilesOf, upgradeCost, year } from './state';
 import type { Building, BuildingDef, CheckResult, GameState } from './types';
 
 export { gateOpen };
@@ -43,8 +43,8 @@ const overwritesPath = (d: BuildingDef) => !FLAT.has(d.id);
 const pathUnder = (o: Building, d: BuildingDef) => o.def === 'jalan' && overwritesPath(d);
 
 /** Drops the plain paths a building is about to cover. */
-function clearPaths(s: GameState, d: BuildingDef, x: number, y: number, ignore?: number): void {
-  const tiles = footprintOf(d.id) === 1 ? [{ x, y }] : tilesOf({ def: d.id, x, y });
+function clearPaths(s: GameState, d: BuildingDef, x: number, y: number, ignore?: number, rot: 0 | 1 = 0): void {
+  const tiles = tilesOf({ def: d.id, x, y, rot });
   s.buildings = s.buildings.filter((o) => o.uid === ignore || !(pathUnder(o, d) && tiles.some((p) => covers(o, p.x, p.y))));
 }
 
@@ -52,9 +52,9 @@ function clearPaths(s: GameState, d: BuildingDef, x: number, y: number, ignore?:
 const LOTS: Record<'rt' | 'rw' | 'kel', Lot[]> = { rt: ['rt'], rw: ['rt', 'rw'], kel: ['rt', 'kel'] };
 
 /** What is wrong with standing a building on this spot: off the map, in the way, or on the wrong lot. `ignore` is a building that is moving, so it never blocks itself. */
-export function siteGaps(s: GameState, d: BuildingDef, x: number, y: number, ignore?: number): string[] {
+export function siteGaps(s: GameState, d: BuildingDef, x: number, y: number, ignore?: number, rot: 0 | 1 = 0): string[] {
   const missing: string[] = [];
-  const tiles = footprintOf(d.id) === 1 ? [{ x, y }] : tilesOf({ def: d.id, x, y });
+  const tiles = tilesOf({ def: d.id, x, y, rot });
   const off = tiles.find((p) => !inBounds(p.x, p.y));
   const hit = off ? undefined : tiles.map((p) => s.buildings.find((o) => o.uid !== ignore && !pathUnder(o, d) && covers(o, p.x, p.y)) ?? neighbourAt(s, p.x, p.y)).find(Boolean);
   const lots = off ? [] : tiles.map((p) => lotAt(p.x, p.y));
@@ -65,19 +65,19 @@ export function siteGaps(s: GameState, d: BuildingDef, x: number, y: number, ign
   return missing;
 }
 
-export function checkPlace(s: GameState, id: string, x: number, y: number): CheckResult {
+export function checkPlace(s: GameState, id: string, x: number, y: number, rot: 0 | 1 = 0): CheckResult {
   if (!hasDef(id)) return { ok: false, missing: [t('sim.unknownBuilding')] };
   const d = def(id);
   const missing: string[] = [];
   if (!d.placeable) missing.push(t('sim.cannotPlace', { name: bName(d) }));
   missing.push(...requirementGaps(s, d));
-  missing.push(...siteGaps(s, d, x, y));
+  missing.push(...siteGaps(s, d, x, y, undefined, rot));
   moneyGap(s, buildCost(s, d), missing);
   return result(missing);
 }
 
-export function place(s: GameState, id: string, x: number, y: number): CheckResult & { uid?: number } {
-  const check = checkPlace(s, id, x, y);
+export function place(s: GameState, id: string, x: number, y: number, rot: 0 | 1 = 0): CheckResult & { uid?: number } {
+  const check = checkPlace(s, id, x, y, rot);
   if (!check.ok) return check;
   const d = def(id);
   const cost = buildCost(s, d);
@@ -85,8 +85,9 @@ export function place(s: GameState, id: string, x: number, y: number): CheckResu
   s.res.orangDalam -= d.orangDalamCost ?? 0;
   s.stats.spent += cost;
   const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
-  clearPaths(s, d, x, y);
+  clearPaths(s, d, x, y, undefined, rot);
   const b = addBuilding(s, id, x, y, instant ? 'active' : d.permitMonths > 0 ? 'permit' : 'building', cost);
+  if (rot) b.rot = rot;
   b.timer = instant ? 0 : d.permitMonths > 0 ? d.permitMonths : Math.max(1, d.buildMonths);
   refreshAccess(s);
   return { ok: true, uid: b.uid };
@@ -151,22 +152,39 @@ export function skipPermit(s: GameState, b: Building): CheckResult {
   return check;
 }
 
-/** Moving is free. The building keeps its level, status and timers. */
-export function checkMove(s: GameState, b: Building, x: number, y: number): CheckResult {
-  return result(siteGaps(s, def(b.def), x, y, b.uid));
+/** Moving is free. The building keeps its level, status and timers, and takes its full size if it was kept small. */
+export function checkMove(s: GameState, b: Building, x: number, y: number, rot: 0 | 1 = b.rot ?? 0): CheckResult {
+  return result(siteGaps(s, def(b.def), x, y, b.uid, rot));
 }
 
-export function moveBuilding(s: GameState, b: Building, x: number, y: number): CheckResult {
-  const check = checkMove(s, b, x, y);
+export function moveBuilding(s: GameState, b: Building, x: number, y: number, rot: 0 | 1 = b.rot ?? 0): CheckResult {
+  const check = checkMove(s, b, x, y, rot);
   if (!check.ok) return check;
-  clearPaths(s, def(b.def), x, y, b.uid);
+  clearPaths(s, def(b.def), x, y, b.uid, rot);
   b.x = x;
   b.y = y;
+  b.rot = rot;
+  delete b.small;
   refreshAccess(s);
   return check;
 }
 
-/** Turns a building to face the other way. Free, and it changes nothing but the picture. */
-export function rotateBuilding(b: Building): void {
+/** True when turning swaps the footprint's sides, so the turned building needs room of its own. */
+export const turnsFootprint = (b: Building): boolean => !b.small && sizeFor(b.def)[0] !== sizeFor(b.def)[1];
+
+/** Turning is free. A square building only changes its picture; a long one swings round its top corner and needs the room. */
+export function checkRotate(s: GameState, b: Building): CheckResult {
+  if (!turnsFootprint(b)) return result([]);
+  return result(siteGaps(s, def(b.def), b.x, b.y, b.uid, b.rot ? 0 : 1));
+}
+
+export function rotateBuilding(s: GameState, b: Building): CheckResult {
+  const check = checkRotate(s, b);
+  if (!check.ok) return check;
   b.rot = b.rot ? 0 : 1;
+  if (turnsFootprint(b)) {
+    clearPaths(s, def(b.def), b.x, b.y, b.uid, b.rot);
+    refreshAccess(s);
+  }
+  return check;
 }

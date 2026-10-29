@@ -83,6 +83,10 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 - RW buildings go inside the player's RTs (their own and any taken over) or on lots along the seams between RTs. Kelurahan buildings go inside the player's RTs or on lots along the seams between RWs. RT buildings stay inside an RT. The seams sit between the RTs, so promotion never takes tiles from the player's RT.
 - RW keeps today's 64x32 tiles. A pinch out gives a view-only overview, and a tap there zooms back in.
 - Kelurahan defaults to half-size tiles. Kelurahan buildings take a 2x2 footprint, so a lot still taps like one RT tile today.
+- **Building sizes** (Oct 30): most buildings are 1x1. 1x2: Kos-kosan, Bengkel, Posyandu, Pasar Kaget. 2x2: Koperasi, Balai RW, Sawah, PAUD, Balai Warga, Taman Bermain, Gudang Material and the Kelurahan buildings. 2x3: Lapangan. 3x3: Terminal only. Range for combos, decorations and Kanibal counts from the nearest edge of each footprint.
+- **Building ladder** (Hari, Oct 30): each unlock tier costs about 1,5–2x the one before and earns about 1,5x, a payback near 9 months, and later tiers are bigger on the map. First pass: Apotek **6jt**, **550rb** a month; Koperasi **8jt**, **700rb**; Bengkel **4,5jt**, **420rb**; Pasar Kaget **450rb**. Problem unlocks and decorations stay cheap.
+- **Turning:** Rotate turns a building 90°. A square one only changes its picture. A long one swaps its sides round its top corner (1x2 to 2x1, 2x3 to 3x2), so it needs the room: the inspector lists what is in the way. While placing, Rotate turns the ghost and the free spots update.
+- Old saves keep every building: one that grew takes its new size where it fits, turned if that fits instead, and otherwise keeps its old square size until the player moves it.
 - This changes one rule in section 6: "tile diamonds ≥32px tall" becomes "tappable diamonds ≥32px tall".
 - **Gate:** before building the Kelurahan map, it must pass the existing CI frame-rate test. Passed, after a fix. See `decisions/growing-map-engine.md`.
 
@@ -138,8 +142,8 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 
 #### New RT content
 
-- **Kos-kosan:** houses **6**, costs **1** Sabar a month for the noise.
-- **Lapangan:** doubles the Lomba Agustusan prizes, and is needed for Panjat Pinang.
+- **Kos-kosan:** a 1x2 row of rooms, houses **8**, costs **1** Sabar a month for the noise.
+- **Lapangan:** a 2x3 field. Rent (sewa lapangan) earns **120rb** a month against its **100rb** upkeep, **+0.5** Popularitas a month. Doubles the Lomba Agustusan prizes, and is needed for Panjat Pinang.
 - **Bank Sampah:** earns up to **Rp 40rb** a month.
 - **Anak Kos** combo (Kos + Warung + Wifi): warung **x1.3**, **+1** Viral a month.
 - **Panjat Pinang** combo (Lapangan + Pos Ronda): Agustus prize **+50%**.
@@ -209,7 +213,7 @@ The player picks a path at promotion. Kelurahan is dense and shop-heavy. Desa ma
 
 #### 2★
 
-- Kelurahan unlocks Terminal and Taman.
+- Kelurahan unlocks Terminal and Taman. Terminal is the one 3x3 building, the Kelurahan landmark: **Rp 25jt**, and shops within **3** tiles earn **20%** more. A 3x3 never fits a 2-tile seam, so it stands inside the player's RT lots.
 - Desa unlocks Sawah Irigasi, Embung, Desa Wisata and the Pendamping Desa job.
 - **Goal for 3★:** **3** Piala wins and every RW at 3★.
 
