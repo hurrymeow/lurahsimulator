@@ -39,9 +39,9 @@ describe('moving and rotating', () => {
   it('rotates back and forth without touching anything else', () => {
     const s = newGame(1);
     const b = s.buildings[0];
-    rotateBuilding(b);
+    rotateBuilding(s, b);
     expect(b.rot).toBe(1);
-    rotateBuilding(b);
+    rotateBuilding(s, b);
     expect(b.rot).toBe(0);
   });
 });

@@ -21,6 +21,12 @@ export interface Art {
   height: number;
   /** Footprint the art was drawn for. A 2x2 or 3x3 building's art is n times the size with its outline still 1px. */
   n: number;
+  /** Tiles the art covers along the map's x and y axes. A square n covers n x n; a 2x1 covers 2 x 1. */
+  w: number;
+  h: number;
+  /** Where the footprint's top corner sits on the canvas, in canvas pixels. */
+  cornerX: number;
+  cornerY: number;
 }
 
 type Face = 'L' | 'R' | 'T';
@@ -58,11 +64,34 @@ export class Painter {
    * smooth 1px lines instead of a small sprite's stair steps scaled up. Paint callbacks still get
    * one-tile rows and columns, so windows, stripes and courses keep their proportions.
    */
-  constructor(readonly n = 1) {
-    this.w = TW * n;
-    this.h = (TOP + TH) * n;
+  /** Offset of the tile being drawn, in canvas pixels, from the footprint's first tile. Set by at(). */
+  ox = 0;
+  oy = 0;
+  private readonly ox0: number;
+
+  /**
+   * fa and fb make a long footprint, fa tiles along the map's x axis and fb along its y axis, drawn at
+   * n = 1. Its art is built from one-tile pieces: at(u, v) moves every call below onto tile (u, v).
+   */
+  constructor(readonly n = 1, readonly fa = 1, readonly fb = 1) {
+    this.w = n === 1 ? ((fa + fb) * TW) / 2 : TW * n;
+    this.h = n === 1 ? TOP + ((fa + fb) * TH) / 2 : (TOP + TH) * n;
+    this.ox0 = ((fb - 1) * TW) / 2;
+    this.ox = this.ox0;
     this.data = new Uint8ClampedArray(this.w * this.h * 4);
     this.ids = new Uint16Array(this.w * this.h);
+  }
+
+  /** Draws the next pieces on tile (u, v) of a long footprint: u along the map's x axis, v along its y. */
+  at(u: number, v: number): this {
+    this.ox = this.ox0 + ((u - v) * TW) / 2;
+    this.oy = ((u + v) * TH) / 2;
+    return this;
+  }
+
+  /** True for a long footprint built from one-tile pieces. */
+  get long(): boolean {
+    return this.fa !== this.fb;
   }
 
   /** One canvas pixel, in native (n-scaled) coordinates. */
@@ -77,15 +106,15 @@ export class Painter {
   /** One art pixel in one-tile coordinates: an n x n block on a big canvas. */
   set(x: number, y: number, c: string | null, alpha = 255): void {
     const n = this.n;
-    for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) this.px(x * n + dx, y * n + dy, c, alpha);
+    for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) this.px(x * n + dx + this.ox, y * n + dy + this.oy, c, alpha);
   }
 
   /** Native ground centre, for drawing that follows the whole footprint (fences, kerbs). */
   get gx(): number {
-    return (TW / 2) * this.n;
+    return (TW / 2) * this.n + this.ox;
   }
   get gy(): number {
-    return (TOP + TH / 2) * this.n;
+    return (TOP + TH / 2) * this.n + this.oy;
   }
 
   /**
@@ -96,15 +125,31 @@ export class Painter {
   ground(paint: (a: number, b: number, px: number) => string | null): void {
     this.id++;
     const n = this.n;
-    const cx = (TW / 2) * n;
-    const cy = (TOP + TH / 2) * n;
+    const cx = (TW / 2) * n + this.ox;
+    const cy = (TOP + TH / 2) * n + this.oy;
     const px = 1 / (TH * n);
-    for (let y = TOP * n; y < (TOP + TH) * n; y++)
-      for (let x = 0; x < TW * n; x++) {
+    for (let y = TOP * n + this.oy; y < (TOP + TH) * n + this.oy; y++)
+      for (let x = this.ox; x < TW * n + this.ox; x++) {
         const rx = (x + 0.5 - cx) / cx;
         const ry = (y + 0.5 - cy) / ((TH / 2) * n);
         if (Math.abs(rx) + Math.abs(ry) > 1) continue;
         this.px(x, y, paint((rx + ry) / 2 + 0.5, (ry - rx) / 2 + 0.5, px));
+      }
+  }
+
+  /** Ground paint over a whole long footprint. a runs 0..1 along its x side, b along its y side; px is one pixel in the shorter. */
+  groundLong(paint: (a: number, b: number, px: number) => string | null): void {
+    this.id++;
+    const bx = (this.fb * TW) / 2;
+    const px = 1 / (TH * Math.max(this.fa, this.fb));
+    for (let y = TOP; y < this.h; y++)
+      for (let x = 0; x < this.w; x++) {
+        const dx = x + 0.5 - bx;
+        const dy = y + 0.5 - TOP;
+        const u = dy / TH + dx / TW;
+        const v = dy / TH - dx / TW;
+        if (u < 0 || v < 0 || u >= this.fa || v >= this.fb) continue;
+        this.px(x, y, paint(u / this.fa, v / this.fb, px));
       }
   }
 
@@ -114,8 +159,8 @@ export class Painter {
     const hw = (TW / 2 - inset * 2) * n;
     const hh = (TH / 2 - inset) * n;
     const H = h * n;
-    const cx = (TW / 2) * n;
-    const cy = (TOP + TH / 2 - z) * n;
+    const cx = (TW / 2) * n + this.ox;
+    const cy = (TOP + TH / 2 - z) * n + this.oy;
     const base = (this.id += 3);
     const FACE_ID: Record<Face, number> = { L: base - 2, R: base - 1, T: base };
     for (let x = Math.floor(cx - hw); x < Math.ceil(cx + hw); x++) {
@@ -147,8 +192,8 @@ export class Painter {
     const n = this.n;
     const hw = (TW / 2 - inset * 2 + 2) * n;
     const hh = (TH / 2 - inset + 1) * n;
-    const cx = (TW / 2) * n;
-    const cy = (TOP + TH / 2 - h) * n;
+    const cx = (TW / 2) * n + this.ox;
+    const cy = (TOP + TH / 2 - h) * n + this.oy;
     const apex = [cx, cy - rise * n];
     const L = [cx - hw, cy];
     const F = [cx, cy + hh];
@@ -193,8 +238,8 @@ export class Painter {
     const n = this.n;
     const hw = (TW / 2 - inset * 2 + 2) * n;
     const hh = (TH / 2 - inset + 1) * n;
-    const cx = (TW / 2) * n;
-    const cy = (TOP + TH / 2 - h) * n;
+    const cx = (TW / 2) * n + this.ox;
+    const cy = (TOP + TH / 2 - h) * n + this.oy;
     const up = (p: number[]) => [p[0], p[1] - rise * n];
     const mid = (a: number[], b: number[]) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
     const L = [cx - hw, cy];
@@ -244,10 +289,10 @@ export class Painter {
     const n = this.n;
     const hw = (TW / 2 - inset * 2 + 2) * n;
     const hh = (TH / 2 - inset + 1) * n;
-    const cx = (TW / 2 + 2) * n;
-    const cy = (TOP + TH / 2) * n;
-    for (let y = TOP * n; y < (TOP + TH) * n; y++)
-      for (let x = 0; x < TW * n; x++)
+    const cx = (TW / 2 + 2) * n + this.ox;
+    const cy = (TOP + TH / 2) * n + this.oy;
+    for (let y = TOP * n + this.oy; y < (TOP + TH) * n + this.oy; y++)
+      for (let x = this.ox; x < (TW + 4) * n + this.ox; x++)
         if (Math.abs(x + 0.5 - cx) / hw + Math.abs(y + 0.5 - cy) / hh <= 1) this.px(x, y, INK, 90);
   }
 
@@ -255,8 +300,8 @@ export class Painter {
   blob(dx: number, up: number, r: number, colour: string): void {
     this.id++;
     const n = this.n;
-    const cx = (TW / 2 + dx) * n;
-    const cy = (TOP + TH / 2 - up) * n;
+    const cx = (TW / 2 + dx) * n + this.ox;
+    const cy = (TOP + TH / 2 - up) * n + this.oy;
     const R = r * n;
     for (let y = Math.floor(cy - R); y <= Math.ceil(cy + R); y++)
       for (let x = Math.floor(cx - R); x <= Math.ceil(cx + R); x++) {
@@ -278,8 +323,8 @@ export class Painter {
     const n = this.n;
     const W = w * n;
     const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2 * n));
-    const ox = (TW / 2) * n - Math.floor(W / 2);
-    const oy = (TOP + TH / 2) * n - Math.floor(W / 2);
+    const ox = (TW / 2) * n - Math.floor(W / 2) + this.ox;
+    const oy = (TOP + TH / 2) * n - Math.floor(W / 2) + this.oy;
     for (let k = 0; k <= steps; k++) {
       const x = Math.round((x0 + ((x1 - x0) * k) / steps) * n);
       const y = Math.round((y0 + ((y1 - y0) * k) / steps) * n);
@@ -347,11 +392,13 @@ export class Painter {
     c.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(this.data), this.w, this.h), 0, 0);
     const alpha = new Uint8ClampedArray(this.w * this.h);
     let top = 0;
+    // Heights count from the footprint's ground centre, so badges sit over the whole building.
+    const ground = (TOP + ((this.fa + this.fb) * TH) / 4) * this.n;
     for (let k = 0; k < alpha.length; k++) {
       alpha[k] = this.data[k * 4 + 3];
-      if (alpha[k] === 255 && !top) top = (TOP + TH / 2) * this.n - Math.floor(k / this.w);
+      if (alpha[k] === 255 && !top) top = ground - Math.floor(k / this.w);
     }
-    return { canvas: c, alpha, height: top, n: this.n };
+    return { canvas: c, alpha, height: top, n: this.n, w: this.fa * this.n, h: this.fb * this.n, cornerX: ((this.fb * TW) / 2) * this.n, cornerY: TOP * this.n };
   }
 }
 
@@ -933,6 +980,66 @@ const ART: Record<string, ArtFn> = {
   },
 };
 
+/**
+ * Long footprints, built from one-tile pieces with Painter.at(u, v): u runs along the map's x axis.
+ * Pieces draw back to front (lower u + v first). A turned building is this art mirrored, so one
+ * drawing covers both ways round.
+ */
+const LONG_ART: Record<string, ArtFn> = {
+  // A row of stalls under striped awnings, each its own colour.
+  pasarKaget: (p) => {
+    for (const [u, awning] of [[0, 'r'], [1, 'b']] as [number, string][]) {
+      p.at(u, 0);
+      p.shadow(2);
+      p.box(2, 5, 'n', (face, _u, j) => (face !== 'T' && j < 2 ? 'N' : undefined));
+      p.box(1, 3, awning, (face, _u, _j, i) => (face !== 'T' ? (Math.floor(i / 3) % 2 ? 'w' : awning) : undefined), 8);
+      p.box(5, 4, u ? 'g' : 'y', (face, _u, _j, i) => (face !== 'T' && i % 4 === 0 ? 'o' : undefined), 5);
+    }
+  },
+  // Two kos blocks joined in a row, the rooms running the length of the lot.
+  kosan: (p, v, level) => {
+    p.at(0, 0);
+    ART.kosan(p, v, level);
+    p.at(1, 0);
+    ART.kosan(p, v, level);
+  },
+  // The clinic, and a shaded waiting porch with a bench for the queue.
+  posyandu: (p) => {
+    p.at(0, 0);
+    HIGHER_ART.posyandu(p);
+    p.at(1, 0);
+    p.shadow(3);
+    p.box(7, 2, 'n', (face) => (face === 'T' ? 'N' : undefined));
+    posts(p, 3, 8, 'n');
+    p.roofShape('shed', 3, 8, 3, 'p', 't');
+  },
+  // The workshop, and an open bay with a car up for repair on the concrete.
+  bengkel: (p, v, level) => {
+    p.at(0, 0);
+    CONTENT_ART.bengkel(p, v, level);
+    p.at(1, 0);
+    p.ground((a, b, px) => (Math.min(a, b, 1 - a, 1 - b) < px ? 'S' : 's'));
+    p.box(5, 3, 'r', (face, u, j) => (face !== 'T' && j === 0 && (within(u, 0.15, 0.3) || within(u, 0.7, 0.85)) ? 'k' : undefined), 1);
+    p.box(8, 3, 'r', (face, u) => (face !== 'T' && within(u, 0.15, 0.85) ? 'l' : undefined), 4);
+    p.box(10, 2, 'k', undefined, 0);
+  },
+  // A 2x3 field: chalk lines round the edge and across the middle of its long side.
+  lapangan: (p) => {
+    p.groundLong((a, b, px) => {
+      const e = Math.min(a, b, 1 - a, 1 - b);
+      if (e < 1.2 * px) return 's';
+      const chalk = (d: number) => Math.abs(d) < 0.6 * px;
+      const under = (d: number) => d > 0.6 * px && d < 1.6 * px;
+      const box = e - 0.07;
+      const mid = p.fb >= p.fa ? b - 0.5 : a - 0.5;
+      if (chalk(box) || (e > 0.07 && chalk(mid))) return 'w';
+      if (under(box) || (e > 0.07 && under(mid))) return '#3f6a2a';
+      return Math.floor((p.fb >= p.fa ? b : a) * 7) % 2 ? 'g' : 'G';
+    });
+    p.overlay.push(dither);
+  },
+};
+
 const cache = new Map<string, Art>();
 
 /** Paints a sprite at a level: its own level art if it has some, otherwise the base art plus the upgrade kit. */
@@ -946,10 +1053,27 @@ export function paint(p: Painter, name: string, variant?: string, level = 1): vo
  * Isometric art for a sprite name. variant is a roof colour for rumah, or 'y' for a selokan. n is the
  * footprint: big buildings get their own art at n times the size. Unknown names get a plain box.
  */
-export function iso(name: string, variant?: string, n = 1, level = 1): Art {
-  const key = `${name}:${variant ?? ''}:${n}:${level}`;
+export function iso(name: string, variant?: string, n = 1, level = 1, fa = 1, fb = 1): Art {
+  const key = `${name}:${variant ?? ''}:${n}:${level}:${fa}x${fb}`;
   const hit = cache.get(key);
   if (hit) return hit;
+  if (fa !== fb) {
+    // A long footprint: its own art, or the one-tile sprite on every tile.
+    const p = new Painter(1, fa, fb);
+    const own = LONG_ART[name];
+    if (own) own(p, variant, level);
+    else
+      for (let d = 0; d < fa + fb - 1; d++)
+        for (let u = 0; u < fa; u++) {
+          const v = d - u;
+          if (v < 0 || v >= fb) continue;
+          p.at(u, v);
+          (ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant, level);
+        }
+    const art = p.finish();
+    cache.set(key, art);
+    return art;
+  }
   // A big footprint is drawn at its own size, so its edges and outlines stay 1px.
   const p = new Painter(n);
   paint(p, name, variant, level);

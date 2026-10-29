@@ -1,6 +1,7 @@
 import { rupiahShort } from '../format';
 import { def } from '../sim/content';
-import { footprintOf, tilesOf } from '../sim/state';
+import { sizeOf, tilesOf, type Placed } from '../sim/state';
+import { sizeFor } from '../sim/content';
 import { GRID_H, GRID_W, RT_H, RT_W, type Building, type GameState, type ResourceId } from '../sim/types';
 import { Atmosphere } from './atmosphere';
 import { drawTint, darkness, dusk, Fx } from './fx';
@@ -80,6 +81,19 @@ interface Burst {
   born: number;
 }
 
+/** A footprint and the art drawn for it: w x h tiles on the map; square art n tiles a side, or long art fa x fb. */
+export type Shape = { w: number; h: number; n: number; fa: number; fb: number };
+
+/** How a building's footprint and art line up, turned or not. A building kept small draws at its old square size. */
+export function shapeOf(b: Placed): Shape {
+  const [fa, fb] = b.small ? [b.small, b.small] : sizeFor(b.def);
+  const { w, h } = sizeOf(b);
+  return fa === fb ? { w, h, n: fa, fa: 1, fb: 1 } : { w, h, n: 1, fa, fb };
+}
+
+/** The ghost's shape, falling back to a square of n. */
+const ghostShape = (g: Ghost): Shape => (g.tiles ? { w: 1, h: 1, n: 1, fa: 1, fb: 1 } : { w: g.w ?? g.n, h: g.h ?? g.n, n: g.fa && g.fa !== g.fb ? 1 : g.n, fa: g.fa ?? 1, fb: g.fb ?? 1 });
+
 export interface Ghost {
   x: number;
   y: number;
@@ -91,6 +105,11 @@ export interface Ghost {
   tiles?: { x: number; y: number; ok: boolean; have: boolean }[];
   /** Draw the sprite mirrored, for a building that has been turned. */
   flip?: boolean;
+  /** A non-square footprint: tiles along x (w) and y (h) on the map, and the art's own sides (fa, fb). */
+  w?: number;
+  h?: number;
+  fa?: number;
+  fb?: number;
   /** A building being moved keeps its look: its house variant and its level. */
   variant?: string;
   level?: number;
@@ -328,9 +347,9 @@ export class MapView {
   ghostAnchor(): { x: number; below: number; above: number } | null {
     const g = this.ghost;
     if (!g) return null;
-    const n = g.tiles ? 1 : g.n;
-    const c = this.tileCentre(g.x + (n - 1) / 2, g.y + (n - 1) / 2);
-    const hh = (TH * this.scale * n) / 2;
+    const sh = ghostShape(g);
+    const c = this.tileCentre(g.x + (sh.w - 1) / 2, g.y + (sh.h - 1) / 2);
+    const hh = (TH * this.scale * (sh.w + sh.h)) / 4;
     return { x: c.x, below: c.y + hh, above: c.y - hh };
   }
 
@@ -352,10 +371,11 @@ export class MapView {
     const s = this.scale;
     // A bigger footprint covers n tiles a side. Art from iso(name, variant, n) is already that big, with
     // 1px outlines, so it draws at the map scale; small art stretches by n (the ghost row, scenery).
+    // The art's top corner lands on the tile's top corner, which also lines up long art.
     const g = s * n;
     const k = g / art.n;
-    const left = c.x - (TW * g) / 2;
-    const top = c.y - TOP * g;
+    const left = c.x - art.cornerX * k;
+    const top = c.y - art.cornerY * k;
     if (flip) {
       ctx.save();
       ctx.translate(c.x, 0);
@@ -364,11 +384,11 @@ export class MapView {
     }
     if (grow < 1 || squash) {
       // Scale up from the footprint's ground centre, so the building rises out of its plot.
-      const gx = c.x;
-      const gy = c.y + (TH * g) / 2;
-      const w = art.canvas.width * k * grow * (1 + squash / 2);
-      const h = art.canvas.height * k * grow * (1 - squash);
-      ctx.drawImage(art.canvas, gx - w / 2, gy - (TOP + TH / 2) * g * grow * (1 - squash), w, h);
+      const gx = left + (art.cornerX + ((art.w - art.h) * TW) / 4) * k;
+      const gy = top + (art.cornerY + ((art.w + art.h) * TH) / 4) * k;
+      const sx = grow * (1 + squash / 2);
+      const sy = grow * (1 - squash);
+      ctx.drawImage(art.canvas, gx - (gx - left) * sx, gy - (gy - top) * sy, art.canvas.width * k * sx, art.canvas.height * k * sy);
     } else ctx.drawImage(art.canvas, left, top, art.canvas.width * k, art.canvas.height * k);
     if (flip) ctx.restore();
     return { x, y, left, top, art, k: k / s, flip };
@@ -382,22 +402,24 @@ export class MapView {
     ctx.drawImage(src, c.x - w / 2, c.y - w, w, w);
   }
 
-  private diamond(ctx: CanvasRenderingContext2D, x: number, y: number, grow = 0, n = 1): void {
-    const c = this.tileCentre(x + (n - 1) / 2, y + (n - 1) / 2);
-    const hw = ((TW * this.scale * n) / 2) * (1 + grow);
-    const hh = ((TH * this.scale * n) / 2) * (1 + grow);
+  /** The ground outline of a w x h footprint, grown by a fraction round its centre. */
+  private diamond(ctx: CanvasRenderingContext2D, x: number, y: number, grow = 0, w = 1, h = w): void {
+    const c = this.tileCentre(x + (w - 1) / 2, y + (h - 1) / 2);
+    const at = (cx: number, cy: number) => {
+      const p = this.corner(cx, cy);
+      return [c.x + (p.x - c.x) * (1 + grow), c.y + (p.y - c.y) * (1 + grow)];
+    };
+    const pts = [at(x, y), at(x + w, y), at(x + w, y + h), at(x, y + h)];
     ctx.beginPath();
-    ctx.moveTo(c.x, c.y - hh);
-    ctx.lineTo(c.x + hw, c.y);
-    ctx.lineTo(c.x, c.y + hh);
-    ctx.lineTo(c.x - hw, c.y);
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (const q of pts.slice(1)) ctx.lineTo(q[0], q[1]);
     ctx.closePath();
   }
 
   /** A pixel arrow bobbing over the ghost, so the building in hand is found at a glance. */
-  private ghostArrow(ctx: CanvasRenderingContext2D, x: number, y: number, n: number, sprite: string, now: number): void {
-    const top = this.artTop(x, y, iso(sprite, undefined, n), n);
-    const c = this.tileCentre(x + (n - 1) / 2, y + (n - 1) / 2);
+  private ghostArrow(ctx: CanvasRenderingContext2D, x: number, y: number, sh: Shape, sprite: string, now: number): void {
+    const top = this.artTop(x, y, iso(sprite, undefined, sh.n, 1, sh.fa, sh.fb), sh);
+    const c = this.tileCentre(x + (sh.w - 1) / 2, y + (sh.h - 1) / 2);
     const u = Math.max(2, Math.round(this.scale));
     const bob = this.motion ? (Math.floor(now / 300) % 2) * u : 0;
     const ax = Math.round(c.x);
@@ -411,8 +433,8 @@ export class MapView {
   }
 
   /** Top of a tile's art, in CSS pixels, for badges and pops. */
-  private artTop(x: number, y: number, art: Art | null, n = 1): number {
-    return this.tileCentre(x + (n - 1) / 2, y + (n - 1) / 2).y - (art ? (art.height * n) / art.n : 0) * this.scale;
+  private artTop(x: number, y: number, art: Art | null, sh: Pick<Shape, 'w' | 'h' | 'n'> = { w: 1, h: 1, n: 1 }): number {
+    return this.tileCentre(x + (sh.w - 1) / 2, y + (sh.h - 1) / 2).y - (art ? (art.height * sh.n) / art.n : 0) * this.scale;
   }
 
   /** Tiles holding a selokan and tiles holding anything, rebuilt each frame so lookups stay O(1) on a big map. */
@@ -427,8 +449,8 @@ export class MapView {
   }
 
   /** How a building is drawn. The map and the ghost of a building being moved both use it, so they always match. */
-  look(b: Building): { sprite: string; variant?: string; n: number; level: number; flip: boolean } {
-    return { sprite: def(b.def).sprite, variant: this.variant(b), n: footprintOf(b.def), level: b.level, flip: b.rot === 1 };
+  look(b: Building): Shape & { sprite: string; variant?: string; level: number; flip: boolean } {
+    return { sprite: def(b.def).sprite, variant: this.variant(b), level: b.level, flip: b.rot === 1, ...shapeOf(b) };
   }
 
   variant(b: Building): string | undefined {
@@ -482,14 +504,14 @@ export class MapView {
     }
     for (const b of all) {
       if (FLAT_AO.has(b.def) || !this.onScreen(b.x, b.y)) continue;
-      const n = footprintOf(b.def);
-      const c = this.tileCentre(b.x + (n - 1) / 2, b.y + (n - 1) / 2);
-      const w = TW * 1.5 * sc * n;
+      const { w: fw, h: fh } = sizeOf(b);
+      const c = this.tileCentre(b.x + (fw - 1) / 2, b.y + (fh - 1) / 2);
+      const w = TW * 1.5 * sc * ((fw + fh) / 2);
       ctx.drawImage(ao, c.x - w / 2, c.y - w / 4, w, w / 2);
     }
 
     if (sel) {
-      this.diamond(ctx, sel.x, sel.y, 0, footprintOf(sel.def));
+      this.diamond(ctx, sel.x, sel.y, 0, sizeOf(sel).w, sizeOf(sel).h);
       ctx.fillStyle = 'rgba(244, 244, 245, 0.25)';
       ctx.fill();
     }
@@ -517,7 +539,8 @@ export class MapView {
     }
     if (this.ghost) {
       for (const g of this.ghost.tiles ?? [this.ghost]) {
-        this.diamond(ctx, g.x, g.y, 0, this.ghost.tiles ? 1 : this.ghost.n);
+        const gs = ghostShape(this.ghost);
+        this.diamond(ctx, g.x, g.y, 0, gs.w, gs.h);
         ctx.fillStyle = g.ok ? 'rgba(74, 222, 128, 0.35)' : 'rgba(248, 113, 113, 0.35)';
         ctx.fill();
       }
@@ -525,7 +548,7 @@ export class MapView {
 
     // Back to front: tiles further up the screen draw first. Walkers slot in by the same depth.
     // A big building sorts by its front tile, so it draws over what stands behind it and under what stands in front.
-    const front = (b: Building) => b.x + b.y + 2 * (footprintOf(b.def) - 1);
+    const front = (b: Building) => b.x + b.y + sizeOf(b).w + sizeOf(b).h - 2;
     const sorted = all.sort((a, b) => front(a) - front(b) || a.x - b.x);
     const tops = new Map<number, number>();
     this.hits = [];
@@ -552,30 +575,42 @@ export class MapView {
     this.crowd.begin();
     const drawOne = (b: Building): void => {
       if (!this.onScreen(b.x, b.y) || b.uid === this.hidden) return;
-      const { sprite, variant, n, level, flip } = this.look(b);
-      const art = iso(sprite, variant, n, level);
+      const sh = this.look(b);
+      const { sprite, variant, n, level, flip } = sh;
+      const art = iso(sprite, variant, n, level, sh.fa, sh.fb);
+      // Site sprites (stakes, scaffold) are one per tile on a long lot; the crane stands on its back tile.
+      const site = (name: string, all = true): Hit | undefined => {
+        if (sh.fa === sh.fb) return this.art(ctx, iso(name, undefined, n), b.x, b.y, 1, 0, n, flip);
+        let first: Hit | undefined;
+        for (const t of tilesOf(b).sort((p, q) => p.x + p.y - (q.x + q.y))) {
+          const hit = this.art(ctx, iso(name), t.x, t.y, 1, 0, 1, flip);
+          first ??= hit;
+          if (!all) break;
+        }
+        return first;
+      };
       if (ai.has(b.uid)) {
         this.art(ctx, art, b.x, b.y, 1, 0, n, flip);
-        tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, art, n));
+        tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, art, sh));
         return;
       }
       if (b.status === 'permit') {
         // Waiting for a permit: nothing is built yet. The plot is staked out with string, under the permit sign.
-        this.hits.push(this.art(ctx, iso('patok', undefined, n), b.x, b.y, 1, 0, n, flip));
+        this.hits.push(site('patok')!);
         this.sign(ctx, 'permit', b.x, b.y);
       } else if (b.status === 'building') {
         // Being built: the half-made building in its scaffold, with a crane over the site.
         ctx.globalAlpha = 0.5;
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.globalAlpha = 1;
-        this.art(ctx, iso('scaffold', undefined, n), b.x, b.y, 1, 0, n, flip);
-        this.art(ctx, iso('crane', undefined, n), b.x, b.y, 1, 0, n, flip);
+        site('scaffold');
+        site('crane', false);
         if (this.effects) this.fx.construct(b.x, b.y, world);
       } else if (b.status === 'mangkrak') {
         ctx.filter = 'grayscale(1) brightness(0.7)';
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
         ctx.filter = 'none';
-        this.art(ctx, iso('scaffold', undefined, n), b.x, b.y, 1, 0, n, flip);
+        site('scaffold');
       } else if (b.status === 'damaged') {
         // A broken path greys out as a whole tile; other buildings tint brown.
         ctx.filter = b.def === 'jalan' ? 'grayscale(1) brightness(0.78) contrast(1.1)' : 'sepia(1) brightness(0.6)';
@@ -602,10 +637,12 @@ export class MapView {
         const k = born === undefined ? 1 : Math.min(1, (now - born) / 350);
         if (k >= 1) this.spawned.delete(b.uid);
         this.hits.push(this.art(ctx, art, b.x, b.y, 0.6 + 0.4 * (1 - (1 - k) ** 3), this.squash(b, now), n, flip));
-        if (b.level > 1) this.levelPips(ctx, b.x + n - 1, b.y + n - 1, b.level);
+        if (b.level > 1) this.levelPips(ctx, b.x + sh.w - 1, b.y + sh.h - 1, b.level);
         this.idle(ctx, b, world);
       }
-      tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, b.status === 'building' ? iso('crane', undefined, n) : b.status === 'mangkrak' ? iso('scaffold', undefined, n) : b.status === 'permit' ? iso('patok', undefined, n) : art, n));
+      const siteArt = (name: string) => (sh.fa === sh.fb ? iso(name, undefined, n) : iso(name));
+      const topArt = b.status === 'building' ? siteArt('crane') : b.status === 'mangkrak' ? siteArt('scaffold') : b.status === 'permit' ? siteArt('patok') : art;
+      tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, topArt, topArt === art || sh.fa === sh.fb ? sh : { ...sh, n: 1 }));
     };
     // Flat pieces are ground: paths, fields and ponds draw first, so no walker or building ever hides under them.
     const { ground, standing } = groundFirst(sorted);
@@ -653,27 +690,27 @@ export class MapView {
       const g = this.ghost;
       for (const p of g.tiles ?? [g]) {
         if ('have' in p && p.have) continue;
-        const n = g.tiles ? 1 : g.n;
+        const sh = ghostShape(g);
         // The ghost breathes, so the eye finds it at once. Steady with reduce motion.
         const breath = this.motion ? 0.5 + 0.5 * Math.sin(now / 260) : 0.5;
         ctx.globalAlpha = p.ok ? 0.72 + 0.2 * breath : 0.5;
         if (!p.ok) ctx.filter = 'grayscale(1) sepia(1) hue-rotate(-50deg) saturate(4)';
-        this.art(ctx, iso(g.sprite, g.variant, n, g.level), p.x, p.y, 1, 0, n, g.flip);
+        this.art(ctx, iso(g.sprite, g.variant, sh.n, g.level, sh.fa, sh.fb), p.x, p.y, 1, 0, sh.n, g.flip);
         ctx.filter = 'none';
         ctx.globalAlpha = 1;
         // A building being moved shows its level pips too, as it does standing on the map.
-        if (!g.tiles && (g.level ?? 1) > 1) this.levelPips(ctx, p.x + n - 1, p.y + n - 1, g.level!);
-        this.diamond(ctx, p.x, p.y, 0, n);
+        if (!g.tiles && (g.level ?? 1) > 1) this.levelPips(ctx, p.x + sh.w - 1, p.y + sh.h - 1, g.level!);
+        this.diamond(ctx, p.x, p.y, 0, sh.w, sh.h);
         ctx.strokeStyle = p.ok ? '#4ade80' : '#f87171';
         ctx.lineWidth = p.ok ? 2 + Math.round(breath) : 2;
-        if (!g.tiles) this.ghostArrow(ctx, p.x, p.y, n, g.sprite, now);
+        if (!g.tiles) this.ghostArrow(ctx, p.x, p.y, sh, g.sprite, now);
         ctx.setLineDash(p.ok ? [] : [4, 3]);
         ctx.stroke();
         ctx.setLineDash([]);
       }
     }
     if (sel) {
-      this.diamond(ctx, sel.x, sel.y, 0, footprintOf(sel.def));
+      this.diamond(ctx, sel.x, sel.y, 0, sizeOf(sel).w, sizeOf(sel).h);
       ctx.strokeStyle = '#f4f4f5';
       ctx.lineWidth = 2;
       ctx.stroke();

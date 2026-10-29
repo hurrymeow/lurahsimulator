@@ -24,8 +24,14 @@ export function def(id: string): BuildingDef {
   return d;
 }
 
-/** Tiles on each side of a building's footprint. Unknown ids count as 1. */
-export const footprintFor = (id: string): number => byId.get(id)?.footprint ?? 1;
+/** Tiles along the map's x and y axes, before any turn. Unknown ids count as 1x1. */
+export function sizeFor(id: string): [number, number] {
+  const f = byId.get(id)?.footprint ?? 1;
+  return typeof f === 'number' ? [f, f] : f;
+}
+
+/** The longest side of a building's footprint. */
+export const footprintFor = (id: string): number => Math.max(...sizeFor(id));
 
 export function hasDef(id: string): boolean {
   return byId.has(id);
@@ -33,5 +39,5 @@ export function hasDef(id: string): boolean {
 
 export const placeableDefs = (): BuildingDef[] => ALL.filter((b) => b.placeable);
 
-/** Tiles that are ground cover, not places: paths, biopori and decorations. They never flood and never count as a building for the ranking. */
-export const isCover = (d: BuildingDef): boolean => !!(d.pathIncome || d.boost);
+/** Tiles that are ground cover, not places: paths, biopori and decorations. They never flood and never count as a building for the ranking. A building that earns and also boosts its neighbours (Terminal) is a place. */
+export const isCover = (d: BuildingDef): boolean => !!(d.pathIncome || (d.boost && !d.income));

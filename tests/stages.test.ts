@@ -116,11 +116,11 @@ describe('star engine', () => {
 });
 
 describe('late-RT content', () => {
-  it('Kos-kosan houses 6', () => {
+  it('Kos-kosan houses 8', () => {
     const s = newGame(1);
     const before = housing(s);
     add(s, 'kosan', 0, 0);
-    expect(housing(s)).toBe(before + 6);
+    expect(housing(s)).toBe(before + 8);
   });
 
   it('Lapangan doubles the Agustus prize and Panjat Pinang adds half again', () => {

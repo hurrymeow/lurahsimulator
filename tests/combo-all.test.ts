@@ -5,7 +5,7 @@ import { BRANDS } from '../src/data/brands';
 import { activeCombos, bookCombos, comboStatus, parseNeed } from '../src/sim/combos';
 import { checkMove, moveBuilding } from '../src/sim/rules';
 import { def } from '../src/sim/content';
-import { addBuilding, footprintOf, newGame } from '../src/sim/state';
+import { addBuilding, footprintOf, newGame, sizeOf } from '../src/sim/state';
 import { promote } from '../src/sim/grow';
 import { GRID_H, GRID_W, setGrid, type Building, type GameState } from '../src/sim/types';
 import type { StageComboDef } from '../src/data/higher/types';
@@ -16,8 +16,8 @@ const ALL = [...COMBOS, ...STAGE_COMBOS] as (StageComboDef | (typeof COMBOS)[num
 const free = (s: GameState, x: number, y: number, n: number) =>
   x >= 0 && y >= 0 && x + n <= GRID_W && y + n <= GRID_H &&
   s.buildings.every((b) => {
-    const m = footprintOf(b.def);
-    return x + n <= b.x || b.x + m <= x || y + n <= b.y || b.y + m <= y;
+    const m = sizeOf(b);
+    return x + n <= b.x || b.x + m.w <= x || y + n <= b.y || b.y + m.h <= y;
   });
 
 /** A fresh town at the combo's stage with nothing built, so only the combo's members are on the map. */
@@ -38,7 +38,8 @@ function town(c: (typeof ALL)[number]): GameState {
 
 /** Builds the combo: the anchor in the middle, every other member on the nearest free lot in range. */
 function build(s: GameState, c: (typeof ALL)[number]): Building[] {
-  const needs = c.needs.map(parseNeed);
+  // The biggest member anchors: a 3x3 fits fewer lots than anything else, so the rest gather round it.
+  const needs = c.needs.map(parseNeed).sort((a, b) => footprintOf(b.id) - footprintOf(a.id));
   const cx = Math.floor(GRID_W / 2) - 1;
   const cy = Math.floor(GRID_H / 2) - 1;
   const members: Building[] = [];
@@ -78,8 +79,8 @@ function build(s: GameState, c: (typeof ALL)[number]): Building[] {
 
 /** Tiles between the anchor's lot and an n x n lot at x,y, edge to edge, as combos count it. */
 const gap = (a: Building, x: number, y: number, n: number) => {
-  const m = footprintOf(a.def);
-  return Math.max(0, a.x - (x + n - 1), x - (a.x + m - 1), a.y - (y + n - 1), y - (a.y + m - 1));
+  const m = sizeOf(a);
+  return Math.max(0, a.x - (x + n - 1), x - (a.x + m.w - 1), a.y - (y + n - 1), y - (a.y + m.h - 1));
 };
 
 const on = (s: GameState, id: string) => activeCombos(s).some((a) => a.combo.id === id);

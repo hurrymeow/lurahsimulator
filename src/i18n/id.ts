@@ -33,7 +33,7 @@ export const ID: Record<Key, string> = {
   'build.ownedOf': '{n}/{max} dimiliki',
   'build.permit': 'Izin {permit} bln · bangun {build} bln',
   'build.permitShort': 'Izin {permit} bln, bangun {build} bln.',
-  'build.size': '{n}×{n} petak',
+  'build.size': '{w}×{h} petak',
   'build.tapToPlace': 'Ketuk petak kosong yang menyala untuk menaruhnya.',
   'build.title': 'Bangun',
   'coach.done': 'Mantap, Pak. Bapak jago, ya. Tambah tempat, tambah warga. Waktu jalan sendiri: jeda atau percepat di atas.',

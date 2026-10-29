@@ -58,6 +58,12 @@ No third-party art or names. Everything is drawn in code.
   roofline is a smooth 1px 2:1 line like a warung's, never a scaled stair step. Paint callbacks get
   one-tile rows and columns, so windows and courses keep their proportions. Never stretch a
   finished sprite: its outline comes out n pixels thick and its diagonals scallop.
+- Long buildings (1x2, 2x3) use `new Painter(1, fa, fb)`: a canvas for fa tiles along the map's x axis
+  and fb along its y axis. Build them from one-tile pieces: `p.at(u, v)` moves every primitive onto
+  tile (u, v), and pieces draw back to front (lower u + v first). `groundLong()` paints ground over the
+  whole lot. Draw long art one way only, along x: a turned building is that art mirrored, which in
+  this projection swaps the axes exactly. Their art lives in `LONG_ART`; a long building without its
+  own entry repeats its one-tile sprite on every tile.
 - Borders that must stay thin take `px` from `ground()`: one canvas pixel in a or b. Write a kerb
   or a bund as `e < 2 * px`, not as a fraction, so it is two pixels on any lot.
 - Edges of flat pieces: the ink pass's 1px coloured line, then a light kerb inside it where it

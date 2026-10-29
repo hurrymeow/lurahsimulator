@@ -14,7 +14,7 @@ import { letterMult } from './rw';
 import { pick } from './rng';
 import { score } from './ranking';
 import { stageDef, goalProgress } from './stages';
-import { addResident, bedsOf, covers, footprintOf, housing, price } from './state';
+import { addResident, bedsOf, covers, housing, price, tilesOf } from './state';
 import { RT_H, RT_W, mapSpan, setGrid, type Building, type GameState, type Neighbour, type RtTrait, type StageId } from './types';
 
 /** The ladder this engine climbs. Matches `next` in the stage data. */
@@ -66,17 +66,28 @@ export const neighbourAt = (s: GameState, x: number, y: number): Building | unde
   return s.neighbours.find((n) => n.cx === cx && n.cy === cy)?.buildings.find((b) => covers(b, x, y));
 };
 
-function addTo(s: GameState, n: Neighbour, id: string, x: number, y: number): Building {
+function addTo(s: GameState, n: Neighbour, id: string, x: number, y: number, rot: 0 | 1 = 0): Building {
   const b: Building = { uid: s.nextUid++, def: id, x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: s.month };
+  if (rot) b.rot = rot;
   n.buildings.push(b);
   return b;
+}
+
+/** Every tile the RT's buildings cover, so a big building never lands on part of another. */
+const takenTiles = (n: Neighbour): Set<string> => new Set(n.buildings.flatMap((b) => tilesOf(b).map((p) => `${p.x},${p.y}`)));
+
+/** How a building fits at a free tile of the RT's lot: unturned, turned, or not at all. */
+function fitAt(n: Neighbour, taken: Set<string>, id: string, x: number, y: number): 0 | 1 | null {
+  const o = cellOrigin(n.cx, n.cy);
+  const ok = (rot: 0 | 1) => tilesOf({ def: id, x, y, rot }).every((p) => p.x >= o.x && p.y >= o.y && p.x < o.x + RT_W && p.y < o.y + RT_H && !isSeam(p.x, p.y) && !taken.has(`${p.x},${p.y}`));
+  return ok(0) ? 0 : ok(1) ? 1 : null;
 }
 
 /** True when the RT's lot has no free tile left: Dana then waits, so the screen says why. */
 export const lotFull = (n: Neighbour): boolean => freeTiles(n).length === 0;
 
 function freeTiles(n: Neighbour): { x: number; y: number }[] {
-  const taken = new Set(n.buildings.map((b) => `${b.x},${b.y}`));
+  const taken = takenTiles(n);
   const out: { x: number; y: number }[] = [];
   const o = cellOrigin(n.cx, n.cy);
   for (let y = o.y; y < o.y + RT_H; y++)
@@ -104,7 +115,7 @@ export function layAiPath(s: GameState, n: Neighbour, b: Building): boolean {
   const roads = new Set<number>();
   for (const o of n.buildings) {
     if (o.def === PATH) roads.add(key(o.x, o.y));
-    else for (let dy = 0; dy < footprintOf(o.def); dy++) for (let dx = 0; dx < footprintOf(o.def); dx++) taken.add(key(o.x + dx, o.y + dy));
+    else for (const p of tilesOf(o)) taken.add(key(p.x, p.y));
   }
   const door = new Set<number>();
   for (const k of n.buildings.filter((o) => o.def.startsWith('kantor'))) for (const [x, y] of ring(k)) if (inside(x, y) && !taken.has(key(x, y))) door.add(key(x, y));
@@ -283,18 +294,34 @@ function build(s: GameState, n: Neighbour): void {
   else {
     id = nextWant(n);
   }
+  // A big building needs every tile of its footprint free: keep only the spots it fits, turned if need be.
+  const taken = takenTiles(n);
+  const rotAt = new Map<string, 0 | 1>();
+  for (const f of free) {
+    const r = fitAt(n, taken, id, f.x, f.y);
+    if (r !== null) rotAt.set(`${f.x},${f.y}`, r);
+  }
+  const fits = free.filter((f) => rotAt.has(`${f.x},${f.y}`));
+  if (!fits.length) {
+    if (id === 'rumah') return;
+    // No room for it: a house instead, so a crowded RT still grows.
+    id = 'rumah';
+    for (const f of free) rotAt.set(`${f.x},${f.y}`, 0);
+  }
+  const rotOf = (f: { x: number; y: number }) => rotAt.get(`${f.x},${f.y}`) ?? 0;
+  const spots = fits.length ? fits : free;
   // Settle next to what is already there, like the player's kampung does.
-  const near = free.filter((f) => built.some((b) => Math.abs(b.x - f.x) <= 1 && Math.abs(b.y - f.y) <= 1));
+  const near = spots.filter((f) => built.some((b) => Math.abs(b.x - f.x) <= 1 && Math.abs(b.y - f.y) <= 1));
   // Shops go where they have the most different neighbours, which is how combos happen. Ties are drawn.
   const mix = (f: { x: number; y: number }) => new Set(built.filter((b) => b.def !== 'rumah' && Math.abs(b.x - f.x) <= 1 && Math.abs(b.y - f.y) <= 1).map((b) => b.def)).size;
-  const pool = near.length ? near : free;
+  const pool = near.length ? near : spots;
   // A spot that completes a combo it has not found wins outright: the AI looks for combos as a player would.
   const combosHere = () => activeCombos(viewOf(s, n)).filter((a) => !n.discovered.includes(a.combo.id)).length;
   const fresh = id === 'rumah' ? [] : (() => {
     const base = combosHere();
     const out: { x: number; y: number }[] = [];
     for (const f of pool) {
-      addTo(s, n, id, f.x, f.y);
+      addTo(s, n, id, f.x, f.y, rotOf(f));
       if (combosHere() > base) out.push(f);
       n.buildings.pop();
     }
@@ -303,14 +330,14 @@ function build(s: GameState, n: Neighbour): void {
   const best = id === 'rumah' ? 0 : Math.max(...pool.map(mix));
   const first = fresh.length ? pick(s, fresh) : pick(s, id === 'rumah' ? pool : pool.filter((f) => mix(f) === best));
   // Like the player, the AI needs a path to the Kantor: try the chosen spot, then the rest of the pool, then anywhere free.
-  const tries = [first, ...pool.filter((f) => f !== first), ...free.filter((f) => !pool.includes(f))];
+  const tries = [first, ...pool.filter((f) => f !== first), ...spots.filter((f) => !pool.includes(f))];
   for (const spot of tries.slice(0, 40)) {
-    const b = addTo(s, n, id, spot.x, spot.y);
+    const b = addTo(s, n, id, spot.x, spot.y, rotOf(spot));
     if (!wantsPath(b) || layAiPath(s, n, b)) return;
     n.buildings.pop();
   }
   // Boxed in everywhere: build anyway, so the RT never stalls on a full lot.
-  addTo(s, n, id, first.x, first.y);
+  addTo(s, n, id, first.x, first.y, rotOf(first));
 }
 
 /** Month by month: build when funded, grow, and earn stars by the same checklist the player uses. */

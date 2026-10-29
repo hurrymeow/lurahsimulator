@@ -1,6 +1,6 @@
 // Road access: a building works only when a path links it to the Kantor RT.
 import { isSeam, lotAt } from './area';
-import { addBuilding } from './state';
+import { addBuilding, sizeOf, type Placed } from './state';
 import { def } from './content';
 import { GRID_H, GRID_W, type Building, type GameState } from './types';
 
@@ -45,15 +45,16 @@ export function connectedRoad(s: GameState, road = roadTiles(s)): Uint8Array {
 }
 
 /** Tiles edge-adjacent to a building's footprint (top-left x,y), where a door can open. */
-export function ring(b: { def: string; x: number; y: number }): [number, number][] {
-  const n = def(b.def).footprint ?? 1;
+export function ring(b: Placed): [number, number][] {
+  const { w, h } = sizeOf(b);
   const out: [number, number][] = [];
-  for (let i = 0; i < n; i++) out.push([b.x + i, b.y - 1], [b.x + i, b.y + n], [b.x - 1, b.y + i], [b.x + n, b.y + i]);
+  for (let i = 0; i < w; i++) out.push([b.x + i, b.y - 1], [b.x + i, b.y + h]);
+  for (let i = 0; i < h; i++) out.push([b.x - 1, b.y + i], [b.x + w, b.y + i]);
   return out;
 }
 
 /** True when a road tile that leads to a Kantor touches this building. */
-export function hasRoadBeside(conn: Uint8Array, b: Pick<Building, 'def' | 'x' | 'y'>): boolean {
+export function hasRoadBeside(conn: Uint8Array, b: Placed): boolean {
   return ring(b).some(([x, y]) => x >= 0 && y >= 0 && x < GRID_W && y < GRID_H && conn[y * GRID_W + x] === 1);
 }
 
