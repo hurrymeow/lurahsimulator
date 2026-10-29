@@ -37,6 +37,7 @@ async function openPanel(page: Page, id: string): Promise<void> {
 /** Taps through every queued message. */
 async function dismissModals(page: Page): Promise<void> {
   if (await page.locator('#howto').isVisible()) await page.locator('#howtoGo').click();
+  const seen: string[] = [];
   for (let i = 0; i < 12; i++) {
     if (!(await page.locator('#modal').isVisible())) {
       // A dismissed card waits 500ms before the next queued card appears,
@@ -46,10 +47,13 @@ async function dismissModals(page: Page): Promise<void> {
       await page.waitForTimeout(650);
       continue;
     }
-    if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click();
-    else await page.locator('#modal').click();
+    seen.push(`${await page.locator('#modal').getAttribute('class')}: ${(await page.locator('#modal h2').first().textContent({ timeout: 1000 }).catch(() => '?'))}`);
+    if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click({ timeout: 5000 });
+    else await page.locator('#modal').click({ timeout: 5000 });
     await page.waitForTimeout(650);
   }
+  // Twelve cards in a row means one is not going away. Name them, rather than run into the test timeout.
+  if (await page.locator('#modal').isVisible()) throw new Error(`cards keep coming: ${seen.join(' | ')}`);
 }
 
 /**
@@ -110,6 +114,9 @@ async function expectLegible(page: Page, where: string): Promise<void> {
 /** Fills the kampung with content so every panel has real text in it. */
 async function seed(page: Page): Promise<void> {
   await page.evaluate(() => {
+    // A busy kampung makes most tips due at once. None of these tests is about tips, and tapping through them
+    // all is slow on a CI runner, so they are marked seen first.
+    (window as unknown as { pakrtTips: { seeAll: () => void } }).pakrtTips.seeAll();
     const app = (window as unknown as { pakrt: any }).pakrt;
     const s = app.s;
     s.res.rupiah = 1_234_567_890;
@@ -125,8 +132,7 @@ async function seed(page: Page): Promise<void> {
     app.runTick();
   });
   await dismissModals(page);
-  // A busy kampung makes several tips due at once, and each refresh shows the next one. Drain them
-  // here, or one lands mid-test and swallows a tap (seen at 430px).
+  // Anything still due (a tip added later, or a queued card) is drained here, or it lands mid-test and swallows a tap (seen at 430px).
   for (let i = 0; i < 20; i++) {
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
     if (!(await page.locator('#modal').isVisible())) break;
@@ -267,7 +273,8 @@ test.describe('tips', () => {
     await page.evaluate(() => {
       const a = (window as unknown as { pakrt: any }).pakrt;
       a.s.lastEvent = { banjir: 0 };
-      a.s.month = 9;
+      // The first yearly ranking is the report card tip's trigger, not the month.
+      a.s.ranking.push({ year: 1, us: 90, them: 80, won: true });
       a.refresh();
     });
     // One tip at a time: tap through whatever is due until the report card tip.
@@ -290,6 +297,50 @@ test.describe('tips', () => {
     await expect(page.locator('#modal')).toBeVisible();
     await page.locator('#modal .tap-hint').click();
     await expect(page.locator('#modal')).toBeHidden();
+  });
+});
+
+test.describe('combo tutorial', () => {
+  test('the first shop names a combo to build, and the first combo points at the Combo list', async ({ page }) => {
+    const HEAD = { id: 'Tetangga saling membantu.', en: 'Neighbours help each other.' }[lang()];
+    const SAVED = { id: 'Combo tersimpan.', en: 'Combo saved.' }[lang()];
+    await start(page);
+    await page.locator('#howtoGo').click();
+    // Opening a shop is the trigger, not the month.
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      const k = a.s.buildings.find((b: any) => b.def === 'kantorRT');
+      a.s.buildings.push({ uid: a.s.nextUid++, def: 'warung', x: k.x - 1, y: k.y + 3, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      a.refresh();
+    });
+    const head = page.locator('#modal .card h2');
+    for (let i = 0; i < 6; i++) {
+      await expect(page.locator('#modal')).toBeVisible();
+      if ((await head.textContent()) === HEAD) break;
+      await page.locator('#modal .tap-hint').click();
+      await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+    }
+    await expect(head).toHaveText(HEAD);
+    // The body names the combo and its pieces, and the picture row shows them joined by "+".
+    await expect(page.locator('#modal .card')).toContainText('combo');
+    expect(await page.locator('#modal .pics img').count()).toBeGreaterThanOrEqual(2);
+    await expect(page.locator('#modal .tip-skip')).toHaveCount(0);
+    await expectLegible(page, 'combo tip');
+    await page.locator('#modal .tap-hint').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    // The combo is made: the next tip says where it is kept.
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.s.discovered.push('tongkrongan');
+      a.refresh();
+    });
+    await expect(head).toHaveText(SAVED);
+    await expect(page.locator('#modal .tip-skip')).toHaveCount(0);
+    await expectLegible(page, 'combo saved tip');
+    await page.locator('#modal .tap-hint').click();
+    await expect(page.locator('#modal')).toBeHidden();
+    await openPanel(page, 'combo');
+    await expect(page.locator('#sheet')).toBeVisible();
   });
 });
 
@@ -651,6 +702,8 @@ test.describe('events, ranking, settings', () => {
   });
 
   test('with effects off the game still plays and shows numbers', async ({ page }) => {
+    // Each month can bring a card to tap away, so this runs close to the 60s limit on a busy CI runner.
+    test.slow();
     await start(page);
     await dismissModals(page);
     await page.evaluate(() => {
@@ -943,6 +996,8 @@ test.describe('text is legible and never cut off', () => {
   });
 
   test('a long idle run never breaks the layout', async ({ page }) => {
+    // Each month can bring a card to tap away, so this runs close to the 60s limit on a busy CI runner.
+    test.slow();
     await start(page);
     await dismissModals(page);
     for (let i = 0; i < 40; i++) {
@@ -1635,7 +1690,8 @@ test.describe('home screen', () => {
       const s = app.s;
       s.month = 3;
       s.buildings.push({ uid: s.nextUid++, def: 'wifi', x: 2, y: 3, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
-      for (let i = 0; i < 3; i++) s.residents.push({ id: s.nextResidentId++, name: 'Mbak Rizki Putri', job: 'none', pensiun: 0, fake: 0, arrived: 0 });
+      // One has taken a wifi job: the tip's trigger.
+      for (let i = 0; i < 3; i++) s.residents.push({ id: s.nextResidentId++, name: 'Mbak Rizki Putri', job: i ? 'none' : 'ojol', pensiun: 0, fake: 0, arrived: 0 });
       app.save();
       localStorage.removeItem('pakrt.tips');
     });
