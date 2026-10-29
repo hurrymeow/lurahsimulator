@@ -1354,6 +1354,18 @@ test.describe('growing map', () => {
     const after = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.funded));
     expect(after[0]).toBe(before[0] + 1);
     await expectLegible(page, 'neighbours panel after funding');
+    // Each RT shows what its next star still needs.
+    await expect(page.locator('.sheet .nb-row').first().locator('.checklist li').first()).toBeVisible();
+    // A big Dana banks six builds and shows the boost they give.
+    const row = page.locator('.sheet .nb-row').first();
+    await row.locator('[data-fund="6"]').click();
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].funded)).toBe(before[0] + 7);
+    await expect(page.locator('.sheet .nb-row').first().locator('.nb-boost')).toHaveText(/\+\d+% boost/);
+    // Auto-dana: pick a level, and it is saved on the RT.
+    await page.locator('.sheet .nb-row').first().locator('[data-auto="6"]').click();
+    await expect(page.locator('.sheet .nb-row').first().locator('[data-auto="6"]')).toHaveAttribute('aria-pressed', 'true');
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].autoKeep)).toBe(6);
+    await expectLegible(page, 'neighbours panel with boost and auto-dana');
   });
 
   test('a tap on an AI RT opens the Neighbours panel instead of a build menu', async ({ page }) => {

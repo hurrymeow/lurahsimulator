@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { lotAt } from '../src/sim/area';
-import { nextStarChecklist } from '../src/sim/stages';
-import { checkFund, fundNeighbour, promote } from '../src/sim/grow';
+import { goalProgress, nextStarChecklist } from '../src/sim/stages';
+import { viewOf } from '../src/sim/neighbourView';
+import { autoFloor, autoMonthly, boostOf, checkFund, fundCost, fundNeighbour, promote, setAutoFund } from '../src/sim/grow';
+import { NEIGHBOUR } from '../src/sim/balance';
 import { checkPlace } from '../src/sim/rules';
 import { areaScore } from '../src/sim/ranking';
 import { deserialize, serialize } from '../src/sim/save';
@@ -180,8 +182,47 @@ describe('AI neighbours', () => {
     s.res.rupiah = 0;
     expect(checkFund(s, s.neighbours[0])).toContain('Need');
     s.res.rupiah = 1e9;
-    for (let i = 0; i < 3; i++) fundNeighbour(s, s.neighbours[0]);
-    expect(fundNeighbour(s, s.neighbours[0])).toContain('Already funded');
+    expect(fundNeighbour(s, s.neighbours[0], NEIGHBOUR.fundBulk)).toBeNull();
+    expect(s.neighbours[0].funded).toBe(NEIGHBOUR.fundBulk);
+    // A big Dana banks only what still fits.
+    for (let i = 0; i < 3; i++) fundNeighbour(s, s.neighbours[0], NEIGHBOUR.fundBulk);
+    expect(s.neighbours[0].funded).toBe(NEIGHBOUR.fundMax);
+    expect(fundNeighbour(s, s.neighbours[0])).toContain('bank is full');
+  });
+
+  it('builds faster with more Dana banked, with diminishing returns', () => {
+    const n = grown().neighbours[0];
+    const at = (k: number) => ((n.funded = k), boostOf(n));
+    expect(at(1)).toBe(0);
+    expect(at(3)).toBeGreaterThan(0.3);
+    expect(at(6) - at(3)).toBeGreaterThan(at(12) - at(9));
+    expect(at(NEIGHBOUR.fundMax)).toBeLessThanOrEqual(NEIGHBOUR.boostMax);
+    // Six banked: a Jarang Muncul RT builds about every 1.8 months instead of 3.
+    const s = grown();
+    const j = s.neighbours[0];
+    j.trait = 'jarang';
+    s.res.rupiah = 1e9;
+    fundNeighbour(s, j, 12);
+    const before = j.buildings.length;
+    for (let m = 0; m < 12; m++) step(s);
+    expect(j.buildings.length - before).toBeGreaterThanOrEqual(6);
+  });
+
+  it('auto-dana tops an RT back up each month and keeps the kas above the floor', () => {
+    const s = grown();
+    const n = s.neighbours[0];
+    s.res.rupiah = 1e9;
+    setAutoFund(n, 6);
+    step(s);
+    expect(n.funded).toBeGreaterThanOrEqual(5);
+    setAutoFund(n, 4);
+    expect(n.autoKeep).toBe(0);
+    setAutoFund(n, 3);
+    n.funded = 0;
+    s.res.rupiah = autoFloor(s) + fundCost(s) * 1.5;
+    step(s);
+    expect(s.res.rupiah).toBeGreaterThanOrEqual(autoFloor(s) - fundCost(s));
+    expect(autoMonthly(s, n)).toBeGreaterThan(0);
   });
 });
 
@@ -247,7 +288,7 @@ describe('RW goals and Stempel', () => {
     const s = grown();
     s.res.rupiah = 1e9;
     s.neighbours.forEach((n, i) => { n.trait = i ? 'rajin' : 'jarang'; n.pop = 0; });
-    s.neighbours[0].lastBuild = -10;
+    s.neighbours[0].progress = 1;
     fundNeighbour(s, s.neighbours[0]);
     s.stempel.stock = 0;
     step(s);
@@ -281,3 +322,39 @@ describe('RW goals and Stempel', () => {
     expect(s.debtFree).toBe(0);
   });
 });
+
+describe('combos count across RTs', () => {
+  it("an AI RT's combos goal uses the most combos any RT has, the player's own check stays its own", () => {
+    const s = grown();
+    const n = s.neighbours[0];
+    s.discovered = ['a', 'b', 'c'];
+    n.discovered = [];
+    const combos = { kind: 'combos', n: 3 } as const;
+    expect(goalProgress(viewOf(s, n), combos).have).toBe(3);
+    s.discovered = [];
+    s.neighbours[1].discovered = ['x', 'y'];
+    expect(goalProgress(viewOf(s, n), combos).have).toBe(2);
+    expect(goalProgress(s, combos).have).toBe(0);
+  });
+
+  it('a Rajin RT, which only ever finds one combo, reaches 3 stars on auto-dana', () => {
+    for (const seed of [1, 2, 3]) {
+      const s = newGame(seed);
+      s.stage.stars.rt = 3;
+      // The player's own RT reached 3 stars, which takes 3 combos.
+      s.discovered = ['tongkrongan', 'rapatMalam', 'perangKuota'];
+      promote(s, []);
+      s.stage.current = 'rw';
+      s.neighbours.forEach((n) => { n.trait = 'rajin'; setAutoFund(n, 6); });
+      for (let m = 0; m < 6 * 12; m++) {
+        s.res.rupiah = 1e9;
+        step(s);
+      }
+      for (const n of s.neighbours) {
+        expect(n.discovered.length, `seed ${seed}`).toBeLessThanOrEqual(1);
+        expect(n.stars, `seed ${seed}`).toBe(3);
+      }
+    }
+  });
+});
+

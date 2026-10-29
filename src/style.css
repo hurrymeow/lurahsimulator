@@ -413,6 +413,11 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 
 .lang-row .row { flex-wrap: wrap; }
 .lang-row .row .btn { flex: 1 1 140px; }
+/* Neighbours: the Dana buttons keep each price in one piece, and the four auto-dana levels share one row. */
+.nb-fund .btn { flex: 1 1 0; }
+.nb-fund .price, .nb-boost { white-space: nowrap; }
+.nb-auto .row .btn { flex: 1 1 56px; padding-left: 4px; padding-right: 4px; }
+.nb-auto { margin-top: var(--gap); }
 
 /* stage header in the Menu */
 .stage-head {

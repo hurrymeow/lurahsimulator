@@ -57,21 +57,51 @@ function newNeighbour(s: GameState, cx: number, cy: number): Neighbour {
 /** What one Dana costs now. */
 export const fundCost = (s: GameState) => price(s, NEIGHBOUR.fundCost);
 
-export function checkFund(s: GameState, n: Neighbour): string | null {
-  if (n.funded >= NEIGHBOUR.fundMax) return t('grow.fundFull');
-  if (s.res.rupiah < fundCost(s)) return t('grow.fundMoney', { amt: fundCost(s) - Math.floor(s.res.rupiah) });
+/** How many of `count` builds still fit in the bank. */
+const room = (n: Neighbour, count: number) => Math.max(0, Math.min(count, NEIGHBOUR.fundMax - n.funded));
+
+export function checkFund(s: GameState, n: Neighbour, count = 1): string | null {
+  const k = room(n, count);
+  if (!k) return t('grow.fundFull', { n: NEIGHBOUR.fundMax });
+  if (s.res.rupiah < fundCost(s) * k) return t('grow.fundMoney', { amt: fundCost(s) * k - Math.floor(s.res.rupiah) });
   return null;
 }
 
-/** Dana for one RT: it pays for one more build. */
-export function fundNeighbour(s: GameState, n: Neighbour): string | null {
-  const why = checkFund(s, n);
+/** Dana for one RT: each pays for one more build. Asking for more than fits banks only what fits. */
+export function fundNeighbour(s: GameState, n: Neighbour, count = 1): string | null {
+  const why = checkFund(s, n, count);
   if (why) return why;
-  s.res.rupiah -= fundCost(s);
-  s.stats.spent += fundCost(s);
-  n.funded = Math.min(NEIGHBOUR.fundMax, n.funded + 1);
+  const k = room(n, count);
+  s.res.rupiah -= fundCost(s) * k;
+  s.stats.spent += fundCost(s) * k;
+  n.funded += k;
   n.everFunded = true;
   return null;
+}
+
+/** How much faster banked Dana makes an RT build, as a fraction: 0.82 is +82%. Diminishing returns. */
+export const boostOf = (n: Neighbour): number => (n.funded > 1 ? NEIGHBOUR.boostMax * (1 - NEIGHBOUR.boostDecay ** (n.funded - 1)) : 0);
+
+/** Months between builds at no boost. */
+export const buildEvery = (n: Neighbour): number => (n.trait === 'rajin' ? NEIGHBOUR.buildEveryRajin : NEIGHBOUR.buildEvery);
+
+/** Auto-dana: off (0) or one of the levels it keeps the bank topped up to. */
+export function setAutoFund(n: Neighbour, keep: number): void {
+  n.autoKeep = (NEIGHBOUR.autoLevels as readonly number[]).includes(keep) ? keep : 0;
+}
+
+/** The kas never drops below this to auto-fund. */
+export const autoFloor = (s: GameState) => price(s, NEIGHBOUR.autoFloor);
+
+/** About what auto-dana spends a month on this RT at its level: one Dana per build, at the boosted pace. */
+export const autoMonthly = (s: GameState, n: Neighbour): number =>
+  n.autoKeep ? Math.round((fundCost(s) * (1 + NEIGHBOUR.boostMax * (1 - NEIGHBOUR.boostDecay ** (n.autoKeep - 1)))) / buildEvery(n)) : 0;
+
+/** Each month, auto-dana tops every RT that has it on back up to its level, while the kas stays above the floor. */
+function autoFund(s: GameState): void {
+  for (const n of s.neighbours) {
+    while (n.autoKeep && n.funded < n.autoKeep && s.res.rupiah - fundCost(s) >= autoFloor(s)) fundNeighbour(s, n);
+  }
 }
 
 function build(s: GameState, n: Neighbour): void {
@@ -97,10 +127,13 @@ function build(s: GameState, n: Neighbour): void {
 
 /** Month by month: build when funded, grow, and earn stars by the same checklist the player uses. */
 export function neighboursSystem(s: GameState, fx: Fx): void {
+  autoFund(s);
   for (const n of s.neighbours) {
     if (n.funded > 0) {
-      const every = n.trait === 'rajin' ? NEIGHBOUR.buildEveryRajin : NEIGHBOUR.buildEvery;
-      if (s.month - n.lastBuild >= every) {
+      // Progress toward the next build: one build every `buildEvery` months, faster with more Dana banked.
+      n.progress = (n.progress ?? 0) + (1 + boostOf(n)) / buildEvery(n);
+      if (n.progress >= 1) {
+        n.progress = Math.min(1, n.progress - 1);
         n.lastBuild = s.month;
         n.turns++;
         // Hobi Wacana holds a wacana instead of building every third turn.

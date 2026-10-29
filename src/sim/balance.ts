@@ -47,8 +47,19 @@ export const NEIGHBOUR = {
   /** Rp one Dana pays an RT, before inflation. Each Dana is one build. Matches RW.danaPerBuild. */
   fundCost: 1_000_000,
   /** Builds one RT can have banked at once. */
-  fundMax: 3,
-  /** Months between builds. Rajin builds faster. */
+  fundMax: 12,
+  /** The bigger Dana button: this many builds at once. */
+  fundBulk: 6,
+  /**
+   * Banked Dana speeds an RT up: each build past the first adds pace, with diminishing returns.
+   * Boost = boostMax x (1 - boostDecay^(banked - 1)): 1 banked 0%, 3 about 36%, 6 about 67%, 12 about 91%.
+   */
+  boostMax: 1,
+  boostDecay: 0.8,
+  /** Auto-dana tops an RT back up to the level the player picks, and never spends the kas below this floor. */
+  autoLevels: [3, 6, 12],
+  autoFloor: 5_000_000,
+  /** Months between builds at no boost. Rajin builds faster. */
   buildEvery: 3,
   buildEveryRajin: 2,
   /** Rajin earns this much more from each building. Kept for the iuran their residents pay. */
