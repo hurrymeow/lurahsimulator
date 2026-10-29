@@ -49,7 +49,8 @@ async function dismissModals(page: Page): Promise<void> {
     }
     seen.push(`${await page.locator('#modal').getAttribute('class')}: ${(await page.locator('#modal h2').first().textContent({ timeout: 1000 }).catch(() => '?'))}`);
     if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click({ timeout: 5000 });
-    else await page.locator('#modal').click({ timeout: 5000 });
+    // Tap the dim corner: the card's own stat icons answer a tap with their name instead of closing the card, and on a slow runner one can sit at the centre.
+    else await page.locator('#modal').click({ position: { x: 8, y: 8 }, timeout: 5000 });
     await page.waitForTimeout(650);
   }
   // Twelve cards in a row means one is not going away. Name them, rather than run into the test timeout.
@@ -609,6 +610,24 @@ test.describe('events, ranking, settings', () => {
     await expectLegible(page, 'stats with ranking');
     // The 2045 meter shows Sejahtera, a whole percent.
     await expect(page.locator('#emas-value')).toHaveText(/^\d{1,3}%$/);
+  });
+
+  test('developer mode loads a seeded RW game after a second tap', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    const rw = page.locator('#sheet [data-seed="rw"]');
+    await rw.scrollIntoViewIfNeeded();
+    await rw.click();
+    await expect(rw).toHaveClass(/btn-danger/);
+    await expect(page.locator('#sheet')).toBeVisible();
+    await expectLegible(page, 'developer seed armed');
+    await rw.click();
+    await expect(page.locator('#sheet')).toBeHidden();
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('pakrt.save') ?? '{}'));
+    expect(saved.stage.current).toBe('rw');
+    expect(saved.stage.stars.rt).toBe(3);
   });
 
   test('every setting flips, saves, and leaves the game readable', async ({ page }) => {

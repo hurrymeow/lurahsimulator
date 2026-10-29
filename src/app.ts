@@ -397,6 +397,22 @@ export class App {
     this.refresh();
   }
 
+  /** Developer test mode: replaces the current kampung with a seeded save from src/sim/seeds/. */
+  async loadSeed(id: 'rt3' | 'rw' | 'kel'): Promise<boolean> {
+    const load = { rt3: () => import('./sim/seeds/rt3.json?raw'), rw: () => import('./sim/seeds/rw.json?raw'), kel: () => import('./sim/seeds/kel.json?raw') }[id];
+    const raw = (await load()).default;
+    const s = deserialize(raw);
+    if (!s) return false;
+    this.s = s;
+    ensureStaff(this.s);
+    setPlayer(this.s.player);
+    this.view.regrid();
+    this.log = [];
+    this.save();
+    this.refresh();
+    return true;
+  }
+
   // ---------- feedback ----------
   haptic(ms: number | number[]): void {
     if (this.settings.haptics && 'vibrate' in navigator) {

@@ -535,6 +535,7 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .staff-gig { padding: 6px 0; border-top: 1px dashed var(--muted); }
 .staff-gig p { margin: 0 0 2px; }
 .staff-gig.done strong { text-decoration: line-through; }
+.dev-seeds { display: flex; flex-direction: column; gap: 8px; }
 
 /* Lomba Agustusan: the panitia panel and the full-screen day. */
 .lomba-contest.on { border-color: var(--accent); }
