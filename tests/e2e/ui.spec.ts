@@ -698,6 +698,8 @@ test.describe('events, ranking, settings', () => {
   });
 
   test('with effects off the game still plays and shows numbers', async ({ page }) => {
+    // Each month can bring a card to tap away, so this runs close to the 60s limit on a busy CI runner.
+    test.slow();
     await start(page);
     await dismissModals(page);
     await page.evaluate(() => {
@@ -990,6 +992,8 @@ test.describe('text is legible and never cut off', () => {
   });
 
   test('a long idle run never breaks the layout', async ({ page }) => {
+    // Each month can bring a card to tap away, so this runs close to the 60s limit on a busy CI runner.
+    test.slow();
     await start(page);
     await dismissModals(page);
     for (let i = 0; i < 40; i++) {
