@@ -122,6 +122,8 @@ export interface Neighbour {
   progress?: number;
   /** Auto-dana: tops the bank back up to this many builds each month. 0 or missing is off. */
   autoKeep?: number;
+  /** Auto-dana level while the player runs the RT, restored on hand-back. */
+  autoBefore?: number;
   /** Its buildings have been linked by Jalan Setapak. Missing in saves from before AI paths. */
   pathsLaid?: boolean;
   /** 'player' when the player took this RT over: its buildings sit in the player's own list. Missing is AI-run. */

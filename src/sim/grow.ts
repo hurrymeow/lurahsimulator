@@ -38,6 +38,9 @@ function addTo(s: GameState, n: Neighbour, id: string, x: number, y: number): Bu
   return b;
 }
 
+/** True when the RT's lot has no free tile left: Dana then waits, so the screen says why. */
+export const lotFull = (n: Neighbour): boolean => freeTiles(n).length === 0;
+
 function freeTiles(n: Neighbour): { x: number; y: number }[] {
   const taken = new Set(n.buildings.map((b) => `${b.x},${b.y}`));
   const out: { x: number; y: number }[] = [];
@@ -183,6 +186,8 @@ export function takeover(s: GameState, n: Neighbour): string | null {
   n.buildings = [];
   n.pop = 0;
   n.funded = 0;
+  // Remembered, so handing it back resumes Auto-dana where the player left it.
+  n.autoBefore = n.autoKeep ?? 0;
   n.autoKeep = 0;
   n.progress = 0;
   n.run = 'player';
@@ -216,6 +221,9 @@ export function handBack(s: GameState, n: Neighbour): void {
   n.lastBuild = s.month;
   // The player may have built where the AI's paths ran: link everything again next month.
   n.pathsLaid = false;
+  // Auto-dana comes back on at the level it had before the takeover, so the RT does not sit unfunded.
+  n.autoKeep = n.autoBefore ?? 0;
+  delete n.autoBefore;
   delete n.run;
   syncArea(s);
   refreshAccess(s);

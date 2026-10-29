@@ -2,7 +2,7 @@ import { t } from '../i18n';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { NEIGHBOUR } from '../sim/balance';
-import { autoFloor, autoMonthly, boostOf, builtBy, cellName, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, setAutoFund, takeover } from '../sim/grow';
+import { autoFloor, autoMonthly, boostOf, builtBy, cellName, lotFull, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, setAutoFund, takeover } from '../sim/grow';
 import { viewOf } from '../sim/neighbourView';
 import { starChecklist } from '../sim/stages';
 import type { Neighbour } from '../sim/types';
@@ -68,7 +68,12 @@ export function openNeighbours(app: App): void {
         h('p', { class: 'meta' }, t('grow.row', { cell: cellName(n), stars: n.stars, pop: viewOf(s, n).residents.length, n: viewOf(s, n).buildings.filter((b) => b.def !== 'jalan').length })),
         h('p', { class: 'meta nb-status' }, t('grow.playerRun')),
         missing(app, n),
-        h('button', { class: 'btn', 'data-handback': '1', onclick: () => { handBack(s, n); redo(); } }, t('grow.handBack')),
+        h('button', { class: 'btn', 'data-handback': '1', onclick: () => {
+          handBack(s, n);
+          // Say what happens next: building resumes only with Dana banked.
+          app.notice({ title: t('grow.handedBack', { cell: cellName(n) }), body: n.autoKeep ? t('grow.handedBackAuto', { n: n.autoKeep }) : t('grow.handedBackFund'), tone: 'info' });
+          redo();
+        } }, t('grow.handBack')),
         h('p', { class: 'meta' }, t('grow.handBackHelp', { n: NEIGHBOUR.takeoverOd })),
       );
     }
@@ -81,7 +86,7 @@ export function openNeighbours(app: App): void {
       h('strong', {}, cellName(n)),
       h('p', { class: 'meta' }, t('grow.row', { cell: cellName(n), stars: n.stars, pop: n.pop, n: builtBy(n).length })),
       h('p', { class: 'meta' }, t(`grow.trait.${n.trait}`)),
-      h('p', { class: `meta nb-status${boost ? ' boosted' : ''}` }, n.funded > 0 ? t('grow.funded', { n: n.funded }) : t('grow.stalled'), boost ? h('strong', { class: 'nb-boost' }, ` ${t('grow.boost', { n: boost })}`) : null),
+      h('p', { class: `meta nb-status${boost ? ' boosted' : ''}` }, lotFull(n) ? t('grow.lotFull') : n.funded > 0 ? t('grow.funded', { n: n.funded }) : t('grow.stalled'), boost ? h('strong', { class: 'nb-boost' }, ` ${t('grow.boost', { n: boost })}`) : null),
       missing(app, n),
       h('div', { class: 'row nb-fund' },
         h('button', { class: 'btn', 'data-fund': '1', disabled: !!one, onclick: () => fund(n, 1) }, t('grow.fund', { n: 1 }), ' ', h('span', { class: 'price' }, rupiah(fundCost(s)))),

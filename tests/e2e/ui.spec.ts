@@ -1576,6 +1576,8 @@ test.describe('growing map', () => {
     await openPanel(page, 'neighbours');
     await page.locator('.sheet .nb-mine [data-handback]').click();
     await expect(page.locator('.sheet .nb-row.nb-mine')).toHaveCount(0);
+    // The toast says what happens next: it builds only with Dana banked.
+    await expect(page.locator('#ticker')).toContainText(lang() === 'en' ? 'back with the AI' : 'kembali dijalankan AI');
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].run)).toBeUndefined();
   });
 });
