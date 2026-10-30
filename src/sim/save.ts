@@ -42,7 +42,10 @@ export function deserialize(raw: string | null): GameState | null {
     if (!s.gapped) ungap(s);
     setGrid(s.stage.current);
     setPlayerCells(s.neighbours.filter((n) => n.run === 'player'));
-    if (!s.sized) growBuildings(s);
+    if (!s.sized) growBuildings(s, GREW_FROM);
+    if (!s.laddered) growBuildings(s, GREW_LADDER);
+    s.sized = true;
+    s.laddered = true;
     if (!s.roadsLaid) layRoads(s);
     return s;
   } catch {
@@ -93,12 +96,14 @@ function ungap(s: GameState): void {
 
 /** Square sizes before the Oct 30 sizes: buildings that grew. Lapangan shrank to 2x3, which always fits. */
 const GREW_FROM: Record<string, number> = { kosan: 1, koperasi: 1, bengkel: 1, balaiRW: 1, posyandu: 1, pasarKaget: 1, terminal: 2 };
+/** Square sizes before the ladder pass: the Kontrakan grew from 1x1 to the RW tier's 2x2. */
+const GREW_LADDER: Record<string, number> = { kontrakan: 1 };
 
 /**
  * Buildings that grew keep their spot. Each takes its new footprint if it fits, turned if that is what fits;
  * otherwise it keeps its old square size (`small`) until the player moves it. Nothing is demolished or refunded.
  */
-function growBuildings(s: GameState): void {
+function growBuildings(s: GameState, grewFrom: Record<string, number>): void {
   const fitsAt = (b: Building, list: Building[], rot: 0 | 1) => {
     const tiles = tilesOf({ def: b.def, x: b.x, y: b.y, rot });
     const ownLots = list === s.buildings;
@@ -106,7 +111,7 @@ function growBuildings(s: GameState): void {
   };
   for (const list of [s.buildings, ...s.neighbours.map((n) => n.buildings)])
     for (const b of list) {
-      const was = GREW_FROM[b.def];
+      const was = grewFrom[b.def];
       if (was === undefined) continue;
       const rot = b.rot ?? 0;
       if (fitsAt(b, list, rot)) continue;
@@ -114,7 +119,6 @@ function growBuildings(s: GameState): void {
       if (fitsAt(b, list, other)) b.rot = other;
       else b.small = was;
     }
-  s.sized = true;
 }
 
 /** The selokan became the biopori, at the same level. Old saves swap it over, including unlocks and Kerja Bakti. */

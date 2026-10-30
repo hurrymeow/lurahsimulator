@@ -23,7 +23,7 @@ describe('shops, facilities and housing', () => {
     const s = newGame(2);
     const before = housing(s);
     addBuilding(s, 'kontrakan', 3, 3, 'active');
-    expect(housing(s)).toBe(before + 4);
+    expect(housing(s)).toBe(before + 12);
   });
   it('bengkel opens ojol slots, gudang opens tukang slots', () => {
     const s = newGame(3);

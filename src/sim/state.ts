@@ -43,6 +43,7 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
     roadsLaid: true,
     gapped: true,
     sized: true,
+    laddered: true,
   };
   setGrid('rt');
   setPlayerCells([]);

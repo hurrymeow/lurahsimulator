@@ -77,6 +77,23 @@ describe('1x2 and other shapes', () => {
     expect(sizeOf(at(boxed.uid))).toEqual({ w: 2, h: 1 });
   });
 
+  it('a save from before the ladder pass fits its Kontrakan at 2x2, or keeps it 1x1 until moved', () => {
+    const s = town();
+    const fits = addBuilding(s, 'kontrakan', 1, 1, 'active');
+    const boxed = addBuilding(s, 'kontrakan', 5, 5, 'active');
+    addBuilding(s, 'warung', 6, 5, 'active');
+    addBuilding(s, 'warung', 5, 6, 'active');
+    addBuilding(s, 'warung', 6, 6, 'active');
+    const raw = JSON.parse(serialize(s));
+    delete raw.laddered;
+    const back = deserialize(JSON.stringify(raw))!;
+    const at = (uid: number) => back.buildings.find((b) => b.uid === uid)!;
+    expect(sizeOf(at(fits.uid))).toEqual({ w: 2, h: 2 });
+    expect(at(boxed.uid).small).toBe(1);
+    expect(back.laddered).toBe(true);
+    expect(back.buildings).toHaveLength(s.buildings.length);
+  });
+
   it('AI RTs never stack a big building on another', () => {
     const s = newGame(2);
     s.stage.stars.rt = 3;
