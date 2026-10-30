@@ -48,6 +48,30 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Show the pending goals for the next star (the unmet ones, with have and need) in the strip or its expanded view, and keep one next action only when it helps. Check UI.md, the Now and Next star strip, and the combo-priority item. Draft the strip with Hari before building.
   - Source: Hari, 2026-10-29. Related: "Put the combo goal ahead of 'build a house' in the goal strip"
   - `claimed · voidinside99 · 2026-10-30 · done when:` the strip shows the pending goals for the next star in ID and EN, nothing clips at 320px, and the pacing e2e still passes.
+- [ ] **Slow the Kelurahan down and make its stars read the player's own kampung.**
+  - Problem: In the bot playtest the Kelurahan reached 3★ in 11 to 15 minutes at 1x (target about 30). Every star waited only on "every RW at N★", which Dana buys, while the player's own Popularitas sat at 0 and their kampung shrank to 2 to 9 residents.
+  - Why: The Kelurahan plays itself once it is funded, and a Lurah can win with an empty kampung.
+  - Suggested solution: Add goals that read the player's own kampung (Popularitas and residents) to Kelurahan 1★ to 3★, and retune with `tests/kel-bot.test.ts` toward the 30-minute target. Pick the goals with Hari.
+  - Source: `decisions/kelurahan-playtest.md`, findings 1 to 3
+  - `open · — · — · done when:` each Kelurahan star needs something from the player's own kampung, and the Kelurahan bot's 3★ lands near 30 minutes at 1x.
+- [ ] **Sejahtera must not reward an empty kampung.**
+  - Problem: The 2045 meter read 86 to 100 with 2 to 9 residents, because Perut and Kerja are full when almost nobody needs feeding or work.
+  - Why: Sidang Emas 2045 compares Sejahtera with the Laporan. An empty kampung would score as Pahlawan.
+  - Suggested solution: Weight Sejahtera by households, or floor it by population against the stage's target, so a tiny kampung cannot read high. Check `src/sim/needs.ts` and the Sidang Emas endings.
+  - Source: `decisions/kelurahan-playtest.md`, finding 4
+  - `open · — · — · done when:` a kampung under the stage's resident target cannot show Sejahtera above a set ceiling, with a unit test.
+- [ ] **Cap Studi Banding.**
+  - Problem: Studi Banding has no `maxCount`, and each one counts as spent toward Serapan. The bot built more than 60 and filled the seams.
+  - Why: Spamming it is the cheapest way to Serapan, and it buries the Kelurahan map.
+  - Suggested solution: Give it a `maxCount` (for example 2), or make it a one-off action in Anggaran instead of a building.
+  - Source: `decisions/kelurahan-playtest.md`, finding 5
+  - `open · — · — · done when:` Studi Banding cannot be built without limit, and the Kelurahan bot still reaches its stars.
+- [ ] **Decide on Kecamatan and above from the playtest.**
+  - Problem: `decisions/kelurahan-playtest.md` proposes Kecamatan (a ring of districts, Musrenbang, pinjol and judol) and one line for each stage above. Hari has not decided.
+  - Why: GAME-DESIGN.md section 2 waits on this before Kecamatan is specified.
+  - Suggested solution: Hari answers the four questions at the end of the playtest doc; then section 2 gets a Kecamatan entry.
+  - Source: `decisions/kelurahan-playtest.md`
+  - `open · — · — · done when:` Hari has decided, and GAME-DESIGN.md section 2 specifies Kecamatan.
 
 ## Done
 
