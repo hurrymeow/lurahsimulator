@@ -15,7 +15,7 @@ export interface WacanaDef {
 export const WACANA: WacanaDef[] = [
   { id: 'digital', name: 'Kampung Digital 2030', line: 'A QR code will be placed on the pos ronda. Eventually.', side: { rupiah: -40_000, viral: 2 }, trade: 'Adds Virality. Costs Rp 40k a month in cloud bills.' },
   { id: 'gotong', name: 'Gotong Royong 2.0', line: 'Same as gotong royong, but with a hashtag.', side: { rupiah: -30_000 }, trade: 'Costs Rp 30k a month in snacks for the volunteers.' },
-  { id: 'genangan', name: 'Zero Genangan', line: 'We will study the puddle. A committee will be formed.', side: { orangDalam: -0.2 }, trade: 'Spends Orang Dalam. The committee needs favours.' },
+  { id: 'genangan', name: 'Zero Genangan', line: 'We will study the puddle. A committee will be formed.', side: { orangDalam: -0.2 }, trade: 'Spends Orang Inside. The committee needs favours.' },
   { id: 'warung', name: 'Warung Naik Kelas', line: 'Every warung to be upgraded to "UMKM". Paperwork TBD.', side: { rupiah: -50_000, viral: 1.5 }, trade: 'Adds Virality. Costs Rp 50k a month in paperwork.' },
   { id: 'hijau', name: 'Kampung Hijau', line: 'Three pots of cabai will be placed near the kantor.', side: { rupiah: -10_000 }, trade: 'Cheap. Costs Rp 10k a month for the pots.' },
 ];

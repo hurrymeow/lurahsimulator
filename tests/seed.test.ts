@@ -1,12 +1,15 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { seedGame, type SeedId } from './seed-bot';
+import { refreshAccess } from '../src/sim/access';
 import { deserialize, serialize } from '../src/sim/save';
 import { setGrid } from '../src/sim/types';
 
 afterEach(() => setGrid('rt'));
 
 const file = (id: SeedId) => new URL(`../src/sim/seeds/${id}.json`, import.meta.url);
+/** Fewest different building kinds a seed must show, so no seed is many copies of a few. */
+const MIN_KINDS = { rt3: 10, rw: 18, kel: 20 } as const;
 const STAGE = { rt3: 'rt', rw: 'rw', kel: 'kelurahan' } as const;
 
 describe('developer seeds', () => {
@@ -25,6 +28,14 @@ describe('developer seeds', () => {
       expect(s?.stage.stars.rt).toBe(3);
       expect(s!.buildings.length).toBeGreaterThan(50);
       expect(s!.res.rupiah).toBeGreaterThan(1_000_000);
+    });
+  }
+  for (const id of Object.keys(STAGE) as SeedId[]) {
+    it(`${id} is a planned town: every building has a road and the mix is wide`, () => {
+      const s = deserialize(readFileSync(file(id), 'utf8'))!;
+      refreshAccess(s);
+      expect(s.buildings.filter((b) => b.noRoad).map((b) => b.def)).toEqual([]);
+      expect(new Set(s.buildings.filter((b) => b.def !== 'jalan').map((b) => b.def)).size).toBeGreaterThanOrEqual(MIN_KINDS[id]);
     });
   }
 });

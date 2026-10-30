@@ -60,15 +60,10 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Hari answers the four questions at the end of the playtest doc; then section 2 gets a Kecamatan entry.
   - Source: `decisions/kelurahan-playtest.md`
   - `open · — · — · done when:` Hari has decided, and GAME-DESIGN.md section 2 specifies Kecamatan.
-- [ ] **Make the dev seeds look like a proper city.**
-  - Problem: The developer seeds (#158, `src/sim/seeds/*.json`, `decisions/dev-seeds.md`) load a messy town. They come from a plain bot (`tests/seed-bot.ts`) that builds everything placeable, so buildings land at random spots with no clear roads and little variety. Hari, 2026-10-30.
-  - Why: The seeds exist to test higher stages quickly. A messy map hides layout, road-access, crowding and art problems, and it is no use for screenshots or playtests of how a late game should look.
-  - Suggested solution: Change the seed bot, or hand-lay the seeds, so each one looks planned: a built road grid with Jalan Setapak linking every building, houses in blocks, shops along the roads, decor and parks in gaps, and a mix of all unlocked buildings and levels (not many copies of a few). Keep the star and resident counts the seeds have now. Rebuild with `SEED_WRITE=1 npx vitest run tests/seed.test.ts` and add a check that the seed has no unreachable buildings and uses a minimum number of different building kinds. Check one screenshot per seed at 390px before merging.
-  - Source: Hari, 2026-10-30. Related: "Let AI RTs build many more kinds of building".
-  - `claimed · Claude (Hari's thread) · 2026-10-30 · done when:` each seed shows roads linking every building, a mix of many building kinds and levels in a tidy layout, the star and resident counts are unchanged, the seed tests pass, and a screenshot of each seed was checked.
 
 ## Done
 
+- [x] **Make the dev seeds look like a proper city.** Planned streets, a wide mix of kinds, road access for every building, checked by tests. Residents rose (45, 87, 60). #186, `decisions/city-seeds.md`.
 - [x] **Sejahtera must not reward an empty kampung.** A population ceiling on Sejahtera: 30 at none, 100 from 25 residents. #184, `decisions/sejahtera-cap.md`.
 - [x] **Cap Studi Banding.** `maxCount: 3`. #183, `decisions/studi-banding-cap.md`.
 - [x] **Add more buildings bigger than 1x1, starting with Balai RW at 2x2.** Reworked with Julian: 1x2 Kos-kosan, Bengkel, Posyandu, Pasar Kaget; 2x2 Koperasi and Balai RW; Lapangan 2x3 with year-round rent; Terminal the only 3x3. Long buildings turn 90 degrees. Square ones reuse their art at full size; long ones are built from the existing one-tile art, which is untouched. #173, `decisions/building-shapes.md`.
@@ -114,7 +109,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: English is the default UI language in-game.
   - Suggested solution: A nightly or weekly workflow runs the `-en` projects without slowing PRs.
   - Source: `decisions/default-lang-id.md`
-  - `open · — · — · done when:` a scheduled workflow runs the en projects and reports failures.
+  - `claimed · Claude (Hari's thread) · 2026-10-30 · done when:` a scheduled workflow runs the en projects and reports failures.
 - [ ] **Tune `GRADE_BONUS`.**
   - Problem: The economy may feel thin after grade bonuses went half-yearly.
   - Why: Less income per year than before.
