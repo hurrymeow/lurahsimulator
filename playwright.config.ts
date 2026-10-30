@@ -30,9 +30,9 @@ export default defineConfig({
     timeout: 120_000,
   },
   // CI runs every phone in Indonesian, the default language and the one whose longer strings clip first.
-  // Local runs add English. The spec reads the language from the project name suffix.
+  // The scheduled English workflow sets E2E_LANG=en. Local runs add English. The spec reads the language from the project name suffix.
   projects: PHONES.flatMap((p) =>
-    (process.env.CI ? (['id'] as const) : (['id', 'en'] as const)).map((lang) => ({
+    (process.env.CI ? (process.env.E2E_LANG === 'en' ? (['en'] as const) : (['id'] as const)) : (['id', 'en'] as const)).map((lang) => ({
       name: `${p.name}-${lang}`,
       use: { viewport: p.viewport, deviceScaleFactor: 2, hasTouch: true, isMobile: true, locale: lang === 'id' ? 'id-ID' : 'en-US' },
     })),

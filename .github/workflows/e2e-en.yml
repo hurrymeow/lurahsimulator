@@ -1,0 +1,39 @@
+# English e2e on a schedule. PR CI runs Indonesian only (decisions/default-lang-id.md), so English clipping is caught here.
+name: E2E English
+
+on:
+  schedule:
+    - cron: '0 20 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-en:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright test --shard=${{ matrix.shard }}/6
+        env:
+          CI: 'true'
+          E2E_LANG: en
+      - if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-en-${{ matrix.shard }}
+          path: playwright-report
+          retention-days: 7
