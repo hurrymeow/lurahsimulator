@@ -164,6 +164,8 @@ export interface Meters {
   perut: number;
   kerja: number;
   aman: number;
+  /** Highest Sejahtera this kampung can show for its size. Absent in old saves, which means no ceiling. */
+  cap?: number;
 }
 
 export interface StaffStats {

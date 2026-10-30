@@ -4,7 +4,7 @@ import { def } from './content';
 import type { Fx } from './gain';
 import { meters, sejahtera } from './needs';
 import { isWorking } from './state';
-import type { GameState, Meters } from './types';
+import type { GameState } from './types';
 
 /** Where a month's Popularitas went, for the first-drop warning. */
 export type SabarCause = 'queue' | 'expect' | 'broke' | 'needs' | 'buildings';
@@ -34,7 +34,7 @@ export function monthWarnings(s: GameState, fx: Fx, before: number, losses: Part
   if (last) {
     const drop = sejahtera(last) - sejahtera(now);
     if (drop >= EMAS_DROP) {
-      const keys = ['perut', 'kerja', 'aman'] as (keyof Meters)[];
+      const keys = ['perut', 'kerja', 'aman'] as ('perut' | 'kerja' | 'aman')[];
       const worst = keys.sort((a, b) => last[b] - now[b] - (last[a] - now[a]))[0];
       const shut = worst === 'perut' ? shutFood(s) : null;
       fx.push({
