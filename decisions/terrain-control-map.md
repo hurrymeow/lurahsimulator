@@ -23,6 +23,14 @@ Asked by the maintainer: blend the mountains too, and add islands so the horizon
 - The far tree line stays only in front of the mountains. Past them it breaks into far islands (`farIsland`) with open sea between, so the horizon has gaps and bumps.
 - Up to seven small islands sit on the open sea (`seaIslands`), placed by hash only where every pixel round them is open sea, so they never touch the kampung, beach or each other. They use the ground's height-blended pick for sand, grass and forest. They are painted into the cached world canvas, so they cost nothing per frame and are not tappable.
 
+## Sky (follow-up in the same PR)
+
+The maintainer found the 32-ray sunburst out of step with the painted, hazy land. Five options were rendered locally (sunburst, clear dithered, soft shafts, cloud banks, golden-hour cloud banks), and the maintainer picked golden-hour cloud banks.
+
+- The sky steps between its bands through the 4x4 dither, like the far haze, so the gradient reads as air instead of stripes. The stops warm toward a gold horizon.
+- Heaps of round cumulus rest on the horizon in separate banks, lit warm cream from the top left with dusty rose shade, melting into the haze at their base. They are baked into the world canvas; the per-frame streak clouds stay.
+- The sunburst rays are gone. The sun, its halo and the atmosphere's god rays are unchanged.
+
 ## Rules kept
 
 - The kampung and the ring road stay tile-exact (`exact`). Plots, the faint tile checker and the road must read for placement and taps.

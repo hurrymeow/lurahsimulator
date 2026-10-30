@@ -5,5 +5,6 @@
 - The coast, sawah, kebun and terraces now meet along organic lines instead of tile staircases. The kampung and ring road are unchanged.
 - Mountains in altitude zones (ash, rock, forest) with height-blended borders; forest feet run into the land.
 - The horizon breaks into far islands with open sea between, and small islands dot the sea.
+- Golden-hour sky stepped through the dither, with cloud banks on the horizon, replaces the sunburst.
 - `tests/terrain.test.ts` covers the bit layout, bilinear weights, blends and the height push.
 - ART.md: new Ground materials section, bare earth in the palette.

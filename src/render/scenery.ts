@@ -444,6 +444,71 @@ function put(img: ImageData, x: number, y: number, c: string): void {
   img.data.set([(n >> 16) & 255, (n >> 8) & 255, n & 255, 255], (y * WORLD_W + x) * 4);
 }
 
+/**
+ * A golden-hour sky: deep blue overhead warming to a gold horizon, stepped between bands through
+ * the 4x4 dither like the far haze, so it reads as air instead of stripes. Peach cloud banks rest
+ * on the horizon (cloudBanks).
+ */
+function paintSky(img: ImageData): void {
+  const SKY_STOPS: [number, number[]][] = [[0, [63, 111, 174]], [0.45, [118, 160, 204]], [0.75, [226, 200, 170]], [1, [246, 206, 148]]];
+  const skyRGB = (k: number, x: number, y: number): number[] => {
+    let i = 0;
+    while (i < SKY_STOPS.length - 2 && k > SKY_STOPS[i + 1][0]) i++;
+    const [k0, c0] = SKY_STOPS[i];
+    const [k1, c1] = SKY_STOPS[i + 1];
+    const f = Math.min(1, Math.max(0, (k - k0) / (k1 - k0)));
+    const q = Math.min(1, Math.floor(f * 8 + bayer(x, y)) / 8);
+    return [0, 1, 2].map((j) => Math.round(c0[j] + (c1[j] - c0[j]) * q));
+  };
+  for (let y = 0; y < WORLD_H; y++)
+    for (let x = 0; x < WORLD_W; x++) {
+      if (y >= HORIZON) put(img, x, y, groundColour('sea', 0, 0, x, y, 0, 0));
+      else img.data.set([...skyRGB(Math.max(0, 1 - (HORIZON - y) / 190), x, y), 255], (y * WORLD_W + x) * 4);
+    }
+  cloudBanks(img);
+}
+
+/**
+ * Banks of cumulus resting on the horizon behind the mountains, after the soft painted skies of
+ * HD-2D vistas: round puffs (nature is round), lit warm cream on top and to the left, dusty rose in
+ * the shade, and a flat underside that melts into the gold horizon haze through the dither. No ink.
+ */
+function cloudBanks(img: ImageData): void {
+  const LIT = ['#fff4dc', '#f6dcc0', '#e8c4b4', '#d2b0b4'];
+  const HAZE_SKY = [240, 214, 170];
+  // A few separate banks with sky between them. Each is a heap of round puffs, tallest in its
+  // middle and trailing off to small puffs at its ends.
+  const puffs: [number, number, number][] = [];
+  for (let k = 0; k < Math.ceil(WORLD_W / 260); k++) {
+    const bx = (k + 0.2 + hash(k, 510) * 0.6) * 260;
+    const bw = 50 + hash(k, 511) * 90;
+    const bh = 14 + hash(k, 512) * 26;
+    for (let i = 0; i < bw / 7; i++) {
+      const t = hash(k * 50 + i, 501) * 2 - 1;
+      const prof = Math.sqrt(1 - t * t);
+      const r = 4 + bh * prof * (0.5 + hash(k * 50 + i, 502) * 0.5);
+      puffs.push([bx + t * bw, HORIZON - 4 - r * 0.6 - bh * prof * hash(k * 50 + i, 503) * 0.5, r]);
+    }
+  }
+  for (const [cx, cy, r] of puffs.sort((p, q) => p[1] - q[1]))
+    for (let y = Math.max(0, Math.floor(cy - r)); y < HORIZON; y++)
+      for (let x = Math.max(0, Math.floor(cx - r)); x < Math.min(WORLD_W, cx + r); x++) {
+        const dx = (x - cx) / r;
+        const dy = (y - cy) / r;
+        // Round top, flat base squashed toward the horizon.
+        if (dx * dx + (dy < 0 ? dy * dy : dy * dy * 0.25) > 1) continue;
+        // Light from the top left: cream cap, rose toward the bottom right.
+        const lit = -dx * 0.6 - dy * 0.9 + (vnoise(x, y, 5) - 0.5) * 0.4;
+        const i = lit > 0.5 ? 0 : lit > 0 ? 1 : lit > -0.45 ? 2 : 3;
+        const c = hex(LIT[i]);
+        let rgb = [c >> 16, (c >> 8) & 255, c & 255];
+        // Toward the horizon the bank melts into the haze.
+        const m = Math.max(0, Math.min(1, Math.round((0.25 + smooth((y - (HORIZON - 30)) / 28) * 0.7 + (bayer(x, y) - 0.5) * 0.3) * 5) / 5));
+        if (m) rgb = rgb.map((ch, k) => Math.round(ch + (HAZE_SKY[k] - ch) * m));
+        img.data.set([rgb[0], rgb[1], rgb[2], 255], (y * WORLD_W + x) * 4);
+      }
+}
+
 /** Renders the whole world at art resolution. Cached by the caller. */
 export function buildWorld(): HTMLCanvasElement {
   const c = document.createElement('canvas');
@@ -453,28 +518,8 @@ export function buildWorld(): HTMLCanvasElement {
   const img = ctx.createImageData(WORLD_W, WORLD_H);
 
   const base = HORIZON + 30;
-  const sx = SUN_X;
-  const sy = SUN_Y;
 
-  // Deep blue sky that warms toward the horizon haze over the last 190 rows, the part the view
-  // can reach, with lighter sunburst rays from the sun.
-  const SKY_STOPS: [number, number[]][] = [[0, [63, 111, 174]], [0.55, [126, 176, 214]], [0.85, [214, 214, 196]], [1, [243, 217, 168]]];
-  const skyAt = (k: number, ray: boolean): string => {
-    let i = 0;
-    while (i < SKY_STOPS.length - 2 && k > SKY_STOPS[i + 1][0]) i++;
-    const [k0, c0] = SKY_STOPS[i];
-    const [k1, c1] = SKY_STOPS[i + 1];
-    const f = Math.min(1, Math.max(0, (k - k0) / (k1 - k0)));
-    // Banded in eight steps per stop, so the gradient stays a painted, pixel-art ramp.
-    const q = Math.round(f * 8) / 8;
-    const ch = (j: number) => Math.round(c0[j] + (c1[j] - c0[j]) * q + (ray ? 14 : 0));
-    return `#${[0, 1, 2].map((j) => Math.min(255, ch(j)).toString(16).padStart(2, '0')).join('')}`;
-  };
-  for (let y = 0; y < WORLD_H; y++)
-    for (let x = 0; x < WORLD_W; x++) {
-      if (y >= HORIZON) put(img, x, y, groundColour('sea', 0, 0, x, y, 0, 0));
-      else put(img, x, y, skyAt(Math.max(0, 1 - (HORIZON - y) / 190), Math.floor(((Math.atan2(y - sy, x - sx) / Math.PI + 1) * 16)) % 2 === 1));
-    }
+  paintSky(img);
 
   // Ground tiles. Each pixel remembers its terrain, so ink lines can follow every border.
   const land = new Uint8Array(WORLD_W * WORLD_H);
@@ -770,7 +815,7 @@ const ISLAND_FOREST = ['#3c6229', '#466e30', '#517a37'];
  */
 function seaIslands(img: ImageData, land: Uint8Array): void {
   const placed: [number, number, number][] = [];
-  for (let i = 0; i < 30 && placed.length < 7; i++) {
+  for (let i = 0; i < 120 && placed.length < 7; i++) {
     const cy = HORIZON + 12 + hash(i, 401) ** 1.3 * (WORLD_H - HORIZON - 40);
     const cx = 20 + hash(i, 402) * (WORLD_W - 40);
     // Nearer islands (lower on screen) are bigger.
