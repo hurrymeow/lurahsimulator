@@ -65,7 +65,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: Spamming it is the cheapest way to Serapan, and it buries the Kelurahan map.
   - Suggested solution: Give it a `maxCount` (for example 2), or make it a one-off action in Anggaran instead of a building.
   - Source: `decisions/kelurahan-playtest.md`, finding 5
-  - `open · — · — · done when:` Studi Banding cannot be built without limit, and the Kelurahan bot still reaches its stars.
+  - `claimed · Claude (Hari's thread) · 2026-10-30 · done when:` Studi Banding cannot be built without limit, and the Kelurahan bot still reaches its stars.
 - [ ] **Decide on Kecamatan and above from the playtest.**
   - Problem: `decisions/kelurahan-playtest.md` proposes Kecamatan (a ring of districts, Musrenbang, pinjol and judol) and one line for each stage above. Hari has not decided.
   - Why: GAME-DESIGN.md section 2 waits on this before Kecamatan is specified.
