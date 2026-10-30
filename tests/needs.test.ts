@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { setPlayer, t } from '../src/i18n';
-import { fed, households, laporan, meters, NEEDS, needsSystem, premanList, premanTake, sejahtera } from '../src/sim/needs';
+import { fed, households, laporan, meters, NEEDS, needsSystem, premanList, premanTake, sejahtera, sejahteraCap } from '../src/sim/needs';
 import { checkRealisasi, realisasiSum, startRealisasi } from '../src/sim/realisasi';
 import { announce } from '../src/sim/wacana';
 import { addBuilding, newGame } from '../src/sim/state';
@@ -70,5 +70,15 @@ describe('player names in text', () => {
     setPlayer({ title: 'Bu', name: 'Sari', kampung: 'Kampung Melati' });
     expect(t('coach.menu')).toContain('Bu Sari');
     expect(t('coach.done')).toMatch(/good team/);
+  });
+});
+
+describe('sejahtera ceiling', () => {
+  it('caps a tiny kampung and lifts the cap as it grows', () => {
+    expect(sejahteraCap(0)).toBe(30);
+    expect(sejahtera({ perut: 100, kerja: 100, aman: 100, cap: sejahteraCap(5) })).toBe(44);
+    expect(sejahteraCap(25)).toBe(100);
+    expect(sejahteraCap(60)).toBe(100);
+    expect(sejahtera({ perut: 100, kerja: 100, aman: 100 })).toBe(100);
   });
 });
