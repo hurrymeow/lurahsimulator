@@ -36,25 +36,30 @@ function starWaitsOnCombo(s: GameState): boolean {
   return open.length > 0 && open.every((l) => l.goal.kind === 'combos');
 }
 
+export type StepKind = 'house' | 'combo' | 'wait' | 'beds' | 'draw';
+
 /**
- * The goal for the next minute or less, so there is always a quick thing to do. The star goal is the long one.
- * Order: first house; the first combo once it is time, or as soon as it is all the star still needs (it leads over
- * beds); waiting on a build; beds; a reason to move in when residents stop coming; then residents.
+ * One next action, only when it helps beyond the star list: the first house, the first combo once it is time
+ * (or as soon as it is all the star still needs, ahead of beds), waiting on a build, beds, or what draws people
+ * when residents stop coming. "Reach N residents" is not a step: the star list already says it with have and need.
  */
-export function shortGoal(s: GameState): string | null {
-  if (!s.buildings.some((b) => b.def === 'rumah')) return t('goal.short.house');
+export function nextStep(s: GameState): { kind: StepKind; text: string } | null {
+  if (!s.buildings.some((b) => b.def === 'rumah')) return { kind: 'house', text: t('goal.short.house') };
   if ((s.month >= COMBO_HINT_MONTH && s.discovered.length === 0) || starWaitsOnCombo(s)) {
     const c = easiestCombo(s);
-    if (c) return t('goal.short.combo', { name: c.name, pieces: c.pieces });
+    if (c) return { kind: 'combo', text: t('goal.short.combo', { name: c.name, pieces: c.pieces }) };
   }
   const pending = s.buildings.filter((b) => b.status === 'permit' || b.status === 'building').sort((a, b) => a.timer - b.timer)[0];
-  if (pending) return t('goal.short.wait', { name: bName(def(pending.def)) });
+  if (pending) return { kind: 'wait', text: t('goal.short.wait', { name: bName(def(pending.def)) }) };
   const pop = population(s);
-  if (pop >= housing(s)) return t('goal.short.beds');
+  if (pop >= housing(s)) return { kind: 'beds', text: t('goal.short.beds') };
   // Beds are free but nobody comes: the kampung has no more pull. Say what draws people, not "reach N".
   if (pop >= attractTarget(s)) {
     const name = bestDraw(s);
-    if (name) return t('goal.short.draw', { name });
+    if (name) return { kind: 'draw', text: t('goal.short.draw', { name }) };
   }
-  return t('goal.short.pop', { n: (Math.floor(pop / 3) + 1) * 3 });
+  return null;
 }
+
+/** The next step's text, or null. */
+export const shortGoal = (s: GameState): string | null => nextStep(s)?.text ?? null;

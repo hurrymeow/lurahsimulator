@@ -152,6 +152,8 @@ test.describe('opener', () => {
     await goal.locator('.goal-now').dispatchEvent('click');
     await expect(goal.locator('.goal-star')).toBeVisible();
     await expect(goal.locator('.goal-now')).toHaveAttribute('aria-expanded', 'true');
+    // Opened, it lists each unmet goal for the next star with have and need.
+    await expect(goal.locator('.goal-row').first()).toContainText({ id: 'punya', en: 'have' }[lang()]);
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.s.month = 30;
