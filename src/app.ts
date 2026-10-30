@@ -556,7 +556,8 @@ export class App {
       h('p', { class: `exp-row exp-${kind}` }, h('strong', {}, `${{ up: '▲', down: '▼', edge: '■' }[kind]} ${t(`exp.${kind}`)}`), ` ${t(`exp.${id}.${kind}` as Key)}`);
     const colour = id === 'pop' ? 'var(--text)' : id === 'emas' ? 'var(--orang)' : RES_VAR[id];
     const icon = id === 'emas' ? h('span', { class: 'chip-text' }, 'Emas') : h('img', { src: iconURL(id === 'pop' ? 'people' : RES_META[id].icon, 6), alt: '', width: 36, height: 36, class: 'pixel' });
-    const title = id === 'pop' ? t('res.warga') : id === 'emas' ? t('stats.emasTitle') : RES_META[id].label();
+    // The title keeps the word beside the big icon: the one word-plus-icon legend per stat.
+    const title = id === 'pop' ? t('res.warga') : id === 'emas' ? t('stats.emasTitle') : `{plain:${RES_META[id].label()}}`;
     const body = id === 'pop'
       ? `${t('exp.pop.what')} ${t('pop.line', { pop: population(this.s), housing: housing(this.s), attract: attractTarget(this.s) })}${population(this.s) >= housing(this.s) ? ` ${t('pop.full')}` : ''}`
       : id === 'emas'

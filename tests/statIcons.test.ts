@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { EN } from '../src/i18n/en';
+import { ID_DATA } from '../src/i18n/id-data';
 import { groupStatSegments, hasStatWord, splitStatText } from '../src/ui/statIcons';
 
 const segs = (str: string, lang: 'id' | 'en') => splitStatText(str, lang);
@@ -60,6 +62,20 @@ describe('stat word replacement', () => {
     expect(before.filter((g) => g.kind === 'pair')).toEqual([{ kind: 'pair', before: '30', stat: 'viral', after: '' }]);
     const after = groupStatSegments(segs('Viral 30 ke atas', 'id'));
     expect(after.filter((g) => g.kind === 'pair')).toEqual([{ kind: 'pair', before: '', stat: 'viral', after: '30' }]);
+  });
+});
+
+describe('stat words in the shipped text', () => {
+  it('uses the English stat words in English, so they turn into icons', () => {
+    for (const [key, str] of Object.entries(EN)) {
+      expect(str, key).not.toMatch(/\bOrang Dalam\b/);
+      if (key !== 'res.viral') expect(str, key).not.toMatch(/\bViral \+/);
+    }
+  });
+
+  it('keeps the adjective and the person as words', () => {
+    expect(stats(ID_DATA['event.lubangViral.name'], 'id')).toEqual([]);
+    expect(stats(ID_DATA['combo.urusanSurat.story'], 'id')).toEqual([]);
   });
 });
 
