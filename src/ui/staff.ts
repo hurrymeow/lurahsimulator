@@ -1,10 +1,11 @@
-// The Staff panel: Inem's dream, every staff member with their stats and what can be done with them, and the
-// Lowongan (post one, wait, pick an applicant).
+// The Staff panel: one card per person with one main action, as in Kairosoft's staff screens. Tapping a card
+// opens that person's detail view, where the rare actions sit (stats, refuse a raise, mutasi, let go). Posting a
+// lowongan is one button per role; the channel is picked in the next view. Inem's dream sits at the bottom.
 import { chBlurb, chName, gName, gNeeds, gReward, roleBlurb, roleName, spType, t, traitEffect, traitName, type Key } from '../i18n';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { inemURL } from '../render/inem';
-import { CHANNELS, GIGS, RAISE, SPECIALS, STATS, STAT_MAX, roleDef, traitDef } from '../data/staff';
+import { CHANNELS, GIGS, RAISE, SPECIALS, STATS, STAT_MAX, roleDef, traitDef, type RoleId } from '../data/staff';
 import {
   answerRaise, bimtek, bimtekCost, cancelLowongan, checkBimtek, checkFire, checkHire, checkMutasi, checkPost, ensureStaff, fire, hire,
   lowonganCost, mutasi, openRoles, pesangon, postLowongan, staffSlots,
@@ -14,6 +15,9 @@ import type { Applicant, Staff } from '../sim/types';
 import { actionButton } from './inspect';
 import { h } from './dom';
 import { openSheet } from './sheet';
+
+/** Which view of the panel is open: the list, one person, or picking a channel for a role. */
+type View = { kind: 'list' } | { kind: 'person'; id: number } | { kind: 'post'; role: RoleId };
 
 const stars = (n: number) => t('staff.stars', { stars: n });
 
@@ -36,13 +40,44 @@ function aboutLines(a: Applicant): Node[] {
   return out;
 }
 
-function staffCard(app: App, x: Staff): HTMLElement {
+const face = (x: Staff) =>
+  x.inem ? h('img', { src: inemURL(), alt: '', width: 44, height: 60, class: 'pixel staff-face' }) : h('span', { class: 'staff-badge', 'aria-hidden': 'true' }, stars(x.stars));
+
+/** Lines that need the player's eye, shown on the card and in the detail view. */
+function flags(x: Staff): Node[] {
+  const out: Node[] = [];
+  if (x.away) out.push(h('p', { class: 'meta warn' }, t('staff.awayNow', { n: x.away })));
+  if (x.refused) out.push(h('p', { class: 'meta warn' }, t('staff.refused')));
+  return out;
+}
+
+function staffCard(app: App, x: Staff, done: () => void): HTMLElement {
   const s = app.s;
-  const done = () => {
-    app.save();
-    app.refresh();
-    openStaff(app);
-  };
+  // The one main action: answer a raise when asked, else train them. Inem has none; her card opens her view.
+  let main: Node | null = null;
+  if (x.raiseAsked) {
+    main = h('div', { class: 'action' }, h('button', { class: 'btn btn-primary', onclick: () => { answerRaise(s, x, true); app.tap(10); done(); } }, t('staff.accept')));
+  } else if (!x.inem) {
+    main = actionButton(t('staff.bimtek', { cost: rupiah(bimtekCost(s)) }), checkBimtek(s, x), () => { bimtek(s, x); app.tap(15); done(); }, true);
+  }
+  return h('div', { class: `card-btn static staff-card${x.inem ? ' inem' : ''}`, 'data-staff': String(x.id) },
+    face(x),
+    h('div', { class: 'card-text' },
+      h('button', { class: 'staff-open', type: 'button', 'aria-label': t('staff.details', { name: x.name }), onclick: () => openStaff(app, { kind: 'person', id: x.id }) },
+        h('span', { class: 'card-title' }, h('strong', {}, x.name), h('span', { class: 'meta' }, t('staff.level', { n: x.level }))),
+        h('span', { class: 'meta' }, t('staff.roleLine', { role: roleName(roleDef(x.role)), stars: x.stars })),
+        h('span', { class: 'meta' }, t('staff.salary', { amt: rupiah(price(s, x.salary)) })),
+      ),
+      ...flags(x),
+      x.raiseAsked ? h('p', { class: 'meta' }, t('staff.raiseAsk', { amt: rupiah(price(s, Math.round(x.salary * (1 + RAISE)))) })) : null,
+      main,
+    ),
+  );
+}
+
+/** One person: everything about them, and the actions a player needs now and then. */
+function personView(app: App, x: Staff, done: () => void): Node[] {
+  const s = app.s;
   const role = roleDef(x.role);
   const parts: Node[] = [
     h('div', { class: 'card-title' }, h('strong', {}, x.name), h('span', { class: 'meta' }, t('staff.level', { n: x.level }))),
@@ -51,9 +86,8 @@ function staffCard(app: App, x: Staff): HTMLElement {
     ...aboutLines(x),
     statBars(x.stats),
     h('p', { class: 'meta' }, t('staff.salary', { amt: rupiah(price(s, x.salary)) })),
+    ...flags(x),
   ];
-  if (x.away) parts.push(h('p', { class: 'meta warn' }, t('staff.awayNow', { n: x.away })));
-  if (x.refused) parts.push(h('p', { class: 'meta warn' }, t('staff.refused')));
   if (x.raiseAsked) {
     parts.push(h('p', { class: 'meta' }, t('staff.raiseAsk', { amt: rupiah(price(s, Math.round(x.salary * (1 + RAISE)))) })));
     parts.push(h('div', { class: 'row staff-actions' },
@@ -62,22 +96,36 @@ function staffCard(app: App, x: Staff): HTMLElement {
     ));
   }
   if (!x.inem) {
-    parts.push(actionButton(t('staff.bimtek', { cost: rupiah(bimtekCost(s)) }), checkBimtek(s, x), () => { bimtek(s, x); app.tap(15); done(); }));
+    if (!x.raiseAsked) parts.push(actionButton(t('staff.bimtek', { cost: rupiah(bimtekCost(s)) }), checkBimtek(s, x), () => { bimtek(s, x); app.tap(15); done(); }, true));
     const mut = checkMutasi(s, x);
     if (mut.ok) {
       s.neighbours.forEach((_n, i) => parts.push(actionButton(t('staff.mutasi', { name: `RT ${i + 2}` }), mut, () => {
         mutasi(s, x, i);
         app.notice({ title: t('staff.mutasiDone', { name: x.name }), body: '', tone: 'good' });
         app.tap(15);
-        done();
+        openStaff(app);
       })));
     } else parts.push(actionButton(t('staff.mutasi', { name: 'RT' }), mut, () => undefined));
-    parts.push(actionButton(t('staff.fire', { cost: rupiah(pesangon(s, x)) }), checkFire(s, x), () => { fire(s, x); app.tap(15); done(); }));
+    parts.push(h('div', { class: 'staff-fire' }, actionButton(t('staff.fire', { cost: rupiah(pesangon(s, x)) }), checkFire(s, x), () => { fire(s, x); app.tap(15); openStaff(app); })));
   }
-  return h('div', { class: `card-btn static staff-card${x.inem ? ' inem' : ''}`, 'data-staff': String(x.id) },
-    x.inem ? h('img', { src: inemURL(), alt: '', width: 44, height: 60, class: 'pixel staff-face' }) : h('span', { class: 'staff-badge', 'aria-hidden': 'true' }, stars(x.stars)),
-    h('div', { class: 'card-text' }, ...parts),
-  );
+  return [h('div', { class: `staff-detail${x.inem ? ' inem' : ''}`, 'data-staff': String(x.id) }, face(x), h('div', { class: 'card-text' }, ...parts))];
+}
+
+/** Picking where to post a lowongan for one role: each channel, its price and its catch. */
+function postView(app: App, role: RoleId): Node[] {
+  const s = app.s;
+  const r = roleDef(role);
+  return [
+    h('p', {}, h('strong', {}, roleName(r)), ` · ${roleBlurb(r)}`),
+    h('p', { class: 'meta' }, t('staff.pickChannel')),
+    ...CHANNELS.map((c) => {
+      const cost = lowonganCost(s, c.id);
+      return h('div', { class: 'staff-channel', 'data-channel': c.id },
+        actionButton(t('staff.postVia', { channel: chName(c), cost: cost ? rupiah(cost) : t('staff.free') }), checkPost(s, role, c.id), () => { postLowongan(s, role, c.id); app.tap(15); app.save(); app.refresh(); openStaff(app); }),
+        h('p', { class: 'meta' }, chBlurb(c)),
+      );
+    }),
+  ];
 }
 
 function dream(app: App): HTMLElement {
@@ -92,13 +140,8 @@ function dream(app: App): HTMLElement {
   );
 }
 
-function lowongan(app: App): HTMLElement {
+function lowongan(app: App, done: () => void): HTMLElement {
   const s = app.s;
-  const done = () => {
-    app.save();
-    app.refresh();
-    openStaff(app);
-  };
   const lw = s.lowongan;
   if (lw) {
     const ch = CHANNELS.find((c) => c.id === lw.channel)!;
@@ -116,31 +159,38 @@ function lowongan(app: App): HTMLElement {
     return h('section', { class: 'staff-lowongan' }, h('h3', {}, t('staff.post')), head, req, ...apps,
       h('div', { class: 'action' }, h('button', { class: 'btn', onclick: () => { cancelLowongan(s); done(); } }, t('staff.cancel'))));
   }
+  // One button per open role; the channels wait behind it.
   const roles = openRoles(s).map((r) => h('div', { class: 'card-btn static staff-role', 'data-role': r.id },
     h('div', { class: 'card-text' },
       h('strong', {}, roleName(r)),
       h('p', {}, roleBlurb(r)),
-      ...CHANNELS.map((c) => {
-        const cost = lowonganCost(s, c.id);
-        return h('div', {},
-          actionButton(t('staff.postVia', { channel: chName(c), cost: cost ? rupiah(cost) : t('staff.free') }), checkPost(s, r.id, c.id), () => { postLowongan(s, r.id, c.id); app.tap(15); done(); }),
-          h('p', { class: 'meta' }, chBlurb(c)),
-        );
-      }),
+      h('div', { class: 'action' }, h('button', { class: 'btn', type: 'button', onclick: () => openStaff(app, { kind: 'post', role: r.id }) }, t('staff.postRole'))),
     ),
   ));
   return h('section', { class: 'staff-lowongan' }, h('h3', {}, t('staff.post')), ...roles);
 }
 
-export function openStaff(app: App): void {
+export function openStaff(app: App, view: View = { kind: 'list' }): void {
   const s = app.s;
   ensureStaff(s);
+  const done = () => {
+    app.save();
+    app.refresh();
+    openStaff(app, view);
+  };
+  const back = h('div', { class: 'action' }, h('button', { class: 'btn staff-back', type: 'button', onclick: () => openStaff(app) }, t('staff.back')));
+  if (view.kind === 'person') {
+    const x = s.staff!.find((p) => p.id === view.id);
+    if (x) return openSheet(x.name, [back, ...personView(app, x, done)]);
+  } else if (view.kind === 'post') {
+    return openSheet(t('staff.post'), [back, ...postView(app, view.role)]);
+  }
   const wages = s.staff!.reduce((n, x) => n + price(s, x.salary), 0);
   openSheet(t('menu.staff'), [
     h('p', { class: 'meta' }, t('staff.intro')),
     h('p', { class: 'meta', id: 'staff-slots' }, t('staff.slots', { n: s.staff!.length, max: staffSlots(s), wages: rupiah(wages) })),
-    ...s.staff!.map((x) => staffCard(app, x)),
-    lowongan(app),
+    ...s.staff!.map((x) => staffCard(app, x, done)),
+    lowongan(app, done),
     dream(app),
   ]);
 }

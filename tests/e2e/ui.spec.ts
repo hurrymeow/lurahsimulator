@@ -2106,7 +2106,8 @@ test.describe('build mode', () => {
     await openPanel(page, 'staff');
     await expect(page.locator('#sheet .staff-card.inem')).toBeVisible();
     await expectLegible(page, 'staff panel');
-    await page.locator('#sheet .staff-role[data-role="hansip"] .btn').nth(1).click();
+    await page.locator('#sheet .staff-role[data-role="hansip"] .btn').click();
+    await page.locator('#sheet .staff-channel[data-channel="online"] .btn').click();
     await expect(page.locator('#sheet .staff-req')).toBeVisible();
     await page.locator('.sheet-head .btn').click();
     // The applicants arrive after the wait; a month at a time, clearing any message on the way.
@@ -2134,7 +2135,8 @@ test.describe('build mode', () => {
     });
     await openPanel(page, 'staff');
     // Online: the second channel, with the shorter wait.
-    await page.locator('#sheet .staff-role[data-role="hansip"] .btn').nth(1).click();
+    await page.locator('#sheet .staff-role[data-role="hansip"] .btn').click();
+    await page.locator('#sheet .staff-channel[data-channel="online"] .btn').click();
     await page.locator('.sheet-head .btn').click();
     const waiting = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.lowongan?.applicants?.length ?? 0);
     for (let i = 0; i < 3 && !(await waiting()); i++) await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
@@ -2170,6 +2172,52 @@ test.describe('build mode', () => {
     await expect(page.locator('#sheet .staff-card')).toHaveCount(2);
     await page.locator('.sheet-head .btn').click();
     await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
+  });
+
+  test('each staff card has one main button; raise and let go work from the card and its detail view', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.res.rupiah = 50_000_000;
+      app.s.stage.stars.rt = 1;
+      app.refresh();
+    });
+    await openPanel(page, 'staff');
+    // Hire: post online, wait for applicants, hire the first.
+    await page.locator('#sheet .staff-role[data-role="hansip"] .btn').click();
+    await expectLegible(page, 'staff channel view');
+    await page.locator('#sheet .staff-channel[data-channel="online"] .btn').click();
+    for (let i = 0; i < 3; i++) {
+      if (await page.evaluate(() => ((window as unknown as { pakrt: any }).pakrt.s.lowongan?.applicants?.length ?? 0) > 0)) break;
+      await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
+    }
+    await page.locator('.sheet-head .btn').click();
+    await dismissModals(page);
+    await openPanel(page, 'staff');
+    await page.locator('#sheet .staff-applicant .btn-primary').first().click();
+    const hired = page.locator('#sheet .staff-card:not(.inem)');
+    await expect(hired).toHaveCount(1);
+    // One main button per card, besides the name block that opens the detail view.
+    for (const card of await page.locator('#sheet .staff-card').all()) expect(await card.locator('.btn').count()).toBeLessThanOrEqual(1);
+    // Raise: asked for one, the card's main button gives it.
+    const salary = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.staff.find((x: any) => !x.inem).salary as number);
+    const before = await salary();
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.staff.find((x: any) => !x.inem).raiseAsked = true;
+      app.refresh();
+    });
+    await page.locator('.sheet-head .btn').click();
+    await openPanel(page, 'staff');
+    await hired.locator('.btn-primary').click();
+    expect(await salary()).toBeGreaterThan(before);
+    // Let go: the rare action sits in the detail view.
+    await hired.locator('.staff-open').click();
+    await expect(page.locator('#sheet .staff-detail')).toBeVisible();
+    await expectLegible(page, 'staff detail');
+    await page.locator('#sheet .staff-fire .btn').click();
+    await expect(page.locator('#sheet .staff-card')).toHaveCount(1);
   });
 
   test('a building waiting for a permit shows its Orang Dalam button without scrolling', async ({ page }) => {
