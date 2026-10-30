@@ -59,13 +59,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: Sidang Emas 2045 compares Sejahtera with the Laporan. An empty kampung would score as Pahlawan.
   - Suggested solution: Weight Sejahtera by households, or floor it by population against the stage's target, so a tiny kampung cannot read high. Check `src/sim/needs.ts` and the Sidang Emas endings.
   - Source: `decisions/kelurahan-playtest.md`, finding 4
-  - `open · — · — · done when:` a kampung under the stage's resident target cannot show Sejahtera above a set ceiling, with a unit test.
-- [ ] **Cap Studi Banding.**
-  - Problem: Studi Banding has no `maxCount`, and each one counts as spent toward Serapan. The bot built more than 60 and filled the seams.
-  - Why: Spamming it is the cheapest way to Serapan, and it buries the Kelurahan map.
-  - Suggested solution: Give it a `maxCount` (for example 2), or make it a one-off action in Anggaran instead of a building.
-  - Source: `decisions/kelurahan-playtest.md`, finding 5
-  - `claimed · Claude (Hari's thread) · 2026-10-30 · done when:` Studi Banding cannot be built without limit, and the Kelurahan bot still reaches its stars.
+  - `claimed · Claude (Hari's thread) · 2026-10-30 · done when:` a kampung under the stage's resident target cannot show Sejahtera above a set ceiling, with a unit test.
 - [ ] **Decide on Kecamatan and above from the playtest.**
   - Problem: `decisions/kelurahan-playtest.md` proposes Kecamatan (a ring of districts, Musrenbang, pinjol and judol) and one line for each stage above. Hari has not decided.
   - Why: GAME-DESIGN.md section 2 waits on this before Kecamatan is specified.
@@ -81,6 +75,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- [x] **Cap Studi Banding.** `maxCount: 3`. #183, `decisions/studi-banding-cap.md`.
 - [x] **Add more buildings bigger than 1x1, starting with Balai RW at 2x2.** Reworked with Julian: 1x2 Kos-kosan, Bengkel, Posyandu, Pasar Kaget; 2x2 Koperasi and Balai RW; Lapangan 2x3 with year-round rent; Terminal the only 3x3. Long buildings turn 90 degrees. Square ones reuse their art at full size; long ones are built from the existing one-tile art, which is untouched. #173, `decisions/building-shapes.md`.
 - [x] **Force the update with a full-screen screen.** Option A: full screen on the home screen only, a dot and a Perbarui tile in Menu during play. #172, `decisions/id-text-and-update.md`.
 - [x] **Review the Bahasa Indonesia UI text (not event content).** Rows 1 to 15 of the proposals doc; row 16 stays Combo. #172.
