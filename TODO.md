@@ -53,7 +53,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: The Kelurahan plays itself once it is funded, and a Lurah can win with an empty kampung.
   - Suggested solution: Add goals that read the player's own kampung (Popularitas and residents) to Kelurahan 1★ to 3★, and retune with `tests/kel-bot.test.ts` toward the 30-minute target. Pick the goals with Hari.
   - Source: `decisions/kelurahan-playtest.md`, findings 1 to 3
-  - `open · — · — · done when:` each Kelurahan star needs something from the player's own kampung, and the Kelurahan bot's 3★ lands near 30 minutes at 1x.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` each Kelurahan star needs something from the player's own kampung, and the Kelurahan bot's 3★ lands near 30 minutes at 1x.
 - [ ] **Sejahtera must not reward an empty kampung.**
   - Problem: The 2045 meter read 86 to 100 with 2 to 9 residents, because Perut and Kerja are full when almost nobody needs feeding or work.
   - Why: Sidang Emas 2045 compares Sejahtera with the Laporan. An empty kampung would score as Pahlawan.
