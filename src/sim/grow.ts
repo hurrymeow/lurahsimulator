@@ -340,6 +340,12 @@ function build(s: GameState, n: Neighbour): void {
   addTo(s, n, id, first.x, first.y, rotOf(first));
 }
 
+/** True for an RT inside the player's own RW, the first RW of every map. */
+const ownRw = (n: { cx: number; cy: number }): boolean => {
+  const { rx, ry } = rwOf(n.cx, n.cy);
+  return rx === 0 && ry === 0;
+};
+
 /** Month by month: build when funded, grow, and earn stars by the same checklist the player uses. */
 export function neighboursSystem(s: GameState, fx: Fx): void {
   autoFund(s);
@@ -357,7 +363,8 @@ export function neighboursSystem(s: GameState, fx: Fx): void {
           build(s, n);
           n.funded--;
           // Every build needs a Surat Pengantar stamped by the RW. Jarang Muncul sends twice as many.
-          s.stempel.backlog += STEMPEL.perBuild * (n.trait === 'jarang' ? 2 : 1) * letterMult(s);
+          // On a Kelurahan map the other RWs stamp their own; only the player's RW queues at the player.
+          if (ownRw(n)) s.stempel.backlog += STEMPEL.perBuild * (n.trait === 'jarang' ? 2 : 1) * letterMult(s);
         }
       }
       const v = viewOf(s, n);

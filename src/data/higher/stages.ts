@@ -38,15 +38,15 @@ export const KELURAHAN_STAGE: StageDef = {
   titles: ['Pak Lurah', 'Kelurahan Rintisan', 'Kelurahan Berkembang', 'Lurah Teladan'],
   stars: [
     {
-      goals: [{ kind: 'rwsAtStars', n: 4, stars: 1 }, { kind: 'serapanMonths', n: 12, pct: 80 }],
+      goals: [{ kind: 'rwsAtStars', n: 4, stars: 1 }, { kind: 'serapanMonths', n: 12, pct: 80 }, { kind: 'residents', n: 50 }, { kind: 'sabar', n: 50 }],
       unlocks: ['puskesmasPembantu', 'studiBanding'],
     },
     {
-      goals: [{ kind: 'rwsAtStars', n: 4, stars: 2 }, { kind: 'tierWins', n: 1, tier: 'kelurahan' }, { kind: 'cleanAudits', n: 1 }],
+      goals: [{ kind: 'rwsAtStars', n: 4, stars: 2 }, { kind: 'tierWins', n: 1, tier: 'kelurahan' }, { kind: 'cleanAudits', n: 1 }, { kind: 'residents', n: 120 }, { kind: 'sabar', n: 45 }],
       unlocks: [],
     },
     {
-      goals: [{ kind: 'tierWins', n: 3, tier: 'kelurahan' }, { kind: 'rwsAtStars', n: 4, stars: 3 }],
+      goals: [{ kind: 'tierWins', n: 3, tier: 'kelurahan' }, { kind: 'rwsAtStars', n: 4, stars: 3 }, { kind: 'residents', n: 200 }, { kind: 'sabar', n: 40 }],
       unlocks: [],
     },
   ],

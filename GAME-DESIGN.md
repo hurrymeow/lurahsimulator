@@ -179,7 +179,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 
 #### New RW content
 
-- **Stempel:** refills **3** a month. Every Surat Pengantar from an RT needs one. Each unstamped letter drains **0.5** Sabar a month. The player is now the permit queue.
+- **Stempel:** refills **3** a month. Every Surat Pengantar from an RT needs one. Each unstamped letter drains **0.5** Sabar a month. The player is now the permit queue. At the Kelurahan only the RTs in the player's own RW send letters to the player; the other RWs stamp their own.
 - **Dana:** the new verb. You fund each RT, and it builds and levels only when funded. More banked Dana builds faster, and Auto-dana keeps it funded (see AI neighbours).
 - **Balai RW:** **+1** Stempel a month, **2** PNS slots.
 - **Posyandu:** **+1** Sabar a month to neighbouring RTs.
@@ -204,18 +204,18 @@ The player picks a path at promotion. Kelurahan is dense and shop-heavy. Desa ma
 #### 0★ Pak Lurah or Pak Kades
 
 - Unlocks Kantor Kelurahan (or Balai Desa) and Anggaran.
-- **Goal for 1★:** every RW at 1★ or above, and serapan of at least **80%** for one year.
+- **Goal for 1★:** every RW at 1★ or above, serapan of at least **80%** for one year, and the player's own kampung at **50** residents and Popularitas **50**.
 
 #### 1★
 
 - Unlocks Puskesmas Pembantu and the Honorer job. Kelurahan gets Pasar. Desa gets BUMDes.
-- **Goal for 2★:** every RW at 2★ or above, **1** Piala Kelurahan win, and a clean Tim Audit.
+- **Goal for 2★:** every RW at 2★ or above, **1** Piala Kelurahan win, a clean Tim Audit, and the player's own kampung at **120** residents and Popularitas **50**.
 
 #### 2★
 
 - Kelurahan unlocks Terminal and Taman. Terminal is the one 3x3 building, the Kelurahan landmark: **Rp 25jt**, and shops within **3** tiles earn **20%** more. A 3x3 never fits a 2-tile seam, so it stands inside the player's RT lots.
 - Desa unlocks Sawah Irigasi, Embung, Desa Wisata and the Pendamping Desa job.
-- **Goal for 3★:** **3** Piala wins and every RW at 3★.
+- **Goal for 3★:** **3** Piala wins, every RW at 3★, and the player's own kampung at **200** residents and Popularitas **45**. A bigger kampung expects more, so holding Popularitas while growing is the work of this stage.
 
 #### 3★ Lurah Teladan
 
@@ -313,7 +313,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - **Growth gates:** stars gate content. Residents, wins and combos set the star goals. Stars never drop.
 - **Kas:** Kas RT becomes Kas RW, then Kas Kelurahan. AI areas pay iuran into it.
 - **Dana (RW):** you fund each neighbouring RT. An RT only builds and levels when funded. An unfunded RT visibly stalls.
-- **Stempel (RW):** refills 3 a month. Every Surat Pengantar needs one. Each unstamped letter drains 0.5 Sabar a month.
+- **Stempel (RW):** refills 3 a month. Every Surat Pengantar needs one. Each unstamped letter drains 0.5 Sabar a month. At the Kelurahan only the player's own RW sends letters to the player.
 - **Anggaran (Kelurahan):** a yearly budget arrives each January. Each unspent % cuts next year's budget by the same %. December brings a forced Serapan rush.
 - **Safety net:** no debt or soft-lock in year 1, and year-1 cash never below 0 for the idle and builder bots (targets 8 and 9).
 - **Tuning:** the balance autoplayer tunes star thresholds. How to read its results is in section 3.

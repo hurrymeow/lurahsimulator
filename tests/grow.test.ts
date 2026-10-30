@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { cellOf, cellOrigin, lotAt, ungapTile } from '../src/sim/area';
+import { cellOf, cellOrigin, lotAt, rwOf, ungapTile } from '../src/sim/area';
 import { goalProgress, nextStarChecklist } from '../src/sim/stages';
 import { viewOf } from '../src/sim/neighbourView';
 import { FLAT, connectedRoad, hasRoadBeside } from '../src/sim/access';
-import { nextWant, rivalTarget, lotFull, builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, promote, setAutoFund, takeover } from '../src/sim/grow';
+import { nextWant, rivalTarget, lotFull, builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, neighboursSystem, promote, setAutoFund, takeover } from '../src/sim/grow';
 import { NEIGHBOUR } from '../src/sim/balance';
 import { checkPlace, siteGaps } from '../src/sim/rules';
 import { def } from '../src/sim/content';
@@ -329,6 +329,24 @@ describe('RW goals and Stempel', () => {
     step(s);
     expect(s.stempel.backlog).toBe(16);
     expect(s.stempel.clear).toBe(0);
+  });
+
+  it('on a Kelurahan map only the RTs in the player\'s own RW send letters to the player', () => {
+    const s = grown('kelurahan');
+    s.res.rupiah = 1e9;
+    s.stempel.backlog = 0;
+    const inOwn = (n: (typeof s.neighbours)[number]) => rwOf(n.cx, n.cy).rx === 0 && rwOf(n.cx, n.cy).ry === 0;
+    const own = s.neighbours.find(inOwn)!;
+    const far = s.neighbours.find((n) => !inOwn(n))!;
+    s.neighbours.forEach((n) => { n.funded = 0; n.trait = 'rajin'; });
+    for (const n of [own, far]) {
+      fundNeighbour(s, n);
+      n.progress = 1;
+    }
+    neighboursSystem(s, []);
+    expect(own.turns).toBe(1);
+    expect(far.turns).toBe(1);
+    expect(s.stempel.backlog).toBe(1);
   });
 
   it('sends twice the letters for Jarang Muncul', () => {
