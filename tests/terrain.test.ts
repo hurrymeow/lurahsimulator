@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoBlend, baseOf, blendOf, encodeControl, isAuto, overlayOf, pickMaterial } from '../src/render/terrain';
+import { autoBlend, baseOf, blendOf, encodeControl, heightBlend, isAuto, overlayOf, pickMaterial } from '../src/render/terrain';
 
 describe('terrain control map', () => {
   it('packs fields at the bits Terrain3D uses', () => {
@@ -51,5 +51,14 @@ describe('terrain control map', () => {
     expect(pickMaterial(a, b, b, a, 0.4, 0.5, tall, 0.5)).toBe(2);
     // Deep on the left side its weight is gone, so it cannot reach.
     expect(pickMaterial(a, b, b, a, 0, 0.5, tall, 0.5)).toBe(1);
+  });
+});
+
+describe('height blend over a field', () => {
+  it('picks the heaviest zone unless a taller texture pushes through', () => {
+    expect(heightBlend([0.6, 0.4], [0, 0], 0.5)).toBe(0);
+    expect(heightBlend([0.6, 0.4], [0, 1], 0.5)).toBe(1);
+    // No weight, no reach.
+    expect(heightBlend([1, 0], [0, 1], 0.5)).toBe(0);
   });
 });

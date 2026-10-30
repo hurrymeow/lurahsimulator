@@ -69,3 +69,22 @@ function add(id: number, w: number): void {
   }
   weight[id] += w;
 }
+
+/**
+ * The same height-blended pick for materials laid out by a smooth field instead of corners, such
+ * as altitude zones on a mountain: weights[i] is how much zone i belongs here, heights[i] its
+ * height texture at this pixel. Returns the winning index.
+ */
+export function heightBlend(weights: readonly number[], heights: readonly number[], depth: number): number {
+  let best = 0;
+  let top = -Infinity;
+  for (let i = 0; i < weights.length; i++) {
+    if (weights[i] <= 0.02) continue;
+    const s = weights[i] + depth * heights[i];
+    if (s > top) {
+      top = s;
+      best = i;
+    }
+  }
+  return best;
+}

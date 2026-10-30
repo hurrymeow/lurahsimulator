@@ -134,8 +134,9 @@ Scenery colours:
 | Beach, sea | Sand `#e6c486` to `#f3daa2` with ripples, sea `#367f80` to `#4a9b96` with `#8fd0c2` wave dashes |
 | Sky | Deep blue `#3f6fae` down to warm haze `#f3d9a8` at the horizon, banded in steps, 32 lighter rays |
 | Clouds | Long thin streaks that taper at both ends: `#fbf8f2` top to `#c9c2d8` underside, no ink. Drawn per frame (`clouds()`): they slide slowly to and fro and twitch a pixel now and then |
-| Mountains | Twin low, broad volcanoes: concave slopes, blunt crater top, `#f1f0ec` lit to `#7689ad` shade with no ridge line, faint ravines, feet melting into haze `#d6dee2`. No ink |
-| Tree line | Soft rounded canopy in the horizon haze, `#88a894` / `#71927f` |
+| Mountains | Twin low, broad volcanoes: concave slopes, blunt crater top, faint ravines, feet melting into haze `#d6dee2`. No ink. Three altitude zones meet through the ground's height-blended pick: the ash cap `#f1f0ec` to `#7689ad`, rock `#d8d4cc` to `#6d7387`, hazy forest `#a3bfa6` to `#517463`. Forest climbs the ravines and its feet run into the tree line |
+| Tree line | Soft rounded canopy in the horizon haze, `#88a894` / `#71927f`, only in front of the mountains. Past them it breaks into far islands, a few with a small cone, with open sea between, each with a pale sand line at the waterline |
+| Sea islands | Up to seven small islands on the open sea, never touching land: a lumpy two-lobed oval, foam ring, sand, grass and forest by height (the beach and grass colours), a short wet-sand bank on the near edge, round tree clumps. Smaller and hazier toward the horizon |
 | Hills | Lit triangle facets over corner heights (`cornerHeight`), a soft grid line on each tile edge (0.86 to 0.88 shade) |
 | Bare earth | The cliff strata `#7a4c2a`, `#8a5a32`, `#9a6236`, with rare stones `#bdb4a3` and `#6d635a`. Only on steep hill faces |
 | Haze | `#ced6c4`. Far land, the hill silhouette and the mountains' feet fade into it through a 4x4 ordered dither |
@@ -145,7 +146,7 @@ Rules:
 - Warm first. Cool colours (teal, blue) are accents, never the main field.
 - Saturated, but not neon. If a colour glows on the dark UI, pull it toward cream or brown.
 - Far things fade toward the sky colour (aerial perspective), ink included.
-- Distance is the one place for dithering: haze, the hill silhouette, mountains and clouds blend
+- Distance is the one place for dithering: haze, the hill silhouette, mountains, far islands and clouds blend
   through a 4x4 ordered (Bayer) dither in a few flat steps. Sprites and near ground never dither.
 - Ground texture uses clumps squashed 2:1, so they lie flat on the isometric plane.
 - The kampung is a raised block: where land meets the beach or the world's edge, a 7-pixel

@@ -15,6 +15,14 @@ Asked by the maintainer: study [Terrain3D](https://github.com/TokisanGames/Terra
 
 Not taken: clipmap LOD, regions, collision, holes, navigation bits, foliage instancer, detiling, UV rotation and scale. The map is one cached canvas at art resolution, so none of them buys anything here.
 
+## Mountains and the sea (follow-up in the same PR)
+
+Asked by the maintainer: blend the mountains too, and add islands so the horizon is not one straight line.
+
+- The volcanoes are painted in three altitude zones (ash cap, rock, forest) that meet through `heightBlend`, the field form of the same height-blended pick. Forest climbs the ravines, rock runs down the ridges. The haze at the feet now starts lower, so the forest feet join the far tree line and the hills instead of floating behind them.
+- The far tree line stays only in front of the mountains. Past them it breaks into far islands (`farIsland`) with open sea between, so the horizon has gaps and bumps.
+- Up to seven small islands sit on the open sea (`seaIslands`), placed by hash only where every pixel round them is open sea, so they never touch the kampung, beach or each other. They use the ground's height-blended pick for sand, grass and forest. They are painted into the cached world canvas, so they cost nothing per frame and are not tappable.
+
 ## Rules kept
 
 - The kampung and the ring road stay tile-exact (`exact`). Plots, the faint tile checker and the road must read for placement and taps.
