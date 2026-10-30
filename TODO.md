@@ -72,6 +72,12 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Hari answers the four questions at the end of the playtest doc; then section 2 gets a Kecamatan entry.
   - Source: `decisions/kelurahan-playtest.md`
   - `open · — · — · done when:` Hari has decided, and GAME-DESIGN.md section 2 specifies Kecamatan.
+- [ ] **Make the dev seeds look like a proper city.**
+  - Problem: The developer seeds (#158, `src/sim/seeds/*.json`, `decisions/dev-seeds.md`) load a messy town. They come from a plain bot (`tests/seed-bot.ts`) that builds everything placeable, so buildings land at random spots with no clear roads and little variety. Hari, 2026-10-30.
+  - Why: The seeds exist to test higher stages quickly. A messy map hides layout, road-access, crowding and art problems, and it is no use for screenshots or playtests of how a late game should look.
+  - Suggested solution: Change the seed bot, or hand-lay the seeds, so each one looks planned: a built road grid with Jalan Setapak linking every building, houses in blocks, shops along the roads, decor and parks in gaps, and a mix of all unlocked buildings and levels (not many copies of a few). Keep the star and resident counts the seeds have now. Rebuild with `SEED_WRITE=1 npx vitest run tests/seed.test.ts` and add a check that the seed has no unreachable buildings and uses a minimum number of different building kinds. Check one screenshot per seed at 390px before merging.
+  - Source: Hari, 2026-10-30. Related: "Let AI RTs build many more kinds of building".
+  - `open · — · — · done when:` each seed shows roads linking every building, a mix of many building kinds and levels in a tidy layout, the star and resident counts are unchanged, the seed tests pass, and a screenshot of each seed was checked.
 
 ## Done
 
