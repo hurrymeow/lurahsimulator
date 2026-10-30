@@ -54,12 +54,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Add goals that read the player's own kampung (Popularitas and residents) to Kelurahan 1★ to 3★, and retune with `tests/kel-bot.test.ts` toward the 30-minute target. Pick the goals with Hari.
   - Source: `decisions/kelurahan-playtest.md`, findings 1 to 3
   - `claimed · voidinside99 · 2026-10-30 · done when:` each Kelurahan star needs something from the player's own kampung, and the Kelurahan bot's 3★ lands near 30 minutes at 1x.
-- [ ] **Sejahtera must not reward an empty kampung.**
-  - Problem: The 2045 meter read 86 to 100 with 2 to 9 residents, because Perut and Kerja are full when almost nobody needs feeding or work.
-  - Why: Sidang Emas 2045 compares Sejahtera with the Laporan. An empty kampung would score as Pahlawan.
-  - Suggested solution: Weight Sejahtera by households, or floor it by population against the stage's target, so a tiny kampung cannot read high. Check `src/sim/needs.ts` and the Sidang Emas endings.
-  - Source: `decisions/kelurahan-playtest.md`, finding 4
-  - `claimed · Claude (Hari's thread) · 2026-10-30 · done when:` a kampung under the stage's resident target cannot show Sejahtera above a set ceiling, with a unit test.
 - [ ] **Decide on Kecamatan and above from the playtest.**
   - Problem: `decisions/kelurahan-playtest.md` proposes Kecamatan (a ring of districts, Musrenbang, pinjol and judol) and one line for each stage above. Hari has not decided.
   - Why: GAME-DESIGN.md section 2 waits on this before Kecamatan is specified.
@@ -71,10 +65,11 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: The seeds exist to test higher stages quickly. A messy map hides layout, road-access, crowding and art problems, and it is no use for screenshots or playtests of how a late game should look.
   - Suggested solution: Change the seed bot, or hand-lay the seeds, so each one looks planned: a built road grid with Jalan Setapak linking every building, houses in blocks, shops along the roads, decor and parks in gaps, and a mix of all unlocked buildings and levels (not many copies of a few). Keep the star and resident counts the seeds have now. Rebuild with `SEED_WRITE=1 npx vitest run tests/seed.test.ts` and add a check that the seed has no unreachable buildings and uses a minimum number of different building kinds. Check one screenshot per seed at 390px before merging.
   - Source: Hari, 2026-10-30. Related: "Let AI RTs build many more kinds of building".
-  - `open · — · — · done when:` each seed shows roads linking every building, a mix of many building kinds and levels in a tidy layout, the star and resident counts are unchanged, the seed tests pass, and a screenshot of each seed was checked.
+  - `claimed · Claude (Hari's thread) · 2026-10-30 · done when:` each seed shows roads linking every building, a mix of many building kinds and levels in a tidy layout, the star and resident counts are unchanged, the seed tests pass, and a screenshot of each seed was checked.
 
 ## Done
 
+- [x] **Sejahtera must not reward an empty kampung.** A population ceiling on Sejahtera: 30 at none, 100 from 25 residents. #184, `decisions/sejahtera-cap.md`.
 - [x] **Cap Studi Banding.** `maxCount: 3`. #183, `decisions/studi-banding-cap.md`.
 - [x] **Add more buildings bigger than 1x1, starting with Balai RW at 2x2.** Reworked with Julian: 1x2 Kos-kosan, Bengkel, Posyandu, Pasar Kaget; 2x2 Koperasi and Balai RW; Lapangan 2x3 with year-round rent; Terminal the only 3x3. Long buildings turn 90 degrees. Square ones reuse their art at full size; long ones are built from the existing one-tile art, which is untouched. #173, `decisions/building-shapes.md`.
 - [x] **Force the update with a full-screen screen.** Option A: full screen on the home screen only, a dot and a Perbarui tile in Menu during play. #172, `decisions/id-text-and-update.md`.
