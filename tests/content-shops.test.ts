@@ -19,11 +19,21 @@ describe('shops, facilities and housing', () => {
       s.buildings = s.buildings.filter((o) => o !== b);
     }
   });
+  it('Pos Ronda is not the only Popularitas building: each RT star opens another, each with a different size or catch', () => {
+    const social = ['bidan', 'panggungSenam', 'kolamPancing'].map((id) => BUILDINGS.find((b) => b.id === id)!);
+    expect(social.map((d) => d.requires?.stars?.n)).toEqual([1, 2, 3]);
+    for (const d of social) expect(d.perMonth?.sabar ?? 0, d.id).toBeGreaterThan(1);
+    // Different trade-offs: an Orang Inside licence, a 2x2 lot with Viral, a big lot whose income barely covers upkeep.
+    expect(social[0].orangDalamCost).toBe(1);
+    expect(social[1].footprint).toBe(2);
+    expect(social[1].perMonth?.viral).toBeGreaterThan(0);
+    expect(social[2].income - social[2].upkeep).toBeLessThan(50_000);
+  });
   it('kontrakan adds beds', () => {
     const s = newGame(2);
     const before = housing(s);
     addBuilding(s, 'kontrakan', 3, 3, 'active');
-    expect(housing(s)).toBe(before + 4);
+    expect(housing(s)).toBe(before + 12);
   });
   it('bengkel opens ojol slots, gudang opens tukang slots', () => {
     const s = newGame(3);

@@ -168,6 +168,7 @@ export const KEL_BUILDINGS: StageBuildingDef[] = [
     permitMonths: 1,
     buildMonths: 1,
     maxLevel: 1,
+    maxCount: 3,
     placeable: true,
     removable: true,
     sprite: 'studiBanding',
