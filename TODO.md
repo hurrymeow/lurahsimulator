@@ -4,56 +4,18 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Tasks
 
-- [ ] **Later buildings cost more, do more and look bigger.**
-  - Problem: Most buildings are 1x1 at any stage, and late unlocks are not clearly pricier, stronger or more distinct than early ones. Related: "Add more buildings bigger than 1x1, starting with Balai RW at 2x2".
-  - Why: Each star should feel like a step up you can see on the map, as in Kairosoft's builders.
-  - Suggested solution: Set a ladder by unlock tier: start 1x1 and cheap, RT stars 1x1 to 2x2, RW 2x2, Kelurahan 2x2 to 3x3, with cost and effect rising per tier (for example x2 cost, x1.5 effect per tier). Audit every building's cost, effect and footprint against the ladder in one table, and pick changes with Hari before building. New art per ART.md at the real footprint; never overwrite the artist's sprites. Check `tests/footprint.test.ts`, `tests/content-footprint.test.ts` and the balance tests.
-  - Source: Julian, 2026-10-29
-  - Hari approved the proposed ladder (Oct 30). First pass shipped in #173: Apotek, Koperasi, Bengkel, Pasar Kaget prices and sizes. Next: the rest of the table, then a balance pass.
-  - `claimed · voidinside99 · 2026-10-30 · done when:` a table of every building's tier, cost, effect and size is agreed with Hari, the changes ship with art per ART.md, and the footprint and balance tests pass.
-- [ ] **Stat icons PR 2.**
-  - Problem: After the stat-icon renderer in `progress/stat-icons.md`, buildings, inspector, events, jobs, staff, mangkrak, calo, Wacana and Realisasi still need verification and fixes.
-  - Why: The renderer iconifies stat words everywhere, so sentences that read oddly with an icon noun, and slang uses that must stay words, will leak until they are checked.
-  - Suggested solution: Verify and fix those screens, reword icon-noun sentences, and check the "Lubang Viral" / "Viral Pothole" title.
-  - Source: `decisions/stat-icons.md`
-  - `claimed · voidinside99 · 2026-10-30 · done when:` those screens are verified in ID, with no icon-noun leaks and no slang replaced.
-- [ ] **Stat icons PR 3.**
-  - Problem: Stage goals, Kelurahan and RW goals, stats explainer, How to play and report card still need the stat-icon check.
-  - Why: Those screens carry stat words in goals and explanations, where an icon alone can lose meaning.
-  - Suggested solution: Check those screens, keeping one word-plus-icon legend in the stats explainer.
-  - Source: `decisions/stat-icons.md`
-  - `claimed · voidinside99 · 2026-10-30 · done when:` those screens are verified in ID, with the explainer legend kept.
-
-- [ ] **Playtest the Kelurahan, then decide on Kecamatan and above.**
-  - Problem: Only stages 1 to 3 are specified.
-  - Why: Nothing past the Kelurahan is designed, and the Kelurahan has not been played end to end.
-  - Suggested solution: Playtest the Kelurahan, then write up what Kecamatan and above should be.
-  - Source: GAME-DESIGN.md section 1 and section 7
-  - `claimed · voidinside99 · 2026-10-30 · done when:` the playtest is done and Hari has decided on Kecamatan and above.
-- [ ] **Add more buildings that raise Popularitas, so it is not just Pos Ronda.**
-  - Problem: Few buildings give Popularitas (hearts) each month. In `src/data/buildings.ts` Pos Ronda is the clear source (`perMonth: {{ sabar: 2 }}`), and a few combos add some (`src/data/combos.ts`). Not a full audit.
-  - Why: The player builds Pos Ronda again and again for hearts, so the town looks the same and choices are not interesting. Popularitas gates arrivals and stars.
-  - Suggested solution: List every building's Popularitas per month, then add a handful of social buildings (for example a mosque or langgar, a posyandu-like clinic, a small park) with different size, cost and side effects. Keep the 25-word blurbs and follow ART.md (the artist's sprites stay). Rebalance with the economy and bot tests, and pick the set with Hari first.
-  - Source: Hari, 2026-10-29
-  - `claimed · voidinside99 · 2026-10-30 · done when:` at least 3 new buildings give Popularitas with different costs or trade-offs, Pos Ronda is no longer the only good source, the economy and bot tests pass, and new art follows ART.md.
-- [ ] **Redo the staff page UI so it has far fewer buttons.**
-  - Problem: The staff page (`src/ui/staff.ts`, about 150 lines) shows many buttons per person and per channel: raise, bimtek, fire, hire, post by channel.
-  - Why: Hari finds it overwhelming, and says Kairosoft handles staff with one card per person and one main action.
-  - Suggested solution: Study the Kairosoft staff screen, then show one card per person with a single main button and put the other actions behind a detail view. Follow UI.md. Draft the layout with Hari before building.
-  - Source: Hari, 2026-10-29
-  - `claimed · voidinside99 · 2026-10-30 · done when:` the staff page has one primary action per card, rare actions sit in a detail view, nothing clips at 320px in ID and EN, and an e2e test covers hire, raise and fire.
-- [ ] **Replace 'Kini: do xx' with the pending goals for the next star.**
-  - Problem: The goal strip (`shortGoal` in `src/sim/nextstep.ts`) shows one 'Kini: ...' action. Hari does not like it and would rather see what is left for the next star (screenshot: 'Kini: capai 60 warga.').
-  - Why: A single line hides the star checklist, and it sometimes names a minor step. The player wants to see the real target.
-  - Suggested solution: Show the pending goals for the next star (the unmet ones, with have and need) in the strip or its expanded view, and keep one next action only when it helps. Check UI.md, the Now and Next star strip, and the combo-priority item. Draft the strip with Hari before building.
-  - Source: Hari, 2026-10-29. Related: "Put the combo goal ahead of 'build a house' in the goal strip"
-  - `claimed · voidinside99 · 2026-10-30 · done when:` the strip shows the pending goals for the next star in ID and EN, nothing clips at 320px, and the pacing e2e still passes.
-- [ ] **Slow the Kelurahan down and make its stars read the player's own kampung.**
-  - Problem: In the bot playtest the Kelurahan reached 3★ in 11 to 15 minutes at 1x (target about 30). Every star waited only on "every RW at N★", which Dana buys, while the player's own Popularitas sat at 0 and their kampung shrank to 2 to 9 residents.
-  - Why: The Kelurahan plays itself once it is funded, and a Lurah can win with an empty kampung.
-  - Suggested solution: Add goals that read the player's own kampung (Popularitas and residents) to Kelurahan 1★ to 3★, and retune with `tests/kel-bot.test.ts` toward the 30-minute target. Pick the goals with Hari.
-  - Source: `decisions/kelurahan-playtest.md`, findings 1 to 3
-  - `claimed · voidinside99 · 2026-10-30 · done when:` each Kelurahan star needs something from the player's own kampung, and the Kelurahan bot's 3★ lands near 30 minutes at 1x.
+- [ ] **Cap Pos Ronda so players use the other Popularitas buildings.**
+  - Problem: Pos Ronda has no `maxCount`. The Kelurahan bot built 20 to 90 of them to hold Popularitas in a big kampung.
+  - Why: A wall of Pos Ronda is the cheapest Popularitas, so Praktik Bidan, Panggung Senam and Kolam Pancing (#180) are skipped and the map looks the same.
+  - Suggested solution: Give Pos Ronda a `maxCount` per stage (for example 4 at RT, 8 at RW, 12 at Kelurahan), or make each one past the fourth give less. Rerun `tests/kel-bot.test.ts` and the balance tests.
+  - Source: `decisions/kelurahan-own-kampung.md`, open question 3
+  - `open · — · — · done when:` Pos Ronda cannot be spammed, and the RT, RW and Kelurahan bots still reach their stars.
+- [ ] **Close the gap between the Kelurahan bot's 19 minutes and the 30-minute target.**
+  - Problem: After #188 the Kelurahan bot reaches 3★ at months 139 to 147 (about 19 min at 1x). The target is about 30. The AI side is fast: every RW reaches its stars by month 80 to 110.
+  - Why: The bot never hesitates, so a person is slower, but how much slower is unknown, and the stage may still feel short.
+  - Suggested solution: Hari decides whether 19 bot-minutes is enough. If not, slow the AI RWs (longer `buildEvery` at the Kelurahan) rather than raising the own-kampung goals, which risks trapping a big kampung under the Popularitas bar (see the decision note).
+  - Source: `decisions/kelurahan-own-kampung.md`, open question 2
+  - `open · — · — · done when:` Hari has decided, and the Kelurahan bot's 3★ month matches that decision.
 - [ ] **Decide on Kecamatan and above from the playtest.**
   - Problem: `decisions/kelurahan-playtest.md` proposes Kecamatan (a ring of districts, Musrenbang, pinjol and judol) and one line for each stage above. Hari has not decided.
   - Why: GAME-DESIGN.md section 2 waits on this before Kecamatan is specified.
@@ -63,6 +25,13 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- [x] **Slow the Kelurahan down and make its stars read the player's own kampung.** Only the player's own RW sends Stempel letters to the player (the backlog had pinned Popularitas at 0). Each star also needs own residents and Popularitas: 50/50, 120/45, 200/40. Bot 3★ moved from 11-15 to about 19 min at 1x; the rest of the gap is a new task. #188, `decisions/kelurahan-own-kampung.md`.
+- [x] **Replace 'Kini: do xx' with the pending goals for the next star.** The strip reads "★ berikutnya, N target lagi: ..."; tapping lists every unmet goal, then one next step when it helps. #178, `decisions/goal-strip-star-goals.md`.
+- [x] **Redo the staff page UI so it has far fewer buttons.** One card per person with one main button; stats, refuse, mutasi and let go in a detail view; one lowongan button per role. #179, `decisions/staff-cards.md`.
+- [x] **Add more buildings that raise Popularitas, so it is not just Pos Ronda.** Praktik Bidan, Panggung Senam and Kolam Pancing, with new art; a langgar was left out (no religious jokes). #180, `decisions/popularitas-buildings.md`.
+- [x] **Later buildings cost more, do more and look bigger.** Full table of every building's tier, cost, effect and size; seven buildings moved up; Kontrakan 2x2 with 12 beds, old saves kept. Built before Hari's sign-off, reviewed in the PR. #181, `decisions/building-ladder.md`.
+- [x] **Stat icons PR 2** and **Stat icons PR 3.** Plain escapes for Lubang Viral and the Orang Dalam person; English uses Orang Inside and Virality so the words become icons; the explainer keeps its word-plus-icon legend. #177, `decisions/stat-icons-2-3.md`.
+- [x] **Playtest the Kelurahan.** Bot playtest on seeds 1 to 4 with seven findings and a Kecamatan proposal. Hari's decision is the open task "Decide on Kecamatan and above from the playtest". #182, `decisions/kelurahan-playtest.md`.
 - [x] **English e2e on a schedule.** Weekly workflow `e2e-en.yml` (Sundays 20:00 UTC, or by hand). #187, `decisions/e2e-en-schedule.md`.
 - [x] **Make the dev seeds look like a proper city.** Planned streets, a wide mix of kinds, road access for every building, checked by tests. Residents rose (45, 87, 60). #186, `decisions/city-seeds.md`.
 - [x] **Sejahtera must not reward an empty kampung.** A population ceiling on Sejahtera: 30 at none, 100 from 25 residents. #184, `decisions/sejahtera-cap.md`.
