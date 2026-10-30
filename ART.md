@@ -75,7 +75,8 @@ No third-party art or names. Everything is drawn in code.
 - Terrain borders are coloured, not inked. The higher ground takes a dark edge in its own
   colour (0.6x). The lower side gets a bright rim that eases back to its base colour over three
   pixels (1.2x, 1.11x, 1.05x). Sea meeting sand gets foam, then lighter shallows. Rank, high to
-  low: hutan, kebun, grass, sawah, road, cliff, beach, sea.
+  low: hutan, kebun and teh, grass, sawah and teras, road and bare earth, cliff, beach, sea. The
+  pass runs per pixel, so it follows the organic borders of the control map (see Ground materials).
 - Walkers and falling leaves get a coloured 1-pixel outline: each outline pixel is a 0.45x shade
   of the fill it touches (the fill below first, then the sides, then above). Eyes, shoes and
   tyres are already dark and keep their own colour.
@@ -136,6 +137,7 @@ Scenery colours:
 | Mountains | Twin low, broad volcanoes: concave slopes, blunt crater top, `#f1f0ec` lit to `#7689ad` shade with no ridge line, faint ravines, feet melting into haze `#d6dee2`. No ink |
 | Tree line | Soft rounded canopy in the horizon haze, `#88a894` / `#71927f` |
 | Hills | Lit triangle facets over corner heights (`cornerHeight`), a soft grid line on each tile edge (0.86 to 0.88 shade) |
+| Bare earth | The cliff strata `#7a4c2a`, `#8a5a32`, `#9a6236`, with rare stones `#bdb4a3` and `#6d635a`. Only on steep hill faces |
 | Haze | `#ced6c4`. Far land, the hill silhouette and the mountains' feet fade into it through a 4x4 ordered dither |
 
 Rules:
@@ -261,6 +263,26 @@ faceless, so the map stays readable.
 - No roof shape rises above the hipped roof of the same house at the same level. `tests/art.test.ts` checks it.
 - The bank sampah is a TPS: an open concrete bak heaped with bags, a green sign, no roof.
 
+## Ground materials
+
+Outside the kampung and its ring road, the ground is painted per tile corner, after Terrain3D's
+control map and index-map shader (`src/render/terrain.ts`, `controlAt` and `groundAt` in
+`src/render/scenery.ts`). Read `decisions/terrain-control-map.md` for the mapping.
+
+- Each corner holds one 32-bit control word in Terrain3D's layout: a base material, an overlay
+  material, an 8-bit blend and an autoshader flag. A corner takes the two commonest materials of
+  the tiles round it, blended by their share, with a little noise.
+- A pixel weighs its four corners bilinearly and adds each material's height texture (clumps,
+  pebbles, sand ridges, rock). The highest score wins the whole pixel. Colours never mix, so the
+  border is organic but crisp, in the palette, with no dither and no half pixels.
+- Autoshader: on hill corners steeper than 8 art pixels to a neighbour, bare earth shows through
+  kebun, teh and teras, fully at 14. No tree stands on it.
+- Macro variation: two low noises, baked per corner, nudge which flat tone a pixel picks, so
+  grass, dirt and gardens get broad lighter and darker patches. It shifts tones and never adds a colour.
+- The kampung and the ring road keep exact tile edges, so plots and the road always read. The
+  coast, sawah, kebun and terraces meet along organic lines, and the beach cliff and wave
+  splashes follow them.
+
 ## Terraced hills and icons
 
 - Behind the ring road the land rolls into real hills: each tile is two flat-lit triangles over its
@@ -271,7 +293,8 @@ faceless, so the map stays readable.
   right. Each terrace is a band of the real hill height. Its riser is a lit rim over a dark line,
   steps alternate light and dark, and slopes facing the top left are lit.
 - Trees stand on the hill surface. Palms and pisang keep to the low kebun by the ring road, shade
-  trees gather in groves on hilltops, and steep faces stay bare so the hills read. Far tree clumps
+  trees gather in groves on hilltops, and steep faces stay bare so the hills read. The steepest
+  faces show bare earth (see Ground materials). Far tree clumps
   and three tiny hamlets sit in the haze along the hilltops.
 - Menu icons sit on a cream bevelled plate, like the tool panel of an old isometric city builder.
   Panels about the kampung show a tiny scene drawn with the map's own sprites. Abstract ones show

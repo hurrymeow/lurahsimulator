@@ -3,6 +3,7 @@
 import { isSeam } from '../sim/area';
 import { GRID_H, GRID_W } from '../sim/types';
 import { INK, TH, TOP, TW } from './iso';
+import { autoBlend, baseOf, blendOf, encodeControl, pickMaterial } from './terrain';
 
 // Painterly ground (clumped grass, dirt with pebbles, fallen leaves) with ink lines where land
 // types meet, a raised kampung that drops to the beach in a cliff, a deep blue sunburst sky with
@@ -24,6 +25,8 @@ export const SUN_SIZE = 44;
 let trees: Tree[] | null = null;
 let shore: { x: number; y: number }[] | null = null;
 let heights: Int16Array | null = null;
+let controls: Uint32Array | null = null;
+let macros: Float32Array | null = null;
 let XMAX = 0;
 let YMAX = 0;
 // These follow the grid. layoutWorld sets them, and importers see the live values.
@@ -56,16 +59,21 @@ export function layoutWorld(): void {
   trees = null;
   shore = null;
   heights = null;
+  controls = null;
+  macros = null;
   cloudList = null;
 }
 
-type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' | 'teh' | 'teras';
+type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' | 'teh' | 'teras' | 'tanah';
 
 function hash(x: number, y: number): number {
   let h = (x * 374761393 + y * 668265263) ^ 0x5bd1e995;
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
+
+/** The kampung and its ring road keep exact tile edges, so plots and the road read. */
+const exact = (tx: number, ty: number) => tx >= -1 && ty >= -1 && tx <= GRID_W && ty <= GRID_H;
 
 function terrain(tx: number, ty: number): Terrain {
   // Seam lots between the RTs are packed dirt, so the bigger buildings have somewhere obvious to stand.
@@ -158,6 +166,118 @@ function heightAtPixel(x: number, y: number): number {
   return heightAt((rx + ry) / 2, (ry - rx) / 2);
 }
 
+/** Control-map material ids. 'tanah' is the bare earth the autoshader shows on steep hill faces. */
+const MATS: Terrain[] = ['grass', 'road', 'sawah', 'kebun', 'hutan', 'beach', 'sea', 'teh', 'teras', 'tanah'];
+const TANAH = MATS.indexOf('tanah');
+/** Materials on hills, which the autoshader may wear down to bare earth. */
+const SLOPED = new Set((['kebun', 'teh', 'teras'] as Terrain[]).map((t) => MATS.indexOf(t)));
+
+/**
+ * The control word at a tile corner (see terrain.ts). A corner takes the two commonest materials of
+ * the tiles round it, leaving out the exact kampung tiles, and blends them by how many tiles each
+ * has, with a little noise so borders wander off the tile grid like a hand-painted blend. On the
+ * hills the autoshader then lets bare earth through on steep corners.
+ */
+function controlAt(vx: number, vy: number): number {
+  const w = XMAX - XMIN + 1;
+  if (!controls) {
+    controls = new Uint32Array(w * (YMAX - YMIN + 1));
+    for (let y = YMIN; y <= YMAX; y++)
+      for (let x = XMIN; x <= XMAX; x++) {
+        const count = new Map<number, number>();
+        for (const [tx, ty] of [[x - 1, y - 1], [x, y - 1], [x, y], [x - 1, y]]) {
+          if (exact(tx, ty)) continue;
+          const id = MATS.indexOf(terrain(Math.max(XMIN, Math.min(XMAX - 1, tx)), Math.max(YMIN, Math.min(YMAX - 1, ty))));
+          count.set(id, (count.get(id) ?? 0) + 1 + hash(id * 13 + x, y) * 0.01);
+        }
+        // Corners deep inside the kampung are never read.
+        if (!count.size) continue;
+        const [[base, nb], [over, no] = [base, 0]] = [...count].sort((p, q) => q[1] - p[1]);
+        let c = encodeControl(base, over, no ? Math.min(255, (no / (nb + no)) * 255 + (vnoise(x * 3, y * 3, 2) - 0.5) * 90) : 0);
+        const h = cornerHeight(x, y);
+        const slope = Math.max(...[[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => Math.abs(cornerHeight(x + dx, y + dy) - h)));
+        const auto = autoBlend(slope, 8, 14);
+        if (auto > 0 && SLOPED.has(base)) c = encodeControl(base, TANAH, Math.max(auto * 255, base === over ? 0 : blendOf(c)), true);
+        controls[(y - YMIN) * w + x - XMIN] = c;
+      }
+  }
+  if (vx < XMIN || vy < YMIN || vx > XMAX || vy > YMAX) return encodeControl(MATS.indexOf('sea'), MATS.indexOf('sea'), 0);
+  return controls[(vy - YMIN) * w + vx - XMIN];
+}
+
+/**
+ * Low, broad patches of lighter and darker ground, like Terrain3D's macro variation: two noises
+ * baked per tile corner and read back bilinearly, as the shader samples its noise texture. It
+ * shifts which flat tone a pixel picks, so it never adds a colour.
+ */
+function macro(a: number, b: number): number {
+  const w = XMAX - XMIN + 1;
+  if (!macros) {
+    macros = new Float32Array(w * (YMAX - YMIN + 1));
+    for (let y = YMIN; y <= YMAX; y++)
+      for (let x = XMIN; x <= XMAX; x++) macros[(y - YMIN) * w + x - XMIN] = (vnoise(x + 90, y + 90, 9) * 0.6 + vnoise(x + 500, y + 70, 3.5) * 0.4 - 0.5) * 0.35;
+  }
+  const x = Math.max(XMIN, Math.min(XMAX - 1, Math.floor(a)));
+  const y = Math.max(YMIN, Math.min(YMAX - 1, Math.floor(b)));
+  const fx = Math.max(0, Math.min(1, a - x));
+  const fy = Math.max(0, Math.min(1, b - y));
+  const k = (y - YMIN) * w + x - XMIN;
+  const top = macros[k] + (macros[k + 1] - macros[k]) * fx;
+  const bot = macros[k + w] + (macros[k + w + 1] - macros[k + w]) * fx;
+  return top + (bot - top) * fy;
+}
+
+/**
+ * Each material's height texture, 0..1, from the same clumps and specks that paint it. Where two
+ * materials meet, the taller detail wins the pixel: clumps of kebun push into the sawah, sand
+ * ridges into the sea, rock out of the terraces.
+ */
+function materialHeight(t: Terrain, x: number, y: number, n: number): number {
+  switch (t) {
+    case 'grass':
+      return n;
+    case 'road':
+      return 0.3 * n + (hash(x * 7 + 3, y * 13 + 1) < 0.05 ? 0.5 : 0);
+    case 'sawah':
+      return 0.35 + 0.3 * n;
+    case 'kebun':
+    case 'hutan':
+      return 0.3 + 0.7 * n;
+    case 'beach':
+      return 0.2 + 0.5 * n;
+    case 'sea':
+      return 0.1;
+    case 'teh':
+      return 0.35 + 0.5 * n;
+    case 'teras':
+      return 0.3 + 0.4 * n;
+    case 'tanah':
+      return 0.15 + 0.85 * vnoise(x + 31, y * 2, 4);
+  }
+}
+
+/** How far a height texture may push a border off the blend line. */
+const BLEND_DEPTH = 0.55;
+
+/** The material that shows at tile-space point (a, b), whose flat-world pixel is (x, y). */
+function groundAt(a: number, b: number, x: number, y: number): Terrain {
+  const tx = Math.floor(a);
+  const ty = Math.floor(b);
+  if (exact(tx, ty)) return terrain(tx, ty);
+  const c0 = controlAt(tx, ty);
+  const c1 = controlAt(tx + 1, ty);
+  const c2 = controlAt(tx + 1, ty + 1);
+  const c3 = controlAt(tx, ty + 1);
+  // Most tiles are one material at every corner, so there is nothing to pick.
+  if (c0 === c1 && c0 === c2 && c0 === c3 && !blendOf(c0)) return MATS[baseOf(c0)];
+  const n = clumps(x, y);
+  const id = pickMaterial(c0, c1, c2, c3, a - tx, b - ty, (m) => materialHeight(MATS[m], x, y, n), BLEND_DEPTH);
+  return MATS[id];
+}
+
+/** Flat-world pixel of a tile-space point. */
+const flatPixel = (a: number, b: number) => [Math.floor(WORLD_OX + ((a - b) * TW) / 2), Math.floor(WORLD_OY + ((a + b) * TH) / 2)];
+
 /** Clumpy texture, squashed 2:1 so clumps lie flat on the isometric ground. */
 function clumps(x: number, y: number): number {
   return vnoise(x, y * 2, 9) * 0.65 + vnoise(x + 71, y * 2 + 13, 3.5) * 0.35;
@@ -175,8 +295,10 @@ const SAND = ['#e6c486', '#edd093', '#f3daa2'];
 const TEH = ['#7aa84a', '#679a3f', '#578a37', '#4a7a30'];
 const TERAS = ['#a8cb5e', '#94bc53', '#86ab45'];
 
+const TANAH_TONES = ['#7a4c2a', '#8a5a32', '#9a6236'];
+
 function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx: number, ty: number): string {
-  const n = clumps(x, y);
+  const n = clumps(x, y) + macro(tx + a, ty + b);
   const speck = hash(x * 7 + 3, y * 13 + 1);
   switch (t) {
     case 'grass':
@@ -194,6 +316,11 @@ function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx
       if (a < 0.07 || b < 0.07) return n > 0.5 ? '#8a5a32' : '#7d5130';
       if ((tx * 3 + ty) % 5 === 0) return Math.floor(a * 8) % 2 ? (n > 0.6 ? '#f0c050' : '#e8b440') : '#d39a32';
       return Math.floor(a * 8) % 2 ? (n > 0.6 ? '#a8cb5e' : '#9cc155') : n < 0.3 ? '#7a9e3f' : '#86ab45';
+    case 'tanah':
+      // Bare earth on steep faces, in the cliff's strata, with stones catching the light.
+      if (speck < 0.015) return '#bdb4a3';
+      if (speck > 0.99) return '#6d635a';
+      return tone(n, TANAH_TONES);
     case 'kebun':
       return speck < 0.03 ? '#7aa04a' : tone(n, KEBUN);
     case 'hutan':
@@ -335,13 +462,15 @@ export function buildWorld(): HTMLCanvasElement {
   const land = new Uint8Array(WORLD_W * WORLD_H);
   // Tile depth (a + b) of each land pixel, for the haze over the far land.
   const depth = new Float32Array(WORLD_W * WORLD_H);
-  // Kind numbers: 1-7 in this order, 8 is the cliff, 9 and 10 the terraced hills.
+  // Kind numbers: 1-7 in this order, 8 is the cliff, 9 and 10 the terraced hills, 11 bare earth.
   const KINDS: Terrain[] = ['grass', 'road', 'sawah', 'kebun', 'hutan', 'beach', 'sea'];
-  const kindOf = (t: Terrain) => (t === 'teh' ? 9 : t === 'teras' ? 10 : KINDS.indexOf(t) + 1);
+  const kindOf = (t: Terrain) => (t === 'teh' ? 9 : t === 'teras' ? 10 : t === 'tanah' ? 11 : KINDS.indexOf(t) + 1);
   // Each tile is two flat-lit triangles over its corner heights, drawn back to front so nearer
   // hills cover farther ones. Texture is sampled at the tile's flat position, so it sticks to the
-  // ground as it rises. Slopes facing the light (top left) brighten and the rest darken in a few
-  // flat steps, and a soft grid line runs along every tile edge, like an old city-builder map.
+  // ground as it rises. Outside the kampung each pixel's material comes from the corner control
+  // map (groundAt), so land types meet along organic borders instead of tile edges. Slopes facing
+  // the light (top left) brighten and the rest darken in a few flat steps, and a soft grid line
+  // runs along every tile edge, like an old city-builder map.
   const GRID_LINE = new Set<Terrain>(['grass', 'kebun', 'hutan', 'teh', 'teras']);
   const LIGHT = (() => {
     const v = [-0.75, -0.3, 1];
@@ -352,7 +481,8 @@ export function buildWorld(): HTMLCanvasElement {
   const SIDE = 20;
   const OX = WORLD_OX;
   const OY = WORLD_OY;
-  const tri = (t: Terrain, tx: number, ty: number, kind: number, v: [number, number, number][]) => {
+  const tri = (tile: Terrain, tx: number, ty: number, v: [number, number, number][]) => {
+    const blended = !exact(tx, ty);
     // Screen corners of the triangle; each v is [a, b, height].
     const P = v.map(([a, b, h]) => [OX + ((a - b) * TW) / 2, OY + ((a + b) * TH) / 2 - h]);
     const area = (P[1][0] - P[0][0]) * (P[2][1] - P[0][1]) - (P[2][0] - P[0][0]) * (P[1][1] - P[0][1]);
@@ -377,7 +507,6 @@ export function buildWorld(): HTMLCanvasElement {
     const x1 = Math.min(WORLD_W - 1, Math.ceil(Math.max(P[0][0], P[1][0], P[2][0])));
     const y0 = Math.max(0, Math.floor(Math.min(P[0][1], P[1][1], P[2][1])));
     const y1 = Math.min(WORLD_H - 1, Math.ceil(Math.max(P[0][1], P[1][1], P[2][1])));
-    const lined = GRID_LINE.has(t);
     for (let y = y0; y <= y1; y++)
       for (let x = x0; x <= x1; x++) {
         const px = x + 0.5;
@@ -391,8 +520,9 @@ export function buildWorld(): HTMLCanvasElement {
         // Flat-world pixel for texture, so clumps and rows stay put on the slope.
         const fx = Math.floor(OX + ((a - b) * TW) / 2);
         const fy = Math.floor(OY + ((a + b) * TH) / 2);
-        const edge = lined && (Math.floor(a - dax) !== Math.floor(a) || Math.floor(b - dbx) !== Math.floor(b) || Math.floor(a - day) !== Math.floor(a) || Math.floor(b - dby) !== Math.floor(b));
-        land[y * WORLD_W + x] = kind;
+        const t = blended ? groundAt(a, b, fx, fy) : tile;
+        const edge = GRID_LINE.has(t) && (Math.floor(a - dax) !== Math.floor(a) || Math.floor(b - dbx) !== Math.floor(b) || Math.floor(a - day) !== Math.floor(a) || Math.floor(b - dby) !== Math.floor(b));
+        land[y * WORLD_W + x] = kindOf(t);
         depth[y * WORLD_W + x] = a + b;
         const c = hex(groundColour(t, a - tx, b - ty, fx, fy, tx, ty));
         const f = lit * (edge ? (t === 'grass' ? 0.86 : 0.88) : 1);
@@ -404,13 +534,12 @@ export function buildWorld(): HTMLCanvasElement {
       const ty = d - tx;
       if (ty < YMIN || ty >= YMAX) continue;
       const t = terrain(tx, ty);
-      const kind = kindOf(t);
       const A: [number, number, number] = [tx, ty, cornerHeight(tx, ty)];
       const B: [number, number, number] = [tx + 1, ty, cornerHeight(tx + 1, ty)];
       const C: [number, number, number] = [tx + 1, ty + 1, cornerHeight(tx + 1, ty + 1)];
       const D: [number, number, number] = [tx, ty + 1, cornerHeight(tx, ty + 1)];
-      tri(t, tx, ty, kind, [A, B, C]);
-      tri(t, tx, ty, kind, [A, C, D]);
+      tri(t, tx, ty, [A, B, C]);
+      tri(t, tx, ty, [A, C, D]);
     }
   // The kampung stands on raised land: where it meets the beach, or the world's front edge, a dirt
   // cliff drops in strata with a grassy lip, like a diorama block. Kind 8, so the ink pass outlines it.
@@ -434,7 +563,7 @@ export function buildWorld(): HTMLCanvasElement {
   // over road over cliff over beach over sea) takes a dark edge in its own colour. The lower side
   // gets a bright rim that eases back to its base colour over three pixels, so each transition
   // reads clearly without hard black lines. Sea meets sand with a line of foam.
-  const RANK = [2, 7, 5, 6, 8, 9, 3, 2, 4, 8, 6];
+  const RANK = [2, 7, 5, 6, 8, 9, 3, 2, 4, 8, 6, 5];
   const rank = (k: number) => RANK[land[k] || 7];
   const edits: [number, number, number][] = [];
   const NEAR: [number, number, number][] = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [2, 0, 2], [-2, 0, 2], [0, 2, 2], [0, -2, 2], [3, 0, 3], [-3, 0, 3]];
@@ -598,7 +727,9 @@ export function worldTrees(): Tree[] {
     for (let tx = XMIN; tx < XMAX; tx++) {
       const ty = d - tx;
       if (ty < YMIN || ty >= YMAX) continue;
-      const t = terrain(tx, ty);
+      // The tree stands on whatever material shows at the tile's centre, so none grows on sea or bare earth.
+      const [fx, fy] = flatPixel(tx + 0.5, ty + 0.5);
+      const t = groundAt(tx + 0.5, ty + 0.5, fx, fy);
       const n = hash(tx * 5 + 1, ty * 3 + 2);
       // The hills stay open so their shape reads. Palms and pisang keep to the low kebun by the
       // ring road; shade trees gather in small groves on the hilltops; steep faces stay bare.
@@ -608,7 +739,7 @@ export function worldTrees(): Tree[] {
       const grove = h > 26 && vnoise(tx + 11, ty + 5, 3) > 0.55;
       const kebun = steep ? null : h < 6 ? (n < 0.3 ? 'kelapa' : n < 0.5 ? 'pisang' : n < 0.58 ? 'pohon' : null) : grove && n < 0.6 ? 'pohon' : n < 0.05 ? 'kelapa' : null;
       // Far back, toward the horizon, more trees stand among the terraces so the edge is not bare.
-      const far = tx + ty < -7 && !steep && (n < 0.16 ? 'pohon' : n < 0.21 ? 'bush' : n < 0.24 ? 'kelapa' : null);
+      const far = tx + ty < -7 && !steep && t !== 'tanah' && (n < 0.16 ? 'pohon' : n < 0.21 ? 'bush' : n < 0.24 ? 'kelapa' : null);
       const name = far ? far : t === 'hutan' ? (n < 0.75 ? 'pohon' : 'kelapa') : t === 'teh' && (grove ? n < 0.4 : n < 0.03) && !steep ? 'pohon' : t === 'teras' && n < 0.03 && !steep ? 'kelapa' : t === 'kebun' ? kebun : t === 'beach' && n < 0.25 ? 'kelapa' : null;
       if (name) trees.push({ name, tx, ty, x: WORLD_OX + ((tx - ty) * TW) / 2 - TW / 2, y: WORLD_OY + ((tx + ty) * TH) / 2 - TOP - Math.round(heightAt(tx + 0.5, ty + 0.5)) });
     }
@@ -762,14 +893,21 @@ export function shorePoints(): { x: number; y: number }[] {
   if (shore) return shore;
   shore = [];
   const at = (a: number, b: number) => ({ x: WORLD_OX + ((a - b) * TW) / 2, y: WORLD_OY + ((a + b) * TH) / 2 });
+  const ground = (a: number, b: number) => {
+    const [x, y] = flatPixel(a, b);
+    return groundAt(a, b, x, y);
+  };
+  // The coast no longer follows tile edges, so walk three lines across each tile toward the front
+  // (screen down-right and down-left) and mark where sand gives way to sea.
+  const STEP = 1 / 16;
   for (let tx = XMIN; tx < XMAX; tx++)
     for (let ty = YMIN; ty < YMAX; ty++) {
-      if (terrain(tx, ty) !== 'beach') continue;
-      // The shared edge with a sea tile in front (screen down-right or down-left), sampled at three points.
-      for (const t of [0.2, 0.5, 0.8]) {
-        if (tx + 1 >= XMAX || terrain(tx + 1, ty) === 'sea') shore.push(at(tx + 1, ty + t));
-        if (ty + 1 >= YMAX || terrain(tx, ty + 1) === 'sea') shore.push(at(tx + t, ty + 1));
-      }
+      if (exact(tx, ty)) continue;
+      for (const t of [0.2, 0.5, 0.8])
+        for (let s = 0; s < 1; s += STEP) {
+          if (ground(tx + s, ty + t) === 'beach' && ground(tx + s + STEP, ty + t) === 'sea') shore.push(at(tx + s + STEP, ty + t));
+          if (ground(tx + t, ty + s) === 'beach' && ground(tx + t, ty + s + STEP) === 'sea') shore.push(at(tx + t, ty + s + STEP));
+        }
     }
   return shore;
 }
