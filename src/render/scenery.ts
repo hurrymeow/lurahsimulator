@@ -583,12 +583,14 @@ export function buildWorld(): HTMLCanvasElement {
         // Flat-world pixel for texture, so clumps and rows stay put on the slope.
         const fx = Math.floor(OX + ((a - b) * TW) / 2);
         const fy = Math.floor(OY + ((a + b) * TH) / 2);
-        const t = blended ? groundAt(a, b, fx, fy) : tile;
+        // Clamped into this tile, so a pixel on the shared edge never reads a kampung tile next door.
+        const t = blended ? groundAt(Math.min(Math.max(a, tx), tx + 0.9999), Math.min(Math.max(b, ty), ty + 0.9999), fx, fy) : tile;
         const edge = GRID_LINE.has(t) && (Math.floor(a - dax) !== Math.floor(a) || Math.floor(b - dbx) !== Math.floor(b) || Math.floor(a - day) !== Math.floor(a) || Math.floor(b - dby) !== Math.floor(b));
         land[y * WORLD_W + x] = kindOf(t);
         depth[y * WORLD_W + x] = a + b;
         const c = hex(groundColour(t, a - tx, b - ty, fx, fy, tx, ty));
-        const f = lit * (edge ? (t === 'grass' ? 0.86 : 0.88) : 1);
+        // Water lies level, so the sea never takes the facet light of a sloped tile it reaches into.
+        const f = (t === 'sea' ? 1 : lit) * (edge ? (t === 'grass' ? 0.86 : 0.88) : 1);
         img.data.set([Math.min(255, Math.round(((c >> 16) & 255) * f)), Math.min(255, Math.round(((c >> 8) & 255) * f)), Math.min(255, Math.round((c & 255) * f)), 255], (y * WORLD_W + x) * 4);
       }
   };
@@ -820,7 +822,7 @@ function seaIslands(img: ImageData, land: Uint8Array): void {
     const cx = 20 + hash(i, 402) * (WORLD_W - 40);
     // Nearer islands (lower on screen) are bigger.
     const near = (cy - HORIZON) / (WORLD_H - HORIZON);
-    const rx = Math.round(6 + near * 26 + hash(i, 403) * near * 22);
+    const rx = Math.round(11 + near * 22 + hash(i, 403) * near * 20);
     const ry = rx / 2;
     // Shape: a main oval and a second lobe off to one side, so no two islands share an outline.
     const stretch = 0.7 + hash(i, 404) * 0.8;
