@@ -10,44 +10,44 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Set a ladder by unlock tier: start 1x1 and cheap, RT stars 1x1 to 2x2, RW 2x2, Kelurahan 2x2 to 3x3, with cost and effect rising per tier (for example x2 cost, x1.5 effect per tier). Audit every building's cost, effect and footprint against the ladder in one table, and pick changes with Hari before building. New art per ART.md at the real footprint; never overwrite the artist's sprites. Check `tests/footprint.test.ts`, `tests/content-footprint.test.ts` and the balance tests.
   - Source: Julian, 2026-10-29
   - Hari approved the proposed ladder (Oct 30). First pass shipped in #173: Apotek, Koperasi, Bengkel, Pasar Kaget prices and sizes. Next: the rest of the table, then a balance pass.
-  - `open · — · — · done when:` a table of every building's tier, cost, effect and size is agreed with Hari, the changes ship with art per ART.md, and the footprint and balance tests pass.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` a table of every building's tier, cost, effect and size is agreed with Hari, the changes ship with art per ART.md, and the footprint and balance tests pass.
 - [ ] **Stat icons PR 2.**
   - Problem: After the stat-icon renderer in `progress/stat-icons.md`, buildings, inspector, events, jobs, staff, mangkrak, calo, Wacana and Realisasi still need verification and fixes.
   - Why: The renderer iconifies stat words everywhere, so sentences that read oddly with an icon noun, and slang uses that must stay words, will leak until they are checked.
   - Suggested solution: Verify and fix those screens, reword icon-noun sentences, and check the "Lubang Viral" / "Viral Pothole" title.
   - Source: `decisions/stat-icons.md`
-  - `open · — · — · done when:` those screens are verified in ID, with no icon-noun leaks and no slang replaced.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` those screens are verified in ID, with no icon-noun leaks and no slang replaced.
 - [ ] **Stat icons PR 3.**
   - Problem: Stage goals, Kelurahan and RW goals, stats explainer, How to play and report card still need the stat-icon check.
   - Why: Those screens carry stat words in goals and explanations, where an icon alone can lose meaning.
   - Suggested solution: Check those screens, keeping one word-plus-icon legend in the stats explainer.
   - Source: `decisions/stat-icons.md`
-  - `open · — · — · done when:` those screens are verified in ID, with the explainer legend kept.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` those screens are verified in ID, with the explainer legend kept.
 
 - [ ] **Playtest the Kelurahan, then decide on Kecamatan and above.**
   - Problem: Only stages 1 to 3 are specified.
   - Why: Nothing past the Kelurahan is designed, and the Kelurahan has not been played end to end.
   - Suggested solution: Playtest the Kelurahan, then write up what Kecamatan and above should be.
   - Source: GAME-DESIGN.md section 1 and section 7
-  - `open · — · — · done when:` the playtest is done and Hari has decided on Kecamatan and above.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` the playtest is done and Hari has decided on Kecamatan and above.
 - [ ] **Add more buildings that raise Popularitas, so it is not just Pos Ronda.**
   - Problem: Few buildings give Popularitas (hearts) each month. In `src/data/buildings.ts` Pos Ronda is the clear source (`perMonth: {{ sabar: 2 }}`), and a few combos add some (`src/data/combos.ts`). Not a full audit.
   - Why: The player builds Pos Ronda again and again for hearts, so the town looks the same and choices are not interesting. Popularitas gates arrivals and stars.
   - Suggested solution: List every building's Popularitas per month, then add a handful of social buildings (for example a mosque or langgar, a posyandu-like clinic, a small park) with different size, cost and side effects. Keep the 25-word blurbs and follow ART.md (the artist's sprites stay). Rebalance with the economy and bot tests, and pick the set with Hari first.
   - Source: Hari, 2026-10-29
-  - `open · — · — · done when:` at least 3 new buildings give Popularitas with different costs or trade-offs, Pos Ronda is no longer the only good source, the economy and bot tests pass, and new art follows ART.md.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` at least 3 new buildings give Popularitas with different costs or trade-offs, Pos Ronda is no longer the only good source, the economy and bot tests pass, and new art follows ART.md.
 - [ ] **Redo the staff page UI so it has far fewer buttons.**
   - Problem: The staff page (`src/ui/staff.ts`, about 150 lines) shows many buttons per person and per channel: raise, bimtek, fire, hire, post by channel.
   - Why: Hari finds it overwhelming, and says Kairosoft handles staff with one card per person and one main action.
   - Suggested solution: Study the Kairosoft staff screen, then show one card per person with a single main button and put the other actions behind a detail view. Follow UI.md. Draft the layout with Hari before building.
   - Source: Hari, 2026-10-29
-  - `open · — · — · done when:` the staff page has one primary action per card, rare actions sit in a detail view, nothing clips at 320px in ID and EN, and an e2e test covers hire, raise and fire.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` the staff page has one primary action per card, rare actions sit in a detail view, nothing clips at 320px in ID and EN, and an e2e test covers hire, raise and fire.
 - [ ] **Replace 'Kini: do xx' with the pending goals for the next star.**
   - Problem: The goal strip (`shortGoal` in `src/sim/nextstep.ts`) shows one 'Kini: ...' action. Hari does not like it and would rather see what is left for the next star (screenshot: 'Kini: capai 60 warga.').
   - Why: A single line hides the star checklist, and it sometimes names a minor step. The player wants to see the real target.
   - Suggested solution: Show the pending goals for the next star (the unmet ones, with have and need) in the strip or its expanded view, and keep one next action only when it helps. Check UI.md, the Now and Next star strip, and the combo-priority item. Draft the strip with Hari before building.
   - Source: Hari, 2026-10-29. Related: "Put the combo goal ahead of 'build a house' in the goal strip"
-  - `open · — · — · done when:` the strip shows the pending goals for the next star in ID and EN, nothing clips at 320px, and the pacing e2e still passes.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` the strip shows the pending goals for the next star in ID and EN, nothing clips at 320px, and the pacing e2e still passes.
 
 ## Done
 
