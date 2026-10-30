@@ -160,7 +160,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatanDigital',
     name: 'Kampung Digital Inspection',
-    body: 'A Diskominfo team comes in 2 months to score WiFi, Viral, abandoned projects and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
+    body: 'A Diskominfo team comes in 2 months to score WiFi, Virality, abandoned projects and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
     when: { chance: 0 },
     choices: [
       { label: 'Carry on as usual', result: 'The team will see the kampung as it is.' },

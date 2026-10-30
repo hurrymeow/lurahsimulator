@@ -762,6 +762,8 @@ test.describe('slim HUD and one menu', () => {
       await page.locator(`#chip-${id}`).click();
       await expect(page.locator('#modal .exp')).toBeVisible();
       await expect(page.locator('#modal .exp-row')).toHaveCount(3);
+      // The card title keeps the stat's word beside the big icon: the one word-plus-icon legend.
+      if (id !== 'pop') await expect(page.locator('#modal .card h2')).not.toHaveText('');
       await expectLegible(page, `${id} explain card`);
       await page.locator('#modal').click();
       await expect(page.locator('#modal')).toBeHidden();

@@ -143,7 +143,7 @@ export const ID_CONTENT: Record<string, string> = {
   'combo.urusanSurat.effect': '+0,3 Orang Dalam per bulan.',
   'combo.urusanSurat.hint': 'Fotokopi dan stempel, bersebelahan.',
   'combo.urusanSurat.name': 'Urusan Surat',
-  'combo.urusanSurat.story': 'Satu legalisir, satu stempel, satu "tolong dibantu ya". Orang Dalam satu-satunya yang bergerak cepat.',
+  'combo.urusanSurat.story': 'Satu legalisir, satu stempel, satu "tolong dibantu ya". {plain:Orang Dalam} satu-satunya yang bergerak cepat.',
   'combo.wisataKolam.effect': 'Pemasukan Rumah Makan x1,8.',
   'combo.wisataKolam.hint': 'Kolam alasan untuk berhenti, gerobak alasan untuk tinggal.',
   'combo.wisataKolam.name': 'Wisata Kolam',
