@@ -63,6 +63,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- [x] **English e2e on a schedule.** Weekly workflow `e2e-en.yml` (Sundays 20:00 UTC, or by hand). #187, `decisions/e2e-en-schedule.md`.
 - [x] **Make the dev seeds look like a proper city.** Planned streets, a wide mix of kinds, road access for every building, checked by tests. Residents rose (45, 87, 60). #186, `decisions/city-seeds.md`.
 - [x] **Sejahtera must not reward an empty kampung.** A population ceiling on Sejahtera: 30 at none, 100 from 25 residents. #184, `decisions/sejahtera-cap.md`.
 - [x] **Cap Studi Banding.** `maxCount: 3`. #183, `decisions/studi-banding-cap.md`.
@@ -104,12 +105,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Ideas
 
-- [ ] **English e2e on a schedule.**
-  - Problem: CI runs Indonesian only (`decisions/default-lang-id.md`), so English clipping is not caught in PRs.
-  - Why: English is the default UI language in-game.
-  - Suggested solution: A nightly or weekly workflow runs the `-en` projects without slowing PRs.
-  - Source: `decisions/default-lang-id.md`
-  - `claimed · Claude (Hari's thread) · 2026-10-30 · done when:` a scheduled workflow runs the en projects and reports failures.
 - [ ] **Tune `GRADE_BONUS`.**
   - Problem: The economy may feel thin after grade bonuses went half-yearly.
   - Why: Less income per year than before.
