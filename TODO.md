@@ -10,47 +10,72 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Set a ladder by unlock tier: start 1x1 and cheap, RT stars 1x1 to 2x2, RW 2x2, Kelurahan 2x2 to 3x3, with cost and effect rising per tier (for example x2 cost, x1.5 effect per tier). Audit every building's cost, effect and footprint against the ladder in one table, and pick changes with Hari before building. New art per ART.md at the real footprint; never overwrite the artist's sprites. Check `tests/footprint.test.ts`, `tests/content-footprint.test.ts` and the balance tests.
   - Source: Julian, 2026-10-29
   - Hari approved the proposed ladder (Oct 30). First pass shipped in #173: Apotek, Koperasi, Bengkel, Pasar Kaget prices and sizes. Next: the rest of the table, then a balance pass.
-  - `open · — · — · done when:` a table of every building's tier, cost, effect and size is agreed with Hari, the changes ship with art per ART.md, and the footprint and balance tests pass.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` a table of every building's tier, cost, effect and size is agreed with Hari, the changes ship with art per ART.md, and the footprint and balance tests pass.
 - [ ] **Stat icons PR 2.**
   - Problem: After the stat-icon renderer in `progress/stat-icons.md`, buildings, inspector, events, jobs, staff, mangkrak, calo, Wacana and Realisasi still need verification and fixes.
   - Why: The renderer iconifies stat words everywhere, so sentences that read oddly with an icon noun, and slang uses that must stay words, will leak until they are checked.
   - Suggested solution: Verify and fix those screens, reword icon-noun sentences, and check the "Lubang Viral" / "Viral Pothole" title.
   - Source: `decisions/stat-icons.md`
-  - `open · — · — · done when:` those screens are verified in ID, with no icon-noun leaks and no slang replaced.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` those screens are verified in ID, with no icon-noun leaks and no slang replaced.
 - [ ] **Stat icons PR 3.**
   - Problem: Stage goals, Kelurahan and RW goals, stats explainer, How to play and report card still need the stat-icon check.
   - Why: Those screens carry stat words in goals and explanations, where an icon alone can lose meaning.
   - Suggested solution: Check those screens, keeping one word-plus-icon legend in the stats explainer.
   - Source: `decisions/stat-icons.md`
-  - `open · — · — · done when:` those screens are verified in ID, with the explainer legend kept.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` those screens are verified in ID, with the explainer legend kept.
 
 - [ ] **Playtest the Kelurahan, then decide on Kecamatan and above.**
   - Problem: Only stages 1 to 3 are specified.
   - Why: Nothing past the Kelurahan is designed, and the Kelurahan has not been played end to end.
   - Suggested solution: Playtest the Kelurahan, then write up what Kecamatan and above should be.
   - Source: GAME-DESIGN.md section 1 and section 7
-  - `open · — · — · done when:` the playtest is done and Hari has decided on Kecamatan and above.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` the playtest is done and Hari has decided on Kecamatan and above.
 - [ ] **Add more buildings that raise Popularitas, so it is not just Pos Ronda.**
   - Problem: Few buildings give Popularitas (hearts) each month. In `src/data/buildings.ts` Pos Ronda is the clear source (`perMonth: {{ sabar: 2 }}`), and a few combos add some (`src/data/combos.ts`). Not a full audit.
   - Why: The player builds Pos Ronda again and again for hearts, so the town looks the same and choices are not interesting. Popularitas gates arrivals and stars.
   - Suggested solution: List every building's Popularitas per month, then add a handful of social buildings (for example a mosque or langgar, a posyandu-like clinic, a small park) with different size, cost and side effects. Keep the 25-word blurbs and follow ART.md (the artist's sprites stay). Rebalance with the economy and bot tests, and pick the set with Hari first.
   - Source: Hari, 2026-10-29
-  - `open · — · — · done when:` at least 3 new buildings give Popularitas with different costs or trade-offs, Pos Ronda is no longer the only good source, the economy and bot tests pass, and new art follows ART.md.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` at least 3 new buildings give Popularitas with different costs or trade-offs, Pos Ronda is no longer the only good source, the economy and bot tests pass, and new art follows ART.md.
 - [ ] **Redo the staff page UI so it has far fewer buttons.**
   - Problem: The staff page (`src/ui/staff.ts`, about 150 lines) shows many buttons per person and per channel: raise, bimtek, fire, hire, post by channel.
   - Why: Hari finds it overwhelming, and says Kairosoft handles staff with one card per person and one main action.
   - Suggested solution: Study the Kairosoft staff screen, then show one card per person with a single main button and put the other actions behind a detail view. Follow UI.md. Draft the layout with Hari before building.
   - Source: Hari, 2026-10-29
-  - `open · — · — · done when:` the staff page has one primary action per card, rare actions sit in a detail view, nothing clips at 320px in ID and EN, and an e2e test covers hire, raise and fire.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` the staff page has one primary action per card, rare actions sit in a detail view, nothing clips at 320px in ID and EN, and an e2e test covers hire, raise and fire.
 - [ ] **Replace 'Kini: do xx' with the pending goals for the next star.**
   - Problem: The goal strip (`shortGoal` in `src/sim/nextstep.ts`) shows one 'Kini: ...' action. Hari does not like it and would rather see what is left for the next star (screenshot: 'Kini: capai 60 warga.').
   - Why: A single line hides the star checklist, and it sometimes names a minor step. The player wants to see the real target.
   - Suggested solution: Show the pending goals for the next star (the unmet ones, with have and need) in the strip or its expanded view, and keep one next action only when it helps. Check UI.md, the Now and Next star strip, and the combo-priority item. Draft the strip with Hari before building.
   - Source: Hari, 2026-10-29. Related: "Put the combo goal ahead of 'build a house' in the goal strip"
-  - `open · — · — · done when:` the strip shows the pending goals for the next star in ID and EN, nothing clips at 320px, and the pacing e2e still passes.
+  - `claimed · voidinside99 · 2026-10-30 · done when:` the strip shows the pending goals for the next star in ID and EN, nothing clips at 320px, and the pacing e2e still passes.
+- [ ] **Slow the Kelurahan down and make its stars read the player's own kampung.**
+  - Problem: In the bot playtest the Kelurahan reached 3★ in 11 to 15 minutes at 1x (target about 30). Every star waited only on "every RW at N★", which Dana buys, while the player's own Popularitas sat at 0 and their kampung shrank to 2 to 9 residents.
+  - Why: The Kelurahan plays itself once it is funded, and a Lurah can win with an empty kampung.
+  - Suggested solution: Add goals that read the player's own kampung (Popularitas and residents) to Kelurahan 1★ to 3★, and retune with `tests/kel-bot.test.ts` toward the 30-minute target. Pick the goals with Hari.
+  - Source: `decisions/kelurahan-playtest.md`, findings 1 to 3
+  - `claimed · voidinside99 · 2026-10-30 · done when:` each Kelurahan star needs something from the player's own kampung, and the Kelurahan bot's 3★ lands near 30 minutes at 1x.
+- [ ] **Sejahtera must not reward an empty kampung.**
+  - Problem: The 2045 meter read 86 to 100 with 2 to 9 residents, because Perut and Kerja are full when almost nobody needs feeding or work.
+  - Why: Sidang Emas 2045 compares Sejahtera with the Laporan. An empty kampung would score as Pahlawan.
+  - Suggested solution: Weight Sejahtera by households, or floor it by population against the stage's target, so a tiny kampung cannot read high. Check `src/sim/needs.ts` and the Sidang Emas endings.
+  - Source: `decisions/kelurahan-playtest.md`, finding 4
+  - `claimed · Claude (Hari's thread) · 2026-10-30 · done when:` a kampung under the stage's resident target cannot show Sejahtera above a set ceiling, with a unit test.
+- [ ] **Decide on Kecamatan and above from the playtest.**
+  - Problem: `decisions/kelurahan-playtest.md` proposes Kecamatan (a ring of districts, Musrenbang, pinjol and judol) and one line for each stage above. Hari has not decided.
+  - Why: GAME-DESIGN.md section 2 waits on this before Kecamatan is specified.
+  - Suggested solution: Hari answers the four questions at the end of the playtest doc; then section 2 gets a Kecamatan entry.
+  - Source: `decisions/kelurahan-playtest.md`
+  - `open · — · — · done when:` Hari has decided, and GAME-DESIGN.md section 2 specifies Kecamatan.
+- [ ] **Make the dev seeds look like a proper city.**
+  - Problem: The developer seeds (#158, `src/sim/seeds/*.json`, `decisions/dev-seeds.md`) load a messy town. They come from a plain bot (`tests/seed-bot.ts`) that builds everything placeable, so buildings land at random spots with no clear roads and little variety. Hari, 2026-10-30.
+  - Why: The seeds exist to test higher stages quickly. A messy map hides layout, road-access, crowding and art problems, and it is no use for screenshots or playtests of how a late game should look.
+  - Suggested solution: Change the seed bot, or hand-lay the seeds, so each one looks planned: a built road grid with Jalan Setapak linking every building, houses in blocks, shops along the roads, decor and parks in gaps, and a mix of all unlocked buildings and levels (not many copies of a few). Keep the star and resident counts the seeds have now. Rebuild with `SEED_WRITE=1 npx vitest run tests/seed.test.ts` and add a check that the seed has no unreachable buildings and uses a minimum number of different building kinds. Check one screenshot per seed at 390px before merging.
+  - Source: Hari, 2026-10-30. Related: "Let AI RTs build many more kinds of building".
+  - `open · — · — · done when:` each seed shows roads linking every building, a mix of many building kinds and levels in a tidy layout, the star and resident counts are unchanged, the seed tests pass, and a screenshot of each seed was checked.
 
 ## Done
 
+- [x] **Cap Studi Banding.** `maxCount: 3`. #183, `decisions/studi-banding-cap.md`.
 - [x] **Add more buildings bigger than 1x1, starting with Balai RW at 2x2.** Reworked with Julian: 1x2 Kos-kosan, Bengkel, Posyandu, Pasar Kaget; 2x2 Koperasi and Balai RW; Lapangan 2x3 with year-round rent; Terminal the only 3x3. Long buildings turn 90 degrees. Square ones reuse their art at full size; long ones are built from the existing one-tile art, which is untouched. #173, `decisions/building-shapes.md`.
 - [x] **Force the update with a full-screen screen.** Option A: full screen on the home screen only, a dot and a Perbarui tile in Menu during play. #172, `decisions/id-text-and-update.md`.
 - [x] **Review the Bahasa Indonesia UI text (not event content).** Rows 1 to 15 of the proposals doc; row 16 stays Combo. #172.

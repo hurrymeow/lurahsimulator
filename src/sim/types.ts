@@ -466,6 +466,8 @@ export interface GameState {
   parkirBack?: { shop: number; at: number }[];
   /** Saved after the Oct 30 building sizes: grown buildings were fitted or kept small on load. */
   sized?: boolean;
+  /** Saved after the ladder pass: buildings that grew then (the Kontrakan) were fitted or kept small on load. */
+  laddered?: boolean;
   /** Saved with RT cells SEAM tiles apart. Older RW and Kelurahan saves had the seams on each RT's edge rows. */
   gapped?: boolean;
   /** A tukang parkir has turned up at least once. The first shop always draws one. */
