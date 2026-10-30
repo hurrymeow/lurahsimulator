@@ -436,7 +436,7 @@ describe('player-run RTs', () => {
     s.stage.current = 'rw';
     const n = s.neighbours[0];
     s.res.orangDalam = 0;
-    expect(checkTakeover(s, n)).toContain('Orang Dalam');
+    expect(checkTakeover(s, n)).toContain('Orang Inside');
     s.res.orangDalam = NEIGHBOUR.takeoverOd + 1;
     s.res.rupiah = 1e9;
     fundNeighbour(s, n, 6);

@@ -1,12 +1,13 @@
 import { t } from '../i18n';
 import type { App } from '../app';
-import { shortGoal } from '../sim/nextstep';
+import { nextStep } from '../sim/nextstep';
 import { nextStarChecklist } from '../sim/stages';
 import { h } from './dom';
 
 /**
- * The goal, as a pill on the map: a quick goal for the next minute, kept to one line. Tap it to see the
- * whole line and the next star below. The full checklist is in Menu.
+ * The goal, as a pill on the map: what is left for the next star, kept to one line. Tap it to see every
+ * unmet goal with have and need, and one next step when there is one. The first house and the first combo
+ * lead the line instead, because they teach. The full checklist is in Menu.
  */
 export function setupGoal(app: App): void {
   const el = document.getElementById('goal')!;
@@ -21,20 +22,26 @@ export function setupGoal(app: App): void {
   });
   el.append(now, star);
   app.refreshers.push((a) => {
-    const next = nextStarChecklist(a.s)?.find((l) => !l.done);
-    const quick = shortGoal(a.s);
-    const starText = next ? t('goal.line', { goal: next.text }) : '';
-    el.hidden = !next && !quick;
-    // One line: the quick goal, or the next star when there is no quick goal. It opens when there is
-    // more to read: the rest of a long line, or the next star.
-    text.textContent = quick ?? starText;
+    const left = nextStarChecklist(a.s)?.filter((l) => !l.done) ?? [];
+    const step = nextStep(a.s);
+    const starLine = left.length === 1
+      ? t('goal.leftOne', { goal: left[0].text })
+      : left.length ? t('goal.left', { n: left.length, goal: left[0].text }) : '';
+    const stepLeads = !!step && (step.kind === 'house' || step.kind === 'combo' || !left.length);
+    el.hidden = !left.length && !step;
+    text.textContent = stepLeads ? step!.text : starLine;
+    // Opened: every unmet goal, then the step when the line does not already say it.
+    const rows = [
+      ...left.map((l) => h('p', { class: 'goal-row' }, `★ ${l.text}`)),
+      ...(step && !stepLeads ? [h('p', { class: 'goal-row goal-step' }, t('goal.step', { step: step.text }))] : []),
+    ];
     const cut = !open && text.scrollWidth > text.clientWidth + 1;
-    const more = open || (!!quick && !!next) || cut;
+    const more = open || cut || rows.length > 1 || (stepLeads && rows.length > 0);
     el.classList.toggle('open', open);
     now.dataset.more = String(more);
     now.setAttribute('aria-expanded', String(open));
-    star.hidden = !(open && !!quick && !!next);
-    star.textContent = starText;
+    star.hidden = !(open && rows.length);
+    star.replaceChildren(...rows);
   });
   app.refresh();
 }

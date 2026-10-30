@@ -65,10 +65,15 @@ export function meters(s: GameState): Meters {
   const idle = s.residents.filter((r) => !r.preman && (r.idle ?? 0) >= a.idleMonths).length;
   const crowd = Math.max(0, pop - a.crowdFrom) * a.perResident;
   const aman = a.base - crowd - a.perIdle * idle - a.perPreman * premanList(s).length + a.perLamp * working('lampuTaman') + a.perPosRonda * working('posRonda') + realisasiSum(s, 'aman') + hansipAman(s);
-  return { perut: clamp(perut), kerja: clamp(kerja), aman: clamp(aman) };
+  return { perut: clamp(perut), kerja: clamp(kerja), aman: clamp(aman), cap: sejahteraCap(pop) };
 }
 
-export const sejahtera = (m: Meters): number => Math.round((m.perut + m.kerja + m.aman) / 3);
+/** A tiny kampung has little to feed or employ, so its meters read full. Its Sejahtera is capped until it has grown. */
+export const SEJAHTERA_FULL_POP = 25;
+const SEJAHTERA_FLOOR_CAP = 30;
+export const sejahteraCap = (pop: number): number => Math.round(SEJAHTERA_FLOOR_CAP + (100 - SEJAHTERA_FLOOR_CAP) * Math.min(1, pop / SEJAHTERA_FULL_POP));
+
+export const sejahtera = (m: Meters): number => Math.min(m.cap ?? 100, Math.round((m.perut + m.kerja + m.aman) / 3));
 
 /** Shops a preman can lean on: working buildings that sell. */
 const turfs = (s: GameState): Building[] => s.buildings.filter((b) => isWorking(b) && (def(b.def).shop || def(b.def).category === 'shops'));

@@ -102,7 +102,7 @@ export const MORE_COMBOS: ComboDef[] = [
     needs: ['fotokopi', 'kantorRT'],
     radius: 1,
     hint: 'Copies and stamps, side by side.',
-    story: 'One legalisir, one stempel, one "tolong dibantu ya". The Orang Inside is the only thing that moves fast.',
+    story: 'One legalisir, one stempel, one "tolong dibantu ya". The {plain:Orang Inside} is the only thing that moves fast.',
     perMonth: { orangDalam: 0.3 },
     effect: '+0.3 Orang Inside a month.',
   },

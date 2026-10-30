@@ -74,7 +74,7 @@ const EVENTS: [id: string, name: string, body: string, choices: Choice[]][] = [
     ['Tunggu truknya', 'Truk datang. Baunya tinggal seminggu lagi.'],
     ['Bayar pengangkut swasta', 'Beres sehari. Tagihannya aneh dan terperinci.'],
   ]],
-  ['lubangViral', 'Lubang Viral', 'Video lubang di depan kantor viral. Keterangannya jeritan minta tolong. Lubangnya punya penggemar.', [
+  ['lubangViral', 'Lubang {plain:Viral}', 'Video lubang di depan kantor viral. Keterangannya jeritan minta tolong. Lubangnya punya penggemar.', [
     ['Abaikan', 'Lubangnya dapat tagar sendiri.'],
     ['Tambal cepat', 'Video sebelum dan sesudah: 2 juta tayangan.'],
     ['Salahkan tahun lalu', 'Tak ada yang ingat siapa yang jaga tahun lalu. Praktis.'],
