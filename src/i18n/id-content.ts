@@ -9,7 +9,7 @@ export const ID_CONTENT: Record<string, string> = {
   'building.balaiWarga.name': 'Balai Warga',
   'building.bangku.blurb': 'Bangku bambu untuk ngobrol. Toko di sekitarnya untung dari orang yang betah.',
   'building.bangku.name': 'Balai-balai Bambu',
-  'building.bankSampah.blurb': 'Tukar plastik dengan uang saku. Hasilkan sampai Rp 40rb per bulan dan +0,5 Popularitas. Membuka kerja pengepul.',
+  'building.bankSampah.blurb': 'Tukar plastik dengan uang saku. Hasilkan sampai Rp 60rb per bulan dan +0,8 Popularitas. Membuka kerja pengepul.',
   'building.barbershop.blurb': 'Potong rambut sambil ngobrol. Menghasilkan uang, dan obrolannya menenangkan warga.',
   'building.barbershop.name': 'Barbershop',
   'building.bengkel.blurb': 'Memperbaiki motor dan menjaga ojol tetap jalan. Menambah tempat untuk driver ojol.',
