@@ -13,6 +13,7 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 5. [Tone and politics guardrails](#5-tone-and-politics-guardrails)
 6. [UI, art and tech rules](#6-ui-art-and-tech-rules)
 7. [Build order](#7-build-order)
+8. [Design review checklist](#8-design-review-checklist): how agents judge the mechanics
 
 ## 1. Pitch and core loop
 
@@ -36,7 +37,7 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 - Discovered combos are auto-logged in the in-game Combo.
 - The Combo book is a column of full-width cards, one per row, under filter buttons (All, ✓ active, ★ found, ? not yet, each with its count). A card shows the name, the buildings (greyed when missing, silhouettes before it is in town) and a state mark on one line, and the effect in two lines below. Tapping a card opens the whole entry below it: effect, conditions, status and, once discovered, the story (`src/ui/lists.ts`).
 - The Warga list opens on a summary line (headcount and what everyone makes a month) and filter buttons: By job (default) and No job (with its count). People sit in boxes per job, headed by the workplace sprite, the headcount and the group's monthly output; each person is a chip with their name. Warga have no star rating (stars are for staff); a resident's own sheet shows their experience as a line, such as "18 months in this job: output +40%". No job comes first, marked red.
-- Speed control: pause, 1x, 2x, 4x.
+- Speed control: pause, 1x, 2x. No 4x (Hari, 2026-10-31; code change pending, see `decisions/design-review-checklist.md`).
 - Text advances on tap, never on a timer.
 
 ## 2. Stage ladder
@@ -219,7 +220,7 @@ The player picks a path at promotion. Kelurahan is dense and shop-heavy. Desa ma
 
 #### 3★ Lurah Teladan
 
-- Credits roll. Play continues as a sandbox. Kecamatan comes later.
+- Play continues. Kecamatan comes later. The credits roll at Sidang Emas 2045, the end of the whole run, not here (Hari, 2026-10-31).
 
 #### New Kelurahan content
 
@@ -243,7 +244,7 @@ The player picks a path at promotion. Kelurahan is dense and shop-heavy. Desa ma
 
 ## 3. Pacing targets
 
-Approved by Hari, 2026-10-27. Times are real seconds at 1x. One month is 8s (`MONTH_MS`), so 15 min is about 112 months.
+Approved by Hari, 2026-10-27. Times are real seconds at 1x. One month is 8s (`MONTH_MS`), so 15 min is about 112 months. Decided 2026-10-31, code pending: 8s becomes one week, so a month is 32s and a year 6.4 min; month counts below re-base with it.
 Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder). A bot never hesitates, so its times are lower bounds. A bot miss is a real miss. A bot pass is unproven.
 
 ### Targets
@@ -253,7 +254,7 @@ Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder
 | 1 | First house built within 30s of New Game | Kairosoft opens on a build. Idle time here loses the player. | Estimate: about 25 to 35s (6 taps, 57 tutorial words). Close to the line. Not timed. |
 | 2 | First resident within 10s of the house | The first build must visibly pay off. | Pass: month 1 (8s) |
 | 3 | First popup between 45s and 90s | Let the player learn the map first. | Pass: 48 to 56s |
-| 4 | 1★ within 2 min, 2★ within 5 min, 3★ within 10 min | A goal done, a new one in view. | Pass in 10 of 10 bot seeds (1★ month 9, 2★ months 23 to 30, 3★ months 32 to 43). Enforced by `tests/balance.test.ts`. |
+| 4 | 1★ within 2 min, 2★ within 5 min, 3★ within 12 min (was 10; matches section 2, Hari 2026-10-31) | A goal done, a new one in view. | Pass in 10 of 10 bot seeds (1★ month 9, 2★ months 23 to 30, 3★ months 32 to 43). Enforced by `tests/balance.test.ts`. |
 | 5 | Something new (resident, event, combo or unlock) at least every 30s | Replaces "something new every 1-2 in-game minutes". | Pass by bot, not asserted. Combos alone can go 30 months apart (seed 8), residents and events fill the gap. |
 | 6 | At most 2 popups per minute, never two within 20s | Back-to-back cards read as spam. | Pass: random popups keep 3 months clear of any other event (`EVENT_CLEAR`). Asserted in `tests/balance.test.ts`. |
 | 7 | Tutorial tips at least 60s apart | One lesson at a time. | Pass (`GAP_MS`) |
@@ -317,7 +318,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - **Anggaran (Kelurahan):** a yearly budget arrives each January. Each unspent % cuts next year's budget by the same %. December brings a forced Serapan rush.
 - **Safety net:** no debt or soft-lock in year 1, and year-1 cash never below 0 for the idle and builder bots (targets 8 and 9).
 - **Tuning:** the balance autoplayer tunes star thresholds. How to read its results is in section 3.
-- **Time:** one month is 8s at 1x (`MONTH_MS`). Speeds are pause, 1x, 2x and 4x.
+- **Time:** one month is 8s at 1x (`MONTH_MS`). Speeds are pause, 1x and 2x. Decided 2026-10-31, code pending: 8s becomes one week (month 32s, year 6.4 min) and 4x is removed.
 - **Rule:** any change to a number a target depends on gets a note in `decisions/`.
 
 ## 5. Tone and politics guardrails
@@ -434,3 +435,315 @@ Settings > Theme picks the colours of the frame and of every sheet and pop-up. B
 5. Playtest, then decide on Kecamatan and above.
 
 Status 2026-10-27: the map engine, RT stars, RW and Kelurahan have shipped. Pick the next stage work in the project chat. The Desa ring is not built.
+
+## 8. Design review checklist
+
+Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing and progression. Each item is a question, why it matters, what Kairosoft does, what good and bad look like, the evidence and a pass bar. UI/UX and testing get their own checklists. See `decisions/design-review-checklist.md`.
+
+### How it works- One review = one scorecard. Each item gets **Pass**, **Fail** or **Unknown**, with a link to the evidence.
+- Each item is judged twice: against the Kairosoft pattern, and against Pak Pejabat's own goal (satire, Laporan vs Sejahtera). A gap from Kairosoft is fine if our goal explains it.
+- Evidence tiers. Use the lowest tier that answers.
+  - **T1 Sim bot:** headless runs in `tests/`, many seeds, several strategies.
+  - **T2 Agent run:** Playwright drives the real app and logs what is on screen.
+  - **T3 Human:** Hari plays a fixed 15-min script and answers 3 questions. Only for feel.
+- Most T1 items need one new tool: a **timeline log** from the sim. One line per thing that happens (resident, event, combo, unlock, star, goal line shown and met, cash, meters, popup, cause of each meter drop). Each metric is a query over it.
+- Bots needed: **idle**, **builder** (today's), **shopkeeper**, **safety-first**, **cheapskate**, **Pencitraan**, **honest**, **random placer** (for accidental combos), **hint reader**.
+- Bots never hesitate. A bot miss is a real miss. A bot pass is a lower bound.
+- Source tags: **[DV]** Dungeon Village, **[GDS]** Game Dev Story, **[PA]** Pocket Academy, **[HSS]** Hot Springs Story, **[MMS]** Mega Mall Story, **[CN]** Cafeteria Nipponica, **[SM]** Station Manager, from `research/kairosoft-raw/`. **[BL]** Backloggd and **[PG]** Pocket Gamer are cited by the research thread or GAME-DESIGN.md but are not in the raw folder. "Inferred" means my reading, not stated on the page.
+
+### Time model
+
+- **Run:** 8h of wall time for the core run (Hari). Wall time = real clock time at whatever speed the player picks. Kairosoft runs take 8–10h [BL, unverified here].
+- **Speeds:** 1x and 2x only (Hari).
+- **Calendar:** 8s = 1 week (Hari, 2026-10-31). A month is 4 weeks (32s at 1x). A year is 48 weeks (6.4 min at 1x). The year count is imaginary and need not match Kairosoft.
+- **How bots convert:** gap bars are checked at **1x**, the worst case for waiting. Content run-out is checked at **2x**, the worst case for depth. Each popup adds a fixed wall cost (start at 5s) because popups pause the game.
+
+### Time bands
+
+| Band | Wall time | Player should | Novelty max | Goal max | Star gap | Stop point |
+| --- | --- | --- | --- | --- | --- | --- |
+| B0 Hook | 0–1 min | First house by 30s | 10s, no popups | tutorial steps | n/a | n/a |
+| B1 Learn | 1–5 min | Close the loop once, 1★ | 30s | 90s | RT 4 min | n/a |
+| B2 First session | 5–15 min | Finish RT, first SK | 30s | 2 min | RT 4 min | first SK |
+| B3 Promotion | 15–30 min | Learn RW's new rule | 45s | 3 min | RW 7 min | 15 min |
+| B4 Act 1 end | 30–60 min | Kelurahan, budget cycle, Lurah 3★ | 60s | 4 min | Kel 10 min | 15 min |
+| B5 Act 2 start | 1–2h | Camat: first Act 2 rule | 90s | 5 min | TBD | 20 min |
+| B6 Act 2 | 2–4h | New pressure: pinjol, judol, Aman | 2 min | 6 min | TBD | 20 min |
+| B7 Act 2 to 3 | 4–6h | Province, then Pusat | 2 min | 8 min | TBD | 20 min |
+| B8 Endgame | 6–8h | Laporan vs Sejahtera decides | 3 min | 10 min | TBD | 20 min |
+| B9 After the end | 8h+ | Free play, optional New Game+ | none | none | n/a | ending |
+
+- **Novelty** = any resident arrival, event, combo, unlock, building level or staff hire (same as section 3 target 5). Item 11 weights them by kind.
+- **Goal** = a star checklist line, an SK, Lomba Agustusan, or an Inem gig. Inspections and resident arrivals do not count, so they cannot pad the bar.
+- **Star gap** uses the section 2 targets. Act 1 keeps its length for now, so it ends near 52 min, inside B4 (Hari, 2026-10-31). Act 2–3 targets do not exist yet.
+
+
+### A. Core loop
+
+#### 1. Always a useful next move
+- **Ask:** at any moment, can the player afford an action that brings an unmet goal line closer?
+- **Why:** waiting with nothing useful to do is where players quit.
+- **Kairosoft:** money, Town Points and research points come on different clocks [DV, GDS]. Event slots refill each season [DV Events page; the main page says per month, so the source conflicts]. Idle staff still earn research [GDS].
+- **Good:** two or three spendable resources on staggered clocks. While saving for something big, a cheap useful action is open.
+- **Bad:** the only affordable action is another Rumah that moves no goal.
+- **Evidence:** T1. Per tick, does any affordable action cut the ETA of an unmet line?
+- **Pass:** no stretch over 60s at 1x without one, any band, any seed.
+
+#### 2. Data lint: nothing dead
+- **Ask:** does every building, role, resource, event and trait move a number someone cares about?
+- **Why:** dead parts dilute choices and waste build time.
+- **Kairosoft:** every structure has upkeep, so a useless one costs money [DV, PA]. Tips say to remove what you do not need [PA]. Staff names are puns, but each has stats [GDS].
+- **Good:** every part feeds a meter or goal, and has upkeep or a stated trade-off.
+- **Bad:** a decoration with no effect, or an event card that changes nothing.
+- **Evidence:** T1 data check over `src/data/`. Build the source → effect graph.
+- **Pass:** 0 orphans among buildings, events, traits and combos. Lowongan requirement lines and Inem's flirt lines are exempt on purpose. Known test case: Patung Ikon has no listed effect in section 2.
+
+#### 3. Growth shows on the map
+- **Ask:** does progress show where the player looks, not only in menus?
+- **Why:** the Kairosoft reward is watching the place fill up.
+- **Kairosoft:** visitors walk to buildings, and a boss walks the streets [DV]. There are two one-time town expansions, at 1,000 Pop and at 4★ [DV].
+- **Good:** the map widens once per promotion. People visibly use what you built.
+- **Bad:** a star that only changes a number in a menu.
+- **Evidence:** T2. Sprite count in the default view, 60s before and after each star, from the player's own actions.
+- **Pass:** each star adds at least N sprites in view (N to be set from a first measured run).
+
+#### 4. Skill matters
+- **Ask:** does a thoughtful player beat an idle one by a clear margin?
+- **Why:** if idling reaches stars nearly as fast, the choices are cosmetic.
+- **Kairosoft:** inferred. Placement, combos and staff picks set the score.
+- **Good:** idle reaches 1★ and stalls. Builder is much faster.
+- **Bad:** idle reaches 3★ within 1.2x of the builder.
+- **Evidence:** T1. Idle vs builder star times, per band.
+- **Pass:** idle is at least 2x slower than builder to every star after 1★.
+
+#### 5. Meters stay in play
+- **Ask:** does each meter move through its range, or sit at floor or cap?
+- **Why:** a pinned meter has no tension and stops mattering.
+- **Kairosoft:** popularity hits 100 and triggers Fever, then drops [MMS].
+- **Good:** Popularitas, Sabar, Aman and Sejahtera each spend most of the run between 20 and 90.
+- **Bad:** Popularitas parked at 90 from hour 1.
+- **Evidence:** T1. Share of ticks each meter sits within 5 of its floor or cap.
+- **Pass:** under 25% for each meter, per band, for the builder bot.
+
+#### 6. Causes are legible
+- **Ask:** when a meter drops, does the game say why?
+- **Why:** an unexplained loss reads as a bug and teaches nothing.
+- **Kairosoft:** inferred. Short status pop-ups over buildings and people.
+- **Good:** every drop links to its cause ("Preman at Warung: −0.2").
+- **Bad:** Sabar falls and the player has to guess.
+- **Evidence:** T1 logs a cause for each drop. T2 checks it is shown.
+- **Pass:** every drop over 2 points in a month has a logged and shown cause.
+
+### B. Goals and stop points
+
+#### 7. Goal cadence and stop points
+- **Ask:** how long between goals met, and between payoff screens?
+- **Why:** a goal done and a new one in view is the hook. Players stop at a payoff, and come back for what it shows next.
+- **Kairosoft:** Dungeon Village has 5 ranks of 3–4 mixed lines (population, income, events held, quests, and on ranks 1, 3 and 5 a named building) [DV]. Lines finishing at different times is inferred. Yearly national rankings [MMS]; graduation each year [PA].
+- **Good:** 3–4 mixed lines per star, one of them a named building where it fits. A payoff screen every 15–20 min that ends with the next goal on screen.
+- **Bad:** one big number to grind. No payoff for 40 min.
+- **Evidence:** T1 timeline. Gaps between goals, and between stop points.
+- **Pass:** Goal max and Stop point columns, 10 of 10 seeds. The next goal is shown within 5s of every stop point.
+
+#### 8. Three horizons at once
+- **Ask:** is there always a short, a mid and a long goal whose progress moves?
+- **Why:** short keeps hands busy, mid gives the session a shape, long brings you back tomorrow.
+- **Kairosoft:** short = this month's build or event. Mid = next rank, Golden Week [HSS], yearly graduation [PA]. Long = the year-16 score [DV, HSS].
+- **Good:** the next star line (short), the next star or Lomba (mid), and the 2045 review (long) all visibly move.
+- **Bad:** the 2045 meter is on screen but never moves, so it is not a goal.
+- **Evidence:** T1 goal ETAs; T2 that each is on screen.
+- **Pass:** a short (<2 min) and a mid (<15 min) goal in ≥90% of ticks after minute 2. The long meter changes at least once per stop point.
+
+#### 9. Goals say what is missing
+- **Ask:** does every unmet line name the exact gap?
+- **Why:** an unclear goal reads as a bug. Existing rule (section 1, Clarity).
+- **Kairosoft:** rank lines are plain counts: "Events Held: 15", "Build: Restaurant" [DV].
+- **Good:** "Warung Sembako 2 of 3". A tap jumps to where you fix it.
+- **Bad:** "Improve the kampung".
+- **Evidence:** T2. Each goal line holds a count or a name.
+- **Pass:** 100%.
+
+#### 10. Gates that loosen
+- **Ask:** if a player is stuck on a gate, does it ease over time?
+- **Why:** a hard gate with no relief ends runs.
+- **Kairosoft:** office upgrade 2 needs money and awards in years 4–6, either one in years 7–9, and neither after year 10 [GDS].
+- **Good:** a stuck player gets a second route or a lower bar after a set time. A fast player still goes faster.
+- **Bad:** one fixed route that a bad seed can miss.
+- **Evidence:** T1. Weakest non-idle bot; time stuck at each gate.
+- **Pass:** no gate holds it more than 2x the band's star gap.
+
+### C. Rewards
+
+#### 11. Novelty and content depth
+- **Ask:** how long between new things, and does new content last to the end?
+- **Why:** an 8h run with 1h of content is a 7h grind.
+- **Kairosoft:** filling the popularity bar rolls a new adventurer, monster, event or a medal; once new things run out, only medals come [DV]. Dungeon Village unlocks 19 buildings across 5 ranks, plus 25 repeatable and 5 one-time events [DV]. Mega Mall has 31 combos [MMS].
+- **Good:** a steady drip, weighted toward new systems and buildings, not decor. New content lasts into B8, with a fallback reward after.
+- **Bad:** today's state: built content covers about B0–B4 (about 1h). Or decor held back to fake late novelty.
+- **Evidence:** T1 timeline at 1x for gaps. Count of first-seen items at 2x for depth. Weight: system 3, building 2, other 1.
+- **Pass:** Novelty max column. At least 6 weighted first-seen points per 30 min in every band B0–B8.
+
+#### 12. Star rewards
+- **Ask:** can the player use a star's reward right away, and does it bring more than one kind of thing?
+- **Why:** an unaffordable unlock is a counter, not a reward. The same kind every time stops feeling like a reward.
+- **Kairosoft:** ranks unlock 1–5 buildings plus plants and events, and often a system: Rearrange [★1], Cauldron [★2], more events [★3, ★5], Expand Town [★4] [DV]. A price spread per rank is inferred.
+- **Good:** each star brings at least one non-decor thing to place now, one dear thing to save for, and about every other star a new system or verb.
+- **Bad:** the only unlock costs three minutes of income. Or a star that only adds another shop.
+- **Evidence:** T1. Cash at star time against the cheapest non-decor unlock. Each unlock tagged by kind.
+- **Pass:** that unlock is affordable within 30s in 10 of 10 seeds. Every star bundles 2+ kinds. A new system at least every 2 stars.
+
+### D. Economy
+
+#### 13. Sources and sinks
+- **Ask:** does every resource have a source and a sink that both get used?
+- **Why:** a resource with no sink piles up and stops mattering.
+- **Kairosoft:** money pays build and upkeep. Town Points pay events, research and job changes [DV]. Research points pay levels and boosts [GDS]. Salaries are paid each March [GDS].
+- **Good:** each resource has a steady sink (upkeep, salary) and a lumpy sink (a big build, an event).
+- **Bad:** a resource that only goes up.
+- **Evidence:** T1 data check plus the bot spend log.
+- **Pass:** every resource is earned and spent in every band where it exists.
+
+#### 14. Cash health
+- **Ask:** does cash pile up with nothing to buy, or run out with no way back?
+- **Why:** hoarding means the cost curve ran ahead of content. Debt means it ran behind.
+- **Kairosoft:** year-1 salaries are paid by a grant [GDS]. Late cash buys dear upgrades and ads [GDS]. Reviewers flag debt traps in Pocket Academy [PG].
+- **Good:** a safety net early. A sink late that scales with income.
+- **Bad:** millions in the bank at hour 5 with nothing to buy.
+- **Evidence:** T1. Cash against the cost of the next key item (item 15).
+- **Pass:** cash above 5x that cost never lasts over 3 min. Cash never below 0 for the builder or idle bot in any band.
+
+#### 15. Cost curve and snowball
+- **Ask:** does time-to-afford the next key item stay in a band, and does income outgrow costs?
+- **Why:** too short makes money meaningless. Too long is a grind wall. Runaway income breaks every later bar.
+- **Kairosoft:** ad prices run from 30K to 9,900K across three office tiers [GDS], so each tier resets what "dear" means.
+- **Good:** prices step up with each stage, in line with income.
+- **Bad:** flat prices, so Act 2 buys everything at once.
+- **Evidence:** T1. Seconds of sim income at 1x for the next key item. Ratio of income growth to cost growth per stage.
+- **Pass:** 30s to 2 min in B0–B4, never over 5 min. Income growth per stage within 0.7–1.5x cost growth.
+
+#### 16. Diminishing returns
+- **Ask:** does repeating the same action pay less over time?
+- **Why:** without it, one action wins forever and choices collapse.
+- **Kairosoft:** the same ad type stops adding fans [GDS]. Training stops working after a while [GDS]. Each item bought raises the others' price [GDS]. Contracts pay early and are not worth it later [GDS].
+- **Good:** early tools fade as better ones open.
+- **Bad:** the best move in minute 5 is still the best in hour 6.
+- **Evidence:** T1. Star time saved per unit of the binding resource (Rupiah, Orang Dalam, Dana, Stempel), per action, per band.
+- **Pass:** no single action is the top payoff in more than 2 bands. Basics every strategy needs (Rumah, Warung) are exempt.
+
+### E. Choices
+
+#### 17. No dominant strategy
+- **Ask:** do different plans all work, and differ in what they get?
+- **Why:** if one plan always wins, the other choices are fake.
+- **Kairosoft:** upkeep caps how much you build [DV]. Placement matters: floor bonus [MMS], combos within 2 tiles [HSS]. Choose medal recipients well [DV].
+- **Good:** several plans reach the stars. They differ in score, meters or ending, not only speed.
+- **Bad:** one build order that wins on every metric.
+- **Evidence:** T1. Builder, shopkeeper, safety-first and Pencitraan bots.
+- **Pass:** no bot wins every metric. For each star, slowest over fastest ≤1.3. The cheapskate bot has its own bar: every star within 2x.
+
+#### 18. Every choice has a cost
+- **Ask:** does each event option trade something?
+- **Why:** an option better on every number is not a choice.
+- **Kairosoft:** in a dungeon, adventurers earn nothing for the town [DV]. Harder contracts pay more, but failing costs reputation [GDS].
+- **Good:** each option names what you give up.
+- **Bad:** a free option that is also the best.
+- **Evidence:** T1 data check on event options.
+- **Pass:** 0 strictly dominated options.
+
+#### 19. Laporan vs Sejahtera
+- **Ask:** does gaming the Laporan pay short term and cost long term?
+- **Why:** this is the satire's core. If honest play is always best, the joke has no teeth.
+- **Kairosoft:** no match. This one is ours.
+- **Good:** Pencitraan reaches stars faster. Honest play ends with higher Sejahtera. Each reaches a different ending.
+- **Bad:** one path wins on both scores.
+- **Evidence:** T1. Pencitraan bot vs honest bot.
+- **Pass:** in 10 of 10 seeds, Pencitraan is 10–30% faster to stars (inside item 17's 1.3 cap), honest ends higher on Sejahtera, and the endings differ.
+
+#### 20. Management load
+- **Ask:** do the taps needed per minute stay bounded as the map grows?
+- **Why:** with 4, then 16+ RTs, micromanagement can turn fun into chores.
+- **Kairosoft:** Station Manager runs one station at a time; the others pay 40% of income on their own [SM].
+- **Good:** each stage brings a way to delegate (Auto-dana, staff) before the load doubles.
+- **Bad:** funding 16 RTs one by one every month.
+- **Evidence:** T1. Required actions per minute for the builder bot, per band.
+- **Pass:** never above the B2 peak by more than 1.5x.
+
+### F. Combos
+
+#### 21. Combo discovery
+- **Ask:** are some combos found by accident and some only by intent?
+- **Why:** accidental finds teach the system. Hidden ones reward study.
+- **Kairosoft:** Mega Mall has 31 combos. The formulae for most are sold over time; the last 8 are never hinted [MMS]. Hot Springs combos fire within 2 tiles [HSS].
+- **Good:** about 3 in 4 hinted or likely by accident, 1 in 4 hidden. A clear distance rule.
+- **Bad:** all hidden, or all obvious.
+- **Evidence:** T1. A random-placement bot for accidental finds. A hint-reading bot for hinted ones.
+- **Pass:** the random bot finds ≥3 in B0–B2. The hint bot finds 65–85%. Every combo is found by some bot.
+
+### G. Calendar and randomness
+
+#### 22. Calendar rhythm
+- **Ask:** does each stage have fixed beats the player can plan for, spaced like real occasions?
+- **Why:** known dates turn randomness into planning. With a 6.4-min year, yearly beats can come too often.
+- **Kairosoft:** Golden Week every month 5 [HSS]. Events in months 6 and 11, recruited a month ahead [PA]. Salaries every March [GDS]. Medals at year end [DV].
+- **Good:** 2–4 fixed beats per stage, each warned well ahead. Big days (Lomba Agustusan, a Lomba Kecamatan) feel rare: some every year, the biggest every 2–4 years.
+- **Bad:** all events random. Or a "big day" every 4 min.
+- **Evidence:** T1 timeline. Fixed beats per stage, warning lead in wall seconds, gap between big days.
+- **Pass:** ≥2 fixed beats per stage. Each warned ≥30s of wall time ahead. Big days ≥10 min of wall time apart.
+
+#### 23. Reliability: seeds, bad luck, recovery
+- **Ask:** do runs stay on track across seeds and after bad luck?
+- **Why:** too much spread feels unfair. A loss with no fix ends runs. Rule: bad choices slow you, never soft-lock.
+- **Kairosoft:** rank lines are player-driven [DV]. A boss drains popularity until killed and pays well when it is [DV]. Downed adventurers recover over time, faster at an Inn [DV]. Some buildings exist only on certain maps [PA].
+- **Good:** the order of events changes and the shape of the run does not. Each threat has a fix, a cost while it lasts and a reward for fixing it.
+- **Bad:** one seed stalls for 5 min. A loss that lasts with no fix.
+- **Evidence:** T1. Builder on 10+ seeds per stage; a forced worst event chain.
+- **Pass:** every star within target in 10 of 10 seeds (section 3 target 4). Slowest over fastest seed ≤1.5. Worst chain: next star within 2x target. Never a soft-lock.
+
+### H. Progression, ending and return
+
+#### 24. Stage change feels new
+- **Ask:** does a promotion bring a new system and keep the old map useful?
+- **Why:** a promotion that is just a bigger copy is a grind.
+- **Kairosoft:** office moves add seats, training, ads and hiring [GDS]. Other stations keep progress and pay 40% of income [SM].
+- **Good:** each stage adds a new verb (Dana, Stempel, Anggaran). The old area keeps paying in.
+- **Bad:** the same loop on a bigger map.
+- **Evidence:** T1 unlock list; T2 screenshots.
+- **Pass:** ≥1 new system per stage. First star of the new stage within its target.
+
+#### 25. The run ends
+- **Ask:** is there a clear end, with a score, near 8h?
+- **Why:** an end gives the run a shape and a reason to push.
+- **Kairosoft:** the score is taken in year 16 [DV, HSS, MMS, CN] or 20 [GDS]. It mixes money with progress counts [HSS, CN]. Play continues after [DV, MMS].
+- **Good:** Sidang Emas 2045 with a score and one of 4 endings. Free play after.
+- **Bad:** no end, or an end that locks the save.
+- **Evidence:** T1 bots reach each ending; T2 checks free play continues.
+- **Pass:** all 4 endings reachable, at 7–9h of wall time. Unknown until Act 3 exists.
+
+#### 26. Replay drivers (optional New Game+)
+- **Ask:** is there a reason to start again?
+- **Why:** optional per Hari, but it turns 8h into 20h for fans.
+- **Kairosoft:** carry-over is small and specific. Funds do not carry [CN]. Staff stats carry [CN], one of each scenery piece [HSS], unlocked stores [MMS], genre levels [GDS]. A new run makes it "easier to beat your high score" [DV].
+- **Good:** carry a little, never money. Chase another ending or a higher score.
+- **Bad:** carry so much that the second run has no early game.
+- **Evidence:** design check.
+- **Pass:** at least one replay driver designed. Not required for the core 8h.
+
+#### 27. Coming back
+- **Ask:** when a player reopens the app, do they know where they were within 5s?
+- **Why:** an 8h run is 20–30 sessions on a phone. Every return is a mini first-time experience.
+- **Kairosoft:** inferred. The game resumes on the map, mid-month.
+- **Good:** resume on the map with the current goal and what changed since last time.
+- **Bad:** resume on a menu, or with no goal shown.
+- **Evidence:** T2. Save, reload, screenshot at 5s.
+- **Pass:** current goal and its progress on screen within 5s, in both languages.
+
+### T3 human check (3 questions, 15 min)
+
+- When did you first want to stop? Why?
+- Name one choice you made on purpose. Did it matter?
+- What did you want to do that the game would not let you?
+
+### Out of scope here
+
+- UI and layout: UI/UX checklist, next.
+- Test coverage and CI: testing checklist, after that.
