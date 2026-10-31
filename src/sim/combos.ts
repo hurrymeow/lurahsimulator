@@ -15,7 +15,7 @@ export interface ActiveCombo {
   members: Building[];
 }
 
-const ORDER = ['rt', 'rw', 'kelurahan'];
+const ORDER = ['rt', 'rw', 'kelurahan', 'kecamatan'];
 
 /** Retired buildings still count as the one they merged into, at the level they stood for. */
 const LEGACY: Record<string, { def: string; level: number }> = {

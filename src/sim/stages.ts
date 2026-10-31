@@ -4,8 +4,9 @@ import { rwOf } from './area';
 import { promote } from './grow';
 import { STAGES } from '../data/stages';
 import { bName, t, tr, type Key } from '../i18n';
-import { def } from './content';
+import { def, hasDef } from './content';
 import { first } from './firsts';
+import { amanAcross, kecSystem, kelStars, weeksSinceRazia } from './kec';
 import { gain, type Fx } from './gain';
 import { population } from './state';
 import type { GameState, Goal, StageDef, StageId, Stars } from './types';
@@ -22,6 +23,8 @@ export const starsOf = (s: GameState, id: StageId = s.stage.current): Stars => s
 export interface GoalProgress {
   have: number;
   need: number;
+  /** The goal is met while `have` is below `need`, as with pinjol under 25%. */
+  under?: boolean;
 }
 
 /** Stars of every RW on a Kelurahan map. Yours is the one you earned. An AI RW is as good as its weakest RT. */
@@ -55,7 +58,16 @@ const GOAL_CHECKS: { [K in Goal['kind']]: (s: GameState, g: Extract<Goal, { kind
   noDebtMonths: (s) => s.debtFree,
   serapanMonths: (s) => s.kel.serapanRun,
   cleanAudits: (s) => s.kel.cleanAudits,
+  kelsAtStars: (s, g) => kelStars(s).filter((x) => x >= g.stars).length,
+  built: (s, g) => s.buildings.filter((b) => b.def === g.def && b.status === 'active').length,
+  pinjolUnder: (s) => Math.round(s.kec?.pinjol ?? 0),
+  amanWeeks: (s) => s.kec?.amanRun ?? 0,
+  amanNow: (s) => amanAcross(s),
+  noRaziaWeeks: (s) => weeksSinceRazia(s),
 };
+
+/** Goals met from below: the line is done while `have` stays under `need`. */
+const UNDER = new Set<Goal['kind']>(['pinjolUnder']);
 
 const GOAL_KEYS: Record<Goal['kind'], Key> = {
   residents: 'stage.goal.residents',
@@ -72,11 +84,17 @@ const GOAL_KEYS: Record<Goal['kind'], Key> = {
   noDebtMonths: 'stage.goal.noDebtMonths',
   serapanMonths: 'stage.goal.serapanMonths',
   cleanAudits: 'stage.goal.cleanAudits',
+  kelsAtStars: 'stage.goal.kelsAtStars',
+  built: 'stage.goal.built',
+  pinjolUnder: 'stage.goal.pinjolUnder',
+  amanWeeks: 'stage.goal.amanWeeks',
+  amanNow: 'stage.goal.amanNow',
+  noRaziaWeeks: 'stage.goal.noRaziaWeeks',
 };
 
 export function goalProgress(s: GameState, g: Goal): GoalProgress {
   const check = GOAL_CHECKS[g.kind] as (s: GameState, g: Goal) => number;
-  return { have: check(s, g), need: g.n };
+  return UNDER.has(g.kind) ? { have: check(s, g), need: g.n, under: true } : { have: check(s, g), need: g.n };
 }
 
 export interface ChecklistLine {
@@ -95,8 +113,9 @@ export function nextStarChecklist(s: GameState, id: StageId = s.stage.current): 
 export function starChecklist(s: GameState, id: StageId, stars: Stars): ChecklistLine[] | null {
   if (stars === 3) return null;
   return stageDef(id).stars[stars].goals.map((goal) => {
-    const { have, need } = goalProgress(s, goal);
-    return { goal, done: have >= need, text: t(GOAL_KEYS[goal.kind], { ...goal, n: need, have }) };
+    const { have, need, under } = goalProgress(s, goal);
+    const name = goal.kind === 'built' ? (hasDef(goal.def) ? bName(def(goal.def)) : goal.def) : '';
+    return { goal, done: under ? have < need : have >= need, text: t(GOAL_KEYS[goal.kind], { ...goal, n: need, have, name }) };
   });
 }
 
@@ -110,6 +129,12 @@ export const stageTitle = (id: StageId, stars: number, path?: 'kelurahan' | 'des
 export function stageSystem(s: GameState, fx: Fx): void {
   const id = s.stage.current;
   const have = s.stage.stars[id];
+  kecSystem(s);
+  // Saves that were at 3★ before the next stage opened (Kelurahan, before Kecamatan) get their SK now.
+  if (have === 3 && stageDef(id).next && s.stage.sk === undefined && canPromote(s)) {
+    s.stage.sk = 'offered';
+    fx.push({ kind: 'notice', title: t('sim.skTitle'), body: t('sim.skBody'), tone: 'good', fanfare: true });
+  }
   if (have === 3 || !starsEarnable(s, id)) return;
   const star = stageDef(id).stars[have];
   const stars = (have + 1) as Stars;

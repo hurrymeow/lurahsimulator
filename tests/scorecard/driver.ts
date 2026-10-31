@@ -76,8 +76,8 @@ export interface Timeline {
   stageTicks: Partial<Record<StageId, number>>;
 }
 
-const STAGE_ORDER: StageId[] = ['rt', 'rw', 'kelurahan'];
-const SCOPES: Record<StageId, string[]> = { rt: ['rt'], rw: ['rt', 'rw'], kelurahan: ['rt', 'rw', 'kel'] };
+const STAGE_ORDER: StageId[] = ['rt', 'rw', 'kelurahan', 'kecamatan'];
+const SCOPES: Record<StageId, string[]> = { rt: ['rt'], rw: ['rt', 'rw'], kelurahan: ['rt', 'rw', 'kel'], kecamatan: ['rt', 'rw', 'kel'] };
 /** Stars earned so far across all stages. */
 export const totalStars = (s: GameState): number => STAGE_ORDER.reduce((n, id) => n + s.stage.stars[id], 0);
 

@@ -12,7 +12,7 @@ const add = (s: ReturnType<typeof newGame>, id: string, x: number, y: number) =>
 describe('stage checklist', () => {
   it('starts at 0 stars and names exactly what is missing', () => {
     const s = newGame(1);
-    expect(s.stage).toEqual({ current: 'rt', stars: { rt: 0, rw: 0, kelurahan: 0 } });
+    expect(s.stage).toEqual({ current: 'rt', stars: { rt: 0, rw: 0, kelurahan: 0, kecamatan: 0 } });
     const lines = nextStarChecklist(s)!;
     expect(lines.map((l) => l.text)).toEqual(['10 residents (have 4)', 'Combos found: 0 of 1']);
     expect(starsEarnable(s)).toBe(false);
