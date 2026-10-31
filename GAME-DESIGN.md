@@ -134,7 +134,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 
 - Unlocks Lapangan, Bank Sampah, Bengkel, PAUD, Balai-balai Bambu and Kandang Ayam. Kantor RT can reach level 3.
 - The scenery edge thins, so the neighbours' roofs show.
-- **Goal for 3★:** **40** residents, **2** wins in a row, **3** combos and Sabar of at least **50**.
+- **Goal for 3★:** **55** residents, **2** wins in a row, **3** combos and Sabar of at least **65**.
 
 #### 3★ RT Teladan
 
@@ -248,7 +248,7 @@ Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder
 | 1 | First house built within 30s of New Game | Kairosoft opens on a build. Idle time here loses the player. | Estimate: about 25 to 35s (6 taps, 57 tutorial words). Close to the line. Not timed. |
 | 2 | First resident within 10s of the house | The first build must visibly pay off. | Pass: month 1 (8s) |
 | 3 | First popup between 45s and 90s | Let the player learn the map first. | Pass: 48 to 56s |
-| 4 | 1★ within 2 min, 2★ within 5 min, 3★ within 12 min (was 10; matches section 2, Hari 2026-10-31) | A goal done, a new one in view. | Pass in 10 of 10 bot seeds (1★ month 9, 2★ months 23 to 30, 3★ months 32 to 43). Enforced by `tests/balance.test.ts`. |
+| 4 | 1★ within 2 min, 2★ within 5 min, 3★ in 9 to 12 min for the builder bot (12 min is the intended pace, not a ceiling; Hari 2026-10-31) | A goal done, a new one in view. | Pass in 10 of 10 bot seeds (1★ week 2, 2★ weeks 33 to 40, 3★ weeks 77 to 90). Ceiling enforced by `tests/balance.test.ts`; the floor reads from the scorecard star table. |
 | 5 | Something new (resident, event, combo or unlock) at least every 30s | Replaces "something new every 1-2 in-game minutes". | Pass by bot, not asserted. Combos alone can go 30 months apart (seed 8), residents and events fill the gap. |
 | 6 | At most 2 popups per minute, never two within 20s | Back-to-back cards read as spam. | Pass: random popups keep 3 months clear of any other event (`EVENT_CLEAR`). Asserted in `tests/balance.test.ts`. |
 | 7 | Tutorial tips at least 60s apart | One lesson at a time. | Pass (`GAP_MS`) |
