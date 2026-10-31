@@ -17,12 +17,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Source: TESTING.md item 7; GAME-DESIGN.md section 8
   - `open · — · — · done when:` the scorecard has no blank rows and runs nightly in under 20 minutes.
   - Order: build after the weekly calendar and the determinism task. Bots play 1x and 2x only (no 4x). Minutes follow 8s a week, 4 weeks a month, 48 a year; pass targets include RT 3★ in about 12 min. Needs `nightly.yml` from the CI task: add a stub if that has not landed.
-- [ ] **Make the sim deterministic and property-tested.**
-  - Problem: `newGame` defaults its seed from `Date.now()` in `src/sim/state.ts`; no property tests check the sim's hard rules.
-  - Why: TESTING.md items 1 and 6. Random games find bugs the two bots never try.
-  - Suggested solution: move the default seed to the caller; lint `src/sim/` for wall-clock and `Math.random`; add fast-check tests for stars never drop, no negative counts, no soft-lock, save round-trip (200 games in `npm test`, 1,000 nightly). Also check an incompatible save shows the start-new prompt (no save migrations).
-  - Source: TESTING.md items 1, 6
-  - `claimed · Claude (project thread) · 2026-10-31 · done when:` the lint and property tests pass in CI.
 - [ ] **Cap Pos Ronda so players use the other Popularitas buildings.**
   - Problem: Pos Ronda has no `maxCount`. The Kelurahan bot built 20 to 90 of them to hold Popularitas in a big kampung.
   - Why: A wall of Pos Ronda is the cheapest Popularitas, so Praktik Bidan, Panggung Senam and Kolam Pancing (#180) are skipped and the map looks the same.
@@ -51,6 +45,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- [x] **Make the sim deterministic and property-tested.** `newGame` needs a seed from the caller; a test fails on clock or `Math.random` use in `src/sim/`; fast-check tests hold five rules at 200 games (`PROP_RUNS=1000` for nightly). Left for other tasks: start-new prompt (calendar), builder-bot soft-lock check (scorecard). #191, `progress/determinism-property-tests.md`.
 - [x] **Make the phone's back gesture and map gestures safe.** Back closes the top layer (how-to, panel, card, placing); event cards are never skipped; on the bare map the first back shows a 2s hint and a second leaves. Sheets contain overscroll. #190, `decisions/back-gesture.md`.
 - [x] **Slow the Kelurahan down and make its stars read the player's own kampung.** Only the player's own RW sends Stempel letters to the player (the backlog had pinned Popularitas at 0). Each star also needs own residents and Popularitas: 50/50, 120/45, 200/40. Bot 3★ moved from 11-15 to about 19 min at 1x; the rest of the gap is a new task. #188, `decisions/kelurahan-own-kampung.md`.
 - [x] **Replace 'Kini: do xx' with the pending goals for the next star.** The strip reads "★ berikutnya, N target lagi: ..."; tapping lists every unmet goal, then one next step when it helps. #178, `decisions/goal-strip-star-goals.md`.
