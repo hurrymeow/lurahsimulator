@@ -11,6 +11,7 @@ import { brandKind, brandOf, displayName, hasBrand, hasOwnName, kanibal, nextBra
 import { FRANCHISE, KANIBAL, NAME_MAX, RENAMABLE } from '../data/brands';
 import { premanTake } from '../sim/needs';
 import { buildingIncome, buildingUpkeep } from '../sim/tick';
+import { deskCapacity, permitEta, permitQueue } from '../sim/staff';
 import type { Building, BuildingDef, CheckResult } from '../sim/types';
 import { spriteImg } from './build';
 import { h } from './dom';
@@ -67,7 +68,8 @@ export function inspect(app: App, uid: number): void {
     inspect(app, uid);
   };
   // Status shows only when the building is not working: a dot and a word, never colour alone.
-  const left = b.timer > 0 && (b.status === 'permit' || b.status === 'building') ? t('insp.left', { n: b.timer }) : '';
+  // A permit waits for the desks, so its time to go is its place in the queue, not its own folders.
+  const left = b.status === 'permit' ? t('insp.left', { n: permitEta(s, b) }) : b.timer > 0 && b.status === 'building' ? t('insp.left', { n: b.timer }) : '';
   const effect = effectLine(d, b);
   const lines: Node[] = [
     h('div', { class: 'inspect-head' }, spriteImg(d.sprite, 40, b.level), h('div', {},
@@ -86,6 +88,8 @@ export function inspect(app: App, uid: number): void {
       done();
     }, true));
     lines.push(h('p', { class: 'meta' }, t('insp.skipHelp')));
+    const queue = permitQueue(s);
+    lines.push(h('p', { class: 'meta desk-queue' }, t('insp.queue', { pos: queue.findIndex((o) => o.uid === b.uid) + 1, n: queue.length, eta: permitEta(s, b), cap: Math.round(deskCapacity(s) * 10) / 10 })));
   }
   // The tukang parkir cannot be demolished, but he can be tertibkan: that action leads his panel too.
   if (b.def === 'parkir') {

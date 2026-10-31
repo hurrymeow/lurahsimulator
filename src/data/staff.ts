@@ -25,7 +25,7 @@ export interface RoleDef {
 }
 
 export const ROLES: RoleDef[] = [
-  { id: 'asisten', name: 'Asisten', blurb: 'Speeds permits and points at the next goal.', stat: 'lobi', opens: { stage: 'rt', stars: 0 }, inemOnly: true },
+  { id: 'asisten', name: 'Asisten', blurb: 'Works a desk at the Kantor and clears the permit queue, folder by folder.', stat: 'lobi', opens: { stage: 'rt', stars: 1 } },
   { id: 'hansip', name: 'Hansip', blurb: 'Keeps the gang safe: Aman rises, and a preman on the beat finds work as a guard.', stat: 'rajin', opens: { stage: 'rt', stars: 1 } },
   { id: 'penagih', name: 'Tukang Tagih Iuran', blurb: 'Finds the warga who are "never home". More iuran comes in; a low Jujur keeps some.', stat: 'rajin', opens: { stage: 'rt', stars: 1 } },
   { id: 'pu', name: 'Petugas PU', blurb: 'Fixes damaged buildings on his own, one a month per level.', stat: 'rajin', opens: { stage: 'rt', stars: 3 } },
@@ -159,7 +159,12 @@ export const MUTASI = { stars: 3, level: 3 };
 
 /** What each role does per level, before the stat and trait multipliers. */
 export const ROLE_FX = {
-  asisten: { permitCutPerLevel: 0.1, permitCutMax: 0.4 },
+  /**
+   * The desk queue: every permit is a pile of folders (its permitMonths), cleared in order. Each Asisten clears
+   * output x berkasPerOutput folders a month (Inem at level 1: about 1). The Kantor never stops: at least floor a month.
+   * The goal strip says to hire once the queue is hireAfter months deep.
+   */
+  asisten: { berkasPerOutput: 0.85, floor: 0.5, hireAfter: 3 },
   hansip: { amanPerLevel: 2 },
   penagih: { iuranPerLevel: 0.1, iuranMax: 0.5, skimBelowJujur: 40, skim: 0.1 },
   pu: { repairsPerLevel: 1 },

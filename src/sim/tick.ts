@@ -28,7 +28,7 @@ import { lombaSystem } from './lomba';
 import { monthWarnings, type SabarCause } from './warnings';
 import { parkirSystem } from './parkir';
 import { needsSystem, premanTake } from './needs';
-import { buildBoost, permitCut, staffSystem, upkeepCut } from './staff';
+import { buildBoost, clearPermits, staffSystem, upkeepCut } from './staff';
 import { realisasiSystem, realisasiWarungMult } from './realisasi';
 import { addBuilding, addResident, attractTarget, decorMult, emptyTiles, housing, isWorking, levelMult, neighbours, pathMult, population } from './state';
 import { gain, type Fx } from './gain';
@@ -72,23 +72,27 @@ export function advanceConstruction(s: GameState, fx: Fx): void {
   const crew = Math.min(TUKANG_MAX, used(s, 'tukang'));
   for (const b of s.buildings) {
     if (b.status !== 'permit' && b.status !== 'building') continue;
-    b.timer -= b.status === 'building' && (s.month + b.uid) % 4 < crew ? 2 : 1;
-    // Inem's paperwork speeds permits; a Supir gets crews to site sooner. A share of months count twice.
-    const extra = b.status === 'permit' ? permitCut(s) : buildBoost(s);
-    if (extra && ((s.month * 7 + b.uid * 3) % 10) / 10 < extra) b.timer--;
+    // A permit waits for the desks (clearPermits, below); every month in the queue costs Popularitas.
     if (b.status === 'permit') {
       gain(s, fx, 'sabar', -QUEUE_SABAR_DRAIN, b);
-      if (b.timer <= 0) {
-        b.status = 'building';
-        b.timer = Math.max(1, def(b.def).buildMonths);
-      }
-    } else if (b.timer <= 0) {
+      continue;
+    }
+    b.timer -= (s.month + b.uid) % 4 < crew ? 2 : 1;
+    // A Supir gets crews to site sooner: a share of months count twice.
+    const extra = buildBoost(s);
+    if (extra && ((s.month * 7 + b.uid * 3) % 10) / 10 < extra) b.timer--;
+    if (b.timer <= 0) {
       b.status = 'active';
       fx.push({ kind: 'built', uid: b.uid });
       if (onBuildingFinished(s, fx, b) === 'ok') fx.push({ kind: 'notice', title: t('sim.openTitle', { name: bName(def(b.def)) }), body: bBlurb(def(b.def)), tone: 'good', x: b.x, y: b.y });
       if (b.def === 'rumah') first(s, fx, 'house', b);
       novelty(s);
     }
+  }
+  // The Kantor's desks stamp the permit queue in order. A stamped building starts on site next month.
+  for (const b of clearPermits(s)) {
+    b.status = 'building';
+    b.timer = Math.max(1, def(b.def).buildMonths);
   }
 }
 

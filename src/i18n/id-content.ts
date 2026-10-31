@@ -198,7 +198,7 @@ export const ID_CONTENT: Record<string, string> = {
   'staff.ch.online.name': 'Online (LokerJalan)',
   'staff.role.adminWa.blurb': 'Mengurus grup WA warga: Viral tiap bulan, dan kabar buruk terasa lebih ringan.',
   'staff.role.adminWa.name': 'Admin Grup WA',
-  'staff.role.asisten.blurb': 'Mempercepat izin dan menunjuk target berikutnya.',
+  'staff.role.asisten.blurb': 'Duduk di meja Kantor dan menghabiskan antrean izin, berkas demi berkas.',
   'staff.role.asisten.name': 'Asisten',
   'staff.role.bendahara.blurb': 'Memegang kas. Biaya perawatan bocor lebih sedikit, kecuali Jujur rendah.',
   'staff.role.bendahara.name': 'Bendahara',
