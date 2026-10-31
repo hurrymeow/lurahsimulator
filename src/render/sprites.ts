@@ -2,6 +2,7 @@
 // Warm storybook palette (terracotta, mustard, teal, cream, olive) kept punchy enough for a party
 // game, read against a dark brown ink.
 import { ICON_ART } from './icon-art';
+import { STAT_ART } from './stat-art';
 
 export const PALETTE: Record<string, string> = {
   k: '#2a1810', w: '#f6ecd4', r: '#df4a2c', R: '#a8321f', y: '#f4b935', b: '#3d72b4', B: '#27427c',
@@ -227,6 +228,7 @@ export const SPRITES: Record<string, string[]> = {
 /** HUD icons, 16x16. Each is the shape people already know from their phone: coin, heart, key, flame, person. */
 export const ICONS: Record<string, string[]> = {
   ...ICON_ART,
+  ...STAT_ART,
   rupiah: ICON_ART.coin,
   sabar: ICON_ART.heart,
   orangDalam: ICON_ART.key,

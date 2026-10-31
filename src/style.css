@@ -546,7 +546,16 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .staff-face { flex: none; width: 44px; height: 60px; image-rendering: pixelated; }
 .staff-badge { flex: none; min-width: 44px; padding: 4px; font-family: var(--font-pixel); font-size: 16px; font-weight: 700; text-align: center; color: #2a1810; background: #f4b935; border: 1px solid #8a4f12; }
 .staff-stats { display: grid; gap: 2px; margin: 6px 0; }
-.staff-stat { display: grid; grid-template-columns: 56px 1fr 32px; gap: 6px; align-items: center; font-size: 16px; }
+/* Icon, name, bar, value; under them, what the stat buys in this job. The two stats a job uses stand out. */
+.staff-stat { display: grid; grid-template-columns: 20px 56px 1fr 32px; column-gap: 6px; align-items: center; font-size: 16px; }
+.staff-stat-note { grid-column: 2 / -1; margin: 0 0 4px; }
+.staff-stat-other { color: var(--muted); }
+.staff-stat-main .staff-stat-name, .staff-stat-risk .staff-stat-name { font-weight: 700; }
+.staff-stat-icon, .staff-work img, .staff-gaul img, .trait-chip img, .staff-course img { image-rendering: pixelated; vertical-align: middle; }
+.trait-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+.trait-chip { border: 1px solid var(--line); border-radius: var(--radius); padding: 0 6px; font-size: 16px; }
+.send-choice { display: grid; gap: 6px; }
+.send-label { margin: 0; }
 .staff-stat .meter { height: 8px; }
 .staff-stat-value { text-align: right; font-weight: 700; }
 .staff-actions { display: flex; gap: 8px; flex-wrap: wrap; }

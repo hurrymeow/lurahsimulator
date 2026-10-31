@@ -1,7 +1,8 @@
 import { noteProblem } from './problems';
 import { realisasiBanjir } from './realisasi';
-import { afterEventStaff } from './staff';
-import { eModLabel, eOutcome, eResult, t } from '../i18n';
+import { afterEventStaff, ensureStaff, permitQueue } from './staff';
+import { STAT_MAX } from '../data/staff';
+import { eModLabel, eOutcome, eResult, t, type Key } from '../i18n';
 import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR_SABAR, EVENTS, POPUP_CHANCE, MIN_REPEAT_GAP, POPUP_GAP, REPAIR_FRACTION, eventDef, type EventChoice, type EventDef, type EventOutcome as OutcomeDef } from '../data/events';
 import { STAGE_EVENTS } from '../data/higher';
 import { rupiah } from '../format';
@@ -18,7 +19,7 @@ import { IURAN } from './balance';
 import { chance, rand } from './rng';
 import { population, price } from './state';
 import { buildingIncome, buildingUpkeep } from './tick';
-import type { Building, CheckResult, GameState, Resources } from './types';
+import type { Building, CheckResult, GameState, Resources, Staff } from './types';
 
 /** What the kampung nets in a month: building income less upkeep, plus iuran. Prices that follow it never fall behind the economy. */
 export function monthlyNet(s: GameState): number {
@@ -67,6 +68,7 @@ function eligible(s: GameState, e: EventDef): boolean {
   if (w.minStars !== undefined && s.stage.stars.rt < w.minStars) return false;
   if (w.months && !inMonths(s.month, w.months)) return false;
   if (w.needs && !s.buildings.some((b) => b.def === w.needs && b.status === 'active')) return false;
+  if (w.queue && !s.buildings.some((b) => b.status === 'permit')) return false;
   const last = s.lastEvent?.[e.id];
   const gap = w.chance < 1 ? Math.max(w.cooldown ?? 0, MIN_REPEAT_GAP) : (w.cooldown ?? 0);
   return !(gap && last !== undefined && s.month - last < gap);
@@ -178,12 +180,32 @@ function rollOutcome(s: GameState, list: OutcomeDef[]): OutcomeDef {
   return list[list.length - 1];
 }
 
+/** Who can be sent: anyone on the staff who is not away, best for the stat first. The card shows three. */
+export function sendCandidates(s: GameState, c: EventChoice): Staff[] {
+  ensureStaff(s);
+  const stat = c.send!.stat;
+  return (s.staff ?? []).filter((x) => !x.away).sort((a, b) => b.stats[stat] - a.stats[stat] || a.id - b.id).slice(0, 3);
+}
+
+/** The odds of sending this person: base, plus or minus per point of the stat away from 50. */
+export const sendChance = (c: EventChoice, x: Staff): number => Math.min(0.95, Math.max(0.05, c.send!.base + (x.stats[c.send!.stat] - 50) * c.send!.perPoint));
+
 function applyOutcome(s: GameState, o: OutcomeDef): void {
   if (o.incomePct) payout(s, o.incomePct);
+  // The desks get a push: folders come off the queue, first placed first.
+  let stamp = o.stamp ?? 0;
+  for (const b of permitQueue(s)) {
+    if (stamp <= 0) break;
+    const take = Math.min(stamp, Math.max(0, b.timer - 1));
+    b.timer -= take;
+    stamp -= take;
+  }
+  if (o.cleanAudit) s.kel.cleanAudits += o.cleanAudit;
+  if (o.perWacana) s.res.sabar -= wacanaNoReceipt(s) * o.perWacana;
   for (const [k, v] of Object.entries(o.res ?? {})) s.res[k as 'sabar'] += v as number;
 }
 
-export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutcome {
+export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number, staffId?: number): EventOutcome {
   const e = s.pendingEvent ? eventDef(s.pendingEvent) : undefined;
   const c = e?.choices[choiceIdx];
   if (!e || !c) return { ok: false, text: t('sim.noEvent') };
@@ -196,7 +218,14 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
   s.res.orangDalam -= cost.orangDalam;
   if (c.incomePct) payout(s, c.incomePct);
   // Advice: the outcome is rolled now and revealed in the result popup.
-  const rolled = c.outcomes ? rollOutcome(s, c.outcomes) : undefined;
+  // Sending someone: their stat sets the odds, and a success teaches them a point of it.
+  const sent = c.send ? (sendCandidates(s, c).find((x) => x.id === staffId) ?? sendCandidates(s, c)[0]) : undefined;
+  let rolled = c.outcomes && !c.send ? rollOutcome(s, c.outcomes) : undefined;
+  if (c.send && c.outcomes) {
+    const win = !!sent && rand(s) < sendChance(c, sent);
+    rolled = c.outcomes[win ? 0 : 1];
+    if (win && sent) sent.stats[c.send.stat] = Math.min(STAT_MAX, sent.stats[c.send.stat] + 1);
+  }
   if (rolled) applyOutcome(s, rolled);
   for (const [k, v] of Object.entries(c.res ?? {})) s.res[k as 'sabar'] += v as number;
   if (c.inspectPrep && s.inspection) s.inspection.prep += c.inspectPrep;
@@ -212,7 +241,9 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
   }
   if (efx?.popReportPct) s.rw.popReport = { pct: efx.popReportPct, until: s.month + (efx.months ?? 1) };
   if (c.modifier) s.modifiers.push({ id: `${e.id}-${s.month}`, label: eModLabel(e, choiceIdx, c.modifier.label), target: c.modifier.target, incomeMult: c.modifier.incomeMult, monthsLeft: c.modifier.months });
-  const text = c.special === 'banjir' ? floodDamage(s, fx) : rolled ? eOutcome(e, choiceIdx, c.outcomes!.indexOf(rolled), rolled) : eResult(e, choiceIdx, c);
+  const said = c.special === 'banjir' ? floodDamage(s, fx) : rolled ? eOutcome(e, choiceIdx, c.outcomes!.indexOf(rolled), rolled) : eResult(e, choiceIdx, c);
+  // The result names who went and the stat that decided it.
+  const text = sent && c.send ? `${t('event.sent', { name: sent.name, stat: t(`staff.stat.${c.send.stat}` as Key), n: sent.stats[c.send.stat] })} ${said}` : said;
   s.pendingEvent = null;
   afterEventStaff(s);
   const delta: Partial<Resources> = {};
