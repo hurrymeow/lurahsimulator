@@ -32,7 +32,7 @@ export const MORE_COMBOS: ComboDef[] = [
     story: 'Telur in the kopi, ayam on the roof. The neighbours stopped complaining once they got a cup.',
     incomeMult: { warung: 1.25 },
     perMonth: { sabar: 0.5 },
-    effect: 'Warung income x1.25. +0.5 Popularitas a month.',
+    effect: 'Warung income x1.25. +0.5 Popularitas a week.',
   },
   {
     id: 'sayurSegar',
@@ -63,7 +63,7 @@ export const MORE_COMBOS: ComboDef[] = [
     hint: 'Swings next to the classroom.',
     story: 'Parents sit on the bench and call it a meeting. Nobody is in a hurry.',
     perMonth: { sabar: 1 },
-    effect: '+1 Popularitas a month.',
+    effect: '+1 Popularitas a week.',
   },
   {
     id: 'cukurKopi',
@@ -74,7 +74,7 @@ export const MORE_COMBOS: ComboDef[] = [
     story: 'The haircut takes twenty minutes. The conversation takes two hours. The fade is posted by nine.',
     incomeMult: { barbershop: 1.3, rumahMakan: 1.3 },
     perMonth: { viral: 1 },
-    effect: 'Barbershop and Rumah Makan income x1.3. +1 Virality a month.',
+    effect: 'Barbershop and Rumah Makan income x1.3. +1 Virality a week.',
   },
   {
     id: 'servisOjol',
@@ -84,7 +84,7 @@ export const MORE_COMBOS: ComboDef[] = [
     hint: 'Fix the motor while the driver waits.',
     story: 'Oil change, kopi and a rumour about the next fare. All three are free if you ask nicely.',
     perMonth: { rupiah: 100000 },
-    effect: '+Rp 100rb a month.',
+    effect: '+Rp 100rb a week.',
   },
   {
     id: 'jagaSehat',
@@ -94,7 +94,7 @@ export const MORE_COMBOS: ComboDef[] = [
     hint: 'A gate and a pharmacy keep the street calm.',
     story: 'The satpam knows which balsem works. The apotek knows who is on night shift.',
     perMonth: { sabar: 1 },
-    effect: '+1 Popularitas a month.',
+    effect: '+1 Popularitas a week.',
   },
   {
     id: 'urusanSurat',
@@ -104,7 +104,7 @@ export const MORE_COMBOS: ComboDef[] = [
     hint: 'Copies and stamps, side by side.',
     story: 'One legalisir, one stempel, one "tolong dibantu ya". The {plain:Orang Inside} is the only thing that moves fast.',
     perMonth: { orangDalam: 0.3 },
-    effect: '+0.3 Orang Inside a month.',
+    effect: '+0.3 Orang Inside a week.',
   },
   {
     id: 'rapatKonsumsi',
@@ -115,7 +115,7 @@ export const MORE_COMBOS: ComboDef[] = [
     story: 'The rapat has eleven agenda items and one nasi kotak order. Item twelve is the nasi kotak.',
     incomeMult: { rumahMakan: 1.3 },
     perMonth: { orangDalam: 0.3, sabar: -0.5 },
-    effect: 'Rumah Makan income x1.3. +0.3 Orang Inside, -0.5 Popularitas a month.',
+    effect: 'Rumah Makan income x1.3. +0.3 Orang Inside, -0.5 Popularitas a week.',
   },
   {
     id: 'proyekSemen',
@@ -125,7 +125,7 @@ export const MORE_COMBOS: ComboDef[] = [
     hint: 'A hall and a warehouse of cement.',
     story: 'The cement is bought twice and built once. The paperwork is perfect.',
     perMonth: { orangDalam: 0.5, rupiah: -50000 },
-    effect: '+0.5 Orang Inside and -Rp 50rb a month.',
+    effect: '+0.5 Orang Inside and -Rp 50rb a week.',
   },
   {
     id: 'simpanPinjam',
@@ -146,7 +146,7 @@ export const MORE_COMBOS: ComboDef[] = [
     story: 'Under the lamp the warkop opens until three. The wifi opens until four.',
     incomeMult: { rumahMakan: 1.3 },
     perMonth: { viral: 1 },
-    effect: 'Rumah Makan income x1.3. +1 Virality a month.',
+    effect: 'Rumah Makan income x1.3. +1 Virality a week.',
   },
   {
     id: 'kafeTaman',
@@ -157,7 +157,7 @@ export const MORE_COMBOS: ComboDef[] = [
     story: 'The tree gives shade, the bench gives time, the warkop gives the bill.',
     incomeMult: { rumahMakan: 1.35 },
     perMonth: { sabar: 0.5 },
-    effect: 'Rumah Makan income x1.35. +0.5 Popularitas a month.',
+    effect: 'Rumah Makan income x1.35. +0.5 Popularitas a week.',
   },
   {
     id: 'wisataKolam',
@@ -180,7 +180,7 @@ export const MORE_COMBOS: ComboDef[] = [
     story: 'The mural was "a community gift". The warung logo is in the corner, very large.',
     incomeMult: { warung: 1.2 },
     perMonth: { viral: 0.5 },
-    effect: 'Warung income x1.2. +0.5 Virality a month.',
+    effect: 'Warung income x1.2. +0.5 Virality a week.',
   },
   {
     id: 'pasarPagi',
@@ -201,7 +201,7 @@ export const MORE_COMBOS: ComboDef[] = [
     hint: 'A fountain and a playground make a Sunday.',
     story: 'Everyone walks one loop and calls it exercise. The sabar returns before the legs do.',
     perMonth: { sabar: 1.5 },
-    effect: '+1.5 Popularitas a month.',
+    effect: '+1.5 Popularitas a week.',
   },
   {
     id: 'upacaraMural',
@@ -223,6 +223,6 @@ export const MORE_COMBOS: ComboDef[] = [
     story: 'Both sell "unlimited" kuota. The salesmen in the gang are faster than either signal.',
     incomeMult: { wifi: 1.3 },
     perMonth: { viral: 2, sabar: -1 },
-    effect: 'Both towers income x1.3. +2 Virality and -1 Popularitas a month from the promo salesmen.',
+    effect: 'Both towers income x1.3. +2 Virality and -1 Popularitas a week from the promo salesmen.',
   },
 ];

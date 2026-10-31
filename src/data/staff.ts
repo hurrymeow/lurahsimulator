@@ -28,11 +28,11 @@ export const ROLES: RoleDef[] = [
   { id: 'asisten', name: 'Asisten', blurb: 'Speeds permits and points at the next goal.', stat: 'lobi', opens: { stage: 'rt', stars: 0 }, inemOnly: true },
   { id: 'hansip', name: 'Hansip', blurb: 'Keeps the gang safe: Aman rises, and a preman on the beat finds work as a guard.', stat: 'rajin', opens: { stage: 'rt', stars: 1 } },
   { id: 'penagih', name: 'Tukang Tagih Iuran', blurb: 'Finds the warga who are "never home". More iuran comes in; a low Jujur keeps some.', stat: 'rajin', opens: { stage: 'rt', stars: 1 } },
-  { id: 'pu', name: 'Petugas PU', blurb: 'Fixes damaged buildings on his own, one a month per level.', stat: 'rajin', opens: { stage: 'rt', stars: 3 } },
-  { id: 'adminWa', name: 'Admin Grup WA', blurb: 'Runs the warga group chat: Virality every month, and bad news lands softer.', stat: 'gaul', opens: { stage: 'rt', stars: 3 } },
+  { id: 'pu', name: 'Petugas PU', blurb: 'Fixes damaged buildings on his own, one a week per level.', stat: 'rajin', opens: { stage: 'rt', stars: 3 } },
+  { id: 'adminWa', name: 'Admin Grup WA', blurb: 'Runs the warga group chat: Virality every week, and bad news lands softer.', stat: 'gaul', opens: { stage: 'rt', stars: 3 } },
   { id: 'supir', name: 'Supir', blurb: 'Drives the official car. Building crews arrive sooner.', stat: 'rajin', opens: { stage: 'rw', stars: 0 } },
   { id: 'bendahara', name: 'Bendahara', blurb: 'Keeps the kas. Upkeep leaks less, unless Jujur is low.', stat: 'jujur', opens: { stage: 'kelurahan', stars: 0 } },
-  { id: 'sekretaris', name: 'Sekretaris', blurb: 'Knows who to call. Orang Inside every month.', stat: 'lobi', opens: { stage: 'kelurahan', stars: 0 } },
+  { id: 'sekretaris', name: 'Sekretaris', blurb: 'Knows who to call. Orang Inside every week.', stat: 'lobi', opens: { stage: 'kelurahan', stars: 0 } },
 ];
 
 export const roleDef = (id: RoleId): RoleDef => ROLES.find((r) => r.id === id)!;
@@ -109,14 +109,14 @@ export interface TraitDef {
 }
 
 export const TRAITS: TraitDef[] = [
-  { id: 'titipan', name: 'Titipan', effect: 'Sent by Pak Camat. Cannot be fired. Low Rajin, +0.1 Orang Inside a month.', stats: { rajin: -25 }, noFire: true, orangDalam: 0.1 },
+  { id: 'titipan', name: 'Titipan', effect: 'Sent by Pak Camat. Cannot be fired. Low Rajin, +0.1 Orang Inside a week.', stats: { rajin: -25 }, noFire: true, orangDalam: 0.1 },
   { id: 'jamKaret', name: 'Jam Karet', effect: 'Always late: output -20%, but never asks for a raise.', output: 0.8, noRaise: true },
-  { id: 'rajinLembur', name: 'Rajin Lembur', effect: 'Output +20%. Quits after 3 years without a raise.', output: 1.2, quitsUnpaidAfter: 36 },
-  { id: 'healingMulu', name: 'Healing Mulu', effect: 'Takes a month off after every event.', healing: true },
+  { id: 'rajinLembur', name: 'Rajin Lembur', effect: 'Output +20%. Quits after 36 weeks without a raise.', output: 1.2, quitsUnpaidAfter: 36 },
+  { id: 'healingMulu', name: 'Healing Mulu', effect: 'Takes a week off after every event.', healing: true },
   { id: 'siPalingWa', name: 'Si Paling Grup WA', effect: 'Lives in the group chat: Gaul +15, Jujur -10.', stats: { gaul: 15, jujur: -10 } },
   { id: 'mantanPreman', name: 'Mantan Preman', effect: 'Knows every gang: as Hansip, output x2.', output: 1 },
   { id: 'freshGrad', name: 'Fresh Graduate', effect: 'Low stats, levels up twice as fast.', stats: { rajin: -10, lobi: -10, jujur: -10, gaul: -10 }, xp: 2 },
-  { id: 'pensiunan', name: 'Pensiunan PNS', effect: 'Lobi +25, levels half as fast, retires after 5 years.', stats: { lobi: 25 }, xp: 0.5, retireAfter: 60 },
+  { id: 'pensiunan', name: 'Pensiunan PNS', effect: 'Lobi +25, levels half as fast, retires after 60 weeks.', stats: { lobi: 25 }, xp: 0.5, retireAfter: 60 },
   { id: 'multitalenta', name: 'Multitalenta', effect: 'Every stat +5.', stats: { rajin: 5, lobi: 5, jujur: 5, gaul: 5 } },
   { id: 'baperan', name: 'Baperan', effect: 'Leaves at once if a raise is refused.', leavesOnRefuse: true },
 ];
@@ -183,7 +183,7 @@ export interface GigDef {
 /** Inem's dangdut dream, as optional sub-goals. They never gate stars. Checked in sim/staff.ts. */
 export const GIGS: GigDef[] = [
   { id: 'agustus', name: 'Panggung 17 Agustus', needs: 'A Lapangan, and Popularitas 50 or more in August.', reward: '+5 Virality, Inem level 2.' },
-  { id: 'hajatan', name: 'Hajatan circuit', needs: 'Reach RW, with Virality 30 or more.', reward: 'Inem tips +Rp 100k a month, level 3.' },
+  { id: 'hajatan', name: 'Hajatan circuit', needs: 'Reach RW, with Virality 30 or more.', reward: 'Inem tips +Rp 100k a week, level 3.' },
   { id: 'lomba', name: 'Lomba Dangdut Kecamatan', needs: 'Win the Piala Kelurahan once.', reward: '+10 Popularitas, Inem level 4.' },
   { id: 'audisi', name: 'Akademi Goyang (TV audition)', needs: 'The city act, with Virality 60 or more.', reward: '+20 Virality, Inem level 5.' },
   { id: 'sidang', name: 'The stage at Sidang Emas 2045', needs: 'Reach the final review.', reward: 'She sings at your ending.' },

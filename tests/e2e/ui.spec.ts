@@ -472,7 +472,7 @@ test.describe('events, ranking, settings', () => {
     // An arrival on the month before the report can show a tip first, so the loop below taps tips away.
     await skipTips(page);
     await seed(page);
-    const title = (n: number) => ({ id: `Laporan tahun ${n}`, en: `Year ${n} report` })[lang()];
+    const title = (n: number) => ({ id: `Laporan triwulan ${n}`, en: `Quarter ${n} report` })[lang()];
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.s.month = 10;
@@ -885,7 +885,7 @@ test.describe('slim HUD and one menu', () => {
     await expect(page.locator('#sheet h2')).toHaveText(info.name);
   });
 
-  test('pause toggles and speed cycles 1x, 2x (4x only from year 10)', async ({ page }) => {
+  test('pause toggles and speed cycles 1x, 2x (no 4x)', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     const speed = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.speed);
@@ -894,14 +894,11 @@ test.describe('slim HUD and one menu', () => {
       expect(await speed()).toBe(want);
       await expect(page.locator('#speed-btn')).toHaveText(`${want}x`);
     }
-    await page.evaluate(() => { (window as unknown as { pakrt: any }).pakrt.s.month = 108; });
-    await page.locator('#speed-btn').click();
-    expect(await speed()).toBe(4);
     await page.locator('#pause-btn').click();
     expect(await speed()).toBe(0);
     await expect(page.locator('#pause-btn')).toHaveAttribute('aria-label', WORDS[lang()].play);
     await page.locator('#pause-btn').click();
-    expect(await speed()).toBe(4);
+    expect(await speed()).toBe(2);
   });
 });
 
@@ -1625,7 +1622,7 @@ test.describe('Lomba Agustusan', () => {
       a.s.res.sabar = 60;
       const k = a.s.buildings.find((b: any) => b.def === 'kantorRT');
       a.s.buildings.push({ uid: a.s.nextUid++, def: 'lapangan', x: k.x - 4, y: k.y + 3, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
-      a.s.month = 15;
+      a.s.month = 18; // the next tick is week 19, when the panitia forms
       a.s.pendingEvent = null;
       a.runTick();
     });
@@ -1646,8 +1643,8 @@ test.describe('Lomba Agustusan', () => {
     await expect(page.locator('#sheet [data-stage="dangdut"]')).toHaveAttribute('aria-pressed', 'true');
     await expectLegible(page, 'lomba panel');
     await page.locator('.sheet-head .btn').click();
-    // Months pass to 17 Agustus; then time waits for the day screen.
-    for (let i = 0; i < 3; i++) await page.evaluate(() => { const a = (window as unknown as { pakrt: any }).pakrt; a.s.pendingEvent = null; a.runTick(); });
+    // Weeks pass to 17 Agustus; then time waits for the day screen.
+    for (let i = 0; i < 12; i++) await page.evaluate(() => { const a = (window as unknown as { pakrt: any }).pakrt; a.s.pendingEvent = null; a.runTick(); });
     expect(await app('a.s.lomba.due')).toBe(true);
     const day = page.locator('#lomba-day');
     for (let i = 0; i < 20 && !(await day.isVisible()); i++) {

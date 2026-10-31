@@ -20,17 +20,17 @@ const until = (s: GameState, month: number): Fx => {
 const prepared = (seed = 1) => {
   const s = newGame(seed);
   s.res.rupiah = 50_000_000;
-  until(s, 16);
+  until(s, 20);
   return s;
 };
 
 describe('Lomba Agustusan', () => {
-  it('the panitia forms in May of year 2 (not year 1) with a card that opens the panel', () => {
+  it('the panitia forms in May (week 19) with a card that opens the panel', () => {
     const s = newGame(1);
-    until(s, 4);
+    until(s, 10);
     expect(s.lomba).toBeUndefined();
     s.res.rupiah = 50_000_000;
-    const fx = until(s, 16);
+    const fx = until(s, 19);
     expect(lombaPrep(s)).not.toBeNull();
     expect(fx).toContainEqual(expect.objectContaining({ kind: 'notice', card: true, open: 'lomba' }));
   });
@@ -74,7 +74,7 @@ describe('Lomba Agustusan', () => {
 
   it('with nothing picked, 17 Agustus passes and Popularitas drops', () => {
     const s = prepared();
-    const fx = until(s, 19);
+    const fx = until(s, 31);
     expect(s.lomba!.held).toBe(true);
     expect(fx).toContainEqual(expect.objectContaining({ title: 'No lomba this year' }));
   });
@@ -82,7 +82,7 @@ describe('Lomba Agustusan', () => {
   it('with contests picked, time waits on 17 Agustus until the day is played', () => {
     const s = prepared();
     toggleContest(s, 'makanKerupuk');
-    until(s, 19);
+    until(s, 31);
     expect(s.lomba!.due).toBe(true);
     const month = s.month;
     s.pendingEvent = null;
@@ -96,7 +96,7 @@ describe('Lomba Agustusan', () => {
     toggleContest(s, 'balapKarung');
     toggleContest(s, 'makanKerupuk');
     setStage(s, 3);
-    until(s, 19);
+    until(s, 31);
     const fx: Fx = [];
     const viral = s.res.viral;
     const r = finishLomba(s, { balapKarung: true, makanKerupuk: true }, fx);
@@ -114,7 +114,7 @@ describe('Lomba Agustusan', () => {
     const s = prepared();
     toggleContest(s, 'balapKarung');
     toggleContest(s, 'makanKerupuk');
-    until(s, 19);
+    until(s, 31);
     const r = finishLomba(s, { balapKarung: true, makanKerupuk: false }, []);
     expect(r.trophy).toBe(false);
     const t = finishLomba(s, {}, []);
@@ -129,9 +129,10 @@ describe('Agustusan decorations', () => {
       s.month = m;
       return agustusan(s);
     };
-    // Year 1 has no lomba, so no bunting either.
-    expect([at(6), at(7)]).toEqual([false, false]);
-    expect([at(17), at(18), at(19), at(20)]).toEqual([false, true, true, false]);
-    expect([at(30), at(31)]).toEqual([true, true]);
+    // July and August are weeks 24 to 31 of each year; the lomba runs from year 1.
+    expect([at(22), at(23)]).toEqual([false, false]);
+    expect([at(24), at(31)]).toEqual([true, true]);
+    expect([at(32), at(40)]).toEqual([false, false]);
+    expect([at(72), at(79), at(80)]).toEqual([true, true, false]);
   });
 });

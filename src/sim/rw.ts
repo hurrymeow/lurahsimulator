@@ -1,4 +1,5 @@
 // The RW stage's rules: building effects, Kader and Calo upkeep, and the timed effects events start.
+import { YEAR_SCALE, atMonth } from './calendar';
 import { t } from '../i18n';
 import { SCORE } from '../data/ranking';
 import { activeCombos } from './combos';
@@ -9,7 +10,7 @@ import { isWorking, price } from './state';
 import type { Building, GameState } from './types';
 
 /** Share of Kader output lost a year without an Apresiasi. */
-export const KADER_DECAY_PER_YEAR = 0.2;
+export const KADER_DECAY_PER_YEAR = 0.2 * 2;
 export const KADER_DECAY_MAX = 0.8;
 const active = (s: GameState, id: string): Building[] => s.buildings.filter((b) => b.def === id && isWorking(b));
 
@@ -56,7 +57,7 @@ export function rwSystem(s: GameState, fx: Fx): void {
     if (!e) continue;
     for (const b of active(s, d.id)) {
       for (const [res, v] of Object.entries(e.neighbourRt ?? {})) gain(s, fx, res as 'sabar', (v as number) * b.level, b);
-      if (e.seasonal && s.month % 12 === e.seasonal.month) {
+      if (e.seasonal && atMonth(s.month, e.seasonal.month)) {
         for (const [res, v] of Object.entries(e.seasonal.res)) gain(s, fx, res as 'viral', v as number, b);
         const cost = price(s, e.seasonal.cost);
         gain(s, fx, 'rupiah', -cost, b);
@@ -71,7 +72,7 @@ export function rwSystem(s: GameState, fx: Fx): void {
 export function rwYearEnd(s: GameState, fx: Fx): void {
   const kader = s.residents.filter((r) => r.job === 'kaderPosyandu').length;
   if (!kader) return;
-  const amt = price(s, 300_000) * kader;
+  const amt = price(s, 300_000 * YEAR_SCALE) * kader;
   if (s.res.rupiah >= amt) {
     gain(s, fx, 'rupiah', -amt);
     s.stats.spent += amt;

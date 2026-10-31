@@ -37,7 +37,7 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 - Discovered combos are auto-logged in the in-game Combo.
 - The Combo book is a column of full-width cards, one per row, under filter buttons (All, ✓ active, ★ found, ? not yet, each with its count). A card shows the name, the buildings (greyed when missing, silhouettes before it is in town) and a state mark on one line, and the effect in two lines below. Tapping a card opens the whole entry below it: effect, conditions, status and, once discovered, the story (`src/ui/lists.ts`).
 - The Warga list opens on a summary line (headcount and what everyone makes a month) and filter buttons: By job (default) and No job (with its count). People sit in boxes per job, headed by the workplace sprite, the headcount and the group's monthly output; each person is a chip with their name. Warga have no star rating (stars are for staff); a resident's own sheet shows their experience as a line, such as "18 months in this job: output +40%". No job comes first, marked red.
-- Speed control: pause, 1x, 2x. No 4x (Hari, 2026-10-31; code change pending, see `decisions/design-review-checklist.md`).
+- Speed control: pause, 1x, 2x. No 4x (Hari, 2026-10-31; removed in code, see `decisions/weekly-calendar.md`).
 - Text advances on tap, never on a timer.
 
 ## 2. Stage ladder
@@ -101,7 +101,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 #### AI neighbours
 
 - Every **3** months each AI RT places one building from its trait's list of 11 to 13 one-tile buildings (shops, facilities, farms and decor), each unlocked by the RT's own stars as the player's are. It builds the kind it has least of, but first the missing partner of a combo it has half built, and puts a new piece where it completes a combo when it can. Every trait can form 3 or more combos at level 1.
-- The Neighbours screen shows each RT's yearly ranking: its score against the target it must beat at the year end (rising each year), what the score is made of (warga, working buildings, combos, Popularitas), and its wins so far.
+- The Neighbours screen shows each RT's ranking every 12 weeks: its score against the target it must beat (rising each time), what the score is made of (warga, working buildings, combos, Popularitas), and its wins so far.
 - An AI RT only builds when you have funded it. An unfunded RT visibly stalls.
 - Like the player, an AI RT lays **Jalan Setapak** from each new building to its Kantor RT or an earlier path, inside its own lot, and picks a spot a path can reach. Up to **3** of its warga walk its paths (at most **24** across the map), never onto the player's lots. When the player takes an RT over, its paths come with it.
 - Each Dana pays for one build, and an RT banks up to **12**. Dana comes **x1** or **x6** at a time. Banked Dana speeds the RT up with diminishing returns: boost = 1 − 0.8^(banked − 1), so 3 banked is **+36%**, 6 is **+67%** and 12 is **+91%**. The Neighbours screen shows it as "+N% boost".
@@ -238,7 +238,7 @@ Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 
 ## 3. Pacing targets
 
-Approved by Hari, 2026-10-27. Times are real seconds at 1x. One month is 8s (`MONTH_MS`), so 15 min is about 112 months. Decided 2026-10-31, code pending: 8s becomes one week, so a month is 32s and a year 6.4 min; month counts below re-base with it.
+Approved by Hari, 2026-10-27. Times are real seconds at 1x. One month is 8s (`MONTH_MS`), so 15 min is about 112 months. Since 2026-10-31 the 8s tick is one week, so a month is 32s and a year 6.4 min. Counts below are weeks (ticks), so wall time is unchanged; see `decisions/weekly-calendar.md`.
 Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder). A bot never hesitates, so its times are lower bounds. A bot miss is a real miss. A bot pass is unproven.
 
 ### Targets
@@ -313,7 +313,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - **Anggaran (Kelurahan):** a yearly budget arrives each January. Each unspent % cuts next year's budget by the same %. December brings a forced Serapan rush.
 - **Safety net:** no debt or soft-lock in year 1, and year-1 cash never below 0 for the idle and builder bots (targets 8 and 9).
 - **Tuning:** the balance autoplayer tunes star thresholds. How to read its results is in section 3.
-- **Time:** one month is 8s at 1x (`MONTH_MS`). Speeds are pause, 1x and 2x. Decided 2026-10-31, code pending: 8s becomes one week (month 32s, year 6.4 min) and 4x is removed.
+- **Time:** one tick is 8s at 1x (`MONTH_MS`) and is one week. A month is 4 weeks (32s), a year 48 weeks (6.4 min). Speeds are pause, 1x and 2x. Done 2026-10-31 (`decisions/weekly-calendar.md`).
 - **Rule:** any change to a number a target depends on gets a note in `decisions/`.
 
 ## 5. Tone and politics guardrails

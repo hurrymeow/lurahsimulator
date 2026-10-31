@@ -1,4 +1,5 @@
 // The growing map: promotion, and the AI-run RTs that fill the new space.
+import { RANKING_WEEKS } from './calendar';
 import { t } from '../i18n';
 import { RIVAL_BASE, RIVAL_PER_YEAR } from '../data/ranking';
 import { IURAN, NEIGHBOUR, STEMPEL } from './balance';
@@ -412,7 +413,7 @@ export function iuranFromNeighbours(s: GameState, fx: Fx): void {
 export const rivalTarget = (year: number): number => RIVAL_BASE + RIVAL_PER_YEAR * year;
 
 /** The next year-end ranking: which year it closes, and how many months away. */
-export const nextRanking = (s: GameState) => ({ year: Math.floor(s.month / 12) + 1, months: 12 - (s.month % 12) });
+export const nextRanking = (s: GameState) => ({ year: Math.floor(s.month / RANKING_WEEKS) + 1, weeks: RANKING_WEEKS - (s.month % RANKING_WEEKS) });
 
 export function neighboursYearEnd(s: GameState, year: number): void {
   for (const n of s.neighbours) {

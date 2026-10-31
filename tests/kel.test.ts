@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { YEAR_SCALE } from '../src/sim/calendar';
 import { activeCombos } from '../src/sim/combos';
 import { banjirProtection, resolveEvent } from '../src/sim/events';
 import { assign, liveJobs } from '../src/sim/jobs';
@@ -49,7 +50,7 @@ describe('Anggaran and serapan', () => {
     const s = kel();
     s.res.rupiah = 0;
     at(s, 1);
-    expect(s.kel.budget).toBe(24_000_000 * s.inflation);
+    expect(s.kel.budget).toBe(24_000_000 * YEAR_SCALE * s.inflation);
     expect(s.res.rupiah).toBe(s.kel.budget);
   });
 
@@ -58,10 +59,10 @@ describe('Anggaran and serapan', () => {
     at(s, 1);
     const first = s.kel.budget;
     s.stats.spent += first * 0.75;
-    at(s, 12);
+    at(s, 48);
     expect(s.kel.budget).toBe(Math.round((first * 0.75) / 1000) * 1000);
     const second = s.kel.budget;
-    at(s, 24); // nothing spent at all
+    at(s, 96); // nothing spent at all
     expect(s.kel.budget).toBeCloseTo(Math.round((first * 0.2) / 1000) * 1000, -3);
     expect(s.kel.budget).toBeLessThan(second);
   });
@@ -85,24 +86,24 @@ describe('Anggaran and serapan', () => {
     const s = kel();
     at(s, 1);
     const before = s.res.rupiah;
-    const fx = at(s, 11);
+    const fx = at(s, 47);
     const rush = before - s.res.rupiah;
     expect(rush).toBe(Math.round((s.kel.budget * 0.5) / 1000) * 1000);
     expect(fx.some((f) => f.kind === 'notice')).toBe(true);
     s.res.rupiah = 1000;
-    at(s, 23);
+    at(s, 95);
     expect(s.res.rupiah).toBeGreaterThanOrEqual(0);
   });
 
   it('halves Dana Desa without a Pendamping Desa, from 2 stars on', () => {
     const s = kel(2, 'desa');
     at(s, 1);
-    expect(s.kel.budget).toBe(12_000_000 * s.inflation);
+    expect(s.kel.budget).toBe(12_000_000 * YEAR_SCALE * s.inflation);
     const t = kel(2, 'desa');
     hire(t, 'pendampingDesa');
     put(t, 'balaiDesa', 3, 3);
     at(t, 1);
-    expect(t.kel.budget).toBe(24_000_000 * t.inflation);
+    expect(t.kel.budget).toBe(24_000_000 * YEAR_SCALE * t.inflation);
   });
 });
 
@@ -169,14 +170,14 @@ describe('Kelurahan combos, jobs and buildings', () => {
     expect(buildingUpkeep(s, taman)).toBe(plain * 2);
   });
 
-  it('Panen Raya pays Rp 2.000.000 each October', () => {
+  it('Panen Raya pays Rp 8.000.000 each October', () => {
     const s = kel(2, 'desa');
     put(s, 'bumdes', 3, 3);
     put(s, 'sawahIrigasi', 4, 4);
     s.kel.budget = 1;
     const before = s.res.rupiah;
-    at(s, 9);
-    expect(s.res.rupiah - before).toBe(2_000_000 * s.inflation);
+    at(s, 36); // first week of October
+    expect(s.res.rupiah - before).toBe(2_000_000 * YEAR_SCALE * s.inflation);
   });
 
   it('Embung cuts banjir damage by 30%', () => {

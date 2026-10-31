@@ -6,10 +6,12 @@ import { checkPlace, place, skipPermit, upgrade } from '../src/sim/rules';
 import { attractTarget, emptyTiles, housing, newGame, population } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
 import { announce } from '../src/sim/wacana';
+import { INFLATION_PER_YEAR } from '../src/sim/balance';
 import type { GameState } from '../src/sim/types';
 
 /**
- * A simple autoplayer: builds the two early combos, keeps a bed ahead of demand,
+ * A simple autoplayer. `years` counts blocks of 12 weeks (the old year), not calendar years.
+ * It: builds the two early combos, keeps a bed ahead of demand,
  * and buys what it can afford. It never plans combos beyond the two it is told to.
  */
 function play(seed: number, years: number, smart: boolean, starMonths: number[] = [], eventMonths: number[] = []): { s: GameState; minRupiahY1: number } {
@@ -94,9 +96,9 @@ describe('balance', () => {
     expect(wins / total).toBeGreaterThan(0.5);
   }, 30_000);
 
-  it('inflation is small: prices rise 3% a year', () => {
-    const { s } = play(1, 5, false);
-    expect(s.inflation).toBeCloseTo(1.03 ** 5, 5);
+  it('inflation is small: prices rise 12.55% a year', () => {
+    const { s } = play(1, 8, false); // 8 blocks of 12 weeks = 2 years
+    expect(s.inflation).toBeCloseTo((1 + INFLATION_PER_YEAR) ** 2, 5);
   });
 });
 

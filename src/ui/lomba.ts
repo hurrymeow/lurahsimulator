@@ -8,7 +8,7 @@ import { audio } from '../audio';
 import { BANNER, POLE, bannerURL, poleURL } from '../render/agustus';
 import { CONTESTS, LOMBA, STAGES_17, type ContestDef } from '../data/lomba';
 import {
-  checkContest, climbBand, contestDef, finishLomba, ketua, lombaPrep, mashTaps, monthsToDay, rollContest, rollChance, setKetua, setStage, toggleContest,
+  checkContest, climbBand, contestDef, finishLomba, ketua, lombaPrep, mashTaps, weeksToDay, rollContest, rollChance, setKetua, setStage, toggleContest,
   turnout, type LombaResult,
 } from '../sim/lomba';
 import { price } from '../sim/state';
@@ -65,7 +65,7 @@ export function openLomba(app: App): void {
       h('span', {}, x.name), h('span', { class: 'meta' }, t('lomba.ketuaStats', { rajin: x.stats.rajin, gaul: x.stats.gaul })))),
   );
   openSheet(t('lomba.title'), [
-    h('p', { class: 'meta lomba-when' }, t('lomba.when', { n: monthsToDay(s) })),
+    h('p', { class: 'meta lomba-when' }, t('lomba.when', { n: weeksToDay(s) })),
     h('p', { class: 'meta' }, t('lomba.intro', { n: LOMBA.maxContests })),
     h('h3', {}, t('lomba.contests', { n: l.contests.length, max: LOMBA.maxContests })),
     ...contests,

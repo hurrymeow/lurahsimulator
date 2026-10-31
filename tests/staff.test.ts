@@ -139,7 +139,7 @@ describe('staff', () => {
     const s = game(12);
     s.buildings.push({ uid: 9999, def: 'lapangan', x: 1, y: 1, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
     s.res.sabar = 60;
-    s.month = 7;
+    s.month = 28; // first week of August
     staffSystem(s, []);
     expect(s.gigs).toContain('agustus');
     expect(inem(s)!.level).toBe(2);

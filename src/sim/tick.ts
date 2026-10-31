@@ -7,6 +7,7 @@ import { accessSystem, connectedRoad, hasRoadBeside } from './access';
 import { comboIncomeMult, comboSystem } from './combos';
 import { def, placeableDefs } from './content';
 import { EMAS } from '../data/ranking';
+import { GRACE_WEEKS, RANKING_WEEKS, WEEKS_PER_YEAR } from './calendar';
 import { eventSystem } from './events';
 import { first } from './firsts';
 import { camatCallSystem, lineSystem } from './lines';
@@ -125,7 +126,7 @@ export function expectations(s: GameState, fx: Fx): void {
 /** Year 1 safety net: upkeep can never push the kas below zero. */
 export function safetyNet(s: GameState, fx: Fx): void {
   if (s.res.rupiah >= 0) return;
-  if (s.month < 12) {
+  if (s.month < GRACE_WEEKS) {
     fx.push({ kind: 'notice', title: t('sim.danaTitle'), body: t('sim.danaBody', { amt: -Math.round(s.res.rupiah) }), tone: 'info' });
     s.res.rupiah = 0;
   } else {
@@ -216,13 +217,17 @@ export function decay(s: GameState): void {
   s.modifiers = s.modifiers.filter((m) => m.monthsLeft > 0);
 }
 
+/** Every 12 weeks: the AI RTs and the player are ranked. */
+export function rankingEnd(s: GameState, fx: Fx): void {
+  neighboursYearEnd(s, s.month / RANKING_WEEKS);
+  yearlyRanking(s, fx, s.month / RANKING_WEEKS);
+}
+
 export function yearEnd(s: GameState, fx: Fx): void {
   s.inflation *= 1 + INFLATION_PER_YEAR;
   addEmas(s, EMAS.perYear);
-  neighboursYearEnd(s, s.month / 12);
   rwYearEnd(s, fx);
-  yearlyRanking(s, fx, s.month / 12);
-  fx.push({ kind: 'notice', title: t('sim.yearTitle', { n: s.month / 12 + 1 }), body: t('sim.yearBody', { pct: Math.round(INFLATION_PER_YEAR * 100) }), tone: 'info' });
+  fx.push({ kind: 'notice', title: t('sim.yearTitle', { n: s.month / WEEKS_PER_YEAR + 1 }), body: t('sim.yearBody', { pct: Math.round(INFLATION_PER_YEAR * 100) }), tone: 'info' });
 }
 
 /** Ordered list of monthly systems. Later milestones insert their systems here. */
@@ -287,7 +292,8 @@ export function tick(s: GameState): Fx {
   }
   monthWarnings(s, fx, before, losses);
   decay(s);
-  if (s.month % 12 === 0) yearEnd(s, fx);
+  if (s.month % RANKING_WEEKS === 0) rankingEnd(s, fx);
+  if (s.month % WEEKS_PER_YEAR === 0) yearEnd(s, fx);
   clampResources(s);
   return fx;
 }
