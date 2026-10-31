@@ -160,11 +160,11 @@ export const MUTASI = { stars: 3, level: 3 };
 /** What each role does per level, before the stat and trait multipliers. */
 export const ROLE_FX = {
   /**
-   * The desk queue: every permit is a pile of folders (its permitMonths), cleared in order. Each Asisten clears
-   * output x berkasPerOutput folders a month (Inem at level 1: about 1). The Kantor never stops: at least floor a month.
-   * The goal strip says to hire once the queue is hireAfter months deep.
+   * The desk queue: every permit is a pile of folders (its permitMonths, which count weekly ticks), cleared in order.
+   * Each Asisten clears output x berkasPerOutput folders a week (Inem at level 1: about 1). The Kantor never stops:
+   * at least floor a week. The goal strip says to hire once the queue is hireAfter weeks deep (a month is 4 weeks).
    */
-  asisten: { berkasPerOutput: 0.85, floor: 0.5, hireAfter: 3 },
+  asisten: { berkasPerOutput: 0.85, floor: 0.5, hireAfter: 12 },
   hansip: { amanPerLevel: 2 },
   penagih: { iuranPerLevel: 0.1, iuranMax: 0.5, skimBelowJujur: 40, skim: 0.1 },
   pu: { repairsPerLevel: 1 },
