@@ -40,6 +40,8 @@ export const MONTH_MS = 8000;
 export const SPEEDS = [0, 1, 2] as const;
 export type Speed = (typeof SPEEDS)[number];
 export const SAVE_KEY = 'pakrt.save';
+/** A seed for a new game. Lives here, not in src/sim, which must not read the clock. */
+const freshSeed = (): number => Date.now() % 2147483647;
 
 interface Notice {
   /** Set on tutorial tips. Adds the picture row. */
@@ -116,7 +118,7 @@ export class App {
     const raw = storage.get(SAVE_KEY);
     const loaded = deserialize(raw);
     this.oldSave = !!raw && !loaded;
-    this.s = loaded ?? newGame();
+    this.s = loaded ?? newGame(freshSeed());
     ensureStaff(this.s);
     setPlayer(this.s.player);
     this.storageOk = storage.set('pakrt.probe', '1');
@@ -391,7 +393,7 @@ export class App {
   }
 
   newGame(player?: PlayerInfo): void {
-    this.s = newGame();
+    this.s = newGame(freshSeed());
     if (player) this.s.player = player;
     ensureStaff(this.s);
     setPlayer(this.s.player);

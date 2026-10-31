@@ -7,7 +7,7 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 ## Contents
 
 1. [Pitch and core loop](#1-pitch-and-core-loop)
-2. [Stage ladder](#2-stage-ladder): RT, RW, Kelurahan or Desa, with stars and unlocks
+2. [Stage ladder](#2-stage-ladder): RT, RW, Kelurahan, with stars and unlocks
 3. [Pacing targets](#3-pacing-targets), with status
 4. [Economy and balance](#4-economy-and-balance)
 5. [Tone and politics guardrails](#5-tone-and-politics-guardrails)
@@ -42,11 +42,11 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 
 ## 2. Stage ladder
 
-The full ladder runs RT, RW, Kelurahan or Desa, Kecamatan, Kabupaten/Kota, Provinsi and Pusat. Only stages 1 to 3 are specified. Kecamatan and above wait for a playtest of the Kelurahan. Approved by Hari on 2026-10-26.
+The full ladder runs RT, RW, Kelurahan, Kecamatan, Kabupaten/Kota, Provinsi and Pusat. Only stages 1 to 3 are specified. Kecamatan and above wait for a playtest of the Kelurahan. Approved by Hari on 2026-10-26.
 
 The ladder reads as three acts (approved by Hari, 2026-10-28): **Act 1 Kampung** (RT, RW, Lurah; pressure: Perut and Kerja), **Act 2 Kota** (Camat, Pj. Wali Kota, Pj. Gubernur; pressure: pinjol, judol and Aman), **Act 3 Pusat** (Pejabat Pusat; Laporan against what is real). City and province posts are Pj. (acting) posts given by SK, so the player still never runs for office. Only Act 1 is built.
 
-Status 2026-10-27: the map engine, RT stars, RW and Kelurahan are built. The Desa path is not. Live grid sizes are 13x17 (RT), 28x36 (RW) and 58x74 (Kelurahan): every RT is 13x17 and the seams are 2-tile dirt roads between them, outside the RTs. These replace the 9x13, 18x26 and 36x52 in the sketch below. See `decisions/growing-map-engine.md`.
+Status 2026-10-27: the map engine, RT stars, RW and Kelurahan are built. Live grid sizes are 13x17 (RT), 28x36 (RW) and 58x74 (Kelurahan): every RT is 13x17 and the seams are 2-tile dirt roads between them, outside the RTs. These replace the 9x13, 18x26 and 36x52 in the sketch below. See `decisions/growing-map-engine.md`.
 
 ### Rules for every stage
 
@@ -75,8 +75,8 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
  +------+               |  RT3 |  RT4 |          +---[Kelurahan lots]--------+
  scenery                +------+------+          |    RW 3     |    RW 4     |
                                                  +-------------+-------------+
-                        AI builds RT2-4.          sawah and kebun ring becomes
-                        You steer with Dana.      buildable on the Desa path
+                        AI builds RT2-4.
+                        You steer with Dana.
 ```
 
 - RW = 2x2 RTs, about 18x26 tiles. Kampung Sebelah is the RT next door.
@@ -198,24 +198,23 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 - **Musim Pindahan** event: Surat Pengantar triple for **2** months.
 - **Pendataan Warga** event: the reported population is off by **10%**, and the gap moves the ranking.
 
-### Stage 3: Kelurahan or Desa
+### Stage 3: Kelurahan
 
-The player picks a path at promotion. Kelurahan is dense and shop-heavy. Desa makes the sawah and kebun ring buildable.
+Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 
-#### 0★ Pak Lurah or Pak Kades
+#### 0★ Pak Lurah
 
-- Unlocks Kantor Kelurahan (or Balai Desa) and Anggaran.
+- Unlocks Kantor Kelurahan and Anggaran.
 - **Goal for 1★:** every RW at 1★ or above, serapan of at least **80%** for one year, and the player's own kampung at **50** residents and Popularitas **50**.
 
 #### 1★
 
-- Unlocks Puskesmas Pembantu and the Honorer job. Kelurahan gets Pasar. Desa gets BUMDes.
+- Unlocks Puskesmas Pembantu and the Honorer job. Kelurahan gets Pasar.
 - **Goal for 2★:** every RW at 2★ or above, **1** Piala Kelurahan win, a clean Tim Audit, and the player's own kampung at **120** residents and Popularitas **50**.
 
 #### 2★
 
-- Kelurahan unlocks Terminal and Taman. Terminal is the one 3x3 building, the Kelurahan landmark: **Rp 25jt**, and shops within **3** tiles earn **20%** more. A 3x3 never fits a 2-tile seam, so it stands inside the player's RT lots.
-- Desa unlocks Sawah Irigasi, Embung, Desa Wisata and the Pendamping Desa job.
+- Unlocks Terminal and Taman. Terminal is the one 3x3 building, the Kelurahan landmark: **Rp 25jt**, and shops within **3** tiles earn **20%** more. A 3x3 never fits a 2-tile seam, so it stands inside the player's RT lots.
 - **Goal for 3★:** **3** Piala wins, every RW at 3★, and the player's own kampung at **200** residents and Popularitas **45**. A bigger kampung expects more, so holding Popularitas while growing is the work of this stage.
 
 #### 3★ Lurah Teladan
@@ -225,19 +224,14 @@ The player picks a path at promotion. Kelurahan is dense and shop-heavy. Desa ma
 #### New Kelurahan content
 
 - **Anggaran:** the new verb. A yearly budget arrives each January. Each unspent % cuts next year's budget by the same %. December brings a forced Serapan rush.
-- **Kantor Kelurahan / Balai Desa:** **4** PNS slots.
+- **Kantor Kelurahan:** **4** PNS slots.
 - **Puskesmas Pembantu:** **+2** Sabar a month.
 - **Aspal Ulang:** costs Rp, adds **0** value, counts as spent.
 - **Studi Banding:** costs **Rp 2jt**, returns one random wacana.
 - **Macet Abadi** combo (Pasar + Terminal + Parkir): income **x1.6**, **-3** Sabar.
 - **Perang Tarif** combo (Terminal + any Ojol job): both earn **x1.3**, **-2** Sabar.
 - **Spot Instagramable** combo (Taman + Influencer): **+3** Viral a month, park upkeep doubles.
-- **BUMDes:** **30%** chance of going mangkrak.
-- **Embung:** banjir damage **30%** lower.
-- **Panen Raya** combo (BUMDes + Sawah Irigasi): **Rp 2jt** harvest bonus.
-- **Wisata Edukasi** combo (Desa Wisata + Sawah Irigasi): **+4** Viral, **-1** Sabar a month.
 - **Honorer** job: does PNS work for half the pay. After **5** years, **20%** a year chance of becoming PNS.
-- **Pendamping Desa** job: Dana Desa only pays out with one employed.
 - **Tim Audit** event: comes every March once the Kelurahan has 1★, so the 2★ goal never waits on luck. Each wacana with no receipt costs **2** Sabar; with none missing (or a paid rapi-rapi) the audit is clean.
 - **Lomba Kelurahan** event: paint spending raises the score for one month.
 - **Kunjungan** event: one month warning before a visit.
@@ -431,10 +425,10 @@ Settings > Theme picks the colours of the frame and of every sheet and pop-up. B
 1. RT stars and late-game content (Kos-kosan, Lapangan, Bank Sampah, 3 combos). Fixes the dead zone after 14 residents.
 2. Frame-rate spike for the Kelurahan map (done).
 3. RW: map growth, AI RTs, Stempel, Dana, RW content.
-4. Kelurahan or Desa.
+4. Kelurahan.
 5. Playtest, then decide on Kecamatan and above.
 
-Status 2026-10-27: the map engine, RT stars, RW and Kelurahan have shipped. Pick the next stage work in the project chat. The Desa ring is not built.
+Status 2026-10-27: the map engine, RT stars, RW and Kelurahan have shipped. Pick the next stage work in the project chat.
 
 ## 8. Design review checklist
 
