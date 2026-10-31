@@ -21,7 +21,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: without them most design checklist items stay Unknown, so agents cannot review mechanics.
   - Suggested solution: log every event in the sim to a timeline; add the 7 missing bots; `npm run scorecard` writes the section 8 scorecard and a golden-trend file.
   - Source: TESTING.md item 7; GAME-DESIGN.md section 8
-  - `open · — · — · done when:` the scorecard has no blank rows and runs nightly in under 20 minutes.
+  - `claimed · claude-scorecard · 2026-10-31 · done when:` the scorecard has no blank rows and runs nightly in under 20 minutes.
   - Order: build after the weekly calendar and the determinism task. Bots play 1x and 2x only (no 4x). Minutes follow 8s a week, 4 weeks a month, 48 a year; pass targets include RT 3★ in about 12 min. Needs `nightly.yml` from the CI task: add a stub if that has not landed.
 - [ ] **Cap Pos Ronda so players use the other Popularitas buildings.**
   - Problem: Pos Ronda has no `maxCount`. The Kelurahan bot built 20 to 90 of them to hold Popularitas in a big kampung.
