@@ -13,9 +13,12 @@ export const wacanaCost = (s: GameState, id?: string) => {
   return price(s, WACANA_COST * (1 + Math.min(WACANA_COST_CAP, times * WACANA_COST_STEP)));
 };
 
+/** The policies this stage offers. */
+export const availableWacana = (s: GameState) => WACANA.filter((w) => !w.stage || w.stage === s.stage.current);
+
 export function checkAnnounce(s: GameState, id: string): CheckResult {
   const cost = wacanaCost(s, id);
-  if (!WACANA.some((w) => w.id === id)) return { ok: false, missing: [t('sim.unknownWacana')] };
+  if (!availableWacana(s).some((w) => w.id === id)) return { ok: false, missing: [t('sim.unknownWacana')] };
   return s.res.rupiah >= cost ? { ok: true } : { ok: false, missing: [t('sim.konsumsi', { amt: rupiah(cost - s.res.rupiah), cost: rupiah(cost) })] };
 }
 

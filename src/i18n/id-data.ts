@@ -118,6 +118,8 @@ const BASE: Record<string, string> = {
   'wacana.genangan.trade': 'Memakai Orang Dalam. Panitia butuh bantuan.',
   'wacana.gotong.line': 'Sama seperti gotong royong, tapi pakai tagar.',
   'wacana.gotong.trade': 'Menguras Rp 30rb seminggu untuk konsumsi relawan.',
+  'wacana.judol.line': 'Spanduk berkata TIDAK pada judol. Digantung di bawah iklan yang menjualnya.',
+  'wacana.judol.trade': 'Menguras Rp 60rb seminggu untuk cetak. Laporan naik. Yang lain tidak.',
   'wacana.hijau.line': 'Tiga pot cabai akan ditaruh dekat kantor.',
   'wacana.hijau.trade': 'Murah. Menguras Rp 10rb seminggu untuk pot.',
   'wacana.warung.line': 'Setiap warung dinaikkan jadi "UMKM". Berkas menyusul.',

@@ -27,6 +27,10 @@ export interface RealisasiDef {
   viral?: number;
   /** Damaged buildings fixed a month while it works. */
   repairs?: number;
+  /** Share of new pinjol and judol cases it stops while it works. */
+  pinjolCut?: number;
+  /** Only offered in this stage. Absent: always. */
+  stage?: 'kecamatan';
   /** Plain words: what it really does. */
   effect: string;
 }
@@ -37,6 +41,7 @@ export const REALISASI: RealisasiDef[] = [
   { id: 'bioporiMassal', wacana: 'genangan', name: 'Biopori Massal', line: 'A hole in every yard. Nobody argues with a hole.', cost: 2_500_000, delay: 3, lasts: 0, banjirProtect: 0.2, effect: 'Banjir damage 20% lower, for good.' },
   { id: 'pelatihanUmkm', wacana: 'warung', name: 'Pelatihan UMKM', line: 'Bookkeeping, packaging and how to post a menu.', cost: 3_000_000, delay: 3, lasts: 24, kerja: 8, warungMult: 1.1, effect: 'Kerja +8 and warung income +10% for 24 weeks.' },
   { id: 'bansos', wacana: 'hijau', name: 'Bansos Sembako', line: 'Rice, oil and sugar, to the right houses this time.', cost: 1_500_000, delay: 1, lasts: 6, perutCover: 0.3, effect: 'Feeds 30% more households for 6 weeks.' },
+  { id: 'literasiKeuangan', wacana: 'judol', name: 'Literasi Keuangan', line: 'Classes at the balai on loans, interest and the word "bunga".', cost: 3_000_000, delay: 8, lasts: 48, pinjolCut: 0.5, stage: 'kecamatan', effect: 'New pinjol and judol cases fall 50% for 48 weeks, once it lands in 8.' },
 ];
 
 export const realisasiDef = (id: string): RealisasiDef | undefined => REALISASI.find((r) => r.id === id);

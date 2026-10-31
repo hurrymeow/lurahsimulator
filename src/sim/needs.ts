@@ -1,13 +1,13 @@
 // What is true for the warga: Perut (fed), Kerja (in work) and Aman (safe), each 0 to 100. Sejahtera is
 // their average. Hungry households and preman cost Popularitas, so warga are more than a headcount.
-import { PINJOL } from '../data/higher/kecamatan';
+import { PINJOL, RAZIA } from '../data/higher/kecamatan';
 import { t } from '../i18n';
 import { def, stageFx } from './content';
 import { gain, type Fx } from './gain';
 import { slots, used } from './jobs';
 import { noteProblem } from './problems';
 import { realisasiDone, realisasiSum } from './realisasi';
-import { hansipAman } from './staff';
+import { hansipAman, satpolRaziaAman } from './staff';
 import { isWorking, population } from './state';
 import type { Building, GameState, Meters, Resident } from './types';
 
@@ -67,6 +67,9 @@ export function fedBase(s: GameState): number {
 /** Households fed this month. A household in debt counts half unfed (PINJOL.unfedShare). */
 export const fed = (s: GameState): number => Math.max(0, Math.floor(fedBase(s) - debtHouseholds(s) * PINJOL.unfedShare));
 
+/** Aman a razia in force adds: its own, plus what the Satpol PP on the beat brings. */
+export const raziaAman = (s: GameState): number => (s.kec?.razia && s.kec.razia.until > s.month ? RAZIA.aman + satpolRaziaAman(s) : 0);
+
 /** Aman the debt collector's visits are costing right now. */
 export const collectorAman = (s: GameState): number => (s.kec?.hits ?? []).filter((until) => until > s.month).length * PINJOL.collectorAman;
 
@@ -85,7 +88,7 @@ export function meters(s: GameState): Meters {
   const a = NEEDS.aman;
   const idle = s.residents.filter((r) => !r.preman && (r.idle ?? 0) >= a.idleMonths).length;
   const crowd = Math.max(0, pop - a.crowdFrom) * a.perResident;
-  const aman = a.base - crowd - a.perIdle * idle - a.perPreman * premanList(s).length + a.perLamp * working('lampuTaman') + a.perPosRonda * working('posRonda') + stageAman(s) + realisasiSum(s, 'aman') + hansipAman(s) - collectorAman(s);
+  const aman = a.base - crowd - a.perIdle * idle - a.perPreman * premanList(s).length + a.perLamp * working('lampuTaman') + a.perPosRonda * working('posRonda') + stageAman(s) + realisasiSum(s, 'aman') + hansipAman(s) - collectorAman(s) + raziaAman(s);
   return { perut: clamp(perut), kerja: clamp(kerja), aman: clamp(aman), cap: sejahteraCap(pop) };
 }
 

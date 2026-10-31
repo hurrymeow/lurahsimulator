@@ -121,6 +121,8 @@ export interface KecState {
   amanRun: number;
   /** Weeks the debt collector's Aman cut ends, one per visit. */
   hits?: number[];
+  /** A razia in force: Aman is up until this week. */
+  razia?: { until: number };
   /** Week of the last razia. Absent if none. */
   lastRazia?: number;
   /** Week the player was promoted. */

@@ -13,7 +13,7 @@ export const liveRealisasi = (s: GameState): RealisasiDef[] =>
 export const runningRealisasi = (s: GameState, id: string): boolean => (s.realisasi ?? []).some((r) => r.id === id && s.month < r.endsAt);
 
 /** Total of one effect across the programs working now. */
-export const realisasiSum = (s: GameState, key: 'kerja' | 'aman' | 'perutCover' | 'viral' | 'repairs'): number => liveRealisasi(s).reduce((n, d) => n + (d[key] ?? 0), 0);
+export const realisasiSum = (s: GameState, key: 'kerja' | 'aman' | 'perutCover' | 'viral' | 'repairs' | 'pinjolCut'): number => liveRealisasi(s).reduce((n, d) => n + (d[key] ?? 0), 0);
 
 /** A lasting program's banjir protection counts once it has landed, for good. */
 export const realisasiBanjir = (s: GameState): number =>
@@ -29,6 +29,7 @@ export const realisasiDone = (s: GameState): number => (s.realisasi ?? []).filte
 export function checkRealisasi(s: GameState, id: string): CheckResult {
   const d = realisasiDef(id);
   if (!d) return { ok: false, missing: [t('sim.unknownWacana')] };
+  if (d.stage && s.stage.current !== d.stage) return { ok: false, missing: [t('sim.unknownWacana')] };
   if (runningRealisasi(s, id)) return { ok: false, missing: [t('real.running')] };
   const cost = realisasiCost(s, d);
   return s.res.rupiah >= cost ? { ok: true } : { ok: false, missing: [t('sim.moneyGap', { amt: rupiah(cost - s.res.rupiah), cost: rupiah(cost) })] };
