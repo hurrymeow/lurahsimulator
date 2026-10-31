@@ -27,7 +27,7 @@ export function setupGoal(app: App): void {
     const starLine = left.length === 1
       ? t('goal.leftOne', { goal: left[0].text })
       : left.length ? t('goal.left', { n: left.length, goal: left[0].text }) : '';
-    const stepLeads = !!step && (step.kind === 'house' || step.kind === 'combo' || !left.length);
+    const stepLeads = !!step && (step.kind === 'house' || step.kind === 'combo' || step.kind === 'desk' || !left.length);
     el.hidden = !left.length && !step;
     text.textContent = stepLeads ? step!.text : starLine;
     // Opened: every unmet goal, then the step when the line does not already say it.
