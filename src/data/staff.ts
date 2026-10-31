@@ -155,6 +155,13 @@ export const SPECIALS: SpecialDef[] = [
   { id: 'buSinetron', name: 'Bu Sinetron', type: 'Soap-opera mother', role: 'adminWa', stats: { rajin: 55, lobi: 50, jujur: 55, gaul: 50 }, quirk: 'Every bad event zooms in three times.' },
   { id: 'masKonten', name: 'Mas Konten', type: 'Prank content creator', role: 'adminWa', stats: { rajin: 45, lobi: 35, jujur: 35, gaul: 95 }, quirk: 'Virality x1.5, the odd prank costs Popularitas.', output: 1.5 },
   { id: 'pakPurna', name: 'Pak Purna', type: 'Retired senior PNS', role: 'hansip', stats: { rajin: 60, lobi: 90, jujur: 60, gaul: 30 }, quirk: 'Lobi 90. Sleeps through rapat.' },
+  // 90s TV and radio types. Types only: never one real person, and never anyone else's character.
+  { id: 'bangLawak', name: 'Bang Lawak', type: 'Comic from a campus-radio trio', role: 'adminWa', stats: { rajin: 40, lobi: 45, jujur: 50, gaul: 85 }, quirk: 'Every bad event gets a punchline: Virality x1.5.', output: 1.5 },
+  { id: 'omLaluLintas', name: 'Om Lalu Lintas', type: 'Radio traffic reporter', role: 'supir', stats: { rajin: 75, lobi: 45, jujur: 50, gaul: 45 }, quirk: 'Knows every macet before it happens: crews arrive 1.5x sooner.', output: 1.5 },
+  { id: 'buJuruKetik', name: 'Bu Juru Ketik', type: 'Typewriter typist from the old kantor', role: 'asisten', stats: { rajin: 60, lobi: 70, jujur: 65, gaul: 25 }, quirk: 'Ten fingers, carbon paper, no mistakes: folders x1.5.', output: 1.5 },
+  { id: 'pakKuis', name: 'Pak Kuis', type: 'TV quiz-show host', role: 'sekretaris', stats: { rajin: 40, lobi: 85, jujur: 40, gaul: 55 }, quirk: 'Every caller wins something: Orang Inside x1.5.', output: 1.5 },
+  { id: 'mbakSenam', name: 'Mbak Senam Pagi', type: 'Morning-aerobics instructor', role: 'hansip', stats: { rajin: 80, lobi: 30, jujur: 50, gaul: 70 }, quirk: 'Senam at six in the lapangan: Aman x1.5.', output: 1.5 },
+  { id: 'bangRentalPS', name: 'Bang Rental PS', type: 'Games-rental repairman', role: 'pu', stats: { rajin: 80, lobi: 35, jujur: 45, gaul: 55 }, quirk: 'Fixes anything with one screwdriver: repairs x1.5.', output: 1.5 },
 ];
 
 /** Months worked to reach levels 2 to 5, as warga jobs. */

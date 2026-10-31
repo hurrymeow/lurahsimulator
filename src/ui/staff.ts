@@ -5,6 +5,7 @@ import { chBlurb, chName, getLang, gName, gNeeds, gReward, roleBlurb, roleName, 
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { inemURL } from '../render/inem';
+import { portraitURL } from '../render/portraits';
 import { BIMTEK, CHANNELS, GIGS, RAISE, SPECIALS, STATS, STAT_ICON, STAT_MAX, roleDef, traitDef, type RoleId, type StatId } from '../data/staff';
 import {
   answerRaise, bimtek, bimtekCost, cancelLowongan, checkBimtek, checkFire, checkHire, checkMutasi, checkPost, ensureStaff, fire, grupWaShift, hire,
@@ -81,8 +82,11 @@ function aboutLines(a: Applicant): Node[] {
   return out;
 }
 
-const face = (x: Staff) =>
-  x.inem ? h('img', { src: inemURL(), alt: '', width: 44, height: 60, class: 'pixel staff-face' }) : h('span', { class: 'staff-badge', 'aria-hidden': 'true' }, stars(x.stars));
+/** Inem's face, a special's portrait, or a star badge for everyone else. */
+const face = (x: Applicant & { inem?: boolean }) => {
+  const url = x.inem ? inemURL() : portraitURL(x.special);
+  return url ? h('img', { src: url, alt: '', width: 44, height: 60, class: 'pixel staff-face' }) : h('span', { class: 'staff-badge', 'aria-hidden': 'true' }, stars(x.stars));
+};
 
 /** Lines that need the player's eye, shown on the card and in the detail view. */
 function flags(x: Staff): Node[] {
@@ -197,7 +201,7 @@ function lowongan(app: App, done: () => void): HTMLElement {
     const head = h('p', { class: 'meta' }, t('staff.waiting', { role: roleName(roleDef(lw.role)), channel: chName(ch), n: Math.max(0, lw.arriveAt - s.month) }));
     const req = h('p', { class: 'meta staff-req' }, t('staff.reqHead', { line: t(`staff.req.${lw.req}` as Key) }));
     const apps = lw.applicants.map((a) => h('div', { class: 'card-btn static staff-applicant', 'data-applicant': String(a.id) },
-      h('span', { class: 'staff-badge', 'aria-hidden': 'true' }, stars(a.stars)),
+      face(a),
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, a.name), h('span', { class: 'meta' }, stars(a.stars))),
         ...aboutLines(a),
