@@ -194,4 +194,71 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
     p.stroke(-12, -2, -12, -10, 2, 'y', false);
     p.stroke(-12, -10, -8, -10, 2, 'y', false);
   },
+  // Kecamatan
+  kantorKec: (p) => {
+    p.shadow(1);
+    p.box(1, 10, 'w', (face, u, j, i) => {
+      if (face === 'L' && within(u, 0.42, 0.6) && j < 7) return 'k';
+      if (j < 1) return 'S';
+      if (face !== 'T' && j === 9) return 'o';
+      return windows(face, u, j, i, [3, 8]);
+    });
+    p.roof(1, 10, 9, 'S', (x) => (Math.floor(x / 4) % 2 ? 'b' : undefined));
+  },
+  posSatpol: (p) => {
+    p.shadow(3);
+    // A khaki post with a blue stripe and a barred window.
+    p.box(3, 7, 'y', (face, u, j) => {
+      if (face === 'T') return undefined;
+      if (j < 1) return 'N';
+      if (face === 'L' && within(u, 0.4, 0.6) && j < 5) return 'k';
+      if (j === 5) return 'b';
+      if (face === 'R' && within(u, 0.3, 0.7) && within(j, 2, 4)) return 'l';
+      return undefined;
+    });
+    p.roof(3, 7, 5, 'b');
+  },
+  koperasiSP: (p) => {
+    p.shadow(2);
+    p.box(2, 8, 'g', (face, u, j, i) => {
+      if (face === 'T') return undefined;
+      if (j < 1) return 'N';
+      if (face === 'L' && within(u, 0.4, 0.6) && j < 5) return 'k';
+      if (j >= 6) return 'y';
+      return windows(face, u, j, i, [2, 5]);
+    });
+    p.roof(2, 8, 5, 'o');
+  },
+  balaiLatihanKerja: (p) => {
+    p.shadow(2);
+    p.box(2, 9, 'c', (face, u, j, i) => {
+      if (face === 'T') return undefined;
+      if (j < 1) return 'S';
+      if (face === 'L' && within(u, 0.42, 0.6) && j < 5) return 'k';
+      return windows(face, u, j, i, [3, 7]);
+    });
+    p.roof(2, 9, 5, 'S', (x) => (Math.floor(x / 3) % 2 ? 'y' : undefined));
+  },
+  baliho: (p) => {
+    p.shadow(6);
+    // Two posts under a wide board with a bright stripe, like the ones over every junction.
+    p.stroke(-8, -2, -8, -12, 3, 'S');
+    p.stroke(8, 3, 8, -7, 3, 'S');
+    p.stroke(-10, -14, 10, -4, 10, 'w');
+    p.stroke(-9, -12, 9, -3, 3, 'y', false);
+    p.stroke(-9, -16, 9, -6, 2, 'r', false);
+  },
+  tamanKota: (p) => {
+    p.shadow(2);
+    p.ground((a, b) => {
+      const d = Math.max(Math.abs(a - 0.5), Math.abs(b - 0.5));
+      if (d < 0.14) return Math.floor((a + b) * 12) % 3 === 0 ? 'c' : 'l';
+      if (d < 0.2) return 's';
+      if (within(a, 0.46, 0.54) || within(b, 0.46, 0.54)) return 't';
+      return (Math.floor(a * 4) + Math.floor(b * 4)) % 2 ? 'g' : 'G';
+    });
+    p.blob(-8, 16, 5, 'G');
+    p.blob(8, 18, 5, 'g');
+    p.overlay.push(dither);
+  },
 };

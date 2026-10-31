@@ -160,6 +160,7 @@ export function roleGain(x: InRole): number {
     case 'supir': return o * ROLE_FX.supir.buildBoostPerLevel * 100;
     case 'bendahara': return Math.min(ROLE_FX.bendahara.upkeepCutMax, o * ROLE_FX.bendahara.upkeepCutPerLevel) * 100;
     case 'sekretaris': return o * ROLE_FX.sekretaris.orangDalamPerLevel;
+    case 'satpol': return o * ROLE_FX.satpol.raziaAmanPerLevel;
   }
 }
 
@@ -231,7 +232,9 @@ export function rollApplicants(s: GameState): Applicant[] {
   const lw = s.lowongan!;
   const base = CHANNELS.find((c) => c.id === lw.channel)!;
   const shift = base.local ? grupWaShift(s) : null;
-  const ch = shift ? { ...base, odds: { ...base.odds, 2: base.odds[2] - shift.pts, 3: base.odds[3] + shift.pts } } : base;
+  const shifted = shift ? { ...base, odds: { ...base.odds, 2: base.odds[2] - shift.pts, 3: base.odds[3] + shift.pts } } : base;
+  // In the Kecamatan, 5-star applicants open: 5 points of the outside channel's 4-star odds.
+  const ch = s.stage.current === 'kecamatan' && !base.local ? { ...shifted, odds: { ...shifted.odds, 4: shifted.odds[4] - 5, 5: 5 } } : shifted;
   const role = roleDef(lw.role);
   const n = APPLICANTS.min + pickN(roll(s, s.month, 1), APPLICANTS.max - APPLICANTS.min + 1);
   const locals = ch.local ? jobless(s) : [];

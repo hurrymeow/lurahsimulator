@@ -25,6 +25,10 @@ export interface MeterDef {
 
 /** Number-moving effects that BuildingDef cannot say. The engine reads only the fields it knows. */
 export interface StageEffects {
+  /** Idle warga retrained each week while it stands (Balai Latihan Kerja). */
+  retrain?: number;
+  /** Aman added while it stands (Pos Satpol PP). */
+  aman?: number;
   /** Stempel gained a month. */
   stempel?: number;
   /** Resource change a month for every neighbouring RT. */

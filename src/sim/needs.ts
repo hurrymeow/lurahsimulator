@@ -2,7 +2,7 @@
 // their average. Hungry households and preman cost Popularitas, so warga are more than a headcount.
 import { PINJOL } from '../data/higher/kecamatan';
 import { t } from '../i18n';
-import { def } from './content';
+import { def, stageFx } from './content';
 import { gain, type Fx } from './gain';
 import { slots, used } from './jobs';
 import { noteProblem } from './problems';
@@ -72,6 +72,9 @@ export const collectorAman = (s: GameState): number => (s.kec?.hits ?? []).filte
 
 export const premanList = (s: GameState): Resident[] => s.residents.filter((r) => r.preman);
 
+/** Aman from stage buildings that carry it (the Pos Satpol PP). */
+const stageAman = (s: GameState): number => s.buildings.reduce((n, b) => n + (isWorking(b) ? stageFx(def(b.def))?.aman ?? 0 : 0), 0);
+
 export function meters(s: GameState): Meters {
   const pop = population(s);
   const hh = households(s);
@@ -82,7 +85,7 @@ export function meters(s: GameState): Meters {
   const a = NEEDS.aman;
   const idle = s.residents.filter((r) => !r.preman && (r.idle ?? 0) >= a.idleMonths).length;
   const crowd = Math.max(0, pop - a.crowdFrom) * a.perResident;
-  const aman = a.base - crowd - a.perIdle * idle - a.perPreman * premanList(s).length + a.perLamp * working('lampuTaman') + a.perPosRonda * working('posRonda') + realisasiSum(s, 'aman') + hansipAman(s) - collectorAman(s);
+  const aman = a.base - crowd - a.perIdle * idle - a.perPreman * premanList(s).length + a.perLamp * working('lampuTaman') + a.perPosRonda * working('posRonda') + stageAman(s) + realisasiSum(s, 'aman') + hansipAman(s) - collectorAman(s);
   return { perut: clamp(perut), kerja: clamp(kerja), aman: clamp(aman), cap: sejahteraCap(pop) };
 }
 
