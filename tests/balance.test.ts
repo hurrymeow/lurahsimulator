@@ -1,3 +1,4 @@
+import { easiestCombo, nextStep } from '../src/sim/nextstep';
 import { describe, expect, it } from 'vitest';
 import { placeableDefs } from '../src/sim/content';
 import { checkRepair, repair, resolveEvent } from '../src/sim/events';
@@ -6,10 +7,12 @@ import { checkPlace, place, skipPermit, upgrade } from '../src/sim/rules';
 import { attractTarget, emptyTiles, housing, newGame, population } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
 import { announce } from '../src/sim/wacana';
+import { INFLATION_PER_YEAR } from '../src/sim/balance';
 import type { GameState } from '../src/sim/types';
 
 /**
- * A simple autoplayer: builds the two early combos, keeps a bed ahead of demand,
+ * A simple autoplayer. `years` counts blocks of 12 weeks (the old year), not calendar years.
+ * It: builds the two early combos, keeps a bed ahead of demand,
  * and buys what it can afford. It never plans combos beyond the two it is told to.
  */
 function play(seed: number, years: number, smart: boolean, starMonths: number[] = [], eventMonths: number[] = []): { s: GameState; minRupiahY1: number } {
@@ -28,7 +31,7 @@ function play(seed: number, years: number, smart: boolean, starMonths: number[] 
       want('warung', k.x + 1, k.y - 1, 3_000_000);
       want('wifi', k.x, k.y - 1, 5_000_000);
       // A bed for the next arrivals, up to what the top goals need.
-      if (population(s) < 42 && housing(s) < attractTarget(s) + 3) {
+      if (population(s) < 57 && housing(s) < attractTarget(s) + 3) {
         const spot = emptyTiles(s)[0];
         if (spot && s.res.rupiah > 2_000_000 && checkPlace(s, 'rumah', spot.x, spot.y).ok) place(s, 'rumah', spot.x, spot.y);
       }
@@ -43,6 +46,16 @@ function play(seed: number, years: number, smart: boolean, starMonths: number[] 
         const have = s.buildings.filter((b) => b.def === d.id).length;
         const worthIt = d.income > d.upkeep || have === 0;
         if (spot && worthIt && have < 4 && checkPlace(s, d.id, spot.x, spot.y).ok && s.res.rupiah > d.cost * 3) place(s, d.id, spot.x, spot.y);
+      }
+      // Like a player, follow the game's own pointer: when it names a combo, put the missing piece beside one already built.
+      const pick = nextStep(s)?.kind === 'combo' ? easiestCombo(s) : null;
+      if (pick) {
+        const absent = pick.ids.find((id) => !s.buildings.some((b) => b.def === id));
+        const missing = absent ?? pick.ids[pick.ids.length - 1];
+        // With every piece built but apart, buy one more of the last piece beside the first.
+        const member = absent ? s.buildings.find((b) => pick.ids.includes(b.def)) : s.buildings.find((b) => b.def === pick.ids[0]);
+        const spot = member && emptyTiles(s).find((t) => Math.abs(t.x - member.x) + Math.abs(t.y - member.y) === 1 && checkPlace(s, missing, t.x, t.y).ok);
+        if (spot && s.res.rupiah > 3_000_000) place(s, missing, spot.x, spot.y);
       }
       // Preman get a Satpam post each, as a player answers a preman with a Pos Satpam.
       const preman = s.residents.filter((r) => r.preman).length;
@@ -94,9 +107,9 @@ describe('balance', () => {
     expect(wins / total).toBeGreaterThan(0.5);
   }, 30_000);
 
-  it('inflation is small: prices rise 3% a year', () => {
-    const { s } = play(1, 5, false);
-    expect(s.inflation).toBeCloseTo(1.03 ** 5, 5);
+  it('inflation is small: prices rise 12.55% a year', () => {
+    const { s } = play(1, 8, false); // 8 blocks of 12 weeks = 2 years
+    expect(s.inflation).toBeCloseTo((1 + INFLATION_PER_YEAR) ** 2, 5);
   });
 });
 
@@ -115,16 +128,18 @@ describe('star pacing', () => {
   }, 30_000);
 });
 
-// GAME-DESIGN.md targets 4 and 6. A month is 8s at 1x, so 2 min is 15 months, 5 min is 37 and 10 min is 75.
+// GAME-DESIGN.md targets 4 and 6. A month is 8s at 1x, so 2 min is 15 months, 5 min is 37, 9 min is 68 and 12 min is 90.
 describe('pacing targets', () => {
   it('stars come on time and popups never come within 3 months of each other', () => {
     for (let seed = 1; seed <= 10; seed++) {
       const stars: number[] = [];
       const events: number[] = [];
       play(seed, 7, true, stars, events);
+
       expect(stars[0], `1 star, seed ${seed}`).toBeLessThanOrEqual(15);
       expect(stars[1], `2 stars, seed ${seed}`).toBeLessThanOrEqual(37);
-      expect(stars[2], `3 stars, seed ${seed}`).toBeLessThanOrEqual(75);
+      // 12 min is the intended pace (Hari, 2026-10-31). This simple bot lands near 8; the scorecard builder bot holds the 9 to 12 min band.
+      expect(stars[2], `3 stars, seed ${seed} (${stars})`).toBeLessThanOrEqual(90);
       events.forEach((m, i) => { if (i) expect(m - events[i - 1], `events at ${events[i - 1]} and ${m}, seed ${seed}`).toBeGreaterThanOrEqual(3); });
     }
   }, 30_000);

@@ -4,7 +4,21 @@ import type { Settings } from './settings';
  * All sound is synthesised with Web Audio, so there is nothing to download or license.
  * The context is created on the first tap, since browsers block audio before a gesture.
  */
-export type Sfx = 'tap' | 'build' | 'event' | 'fanfare' | 'first' | 'bad';
+export type Sfx = 'tap' | 'build' | 'event' | 'fanfare' | 'first' | 'bad' | Sfx17;
+
+/**
+ * 17 Agustus sounds. Every tune here is original: they sound like 17an through the instruments (a school drumband,
+ * kendang, angklung, a slide whistle), never by quoting a song. Indonesia Raya is never used or changed (UU 24/2009).
+ */
+export type Sfx17 = 'drumband' | 'koplo' | 'angklung' | 'slideUp' | 'slideDown' | 'hop' | 'crunch' | 'cheer';
+
+// The drumband's march, in 2/4 at 120 bpm: [midi note or 0 for a rest, length in 16ths]. Original, pentatonic.
+const MARCH: [number, number][] = [
+  [72, 2], [72, 1], [74, 1], [76, 2], [79, 2], [76, 2], [74, 2], [72, 4],
+  [74, 2], [76, 2], [79, 2], [81, 2], [79, 6], [0, 2],
+];
+// The angklung's rising call: each note is shaken, so it repeats fast.
+const ANGKLUNG = [67, 69, 72, 76, 79];
 
 const MUSIC_MIX = 0.5;
 const BEAT = 60 / 96 / 2;
@@ -97,7 +111,193 @@ class Audio {
       case 'bad': this.tone(196, 0, 0.3, 0.18, 'sawtooth'); this.tone(147, 0.12, 0.35, 0.16, 'sawtooth'); break;
       case 'first': [523, 659, 784, 1047, 1319, 1568].forEach((f, k) => this.tone(f, k * 0.07, 0.35, 0.16)); break;
       case 'fanfare': [523, 659, 784, 1047].forEach((f, k) => this.tone(f, k * 0.09, 0.4, 0.15)); break;
+      default: this.play17(name);
     }
+  }
+
+  private play17(name: Sfx17): void {
+    switch (name) {
+      case 'drumband': {
+        // A snare roll that swells, a bass drum on the downbeat, then glockenspiel and pianika play the march.
+        for (let k = 0; k < 16; k++) this.noise(k * 0.045, 0.05, 0.03 + k * 0.006, 'highpass', 2200);
+        this.drum(0.72, 70, 0.3);
+        const s16 = 0.125;
+        let at = 0.75;
+        let step = 0;
+        for (const [m, l] of MARCH) {
+          if (m) {
+            this.bell(hz(m + 12), at, 0.5, 0.09);
+            this.reed(hz(m), at, l * s16 * 0.9, 0.05);
+          }
+          // The snare keeps the march on every beat, the bass drum on the one.
+          if (step % 4 === 0) this.noise(at, 0.06, 0.06, 'highpass', 2200);
+          if (step % 8 === 0) this.drum(at, 70, 0.2);
+          at += l * s16;
+          step += l;
+        }
+        this.noise(at, 0.5, 0.08, 'highpass', 5000);
+        this.drum(at, 60, 0.3);
+        break;
+      }
+      case 'koplo': {
+        // Kendang: low "dung" and sharp "tak" in a fast fill, a bamboo flute lick, then one punchy hit.
+        const fill: [number, 'dung' | 'tak'][] = [[0, 'dung'], [0.11, 'tak'], [0.17, 'tak'], [0.28, 'dung'], [0.39, 'tak'], [0.45, 'dung'], [0.5, 'tak']];
+        for (const [at, kind] of fill) {
+          if (kind === 'dung') this.drum(at, 150, 0.22, 0.18);
+          else this.noise(at, 0.04, 0.12, 'bandpass', 1800);
+        }
+        [76, 79, 81, 79, 76, 84].forEach((m, k) => this.flute(hz(m), 0.62 + k * 0.1, k === 5 ? 0.35 : 0.09, 0.06));
+        this.drum(1.3, 110, 0.32, 0.25);
+        this.noise(1.3, 0.08, 0.15, 'bandpass', 1400);
+        break;
+      }
+      case 'angklung':
+        // Each note is a bamboo tube shaken: four quick strikes of a hollow tone with an octave over it.
+        ANGKLUNG.forEach((m, n) => {
+          for (let r = 0; r < 4; r++) {
+            const at = n * 0.16 + r * 0.035;
+            this.tone(hz(m), at, 0.14, 0.05 * (1 - r * 0.15), 'triangle');
+            this.tone(hz(m + 12), at, 0.08, 0.02, 'sine');
+          }
+        });
+        break;
+      case 'slideUp':
+        this.slide(500, 1700, 0, 0.55, 0.09);
+        this.noise(0.55, 0.5, 0.06, 'highpass', 6000);
+        break;
+      case 'slideDown':
+        this.slide(1500, 380, 0, 0.6, 0.09);
+        this.drum(0.62, 90, 0.25, 0.22);
+        this.noise(0.62, 0.12, 0.05, 'lowpass', 600);
+        break;
+      case 'hop':
+        this.drum(0, 95, 0.12, 0.2);
+        this.noise(0, 0.05, 0.05, 'lowpass', 900);
+        break;
+      case 'crunch':
+        // Cracker bites: a few dry crackles close together.
+        for (let k = 0; k < 6; k++) this.noise(k * 0.035 + (k % 2) * 0.012, 0.03, 0.09, 'bandpass', 3000 + k * 400);
+        break;
+      case 'cheer':
+        // A crowd from across the lapangan: breathy noise that swells and falls, with claps scattered through it.
+        this.noise(0, 1.6, 0.07, 'bandpass', 1100, true);
+        for (let k = 0; k < 14; k++) this.noise(0.1 + ((k * 37) % 13) * 0.1, 0.02, 0.05, 'highpass', 2500);
+        break;
+    }
+  }
+
+  private noiseBuf: AudioBuffer | null = null;
+
+  /** A burst of filtered noise: snares, crackles, claps and crowds. A swell rises and falls instead of striking. */
+  private noise(delay: number, len: number, vol: number, type: BiquadFilterType, freq: number, swell = false): void {
+    const ctx = this.ctx!;
+    if (!this.noiseBuf) {
+      this.noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const d = this.noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const t = ctx.currentTime + delay;
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuf;
+    src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = type;
+    filter.frequency.value = freq;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    if (swell) {
+      g.gain.linearRampToValueAtTime(vol, t + len * 0.35);
+      g.gain.linearRampToValueAtTime(0.0001, t + len);
+    } else {
+      g.gain.linearRampToValueAtTime(vol, t + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    }
+    src.connect(filter).connect(g).connect(this.sfxOut);
+    src.start(t, Math.random() * 0.5);
+    src.stop(t + len + 0.02);
+  }
+
+  /** A drum: a sine that drops in pitch fast. Bass drum low, kendang dung higher. */
+  private drum(delay: number, freq: number, vol: number, len = 0.3): void {
+    const ctx = this.ctx!;
+    const t = ctx.currentTime + delay;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(freq * 2, t);
+    o.frequency.exponentialRampToValueAtTime(freq, t + 0.06);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + len);
+    o.connect(g).connect(this.sfxOut);
+    o.start(t);
+    o.stop(t + len + 0.02);
+  }
+
+  /** A struck metal bar: the note and its out-of-tune overtone, both dying fast, like a glockenspiel. */
+  private bell(freq: number, delay: number, len: number, vol: number): void {
+    this.tone(freq, delay, len, vol, 'sine');
+    this.tone(freq * 2.76, delay, len * 0.4, vol * 0.35, 'sine');
+  }
+
+  /** A reed, like a pianika: a square wave softened by a low-pass filter. */
+  private reed(freq: number, delay: number, len: number, vol: number): void {
+    const ctx = this.ctx!;
+    const t = ctx.currentTime + delay;
+    const o = ctx.createOscillator();
+    const f = ctx.createBiquadFilter();
+    const g = ctx.createGain();
+    o.type = 'square';
+    o.frequency.value = freq;
+    f.type = 'lowpass';
+    f.frequency.value = freq * 3;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.02);
+    g.gain.setValueAtTime(vol, t + len * 0.8);
+    g.gain.linearRampToValueAtTime(0.0001, t + len);
+    o.connect(f).connect(g).connect(this.sfxOut);
+    o.start(t);
+    o.stop(t + len + 0.02);
+  }
+
+  /** A bamboo flute: a sine with a little vibrato. */
+  private flute(freq: number, delay: number, len: number, vol: number): void {
+    const ctx = this.ctx!;
+    const t = ctx.currentTime + delay;
+    const o = ctx.createOscillator();
+    const lfo = ctx.createOscillator();
+    const depth = ctx.createGain();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    lfo.frequency.value = 6;
+    depth.gain.value = freq * 0.012;
+    lfo.connect(depth).connect(o.frequency);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.001, t + len + 0.05);
+    o.connect(g).connect(this.sfxOut);
+    o.start(t);
+    lfo.start(t);
+    o.stop(t + len + 0.07);
+    lfo.stop(t + len + 0.07);
+  }
+
+  /** A slide whistle: one pure tone gliding from one pitch to another. */
+  private slide(from: number, to: number, delay: number, len: number, vol: number): void {
+    const ctx = this.ctx!;
+    const t = ctx.currentTime + delay;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(from, t);
+    o.frequency.exponentialRampToValueAtTime(to, t + len);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.03);
+    g.gain.setValueAtTime(vol, t + len * 0.85);
+    g.gain.linearRampToValueAtTime(0.0001, t + len);
+    o.connect(g).connect(this.sfxOut);
+    o.start(t);
+    o.stop(t + len + 0.02);
   }
 
   /** Short blip so the player hears the new SFX level while dragging the slider. */

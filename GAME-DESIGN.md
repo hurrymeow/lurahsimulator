@@ -38,7 +38,7 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 - The Combo book is the last tab of the Build sheet, after the building tabs, and is not in the Menu. Build still opens on the last building tab used.
 - The Combo book is a column of full-width cards, one per row, under filter buttons (All, ✓ active, ★ found, ? not yet, each with its count). A card shows the name, the buildings (greyed when missing, silhouettes before it is in town) and a state mark on one line, and the effect in two lines below. Tapping a card opens the whole entry below it: effect, conditions, status and, once discovered, the story (`src/ui/lists.ts`).
 - The Warga list opens on a summary line (headcount and what everyone makes a month) and filter buttons: By job (default) and No job (with its count). People sit in boxes per job, headed by the workplace sprite, the headcount and the group's monthly output; each person is a chip with their name. Warga have no star rating (stars are for staff); a resident's own sheet shows their experience as a line, such as "18 months in this job: output +40%". No job comes first, marked red.
-- Speed control: pause, 1x, 2x. No 4x (Hari, 2026-10-31; code change pending, see `decisions/design-review-checklist.md`).
+- Speed control: pause, 1x, 2x. No 4x (Hari, 2026-10-31; removed in code, see `decisions/weekly-calendar.md`).
 - Text advances on tap, never on a timer.
 
 ## 2. Stage ladder
@@ -102,7 +102,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 #### AI neighbours
 
 - Every **3** months each AI RT places one building from its trait's list of 11 to 13 one-tile buildings (shops, facilities, farms and decor), each unlocked by the RT's own stars as the player's are. It builds the kind it has least of, but first the missing partner of a combo it has half built, and puts a new piece where it completes a combo when it can. Every trait can form 3 or more combos at level 1.
-- The Neighbours screen shows each RT's yearly ranking: its score against the target it must beat at the year end (rising each year), what the score is made of (warga, working buildings, combos, Popularitas), and its wins so far.
+- The Neighbours screen shows each RT's ranking every 12 weeks: its score against the target it must beat (rising each time), what the score is made of (warga, working buildings, combos, Popularitas), and its wins so far.
 - An AI RT only builds when you have funded it. An unfunded RT visibly stalls.
 - Like the player, an AI RT lays **Jalan Setapak** from each new building to its Kantor RT or an earlier path, inside its own lot, and picks a spot a path can reach. Up to **3** of its warga walk its paths (at most **24** across the map), never onto the player's lots. When the player takes an RT over, its paths come with it.
 - Each Dana pays for one build, and an RT banks up to **12**. Dana comes **x1** or **x6** at a time. Banked Dana speeds the RT up with diminishing returns: boost = 1 − 0.8^(banked − 1), so 3 banked is **+36%**, 6 is **+67%** and 12 is **+91%**. The Neighbours screen shows it as "+N% boost".
@@ -135,7 +135,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 
 - Unlocks Lapangan, Bank Sampah, Bengkel, PAUD, Balai-balai Bambu and Kandang Ayam. Kantor RT can reach level 3.
 - The scenery edge thins, so the neighbours' roofs show.
-- **Goal for 3★:** **40** residents, **2** wins in a row, **3** combos and Sabar of at least **50**.
+- **Goal for 3★:** **55** residents, **2** wins in a row, **3** combos and Sabar of at least **65**.
 
 #### 3★ RT Teladan
 
@@ -211,12 +211,12 @@ Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 #### 1★
 
 - Unlocks Puskesmas Pembantu and the Honorer job. Kelurahan gets Pasar.
-- **Goal for 2★:** every RW at 2★ or above, **1** Piala Kelurahan win, a clean Tim Audit, and the player's own kampung at **120** residents and Popularitas **50**.
+- **Goal for 2★:** every RW at 2★ or above, **1** Piala Kelurahan win, a clean Tim Audit, and the player's own kampung at **120** residents and Popularitas **45**.
 
 #### 2★
 
 - Unlocks Terminal and Taman. Terminal is the one 3x3 building, the Kelurahan landmark: **Rp 25jt**, and shops within **3** tiles earn **20%** more. A 3x3 never fits a 2-tile seam, so it stands inside the player's RT lots.
-- **Goal for 3★:** **3** Piala wins, every RW at 3★, and the player's own kampung at **200** residents and Popularitas **45**. A bigger kampung expects more, so holding Popularitas while growing is the work of this stage.
+- **Goal for 3★:** **3** Piala wins, every RW at 3★, and the player's own kampung at **200** residents and Popularitas **35**. A bigger kampung expects more, so holding Popularitas while growing is the work of this stage.
 
 #### 3★ Lurah Teladan
 
@@ -239,7 +239,7 @@ Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 
 ## 3. Pacing targets
 
-Approved by Hari, 2026-10-27. Times are real seconds at 1x. One month is 8s (`MONTH_MS`), so 15 min is about 112 months. Decided 2026-10-31, code pending: 8s becomes one week, so a month is 32s and a year 6.4 min; month counts below re-base with it.
+Approved by Hari, 2026-10-27. Times are real seconds at 1x. One month is 8s (`MONTH_MS`), so 15 min is about 112 months. Since 2026-10-31 the 8s tick is one week, so a month is 32s and a year 6.4 min. Counts below are weeks (ticks), so wall time is unchanged; see `decisions/weekly-calendar.md`.
 Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder). A bot never hesitates, so its times are lower bounds. A bot miss is a real miss. A bot pass is unproven.
 
 ### Targets
@@ -249,7 +249,7 @@ Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder
 | 1 | First house built within 30s of New Game | Kairosoft opens on a build. Idle time here loses the player. | Estimate: about 25 to 35s (6 taps, 57 tutorial words). Close to the line. Not timed. |
 | 2 | First resident within 10s of the house | The first build must visibly pay off. | Pass: month 1 (8s) |
 | 3 | First popup between 45s and 90s | Let the player learn the map first. | Pass: 48 to 56s |
-| 4 | 1★ within 2 min, 2★ within 5 min, 3★ within 12 min (was 10; matches section 2, Hari 2026-10-31) | A goal done, a new one in view. | Pass in 10 of 10 bot seeds (1★ month 9, 2★ months 23 to 30, 3★ months 32 to 43). Enforced by `tests/balance.test.ts`. |
+| 4 | 1★ within 2 min, 2★ within 5 min, 3★ in 9 to 12 min for the builder bot (12 min is the intended pace, not a ceiling; Hari 2026-10-31) | A goal done, a new one in view. | Pass in 10 of 10 bot seeds (1★ week 2, 2★ weeks 33 to 40, 3★ weeks 77 to 90). Ceiling enforced by `tests/balance.test.ts`; the floor reads from the scorecard star table. |
 | 5 | Something new (resident, event, combo or unlock) at least every 30s | Replaces "something new every 1-2 in-game minutes". | Pass by bot, not asserted. Combos alone can go 30 months apart (seed 8), residents and events fill the gap. |
 | 6 | At most 2 popups per minute, never two within 20s | Back-to-back cards read as spam. | Pass: random popups keep 3 months clear of any other event (`EVENT_CLEAR`). Asserted in `tests/balance.test.ts`. |
 | 7 | Tutorial tips at least 60s apart | One lesson at a time. | Pass (`GAP_MS`) |
@@ -289,6 +289,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
   - Staff stats: the ketua's **Rajin** widens the grip band; **Gaul** cuts the taps and lifts the odds. Kampung meters: **Aman** lifts the odds, and below **40** the day turns ricuh (Popularitas −5). **Popularitas** sets turnout (0.5 at 0, 1.5 at 100).
   - On **17 Agustus** time stops for a full-screen day: one contest at a time, then the prizes. It cannot be closed in one tap. Prizes per win are scaled by turnout and the 17 Agustus combos (Lapangan ×2 and the rest). Any win brings a crowd: income **×1.2** for 2 months. Winning every contest (2 or more) puts a trophy on the Kantor RT for a year. No contests picked: Popularitas −8.
   - Random events keep 3 months clear of the day, as they did of the old one-tap 17 Agustus event, which this replaces.
+  - **Look and sound**, all made in code (`src/render/agustus.ts`, `src/audio.ts`): in July and August from year 2, red-and-white bunting runs from the Kantor RT to its nearest buildings, with many-coloured umbul-umbul in front. The day opens on a confetti banner and a drumband fanfare (snare roll, glockenspiel, pianika). The pole is a greased pinang trunk with the prizes on its hoop; a win slides a whistle up into a cheer, a slip slides it down into a thud. Every sack-race hop thumps, the kerupuk crunches, a lost contest gets a koplo sting, and the prizes get an angklung call (the drumband again for a clean sweep). Tunes are original; Indonesia Raya is never used, and the flag itself is never drawn (`decisions/17an-assets.md`).
 - **Inspections** (from month 15, then 10 months after each visit): a warning event 2 months ahead, then the visit scores 4 criteria of **25** points each. **70** pays 2 Orang Dalam and +5 Popularitas, **45** pays 1 Orang Dalam, less costs 4 Popularitas. Each warning offers a free choice and two shortcuts (Rupiah or 1 Orang Dalam) that add points for that visit only; a pass carried by shortcuts gets its own line. The first visit is Kampung Bersih; after that any other team, never the same twice in a row:
   - Kampung Bersih (Kecamatan): drainage, Popularitas, tertib (no mangkrak or damaged buildings), parkir liar.
   - Ketertiban (Satpol PP): parkir liar, tertib, Aman, Popularitas.
@@ -296,13 +297,18 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
   - Kampung Digital (Diskominfo): WiFi, Viral, tertib, Popularitas.
 - **Wacana or Realisasi:** each policy has a real version (Wifi Gratis di Balai, Kerja Bakti Rutin, Biopori Massal, Pelatihan UMKM, Bansos Sembako). It costs Rp 1 to 3 juta, lands after 1 to 3 months and moves a meter for a time (Biopori for good). Announcing fills the Laporan as well as doing does; only doing moves Sejahtera.
 - **Popularitas soft cap:** above **80**, gains shrink toward nothing at 100, so a full kampung settles around 90 instead of sitting at the cap. Each employed resident gives **0.04** (was 0.08), each resident expects **0.14** (was 0.1), and a Satpam gives **0.5** (was 1).
-- **Staff** (`src/data/staff.ts`): the people the player manages, as Kairosoft's staff are; warga still pick their own jobs. Inem is staff number 1 (the Asisten: permits up to 40% faster) and never leaves. Slots: 1 at the start, 3 at RT 1★, 4 at RT 3★, 6 at RW, 8 at Kelurahan, never more than **10**.
-  - **Roles:** Hansip (Aman +2 per level, finds a preman work), Tukang Tagih Iuran (up to +50% iuran; a low Jujur keeps 10%), Petugas PU (repairs), Admin Grup WA (Viral), Supir (crews arrive sooner), Bendahara (upkeep down, halved if Jujur is low), Sekretaris (Orang Inside).
-  - **Stats:** Rajin, Lobi, Jujur, Gaul (1 to 99). Output = level x the role's stat / 50 x trait.
+- **Staff** (`src/data/staff.ts`): the people the player manages, as Kairosoft's staff are; warga still pick their own jobs. Inem is staff number 1 (the first Asisten at the Kantor desk, see the desk queue below) and never leaves. Slots: 1 at the start, 3 at RT 1★, 4 at RT 3★, 6 at RW, 8 at Kelurahan, never more than **10**.
+  - **Desk queue** (prototype, 2026-10-31, `decisions/desk-queue.md`): every permit is a pile of folders (berkas), one per permit month, and the Kantor clears them in the order buildings were placed. Each Asisten clears **0.85** folders a month per point of output, so Inem at level 1 clears about **1**; the Kantor never clears fewer than **0.5**. Each building still costs **1** Popularitas for every month it waits. More Asisten clear the queue sooner, and the Asisten role can be posted from RT 1★. The map badge shows the months to go, the Kantor carries a pile of folders while the queue has work, and once the queue is **3** months deep with a free slot, the goal strip says to post a lowongan for an Asisten. Rumah need no permit, so the first house is still instant.
+  - **Stats** (`decisions/staff-stats.md`): Rajin, Lobi, Jujur, Gaul (1 to 99), each with its own icon and one meaning everywhere: Rajin is how much gets done, Lobi how smoothly things go through the people above, Jujur how much leaks, Gaul how liked. Output = level x the role's work stat / 50 x trait.
+  - **Roles**, each with a work stat and a risk stat: Asisten (Lobi: the desk queue; Jujur: a titipan folder jumps the queue, −2 Popularitas), Hansip (Rajin: Aman +2 per level, finds a preman work; Gaul: a scuffle, −2), Tukang Tagih Iuran (Rajin: up to +50% iuran; Jujur: skims Rp 150rb), Petugas PU (Rajin: repairs; Jujur: pads the bill, Rp 250rb), Admin Grup WA (Gaul: Viral; Jujur: a hoax, −3), Supir (Rajin: crews arrive sooner; Gaul: clips a gerobak, −1), Bendahara (Jujur: upkeep down; Rajin: the receipts go missing, Rp 300rb), Sekretaris (Lobi: Orang Inside; Jujur: a small scandal, −3).
+  - **Mishaps:** below **60** in the risk stat, a mishap can strike any week, at 8% x (60 − stat) / 60: Jujur 30 is about one every half year. The notice names the person, the stat and its value ("Bu Sri (Jujur 25): menyunat iuran").
+  - **Shown in numbers:** every staff card says what its work stat buys ("Lobi 60 → 1 berkas per minggu"); the detail view labels the two stats a job uses (work and risk, each with its effect) and greys the other two; an applicant shows what they would do in the posted role and their risk; trait chips name the stats a trait bends.
+  - **Who do you send?** Some events ask you to send one of your staff. The card lists the best three for the stat with their odds (base + (stat − 50) x 1.2%, from 5% to 95%), and a success teaches them a point of it: a call from the Kecamatan (Lobi: stamps 4 folders), warga at the gate (Gaul), a hibah in cash (Jujur), leaking roofs (Rajin), and the Tim Audit (Lobi: a clean audit, or receipts cost double).
+  - **Lowongan:** a Grup WA posting goes out through your Admin Grup WA, whose Gaul moves up to 20 points of the odds from 2★ to 3★ applicants (or 10 the other way).
   - **Rarity:** stars set only the stat total and salary: 2★ 120, 3★ 160, 4★ 210 (Act 1 tops out here), 5★ 270 (Act 2), 6★ 340 (Act 3). No paid pulls.
   - **Lowongan:** one posting at a time. Grup WA RT is free, takes 2 months, and brings your own longest-idle warga (60/35/5% for 2/3/4★, 15% chance of a Titipan); Online costs Rp 500k, takes 1 month and brings outsiders at 30/50/20%. 3 to 5 applicants arrive as a card with a button to Staff, and wait there until you hire one or cancel; the Menu shows how many wait. The requirement lines are flavour; every applicant is an adult.
-  - **Traits:** Titipan, Jam Karet, Rajin Lembur, Healing Mulu, Si Paling Grup WA, Mantan Preman, Fresh Graduate, Pensiunan PNS, Multitalenta, Baperan. **Specials** (4★, one each, 30% of 4★ Online applicants for their role) are types, never one real person: Pak Breaking, Mbak Gosip, Om Motivasi, Bro Kripto, Bu Sinetron, Mas Konten, Pak Purna.
-  - **Managing:** levels at 6, 18, 36 and 60 months; each asks for a 15% raise (refused: 10% a month to be poached, a Baperan leaves at once). Bimtek: Rp 2jt, +5 to the role stat, a month away. Pesangon: 2 months' salary. **Mutasi:** a 3★ at level 3 becomes Ketua RT of a neighbour, which takes their habit (Rajin, Hobi Wacana or Jarang Muncul), and the slot frees.
+  - **Traits:** Titipan, Jam Karet, Rajin Lembur, Healing Mulu, Si Paling Grup WA, Mantan Preman, Fresh Graduate, Pensiunan PNS, Multitalenta, Baperan. **Specials** (4★, one each, 30% of 4★ Online applicants for their role) are types, never one real person: Pak Breaking, Mbak Gosip, Om Motivasi, Bro Kripto, Bu Sinetron, Mas Konten, Pak Purna, and six 90s TV and radio types: Bang Lawak (a campus-radio comic), Om Lalu Lintas (a radio traffic reporter), Bu Juru Ketik (a typewriter typist), Pak Kuis (a quiz-show host), Mbak Senam Pagi (a morning-aerobics instructor) and Bang Rental PS (a games-rental repairman). Every special has a portrait drawn in code (`src/render/portraits.ts`), shown on their card and as an applicant; types only, never a real person or anyone else's character.
+  - **Managing:** levels at 6, 18, 36 and 60 months; each asks for a 15% raise (refused: 10% a month to be poached, a Baperan leaves at once). Every level-up adds **2** to the work stat. Bimtek: pick a course for any stat, +5, a week away; Rp 2jt, or Rp 3jt for the anti-corruption course. Pesangon: 2 months' salary. **Mutasi:** a 3★ at level 3 becomes Ketua RT of a neighbour, which takes their habit (Rajin, Hobi Wacana or Jarang Muncul), and the slot frees.
   - **Inem's dream:** gigs as optional sub-goals that never gate stars: Panggung 17 Agustus (Lapangan, Popularitas 50 in August), Hajatan circuit (RW, Viral 30), Lomba Dangdut Kecamatan (a Piala Kelurahan win), then the city audition and the stage at Sidang Emas 2045. Each raises her level. Her wage is Rp 75k a month.
 
 - **Resources:** every resource has an icon and a colour. Names are translated, see `decisions/resource-names.md`. Orang Dalam is "Orang Inside" in EN on purpose.
@@ -313,7 +319,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - **Anggaran (Kelurahan):** a yearly budget arrives each January. Each unspent % cuts next year's budget by the same %. December brings a forced Serapan rush.
 - **Safety net:** no debt or soft-lock in year 1, and year-1 cash never below 0 for the idle and builder bots (targets 8 and 9).
 - **Tuning:** the balance autoplayer tunes star thresholds. How to read its results is in section 3.
-- **Time:** one month is 8s at 1x (`MONTH_MS`). Speeds are pause, 1x and 2x. Decided 2026-10-31, code pending: 8s becomes one week (month 32s, year 6.4 min) and 4x is removed.
+- **Time:** one tick is 8s at 1x (`MONTH_MS`) and is one week. A month is 4 weeks (32s), a year 48 weeks (6.4 min). Speeds are pause, 1x and 2x. Done 2026-10-31 (`decisions/weekly-calendar.md`).
 - **Rule:** any change to a number a target depends on gets a note in `decisions/`.
 
 ## 5. Tone and politics guardrails

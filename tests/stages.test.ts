@@ -101,7 +101,7 @@ describe('star engine', () => {
     const s = newGame(1);
     s.stage.stars.rt = 2;
     s.discovered.push('a', 'b', 'c');
-    s.residents.push(...Array.from({ length: 40 }, (_, i) => ({ ...s.residents[0], id: 100 + i })));
+    s.residents.push(...Array.from({ length: 55 }, (_, i) => ({ ...s.residents[0], id: 100 + i })));
     s.ranking = [true, true].map((won, i) => ({ year: i + 1, us: 1, them: 1, won }));
     const fx = run(s);
     expect(s.stage.stars.rt).toBe(3);

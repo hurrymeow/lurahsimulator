@@ -17,8 +17,8 @@ describe('auto-pause', () => {
     ['how to play', { howtoOpen: true }],
     ['home screen', { held: true }],
   ])('holds time for %s and resumes after', (_n, patch) => {
-    expect(simRunning({ ...idle, ...patch, speed: 4 })).toBe(false);
-    expect(simRunning({ ...idle, speed: 4 })).toBe(true);
+    expect(simRunning({ ...idle, ...patch, speed: 2 })).toBe(false);
+    expect(simRunning({ ...idle, speed: 2 })).toBe(true);
   });
 
   it('keeps a manual pause paused after the menu closes', () => {

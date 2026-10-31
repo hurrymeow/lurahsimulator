@@ -7,6 +7,7 @@ import { accessSystem, connectedRoad, hasRoadBeside } from './access';
 import { comboIncomeMult, comboSystem } from './combos';
 import { def, placeableDefs } from './content';
 import { EMAS } from '../data/ranking';
+import { GRACE_WEEKS, RANKING_WEEKS, WEEKS_PER_YEAR } from './calendar';
 import { eventSystem } from './events';
 import { first } from './firsts';
 import { camatCallSystem, lineSystem } from './lines';
@@ -28,7 +29,8 @@ import { lombaSystem } from './lomba';
 import { monthWarnings, type SabarCause } from './warnings';
 import { parkirSystem } from './parkir';
 import { needsSystem, premanTake } from './needs';
-import { buildBoost, permitCut, staffSystem, upkeepCut } from './staff';
+import { buildBoost, clearPermits, permitQueue, queueMonths, staffSystem, upkeepCut } from './staff';
+import { ROLE_FX } from '../data/staff';
 import { realisasiSystem, realisasiWarungMult } from './realisasi';
 import { addBuilding, addResident, attractTarget, decorMult, emptyTiles, housing, isWorking, levelMult, neighbours, pathMult, population } from './state';
 import { gain, type Fx } from './gain';
@@ -70,25 +72,30 @@ function novelty(s: GameState): void {
 export function advanceConstruction(s: GameState, fx: Fx): void {
   // Each tukang on the crew gives every site an extra month of progress one month in four.
   const crew = Math.min(TUKANG_MAX, used(s, 'tukang'));
+  // The permit queue costs Popularitas as a whole, not per building, so a long line does not snowball:
+  // 1 a week while anything waits, twice that once the queue is deep enough that the goal strip says to hire.
+  const queue = permitQueue(s);
+  if (queue.length) gain(s, fx, 'sabar', -QUEUE_SABAR_DRAIN * (queueMonths(s) >= ROLE_FX.asisten.hireAfter ? 2 : 1), queue[0]);
   for (const b of s.buildings) {
     if (b.status !== 'permit' && b.status !== 'building') continue;
-    b.timer -= b.status === 'building' && (s.month + b.uid) % 4 < crew ? 2 : 1;
-    // Inem's paperwork speeds permits; a Supir gets crews to site sooner. A share of months count twice.
-    const extra = b.status === 'permit' ? permitCut(s) : buildBoost(s);
+    // A permit waits for the desks (clearPermits, below).
+    if (b.status === 'permit') continue;
+    b.timer -= (s.month + b.uid) % 4 < crew ? 2 : 1;
+    // A Supir gets crews to site sooner: a share of months count twice.
+    const extra = buildBoost(s);
     if (extra && ((s.month * 7 + b.uid * 3) % 10) / 10 < extra) b.timer--;
-    if (b.status === 'permit') {
-      gain(s, fx, 'sabar', -QUEUE_SABAR_DRAIN, b);
-      if (b.timer <= 0) {
-        b.status = 'building';
-        b.timer = Math.max(1, def(b.def).buildMonths);
-      }
-    } else if (b.timer <= 0) {
+    if (b.timer <= 0) {
       b.status = 'active';
       fx.push({ kind: 'built', uid: b.uid });
       if (onBuildingFinished(s, fx, b) === 'ok') fx.push({ kind: 'notice', title: t('sim.openTitle', { name: bName(def(b.def)) }), body: bBlurb(def(b.def)), tone: 'good', x: b.x, y: b.y });
       if (b.def === 'rumah') first(s, fx, 'house', b);
       novelty(s);
     }
+  }
+  // The Kantor's desks stamp the permit queue in order. A stamped building starts on site next month.
+  for (const b of clearPermits(s)) {
+    b.status = 'building';
+    b.timer = Math.max(1, def(b.def).buildMonths);
   }
 }
 
@@ -125,7 +132,7 @@ export function expectations(s: GameState, fx: Fx): void {
 /** Year 1 safety net: upkeep can never push the kas below zero. */
 export function safetyNet(s: GameState, fx: Fx): void {
   if (s.res.rupiah >= 0) return;
-  if (s.month < 12) {
+  if (s.month < GRACE_WEEKS) {
     fx.push({ kind: 'notice', title: t('sim.danaTitle'), body: t('sim.danaBody', { amt: -Math.round(s.res.rupiah) }), tone: 'info' });
     s.res.rupiah = 0;
   } else {
@@ -216,13 +223,17 @@ export function decay(s: GameState): void {
   s.modifiers = s.modifiers.filter((m) => m.monthsLeft > 0);
 }
 
+/** Every 12 weeks: the AI RTs and the player are ranked. */
+export function rankingEnd(s: GameState, fx: Fx): void {
+  neighboursYearEnd(s, s.month / RANKING_WEEKS);
+  yearlyRanking(s, fx, s.month / RANKING_WEEKS);
+}
+
 export function yearEnd(s: GameState, fx: Fx): void {
   s.inflation *= 1 + INFLATION_PER_YEAR;
   addEmas(s, EMAS.perYear);
-  neighboursYearEnd(s, s.month / 12);
   rwYearEnd(s, fx);
-  yearlyRanking(s, fx, s.month / 12);
-  fx.push({ kind: 'notice', title: t('sim.yearTitle', { n: s.month / 12 + 1 }), body: t('sim.yearBody', { pct: Math.round(INFLATION_PER_YEAR * 100) }), tone: 'info' });
+  fx.push({ kind: 'notice', title: t('sim.yearTitle', { n: s.month / WEEKS_PER_YEAR + 1 }), body: t('sim.yearBody', { pct: Math.round(INFLATION_PER_YEAR * 100) }), tone: 'info' });
 }
 
 /** Ordered list of monthly systems. Later milestones insert their systems here. */
@@ -287,7 +298,8 @@ export function tick(s: GameState): Fx {
   }
   monthWarnings(s, fx, before, losses);
   decay(s);
-  if (s.month % 12 === 0) yearEnd(s, fx);
+  if (s.month % RANKING_WEEKS === 0) rankingEnd(s, fx);
+  if (s.month % WEEKS_PER_YEAR === 0) yearEnd(s, fx);
   clampResources(s);
   return fx;
 }

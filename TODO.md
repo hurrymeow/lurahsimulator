@@ -16,13 +16,19 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: add a `json` reporter, always upload it, and list flaky tests in the run summary. When `src/i18n/` changes, add an English project at 412px. Add a WebKit project at 412px with 5 smoke specs on PRs and the full suite nightly. Add `nightly.yml`. Add a shared Playwright fixture that fails on `pageerror` and `console.error`, with a reasoned allowlist, and canary tests that inject a clipped label, small text, a small button and a layout shift. Update AGENTS.md's CI lines in the same PR. Land the fixture before the gesture task adds specs, or expect a rebase.
   - Source: TESTING.md items 2, 5, 9, 13, 15; `decisions/testing-checklist.md`
   - `open · — · — · done when:` all of it runs, the fixture covers all specs, every canary fails as expected, and AGENTS.md matches CI.
-- [ ] **Build the scorecard harness: timeline log and the 9 bots.**
-  - Problem: GAME-DESIGN.md section 8 needs a timeline log and 9 bot strategies; only idle and builder exist.
-  - Why: without them most design checklist items stay Unknown, so agents cannot review mechanics.
-  - Suggested solution: log every event in the sim to a timeline; add the 7 missing bots; `npm run scorecard` writes the section 8 scorecard and a golden-trend file.
-  - Source: TESTING.md item 7; GAME-DESIGN.md section 8
-  - `open · — · — · done when:` the scorecard has no blank rows and runs nightly in under 20 minutes.
-  - Order: build after the weekly calendar and the determinism task. Bots play 1x and 2x only (no 4x). Minutes follow 8s a week, 4 weeks a month, 48 a year; pass targets include RT 3★ in about 12 min. Needs `nightly.yml` from the CI task: add a stub if that has not landed.
+- [ ] **Fix the balance failures on the scorecard.**
+  - Problem: the first scorecard has 13 Fail rows. Balance ones: Act 1 too fast (RT 3★ at 6.7 min vs 12), cheapskate never reaches RT 3★ (item 17), hint-only bot stalls at 1★ because the combo pointer fires late (21), RT 1★ gap 15x (17), events with strictly dominated options (18), soft-lock takeovers fail (23).
+  - Why: the scorecard is the baseline for game quality. Each Fail is a place the game is too easy, too flat or can strand a player.
+  - Suggested solution: small batched PRs, each proving its fix by rerunning `npm run scorecard`. Do not stretch numbers to fill the 34 min vs 8h content gap; that needs Act 2/3 content, a design call for Hari.
+  - Source: `scorecard/scorecard.md`
+  - `claimed · claude-scorecard-fix · 2026-10-31 · done when:` the balance-tuning rows pass or have a stated reason in decisions/.
+
+- [ ] **Finish the scorecard: the 10 Unknown rows and the bot gaps.**
+  - Problem: the first scorecard (`scorecard/scorecard.md`) has 10 Unknown rows. Missing: goal ETAs (item 8), the screen checks (3, 27, T2), ablation runs (16), warning lead of fixed beats (22), a worst-event chain (23), Dana, Stempel and Anggaran in the timeline (13), the cause shown on screen (6), plus traits and combos in the data lint (2). The hint bot stalls at 1★ because the combo pointer fires late.
+  - Why: section 8 stays partly blind until each row can be judged. The nightly run is also untested on GitHub.
+  - Suggested solution: add goal ETAs to the recorder, a forced event chain, per-action ablation runs and the extra resources to the timeline. Add T2 specs for items 3, 6 and 27. Check the first nightly run time (bar 20 min) and trim seeds if needed.
+  - Source: `scorecard/scorecard.md`; `decisions/scorecard-harness.md`
+  - `open · — · — · done when:` no row reads Unknown for a reason the harness could fix, and a nightly run finishes under 20 minutes.
 - [ ] **Cap Pos Ronda so players use the other Popularitas buildings.**
   - Problem: Pos Ronda has no `maxCount`. The Kelurahan bot built 20 to 90 of them to hold Popularitas in a big kampung.
   - Why: A wall of Pos Ronda is the cheapest Popularitas, so Praktik Bidan, Panggung Senam and Kolam Pancing (#180) are skipped and the map looks the same.
@@ -55,15 +61,27 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: rewrite those blurbs in en and id without numbers, and let the panel's income and per-month lines carry them. Keep each under 25 words.
   - Source: `decisions/building-panel.md`, "Effect line scope"
   - `open · — · — · done when:` no blurb states a number that changes with level, in en and id.
-- [ ] **17an (Agustusan) fanfares, SFX and key art.**
-  - Problem: the Lomba Agustusan event (#152) uses the generic synthesised fanfare and has no event art. A team chat planned original 17an fanfares, lomba sound effects and pixel key art made with Scenario (ElevenLabs SFX, a music model, image models and a style model), plus a recorded "MERDEKA!" shout.
-  - Why: the biggest yearly event should sound and look like 17an. But `src/audio.ts` says all sound is synthesised with nothing to download or license, and the art is painted in code (ART.md), so recorded audio and AI-made art are a policy change.
-  - Suggested solution: Hari and Koko decide whether recorded audio and AI-assisted art may ship, and under what licence. If yes, follow `decisions/17an-assets.md` (prompts, the anthem and copyright limits, the flag rule). If no, write original 17an fanfares in `src/audio.ts` with the same instrument and rhythm cues.
-  - Source: WNI Sim handoff from chat, 2026-10-31
-  - `open · — · — · done when:` the asset policy is decided, and the 17an event has its own fanfare and art that follow `decisions/17an-assets.md`.
+
+- [ ] **Make staffing integral: the permit desk queue (prototype).**
+  - Problem: staff are optional bonuses. Inem made permits up to 40% faster, a Hansip adds a little Aman, and nothing breaks or asks for a hire when the player has nobody.
+  - Why: in Kairosoft's games staff are the hands that turn money into output, and running short of people is the pressure the player feels. Staffing should tighten the core loop: build, queue, hire or train, build faster.
+  - Suggested solution: permits become folders the Kantor clears in order; each Asisten clears some a month; the Asisten role can be posted from RT 1★; the map, panel and goal strip show the queue and say when to hire. Prototype in a draft PR for Hari to play. Later steps: petugas on big public buildings, output numbers on staff cards, the same queue for Stempel and Serapan.
+  - Source: voidinside99, 2026-10-31
+  - `claimed · voidinside99 · 2026-10-31 · done when:` Hari has played the prototype and it merges (or is dropped), with the bite tuned in `decisions/desk-queue.md`.
+
+- [ ] **Stop a big kampung getting stuck under the Kelurahan 3★ Popularitas bar.**
+  - Problem: residents never leave while Popularitas is above 15, and each resident lowers it. A kampung that grows well past 200 settles in the low 30s and cannot get back over the 3★ bar (35). One Kelurahan bot seed of three stays at 2★ for good (#204).
+  - Why: a player who grew too fast is soft-locked out of 3★, with no way to see why or fix it.
+  - Suggested solution: let the bar scale down with residents over 200, or give the player a way out (a Popularitas building that ignores the roadside limit, or warga who move to the neighbours when the kampung is crowded). Check with `tests/kel-bot.test.ts` that all three seeds reach 3★.
+  - Source: `decisions/kelurahan-own-kampung.md`, `decisions/desk-queue-weeks.md`
+  - `open · — · — · done when:` a kampung of any size can reach Kelurahan 3★, and the bot test asks for all three seeds.
 
 ## Done
 
+- [x] **Make the four staff stats obvious and decisive.** One meaning and icon per stat; a work and a risk stat per role, with named weekly mishaps; cards and applicants say what each stat buys; "who do you send?" events with odds by stat; Bimtek picks the stat; trait chips. #206, `decisions/staff-stats.md`.
+- [x] **90s special hires and a portrait for every special.** Six 90s TV and radio types (types, never real people or others' characters) and a 44x60 portrait for all 13 specials. #207, `decisions/staff-portraits.md`.
+- [x] **Build the scorecard harness: timeline log and the 9 bots.** `npm run scorecard` plays 9 bots on 10 seeds and writes the section 8 scorecard and a golden-trend file; `nightly.yml` runs it. Soft-lock takeover check included. First result: 4 Pass, 13 Fail, 10 Unknown. See `progress/scorecard-harness.md` (#201).
+- [x] **17an (Agustusan) fanfares, SFX and key art.** Made in the engine: drumband fanfare, koplo sting, angklung call, slide whistles, sack hops, kerupuk crunch and a crowd cheer in `src/audio.ts`; a drawn panjat pinang pole, a confetti banner, and bunting and umbul-umbul in July and August. No recorded audio or AI art. #197, `decisions/17an-in-engine.md`.
 - [x] **Redo the building panel.** The description is built from the current level; a pixel roof badge (gold with MAKS at the top) replaces the level strip and the max-level messages; the upgrade button reads "Naikkan ke Lv n" with the gain under it and is hidden at the top; disabled reasons are one grey line; Bongkar names the warga still there; "Warga 4/5"; status only when not working. #194, `decisions/building-panel.md`.
 - [x] **Make the sim deterministic and property-tested.** `newGame` needs a seed from the caller; a test fails on clock or `Math.random` use in `src/sim/`; fast-check tests hold five rules at 200 games (`PROP_RUNS=1000` for nightly). Left for other tasks: start-new prompt (calendar), builder-bot soft-lock check (scorecard). #191, `progress/determinism-property-tests.md`.
 - [x] **Make the phone's back gesture and map gestures safe.** Back closes the top layer (how-to, panel, card, placing); event cards are never skipped; on the bare map the first back shows a 2s hint and a second leaves. Sheets contain overscroll. #190, `decisions/back-gesture.md`.

@@ -6,15 +6,18 @@ import { requirementGaps } from './rules';
 import { attractTarget, buildCost, count, housing, population } from './state';
 import { placeableDefs } from './content';
 import { nextStarChecklist } from './stages';
+import { openRoles, queueMonths, staffSlots } from './staff';
+import { ROLE_FX } from '../data/staff';
 import type { GameState } from './types';
 
-/** Game month when the first combo is pointed out by name: about 4 minutes at 1x (8s a month). */
-export const COMBO_HINT_MONTH = 30;
+/** Game month when the first combo is pointed out by name: about 1.6 minutes at 1x (8s a week), so a player who has not found one still earns 1★ within 2 minutes. */
+export const COMBO_HINT_MONTH = 12;
 
 /** The cheapest combo the player could set up now, by the money still to spend on pieces they lack. */
 export function easiestCombo(s: GameState) {
   let best: { name: string; pieces: string; ids: string[]; cost: number } | null = null;
   for (const c of COMBOS) {
+    if (c.retired || s.discovered.includes(c.id)) continue;
     const defs = c.needs.map((n) => def(parseNeed(n).id));
     if (defs.some((d) => !d.placeable || requirementGaps(s, d, { ignoreLimit: true }).length)) continue;
     const cost = defs.reduce((sum, d) => sum + (count(s, d.id) ? 0 : d.cost), 0);
@@ -36,7 +39,16 @@ function starWaitsOnCombo(s: GameState): boolean {
   return open.length > 0 && open.every((l) => l.goal.kind === 'combos');
 }
 
-export type StepKind = 'house' | 'combo' | 'wait' | 'beds' | 'draw';
+/** True when the next star still lists a combos goal that is not met. */
+function comboGoalOpen(s: GameState): boolean {
+  return (nextStarChecklist(s) ?? []).some((l) => !l.done && l.goal.kind === 'combos');
+}
+
+export type StepKind = 'house' | 'combo' | 'desk' | 'wait' | 'beds' | 'draw';
+
+/** True when the player can post a lowongan for an Asisten right now: the role is open, a slot is free, none is posted. */
+const canPostDesk = (s: GameState): boolean =>
+  openRoles(s).some((r) => r.id === 'asisten') && (s.staff?.length ?? 1) < staffSlots(s) && !s.lowongan;
 
 /**
  * One next action, only when it helps beyond the star list: the first house, the first combo once it is time
@@ -45,10 +57,13 @@ export type StepKind = 'house' | 'combo' | 'wait' | 'beds' | 'draw';
  */
 export function nextStep(s: GameState): { kind: StepKind; text: string } | null {
   if (!s.buildings.some((b) => b.def === 'rumah')) return { kind: 'house', text: t('goal.short.house') };
-  if ((s.month >= COMBO_HINT_MONTH && s.discovered.length === 0) || starWaitsOnCombo(s)) {
+  if ((s.month >= COMBO_HINT_MONTH && (s.discovered.length === 0 || comboGoalOpen(s))) || starWaitsOnCombo(s)) {
     const c = easiestCombo(s);
     if (c) return { kind: 'combo', text: t('goal.short.combo', { name: c.name, pieces: c.pieces }) };
   }
+  // The permit queue is a staffing problem: say so once it is deep, while there is room to hire.
+  const months = queueMonths(s);
+  if (months >= ROLE_FX.asisten.hireAfter && canPostDesk(s)) return { kind: 'desk', text: t('goal.short.desk', { n: months }) };
   const pending = s.buildings.filter((b) => b.status === 'permit' || b.status === 'building').sort((a, b) => a.timer - b.timer)[0];
   if (pending) return { kind: 'wait', text: t('goal.short.wait', { name: bName(def(pending.def)) }) };
   const pop = population(s);

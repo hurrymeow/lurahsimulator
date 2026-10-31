@@ -8,7 +8,7 @@ export const RW_METERS: MeterDef[] = [
   {
     id: 'stempel',
     name: 'Stempel',
-    blurb: 'Refills 3 a month. Every Surat Pengantar from an RT needs one. Each unstamped letter drains 0.5 Popularitas a month.',
+    blurb: 'Refills 3 a week. Every Surat Pengantar from an RT needs one. Each unstamped letter drains 0.5 Popularitas a week.',
     gate: RW0,
   },
   {
@@ -23,7 +23,7 @@ export const RW_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'balaiRW',
     name: 'Balai RW',
-    blurb: '+1 Stempel a month and 2 PNS desks. The queue starts here.',
+    blurb: '+1 Stempel a week and 2 PNS desks. The queue starts here.',
     cost: 6_000_000,
     upkeep: 150_000,
     income: 0,
@@ -44,7 +44,7 @@ export const RW_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'posyandu',
     name: 'Posyandu',
-    blurb: '+1 Popularitas a month to every neighbouring RT. Kader work for free.',
+    blurb: '+1 Popularitas a week to every neighbouring RT. Kader work for free.',
     cost: 5_000_000,
     upkeep: 120_000,
     income: 0,
@@ -65,7 +65,7 @@ export const RW_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'portal',
     name: 'Portal',
-    blurb: '+1 Popularitas a month. Ojol income -30%, because riders stop at the barrier.',
+    blurb: '+1 Popularitas a week. Ojol income -30%, because riders stop at the barrier.',
     cost: 3_500_000,
     upkeep: 40_000,
     income: 0,
@@ -84,7 +84,7 @@ export const RW_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'pasarKaget',
     name: 'Pasar Kaget',
-    blurb: 'Income x3 one month in four. Spawns 2 tukang parkir.',
+    blurb: 'Income x3 one week in four. Spawns 2 tukang parkir.',
     cost: 4_500_000,
     upkeep: 80_000,
     income: 450_000,
@@ -133,7 +133,7 @@ export const RW_COMBOS: StageComboDef[] = [
     story: 'The portal closes for the pasar. Ojol riders circle the block twice and give up.',
     incomeMult: { pasarKaget: 1.5 },
     perMonth: { sabar: -1 },
-    effect: 'Pasar Kaget income x1.5. Ojol income is 0 that month. -1 Popularitas a month.',
+    effect: 'Pasar Kaget income x1.5. Ojol income is 0 that month. -1 Popularitas a week.',
     gate: RW2,
   },
   {
@@ -145,7 +145,7 @@ export const RW_COMBOS: StageComboDef[] = [
     hint: 'Two Ketua RT who think alike. One group chat.',
     story: 'Two RTs, one trait, one group chat. Every rumour is now faster than the SK.',
     perMonth: { viral: 2, sabar: -1 },
-    effect: 'Two neighbouring RTs with the same trait: +2 Virality and -1 Popularitas a month.',
+    effect: 'Two neighbouring RTs with the same trait: +2 Virality and -1 Popularitas a week.',
     gate: RW1,
   },
   {
@@ -156,7 +156,7 @@ export const RW_COMBOS: StageComboDef[] = [
     hint: 'A health post and a barrier. The kader check who comes in.',
     story: 'The portal now opens only after the posyandu has weighed everyone. Nobody has complained yet, because nobody can get out to.',
     perMonth: { sabar: 1, viral: 1 },
-    effect: '+1 Popularitas and +1 Virality a month.',
+    effect: '+1 Popularitas and +1 Virality a week.',
     gate: RW1,
   },
   {
@@ -176,15 +176,15 @@ export const RW_JOBS: StageJobDef[] = [
   {
     id: 'kaderPosyandu',
     name: 'Kader Posyandu',
-    blurb: '+0.5 Popularitas a month, unpaid. Output falls 20% a year unless you pay an Apresiasi of Rp 300.000.',
+    blurb: '+0.5 Popularitas a week, unpaid. Output falls 40% a year unless you pay an Apresiasi of Rp 1.200.000.',
     gate: RW1,
     perMonth: { sabar: 0.5 },
-    decay: { perYear: 0.2, apresiasi: 300_000 },
+    decay: { perYear: 0.4, apresiasi: 1_200_000 },
   },
   {
     id: 'calo',
     name: 'Calo',
-    blurb: 'Turns Rp 200.000 into 1 Stempel and +0.1 Orang Inside. 5% a month chance of a scandal: -6 Popularitas.',
+    blurb: 'Turns Rp 200.000 into 1 Stempel and +0.1 Orang Inside. 5% a week chance of a scandal: -6 Popularitas.',
     gate: RW2,
     perMonth: { orangDalam: 0.1 },
     converts: { rupiah: -200_000, stempel: 1, orangDalam: 0.1 },
@@ -206,7 +206,7 @@ export const RW_EVENTS: StageEventDef[] = [
         cost: { rupiah: 300_000 },
         res: { sabar: 6 },
         modifier: { label: 'Kerja bakti', target: 'biopori', incomeMult: 1.2, months: 6 },
-        result: 'Everyone came for the gorengan. The selokan flow 20% better for 6 months.',
+        result: 'Everyone came for the gorengan. The selokan flow 20% better for 6 weeks.',
       },
     ],
   },
@@ -221,13 +221,13 @@ export const RW_EVENTS: StageEventDef[] = [
         label: 'Process them in order',
         res: { sabar: -3 },
         fx: { letterMult: 3, months: 2 },
-        result: 'Surat Pengantar triple for 2 months. The queue wraps round the balai.',
+        result: 'Surat Pengantar triple for 2 weeks. The queue wraps round the balai.',
       },
       {
         label: 'Extra stempel hours · Rp 600.000',
         cost: { rupiah: 600_000 },
         fx: { letterMult: 2, months: 2 },
-        result: 'Letters only double for 2 months. The ink pad never cooled.',
+        result: 'Letters only double for 2 weeks. The ink pad never cooled.',
       },
     ],
   },
@@ -242,7 +242,7 @@ export const RW_EVENTS: StageEventDef[] = [
         label: 'Report what the spreadsheet says',
         res: { sabar: -1 },
         fx: { popReportPct: 10, months: 12 },
-        result: 'Reported population is off by 10% for a year. The gap moves the ranking.',
+        result: 'Reported population is off by 10% for 12 weeks. The gap moves the ranking.',
       },
       {
         label: 'Go door to door · Rp 800.000',

@@ -1,4 +1,5 @@
 // The growing map: promotion, and the AI-run RTs that fill the new space.
+import { RANKING_WEEKS } from './calendar';
 import { t } from '../i18n';
 import { RIVAL_BASE, RIVAL_PER_YEAR } from '../data/ranking';
 import { IURAN, NEIGHBOUR, STEMPEL } from './balance';
@@ -374,7 +375,8 @@ export function neighboursSystem(s: GameState, fx: Fx): void {
     n.discovered = [...new Set([...n.discovered, ...activeCombos(v).map((a) => a.combo.id)])];
     while (n.stars < 3) {
       const goals = stageDef('rt').stars[n.stars as 0 | 1 | 2].goals;
-      if (!goals.every((g) => goalProgress(viewOf(s, n), g).have >= g.n)) break;
+      // The player's RT 3★ asks for more residents (pace, decisions/rt-3star-pace.md); the AI RTs keep the old bar.
+      if (!goals.every((g) => goalProgress(viewOf(s, n), g).have >= (g.kind === 'residents' ? Math.min(g.n, NEIGHBOUR_RESIDENTS_BAR) : g.n))) break;
       n.stars++;
       fx.push({ kind: 'notice', title: t('grow.rtStar', { cell: cellName(n), n: n.stars }), body: t('grow.rtStarBody'), tone: 'info', x: cellOrigin(n.cx, n.cy).x + 4, y: cellOrigin(n.cx, n.cy).y + 6 });
     }
@@ -412,7 +414,10 @@ export function iuranFromNeighbours(s: GameState, fx: Fx): void {
 export const rivalTarget = (year: number): number => RIVAL_BASE + RIVAL_PER_YEAR * year;
 
 /** The next year-end ranking: which year it closes, and how many months away. */
-export const nextRanking = (s: GameState) => ({ year: Math.floor(s.month / 12) + 1, months: 12 - (s.month % 12) });
+/** Residents an AI RT needs for a star, whatever the player's own bar is. */
+const NEIGHBOUR_RESIDENTS_BAR = 40;
+
+export const nextRanking = (s: GameState) => ({ year: Math.floor(s.month / RANKING_WEEKS) + 1, weeks: RANKING_WEEKS - (s.month % RANKING_WEEKS) });
 
 export function neighboursYearEnd(s: GameState, year: number): void {
   for (const n of s.neighbours) {

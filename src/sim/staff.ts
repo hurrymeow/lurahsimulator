@@ -1,10 +1,11 @@
 // The staff: hiring through a Lowongan, levels, raises, Bimtek, firing, mutasi to a neighbouring RT, what
 // each role does, and Inem's gigs. Rolls hash the seed, month and ids, so staff never shift the shared random
 // stream that events and arrivals draw from.
-import { gName, gReward, t } from '../i18n';
+import { atMonth } from './calendar';
+import { gName, gReward, t, type Key } from '../i18n';
 import { rupiah } from '../format';
 import {
-  APPLICANTS, BIMTEK, CHANNELS, GIGS, INEM, MUTASI, PESANGON_MONTHS, POACH_CHANCE, RAISE, REQUIREMENTS, ROLE_FX, ROLES, SLOTS,
+  APPLICANTS, BIMTEK, CHANNELS, COURSE_COST, LEVEL_STAT_GAIN, RISK, GIGS, INEM, MUTASI, PESANGON_MONTHS, POACH_CHANCE, RAISE, REQUIREMENTS, ROLE_FX, ROLES, SLOTS,
   SPECIAL_CHANCE, SPECIALS, STAFF_CAP, STAFF_LEVEL_MONTHS, STAR_SALARY, STAR_TOTAL, STAT_MAX, STATS, TRAITS, roleDef, traitDef,
   type ChannelId, type RoleDef, type RoleId, type StatId, type TraitId,
 } from '../data/staff';
@@ -12,7 +13,7 @@ import { NAMES, TITLES } from '../data/names';
 import { IURAN } from './balance';
 import { gain, type Fx } from './gain';
 import { isWorking, population, price } from './state';
-import type { Applicant, CheckResult, GameState, Resident, RtTrait, Staff, StaffStats } from './types';
+import type { Applicant, Building, CheckResult, GameState, Resident, RtTrait, Staff, StaffStats } from './types';
 
 const ORDER = ['rt', 'rw', 'kelurahan'];
 
@@ -74,23 +75,102 @@ export function output(x: Staff): number {
 export const roleOutput = (s: GameState, role: RoleId): number => (s.staff ?? []).filter((x) => x.role === role).reduce((n, x) => n + output(x), 0);
 
 /** Share of a permit Inem's paperwork saves. */
-export const permitCut = (s: GameState): number => Math.min(ROLE_FX.asisten.permitCutMax, roleOutput(s, 'asisten') * ROLE_FX.asisten.permitCutPerLevel);
-export const hansipAman = (s: GameState): number => roleOutput(s, 'hansip') * ROLE_FX.hansip.amanPerLevel;
-export const buildBoost = (s: GameState): number => roleOutput(s, 'supir') * ROLE_FX.supir.buildBoostPerLevel;
-export const upkeepCut = (s: GameState): number => {
-  const raw = Math.min(ROLE_FX.bendahara.upkeepCutMax, roleOutput(s, 'bendahara') * ROLE_FX.bendahara.upkeepCutPerLevel);
-  // A Bendahara with low Jujur keeps half of what he saves.
-  const crooked = (s.staff ?? []).some((x) => x.role === 'bendahara' && x.stats.jujur < 40);
-  return crooked ? raw / 2 : raw;
+/** Folders the Kantor's desks clear in a month: every Asisten's output, never less than the floor. */
+export const deskCapacity = (s: GameState): number => {
+  // A new game has Inem before the staff system first runs.
+  const desk = (s.staff ?? [newInem()]).filter((x) => x.role === 'asisten').reduce((n, x) => n + output(x), 0);
+  return Math.max(ROLE_FX.asisten.floor, desk * ROLE_FX.asisten.berkasPerOutput);
 };
 
-/** Extra iuran a month from the Tukang Tagih, after what a low-Jujur one keeps. */
+/** Buildings waiting for a permit, in the order the desks take them: first placed, first stamped. */
+export const permitQueue = (s: GameState): Building[] =>
+  s.buildings.filter((b) => b.status === 'permit').sort((a, b) => a.placedAt - b.placedAt || a.uid - b.uid);
+
+/** Folders still in the queue. */
+export const queueBerkas = (s: GameState): number => permitQueue(s).reduce((n, b) => n + Math.max(0, b.timer), 0);
+
+/** Months until this building's permit is through, at today's desk speed. Counts the folders ahead of it too. */
+export function permitEta(s: GameState, b: Building): number {
+  let ahead = 0;
+  for (const o of permitQueue(s)) {
+    ahead += Math.max(0, o.timer);
+    if (o.uid === b.uid) break;
+  }
+  return Math.max(1, Math.ceil((ahead - (s.deskCarry ?? 0)) / deskCapacity(s)));
+}
+
+/** Months until the whole queue is through. */
+export const queueMonths = (s: GameState): number => {
+  const q = permitQueue(s);
+  return q.length ? permitEta(s, q[q.length - 1]) : 0;
+};
+
+/** The desks clear the queue in order, whole folders only; what is left of a folder carries to next month. Returns the buildings whose permit came through. */
+export function clearPermits(s: GameState): Building[] {
+  const queue = permitQueue(s);
+  if (!queue.length) {
+    s.deskCarry = 0;
+    return [];
+  }
+  let cap = deskCapacity(s) + (s.deskCarry ?? 0);
+  const done: Building[] = [];
+  for (const b of queue) {
+    while (cap >= 1 && b.timer > 0) {
+      b.timer--;
+      cap--;
+    }
+    if (b.timer <= 0) done.push(b);
+    if (cap < 1) break;
+  }
+  s.deskCarry = done.length === queue.length ? 0 : Math.min(1, cap);
+  return done;
+}
+export const hansipAman = (s: GameState): number => roleOutput(s, 'hansip') * ROLE_FX.hansip.amanPerLevel;
+export const buildBoost = (s: GameState): number => roleOutput(s, 'supir') * ROLE_FX.supir.buildBoostPerLevel;
+export const upkeepCut = (s: GameState): number => Math.min(ROLE_FX.bendahara.upkeepCutMax, roleOutput(s, 'bendahara') * ROLE_FX.bendahara.upkeepCutPerLevel);
+
+/** Extra iuran a week from the Tukang Tagih. What a low-Jujur one keeps comes as a mishap, named. */
 export function iuranBonus(s: GameState): number {
   const f = ROLE_FX.penagih;
   const share = Math.min(f.iuranMax, roleOutput(s, 'penagih') * f.iuranPerLevel);
   if (!share) return 0;
-  const skim = (s.staff ?? []).some((x) => x.role === 'penagih' && x.stats.jujur < f.skimBelowJujur) ? f.skim : 0;
-  return Math.round(population(s) * IURAN * s.inflation * share * (1 - skim));
+  return Math.round(population(s) * IURAN * s.inflation * share);
+}
+
+// ---------- what each stat buys ----------
+
+/** A person in a role as the stat lines see them: a hire on the staff, or an applicant for a posted role. */
+export type InRole = Pick<Staff, 'role' | 'stats' | 'trait' | 'special'> & { level?: number };
+
+/** Chance a week that this person has a mishap: zero once their risk stat reaches RISK.safeFrom. */
+export function mishapChance(x: InRole): number {
+  const stat = x.stats[roleDef(x.role).risk];
+  return RISK.base * Math.max(0, (RISK.safeFrom - stat) / RISK.safeFrom);
+}
+
+/** What one person adds in their role, in the role's own unit: folders, Aman, percent of iuran, and so on. */
+export function roleGain(x: InRole): number {
+  const o = output({ ...x, level: x.level ?? 1, away: 0 } as Staff);
+  switch (x.role) {
+    case 'asisten': return o * ROLE_FX.asisten.berkasPerOutput;
+    case 'hansip': return o * ROLE_FX.hansip.amanPerLevel;
+    case 'penagih': return Math.min(ROLE_FX.penagih.iuranMax, o * ROLE_FX.penagih.iuranPerLevel) * 100;
+    case 'pu': return o * ROLE_FX.pu.repairsPerLevel;
+    case 'adminWa': return o * ROLE_FX.adminWa.viralPerLevel;
+    case 'supir': return o * ROLE_FX.supir.buildBoostPerLevel * 100;
+    case 'bendahara': return Math.min(ROLE_FX.bendahara.upkeepCutMax, o * ROLE_FX.bendahara.upkeepCutPerLevel) * 100;
+    case 'sekretaris': return o * ROLE_FX.sekretaris.orangDalamPerLevel;
+  }
+}
+
+/** A mishap: the role's risk stat let something slip. It costs what the role's mishap says, and names who and why. */
+function mishap(s: GameState, fx: Fx, x: Staff, site?: Building): void {
+  const role = roleDef(x.role);
+  const stat = role.risk;
+  const what = t(`staff.mishapWhat.${x.role}` as Key);
+  if (role.mishap.res === 'sabar') gain(s, fx, 'sabar', -role.mishap.amount, site);
+  else gain(s, fx, 'rupiah', -price(s, role.mishap.amount), site);
+  fx.push({ kind: 'notice', title: t('staff.mishapTitle', { name: x.name, stat: t(`staff.stat.${stat}` as Key), n: x.stats[stat], what }), body: t('staff.mishapBody', { stat: t(`staff.stat.${stat}` as Key) }), tone: 'bad' });
 }
 
 // ---------- hiring ----------
@@ -138,9 +218,20 @@ function applyTrait(stats: StaffStats, trait?: TraitId): StaffStats {
 /** Jobless warga, longest idle first: who answers the Grup WA. */
 const jobless = (s: GameState): Resident[] => s.residents.filter((r) => r.job === 'none' && r.staffId === undefined).sort((a, b) => (b.idle ?? 0) - (a.idle ?? 0));
 
+/**
+ * A Grup WA posting goes out through your Admin Grup WA, if you have one: their Gaul moves points of the odds
+ * between 2-star and 3-star applicants, up to 20 better or 10 worse.
+ */
+export function grupWaShift(s: GameState): { x: Staff; pts: number } | null {
+  const x = (s.staff ?? []).filter((p) => p.role === 'adminWa' && !p.away).sort((a, b) => b.stats.gaul - a.stats.gaul)[0];
+  return x ? { x, pts: Math.max(-10, Math.min(20, Math.round((x.stats.gaul - 50) * 0.4))) } : null;
+}
+
 export function rollApplicants(s: GameState): Applicant[] {
   const lw = s.lowongan!;
-  const ch = CHANNELS.find((c) => c.id === lw.channel)!;
+  const base = CHANNELS.find((c) => c.id === lw.channel)!;
+  const shift = base.local ? grupWaShift(s) : null;
+  const ch = shift ? { ...base, odds: { ...base.odds, 2: base.odds[2] - shift.pts, 3: base.odds[3] + shift.pts } } : base;
   const role = roleDef(lw.role);
   const n = APPLICANTS.min + pickN(roll(s, s.month, 1), APPLICANTS.max - APPLICANTS.min + 1);
   const locals = ch.local ? jobless(s) : [];
@@ -236,23 +327,24 @@ export function fire(s: GameState, x: Staff): boolean {
   return true;
 }
 
-export const bimtekCost = (s: GameState): number => price(s, BIMTEK.cost);
+export const bimtekCost = (s: GameState, stat?: StatId): number => price(s, BIMTEK.cost * (stat ? COURSE_COST[stat] : 1));
 
-export function checkBimtek(s: GameState, x: Staff): CheckResult {
+export function checkBimtek(s: GameState, x: Staff, stat: StatId = roleDef(x.role).stat): CheckResult {
   if (x.away) return { ok: false, missing: [t('staff.away', { n: x.away })] };
-  const st = roleDef(x.role).stat;
+  const st = stat;
   if (x.stats[st] >= STAT_MAX) return { ok: false, missing: [t('staff.maxed')] };
-  const cost = bimtekCost(s);
+  const cost = bimtekCost(s, stat);
   return s.res.rupiah >= cost ? { ok: true } : { ok: false, missing: [t('sim.moneyGap', { amt: rupiah(cost - s.res.rupiah), cost: rupiah(cost) })] };
 }
 
 /** Training at a hotel: a little more of the role's stat, a month away. */
-export function bimtek(s: GameState, x: Staff): boolean {
-  if (!checkBimtek(s, x).ok) return false;
-  const cost = bimtekCost(s);
+/** Bimtek picks the stat: a course for each, the role's own stat by default. */
+export function bimtek(s: GameState, x: Staff, stat: StatId = roleDef(x.role).stat): boolean {
+  if (!checkBimtek(s, x, stat).ok) return false;
+  const cost = bimtekCost(s, stat);
   s.res.rupiah -= cost;
   s.stats.spent += cost;
-  const st = roleDef(x.role).stat;
+  const st = stat;
   x.stats[st] = Math.min(STAT_MAX, x.stats[st] + BIMTEK.gain);
   x.away = BIMTEK.away;
   return true;
@@ -330,10 +422,17 @@ export function staffSystem(s: GameState, fx: Fx): void {
     }
     const tr = x.trait ? traitDef(x.trait) : undefined;
     if (tr?.orangDalam) gain(s, fx, 'orangDalam', tr.orangDalam);
+    // A low risk stat leaves a gap: now and then something slips, and the notice says who and which stat.
+    if (roll(s, s.month, x.id, 13) < mishapChance(x)) mishap(s, fx, x, kantor);
     if (x.inem) continue;
     const before = x.level;
     x.xp += tr?.xp ?? 1;
     x.level = levelForStaff(x.xp);
+    // People get better at what they do: each level-up raises the role's main stat.
+    if (x.level > before) {
+      const st = roleDef(x.role).stat;
+      x.stats[st] = Math.min(STAT_MAX, x.stats[st] + LEVEL_STAT_GAIN);
+    }
     if (x.level > before && !tr?.noRaise) {
       x.raiseAsked = true;
       fx.push({ kind: 'notice', title: t('staff.raiseTitle', { name: x.name, n: x.level }), body: t('staff.raiseBody'), tone: 'info' });
@@ -399,7 +498,7 @@ function gigDone(s: GameState, id: string, fx: Fx, level: number): void {
 /** Monthly: Inem's sub-goals. They never gate stars. */
 export function gigSystem(s: GameState, fx: Fx): void {
   const done = (id: string) => s.gigs!.includes(id);
-  if (!done('agustus') && s.month % 12 === 7 && s.buildings.some((b) => b.def === 'lapangan' && isWorking(b)) && s.res.sabar >= 50) {
+  if (!done('agustus') && atMonth(s.month, 7) && s.buildings.some((b) => b.def === 'lapangan' && isWorking(b)) && s.res.sabar >= 50) {
     gain(s, fx, 'viral', 5);
     gigDone(s, 'agustus', fx, 2);
   }

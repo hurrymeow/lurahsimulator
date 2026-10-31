@@ -4,6 +4,9 @@ import { sizeOf, tilesOf, type Placed } from '../sim/state';
 import { sizeFor } from '../sim/content';
 import { GRID_H, GRID_W, RT_H, RT_W, type Building, type GameState, type ResourceId } from '../sim/types';
 import { Atmosphere } from './atmosphere';
+import { drawBunting, drawUmbul } from './agustus';
+import { agustusan } from '../sim/lomba';
+import { permitEta, queueBerkas } from '../sim/staff';
 import { drawTint, darkness, dusk, Fx } from './fx';
 import { iso, TH, TOP, TW, type Art } from './iso';
 import { t } from '../i18n';
@@ -317,6 +320,41 @@ export class MapView {
   }
 
   /** Screen position of a tile's ground centre, relative to the canvas. */
+  /**
+   * July and August from the second year: bunting from the Kantor RT's roof to the nearest few buildings, and an
+   * umbul-umbul on each free tile in front of it. Drawn before the night tint, so it darkens with the kampung.
+   */
+  private agustus(ctx: CanvasRenderingContext2D, sorted: Building[], tops: Map<number, number>): void {
+    const k = sorted.find((b) => b.def === 'kantorRT');
+    const kTop = k && tops.get(k.y * GRID_W + k.x);
+    if (!k || kTop === undefined) return;
+    const from = { x: this.tileCentre(k.x, k.y).x, y: kTop + 4 * this.scale };
+    const near = sorted
+      .filter((b) => b !== k && tops.has(b.y * GRID_W + b.x) && Math.abs(b.x - k.x) + Math.abs(b.y - k.y) <= 4)
+      .sort((a, b) => Math.abs(a.x - k.x) + Math.abs(a.y - k.y) - (Math.abs(b.x - k.x) + Math.abs(b.y - k.y)))
+      .slice(0, 3);
+    for (const b of near) drawBunting(ctx, from.x, from.y, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! + 4 * this.scale, this.scale);
+    let colour = 0;
+    for (const p of [{ x: k.x, y: k.y + 1 }, { x: k.x + 1, y: k.y }]) {
+      if (p.x >= GRID_W || p.y >= GRID_H || this.occupied.has(p.y * GRID_W + p.x) || !this.onScreen(p.x, p.y)) continue;
+      const c = this.tileCentre(p.x, p.y);
+      drawUmbul(ctx, c.x, c.y, this.scale, colour++);
+    }
+  }
+
+  /** A pile of map folders, bottom centre at (x, y): manila with a dark edge, each a little askew. */
+  private folders(ctx: CanvasRenderingContext2D, x: number, y: number, n: number): void {
+    const s = this.scale;
+    for (let i = 0; i < n; i++) {
+      const dx = (i % 2 ? 1 : -1) * s;
+      const fy = y - (i + 1) * 2 * s;
+      ctx.fillStyle = '#603620';
+      ctx.fillRect(x - 4 * s + dx, fy, 8 * s, 2 * s);
+      ctx.fillStyle = i % 3 === 2 ? '#e57d2e' : '#eac58f';
+      ctx.fillRect(x - 4 * s + dx + s, fy, 6 * s, s);
+    }
+  }
+
   tileCentre(x: number, y: number): { x: number; y: number } {
     const c = this.corner(x, y);
     return { x: c.x, y: c.y + (TH * this.scale) / 2 };
@@ -659,6 +697,7 @@ export class MapView {
       const k = Math.floor(fy) * GRID_W + Math.floor(fx);
       return this.project(fx, fy).y - (tops.get(k) ?? this.project(fx, fy).y);
     });
+    if (agustusan(s)) this.agustus(ctx, sorted, tops);
     if (this.effects) {
       this.air.draw(ctx, this.viewW, this.viewH, world, this.night, dusk(this.clock), this.motion);
       drawTint(ctx, this.viewW, this.viewH, this.clock);
@@ -670,8 +709,15 @@ export class MapView {
     const badges: BadgeBox[] = [];
     for (const b of sorted) {
       if (!tops.has(b.y * GRID_W + b.x)) continue;
-      const label = b.status === 'permit' || b.status === 'building' ? `${b.timer}` : b.status === 'mangkrak' ? '80%' : b.status === 'damaged' ? '!' : b.noRoad ? t('map.noRoad') : null;
+      const label = b.status === 'permit' ? `${permitEta(s, b)}` : b.status === 'building' ? `${b.timer}` : b.status === 'mangkrak' ? '80%' : b.status === 'damaged' ? '!' : b.noRoad ? t('map.noRoad') : null;
       if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label, badges, b.status === 'damaged');
+    }
+    // The permit queue as a pile of folders on the Kantor RT: one for every two waiting, up to six.
+    const berkas = queueBerkas(s);
+    if (berkas > 0) {
+      const k = s.buildings.find((b) => b.def === 'kantorRT');
+      const top = k && tops.get(k.y * GRID_W + k.x);
+      if (k && top !== undefined) this.folders(ctx, this.tileCentre(k.x, k.y).x + 6 * this.scale, top + 2 * this.scale, Math.min(6, Math.ceil(berkas / 2)));
     }
     // A clean sweep at the 17 Agustus lomba: the trophy stands on the Kantor RT for a year.
     if ((s.pialaUntil ?? -1) > s.month) {

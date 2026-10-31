@@ -65,7 +65,7 @@ export const KEL_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'puskesmasPembantu',
     name: 'Puskesmas Pembantu',
-    blurb: '+2 Popularitas a month. The queue is long and the paracetamol is free.',
+    blurb: '+2 Popularitas a week. The queue is long and the paracetamol is free.',
     cost: 12_000_000,
     upkeep: 300_000,
     income: 0,
@@ -103,7 +103,7 @@ export const KEL_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'terminal',
     name: 'Terminal',
-    blurb: 'The kelurahan landmark, 3x3. Income from every bus and ojol, and shops within 3 tiles earn 20% more from the crowd. -1 Popularitas a month for the horns.',
+    blurb: 'The kelurahan landmark, 3x3. Income from every bus and ojol, and shops within 3 tiles earn 20% more from the crowd. -1 Popularitas a week for the horns.',
     cost: 25_000_000,
     upkeep: 350_000,
     income: 1_000_000,
@@ -125,7 +125,7 @@ export const KEL_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'taman',
     name: 'Taman',
-    blurb: '+2 Popularitas and +1 Virality a month. Mowing costs more than anyone planned.',
+    blurb: '+2 Popularitas and +1 Virality a week. Mowing costs more than anyone planned.',
     cost: 9_000_000,
     upkeep: 200_000,
     income: 0,
@@ -232,7 +232,7 @@ export const KEL_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'desaWisata',
     name: 'Desa Wisata',
-    blurb: '+2 Virality a month and tourist income. The selfie spot gets more traffic than the sawah.',
+    blurb: '+2 Virality a week and tourist income. The selfie spot gets more traffic than the sawah.',
     cost: 11_000_000,
     upkeep: 220_000,
     income: 800_000,
@@ -260,7 +260,7 @@ export const KEL_COMBOS: StageComboDef[] = [
     story: 'Everyone is stuck. Everyone is also spending. The jam is the economy.',
     incomeMult: { pasar: 1.6, terminal: 1.6 },
     perMonth: { sabar: -3 },
-    effect: 'Pasar and Terminal income x1.6. -3 Popularitas a month.',
+    effect: 'Pasar and Terminal income x1.6. -3 Popularitas a week.',
     gate: KP2,
   },
   {
@@ -273,7 +273,7 @@ export const KEL_COMBOS: StageComboDef[] = [
     story: 'The terminal cuts its fare. The ojol cuts it again. Passengers learn to wait for the next cut.',
     incomeMult: { terminal: 1.3 },
     perMonth: { sabar: -2 },
-    effect: 'Terminal and ojol income x1.3. -2 Popularitas a month.',
+    effect: 'Terminal and ojol income x1.3. -2 Popularitas a week.',
     gate: KP2,
   },
   {
@@ -286,7 +286,7 @@ export const KEL_COMBOS: StageComboDef[] = [
     story: 'One bench, one mural, three hundred posts. The grass has never been this photographed.',
     upkeepMult: { taman: 2 },
     perMonth: { viral: 3 },
-    effect: '+3 Virality a month. Taman upkeep doubles.',
+    effect: '+3 Virality a week. Taman upkeep doubles.',
     gate: KP2,
   },
   {
@@ -296,7 +296,7 @@ export const KEL_COMBOS: StageComboDef[] = [
     radius: 2,
     hint: 'Enterprise meets paddy. Harvest time.',
     story: 'The BUMDes buys the whole panen, in cash, on time. Nobody checks the invoice.',
-    effect: 'Rp 2.000.000 harvest bonus every harvest.',
+    effect: 'Rp 8.000.000 harvest bonus every harvest.',
     gate: D2,
   },
   {
@@ -307,7 +307,7 @@ export const KEL_COMBOS: StageComboDef[] = [
     hint: 'Tourists who want to hold a cangkul for ten minutes.',
     story: 'School trips plant rice at noon and post it by one. The rice never gets planted straight.',
     perMonth: { viral: 4, sabar: -1 },
-    effect: '+4 Virality and -1 Popularitas a month.',
+    effect: '+4 Virality and -1 Popularitas a week.',
     gate: D2,
   },
 ];
@@ -316,11 +316,11 @@ export const KEL_JOBS: StageJobDef[] = [
   {
     id: 'honorer',
     name: 'Honorer',
-    blurb: 'Does PNS work for half the pay. After 5 years, a 20% a year chance of becoming PNS.',
+    blurb: 'Does PNS work for half the pay. After 60 weeks, a small weekly chance of becoming PNS.',
     gate: K1,
     perMonth: {},
     pay: 0.5,
-    promote: { afterYears: 5, chancePerYear: 0.2 },
+    promote: { afterWeeks: 60, chancePerWeek: 0.2 / 12 },
   },
   {
     id: 'pendampingDesa',
@@ -352,6 +352,15 @@ export const KEL_EVENTS: StageEventDef[] = [
         fx: { cleanAudit: 1 },
         result: 'Every receipt found. The audit is clean, and so is the shredder.',
       },
+      {
+        label: 'Send someone to talk it through',
+        send: { stat: 'lobi', base: 0.45, perPoint: 0.012 },
+        outcomes: [
+          { weight: 1, cleanAudit: 1, result: '"An administrative oversight," they agree. The audit is clean.' },
+          { weight: 1, perWacana: 4, result: 'The talk goes badly. Every missing receipt now costs double.' },
+        ],
+        result: '',
+      },
     ],
   },
   {
@@ -367,14 +376,14 @@ export const KEL_EVENTS: StageEventDef[] = [
         cost: { rupiah: 2_500_000 },
         res: { viral: 3 },
         fx: { lombaScoreMult: 1.5, months: 1 },
-        result: 'Paint spending raises the score this month. The wall behind the gate stays grey.',
+        result: 'Paint spending raises the score this week. The wall behind the gate stays grey.',
       },
     ],
   },
   {
     id: 'kunjungan',
     name: 'Kunjungan',
-    body: 'A visit from above is announced for next month. Everything must be perfect by then.',
+    body: 'A visit from above is announced for next week. Everything must be perfect by then.',
     gate: K0,
     when: { minMonth: 30, chance: 0.12, cooldown: 12 },
     choices: [

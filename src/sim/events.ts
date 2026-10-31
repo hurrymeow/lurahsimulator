@@ -1,7 +1,8 @@
 import { noteProblem } from './problems';
 import { realisasiBanjir } from './realisasi';
-import { afterEventStaff } from './staff';
-import { eModLabel, eOutcome, eResult, t } from '../i18n';
+import { afterEventStaff, ensureStaff, permitQueue } from './staff';
+import { STAT_MAX } from '../data/staff';
+import { eModLabel, eOutcome, eResult, t, type Key } from '../i18n';
 import { BANJIR_HIT_CHANCE, BANJIR_MAX_PROTECT, BANJIR_PROTECT_PER_LEVEL, BANJIR_SABAR, EVENTS, POPUP_CHANCE, MIN_REPEAT_GAP, POPUP_GAP, REPAIR_FRACTION, eventDef, type EventChoice, type EventDef, type EventOutcome as OutcomeDef } from '../data/events';
 import { STAGE_EVENTS } from '../data/higher';
 import { rupiah } from '../format';
@@ -9,6 +10,7 @@ import { activeCombos } from './combos';
 import { def, isCover } from './content';
 import { gateOpen } from './gate';
 import { LOMBA } from '../data/lomba';
+import { GRACE_WEEKS, WEEKS_PER_YEAR, inMonths, weekOfYear } from './calendar';
 import { banjirCut, wacanaNoReceipt } from './kel';
 import type { StageEventChoice } from '../data/higher';
 import { gain, type Fx } from './gain';
@@ -17,7 +19,7 @@ import { IURAN } from './balance';
 import { chance, rand } from './rng';
 import { population, price } from './state';
 import { buildingIncome, buildingUpkeep } from './tick';
-import type { Building, CheckResult, GameState, Resources } from './types';
+import type { Building, CheckResult, GameState, Resources, Staff } from './types';
 
 /** What the kampung nets in a month: building income less upkeep, plus iuran. Prices that follow it never fall behind the economy. */
 export function monthlyNet(s: GameState): number {
@@ -64,8 +66,9 @@ function eligible(s: GameState, e: EventDef): boolean {
   if (w.minMonth !== undefined && s.month < w.minMonth) return false;
   if (w.maxMonth !== undefined && s.month > w.maxMonth) return false;
   if (w.minStars !== undefined && s.stage.stars.rt < w.minStars) return false;
-  if (w.months && !w.months.includes(s.month % 12)) return false;
+  if (w.months && !inMonths(s.month, w.months)) return false;
   if (w.needs && !s.buildings.some((b) => b.def === w.needs && b.status === 'active')) return false;
+  if (w.queue && !s.buildings.some((b) => b.status === 'permit')) return false;
   const last = s.lastEvent?.[e.id];
   const gap = w.chance < 1 ? Math.max(w.cooldown ?? 0, MIN_REPEAT_GAP) : (w.cooldown ?? 0);
   return !(gap && last !== undefined && s.month - last < gap);
@@ -97,13 +100,13 @@ function crowded(s: GameState): boolean {
   const last = Object.values(s.lastEvent ?? {});
   if (last.length && s.month - Math.max(...last) < EVENT_CLEAR) return true;
   // 17 Agustus is a popup too: random events keep clear of the Lomba day, before and after.
-  const m = s.month % 12;
-  const toDay = (LOMBA.day - m + 12) % 12;
-  const sinceDay = (m - LOMBA.day + 12) % 12;
+  const wk = weekOfYear(s.month);
+  const toDay = (LOMBA.dayWeek - wk + WEEKS_PER_YEAR) % WEEKS_PER_YEAR;
+  const sinceDay = (wk - LOMBA.dayWeek + WEEKS_PER_YEAR) % WEEKS_PER_YEAR;
   if (s.month + toDay >= LOMBA.fromMonth && (toDay < EVENT_CLEAR || sinceDay < EVENT_CLEAR)) return true;
   for (let k = 1; k < EVENT_CLEAR; k++) {
     // A yearly one on its month, or a one-off (no months list) on the month it first comes due.
-    const due = EVENTS.some((e) => e.when.chance >= 1 && (e.when.months ? e.when.months.includes((s.month + k) % 12) && (e.when.minMonth ?? 0) <= s.month + k : e.when.minMonth === s.month + k && !(s.lastEvent ?? {})[e.id]));
+    const due = EVENTS.some((e) => e.when.chance >= 1 && (e.when.months ? inMonths(s.month + k, e.when.months) && (e.when.minMonth ?? 0) <= s.month + k : e.when.minMonth === s.month + k && !(s.lastEvent ?? {})[e.id]));
     if (due) return true;
     if (s.inspection && s.inspection.visitAt === undefined && s.inspection.warnAt === s.month + k) return true;
   }
@@ -149,7 +152,7 @@ function floodDamage(s: GameState, fx: Fx): string {
   const targets = s.buildings.filter((b) => b.status === 'active' && b.def !== 'rumah' && b.def !== 'parkir' && b.def !== 'biopori' && !isCover(def(b.def)));
   let hit = 0;
   for (const b of targets) {
-    if (s.month < 12 && hit >= 1) break;
+    if (s.month < GRACE_WEEKS && hit >= 1) break;
     if (chance(s, BANJIR_HIT_CHANCE * (1 - protect))) {
       b.status = 'damaged';
       hit++;
@@ -177,12 +180,32 @@ function rollOutcome(s: GameState, list: OutcomeDef[]): OutcomeDef {
   return list[list.length - 1];
 }
 
+/** Who can be sent: anyone on the staff who is not away, best for the stat first. The card shows three. */
+export function sendCandidates(s: GameState, c: EventChoice): Staff[] {
+  ensureStaff(s);
+  const stat = c.send!.stat;
+  return (s.staff ?? []).filter((x) => !x.away).sort((a, b) => b.stats[stat] - a.stats[stat] || a.id - b.id).slice(0, 3);
+}
+
+/** The odds of sending this person: base, plus or minus per point of the stat away from 50. */
+export const sendChance = (c: EventChoice, x: Staff): number => Math.min(0.95, Math.max(0.05, c.send!.base + (x.stats[c.send!.stat] - 50) * c.send!.perPoint));
+
 function applyOutcome(s: GameState, o: OutcomeDef): void {
   if (o.incomePct) payout(s, o.incomePct);
+  // The desks get a push: folders come off the queue, first placed first.
+  let stamp = o.stamp ?? 0;
+  for (const b of permitQueue(s)) {
+    if (stamp <= 0) break;
+    const take = Math.min(stamp, Math.max(0, b.timer - 1));
+    b.timer -= take;
+    stamp -= take;
+  }
+  if (o.cleanAudit) s.kel.cleanAudits += o.cleanAudit;
+  if (o.perWacana) s.res.sabar -= wacanaNoReceipt(s) * o.perWacana;
   for (const [k, v] of Object.entries(o.res ?? {})) s.res[k as 'sabar'] += v as number;
 }
 
-export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutcome {
+export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number, staffId?: number): EventOutcome {
   const e = s.pendingEvent ? eventDef(s.pendingEvent) : undefined;
   const c = e?.choices[choiceIdx];
   if (!e || !c) return { ok: false, text: t('sim.noEvent') };
@@ -195,7 +218,14 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
   s.res.orangDalam -= cost.orangDalam;
   if (c.incomePct) payout(s, c.incomePct);
   // Advice: the outcome is rolled now and revealed in the result popup.
-  const rolled = c.outcomes ? rollOutcome(s, c.outcomes) : undefined;
+  // Sending someone: their stat sets the odds, and a success teaches them a point of it.
+  const sent = c.send ? (sendCandidates(s, c).find((x) => x.id === staffId) ?? sendCandidates(s, c)[0]) : undefined;
+  let rolled = c.outcomes && !c.send ? rollOutcome(s, c.outcomes) : undefined;
+  if (c.send && c.outcomes) {
+    const win = !!sent && rand(s) < sendChance(c, sent);
+    rolled = c.outcomes[win ? 0 : 1];
+    if (win && sent) sent.stats[c.send.stat] = Math.min(STAT_MAX, sent.stats[c.send.stat] + 1);
+  }
   if (rolled) applyOutcome(s, rolled);
   for (const [k, v] of Object.entries(c.res ?? {})) s.res[k as 'sabar'] += v as number;
   if (c.inspectPrep && s.inspection) s.inspection.prep += c.inspectPrep;
@@ -211,7 +241,9 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number): EventOutc
   }
   if (efx?.popReportPct) s.rw.popReport = { pct: efx.popReportPct, until: s.month + (efx.months ?? 1) };
   if (c.modifier) s.modifiers.push({ id: `${e.id}-${s.month}`, label: eModLabel(e, choiceIdx, c.modifier.label), target: c.modifier.target, incomeMult: c.modifier.incomeMult, monthsLeft: c.modifier.months });
-  const text = c.special === 'banjir' ? floodDamage(s, fx) : rolled ? eOutcome(e, choiceIdx, c.outcomes!.indexOf(rolled), rolled) : eResult(e, choiceIdx, c);
+  const said = c.special === 'banjir' ? floodDamage(s, fx) : rolled ? eOutcome(e, choiceIdx, c.outcomes!.indexOf(rolled), rolled) : eResult(e, choiceIdx, c);
+  // The result names who went and the stat that decided it.
+  const text = sent && c.send ? `${t('event.sent', { name: sent.name, stat: t(`staff.stat.${c.send.stat}` as Key), n: sent.stats[c.send.stat] })} ${said}` : said;
   s.pendingEvent = null;
   afterEventStaff(s);
   const delta: Partial<Resources> = {};

@@ -5,6 +5,7 @@ import { deserialize, serialize } from '../src/sim/save';
 import { attractTarget, buildCost, byUid, count, emptyTiles, housing, newGame, population } from '../src/sim/state';
 import { assign, autoPick } from '../src/sim/jobs';
 import { tick } from '../src/sim/tick';
+import { INFLATION_PER_YEAR } from '../src/sim/balance';
 import type { GameState } from '../src/sim/types';
 
 const run = (s: GameState, months: number) => {
@@ -192,8 +193,8 @@ describe('monthly tick', () => {
 
   it('inflates prices every year', () => {
     const s = newGame(14);
-    run(s, 12);
-    expect(buildCost(s, def('warung'))).toBe(1_545_000);
+    run(s, 48);
+    expect(buildCost(s, def('warung'))).toBe(Math.round((1_500_000 * (1 + INFLATION_PER_YEAR)) / 1000) * 1000);
   });
 
   it('is deterministic for the same seed', () => {
@@ -220,6 +221,15 @@ describe('save and load', () => {
     run(s, 5);
     const loaded = deserialize(serialize(s));
     expect(loaded).toEqual(s);
+  });
+
+  it('rejects a save from before the weekly calendar so the home screen can ask for a new game', () => {
+    const s = newGame(21);
+    run(s, 30);
+    const old = JSON.parse(serialize(s));
+    old.version = 2;
+    expect(deserialize(JSON.stringify(old))).toBeNull();
+    expect(deserialize(serialize(s))).not.toBeNull();
   });
 
   it('rejects junk, old versions and unknown buildings', () => {

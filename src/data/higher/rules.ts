@@ -1,4 +1,5 @@
 // Numbers for the new stages, in one place for the balance autoplayer to tune.
+import { YEAR_SCALE } from '../../sim/calendar';
 
 export const RW = {
   /** RTs on the map once the RW exists: you plus three AI. */
@@ -22,14 +23,14 @@ export const RW = {
 
 /** Ketua RT traits for the AI neighbours. */
 export const RT_TRAITS = [
-  { id: 'rajin', name: 'Rajin', buildEvery: 2, incomeMult: 1.2, blurb: 'Builds every 2 months and earns x1.2.' },
+  { id: 'rajin', name: 'Rajin', buildEvery: 2, incomeMult: 1.2, blurb: 'Builds every 2 weeks and earns x1.2.' },
   { id: 'hobiWacana', name: 'Hobi Wacana', skipOneIn: 3, blurb: 'Skips one build in three to hold a wacana.' },
   { id: 'jarangMuncul', name: 'Jarang Muncul', letterMult: 2, blurb: 'Builds on time but sends 2x Surat Pengantar.' },
 ] as const;
 
 export const KEL = {
   /** Budget arrives each January, in Rupiah. */
-  anggaranPerYear: 24_000_000,
+  anggaranPerYear: 24_000_000 * YEAR_SCALE,
   /** Each unspent percent cuts next year's budget by the same percent. */
   unspentCut: 1,
   /** Serapan rush forced in December. */

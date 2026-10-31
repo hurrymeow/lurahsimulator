@@ -175,7 +175,7 @@ export const MORE_EVENTS: EventDef[] = [
         cost: { rupiah: 150_000, incomeMonths: 0.1 },
         outcomes: [
           { weight: 4, res: { sabar: 2 }, result: 'Nothing happens. For now.' },
-          { weight: 4, res: { sabar: -1 }, incomePct: -0.05, result: 'He is back next month. There is now a rate card.' },
+          { weight: 4, res: { sabar: -1 }, incomePct: -0.05, result: 'He is back next week. There is now a rate card.' },
         ],
         result: '',
       },

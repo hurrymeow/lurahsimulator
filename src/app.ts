@@ -10,7 +10,8 @@ import { MapView, RES_VAR, shapeOf } from './render/map';
 import { iconURL } from './render/sprites';
 import { def } from './sim/content';
 import { eventDef } from './data/events';
-import { checkChoice, eventCost, resolveEvent } from './sim/events';
+import { checkChoice, eventCost, resolveEvent, sendCandidates, sendChance } from './sim/events';
+import { STAT_ICON } from './data/staff';
 import { discoverCombos } from './sim/combos';
 import { checkMove, checkPlace, moveBuilding, place } from './sim/rules';
 import { linePath, placeLine, type LineTile } from './sim/line';
@@ -19,7 +20,7 @@ import { promote } from './sim/grow';
 import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, type FirstKind } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
-import { attractTarget, buildCost, buildingAt, byUid, newGame, population, housing, sizeOf, year } from './sim/state';
+import { attractTarget, buildCost, buildingAt, byUid, newGame, population, housing, sizeOf } from './sim/state';
 import { tick } from './sim/tick';
 import type { GameState, ResourceId, SimEffect } from './sim/types';
 import { audio } from './audio';
@@ -35,10 +36,9 @@ import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
 import { autoPauseStarted, showPausedBadge, simRunning, type PauseInputs } from './ui/autopause';
 import { canShowQueued, type PopupQueueState } from './ui/popupQueue';
 
+/** One tick, which is one week of game time (see sim/calendar.ts). */
 export const MONTH_MS = 8000;
-/** First year the 4x speed is allowed. */
-export const FAST_FROM_YEAR = 10;
-export const SPEEDS = [0, 1, 2, 4] as const;
+export const SPEEDS = [0, 1, 2] as const;
 export type Speed = (typeof SPEEDS)[number];
 export const SAVE_KEY = 'pakrt.save';
 /** A seed for a new game. Lives here, not in src/sim, which must not read the clock. */
@@ -112,9 +112,13 @@ export class App {
   readonly rt = { w: CELL_W, h: CELL_H };
   /** True while the home screen is up. The sim waits. */
   held = false;
-  
+  /** A save exists but this version cannot read it. The home screen says so and offers a new game. */
+  oldSave = false;
+
   constructor() {
-    const loaded = deserialize(storage.get(SAVE_KEY));
+    const raw = storage.get(SAVE_KEY);
+    const loaded = deserialize(raw);
+    this.oldSave = !!raw && !loaded;
     this.s = loaded ?? newGame(freshSeed());
     ensureStaff(this.s);
     setPlayer(this.s.player);
@@ -305,6 +309,17 @@ export class App {
     // frame loop shows it once the sheet closes, and time is already held.
     if (sheetOpen()) return;
     const choices = e.choices.map((c, i) => {
+      // Sending someone: one button per candidate, best for the stat first, each with the stat and the odds.
+      if (c.send) {
+        const stat = c.send.stat;
+        return h('div', { class: 'action send-choice', 'data-stat': stat },
+          h('p', { class: 'meta send-label' }, eLabel(e, i, c)),
+          ...sendCandidates(this.s, c).map((x) => h('button', { class: 'btn btn-primary send-btn', 'data-staff': String(x.id), onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i, x.id); } },
+            t('event.send', { name: x.name }), ' · ',
+            h('span', { class: 'send-odds' }, h('img', { src: iconURL(STAT_ICON[stat], 2), alt: t(`staff.stat.${stat}` as Key), width: 18, height: 18, class: 'inline-icon pixel' }), ` ${x.stats[stat]} · ${t('event.sendOdds', { pct: Math.round(sendChance(c, x) * 100) })}`),
+          )),
+        );
+      }
       const check = checkChoice(this.s, c);
       const cost = eventCost(this.s, c);
       const label = eLabel(e, i, c).replace(/ · Rp [\d.]+/, '').replace(/ · \d Orang (Inside|Dalam)/, '');
@@ -330,9 +345,9 @@ export class App {
     el.hidden = false;
   }
 
-  private chooseEvent(i: number): void {
+  private chooseEvent(i: number, staffId?: number): void {
     const fx: SimEffect[] = [];
-    const out = resolveEvent(this.s, fx, i);
+    const out = resolveEvent(this.s, fx, i, staffId);
     if (!out.ok) return;
     document.getElementById('modal')!.hidden = true;
     this.handleFx(fx);
@@ -650,21 +665,18 @@ export class App {
   }
 
   // ---------- speed ----------
-  // Two buttons: pause/play, and one that cycles 1x, 2x, 4x.
+  // Two buttons: pause/play, and one that cycles 1x, 2x.
   private bindSpeed(): void {
     document.getElementById('pause-btn')!.addEventListener('click', () => this.setSpeed(this.speed ? 0 : this.pace));
     document.getElementById('speed-btn')!.addEventListener('click', () => this.setSpeed(this.nextPace()));
     this.setSpeed(this.speed);
   }
 
-  /** 4x unlocks in year 10, so early months can't be rushed past. */
   private nextPace(): Speed {
-    if (this.pace === 1) return 2;
-    return this.pace === 2 && year(this.s) >= FAST_FROM_YEAR ? 4 : 1;
+    return this.pace === 1 ? 2 : 1;
   }
 
   setSpeed(sp: Speed): void {
-    if (sp === 4 && year(this.s) < FAST_FROM_YEAR) sp = 2;
     this.speed = sp;
     if (sp) this.pace = sp;
     const pause = document.getElementById('pause-btn')!;
