@@ -2,7 +2,7 @@
 // mountains with the sun between them from every kid's "pemandangan" drawing. Decorative only.
 import { isSeam } from '../sim/area';
 import { GRID_H, GRID_W } from '../sim/types';
-import { INK, TH, TOP, TW } from './iso';
+import { INK, Painter, TH, TOP, TW, type Art } from './iso';
 import { autoBlend, baseOf, blendOf, encodeControl, heightBlend, pickMaterial } from './terrain';
 
 // Painterly ground (clumped grass, dirt with pebbles, fallen leaves) with ink lines where land
@@ -43,10 +43,78 @@ let M2 = 0;
 export let SUN_X = 0;
 export let SUN_Y = 0;
 
+// ---------------------------------------------------------------- Kecamatan ring
+// The Kecamatan keeps the Kelurahan's tile map. The three other Kelurahan are low-detail district blocks beside it:
+// east, south and the corner between. They are drawn as one sprite each, and tapping one opens its panel.
+let ringOn = false;
+/** Tiles on a side of a district block, and the gap between the Kelurahan's ring road and a block. */
+export const RING_SIDE = 14;
+const RING_GAP = 3;
+/** How far past the grid the blocks reach, with a margin of land round them. */
+export const RING_EXT = RING_GAP + RING_SIDE + 4;
+const ringExt = (): number => (ringOn ? RING_EXT : 0);
+export const ringShown = (): boolean => ringOn;
+/** Turns the ring on or off. The caller lays the world out again. */
+export function setRing(on: boolean): void {
+  ringOn = on;
+}
+
+export type DistrictId = 'mawar' | 'melati' | 'kenanga';
+export interface RingBlock {
+  id: DistrictId;
+  /** Tile of the block's top corner. */
+  x: number;
+  y: number;
+}
+
+/** Where the three blocks stand for the current grid. Empty when the ring is off. */
+export function ringBlocks(): RingBlock[] {
+  if (!ringOn) return [];
+  const mid = (n: number) => Math.floor((n - RING_SIDE) / 2);
+  return [
+    { id: 'mawar', x: GRID_W + RING_GAP, y: mid(GRID_H) },
+    { id: 'melati', x: mid(GRID_W), y: GRID_H + RING_GAP },
+    { id: 'kenanga', x: GRID_W + RING_GAP, y: GRID_H + RING_GAP },
+  ];
+}
+
+const ringArts = new Map<DistrictId, Art>();
+
+/** Sprite of a district block: grass, a crossroads, and small houses and shops. Same on every device. */
+export function ringArt(id: DistrictId): Art {
+  const hit = ringArts.get(id);
+  if (hit) return hit;
+  const seed = id.length * 97 + id.charCodeAt(0);
+  const p = new Painter(1, RING_SIDE, RING_SIDE);
+  const mid = RING_SIDE / 2;
+  const road = (u: number, v: number) => u === mid || v === mid;
+  p.ground((a, b, px) => {
+    if (a < 2 * px || b < 2 * px || a > 1 - 2 * px || b > 1 - 2 * px) return 's';
+    if (Math.floor(a * RING_SIDE) === mid || Math.floor(b * RING_SIDE) === mid) return 't';
+    return (Math.floor(a * RING_SIDE) + Math.floor(b * RING_SIDE)) % 2 ? 'g' : 'G';
+  });
+  const WALL = ['w', 't', 'y', 'c', 'p', 'a'];
+  const ROOF = ['r', 'o', 'S', 'b'];
+  for (let d = 0; d < 2 * RING_SIDE - 1; d++)
+    for (let u = 0; u < RING_SIDE; u++) {
+      const v = d - u;
+      if (v < 0 || v >= RING_SIDE || road(u, v) || u === 0 || v === 0) continue;
+      const n = hash(u * 7 + seed, v * 13 + seed);
+      if (n < 0.3) continue;
+      const h = 5 + Math.floor(n * 5);
+      p.at(u, v);
+      p.box(2, h, WALL[Math.floor(n * 97) % WALL.length]);
+      p.roof(2, h, 4, ROOF[Math.floor(n * 53) % ROOF.length]);
+    }
+  const art = p.finish();
+  ringArts.set(id, art);
+  return art;
+}
+
 /** Sizes the world for the current grid. Call after setGrid, then rebuild the cached canvas and trees. */
 export function layoutWorld(): void {
-  XMAX = GRID_W + 8;
-  YMAX = GRID_H + 8;
+  XMAX = GRID_W + 8 + ringExt();
+  YMAX = GRID_H + 8 + ringExt();
   WORLD_W = (XMAX - XMIN + (YMAX - YMIN)) * (TW / 2);
   WORLD_H = HEAD + (XMAX - XMIN + (YMAX - YMIN)) * (TH / 2);
   WORLD_OX = (YMAX - XMIN) * (TW / 2);
@@ -80,7 +148,7 @@ function terrain(tx: number, ty: number): Terrain {
   if (tx >= 0 && ty >= 0 && tx < GRID_W && ty < GRID_H) return isSeam(tx, ty) ? 'road' : 'grass';
   if (tx >= -1 && ty >= -1 && tx <= GRID_W && ty <= GRID_H) return 'road';
   // The front two sides run down to a beach and the sea, with a ragged coastline.
-  const coast = Math.max(tx - GRID_W - 3, ty - GRID_H - 5) + hash(tx, ty) * 1.2;
+  const coast = Math.max(tx - GRID_W - 3 - ringExt(), ty - GRID_H - 5 - ringExt()) + hash(tx, ty) * 1.2;
   if (coast > 0.7) return 'sea';
   if (coast > -0.3) return 'beach';
   if (tx > GRID_W || ty > GRID_H) return 'sawah';
@@ -903,6 +971,9 @@ export interface Tree {
 }
 
 
+/** True on a tile under a district block, where no tree grows. */
+const inRing = (tx: number, ty: number): boolean => ringBlocks().some((b) => tx >= b.x - 1 && ty >= b.y - 1 && tx < b.x + RING_SIDE + 1 && ty < b.y + RING_SIDE + 1);
+
 /** Trees on the land round the kampung, back to front so nearer trees overlap farther ones. Drawn per frame so they can bounce. */
 export function worldTrees(): Tree[] {
   if (trees) return trees;
@@ -925,7 +996,7 @@ export function worldTrees(): Tree[] {
       // Far back, toward the horizon, more trees stand among the terraces so the edge is not bare.
       const far = tx + ty < -7 && !steep && t !== 'tanah' && (n < 0.16 ? 'pohon' : n < 0.21 ? 'bush' : n < 0.24 ? 'kelapa' : null);
       const name = far ? far : t === 'hutan' ? (n < 0.75 ? 'pohon' : 'kelapa') : t === 'teh' && (grove ? n < 0.4 : n < 0.03) && !steep ? 'pohon' : t === 'teras' && n < 0.03 && !steep ? 'kelapa' : t === 'kebun' ? kebun : t === 'beach' && n < 0.25 ? 'kelapa' : null;
-      if (name) trees.push({ name, tx, ty, x: WORLD_OX + ((tx - ty) * TW) / 2 - TW / 2, y: WORLD_OY + ((tx + ty) * TH) / 2 - TOP - Math.round(heightAt(tx + 0.5, ty + 0.5)) });
+      if (name && !inRing(tx, ty)) trees.push({ name, tx, ty, x: WORLD_OX + ((tx - ty) * TW) / 2 - TW / 2, y: WORLD_OY + ((tx + ty) * TH) / 2 - TOP - Math.round(heightAt(tx + 0.5, ty + 0.5)) });
     }
   return trees;
 }
@@ -1058,6 +1129,7 @@ export function sunArt(blink: boolean): HTMLCanvasElement {
 
 /** Roofs of the neighbouring RTs beyond the ring road, shown from 2 stars. The sawah thins out where they stand. */
 export function farRoofs(): { x: number; y: number; name: string }[] {
+  if (ringOn) return [];
   const out: { x: number; y: number; name: string }[] = [];
   for (const y of [2, 6, 10]) out.push({ x: GRID_W + 3, y: Math.min(y, GRID_H - 1), name: 'rumah' });
   for (const x of [1, 4, 7]) out.push({ x: Math.min(x, GRID_W - 1), y: GRID_H + 3, name: 'rumah' });

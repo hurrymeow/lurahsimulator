@@ -13,7 +13,7 @@ import { t } from '../i18n';
 import { Crowd } from './people';
 import { Weather } from './weather';
 import { placeBadge, type BadgeBox } from './badge';
-import { buildWorld, clouds, decoAt, farRoofs, layoutWorld, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
+import { buildWorld, clouds, decoAt, farRoofs, layoutWorld, ringArt, ringBlocks, ringShown, RING_EXT, RING_SIDE, setRing, type DistrictId, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
 import { ICONS, ROOF_COLOURS, ROOF_SHAPES, WALL_COLOURS, sprite } from './sprites';
 
 /** Resource colours for page elements: CSS variables, so they follow the Light or Dark theme. */
@@ -153,12 +153,14 @@ let PAN_W = 0;
 let PAN_H = 0;
 
 function measure(): void {
+  // The Kecamatan's district blocks stand past the grid, so the camera can go that far too.
+  const ext = ringShown() ? RING_EXT : 0;
   MAP_W = ((GRID_W + GRID_H) * TW) / 2;
   MAP_H = TOP + ((GRID_W + GRID_H) * TH) / 2 + DEPTH;
-  PAN_LEFT = (GRID_H * TW) / 2 + TW;
+  PAN_LEFT = ((GRID_H + ext) * TW) / 2 + TW;
   PAN_TOP = WORLD_OY - HORIZON + 150;
-  PAN_W = PAN_LEFT + (GRID_W * TW) / 2 + TW;
-  PAN_H = PAN_TOP + ((GRID_W + GRID_H) * TH) / 2 + PAN_BELOW * TH;
+  PAN_W = PAN_LEFT + ((GRID_W + ext) * TW) / 2 + TW;
+  PAN_H = PAN_TOP + ((GRID_W + GRID_H + 2 * ext) * TH) / 2 + PAN_BELOW * TH;
 }
 measure();
 
@@ -219,6 +221,22 @@ export class MapView {
     // A grown map opens at its own default size, half size for the Kelurahan.
     this.zoomed = null;
     this.resize();
+  }
+
+  /** Shows or hides the Kecamatan's district blocks. Lays the world out again only when that changes. */
+  setRing(on: boolean): void {
+    if (on === ringShown()) return;
+    setRing(on);
+    this.regrid();
+  }
+
+  /** The district block under a point, or null. Taps on the Kelurahan's own tiles never reach it. */
+  districtAt(px: number, py: number): DistrictId | null {
+    const a = (px - this.ox) / ((TW * this.scale) / 2);
+    const b = (py - this.oy) / ((TH * this.scale) / 2);
+    const x = (a + b) / 2;
+    const y = (b - a) / 2;
+    return ringBlocks().find((r) => x >= r.x && y >= r.y && x < r.x + RING_SIDE && y < r.y + RING_SIDE)?.id ?? null;
   }
 
   /** The box changed shape under the camera (home screen opens or closes): open on the kampung again. */
@@ -526,6 +544,15 @@ export class MapView {
     const sh = Math.min(WORLD_H - sy, Math.ceil(this.viewH / sc) + 2);
     if (sw > 0 && sh > 0) ctx.drawImage(this.drawWorld(), sx, sy, sw, sh, wx + sx * sc, wy + sy * sc, sw * sc, sh * sc);
     this.drawBackdrop(ctx, wx, wy, world);
+    // The other Kelurahan of the Kecamatan: one low-detail block each, past the ring road.
+    for (const r of ringBlocks()) {
+      const art = ringArt(r.id);
+      const c = this.corner(r.x, r.y);
+      const left = c.x - art.cornerX * sc;
+      const top = c.y - art.cornerY * sc;
+      if (left > this.viewW || top > this.viewH || left + art.canvas.width * sc < 0 || top + art.canvas.height * sc < 0) continue;
+      ctx.drawImage(art.canvas, left, top, art.canvas.width * sc, art.canvas.height * sc);
+    }
 
     const sel = s.buildings.find((b) => b.uid === this.selected);
     // Ambient occlusion: a soft contact shadow pooled round the foot of every standing building.
