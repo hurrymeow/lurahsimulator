@@ -440,7 +440,9 @@ Status 2026-10-27: the map engine, RT stars, RW and Kelurahan have shipped. Pick
 
 Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing and progression. Each item is a question, why it matters, what Kairosoft does, what good and bad look like, the evidence and a pass bar. UI/UX and testing get their own checklists. See `decisions/design-review-checklist.md`.
 
-### How it works- One review = one scorecard. Each item gets **Pass**, **Fail** or **Unknown**, with a link to the evidence.
+### How it works
+
+- One review = one scorecard. Each item gets **Pass**, **Fail** or **Unknown**, with a link to the evidence.
 - Each item is judged twice: against the Kairosoft pattern, and against Pak Pejabat's own goal (satire, Laporan vs Sejahtera). A gap from Kairosoft is fine if our goal explains it.
 - Evidence tiers. Use the lowest tier that answers.
   - **T1 Sim bot:** headless runs in `tests/`, many seeds, several strategies.
