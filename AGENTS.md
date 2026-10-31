@@ -7,7 +7,7 @@ Single source of rules for AI coding agents. Tool-specific files (CLAUDE.md, .cu
 Read before you plan or write code. Read only what your change touches, but never skip a doc that applies.
 
 - [CONTRIBUTING.md](CONTRIBUTING.md): UI, i18n, art, tone, naming, workflow. Always read.
-- [UI.md](UI.md): 12 UI rules. Read for any screen, text or layout change.
+- [UI.md](UI.md): 13 UI rules. Read for any screen, text or layout change.
 - [ART.md](ART.md): sprite and icon rules. Read for any art.
 - [GAME-DESIGN.md](GAME-DESIGN.md): the game design. Pitch, stage ladder, pacing targets, economy, tone and politics, UI rules. Read for new mechanics, map or stage work, economy, events, tutorial or progression. Read only the section you touch.
 - [TESTING.md](TESTING.md): the review checklist for the test suite. Read before you add or change tests, CI or bots.

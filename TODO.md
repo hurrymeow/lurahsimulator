@@ -4,6 +4,12 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Tasks
 
+- [ ] **Cut text on the 5 screens that fail UI rule 13.**
+  - Problem: measured at 360px on 2026-10-31, words in view: Neighbours 113 (1,201 in the sheet, longest block 31), How-to card 94 (block 29), Wacana 66, Stats 64, Build tabs 59 to 71 (block 24, 572 words on one tab). Rule 13 allows 50 in view, 20 per block, 300 per sheet.
+  - Why: players skim about 20% of the words; a wall of text hides the one line that matters.
+  - Suggested solution: one line per row with detail behind a tap; split Neighbours and the long Build tab; shorten How-to pages to one idea each. Add the word-count scan to `tests/e2e/ui.spec.ts` (start from the measure script in the project files, `plans/text-density-measure.spec.ts`).
+  - Source: UI.md rule 13
+  - `open · — · — · done when:` all screens pass rule 13 in both languages, and the scan runs in CI.
 - [ ] **CI and test config: flaky reports, English, WebKit, nightly, console-error fixture and canaries.**
   - Problem: a test that passes on retry leaves no record; English is only checked weekly; tests run in Chromium only; there is no nightly workflow.
   - Why: TESTING.md items 2, 9 and 13 fail today, and items 6, 11, 12 and 17 need a nightly run. Items 5 and 15 (merged in from the console-error task): e2e does not fail on `pageerror` or `console.error`, and nothing proves the legibility scan or visual diff can fail.

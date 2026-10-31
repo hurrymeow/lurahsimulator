@@ -1,6 +1,6 @@
 # UI rules
 
-Twelve measurable UI and UX rules for Pak Pejabat. A PR that touches a screen, text or layout is checked against them. Approved by Hari, 2026-10-27. The [Review checklist](#review-checklist) below adds bars for six rules and 23 more items (2026-10-31).
+Thirteen measurable UI and UX rules for Pak Pejabat. A PR that touches a screen, text or layout is checked against them. Approved by Hari, 2026-10-27. The [Review checklist](#review-checklist) below adds bars for six rules and 23 more items (2026-10-31).
 
 Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) section 6. Pacing targets live in section 3. This file holds only the numbers and limits.
 
@@ -30,6 +30,10 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 11. **Feedback follows a ladder.** Routine income gets a small number pop. A combo or unlock gets fanfare. The game works with effects, motion and sound off.
 12. **Every tap shows feedback within 100ms.** The first house is built within 30s of New Game (target 1 in GAME-DESIGN.md section 3).
 
+### Density
+
+13. **Each screen shows little text at a time, and detail waits behind a tap.** At most **50** words in view on any sheet, card or tip, and at most **20** words in one paragraph, row or button. A whole sheet holds at most **300** words when scrolled; more becomes tabs or detail screens. At most **2** levels below the map (a panel, then a detail), and **1** primary button per screen. Counted in the first viewport at 360px in both languages; numbers, icons and the player's own names are not words. List length is not capped. Why: adults read about 238 words a minute ([Brysbaert 2019](https://www.Gwern.net/doc/psychology/linguistics/2019-brysbaert.pdf)), people read about 20% of the words on a page ([NN/g](https://www.nngroup.com/articles/how-little-do-users-read/)), and "designs that go beyond 2 disclosure levels typically have low usability" ([NN/g](https://www.nngroup.com/articles/progressive-disclosure/)). Long lists are fine when items are recognisable ([NN/g](https://www.nngroup.com/articles/short-term-memory-and-web-usability/)). The 50 and 300 are judgement calls from reading speed. Known fails on 2026-10-31: Neighbours, the How-to card, Wacana, Stats and the Build tabs.
+
 ## How each rule is checked
 
 | Rules | Check |
@@ -38,6 +42,7 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 | 7, 8 | Word count over `src/i18n/en.ts` and the event data. Not automated. |
 | 2, 3, 6, 9, 10, 11 | Review against the audit crawl screenshots |
 | 12 | Timed run. Not automated. |
+| 13 | Word counts per screen. Measure script in the project files (`plans/text-density-measure.spec.ts`); to be added to `ui.spec.ts`. |
 | Layout drift | Screenshot baselines (`tests/e2e/visual.spec.ts`): home, HUD, Build sheet, event popup, tip card. 412px, Indonesian. |
 
 Every new panel or message needs a scan in `tests/e2e/ui.spec.ts`. CI runs the suite on every PR. The audit crawl scripts are in the project files, not in the repo.
@@ -64,7 +69,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge whether the UI is
 
 ### How it relates to the rules
 
-- **UI.md's 12 rules stay the floor.** A screen that fails them is a bug.
+- **UI.md's 13 rules stay the floor.** A screen that fails them is a bug.
 - **Part 1** gives six of those rules a bar a bot can check, with the source behind each.
 - **Part 2** adds 23 items the floor misses.
 - Items already in GAME-DESIGN.md section 8 are cross-referenced, not repeated: causes are legible (6), star rewards and NEW tags (12), coming back (27).
