@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LOMBA, STAGES_17 } from '../src/data/lomba';
-import { checkContest, climbBand, finishLomba, lombaPrep, mashTaps, rollChance, setKetua, setStage, toggleContest, turnout } from '../src/sim/lomba';
+import { agustusan, checkContest, climbBand, finishLomba, lombaPrep, mashTaps, rollChance, setKetua, setStage, toggleContest, turnout } from '../src/sim/lomba';
 import { ensureStaff } from '../src/sim/staff';
 import { addBuilding, newGame } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
@@ -119,5 +119,20 @@ describe('Lomba Agustusan', () => {
     expect(r.trophy).toBe(false);
     const t = finishLomba(s, {}, []);
     expect(t.viral + t.sabar + t.rupiah).toBe(0);
+  });
+});
+
+describe('Agustusan decorations', () => {
+  it('go up in July and August from the year the lomba starts, and come down after', () => {
+    const s = newGame(1);
+    const at = (m: number) => {
+      s.month = m;
+      return agustusan(s);
+    };
+    // July and August are weeks 24 to 31 of each year; the lomba runs from year 1.
+    expect([at(22), at(23)]).toEqual([false, false]);
+    expect([at(24), at(31)]).toEqual([true, true]);
+    expect([at(32), at(40)]).toEqual([false, false]);
+    expect([at(72), at(79), at(80)]).toEqual([true, true, false]);
   });
 });

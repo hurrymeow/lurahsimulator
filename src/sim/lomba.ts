@@ -3,7 +3,7 @@
 import { t, type Key } from '../i18n';
 import { CONTESTS, LOMBA, STAGES_17, type ContestDef } from '../data/lomba';
 import { agustusMult } from './events';
-import { WEEKS_PER_YEAR, weekOfYear, yearsDone } from './calendar';
+import { WEEKS_PER_MONTH, WEEKS_PER_YEAR, weekOfYear, yearsDone } from './calendar';
 import { gain, type Fx } from './gain';
 import { meters } from './needs';
 import { chance } from './rng';
@@ -155,4 +155,7 @@ export function finishLomba(s: GameState, won: Record<string, boolean>, fx: Fx):
 }
 
 /** The trophy stands by the Kantor RT for a year after a clean sweep. */
+/** July and August (weeks 24 to 31) once the lomba has started: the kampung puts up bunting and umbul-umbul. */
+export const agustusan = (s: GameState): boolean => s.month + 1 >= LOMBA.fromMonth && weeksToDay(s) < 2 * WEEKS_PER_MONTH;
+
 export const showTrophy = (s: GameState): boolean => (s.pialaUntil ?? -1) > s.month;

@@ -147,6 +147,24 @@ export function bedsOf(b: Building): number {
   return d.housingLevels?.[b.level - 1] ?? d.housing ?? 0;
 }
 
+/**
+ * Residents living in one building. Warga are not tied to a house, so the panel fills houses in the order they
+ * were built: the oldest are full first. Buildings off the road house nobody.
+ */
+export function occupants(s: GameState, b: Building): number {
+  let left = population(s);
+  for (const o of s.buildings) {
+    const beds = o.noRoad ? 0 : bedsOf(o);
+    const here = Math.min(beds, Math.max(0, left));
+    if (o.uid === b.uid) return here;
+    left -= here;
+  }
+  return 0;
+}
+
+/** Warga who would have no bed if this building were gone. */
+export const homelessWithout = (s: GameState, b: Building): number => Math.max(0, population(s) - (housing(s) - (b.noRoad ? 0 : bedsOf(b))));
+
 export function housing(s: GameState): number {
   return s.buildings.reduce((n, b) => n + (b.noRoad ? 0 : bedsOf(b)), 0);
 }

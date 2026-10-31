@@ -2656,21 +2656,41 @@ test.describe('map taps', () => {
 });
 
 test.describe('level art and menu icons', () => {
-  test('the inspector shows every level of a building and marks the current one', async ({ page }) => {
+  test('the panel shows the level as a roof badge, the next level as a diff, and nothing extra at the top level', async ({ page }) => {
     await start(page);
     await dismissModals(page);
-    await page.evaluate(() => {
+    const open = (level: number) => page.evaluate((lv) => {
       const app = (window as unknown as { pakrt: any }).pakrt;
-      const b = { uid: 9100, def: 'warung', x: 1, y: 1, level: 2, status: 'active', timer: 0, invested: 0, placedAt: 0 };
-      app.s.buildings.push(b);
+      app.s.res.rupiah = 1e9;
+      const b = app.s.buildings.find((o: any) => o.def === 'rumah');
+      b.level = lv;
+      // Fill every bed, so this house cannot be torn down.
+      const beds = app.s.buildings.reduce((n: number, o: any) => n + (o.noRoad ? 0 : ({ rumah: [3, 5, 7] } as any)[o.def]?.[o.level - 1] ?? 0), 0);
+      while (app.s.residents.length < beds) app.s.residents.push({ id: app.s.nextResidentId++, name: 'Bu Sri', job: 'none', pensiun: 0, fake: 0, arrived: 0 });
       app.inspect(b.uid);
-    });
-    const strip = page.locator('#sheet .level-strip');
-    await expect(strip.locator('.lv')).toHaveCount(3);
-    await expect(strip.locator('.lv.current')).toHaveCount(1);
-    await expect(strip.locator('.lv').nth(1)).toHaveClass(/current/);
-    for (const img of await strip.locator('img').all()) expect(await img.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)).toBe(true);
-    await expectLegible(page, 'level strip');
+    }, level);
+    await open(2);
+    const badge = page.locator('#sheet h2 .level-badge');
+    await expect(badge).toHaveAttribute('data-level', '2');
+    await expect(badge).toHaveAttribute('data-state', 'up');
+    expect(await badge.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)).toBe(true);
+    await expect(page.locator('#sheet .level-strip')).toHaveCount(0);
+    // One source for the numbers: the description, the occupancy and the diff all read level 2.
+    await expect(page.locator('#sheet .inspect-head .effect')).toContainText(lang() === 'en' ? 'Houses 5 residents' : 'Menampung 5 warga');
+    await expect(page.locator('#sheet .occupancy')).toContainText('/5');
+    await expect(page.locator('#sheet .btn', { hasText: lang() === 'en' ? 'Upgrade to Lv 3' : 'Naikkan ke Lv 3' })).toBeEnabled();
+    await expect(page.locator('#sheet .upgrade-diff')).toContainText('5 → 7');
+    await expectLegible(page, 'building panel with an upgrade');
+
+    await open(3);
+    await expect(badge).toHaveAttribute('data-state', 'max');
+    await expect(page.locator('#sheet .btn', { hasText: lang() === 'en' ? 'Upgrade' : 'Naikkan' })).toHaveCount(0);
+    await expect(page.locator('#sheet')).not.toContainText(lang() === 'en' ? 'Max level' : 'Level maks');
+    await expect(page.locator('#sheet .inspect-head .status')).toHaveCount(0);
+    // A disabled Bongkar says why in one grey line, not a red list.
+    await expect(page.locator('#sheet .missing')).toHaveCount(0);
+    await expect(page.locator('#sheet .reason').last()).toContainText(lang() === 'en' ? 'Move them to another house first' : 'Pindahkan dulu ke rumah lain');
+    await expectLegible(page, 'building panel at the top level');
   });
 
   test('every menu tile has a drawn icon', async ({ page }) => {

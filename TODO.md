@@ -49,8 +49,24 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Source: `decisions/cut-desa.md`
   - `open · — · — · done when:` no Desa string or branch remains in `src/`, and the Kelurahan tests pass.
 
+- [ ] **Take level-dependent numbers out of building blurbs.**
+  - Problem: about 15 building blurbs state level 1 numbers ("Earns up to Rp 60rb a month and +0.8 Popularitas" on Bank Sampah). The building panel now builds its housing line from the current level (#194), but other buildings still show their blurb, so the numbers go wrong after an upgrade.
+  - Why: the panel should have one source for every number, and blurbs read better as flavour.
+  - Suggested solution: rewrite those blurbs in en and id without numbers, and let the panel's income and per-month lines carry them. Keep each under 25 words.
+  - Source: `decisions/building-panel.md`, "Effect line scope"
+  - `open · — · — · done when:` no blurb states a number that changes with level, in en and id.
+
+- [ ] **Make staffing integral: the permit desk queue (prototype).**
+  - Problem: staff are optional bonuses. Inem made permits up to 40% faster, a Hansip adds a little Aman, and nothing breaks or asks for a hire when the player has nobody.
+  - Why: in Kairosoft's games staff are the hands that turn money into output, and running short of people is the pressure the player feels. Staffing should tighten the core loop: build, queue, hire or train, build faster.
+  - Suggested solution: permits become folders the Kantor clears in order; each Asisten clears some a month; the Asisten role can be posted from RT 1★; the map, panel and goal strip show the queue and say when to hire. Prototype in a draft PR for Hari to play. Later steps: petugas on big public buildings, output numbers on staff cards, the same queue for Stempel and Serapan.
+  - Source: voidinside99, 2026-10-31
+  - `claimed · voidinside99 · 2026-10-31 · done when:` Hari has played the prototype and it merges (or is dropped), with the bite tuned in `decisions/desk-queue.md`.
+
 ## Done
 
+- [x] **17an (Agustusan) fanfares, SFX and key art.** Made in the engine: drumband fanfare, koplo sting, angklung call, slide whistles, sack hops, kerupuk crunch and a crowd cheer in `src/audio.ts`; a drawn panjat pinang pole, a confetti banner, and bunting and umbul-umbul in July and August. No recorded audio or AI art. #197, `decisions/17an-in-engine.md`.
+- [x] **Redo the building panel.** The description is built from the current level; a pixel roof badge (gold with MAKS at the top) replaces the level strip and the max-level messages; the upgrade button reads "Naikkan ke Lv n" with the gain under it and is hidden at the top; disabled reasons are one grey line; Bongkar names the warga still there; "Warga 4/5"; status only when not working. #194, `decisions/building-panel.md`.
 - [x] **Make the sim deterministic and property-tested.** `newGame` needs a seed from the caller; a test fails on clock or `Math.random` use in `src/sim/`; fast-check tests hold five rules at 200 games (`PROP_RUNS=1000` for nightly). Left for other tasks: start-new prompt (calendar), builder-bot soft-lock check (scorecard). #191, `progress/determinism-property-tests.md`.
 - [x] **Make the phone's back gesture and map gestures safe.** Back closes the top layer (how-to, panel, card, placing); event cards are never skipped; on the bare map the first back shows a 2s hint and a second leaves. Sheets contain overscroll. #190, `decisions/back-gesture.md`.
 - [x] **Slow the Kelurahan down and make its stars read the player's own kampung.** Only the player's own RW sends Stempel letters to the player (the backlog had pinned Popularitas at 0). Each star also needs own residents and Popularitas: 50/50, 120/45, 200/40. Bot 3★ moved from 11-15 to about 19 min at 1x; the rest of the gap is a new task. #188, `decisions/kelurahan-own-kampung.md`.
