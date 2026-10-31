@@ -9,10 +9,10 @@ import { checkRepair, monthlyNet, repair, resolveEvent } from '../../src/sim/eve
 import { fundNeighbour, setAutoFund } from '../../src/sim/grow';
 import { meters, sejahtera, laporan } from '../../src/sim/needs';
 import { checkRestart, restart } from '../../src/sim/projects';
-import { checkPlace, checkUpgrade, place, requirementGaps, skipPermit, upgrade } from '../../src/sim/rules';
+import { checkPlace, checkUpgrade, place, requirementGaps, siteGaps, skipPermit, upgrade } from '../../src/sim/rules';
 import { COMBO_HINT_MONTH, easiestCombo, nextStep } from '../../src/sim/nextstep';
 import { acceptSK, canPromote, nextStarChecklist } from '../../src/sim/stages';
-import { buildCost, housing, newGame, population } from '../../src/sim/state';
+import { buildCost, housing, newGame, population, tilesOf } from '../../src/sim/state';
 import { tick } from '../../src/sim/tick';
 import { announce } from '../../src/sim/wacana';
 import { GRID_H, GRID_W, RT_H, RT_W, setGrid, type GameState, type StageId } from '../../src/sim/types';
@@ -93,7 +93,8 @@ interface Ctx {
   noSpot: Map<string, number>;
 }
 
-const free = (s: GameState, id: string, p: { x: number; y: number }) => checkPlace(s, id, p.x, p.y).ok;
+/** Whether the tile is a legal site. Requirements and cash do not depend on the tile; `place` checks them once a spot is picked. */
+const free = (s: GameState, id: string, p: { x: number; y: number }) => siteGaps(s, def(id), p.x, p.y).length === 0;
 
 function mulberry(seed: number): () => number {
   let a = seed >>> 0;
@@ -128,16 +129,26 @@ const allCells = (): { x: number; y: number }[] => {
 function spotFor(s: GameState, id: string, around?: { x: number; y: number }): { x: number; y: number } | undefined {
   const d = def(id);
   const scope = d.scope ?? 'rt';
-  const cells = allCells();
+  // A tile under a standing building can never be a spot (a plain path can be built over): skip it before the costly placement check.
+  const taken = new Set(s.buildings.filter((b) => b.def !== 'jalan').flatMap((b) => tilesOf(b).map((q) => q.x + q.y * GRID_W)));
+  const cells = allCells().filter((p) => !taken.has(p.x + p.y * GRID_W));
   if (around) {
-    return cells.filter((p) => free(s, id, p)).sort((p, q) => dist(p, around) - dist(q, around))[0];
+    return [...cells].sort((p, q) => dist(p, around) - dist(q, around)).find((p) => free(s, id, p));
   }
   if (scope !== 'rt') return cells.find((p) => lotAt(p.x, p.y) === scope && free(s, id, p));
-  const lots = cells.filter((p) => lotAt(p.x, p.y) === 'rt' && free(s, id, p));
+  const rtCells = cells.filter((p) => lotAt(p.x, p.y) === 'rt');
   const conn = connectedRoad(s);
-  const fed = lots.filter((p) => hasRoadBeside(conn, { def: id, x: p.x, y: p.y }));
+  const fedAt = (p: { x: number; y: number }) => hasRoadBeside(conn, { def: id, x: p.x, y: p.y });
   const needsRoad = d.category !== 'decoration' && !FLAT.has(id) && !id.startsWith('kantor');
-  return needsRoad ? fed.sort((p, q) => near(p) - near(q) || p.y - q.y)[0] : lots.filter((p) => !fed.includes(p))[0] ?? lots[0];
+  // Same picks as filtering every lot first, but stops at the first site that qualifies.
+  if (needsRoad) return [...rtCells].sort((p, q) => near(p) - near(q) || p.y - q.y).find((p) => fedAt(p) && free(s, id, p));
+  let firstFree: { x: number; y: number } | undefined;
+  for (const p of rtCells) {
+    if (!free(s, id, p)) continue;
+    if (!fedAt(p)) return p;
+    firstFree ??= p;
+  }
+  return firstFree;
 }
 
 const dist = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
