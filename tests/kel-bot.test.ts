@@ -7,6 +7,7 @@ import { lotAt } from '../src/sim/area';
 import { placeableDefs } from '../src/sim/content';
 import { checkPlace, checkUpgrade, place, skipPermit, upgrade } from '../src/sim/rules';
 import { housing, newGame, population } from '../src/sim/state';
+import { queueMonths, staffSlots } from '../src/sim/staff';
 import { tick } from '../src/sim/tick';
 import { GRID_H, GRID_W, setGrid, type GameState } from '../src/sim/types';
 
@@ -71,6 +72,10 @@ function playKel(seed: number, years: number, auto = false): { s: GameState; at:
       if (b.status === 'permit') skipPermit(s, b);
       else if (b.status === 'damaged' && checkRepair(s, b).ok) repair(s, b);
       else if (b.status === 'mangkrak' && checkRestart(s, b).ok) restart(s, b);
+    }
+    // Like the goal strip says, hire an Asisten when the permit queue is three months deep and a slot is free.
+    if (queueMonths(s) >= 3 && (s.staff?.length ?? 1) < staffSlots(s)) {
+      s.staff = [...(s.staff ?? []), { id: 900 + (s.staff?.length ?? 0), name: 'Asisten', role: 'asisten', stars: 2, stats: { rajin: 50, lobi: 50, jujur: 50, gaul: 50 }, salary: 300_000, xp: 0, level: 1, hiredAt: s.month } as never];
     }
     const before = s.stage.stars.kelurahan;
     tick(s);
