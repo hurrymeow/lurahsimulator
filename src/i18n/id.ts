@@ -357,6 +357,7 @@ export const ID: Record<Key, string> = {
   'meter.preman': '{n} preman di kampung.',
   'modal.new': '★ Baru ★',
   'modal.open': 'Buka {panel}',
+  'back.again': 'Tekan kembali sekali lagi untuk keluar.',
   'modal.tap': 'Ketuk untuk lanjut',
   'name.begin': 'Mulai',
   'name.bu': 'Bu',

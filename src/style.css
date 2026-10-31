@@ -308,6 +308,7 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
   margin: 0 auto;
   max-height: 75dvh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--surface);
   border-top: 1px solid var(--line);
   border-radius: 16px 16px 0 0;
@@ -571,3 +572,20 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .lomba-outcome.win { color: var(--rupiah); }
 .lomba-outcome.lose { color: var(--muted); }
 .lomba-prizes, .lomba-trophy { font-weight: 700; }
+
+.back-hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  z-index: 60;
+  pointer-events: none;
+}
+.back-hint[hidden] { display: none; }

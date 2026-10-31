@@ -2846,4 +2846,19 @@ test.describe('console frame and theme', () => {
       await expect(page.locator('#sheet')).toBeHidden();
     }
   });
+  test('the phone back gesture closes the top panel and asks before leaving', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    for (const id of ['build', 'log', 'settings']) {
+      await openPanel(page, id);
+      await expect(page.locator('#sheet')).toBeVisible();
+      await page.goBack();
+      await expect(page.locator('#sheet')).toBeHidden();
+      await expect(page.locator('#back-hint')).toBeHidden();
+    }
+    // On the bare map the first back only warns, and the page stays put.
+    await page.goBack();
+    await expect(page.locator('#back-hint')).toBeVisible();
+    await expect(page.locator('#map')).toBeVisible();
+  });
 });
