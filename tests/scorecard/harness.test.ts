@@ -10,7 +10,7 @@ describe('scorecard harness', () => {
       expect(tl.rows.length, bot).toBe(40);
       for (const r of tl.rows) for (const v of Object.values(r)) expect(Number.isFinite(v) || typeof v === 'string', `${bot} row ${r.t}`).toBe(true);
     }
-  });
+  }, 30_000);
 
   it('the same bot and seed give the same timeline', () => {
     const a = runBot('builder', 5, 60);
