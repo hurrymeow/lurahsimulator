@@ -1,0 +1,63 @@
+# Nightly checks that are too heavy for every PR. Today: the design scorecard (GAME-DESIGN.md section 8).
+# The CI and test config task adds the WebKit suite, the property-test run and the other nightly jobs here.
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 19 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scorecard-runs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [run-0, run-1, run-2, run-takeover]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run tests/scorecard/${{ matrix.group }}
+        env:
+          SCORECARD: '1'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scorecard-cache-${{ matrix.group }}
+          path: scorecard/.cache
+          retention-days: 1
+
+  scorecard-report:
+    needs: scorecard-runs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: scorecard-cache-*
+          path: scorecard/.cache
+          merge-multiple: true
+      - run: npx vitest run tests/scorecard/report.test.ts
+        env:
+          SCORECARD: '1'
+      - run: cat scorecard/scorecard.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scorecard
+          path: |
+            scorecard/scorecard.md
+            scorecard/golden-trend.json
+          retention-days: 30
