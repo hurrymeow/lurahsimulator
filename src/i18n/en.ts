@@ -144,6 +144,8 @@ export const EN = {
   'grow.none': 'No neighbours yet. They appear when you are promoted.',
   'grow.playerRun': 'You run this RT. Build on its lots like your own; its stars count from its own lots.',
   'grow.promoted': 'Promoted! The map grows.',
+  'pinjol.collectorBody': 'A household behind on a pinjol loan has a visitor at the gate. The street feels less safe for {weeks} weeks. Aman −{aman}.',
+  'pinjol.collectorTitle': 'Debt collector on the street',
   'grow.promotedKecBody': 'You are Pak Camat now. Three more Kelurahan share the Kecamatan with you. Watch pinjol and Aman.',
   'grow.promotedBody': 'The scenery pulls back and the neighbours appear. Fund each RT from Menu, Neighbours, or it stalls.',
   'grow.rank': 'Ranking in {n} week(s): score {score}, needs more than {target}. Wins so far: {wins}.',
