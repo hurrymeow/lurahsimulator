@@ -1622,7 +1622,7 @@ test.describe('Lomba Agustusan', () => {
       a.s.res.sabar = 60;
       const k = a.s.buildings.find((b: any) => b.def === 'kantorRT');
       a.s.buildings.push({ uid: a.s.nextUid++, def: 'lapangan', x: k.x - 4, y: k.y + 3, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
-      a.s.month = 15;
+      a.s.month = 18; // the next tick is week 19, when the panitia forms
       a.s.pendingEvent = null;
       a.runTick();
     });
@@ -1643,8 +1643,8 @@ test.describe('Lomba Agustusan', () => {
     await expect(page.locator('#sheet [data-stage="dangdut"]')).toHaveAttribute('aria-pressed', 'true');
     await expectLegible(page, 'lomba panel');
     await page.locator('.sheet-head .btn').click();
-    // Months pass to 17 Agustus; then time waits for the day screen.
-    for (let i = 0; i < 3; i++) await page.evaluate(() => { const a = (window as unknown as { pakrt: any }).pakrt; a.s.pendingEvent = null; a.runTick(); });
+    // Weeks pass to 17 Agustus; then time waits for the day screen.
+    for (let i = 0; i < 12; i++) await page.evaluate(() => { const a = (window as unknown as { pakrt: any }).pakrt; a.s.pendingEvent = null; a.runTick(); });
     expect(await app('a.s.lomba.due')).toBe(true);
     const day = page.locator('#lomba-day');
     for (let i = 0; i < 20 && !(await day.isVisible()); i++) {
