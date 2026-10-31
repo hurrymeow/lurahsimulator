@@ -450,6 +450,8 @@ export interface GameState {
   stempel: Stempel;
   /** Months in a row with the kas at or above zero. */
   debtFree: number;
+  /** Part of a folder the desks got through last month, carried over while the permit queue has work. */
+  deskCarry?: number;
   /** RW stage state. Absent in older saves. */
   rw: RwState;
   /** Kelurahan stage state. Absent in older saves. */

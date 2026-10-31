@@ -13,7 +13,7 @@ import { NAMES, TITLES } from '../data/names';
 import { IURAN } from './balance';
 import { gain, type Fx } from './gain';
 import { isWorking, population, price } from './state';
-import type { Applicant, CheckResult, GameState, Resident, RtTrait, Staff, StaffStats } from './types';
+import type { Applicant, Building, CheckResult, GameState, Resident, RtTrait, Staff, StaffStats } from './types';
 
 const ORDER = ['rt', 'rw', 'kelurahan'];
 
@@ -75,7 +75,56 @@ export function output(x: Staff): number {
 export const roleOutput = (s: GameState, role: RoleId): number => (s.staff ?? []).filter((x) => x.role === role).reduce((n, x) => n + output(x), 0);
 
 /** Share of a permit Inem's paperwork saves. */
-export const permitCut = (s: GameState): number => Math.min(ROLE_FX.asisten.permitCutMax, roleOutput(s, 'asisten') * ROLE_FX.asisten.permitCutPerLevel);
+/** Folders the Kantor's desks clear in a month: every Asisten's output, never less than the floor. */
+export const deskCapacity = (s: GameState): number => {
+  // A new game has Inem before the staff system first runs.
+  const desk = (s.staff ?? [newInem()]).filter((x) => x.role === 'asisten').reduce((n, x) => n + output(x), 0);
+  return Math.max(ROLE_FX.asisten.floor, desk * ROLE_FX.asisten.berkasPerOutput);
+};
+
+/** Buildings waiting for a permit, in the order the desks take them: first placed, first stamped. */
+export const permitQueue = (s: GameState): Building[] =>
+  s.buildings.filter((b) => b.status === 'permit').sort((a, b) => a.placedAt - b.placedAt || a.uid - b.uid);
+
+/** Folders still in the queue. */
+export const queueBerkas = (s: GameState): number => permitQueue(s).reduce((n, b) => n + Math.max(0, b.timer), 0);
+
+/** Months until this building's permit is through, at today's desk speed. Counts the folders ahead of it too. */
+export function permitEta(s: GameState, b: Building): number {
+  let ahead = 0;
+  for (const o of permitQueue(s)) {
+    ahead += Math.max(0, o.timer);
+    if (o.uid === b.uid) break;
+  }
+  return Math.max(1, Math.ceil((ahead - (s.deskCarry ?? 0)) / deskCapacity(s)));
+}
+
+/** Months until the whole queue is through. */
+export const queueMonths = (s: GameState): number => {
+  const q = permitQueue(s);
+  return q.length ? permitEta(s, q[q.length - 1]) : 0;
+};
+
+/** The desks clear the queue in order, whole folders only; what is left of a folder carries to next month. Returns the buildings whose permit came through. */
+export function clearPermits(s: GameState): Building[] {
+  const queue = permitQueue(s);
+  if (!queue.length) {
+    s.deskCarry = 0;
+    return [];
+  }
+  let cap = deskCapacity(s) + (s.deskCarry ?? 0);
+  const done: Building[] = [];
+  for (const b of queue) {
+    while (cap >= 1 && b.timer > 0) {
+      b.timer--;
+      cap--;
+    }
+    if (b.timer <= 0) done.push(b);
+    if (cap < 1) break;
+  }
+  s.deskCarry = done.length === queue.length ? 0 : Math.min(1, cap);
+  return done;
+}
 export const hansipAman = (s: GameState): number => roleOutput(s, 'hansip') * ROLE_FX.hansip.amanPerLevel;
 export const buildBoost = (s: GameState): number => roleOutput(s, 'supir') * ROLE_FX.supir.buildBoostPerLevel;
 export const upkeepCut = (s: GameState): number => {
