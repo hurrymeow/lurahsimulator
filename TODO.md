@@ -69,18 +69,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Source: voidinside99, 2026-10-31
   - `claimed · voidinside99 · 2026-10-31 · done when:` Hari has played the prototype and it merges (or is dropped), with the bite tuned in `decisions/desk-queue.md`.
 
-- [ ] **Make the four staff stats obvious and decisive.**
-  - Problem: Rajin, Lobi, Jujur and Gaul only scale a role's output, invisibly. Rajin drives most roles, Jujur only shows as a hidden penalty, and the player cannot see what a stat buys.
-  - Why: in Kairosoft's games the stats are the choice. A player should know at a glance what each stat does in each job, and pick people for it.
-  - Suggested solution (Hari approved, 2026-10-31): (1) one verb and icon per stat: Rajin how much, Lobi how smoothly, Jujur how much leaks, Gaul how liked; (2) two stats per role, one for output and one for risk, where a low risk stat brings mishaps; (3) staff cards and applicants show what each stat buys in numbers, and results name the stat; (4) "who do you send?" choices with odds by stat (Kecamatan permit call, Tim Audit, warga protest, banjir, lowongan quality); (5) Bimtek picks the stat, and level-ups raise the main stat; (6) traits name the stat they bend.
-  - Source: voidinside99 and Hari, 2026-10-31
-  - `claimed · voidinside99 · 2026-10-31 · done when:` all six are in, in ID and EN, with the staff and balance tests passing.
-- [ ] **90s special hires and a portrait for every special.**
-  - Problem: special hires show a star badge instead of a face; only Inem has a portrait. The specials are modern types only.
-  - Why: a face makes a hire feel like a person, as in Kairosoft's staff screens, and 90s TV types give the kampung nostalgia.
-  - Suggested solution: a portrait drawn in code for each special, and six new 90s archetypes (types, never one real person or someone else's character, per GAME-DESIGN.md section 5): a campus-radio comic, a radio traffic reporter, a typewriter typist, a TV quiz host, a morning-aerobics instructor, a games-rental repairman.
-  - Source: voidinside99, 2026-10-31
-  - `claimed · voidinside99 · 2026-10-31 · done when:` every special has a portrait in the Staff panel and its applicant card, and the six new specials can be hired.
 - [ ] **Stop a big kampung getting stuck under the Kelurahan 3★ Popularitas bar.**
   - Problem: residents never leave while Popularitas is above 15, and each resident lowers it. A kampung that grows well past 200 settles in the low 30s and cannot get back over the 3★ bar (35). One Kelurahan bot seed of three stays at 2★ for good (#204).
   - Why: a player who grew too fast is soft-locked out of 3★, with no way to see why or fix it.
@@ -90,6 +78,8 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- [x] **Make the four staff stats obvious and decisive.** One meaning and icon per stat; a work and a risk stat per role, with named weekly mishaps; cards and applicants say what each stat buys; "who do you send?" events with odds by stat; Bimtek picks the stat; trait chips. #206, `decisions/staff-stats.md`.
+- [x] **90s special hires and a portrait for every special.** Six 90s TV and radio types (types, never real people or others' characters) and a 44x60 portrait for all 13 specials. #207, `decisions/staff-portraits.md`.
 - [x] **Build the scorecard harness: timeline log and the 9 bots.** `npm run scorecard` plays 9 bots on 10 seeds and writes the section 8 scorecard and a golden-trend file; `nightly.yml` runs it. Soft-lock takeover check included. First result: 4 Pass, 13 Fail, 10 Unknown. See `progress/scorecard-harness.md` (#201).
 - [x] **17an (Agustusan) fanfares, SFX and key art.** Made in the engine: drumband fanfare, koplo sting, angklung call, slide whistles, sack hops, kerupuk crunch and a crowd cheer in `src/audio.ts`; a drawn panjat pinang pole, a confetti banner, and bunting and umbul-umbul in July and August. No recorded audio or AI art. #197, `decisions/17an-in-engine.md`.
 - [x] **Redo the building panel.** The description is built from the current level; a pixel roof badge (gold with MAKS at the top) replaces the level strip and the max-level messages; the upgrade button reads "Naikkan ke Lv n" with the gain under it and is hidden at the top; disabled reasons are one grey line; Bongkar names the warga still there; "Warga 4/5"; status only when not working. #194, `decisions/building-panel.md`.
