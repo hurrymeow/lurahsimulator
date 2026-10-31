@@ -16,13 +16,12 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: add a `json` reporter, always upload it, and list flaky tests in the run summary. When `src/i18n/` changes, add an English project at 412px. Add a WebKit project at 412px with 5 smoke specs on PRs and the full suite nightly. Add `nightly.yml`. Add a shared Playwright fixture that fails on `pageerror` and `console.error`, with a reasoned allowlist, and canary tests that inject a clipped label, small text, a small button and a layout shift. Update AGENTS.md's CI lines in the same PR. Land the fixture before the gesture task adds specs, or expect a rebase.
   - Source: TESTING.md items 2, 5, 9, 13, 15; `decisions/testing-checklist.md`
   - `open · — · — · done when:` all of it runs, the fixture covers all specs, every canary fails as expected, and AGENTS.md matches CI.
-- [ ] **Build the scorecard harness: timeline log and the 9 bots.**
-  - Problem: GAME-DESIGN.md section 8 needs a timeline log and 9 bot strategies; only idle and builder exist.
-  - Why: without them most design checklist items stay Unknown, so agents cannot review mechanics.
-  - Suggested solution: log every event in the sim to a timeline; add the 7 missing bots; `npm run scorecard` writes the section 8 scorecard and a golden-trend file.
-  - Source: TESTING.md item 7; GAME-DESIGN.md section 8
-  - `claimed · claude-scorecard · 2026-10-31 · done when:` the scorecard has no blank rows and runs nightly in under 20 minutes.
-  - Order: build after the weekly calendar and the determinism task. Bots play 1x and 2x only (no 4x). Minutes follow 8s a week, 4 weeks a month, 48 a year; pass targets include RT 3★ in about 12 min. Needs `nightly.yml` from the CI task: add a stub if that has not landed.
+- [ ] **Finish the scorecard: the 10 Unknown rows and the bot gaps.**
+  - Problem: the first scorecard (`scorecard/scorecard.md`) has 10 Unknown rows. Missing: goal ETAs (item 8), the screen checks (3, 27, T2), ablation runs (16), warning lead of fixed beats (22), a worst-event chain (23), Dana, Stempel and Anggaran in the timeline (13), the cause shown on screen (6), plus traits and combos in the data lint (2). The hint bot stalls at 1★ because the combo pointer fires late.
+  - Why: section 8 stays partly blind until each row can be judged. The nightly run is also untested on GitHub.
+  - Suggested solution: add goal ETAs to the recorder, a forced event chain, per-action ablation runs and the extra resources to the timeline. Add T2 specs for items 3, 6 and 27. Check the first nightly run time (bar 20 min) and trim seeds if needed.
+  - Source: `scorecard/scorecard.md`; `decisions/scorecard-harness.md`
+  - `open · — · — · done when:` no row reads Unknown for a reason the harness could fix, and a nightly run finishes under 20 minutes.
 - [ ] **Cap Pos Ronda so players use the other Popularitas buildings.**
   - Problem: Pos Ronda has no `maxCount`. The Kelurahan bot built 20 to 90 of them to hold Popularitas in a big kampung.
   - Why: A wall of Pos Ronda is the cheapest Popularitas, so Praktik Bidan, Panggung Senam and Kolam Pancing (#180) are skipped and the map looks the same.
@@ -65,6 +64,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- [x] **Build the scorecard harness: timeline log and the 9 bots.** `npm run scorecard` plays 9 bots on 10 seeds and writes the section 8 scorecard and a golden-trend file; `nightly.yml` runs it. Soft-lock takeover check included. First result: 4 Pass, 13 Fail, 10 Unknown. See `progress/scorecard-harness.md` (#201).
 - [x] **17an (Agustusan) fanfares, SFX and key art.** Made in the engine: drumband fanfare, koplo sting, angklung call, slide whistles, sack hops, kerupuk crunch and a crowd cheer in `src/audio.ts`; a drawn panjat pinang pole, a confetti banner, and bunting and umbul-umbul in July and August. No recorded audio or AI art. #197, `decisions/17an-in-engine.md`.
 - [x] **Redo the building panel.** The description is built from the current level; a pixel roof badge (gold with MAKS at the top) replaces the level strip and the max-level messages; the upgrade button reads "Naikkan ke Lv n" with the gain under it and is hidden at the top; disabled reasons are one grey line; Bongkar names the warga still there; "Warga 4/5"; status only when not working. #194, `decisions/building-panel.md`.
 - [x] **Make the sim deterministic and property-tested.** `newGame` needs a seed from the caller; a test fails on clock or `Math.random` use in `src/sim/`; fast-check tests hold five rules at 200 games (`PROP_RUNS=1000` for nightly). Left for other tasks: start-new prompt (calendar), builder-bot soft-lock check (scorecard). #191, `progress/determinism-property-tests.md`.
