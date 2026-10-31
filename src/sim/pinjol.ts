@@ -3,7 +3,9 @@
 // and on judol when any member has `judol`.
 import { JUDOL, PINJOL } from '../data/higher/kecamatan';
 import { t } from '../i18n';
+import { def, stageFx } from './content';
 import type { Fx } from './gain';
+import { isWorking } from './state';
 import { debtHouseholds, fedBase, householdGroups, households, judolHouseholds } from './needs';
 import { chance } from './rng';
 import type { GameState, Resident } from './types';
@@ -18,8 +20,13 @@ export const pinjolShare = (s: GameState): number => pct(debtHouseholds(s), hous
 /** Share of households on judol, 0 to 100. */
 export const judolShare = (s: GameState): number => pct(judolHouseholds(s), households(s));
 
-/** Chance a week that a household starts on judol, from Viral. */
-export const judolStartChance = (viral: number): number => Math.floor(Math.max(0, viral - JUDOL.viralFloor) / JUDOL.viralStep) * JUDOL.perStep;
+/** Chance a week that a household starts on judol, from Viral and from the Baliho standing. */
+export const judolStartChance = (viral: number, balihos = 0): number => Math.floor(Math.max(0, viral - JUDOL.viralFloor) / JUDOL.viralStep) * JUDOL.perStep + balihos * JUDOL.balihoStart;
+
+/** Idle warga retrained this week by the Balai Latihan Kerja standing. */
+const retrained = (s: GameState): number => s.buildings.reduce((n, b) => n + (isWorking(b) ? stageFx(def(b.def))?.retrain ?? 0 : 0), 0);
+
+const working = (s: GameState, id: string): number => s.buildings.filter((b) => b.def === id && isWorking(b)).length;
 
 /** Share of shop income judol takes: the cut times the share of households on it. 0 outside the Kecamatan. */
 export const judolIncomeCut = (s: GameState): number => (pinjolOn(s) ? JUDOL.incomeCut * (judolHouseholds(s) / Math.max(1, households(s))) : 0);
@@ -33,7 +40,12 @@ export function pinjolSystem(s: GameState, fx: Fx): void {
   const groups = householdGroups(s);
   // The last households in the order go hungry first when the kampung is short of food.
   const unfedFrom = Math.min(groups.length, fedBase(s));
-  const startJudol = judolStartChance(s.res.viral);
+  const startJudol = judolStartChance(s.res.viral, working(s, 'baliho'));
+  // A Koperasi Simpan Pinjam makes a fair loan easy to find. Two at most count.
+  const borrow = PINJOL.borrow * (1 - PINJOL.koperasiCut * Math.min(2, working(s, 'koperasiSP')));
+  // A Balai Latihan Kerja retrains the longest-idle warga, so their idle time starts again.
+  const idlers = s.residents.filter((r) => r.job === 'none' && !r.preman && r.staffId === undefined && (r.idle ?? 0) > 0).sort((a, b) => (b.idle ?? 0) - (a.idle ?? 0));
+  for (let i = 0; i < retrained(s) && i < idlers.length; i++) idlers[i].idle = 0;
   groups.forEach((g, i) => {
     const onJudol = g.some((r) => r.judol);
     if (onJudol) {
@@ -49,7 +61,7 @@ export function pinjolSystem(s: GameState, fx: Fx): void {
         fx.push({ kind: 'notice', title: t('pinjol.collectorTitle'), body: t('pinjol.collectorBody', { aman: PINJOL.collectorAman, weeks: PINJOL.collectorWeeks }), tone: 'bad' });
       }
       if (!hungry && chance(s, PINJOL.repay)) for (const r of g) delete r.debt;
-    } else if (hungry && chance(s, PINJOL.borrow * (onJudol ? JUDOL.borrowMult : 1))) g[0].debt = 0;
+    } else if (hungry && chance(s, borrow * (onJudol ? JUDOL.borrowMult : 1))) g[0].debt = 0;
   });
   kec.hits = (kec.hits ?? []).filter((until) => until > s.month);
   kec.pinjol = pinjolShare(s);

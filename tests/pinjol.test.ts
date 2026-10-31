@@ -5,6 +5,8 @@ import { collectorAman, debtHouseholds, fed, fedBase, households, judolHousehold
 import { judolIncomeCut, judolShare, judolStartChance, pinjolShare, pinjolSystem } from '../src/sim/pinjol';
 import { deserialize } from '../src/sim/save';
 import { acceptSK } from '../src/sim/stages';
+import { openRoles } from '../src/sim/staff';
+import { addBuilding } from '../src/sim/state';
 import { incomeMult } from '../src/sim/tick';
 import { setGrid, type GameState } from '../src/sim/types';
 
@@ -121,5 +123,42 @@ describe('the gate', () => {
     run(s, 100);
     expect(debtHouseholds(s)).toBe(0);
     expect(s.kec).toBeUndefined();
+  });
+});
+
+describe('Kecamatan buildings', () => {
+  const add = (s: GameState, id: string, x: number) => addBuilding(s, id, x, 0, 'active');
+
+  it('a Pos Satpol PP adds 4 Aman', () => {
+    const s = kec();
+    s.residents = s.residents.slice(0, 6);
+    const before = meters(s).aman;
+    add(s, 'posSatpol', 40);
+    expect(meters(s).aman).toBe(Math.min(100, before + 4));
+  });
+
+  it('a Balai Latihan Kerja restarts one idle warga a week', () => {
+    const s = kec();
+    add(s, 'balaiLatihanKerja', 40);
+    const idle = s.residents.filter((r) => r.job === 'none' && (r.idle ?? 0) > 0).length;
+    run(s, 1);
+    expect(s.residents.filter((r) => r.job === 'none' && (r.idle ?? 0) > 0).length).toBe(idle - 1);
+  });
+
+  it('Koperasi Simpan Pinjam cut new cases and Baliho feed judol', () => {
+    const plain = kec();
+    const helped = kec();
+    add(helped, 'koperasiSP', 40);
+    add(helped, 'koperasiSP', 44);
+    run(plain, 80);
+    run(helped, 80);
+    expect(debtHouseholds(helped)).toBeLessThan(debtHouseholds(plain));
+    expect(judolStartChance(0, 2)).toBeCloseTo(2 * JUDOL.balihoStart);
+  });
+
+  it('opens the Satpol PP post and 5-star applicants in the Kecamatan only', () => {
+    const s = kec();
+    expect(openRoles(s).map((r) => r.id)).toContain('satpol');
+    expect(openRoles(kelSeed()).map((r) => r.id)).not.toContain('satpol');
   });
 });

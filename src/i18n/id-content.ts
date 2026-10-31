@@ -208,6 +208,8 @@ export const ID_CONTENT: Record<string, string> = {
   'staff.role.penagih.name': 'Tukang Tagih Iuran',
   'staff.role.pu.blurb': 'Memperbaiki bangunan rusak sendiri, satu per minggu per level.',
   'staff.role.pu.name': 'Petugas PU',
+  'staff.role.satpol.blurb': 'Memimpin razia. Rajin membuatnya berhasil; Gaul rendah berisiko bentrok.',
+  'staff.role.satpol.name': 'Satpol PP',
   'staff.role.sekretaris.blurb': 'Tahu siapa yang harus ditelepon. Orang Dalam tiap minggu.',
   'staff.role.sekretaris.name': 'Sekretaris',
   'staff.role.supir.blurb': 'Menyetir mobil dinas. Tukang sampai ke lokasi lebih cepat.',
