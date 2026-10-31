@@ -22,7 +22,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: TESTING.md items 1 and 6. Random games find bugs the two bots never try.
   - Suggested solution: move the default seed to the caller; lint `src/sim/` for wall-clock and `Math.random`; add fast-check tests for stars never drop, no negative counts, no soft-lock, save round-trip (200 games in `npm test`, 1,000 nightly). Also check an incompatible save shows the start-new prompt (no save migrations).
   - Source: TESTING.md items 1, 6
-  - `open · — · — · done when:` the lint and property tests pass in CI.
+  - `claimed · Claude (project thread) · 2026-10-31 · done when:` the lint and property tests pass in CI.
 - [ ] **Make the phone's back gesture and map gestures safe.**
   - Problem: `src/` has no history handling, so Android back does not close panels. Map gestures may also trigger pull-to-refresh, double-tap zoom or edge-swipe back.
   - Why: back that quits the app loses the session, and a pull-down reload loses the month. UI.md review checklist items 7 and 8 fail or are untested.
