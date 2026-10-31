@@ -12,7 +12,7 @@ Date: 2026-10-31. Decided by Hari in the thread "Plan review checklists for game
 
 ## Why
 
-- Hari wants agents to run UI review without his playtesting, and asked for "what good looks like" quoted, not asserted.
+- Hari wants agents to run UI review without Hari having to playtest, and asked for "what good looks like" quoted, not asserted.
 - Kairosoft's wiki covers mechanics, not UI, and most Kairosoft games are landscape, so most items rest on platform and accessibility guidance.
 - An independent agent review of an earlier draft removed unsourced claims and merged items that duplicated the rules.
 
