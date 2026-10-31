@@ -145,6 +145,8 @@ export const ID: Record<Key, string> = {
   'grow.none': 'Belum ada tetangga. Mereka muncul saat kamu naik jabatan.',
   'grow.playerRun': 'Kamu yang pegang RT ini. Bangun di lahannya seperti RT-mu; bintangnya dihitung dari lahannya sendiri.',
   'grow.promoted': 'Naik jabatan! Peta melebar.',
+  'pinjol.collectorBody': 'Satu rumah menunggak pinjol dan didatangi penagih. Jalanan terasa kurang aman selama {weeks} minggu. Aman −{aman}.',
+  'pinjol.collectorTitle': 'Penagih utang di jalan',
   'grow.promotedKecBody': 'Sekarang Anda Pak Camat. Tiga Kelurahan lain berbagi Kecamatan dengan Anda. Awasi pinjol dan Aman.',
   'grow.promotedBody': 'Pemandangan mundur dan tetangga muncul. Danai tiap RT lewat Menu, Tetangga, atau macet.',
   'grow.rank': 'Peringkat dalam {n} minggu: skor {score}, harus lebih dari {target}. Menang sejauh ini: {wins}.',

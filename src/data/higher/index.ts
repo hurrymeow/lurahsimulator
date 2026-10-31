@@ -3,6 +3,7 @@ import { RW_BUILDINGS, RW_COMBOS, RW_EVENTS, RW_JOBS, RW_METERS } from './rw';
 
 export * from './types';
 export * from './rules';
+export * from './kecamatan';
 export * from './stages';
 
 export const STAGE_METERS = [...RW_METERS, ...KEL_METERS];
