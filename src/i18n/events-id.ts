@@ -91,6 +91,22 @@ const EVENTS: [id: string, name: string, body: string, choices: Choice[]][] = [
     ['Lewati festival', 'Warung tetap di rumah dan menggoreng seperti biasa.'],
     ['Ambil lapak', 'Antrean mengular. Warung mengalahkan sambalnya sendiri.', 'Keramaian festival'],
   ]],
+  ['telponKecamatan', 'Telepon dari Kecamatan', 'Kantor kecamatan menelepon soal izin-izinmu. "Sebaiknya ada yang datang langsung." Siapa yang pergi?', [
+    ['Biarkan berkasnya menunggu', 'Teleponnya berdering sekali lagi, lalu tak pernah lagi.'],
+    ['Kirim orang', ['Empat berkas pulang berstempel, plus sekotak kue untuk kantor.', 'Dia pulang membawa formulir baru. Formulir barunya butuh stempel.']],
+  ]],
+  ['protesWarga', 'Warga di Gerbang', 'Selusin warga berkumpul di Kantor soal bising, got, dan antrean untuk segala hal. Harus ada yang keluar menemui mereka.', [
+    ['Tutup jendela', 'Mereka pulang. Mereka juga pindah ke grup WA.'],
+    ['Kirim orang keluar', ['Teh, canda, dan janji yang ada tanggalnya. Mereka pulang senang.', 'Ada yang merekam. Videonya berjudul "Kantor vs warga".']],
+  ]],
+  ['hibahTunai', 'Hibah Tunai', 'Seorang donatur menyerahkan hibah tunai, dalam amplop, malam-malam. Harus ada yang menghitung dan membukukannya.', [
+    ['Kembalikan', 'Donaturnya tersinggung. Warganya terkesan.'],
+    ['Suruh orang membukukan', ['Tiap rupiah tercatat, lengkap dengan kuitansi dan foto.', 'Amplopnya tiba lebih tipis daripada saat berangkat.']],
+  ]],
+  ['atapBocor', 'Atap Bocor', 'Selepas badai, atap bocor di sepanjang gang. Memperbaikinya butuh seharian memanjat. Siapa yang memimpin?', [
+    ['Ember untuk semua', 'Ember plastik, senyum plastik.'],
+    ['Kirim kru', ['Semua atap tertambal sebelum magrib. Tangganya juga selamat.', 'Separuh atap, tagihan terpal dua kali lipat.']],
+  ]],
 ];
 
 const LINES: [id: string, name: string, line: string][] = [

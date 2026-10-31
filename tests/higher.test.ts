@@ -86,6 +86,7 @@ describe('RW and Kelurahan content', () => {
         want.add(`event.${e.id}.c${i}.label`);
         if (c.result) want.add(`event.${e.id}.c${i}.result`);
         if (c.modifier) want.add(`event.${e.id}.c${i}.mod`);
+        c.outcomes?.forEach((_o, j) => want.add(`event.${e.id}.c${i}.o${j}.result`));
       });
     }
     for (const k of want) expect(ID_HIGHER_DATA[k], k).toBeTruthy();
