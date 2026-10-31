@@ -20,6 +20,7 @@ import { openSettings } from './ui/settings';
 import { openNeighbours } from './ui/neighbours';
 import { openMenu } from './ui/menu';
 import { closeSheet } from './ui/sheet';
+import { setupBack } from './ui/back';
 import { registerSystems } from './systems';
 import { setupConsole } from './ui/console';
 import { observeStatIcons } from './ui/statIcons';
@@ -31,6 +32,7 @@ app.inspect = (uid) => inspect(app, uid);
 app.openResident = (id) => openResident(app, id);
 app.actions.push({ id: 'build', label: () => t('menu.build'), open: openBuild });
 registerSystems(app);
+setupBack(app);
 app.actions.push(
   { id: 'neighbours', label: () => t('grow.title'), show: (a) => a.s.neighbours.length > 0, open: openNeighbours },
   { id: 'log', label: () => t('menu.log'), group: 'records', open: (a) => a.openLog() },

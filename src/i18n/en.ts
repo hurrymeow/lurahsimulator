@@ -356,6 +356,7 @@ export const EN = {
   'meter.preman': '{n} preman in the kampung.',
   'modal.new': '★ New ★',
   'modal.open': 'Open {panel}',
+  'back.again': 'Press back again to leave.',
   'modal.tap': 'Tap to continue',
   'name.begin': 'Start',
   'name.bu': 'Bu',
