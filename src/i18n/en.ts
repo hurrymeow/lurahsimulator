@@ -72,7 +72,7 @@ export const EN = {
   'cs.satHide': 'Hide the satellite view',
   'cs.satHelp': 'Satellite view. Tap to look there.',
   'cs.satShow': 'Show the satellite view',
-  'date.label': '{month} W{week} · Year {year}',
+  'date.label': '{month} W{week} · Y{year}',
   'date.months': 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
   'event.mod': '{label}: income x{mult} for {n} weeks',
   'event.result': 'Event result',

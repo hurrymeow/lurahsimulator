@@ -6,7 +6,7 @@ Date: 2026-10-31. Decided by Hari: days are too fast for Indonesian life, weeks 
 - One tick (`MONTH_MS`, 8s at 1x) is one week. A month is 4 weeks (32s), a year 48 weeks (6.4 min).
 - Speeds are pause, 1x, 2x. `FAST_FROM_YEAR` and the 4x picture are gone.
 - `src/sim/calendar.ts` holds the calendar. `GameState.month` still counts ticks, so it now means weeks. The name stays so saves load unchanged.
-- HUD date reads `Mar W2 · Year 3` (ID: `Mar M2 · Tahun 3`).
+- HUD date reads `Mar W2 · Y3` (ID: `Mar M2 · T3`).
 
 ## Re-basing rule
 - Anything counted in ticks keeps its number, so wall time is unchanged: cooldowns, `minMonth`, building income and upkeep, modifier lengths, Act 1 length, RT 3★ target. Their text now says weeks.
