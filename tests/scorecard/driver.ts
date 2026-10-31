@@ -251,6 +251,11 @@ function buildCombo(c: Ctx, buffer: number, only?: string[]): void {
       if (s.buildings.some((b) => b.def === id)) continue;
       if (buy(c, id, buffer, member ? { x: member.x, y: member.y } : undefined)) return;
     }
+    // Every piece is on the map but none touch: buy one more copy of the last piece beside the first, as the hint says.
+    if (ids.length > 1 && ids.every((id) => s.buildings.some((b) => b.def === id))) {
+      const anchor = s.buildings.find((b) => b.def === ids[0])!;
+      if (buy(c, ids[ids.length - 1], buffer, { x: anchor.x, y: anchor.y })) return;
+    }
   }
 }
 
