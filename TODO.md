@@ -4,30 +4,25 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Tasks
 
-- [ ] **CI: keep flaky reports, run English and WebKit where it matters, add a nightly run.**
+- [ ] **CI and test config: flaky reports, English, WebKit, nightly, console-error fixture and canaries.**
   - Problem: a test that passes on retry leaves no record; English is only checked weekly; tests run in Chromium only; there is no nightly workflow.
-  - Why: TESTING.md items 2, 9 and 13 fail today, and items 6, 11, 12 and 17 need a nightly run.
-  - Suggested solution: add a `json` reporter, always upload it, and list flaky tests in the run summary. When `src/i18n/` changes, add an English project at 412px. Add a WebKit project at 412px with 5 smoke specs on PRs and the full suite nightly. Add `nightly.yml`. Update AGENTS.md's CI lines in the same PR.
-  - Source: TESTING.md items 2, 9, 13; `decisions/testing-checklist.md`
-  - `open · — · — · done when:` all four run, and AGENTS.md matches CI.
+  - Why: TESTING.md items 2, 9 and 13 fail today, and items 6, 11, 12 and 17 need a nightly run. Items 5 and 15 (merged in from the console-error task): e2e does not fail on `pageerror` or `console.error`, and nothing proves the legibility scan or visual diff can fail.
+  - Suggested solution: add a `json` reporter, always upload it, and list flaky tests in the run summary. When `src/i18n/` changes, add an English project at 412px. Add a WebKit project at 412px with 5 smoke specs on PRs and the full suite nightly. Add `nightly.yml`. Add a shared Playwright fixture that fails on `pageerror` and `console.error`, with a reasoned allowlist, and canary tests that inject a clipped label, small text, a small button and a layout shift. Update AGENTS.md's CI lines in the same PR. Land the fixture before the gesture task adds specs, or expect a rebase.
+  - Source: TESTING.md items 2, 5, 9, 13, 15; `decisions/testing-checklist.md`
+  - `open · — · — · done when:` all of it runs, the fixture covers all specs, every canary fails as expected, and AGENTS.md matches CI.
 - [ ] **Build the scorecard harness: timeline log and the 9 bots.**
   - Problem: GAME-DESIGN.md section 8 needs a timeline log and 9 bot strategies; only idle and builder exist.
   - Why: without them most design checklist items stay Unknown, so agents cannot review mechanics.
   - Suggested solution: log every event in the sim to a timeline; add the 7 missing bots; `npm run scorecard` writes the section 8 scorecard and a golden-trend file.
   - Source: TESTING.md item 7; GAME-DESIGN.md section 8
   - `open · — · — · done when:` the scorecard has no blank rows and runs nightly in under 20 minutes.
+  - Order: build after the weekly calendar and the determinism task. Bots play 1x and 2x only (no 4x). Minutes follow 8s a week, 4 weeks a month, 48 a year; pass targets include RT 3★ in about 12 min. Needs `nightly.yml` from the CI task: add a stub if that has not landed.
 - [ ] **Make the sim deterministic and property-tested.**
   - Problem: `newGame` defaults its seed from `Date.now()` in `src/sim/state.ts`; no property tests check the sim's hard rules.
   - Why: TESTING.md items 1 and 6. Random games find bugs the two bots never try.
-  - Suggested solution: move the default seed to the caller; lint `src/sim/` for wall-clock and `Math.random`; add fast-check tests for stars never drop, no negative counts, no soft-lock, save round-trip (200 games in `npm test`, 1,000 nightly).
+  - Suggested solution: move the default seed to the caller; lint `src/sim/` for wall-clock and `Math.random`; add fast-check tests for stars never drop, no negative counts, no soft-lock, save round-trip (200 games in `npm test`, 1,000 nightly). Also check an incompatible save shows the start-new prompt (no save migrations).
   - Source: TESTING.md items 1, 6
   - `open · — · — · done when:` the lint and property tests pass in CI.
-- [ ] **Fail tests on console errors and prove the scans can fail.**
-  - Problem: e2e runs do not fail on `pageerror` or `console.error`; nothing checks that the legibility scan or visual diff would catch a planted fault.
-  - Why: TESTING.md items 5 and 15.
-  - Suggested solution: a shared Playwright fixture that fails on errors, with a reasoned allowlist; canary tests that inject a clipped label, small text, a small button and a layout shift.
-  - Source: TESTING.md items 5, 15
-  - `open · — · — · done when:` the fixture runs on all specs and every canary fails as expected.
 - [ ] **Make the phone's back gesture and map gestures safe.**
   - Problem: `src/` has no history handling, so Android back does not close panels. Map gestures may also trigger pull-to-refresh, double-tap zoom or edge-swipe back.
   - Why: back that quits the app loses the session, and a pull-down reload loses the month. UI.md review checklist items 7 and 8 fail or are untested.
@@ -37,11 +32,11 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 - [ ] **Cap Pos Ronda so players use the other Popularitas buildings.**
   - Problem: Pos Ronda has no `maxCount`. The Kelurahan bot built 20 to 90 of them to hold Popularitas in a big kampung.
   - Why: A wall of Pos Ronda is the cheapest Popularitas, so Praktik Bidan, Panggung Senam and Kolam Pancing (#180) are skipped and the map looks the same.
-  - Suggested solution: Give Pos Ronda a `maxCount` per stage (for example 4 at RT, 8 at RW, 12 at Kelurahan), or make each one past the fourth give less. Rerun `tests/kel-bot.test.ts` and the balance tests.
+  - Suggested solution: Give Pos Ronda a `maxCount` per stage (for example 4 at RT, 8 at RW, 12 at Kelurahan), or make each one past the fourth give less. Rerun `tests/kel-bot.test.ts` and the balance tests after the weekly calendar lands, and again after the scorecard exists.
   - Source: `decisions/kelurahan-own-kampung.md`, open question 3
   - `open · — · — · done when:` Pos Ronda cannot be spammed, and the RT, RW and Kelurahan bots still reach their stars.
 - [ ] **Close the gap between the Kelurahan bot's 19 minutes and the 30-minute target.**
-  - Problem: After #188 the Kelurahan bot reaches 3★ at months 139 to 147 (about 19 min at 1x). The target is about 30. The AI side is fast: every RW reaches its stars by month 80 to 110.
+  - Problem: After #188 the Kelurahan bot reaches 3★ at months 139 to 147 (about 19 min at 1x; month numbers shift when the weekly calendar lands, so re-baseline after it). The target is about 30. The AI side is fast: every RW reaches its stars by month 80 to 110.
   - Why: The bot never hesitates, so a person is slower, but how much slower is unknown, and the stage may still feel short.
   - Suggested solution: Hari decides whether 19 bot-minutes is enough. If not, slow the AI RWs (longer `buildEvery` at the Kelurahan) rather than raising the own-kampung goals, which risks trapping a big kampung under the Popularitas bar (see the decision note).
   - Source: `decisions/kelurahan-own-kampung.md`, open question 2
