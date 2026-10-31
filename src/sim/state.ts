@@ -10,7 +10,7 @@ import { GRID_H, GRID_W, setGrid, type Building, type BuildingDef, type GameStat
 
 export const SAVE_VERSION = 3;
 
-export const newStageState = (): StageState => ({ current: 'rt', stars: { rt: 0, rw: 0, kelurahan: 0 } });
+export const newStageState = (): StageState => ({ current: 'rt', stars: { rt: 0, rw: 0, kelurahan: 0, kecamatan: 0 } });
 
 /** The seed comes from the caller: the sim never reads the clock. The app passes `freshSeed()` from src/app.ts. */
 export function newGame(seed: number): GameState {

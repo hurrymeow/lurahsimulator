@@ -20,7 +20,7 @@ function moneyGap(s: GameState, cost: number, missing: string[]): void {
 }
 
 /** Requirements that do not depend on the tile. Every miss says exactly what is missing. */
-const STAGE_ORDER = ['rt', 'rw', 'kelurahan'];
+const STAGE_ORDER = ['rt', 'rw', 'kelurahan', 'kecamatan'];
 
 export function requirementGaps(s: GameState, d: BuildingDef, opts: { ignoreLimit?: boolean } = {}): string[] {
   const missing: string[] = [];

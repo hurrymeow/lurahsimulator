@@ -12,6 +12,7 @@ import { def } from './content';
 import type { Fx } from './gain';
 import { gain } from './gain';
 import { letterMult } from './rw';
+import { newKec } from './kec';
 import { pick } from './rng';
 import { score } from './ranking';
 import { stageDef, goalProgress } from './stages';
@@ -19,7 +20,7 @@ import { addResident, bedsOf, covers, housing, price, tilesOf } from './state';
 import { RT_H, RT_W, mapSpan, setGrid, type Building, type GameState, type Neighbour, type RtTrait, type StageId } from './types';
 
 /** The ladder this engine climbs. Matches `next` in the stage data. */
-const NEXT: Partial<Record<StageId, StageId>> = { rt: 'rw', rw: 'kelurahan' };
+const NEXT: Partial<Record<StageId, StageId>> = { rt: 'rw', rw: 'kelurahan', kelurahan: 'kecamatan' };
 
 const TRAITS: RtTrait[] = ['rajin', 'hobi', 'jarang'];
 
@@ -434,12 +435,13 @@ export function promote(s: GameState, fx: Fx): boolean {
   const next = NEXT[s.stage.current];
   if (!next) return false;
   s.stage.current = next;
+  if (next === 'kecamatan') s.kec ??= newKec(s);
   setGrid(next);
   syncArea(s);
   for (const c of neighbourCells()) if (!s.neighbours.some((n) => n.cx === c.cx && n.cy === c.cy)) s.neighbours.push(newNeighbour(s, c.cx, c.cy));
   // Grup Chat Warga needs two RTs that think alike, so the draw never leaves every trait different.
   if (s.neighbours.length > 1 && new Set(s.neighbours.map((n) => n.trait)).size === s.neighbours.length) s.neighbours[s.neighbours.length - 1].trait = s.neighbours[0].trait;
   s.lastNovelty = s.month;
-  fx.push({ kind: 'notice', title: t('grow.promoted'), body: t('grow.promotedBody'), tone: 'good', fanfare: true });
+  fx.push({ kind: 'notice', title: t('grow.promoted'), body: t(next === 'kecamatan' ? 'grow.promotedKecBody' : 'grow.promotedBody'), tone: 'good', fanfare: true });
   return true;
 }

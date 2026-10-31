@@ -15,7 +15,7 @@ import { gain, type Fx } from './gain';
 import { isWorking, population, price } from './state';
 import type { Applicant, Building, CheckResult, GameState, Resident, RtTrait, Staff, StaffStats } from './types';
 
-const ORDER = ['rt', 'rw', 'kelurahan'];
+const ORDER = ['rt', 'rw', 'kelurahan', 'kecamatan'];
 
 /** A 0..1 roll from the seed and some salts. */
 function roll(s: GameState, ...salt: number[]): number {

@@ -55,7 +55,7 @@ describe('growing map', () => {
 
   it('stops at the top of the ladder', () => {
     const s = newGame(1);
-    s.stage.current = 'kelurahan';
+    s.stage.current = 'kecamatan';
     expect(promote(s, [])).toBe(false);
   });
 });
