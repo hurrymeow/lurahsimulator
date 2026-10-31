@@ -81,13 +81,13 @@ export function seedGame(id: SeedId): GameState {
   // Stars are set first, so every kind the stage opens is on the map.
   s.stage.stars.rt = 3;
   play(s, 72, ['rt']);
-  if (id === 'rt3') { s.res.rupiah = 5_000_000; return s; }
+  if (id === 'rt3') { s.res.rupiah = 5_000_000; s.stage.sk = 'offered'; return s; }
   promote(s, []);
   for (const n of s.neighbours) setAutoFund(n, 6);
   s.res.rupiah = 30_000_000;
   s.stage.stars.rw = 3;
   play(s, 72, ['rt', 'rw']);
-  if (id === 'rw') { s.res.rupiah = 20_000_000; return s; }
+  if (id === 'rw') { s.res.rupiah = 20_000_000; s.stage.sk = 'offered'; return s; }
   promote(s, []);
   s.stage.path = 'kelurahan';
   s.res.rupiah = 60_000_000;
