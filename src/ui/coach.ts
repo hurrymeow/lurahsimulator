@@ -59,11 +59,19 @@ export function setupCoach(app: App): void {
    * Place bar or the bottom bar, whichever is up.
    */
   const dock = (target: HTMLElement | null) => {
-    const r = target?.getBoundingClientRect();
+    let r = target?.getBoundingClientRect();
     const inSheet = !!target && !!document.getElementById('sheet')?.contains(target);
     const h = bar.offsetHeight;
     let up = false;
     if (inSheet && r) {
+      // No room under the target: scroll the sheet up just enough, while the target stays in full view.
+      const sheet = document.getElementById('sheet')!;
+      const short = r.bottom + 12 + h - (innerHeight - 8);
+      const spare = r.top - sheet.getBoundingClientRect().top;
+      if (short > 0 && short <= spare) {
+        sheet.scrollTop += short;
+        r = target!.getBoundingClientRect();
+      }
       const top = r.bottom + 12;
       if (top + h > innerHeight - 8) {
         // No room under the target. Above it would sit on the sheet's own text and tabs, so go above the sheet.

@@ -30,6 +30,12 @@ async function openPanel(page: Page, id: string): Promise<void> {
     await page.locator(`#dock-${id}`).click();
     return;
   }
+  // The Combo book is the Build sheet's last tab.
+  if (id === 'combo') {
+    await page.locator('#dock-build').click();
+    await page.locator('#sheet .tabs [data-tab="combo"]').click();
+    return;
+  }
   await page.locator('#menu-btn').click();
   await page.locator(`#act-${id}`).click();
 }
@@ -1726,19 +1732,16 @@ test.describe('RW stage', () => {
     await page.locator('#dock-build').click();
     // Build is split into tabs, so walk them until every RW building has shown up.
     const seen = new Set<string>();
-    const tabs = await page.locator('.sheet .tabs .tab').count();
+    const tabs = await page.locator('.sheet .tabs [data-tab]:not([data-tab="combo"])').count();
     for (let i = 0; i < tabs; i++) {
-      await page.locator('.sheet .tabs .tab').nth(i).click();
+      await page.locator('.sheet .tabs [data-tab]:not([data-tab="combo"])').nth(i).click();
       for (const name of ['Balai RW', 'Posyandu', 'Portal', 'Pasar Kaget', 'Gapura']) {
         if (await page.locator('.sheet .card-title strong', { hasText: new RegExp(`^${name}$`) }).count()) seen.add(name);
       }
       if (i === tabs - 1 || seen.size === 5) await expectLegible(page, `RW build menu tab ${i}`);
     }
     expect([...seen].sort()).toEqual(['Balai RW', 'Gapura', 'Pasar Kaget', 'Portal', 'Posyandu']);
-    await page.locator('.sheet-head .btn').click();
-
-    await page.locator('#menu-btn').click();
-    await page.locator('#act-combo').click();
+    await page.locator('.sheet .tabs [data-tab="combo"]').click();
     await page.locator('.sheet .ls-tile').first().click();
     await expect(page.locator('.sheet').getByText(lang() === 'en' ? /Needs .* within/ : /Butuh .* dalam jarak/).first()).toBeVisible();
     await expectLegible(page, 'RW Combo');

@@ -11,7 +11,7 @@
 .ls-stars .off { color: var(--line); opacity: 0.35; }
 .ls-progress { display: flex; flex-direction: column; gap: 4px; color: var(--muted); }
 .ls-progress .meter > div { background: var(--accent); }
-.ls-tabs .tab { min-width: 64px; }
+.ls-tabs .tab { min-width: 48px; }
 .ls-empty { grid-column: 1 / -1; margin: 8px 0; }
 .ls-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; font-size: 16px; font-weight: 700; border: 1px solid currentColor; }
 .ls-badge b { font-family: var(--font-pixel); }

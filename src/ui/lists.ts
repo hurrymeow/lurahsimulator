@@ -135,8 +135,8 @@ const members = (c: ComboDef, st: ComboStatus, size = 32) => {
 type ComboFilter = 'all' | ComboStatus['state'];
 
 /** A list of combo cards under filter buttons, one per row. A card shows the name, the buildings, a state
- * mark and the effect in two lines; tapping it opens the whole entry below it. */
-export function openComboBook(app: App): void {
+ * mark and the effect in two lines; tapping it opens the whole entry below it. It is the Build sheet's Combo tab. */
+export function comboBook(app: App): Node[] {
   const s = app.s;
   const combos = bookCombos(s).map((c) => ({ c, st: comboStatus(s, c) }));
   const found = combos.filter(({ c }) => s.discovered.includes(c.id)).length;
@@ -185,7 +185,7 @@ export function openComboBook(app: App): void {
     (k) => (k === 'all' ? `${t('ls.all')} ${count(k)}` : `${STATE_ICON[k]} ${count(k)}`),
     (k) => `${k === 'all' ? t('ls.all') : stateName(k)}: ${count(k)}`, draw);
   draw('all');
-  openSheet(t('menu.combo'), [head, bar, grid]);
+  return [head, bar, grid];
 }
 
 // ---------- Warga ----------
