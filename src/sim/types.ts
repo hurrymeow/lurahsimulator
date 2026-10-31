@@ -119,6 +119,10 @@ export interface KecState {
   pinjol: number;
   /** Weeks in a row with Aman across the Kecamatan at the 2-star bar. */
   amanRun: number;
+  /** Weeks the debt collector's Aman cut ends, one per visit. */
+  hits?: number[];
+  /** A razia in force: Aman is up until this week. */
+  razia?: { until: number };
   /** Week of the last razia. Absent if none. */
   lastRazia?: number;
   /** Week the player was promoted. */
@@ -376,6 +380,10 @@ export interface Resident {
   preman?: boolean;
   /** Hired onto the staff: counts as in work, never picks a job of their own. */
   staffId?: number;
+  /** Kecamatan only: weeks this resident's household has owed a pinjol. Absent when out of debt. */
+  debt?: number;
+  /** Kecamatan only: this resident's household is on judol. */
+  judol?: boolean;
 }
 
 export interface WacanaState {

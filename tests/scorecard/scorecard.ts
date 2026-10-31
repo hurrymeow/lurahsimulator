@@ -62,10 +62,10 @@ const verdict = (ok: boolean): Verdict => (ok ? 'Pass' : 'Fail');
 const partial = (ok: boolean): Verdict => (ok ? 'Unknown' : 'Fail');
 
 const runsOf = (r: Runs, bot: BotId) => r[bot] ?? [];
-/** Median tick of the nth star across seeds, or NaN if any seed never got there. */
+/** Median tick of the nth star over the seeds that got there, or NaN if fewer than half did. */
 function starMedian(tls: Timeline[], idx: number): number {
-  const ts = tls.map((t) => t.starTicks[idx]);
-  return ts.some((x) => x === undefined) ? NaN : median(ts as number[]);
+  const ts = tls.map((t) => t.starTicks[idx]).filter((x): x is number => x !== undefined);
+  return ts.length * 2 < tls.length || ts.length === 0 ? NaN : median(ts);
 }
 const reached = (tls: Timeline[], idx: number) => tls.filter((t) => t.starTicks[idx] !== undefined).length;
 const STAR_NAMES = ['RT 1★', 'RT 2★', 'RT 3★', 'RW 1★', 'RW 2★', 'RW 3★', 'Kel 1★', 'Kel 2★', 'Kel 3★'];
@@ -489,10 +489,10 @@ export function renderMarkdown(runs: Runs, rows: ScoreRow[], takeovers: Takeover
   out.push('', `**${counts.Pass} Pass · ${counts.Fail} Fail · ${counts.Unknown} Unknown** of ${rows.length} items. Unknown means the harness cannot judge the item yet, and says why.`, '');
   out.push('| # | Item | Tier | Verdict | Evidence |', '| --- | --- | --- | --- | --- |');
   for (const r of rows) out.push(`| ${r.n} | ${r.title} | ${r.tier} | ${r.verdict} | ${r.evidence.replace(/\|/g, '/')} |`);
-  out.push('', '## Star times by bot', '', 'Median minute each star was earned across seeds. A dash means a seed never got there.', '');
+  out.push('', '## Star times by bot', '', 'Median minute each star was earned, over the seeds that got there. A count in brackets means some seeds never did. A dash means fewer than half did.', '');
   out.push(`| Bot | Seeds | ${STAR_NAMES.join(' | ')} | Final pop |`, `| --- | --- | ${STAR_NAMES.map(() => '---').join(' | ')} | --- |`);
   for (const [bot, tls] of Object.entries(runs) as [BotId, Timeline[]][]) {
-    const cells = STAR_NAMES.map((_, i) => (Number.isNaN(starMedian(tls, i)) ? `– (${reached(tls, i)}/${tls.length})` : min(starMedian(tls, i)).toFixed(1)));
+    const cells = STAR_NAMES.map((_, i) => (Number.isNaN(starMedian(tls, i)) ? `– (${reached(tls, i)}/${tls.length})` : min(starMedian(tls, i)).toFixed(1) + (reached(tls, i) < tls.length ? ` (${reached(tls, i)}/${tls.length})` : '')));
     out.push(`| ${bot} | ${tls.length} | ${cells.join(' | ')} | ${median(tls.map((tl) => tl.rows.at(-1)?.pop ?? 0)).toFixed(0)} |`);
   }
   out.push('', '## Soft-lock takeover', '', 'An idle or random bot plays to mid-game, then a builder bot takes over the state. It must earn a star or finish a goal line within 150 ticks (20 min).', '');

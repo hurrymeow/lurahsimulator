@@ -29,6 +29,7 @@ import { lombaSystem } from './lomba';
 import { monthWarnings, type SabarCause } from './warnings';
 import { parkirSystem } from './parkir';
 import { needsSystem, premanTake } from './needs';
+import { judolIncomeCut, pinjolSystem } from './pinjol';
 import { buildBoost, clearPermits, permitQueue, queueMonths, staffSystem, upkeepCut } from './staff';
 import { ROLE_FX } from '../data/staff';
 import { realisasiSystem, realisasiWarungMult } from './realisasi';
@@ -43,7 +44,7 @@ export type { Fx };
 export function incomeMult(s: GameState, b: Building): number {
   let m = comboIncomeMult(s, b);
   for (const mod of s.modifiers) if (mod.target === '*' || mod.target === b.def) m *= mod.incomeMult;
-  if (def(b.def).shop) m *= 1 + s.res.viral * VIRAL_INCOME;
+  if (def(b.def).shop) m *= (1 + s.res.viral * VIRAL_INCOME) * (1 - judolIncomeCut(s));
   return m;
 }
 
@@ -252,6 +253,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   realisasiSystem,
   staffSystem,
   needsSystem,
+  pinjolSystem,
   wacanaSystem,
   mangkrakSystem,
   expectations,

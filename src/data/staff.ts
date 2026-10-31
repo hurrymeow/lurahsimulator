@@ -16,7 +16,7 @@ export const STATS: StatId[] = ['rajin', 'lobi', 'jujur', 'gaul'];
  */
 export const STAT_ICON: Record<StatId, string> = { rajin: 'statRajin', lobi: 'statLobi', jujur: 'statJujur', gaul: 'statGaul' };
 
-export type RoleId = 'asisten' | 'hansip' | 'penagih' | 'pu' | 'adminWa' | 'supir' | 'bendahara' | 'sekretaris';
+export type RoleId = 'asisten' | 'hansip' | 'penagih' | 'pu' | 'adminWa' | 'supir' | 'bendahara' | 'sekretaris' | 'satpol';
 
 export interface RoleDef {
   id: RoleId;
@@ -43,6 +43,7 @@ export const ROLES: RoleDef[] = [
   { id: 'supir', name: 'Supir', blurb: 'Drives the official car. Building crews arrive sooner.', stat: 'rajin', risk: 'gaul', mishap: { res: 'sabar', amount: 1 }, opens: { stage: 'rw', stars: 0 } },
   { id: 'bendahara', name: 'Bendahara', blurb: 'Keeps the kas. Upkeep leaks less.', stat: 'jujur', risk: 'rajin', mishap: { res: 'rupiah', amount: 300_000 }, opens: { stage: 'kelurahan', stars: 0 } },
   { id: 'sekretaris', name: 'Sekretaris', blurb: 'Knows who to call. Orang Inside every week.', stat: 'lobi', risk: 'jujur', mishap: { res: 'sabar', amount: 3 }, opens: { stage: 'kelurahan', stars: 0 } },
+  { id: 'satpol', name: 'Satpol PP', blurb: 'Mans the razia. Rajin makes it work; a low Gaul risks a scuffle.', stat: 'rajin', risk: 'gaul', mishap: { res: 'sabar', amount: 3 }, opens: { stage: 'kecamatan', stars: 0 } },
 ];
 
 export const roleDef = (id: RoleId): RoleDef => ROLES.find((r) => r.id === id)!;
@@ -55,6 +56,7 @@ export const SLOTS: { stage: StageId; stars: number; slots: number }[] = [
   { stage: 'rt', stars: 3, slots: 4 },
   { stage: 'rw', stars: 0, slots: 6 },
   { stage: 'kelurahan', stars: 0, slots: 8 },
+  { stage: 'kecamatan', stars: 0, slots: 9 },
 ];
 
 /** Stars set only the starting stat total and the salary. The kampung act never sees 5 or 6 stars. */
@@ -198,6 +200,8 @@ export const ROLE_FX = {
   supir: { buildBoostPerLevel: 0.1 },
   bendahara: { upkeepCutPerLevel: 0.03, upkeepCutMax: 0.15 },
   sekretaris: { orangDalamPerLevel: 0.05 },
+  /** Extra Aman a razia gives, per level of output. The razia itself lands in the responses task. */
+  satpol: { raziaAmanPerLevel: 1 },
 };
 
 /** Inem: staff number 1, the Asisten. Fixed stats, a modest salary, and a dream. */

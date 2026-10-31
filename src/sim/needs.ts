@@ -1,12 +1,13 @@
 // What is true for the warga: Perut (fed), Kerja (in work) and Aman (safe), each 0 to 100. Sejahtera is
 // their average. Hungry households and preman cost Popularitas, so warga are more than a headcount.
+import { PINJOL, RAZIA } from '../data/higher/kecamatan';
 import { t } from '../i18n';
-import { def } from './content';
+import { def, stageFx } from './content';
 import { gain, type Fx } from './gain';
 import { slots, used } from './jobs';
 import { noteProblem } from './problems';
 import { realisasiDone, realisasiSum } from './realisasi';
-import { hansipAman } from './staff';
+import { hansipAman, satpolRaziaAman } from './staff';
 import { isWorking, population } from './state';
 import type { Building, GameState, Meters, Resident } from './types';
 
@@ -40,8 +41,19 @@ const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
 export const households = (s: GameState): number => Math.ceil(population(s) / NEEDS.household);
 
-/** Households fed this month: every working Warung Sembako, less the price rise, plus any Bansos. */
-export function fed(s: GameState): number {
+/** The residents split into households of three, in the order they moved in. Pinjol and judol track households this way. */
+export function householdGroups(s: GameState): Resident[][] {
+  const out: Resident[][] = [];
+  for (let i = 0; i < s.residents.length; i += PINJOL.household) out.push(s.residents.slice(i, i + PINJOL.household));
+  return out;
+}
+
+/** Households with a pinjol, and households on judol. Both are zero outside the Kecamatan. */
+export const debtHouseholds = (s: GameState): number => householdGroups(s).filter((g) => g.some((r) => r.debt !== undefined)).length;
+export const judolHouseholds = (s: GameState): number => householdGroups(s).filter((g) => g.some((r) => r.judol)).length;
+
+/** Households fed before pinjol counts against them. */
+export function fedBase(s: GameState): number {
   let n = 0;
   for (const b of s.buildings) {
     if (!isWorking(b)) continue;
@@ -52,7 +64,19 @@ export function fed(s: GameState): number {
   return Math.floor(n + households(s) * realisasiSum(s, 'perutCover'));
 }
 
+/** Households fed this month. A household in debt counts half unfed (PINJOL.unfedShare). */
+export const fed = (s: GameState): number => Math.max(0, Math.floor(fedBase(s) - debtHouseholds(s) * PINJOL.unfedShare));
+
+/** Aman a razia in force adds: its own, plus what the Satpol PP on the beat brings. */
+export const raziaAman = (s: GameState): number => (s.kec?.razia && s.kec.razia.until > s.month ? RAZIA.aman + satpolRaziaAman(s) : 0);
+
+/** Aman the debt collector's visits are costing right now. */
+export const collectorAman = (s: GameState): number => (s.kec?.hits ?? []).filter((until) => until > s.month).length * PINJOL.collectorAman;
+
 export const premanList = (s: GameState): Resident[] => s.residents.filter((r) => r.preman);
+
+/** Aman from stage buildings that carry it (the Pos Satpol PP). */
+const stageAman = (s: GameState): number => s.buildings.reduce((n, b) => n + (isWorking(b) ? stageFx(def(b.def))?.aman ?? 0 : 0), 0);
 
 export function meters(s: GameState): Meters {
   const pop = population(s);
@@ -64,7 +88,7 @@ export function meters(s: GameState): Meters {
   const a = NEEDS.aman;
   const idle = s.residents.filter((r) => !r.preman && (r.idle ?? 0) >= a.idleMonths).length;
   const crowd = Math.max(0, pop - a.crowdFrom) * a.perResident;
-  const aman = a.base - crowd - a.perIdle * idle - a.perPreman * premanList(s).length + a.perLamp * working('lampuTaman') + a.perPosRonda * working('posRonda') + realisasiSum(s, 'aman') + hansipAman(s);
+  const aman = a.base - crowd - a.perIdle * idle - a.perPreman * premanList(s).length + a.perLamp * working('lampuTaman') + a.perPosRonda * working('posRonda') + stageAman(s) + realisasiSum(s, 'aman') + hansipAman(s) - collectorAman(s) + raziaAman(s);
   return { perut: clamp(perut), kerja: clamp(kerja), aman: clamp(aman), cap: sejahteraCap(pop) };
 }
 

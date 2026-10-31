@@ -61,7 +61,7 @@ export const KECAMATAN_STAGE: StageDef = {
   stars: [
     {
       goals: [{ kind: 'built', n: 1, def: 'kantorKec' }, { kind: 'kelsAtStars', n: 4, stars: 1 }, { kind: 'pinjolUnder', n: 25 }, { kind: 'residents', n: 250 }],
-      unlocks: [],
+      unlocks: ['baliho', 'tamanKota'],
     },
     {
       goals: [{ kind: 'kelsAtStars', n: 4, stars: 2 }, { kind: 'tierWins', n: 1, tier: 'kecamatan' }, { kind: 'amanWeeks', n: 24, min: 60 }, { kind: 'sabar', n: 35 }],
@@ -84,6 +84,6 @@ export const PATH_UNLOCKS: Record<Path, { start: string[]; stars: [string[], str
 };
 
 /** Free on promotion into the stage, on both paths. */
-export const PROMOTION_UNLOCKS: Record<'rw' | 'kelurahan' | 'kecamatan', string[]> = { rw: ['balaiRW'], kelurahan: ['aspalUlang'], kecamatan: [] };
+export const PROMOTION_UNLOCKS: Record<'rw' | 'kelurahan' | 'kecamatan', string[]> = { rw: ['balaiRW'], kelurahan: ['aspalUlang'], kecamatan: ['kantorKec', 'posSatpol', 'koperasiSP', 'balaiLatihanKerja'] };
 
 export const HIGHER_STAGES: StageDef[] = [RW_STAGE, KELURAHAN_STAGE, KECAMATAN_STAGE];
