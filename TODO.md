@@ -23,12 +23,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: move the default seed to the caller; lint `src/sim/` for wall-clock and `Math.random`; add fast-check tests for stars never drop, no negative counts, no soft-lock, save round-trip (200 games in `npm test`, 1,000 nightly). Also check an incompatible save shows the start-new prompt (no save migrations).
   - Source: TESTING.md items 1, 6
   - `claimed · Claude (project thread) · 2026-10-31 · done when:` the lint and property tests pass in CI.
-- [ ] **Make the phone's back gesture and map gestures safe.**
-  - Problem: `src/` has no history handling, so Android back does not close panels. Map gestures may also trigger pull-to-refresh, double-tap zoom or edge-swipe back.
-  - Why: back that quits the app loses the session, and a pull-down reload loses the month. UI.md review checklist items 7 and 8 fail or are untested.
-  - Suggested solution: push a history entry per open panel and close the top panel on popstate; on the bare map, ask before leaving. Set `overscroll-behavior: contain` and `touch-action` on the map and sheets. Add the T2 checks from items 7 and 8 to `tests/e2e/ui.spec.ts`.
-  - Source: UI.md, Review checklist, items 7 and 8
-  - `claimed · Claude (project thread) · 2026-10-31 · done when:` back closes the top panel on every sheet, and the item 8 gesture checks pass.
 - [ ] **Cap Pos Ronda so players use the other Popularitas buildings.**
   - Problem: Pos Ronda has no `maxCount`. The Kelurahan bot built 20 to 90 of them to hold Popularitas in a big kampung.
   - Why: A wall of Pos Ronda is the cheapest Popularitas, so Praktik Bidan, Panggung Senam and Kolam Pancing (#180) are skipped and the map looks the same.
@@ -57,6 +51,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Done
 
+- [x] **Make the phone's back gesture and map gestures safe.** Back closes the top layer (how-to, panel, card, placing); event cards are never skipped; on the bare map the first back shows a 2s hint and a second leaves. Sheets contain overscroll. #190, `decisions/back-gesture.md`.
 - [x] **Slow the Kelurahan down and make its stars read the player's own kampung.** Only the player's own RW sends Stempel letters to the player (the backlog had pinned Popularitas at 0). Each star also needs own residents and Popularitas: 50/50, 120/45, 200/40. Bot 3★ moved from 11-15 to about 19 min at 1x; the rest of the gap is a new task. #188, `decisions/kelurahan-own-kampung.md`.
 - [x] **Replace 'Kini: do xx' with the pending goals for the next star.** The strip reads "★ berikutnya, N target lagi: ..."; tapping lists every unmet goal, then one next step when it helps. #178, `decisions/goal-strip-star-goals.md`.
 - [x] **Redo the staff page UI so it has far fewer buttons.** One card per person with one main button; stats, refuse, mutasi and let go in a detail view; one lowongan button per role. #179, `decisions/staff-cards.md`.
