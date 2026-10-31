@@ -55,7 +55,8 @@ function run(g: { seed: number; turns: Act[][] }, each: (s: GameState, prev: Gam
 
 const opts = { numRuns: RUNS };
 
-describe('sim rules hold for any play', () => {
+// Many random plays each: slow when the whole suite runs at once, so every test here gets 30 seconds.
+describe('sim rules hold for any play', { timeout: 30_000 }, () => {
   it('stars never drop', () => {
     fc.assert(
       fc.property(game, (g) => {
@@ -65,8 +66,7 @@ describe('sim rules hold for any play', () => {
       }),
       opts,
     );
-    // Many random plays: slow when the whole suite runs at once.
-  }, 30_000);
+  });
 
   it('no count goes below zero', () => {
     fc.assert(
