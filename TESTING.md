@@ -18,6 +18,7 @@ Decided 2026-10-31, code pending: English e2e at 412px in PR CI when `src/i18n/`
 - **Unit and sim:** 52 test files in `tests/` (plus 3 helpers), about 380 tests, run by `npm test`. `balance.test.ts` runs the idle and builder bots on 10 seeds.
 - **E2E:** `tests/e2e/ui.spec.ts` (about 100 tests) and `visual.spec.ts` (5 baselines: home, HUD, Build, event, tip; 412px, Indonesian only). Chromium only.
 - **CI:** typecheck, unit, build, then e2e in 6 shards in Indonesian at 4 widths (about 420 test runs). English runs weekly (`e2e-en.yml`). 1 retry. The Playwright report is uploaded only when a run fails or is cancelled. Service workers are blocked in tests.
+- **Scorecard:** `npm run scorecard` plays nine bots on 10 seeds (`tests/scorecard/`), writes `scorecard/scorecard.md` and `scorecard/golden-trend.json`, and runs nightly (`nightly.yml`). Rows the harness cannot judge read Unknown with the reason. `npm test` runs a short harness check only. See `decisions/scorecard-harness.md`.
 - **Randomness:** the sim uses a seeded RNG (`src/sim/rng.ts`). `Math.random` appears only in `src/ui` and `src/render`. One wall-clock default remains in the sim: `newGame(seed = Date.now() % ...)` in `src/sim/state.ts`.
 - **Build stamp:** the build already stamps a content hash (`__VERSION__` in `vite.config.ts`) for the update banner.
 
