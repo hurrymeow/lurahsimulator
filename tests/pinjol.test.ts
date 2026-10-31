@@ -1,10 +1,15 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
-import { JUDOL, PINJOL } from '../src/data/higher/kecamatan';
+import { JUDOL, PINJOL, RAZIA } from '../src/data/higher/kecamatan';
 import { collectorAman, debtHouseholds, fed, fedBase, households, judolHouseholds, meters } from '../src/sim/needs';
 import { judolIncomeCut, judolShare, judolStartChance, pinjolShare, pinjolSystem } from '../src/sim/pinjol';
 import { deserialize } from '../src/sim/save';
-import { acceptSK } from '../src/sim/stages';
+import { acceptSK, nextStarChecklist } from '../src/sim/stages';
+import { REALISASI } from '../src/data/realisasi';
+import { checkRazia, startRazia } from '../src/sim/kec';
+import { laporan, raziaAman } from '../src/sim/needs';
+import { checkRealisasi, realisasiSum, startRealisasi } from '../src/sim/realisasi';
+import { announce, availableWacana, checkAnnounce } from '../src/sim/wacana';
 import { openRoles } from '../src/sim/staff';
 import { addBuilding } from '../src/sim/state';
 import { incomeMult } from '../src/sim/tick';
@@ -160,5 +165,94 @@ describe('Kecamatan buildings', () => {
     const s = kec();
     expect(openRoles(s).map((r) => r.id)).toContain('satpol');
     expect(openRoles(kelSeed()).map((r) => r.id)).not.toContain('satpol');
+  });
+});
+
+describe('responses', () => {
+  const shaky = (): GameState => {
+    const s = kec();
+    s.res.orangDalam = 5;
+    addBuilding(s, 'posSatpol', 40, 0, 'active');
+    run(s, 80);
+    return s;
+  };
+
+  it('a razia lifts Aman, costs Popularitas, and moves half the cases next door', () => {
+    const s = shaky();
+    s.res.viral = 90;
+    run(s, 40);
+    const debt = debtHouseholds(s);
+    const judol = judolHouseholds(s);
+    expect(debt + judol).toBeGreaterThan(2);
+    const aman = meters(s).aman;
+    const sabar = s.res.sabar;
+    const od = s.res.orangDalam;
+    const districts = s.kec!.districts.map((d) => d.pinjol);
+    expect(startRazia(s, []).ok).toBe(true);
+    expect(debtHouseholds(s)).toBe(debt - Math.floor(debt / 2));
+    expect(judolHouseholds(s)).toBe(judol - Math.floor(judol / 2));
+    expect(s.res.orangDalam).toBe(od - RAZIA.orangDalam);
+    expect(s.res.sabar).toBeLessThan(sabar);
+    expect(meters(s).aman).toBeGreaterThanOrEqual(aman);
+    expect(raziaAman(s)).toBe(RAZIA.aman);
+    expect(s.kec!.districts.reduce((n, d) => n + d.pinjol, 0)).toBeGreaterThan(districts.reduce((n, d) => n + d, 0));
+    expect(s.kec!.lastRazia).toBe(s.month);
+    // One at a time, and it ends.
+    expect(checkRazia(s).ok).toBe(false);
+    s.month += RAZIA.weeks;
+    expect(raziaAman(s)).toBe(0);
+  });
+
+  it('a razia needs a working Pos Satpol PP and an Orang Inside', () => {
+    const s = kec();
+    s.res.orangDalam = 5;
+    expect(checkRazia(s).ok).toBe(false);
+    addBuilding(s, 'posSatpol', 40, 0, 'active');
+    s.res.orangDalam = 0;
+    expect(checkRazia(s).ok).toBe(false);
+    s.res.orangDalam = 1;
+    expect(checkRazia(s).ok).toBe(true);
+  });
+
+  it('the 3-star razia line reads the last 48 weeks', () => {
+    const s = kec();
+    s.res.orangDalam = 5;
+    addBuilding(s, 'posSatpol', 40, 0, 'active');
+    s.month += 60;
+    const line = () => nextStarChecklist({ ...s, stage: { ...s.stage, stars: { ...s.stage.stars, kecamatan: 2 } } })!.find((l) => l.goal.kind === 'noRaziaWeeks')!;
+    expect(line().done).toBe(true);
+    startRazia(s, []);
+    expect(line().done).toBe(false);
+    s.month += 48;
+    expect(line().done).toBe(true);
+  });
+
+  it('Spanduk Anti Judol only moves the Laporan, and only in the Kecamatan', () => {
+    const s = kec();
+    s.res.rupiah = 1e8;
+    const pin = pinjolShare(s);
+    const l = laporan(s);
+    expect(announce(s, 'judol').ok).toBe(true);
+    expect(laporan(s)).toBe(l + 5);
+    expect(pinjolShare(s)).toBe(pin);
+    expect(availableWacana(kelSeed()).some((w) => w.id === 'judol')).toBe(false);
+    expect(checkAnnounce(kelSeed(), 'judol').ok).toBe(false);
+  });
+
+  it('Literasi Keuangan lands after 8 weeks and halves new cases for 48', () => {
+    const plain = kec();
+    const taught = kec();
+    taught.res.rupiah = 1e8;
+    expect(startRealisasi(taught, 'literasiKeuangan').ok).toBe(true);
+    expect(realisasiSum(taught, 'pinjolCut')).toBe(0);
+    taught.month += REALISASI.find((r) => r.id === 'literasiKeuangan')!.delay;
+    plain.month = taught.month;
+    expect(realisasiSum(taught, 'pinjolCut')).toBe(0.5);
+    expect(checkRealisasi(kelSeed(), 'literasiKeuangan').ok).toBe(false);
+    run(plain, 40);
+    run(taught, 40);
+    expect(debtHouseholds(taught)).toBeLessThan(debtHouseholds(plain));
+    taught.month += 48;
+    expect(realisasiSum(taught, 'pinjolCut')).toBe(0);
   });
 });

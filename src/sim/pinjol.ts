@@ -8,6 +8,7 @@ import type { Fx } from './gain';
 import { isWorking } from './state';
 import { debtHouseholds, fedBase, householdGroups, households, judolHouseholds } from './needs';
 import { chance } from './rng';
+import { realisasiSum } from './realisasi';
 import type { GameState, Resident } from './types';
 
 /** True only in the Kecamatan stage, once the state exists. Act 1 saves never run any of this. */
@@ -40,9 +41,11 @@ export function pinjolSystem(s: GameState, fx: Fx): void {
   const groups = householdGroups(s);
   // The last households in the order go hungry first when the kampung is short of food.
   const unfedFrom = Math.min(groups.length, fedBase(s));
-  const startJudol = judolStartChance(s.res.viral, working(s, 'baliho'));
+  // Literasi Keuangan stops a share of new cases, of both kinds, while it works.
+  const literasi = Math.max(0, 1 - realisasiSum(s, 'pinjolCut'));
+  const startJudol = judolStartChance(s.res.viral, working(s, 'baliho')) * literasi;
   // A Koperasi Simpan Pinjam makes a fair loan easy to find. Two at most count.
-  const borrow = PINJOL.borrow * (1 - PINJOL.koperasiCut * Math.min(2, working(s, 'koperasiSP')));
+  const borrow = PINJOL.borrow * literasi * (1 - PINJOL.koperasiCut * Math.min(2, working(s, 'koperasiSP')));
   // A Balai Latihan Kerja retrains the longest-idle warga, so their idle time starts again.
   const idlers = s.residents.filter((r) => r.job === 'none' && !r.preman && r.staffId === undefined && (r.idle ?? 0) > 0).sort((a, b) => (b.idle ?? 0) - (a.idle ?? 0));
   for (let i = 0; i < retrained(s) && i < idlers.length; i++) idlers[i].idle = 0;

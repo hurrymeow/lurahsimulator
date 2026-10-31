@@ -26,6 +26,17 @@ export const PINJOL = {
   repay: 0.02,
 } as const;
 
+/** The razia: a Satpol PP response. It buys time and moves the problem next door. */
+export const RAZIA = {
+  orangDalam: 1,
+  /** Aman while it lasts, before the Satpol PP role adds to it. */
+  aman: 8,
+  weeks: 8,
+  sabar: -3,
+  /** Share of the households in debt or on judol that move to the next Kelurahan. */
+  moveShare: 0.5,
+} as const;
+
 /** Judol: spreads with Viral. */
 export const JUDOL = {
   /** Viral above this starts to feed it. */

@@ -126,6 +126,8 @@ export function clearPermits(s: GameState): Building[] {
   return done;
 }
 export const hansipAman = (s: GameState): number => roleOutput(s, 'hansip') * ROLE_FX.hansip.amanPerLevel;
+/** Aman the Satpol PP adds to a razia, on top of the razia's own. */
+export const satpolRaziaAman = (s: GameState): number => roleOutput(s, 'satpol') * ROLE_FX.satpol.raziaAmanPerLevel;
 export const buildBoost = (s: GameState): number => roleOutput(s, 'supir') * ROLE_FX.supir.buildBoostPerLevel;
 export const upkeepCut = (s: GameState): number => Math.min(ROLE_FX.bendahara.upkeepCutMax, roleOutput(s, 'bendahara') * ROLE_FX.bendahara.upkeepCutPerLevel);
 

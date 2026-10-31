@@ -1,4 +1,4 @@
-import type { ResourceId } from '../sim/types';
+import type { ResourceId, StageId } from '../sim/types';
 
 export interface WacanaDef {
   id: string;
@@ -8,6 +8,8 @@ export interface WacanaDef {
   side: Partial<Record<ResourceId, number>>;
   /** One line that says it in words. */
   trade: string;
+  /** Only offered in this stage. Absent: always. */
+  stage?: StageId;
 }
 
 // Nothing here builds anything. That is the joke. The price is the number: each one buys Popularitas
@@ -17,6 +19,7 @@ export const WACANA: WacanaDef[] = [
   { id: 'gotong', name: 'Gotong Royong 2.0', line: 'Same as gotong royong, but with a hashtag.', side: { rupiah: -30_000 }, trade: 'Costs Rp 30k a week in snacks for the volunteers.' },
   { id: 'genangan', name: 'Zero Genangan', line: 'We will study the puddle. A committee will be formed.', side: { orangDalam: -0.2 }, trade: 'Spends Orang Inside. The committee needs favours.' },
   { id: 'warung', name: 'Warung Naik Kelas', line: 'Every warung to be upgraded to "UMKM". Paperwork TBD.', side: { rupiah: -50_000, viral: 1.5 }, trade: 'Adds Virality. Costs Rp 50k a week in paperwork.' },
+  { id: 'judol', name: 'Spanduk Anti Judol', line: 'A banner says NO to judol. It hangs under the ad that sells it.', side: { rupiah: -60_000 }, trade: 'Costs Rp 60k a week for printing. The Laporan rises. Nothing else does.', stage: 'kecamatan' },
   { id: 'hijau', name: 'Kampung Hijau', line: 'Three pots of cabai will be placed near the kantor.', side: { rupiah: -10_000 }, trade: 'Cheap. Costs Rp 10k a week for the pots.' },
 ];
 
