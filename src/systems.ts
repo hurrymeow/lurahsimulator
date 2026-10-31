@@ -4,7 +4,7 @@ import { inspectExtras } from './ui/inspect';
 import { openStaff } from './ui/staff';
 import { openLomba } from './ui/lomba';
 import { lombaPrep } from './sim/lomba';
-import { damagedExtras, mangkrakExtras, openBukuCombo, openResidents, openWacana, parkirExtras } from './ui/panels';
+import { damagedExtras, mangkrakExtras, openResidents, openWacana, parkirExtras } from './ui/panels';
 
 /** Wires satire systems into the app: extra action buttons and inspector rows. */
 export function registerSystems(app: App): void {
@@ -12,7 +12,6 @@ export function registerSystems(app: App): void {
     { id: 'warga', label: () => t('menu.warga'), open: openResidents },
     { id: 'wacana', label: () => t('menu.wacana'), open: openWacana },
     { id: 'staff', label: () => t('menu.staff'), open: openStaff, badge: (app) => app.s.lowongan?.applicants.length ?? 0 },
-    { id: 'combo', label: () => t('menu.combo'), group: 'records', open: openBukuCombo },
     // The panitia's panel shows from May to the day.
     { id: 'lomba', label: () => t('lomba.title'), open: openLomba, show: (app) => !!lombaPrep(app.s) },
   );

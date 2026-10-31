@@ -15,7 +15,7 @@ import type { Building, JobId, Resident } from '../sim/types';
 import { actionButton } from './inspect';
 import { h } from './dom';
 import { openSheet } from './sheet';
-import { openComboBook, openWargaList } from './lists';
+import { openWargaList } from './lists';
 
 // ---------- Warga ----------
 /** focus: the resident just edited. The list opens scrolled to their row instead of the top. */
@@ -106,11 +106,6 @@ export function openWacana(app: App): void {
     );
   });
   openSheet(t('menu.wacana'), [h('p', { class: 'meta' }, t('wac.intro')), ...rows]);
-}
-
-// ---------- Buku Combo ----------
-export function openBukuCombo(app: App): void {
-  openComboBook(app);
 }
 
 // ---------- Inspector extras ----------

@@ -211,6 +211,8 @@ html.no-effects #dof { display: none; }
 .tabs { display: flex; flex-wrap: wrap; gap: var(--gap); margin: var(--gap) 0; }
 .tabs .tab { flex: 1 1 auto; padding: 0 6px; }
 .tabs .tab[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
+/* Build has four building tabs and Combo. Below 412px five do not fit on a row, so they sit three and two instead of leaving Combo alone. */
+@media (max-width: 411px) { .build-tabs .tab { flex-basis: 30%; } }
 .card-btn.locked { border-style: dashed; cursor: default; }
 .card-btn.locked .pixel { filter: grayscale(1); }
 .card-text { flex: 1; min-width: 0; }

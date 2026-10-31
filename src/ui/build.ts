@@ -11,6 +11,7 @@ import type { BuildCategory, GameState } from '../sim/types';
 import { h, missingList } from './dom';
 import { storage } from '../storage';
 import { openSheet } from './sheet';
+import { comboBook } from './lists';
 
 function spriteImg(name: string, size = 40, level = 1): HTMLImageElement {
   return h('img', { src: isoURL(name, 3, level), alt: '', width: size, height: size, class: 'pixel' });
@@ -86,17 +87,26 @@ export function openBuild(app: App): void {
   const tabs = CATEGORIES.filter((c) => visible.some((d) => categoryOf(d) === c));
   let tab = lastTab && tabs.includes(lastTab) ? lastTab : tabs[0];
   const list = h('div', { class: 'build-list' });
-  const bar = h('div', { class: 'tabs', role: 'group', 'aria-label': t('build.cat.tabs') });
+  const bar = h('div', { class: 'tabs build-tabs', role: 'group', 'aria-label': t('build.cat.tabs') });
+  const press = (key: string) => bar.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tab === key)));
   const show = (c: BuildCategory) => {
     tab = c;
     lastTab = c;
     // Jalan Setapak leads the Decor tab it lives on, since nothing works without a path.
     const rows = visible.filter((d) => categoryOf(d) === c).sort((a, b) => Number(b.id === 'jalan') - Number(a.id === 'jalan'));
     list.replaceChildren(...rows.map(card));
-    bar.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tab === c)));
+    press(c);
+  };
+  // The Combo book is the last tab: combos are made by building, so it sits beside the buildings.
+  // It is not remembered as the last tab, so the next Build still opens on buildings.
+  const showCombos = () => {
+    list.replaceChildren(...comboBook(app));
+    press('combo');
   };
   for (const c of tabs) bar.append(h('button', { class: 'btn tab', 'data-tab': c, 'aria-pressed': 'false', onclick: () => show(c) }, t(`build.cat.${c}` as Key), visible.some((d) => categoryOf(d) === c && fresh.has(d.id)) ? newTag(true) : null));
+  bar.append(h('button', { class: 'btn tab', 'data-tab': 'combo', 'aria-pressed': 'false', onclick: showCombos }, t('menu.combo')));
   if (tab) show(tab);
+  else showCombos();
   // The two population levers, and what the next star wants, right where the player acts.
   const goal = nextStarChecklist(s)?.find((l) => !l.done);
   const head: Node[] = [
