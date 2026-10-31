@@ -11,7 +11,8 @@ export const SAVE_VERSION = 2;
 
 export const newStageState = (): StageState => ({ current: 'rt', stars: { rt: 0, rw: 0, kelurahan: 0 } });
 
-export function newGame(seed = Date.now() % 2147483647): GameState {
+/** The seed comes from the caller: the sim never reads the clock. The app passes `freshSeed()` from src/app.ts. */
+export function newGame(seed: number): GameState {
   const s: GameState = {
     version: SAVE_VERSION,
     seed,
@@ -44,6 +45,7 @@ export function newGame(seed = Date.now() % 2147483647): GameState {
     gapped: true,
     sized: true,
     laddered: true,
+    parkirSeen: false,
   };
   setGrid('rt');
   setPlayerCells([]);

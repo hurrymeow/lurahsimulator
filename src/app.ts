@@ -41,6 +41,8 @@ export const FAST_FROM_YEAR = 10;
 export const SPEEDS = [0, 1, 2, 4] as const;
 export type Speed = (typeof SPEEDS)[number];
 export const SAVE_KEY = 'pakrt.save';
+/** A seed for a new game. Lives here, not in src/sim, which must not read the clock. */
+const freshSeed = (): number => Date.now() % 2147483647;
 
 interface Notice {
   /** Set on tutorial tips. Adds the picture row. */
@@ -113,7 +115,7 @@ export class App {
   
   constructor() {
     const loaded = deserialize(storage.get(SAVE_KEY));
-    this.s = loaded ?? newGame();
+    this.s = loaded ?? newGame(freshSeed());
     ensureStaff(this.s);
     setPlayer(this.s.player);
     this.storageOk = storage.set('pakrt.probe', '1');
@@ -388,7 +390,7 @@ export class App {
   }
 
   newGame(player?: PlayerInfo): void {
-    this.s = newGame();
+    this.s = newGame(freshSeed());
     if (player) this.s.player = player;
     ensureStaff(this.s);
     setPlayer(this.s.player);
