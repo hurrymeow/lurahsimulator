@@ -60,7 +60,8 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Why: the biggest yearly event should sound and look like 17an. But `src/audio.ts` says all sound is synthesised with nothing to download or license, and the art is painted in code (ART.md), so recorded audio and AI-made art are a policy change.
   - Suggested solution: Hari and Koko decide whether recorded audio and AI-assisted art may ship, and under what licence. If yes, follow `decisions/17an-assets.md` (prompts, the anthem and copyright limits, the flag rule). If no, write original 17an fanfares in `src/audio.ts` with the same instrument and rhythm cues.
   - Source: WNI Sim handoff from chat, 2026-10-31
-  - `open · — · — · done when:` the asset policy is decided, and the 17an event has its own fanfare and art that follow `decisions/17an-assets.md`.
+  - Decided 2026-10-31 by voidinside99: make it in the engine (synthesised sound, art drawn in code), so no asset policy change is needed. The "MERDEKA!" shout becomes a crowd cheer.
+  - `claimed · voidinside99 · 2026-10-31 · done when:` the 17an event has its own fanfare and art made in the engine, following the limits in `decisions/17an-assets.md`.
 
 ## Done
 
