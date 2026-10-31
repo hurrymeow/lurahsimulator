@@ -21,7 +21,7 @@ const BASE: Record<string, string> = {
   'building.parkir.block': 'Tak ada yang ingat mempekerjakannya. Tertibkan saja.',
   'building.parkir.blurb': 'Muncul di samping sebagian toko baru. Setor retribusi kecil ke kas, menguras Popularitas. Tertibkan dengan Hansip atau Orang Dalam; dia bisa balik.',
   'building.posRonda.blurb': 'Pos jaga malam. +2 Popularitas per bulan. Belum ada yang pernah lihat orang jaga.',
-  'building.rumah.blurb': 'Menampung 3 warga dan mengundang warga baru.',
+  'building.rumah.blurb': 'Menampung warga dan menarik warga baru.',
   'building.warung.blurb': 'Sembako, kopi sachet, dan gosip. Pemasukan stabil, menarik warga. Level 3 jadi toko kelontong.',
   'building.wifi.blurb': 'Jual voucher. Membuka kerja ojol, influencer dan buzzer.',
   'building.wifi.name': 'Menara Wifi',
