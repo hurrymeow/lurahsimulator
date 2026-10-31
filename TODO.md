@@ -16,6 +16,13 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: add a `json` reporter, always upload it, and list flaky tests in the run summary. When `src/i18n/` changes, add an English project at 412px. Add a WebKit project at 412px with 5 smoke specs on PRs and the full suite nightly. Add `nightly.yml`. Add a shared Playwright fixture that fails on `pageerror` and `console.error`, with a reasoned allowlist, and canary tests that inject a clipped label, small text, a small button and a layout shift. Update AGENTS.md's CI lines in the same PR. Land the fixture before the gesture task adds specs, or expect a rebase.
   - Source: TESTING.md items 2, 5, 9, 13, 15; `decisions/testing-checklist.md`
   - `open · — · — · done when:` all of it runs, the fixture covers all specs, every canary fails as expected, and AGENTS.md matches CI.
+- [ ] **Fix the balance failures on the scorecard.**
+  - Problem: the first scorecard has 13 Fail rows. Balance ones: Act 1 too fast (RT 3★ at 6.7 min vs 12), cheapskate never reaches RT 3★ (item 17), hint-only bot stalls at 1★ because the combo pointer fires late (21), RT 1★ gap 15x (17), events with strictly dominated options (18), soft-lock takeovers fail (23).
+  - Why: the scorecard is the baseline for game quality. Each Fail is a place the game is too easy, too flat or can strand a player.
+  - Suggested solution: small batched PRs, each proving its fix by rerunning `npm run scorecard`. Do not stretch numbers to fill the 34 min vs 8h content gap; that needs Act 2/3 content, a design call for Hari.
+  - Source: `scorecard/scorecard.md`
+  - `claimed · claude-scorecard-fix · 2026-10-31 · done when:` the balance-tuning rows pass or have a stated reason in decisions/.
+
 - [ ] **Finish the scorecard: the 10 Unknown rows and the bot gaps.**
   - Problem: the first scorecard (`scorecard/scorecard.md`) has 10 Unknown rows. Missing: goal ETAs (item 8), the screen checks (3, 27, T2), ablation runs (16), warning lead of fixed beats (22), a worst-event chain (23), Dana, Stempel and Anggaran in the timeline (13), the cause shown on screen (6), plus traits and combos in the data lint (2). The hint bot stalls at 1★ because the combo pointer fires late.
   - Why: section 8 stays partly blind until each row can be judged. The nightly run is also untested on GitHub.
