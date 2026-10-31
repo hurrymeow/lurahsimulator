@@ -4,6 +4,8 @@ import { t, type Key } from '../i18n';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { inemURL } from '../render/inem';
+import { audio } from '../audio';
+import { BANNER, POLE, bannerURL, poleURL } from '../render/agustus';
 import { CONTESTS, LOMBA, STAGES_17, type ContestDef } from '../data/lomba';
 import {
   checkContest, climbBand, contestDef, finishLomba, ketua, lombaPrep, mashTaps, monthsToDay, rollContest, rollChance, setKetua, setStage, toggleContest,
@@ -97,7 +99,9 @@ export function openLombaDay(app: App): void {
   const page = (...kids: (Node | null)[]) => root.replaceChildren(h('div', { class: 'lomba-page' }, ...kids));
   const title = (text: string) => h('h1', { id: 'lomba-day-title' }, text);
 
+  const banner = () => h('img', { class: 'pixel lomba-banner', src: bannerURL(), alt: '', width: BANNER.w * 4, height: BANNER.h * 4 });
   const intro = () => page(
+    banner(),
     title(t('lomba.dayTitle')),
     h('p', {}, t('lomba.dayBody', { turnout: turnout(s).toFixed(1) })),
     STAGES_17[l.stage].inem ? h('div', { class: 'inem-head' }, h('img', { src: inemURL(), alt: '', width: 88, height: 120, class: 'pixel inem-face' }), h('span', { class: 'inem-name' }, t('inem.name'))) : null,
@@ -116,6 +120,9 @@ export function openLombaDay(app: App): void {
 
   const outcome = (c: ContestDef, win: boolean) => {
     won[c.id] = win;
+    if (c.game === 'climb') audio.play(win ? 'slideUp' : 'slideDown');
+    else audio.play(win ? 'cheer' : 'koplo');
+    if (c.game === 'climb' && win) window.setTimeout(() => audio.play('cheer'), 450);
     page(
       title(cTitle(c)),
       h('p', { class: `lomba-outcome ${win ? 'win' : 'lose'}` }, t(win ? 'lomba.win' : 'lomba.lose')),
@@ -134,6 +141,9 @@ export function openLombaDay(app: App): void {
     const zone = h('div', { class: 'lomba-zone' });
     const marker = h('div', { class: 'lomba-marker' });
     const pole = h('div', { class: 'lomba-pole', 'aria-hidden': 'true' }, zone, marker);
+    pole.style.backgroundImage = `url(${poleURL()})`;
+    pole.style.width = `${POLE.w * 4}px`;
+    pole.style.height = `${POLE.h * 4}px`;
     const count = h('p', { class: 'meta lomba-count', 'aria-live': 'polite' });
     const btn = h('button', { class: 'btn btn-primary lomba-tap', id: 'lomba-climb' }, t('lomba.climbBtn'));
     const paint = (pos: number) => {
@@ -190,6 +200,7 @@ export function openLombaDay(app: App): void {
         window.setTimeout(stop, LOMBA.mashSeconds * 1000);
       }
       taps++;
+      audio.play('hop');
       (bar.firstChild as HTMLElement).style.width = pct(Math.min(1, taps / need));
       info.textContent = t('lomba.mashCount', { n: taps, need });
     };
@@ -202,17 +213,24 @@ export function openLombaDay(app: App): void {
       title(cTitle(c)),
       h('p', {}, cBlurb(c)),
       h('p', { class: 'meta' }, t('lomba.rollOdds', { pct: pct(rollChance(s)) })),
-      h('button', { class: 'btn btn-primary lomba-go', id: 'lomba-roll', onclick: () => { app.tap(10); outcome(c, rollContest(s)); } }, t('lomba.rollBtn')),
+      h('button', { class: 'btn btn-primary lomba-go', id: 'lomba-roll', onclick: () => {
+        app.tap(10);
+        if (c.id === 'makanKerupuk') audio.play('crunch');
+        outcome(c, rollContest(s));
+      } }, t('lomba.rollBtn')),
     );
   };
 
   const done = () => {
     const fx: Parameters<typeof finishLomba>[2] = [];
     const r: LombaResult = finishLomba(s, won, fx);
+    if (r.trophy) audio.play('drumband');
+    else if (r.wins.length) audio.play('angklung');
     app.handleFx(fx);
     app.save();
     app.refresh();
     page(
+      banner(),
       title(t('lomba.prizesTitle')),
       h('p', {}, r.wins.length ? t('lomba.prizesBody', { n: r.wins.length, of: l.contests.length }) : t('lomba.prizesNone')),
       r.wins.length ? h('p', { class: 'lomba-prizes' }, t('lomba.prizesLine', { viral: r.viral, sabar: r.sabar, amt: rupiah(r.rupiah) })) : null,
@@ -230,4 +248,5 @@ export function openLombaDay(app: App): void {
   };
 
   intro();
+  audio.play('drumband');
 }
