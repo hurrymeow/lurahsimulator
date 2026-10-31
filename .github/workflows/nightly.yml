@@ -36,6 +36,7 @@ jobs:
         with:
           name: scorecard-cache-${{ matrix.bot }}-${{ matrix.seeds }}
           path: scorecard/.cache
+          include-hidden-files: true
           retention-days: 1
 
   scorecard-takeover:
@@ -55,6 +56,7 @@ jobs:
         with:
           name: scorecard-cache-takeover
           path: scorecard/.cache
+          include-hidden-files: true
           retention-days: 1
 
   scorecard-report:
