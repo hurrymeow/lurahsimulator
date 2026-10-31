@@ -49,6 +49,19 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Source: `decisions/cut-desa.md`
   - `open · — · — · done when:` no Desa string or branch remains in `src/`, and the Kelurahan tests pass.
 
+- [ ] **Redo the building panel: live description, roof level badge, fewer messages.**
+  - Problem: the panel's description is static, so a Rumah at level 3 says "Menampung 3 warga" while its level line says 7. The Lv1/Lv2/Lv3 strip, "Level 3/3", "Level maks" and "Sudah level maks 3" all say the same thing; disabled buttons show red ✕ text; Bongkar's reason asks for another house; "Aktif" prefixes every working building; Rumah says "mengundang" where every other panel says "Menarik".
+  - Why: one source of truth for numbers, and less text per screen (UI.md rule 13). Red should mean "you tried and it was blocked", not "this is the top level".
+  - Suggested solution: generate the effect line from the current level's config; a pixel roof badge with the level next to the name (terracotta, a ▲ when an upgrade is affordable, gold with MAKS at the top) replaces the strip and every max-level message; the upgrade button reads "Naikkan ke Lv 3 · 500" with the gain under it ("Kapasitas 5 → 7"), and is hidden at max; disabled reasons are one grey line; Bongkar says how many warga still live there; "Warga 4/5" for occupancy; status shows only when not working, as a dot and a word. ART.md's "every level side by side" line changes in the same PR.
+  - Source: WNI Sim handoff from chat, 2026-10-31 (agreed layouts)
+  - `claimed · voidinside99 · 2026-10-31 · done when:` the panel matches the agreed layouts in ID and EN, nothing clips at 320px, and the inspector e2e tests pass.
+- [ ] **17an (Agustusan) fanfares, SFX and key art.**
+  - Problem: the Lomba Agustusan event (#152) uses the generic synthesised fanfare and has no event art. A team chat planned original 17an fanfares, lomba sound effects and pixel key art made with Scenario (ElevenLabs SFX, a music model, image models and a style model), plus a recorded "MERDEKA!" shout.
+  - Why: the biggest yearly event should sound and look like 17an. But `src/audio.ts` says all sound is synthesised with nothing to download or license, and the art is painted in code (ART.md), so recorded audio and AI-made art are a policy change.
+  - Suggested solution: Hari and Koko decide whether recorded audio and AI-assisted art may ship, and under what licence. If yes, follow `decisions/17an-assets.md` (prompts, the anthem and copyright limits, the flag rule). If no, write original 17an fanfares in `src/audio.ts` with the same instrument and rhythm cues.
+  - Source: WNI Sim handoff from chat, 2026-10-31
+  - `open · — · — · done when:` the asset policy is decided, and the 17an event has its own fanfare and art that follow `decisions/17an-assets.md`.
+
 ## Done
 
 - [x] **Make the sim deterministic and property-tested.** `newGame` needs a seed from the caller; a test fails on clock or `Math.random` use in `src/sim/`; fast-check tests hold five rules at 200 games (`PROP_RUNS=1000` for nightly). Left for other tasks: start-new prompt (calendar), builder-bot soft-lock check (scorecard). #191, `progress/determinism-property-tests.md`.
