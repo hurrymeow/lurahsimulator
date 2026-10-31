@@ -63,7 +63,7 @@ describe('the permit desk queue', () => {
     const s = queued([1, 1]);
     s.stage.stars.rt = 1;
     expect(nextStep(s)?.kind).not.toBe('desk');
-    const t = queued([3, 3, 3]);
+    const t = queued([5, 5, 5]);
     t.stage.stars.rt = 1;
     expect(queueMonths(t)).toBeGreaterThanOrEqual(ROLE_FX.asisten.hireAfter);
     // A house exists in a new game, so the first-house step does not lead.

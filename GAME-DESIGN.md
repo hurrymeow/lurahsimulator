@@ -210,12 +210,12 @@ Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 #### 1★
 
 - Unlocks Puskesmas Pembantu and the Honorer job. Kelurahan gets Pasar.
-- **Goal for 2★:** every RW at 2★ or above, **1** Piala Kelurahan win, a clean Tim Audit, and the player's own kampung at **120** residents and Popularitas **50**.
+- **Goal for 2★:** every RW at 2★ or above, **1** Piala Kelurahan win, a clean Tim Audit, and the player's own kampung at **120** residents and Popularitas **45**.
 
 #### 2★
 
 - Unlocks Terminal and Taman. Terminal is the one 3x3 building, the Kelurahan landmark: **Rp 25jt**, and shops within **3** tiles earn **20%** more. A 3x3 never fits a 2-tile seam, so it stands inside the player's RT lots.
-- **Goal for 3★:** **3** Piala wins, every RW at 3★, and the player's own kampung at **200** residents and Popularitas **45**. A bigger kampung expects more, so holding Popularitas while growing is the work of this stage.
+- **Goal for 3★:** **3** Piala wins, every RW at 3★, and the player's own kampung at **200** residents and Popularitas **35**. A bigger kampung expects more, so holding Popularitas while growing is the work of this stage.
 
 #### 3★ Lurah Teladan
 

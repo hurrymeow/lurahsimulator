@@ -46,7 +46,7 @@ export const KELURAHAN_STAGE: StageDef = {
       unlocks: [],
     },
     {
-      goals: [{ kind: 'tierWins', n: 3, tier: 'kelurahan' }, { kind: 'rwsAtStars', n: 4, stars: 3 }, { kind: 'residents', n: 200 }, { kind: 'sabar', n: 40 }],
+      goals: [{ kind: 'tierWins', n: 3, tier: 'kelurahan' }, { kind: 'rwsAtStars', n: 4, stars: 3 }, { kind: 'residents', n: 200 }, { kind: 'sabar', n: 35 }],
       unlocks: [],
     },
   ],
