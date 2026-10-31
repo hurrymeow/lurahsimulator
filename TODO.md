@@ -55,16 +55,10 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: rewrite those blurbs in en and id without numbers, and let the panel's income and per-month lines carry them. Keep each under 25 words.
   - Source: `decisions/building-panel.md`, "Effect line scope"
   - `open · — · — · done when:` no blurb states a number that changes with level, in en and id.
-- [ ] **17an (Agustusan) fanfares, SFX and key art.**
-  - Problem: the Lomba Agustusan event (#152) uses the generic synthesised fanfare and has no event art. A team chat planned original 17an fanfares, lomba sound effects and pixel key art made with Scenario (ElevenLabs SFX, a music model, image models and a style model), plus a recorded "MERDEKA!" shout.
-  - Why: the biggest yearly event should sound and look like 17an. But `src/audio.ts` says all sound is synthesised with nothing to download or license, and the art is painted in code (ART.md), so recorded audio and AI-made art are a policy change.
-  - Suggested solution: Hari and Koko decide whether recorded audio and AI-assisted art may ship, and under what licence. If yes, follow `decisions/17an-assets.md` (prompts, the anthem and copyright limits, the flag rule). If no, write original 17an fanfares in `src/audio.ts` with the same instrument and rhythm cues.
-  - Source: WNI Sim handoff from chat, 2026-10-31
-  - Decided 2026-10-31 by voidinside99: make it in the engine (synthesised sound, art drawn in code), so no asset policy change is needed. The "MERDEKA!" shout becomes a crowd cheer.
-  - `claimed · voidinside99 · 2026-10-31 · done when:` the 17an event has its own fanfare and art made in the engine, following the limits in `decisions/17an-assets.md`.
 
 ## Done
 
+- [x] **17an (Agustusan) fanfares, SFX and key art.** Made in the engine: drumband fanfare, koplo sting, angklung call, slide whistles, sack hops, kerupuk crunch and a crowd cheer in `src/audio.ts`; a drawn panjat pinang pole, a confetti banner, and bunting and umbul-umbul in July and August. No recorded audio or AI art. #197, `decisions/17an-in-engine.md`.
 - [x] **Redo the building panel.** The description is built from the current level; a pixel roof badge (gold with MAKS at the top) replaces the level strip and the max-level messages; the upgrade button reads "Naikkan ke Lv n" with the gain under it and is hidden at the top; disabled reasons are one grey line; Bongkar names the warga still there; "Warga 4/5"; status only when not working. #194, `decisions/building-panel.md`.
 - [x] **Make the sim deterministic and property-tested.** `newGame` needs a seed from the caller; a test fails on clock or `Math.random` use in `src/sim/`; fast-check tests hold five rules at 200 games (`PROP_RUNS=1000` for nightly). Left for other tasks: start-new prompt (calendar), builder-bot soft-lock check (scorecard). #191, `progress/determinism-property-tests.md`.
 - [x] **Make the phone's back gesture and map gestures safe.** Back closes the top layer (how-to, panel, card, placing); event cards are never skipped; on the bare map the first back shows a 2s hint and a second leaves. Sheets contain overscroll. #190, `decisions/back-gesture.md`.
