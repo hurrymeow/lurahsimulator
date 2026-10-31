@@ -19,7 +19,7 @@ import { promote } from './sim/grow';
 import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, type FirstKind } from './sim/types';
 import { acceptSK } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
-import { attractTarget, buildCost, buildingAt, byUid, newGame, population, housing, sizeOf, year } from './sim/state';
+import { attractTarget, buildCost, buildingAt, byUid, newGame, population, housing, sizeOf } from './sim/state';
 import { tick } from './sim/tick';
 import type { GameState, ResourceId, SimEffect } from './sim/types';
 import { audio } from './audio';
@@ -35,10 +35,9 @@ import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
 import { autoPauseStarted, showPausedBadge, simRunning, type PauseInputs } from './ui/autopause';
 import { canShowQueued, type PopupQueueState } from './ui/popupQueue';
 
+/** One tick, which is one week of game time (see sim/calendar.ts). */
 export const MONTH_MS = 8000;
-/** First year the 4x speed is allowed. */
-export const FAST_FROM_YEAR = 10;
-export const SPEEDS = [0, 1, 2, 4] as const;
+export const SPEEDS = [0, 1, 2] as const;
 export type Speed = (typeof SPEEDS)[number];
 export const SAVE_KEY = 'pakrt.save';
 
@@ -110,9 +109,13 @@ export class App {
   readonly rt = { w: CELL_W, h: CELL_H };
   /** True while the home screen is up. The sim waits. */
   held = false;
-  
+  /** A save exists but this version cannot read it. The home screen says so and offers a new game. */
+  oldSave = false;
+
   constructor() {
-    const loaded = deserialize(storage.get(SAVE_KEY));
+    const raw = storage.get(SAVE_KEY);
+    const loaded = deserialize(raw);
+    this.oldSave = !!raw && !loaded;
     this.s = loaded ?? newGame();
     ensureStaff(this.s);
     setPlayer(this.s.player);
@@ -648,21 +651,18 @@ export class App {
   }
 
   // ---------- speed ----------
-  // Two buttons: pause/play, and one that cycles 1x, 2x, 4x.
+  // Two buttons: pause/play, and one that cycles 1x, 2x.
   private bindSpeed(): void {
     document.getElementById('pause-btn')!.addEventListener('click', () => this.setSpeed(this.speed ? 0 : this.pace));
     document.getElementById('speed-btn')!.addEventListener('click', () => this.setSpeed(this.nextPace()));
     this.setSpeed(this.speed);
   }
 
-  /** 4x unlocks in year 10, so early months can't be rushed past. */
   private nextPace(): Speed {
-    if (this.pace === 1) return 2;
-    return this.pace === 2 && year(this.s) >= FAST_FROM_YEAR ? 4 : 1;
+    return this.pace === 1 ? 2 : 1;
   }
 
   setSpeed(sp: Speed): void {
-    if (sp === 4 && year(this.s) < FAST_FROM_YEAR) sp = 2;
     this.speed = sp;
     if (sp) this.pace = sp;
     const pause = document.getElementById('pause-btn')!;

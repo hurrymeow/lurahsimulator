@@ -3,11 +3,12 @@ import { EMAS } from '../data/ranking';
 import { BASE_ATTRACT, DECOR_CAP, LEVEL_BONUS, SPRAWL_FREE, SPRAWL_STEP, START, START_RESIDENTS } from './balance';
 import { def, footprintFor, sizeFor } from './content';
 import { pick } from './rng';
+import { yearsDone } from './calendar';
 import { lotAt, setPlayerCells } from './area';
 import { refreshAccess } from './access';
 import { GRID_H, GRID_W, setGrid, type Building, type BuildingDef, type GameState, type Resident, type StageState } from './types';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export const newStageState = (): StageState => ({ current: 'rt', stars: { rt: 0, rw: 0, kelurahan: 0 } });
 
@@ -83,7 +84,7 @@ export function addResident(s: GameState): Resident {
   return r;
 }
 
-export const year = (s: GameState) => Math.floor(s.month / 12) + 1;
+export const year = (s: GameState) => yearsDone(s.month) + 1;
 export const inBounds = (x: number, y: number) => x >= 0 && y >= 0 && x < GRID_W && y < GRID_H;
 /** The longest side of a building's footprint. */
 export const footprintOf = footprintFor;

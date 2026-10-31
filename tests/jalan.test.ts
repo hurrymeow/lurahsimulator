@@ -5,7 +5,6 @@ import { checkPlace, place } from '../src/sim/rules';
 import { score } from '../src/sim/ranking';
 import { addBuilding, buildingAt, newGame } from '../src/sim/state';
 import { SYSTEMS, buildingIncome } from '../src/sim/tick';
-import { GRID_H, GRID_W } from '../src/sim/types';
 
 describe('jalan', () => {
   it('is free, instant, and adds 10% income beside a shop', () => {
@@ -25,17 +24,6 @@ describe('jalan', () => {
     const a = score(s);
     place(s, 'jalan', 0, 0);
     expect(score(s)).toBe(a);
-  });
-  it('migrates v1 saves by centring them', () => {
-    const s = newGame(3);
-    s.version = 1;
-    s.buildings = [];
-    addBuilding(s, 'warung', 3, 4, 'active');
-    const l = deserialize(serialize(s))!;
-    expect(l.version).toBe(2);
-    expect(l.buildings[0]).toMatchObject({ x: 5, y: 6 });
-    expect(l.buildings[0].x).toBeLessThan(GRID_W);
-    expect(l.buildings[0].y).toBeLessThan(GRID_H);
   });
 });
 

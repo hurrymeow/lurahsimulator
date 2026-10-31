@@ -105,7 +105,7 @@ describe('RW and Kelurahan content', () => {
     const s = newGame(1);
     s.stage.current = 'rw';
     const lines = nextStarChecklist(s)!.map((l) => l.text);
-    expect(lines).toEqual(['Fund 3 neighbouring RTs once (have 0)', 'Stempel backlog under 5 for 6 months (have 0)']);
+    expect(lines).toEqual(['Fund 3 neighbouring RTs once (have 0)', 'Stempel backlog under 5 for 6 weeks (have 0)']);
     s.stage.stars.rw = 2;
     expect(nextStarChecklist(s)!.map((l) => l.text)[1]).toBe('2 RTs at 3★ or above (have 0)');
   });

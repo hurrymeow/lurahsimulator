@@ -3,6 +3,7 @@
 import { t, type Key } from '../i18n';
 import { CONTESTS, LOMBA, STAGES_17, type ContestDef } from '../data/lomba';
 import { agustusMult } from './events';
+import { WEEKS_PER_YEAR, weekOfYear, yearsDone } from './calendar';
 import { gain, type Fx } from './gain';
 import { meters } from './needs';
 import { chance } from './rng';
@@ -11,7 +12,7 @@ import { inemHeadlined } from './staff';
 import type { GameState, LombaState, Staff } from './types';
 
 export const contestDef = (id: string): ContestDef => CONTESTS.find((c) => c.id === id)!;
-const year = (s: GameState) => Math.floor(s.month / 12);
+const year = (s: GameState) => yearsDone(s.month);
 
 /** This year's lomba while it can still be prepared: from the panitia's card until the day. */
 export function lombaPrep(s: GameState): LombaState | null {
@@ -19,8 +20,8 @@ export function lombaPrep(s: GameState): LombaState | null {
   return l && l.year === year(s) && !l.held && !l.due ? l : null;
 }
 
-/** Months until 17 Agustus. */
-export const monthsToDay = (s: GameState): number => (LOMBA.day - (s.month % 12) + 12) % 12;
+/** Weeks until 17 Agustus. */
+export const weeksToDay = (s: GameState): number => (LOMBA.dayWeek - weekOfYear(s.month) + WEEKS_PER_YEAR) % WEEKS_PER_YEAR;
 
 /** The ketua panitia: the staff member the player named, still on staff. */
 export function ketua(s: GameState): Staff | undefined {
@@ -93,14 +94,14 @@ export function setKetua(s: GameState, staffId: number | undefined): void {
 
 /** Month by month: the panitia forms in May; on 17 Agustus the day begins, or a skipped lomba costs Popularitas. */
 export function lombaSystem(s: GameState, fx: Fx): void {
-  const m = s.month % 12;
-  if (m === LOMBA.announce && s.month + (LOMBA.day - LOMBA.announce) >= LOMBA.fromMonth && s.lomba?.year !== year(s)) {
+  const wk = weekOfYear(s.month);
+  if (wk === LOMBA.announceWeek && s.month + (LOMBA.dayWeek - LOMBA.announceWeek) >= LOMBA.fromMonth && s.lomba?.year !== year(s)) {
     s.lomba = { year: year(s), contests: [], stage: 0 };
-    fx.push({ kind: 'notice', title: t('lomba.announceTitle'), body: t('lomba.announceBody', { n: LOMBA.day - LOMBA.announce }), tone: 'info', card: true, open: 'lomba' });
+    fx.push({ kind: 'notice', title: t('lomba.announceTitle'), body: t('lomba.announceBody', { n: LOMBA.dayWeek - LOMBA.announceWeek }), tone: 'info', card: true, open: 'lomba' });
     return;
   }
   const l = s.lomba;
-  if (m !== LOMBA.day || !l || l.year !== year(s) || l.held || l.due) return;
+  if (wk !== LOMBA.dayWeek || !l || l.year !== year(s) || l.held || l.due) return;
   if (l.contests.length) {
     // The day itself: time stops until the player has played it through.
     l.due = true;

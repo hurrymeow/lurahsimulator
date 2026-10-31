@@ -60,9 +60,9 @@ export const STAGES_17: StageDef[] = [
 ];
 
 export const LOMBA = {
-  /** Month of the year (0 = Jan) the panitia forms, and the day itself (7 = Agustus). */
-  announce: 4,
-  day: 7,
+  /** Week of the year (0 to 47) the panitia forms, and the day itself. 17 Agustus is the 4th week of month 7: 12 weeks of prep. */
+  announceWeek: 19,
+  dayWeek: 31,
   /** No lomba before this game month: the first year is for learning. */
   fromMonth: 12,
   /** Contests a kampung can run in one year. */

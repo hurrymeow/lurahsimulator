@@ -20,17 +20,17 @@ const until = (s: GameState, month: number): Fx => {
 const prepared = (seed = 1) => {
   const s = newGame(seed);
   s.res.rupiah = 50_000_000;
-  until(s, 16);
+  until(s, 20);
   return s;
 };
 
 describe('Lomba Agustusan', () => {
-  it('the panitia forms in May of year 2 (not year 1) with a card that opens the panel', () => {
+  it('the panitia forms in May (week 19) with a card that opens the panel', () => {
     const s = newGame(1);
-    until(s, 4);
+    until(s, 10);
     expect(s.lomba).toBeUndefined();
     s.res.rupiah = 50_000_000;
-    const fx = until(s, 16);
+    const fx = until(s, 19);
     expect(lombaPrep(s)).not.toBeNull();
     expect(fx).toContainEqual(expect.objectContaining({ kind: 'notice', card: true, open: 'lomba' }));
   });
@@ -74,7 +74,7 @@ describe('Lomba Agustusan', () => {
 
   it('with nothing picked, 17 Agustus passes and Popularitas drops', () => {
     const s = prepared();
-    const fx = until(s, 19);
+    const fx = until(s, 31);
     expect(s.lomba!.held).toBe(true);
     expect(fx).toContainEqual(expect.objectContaining({ title: 'No lomba this year' }));
   });
@@ -82,7 +82,7 @@ describe('Lomba Agustusan', () => {
   it('with contests picked, time waits on 17 Agustus until the day is played', () => {
     const s = prepared();
     toggleContest(s, 'makanKerupuk');
-    until(s, 19);
+    until(s, 31);
     expect(s.lomba!.due).toBe(true);
     const month = s.month;
     s.pendingEvent = null;
@@ -96,7 +96,7 @@ describe('Lomba Agustusan', () => {
     toggleContest(s, 'balapKarung');
     toggleContest(s, 'makanKerupuk');
     setStage(s, 3);
-    until(s, 19);
+    until(s, 31);
     const fx: Fx = [];
     const viral = s.res.viral;
     const r = finishLomba(s, { balapKarung: true, makanKerupuk: true }, fx);
@@ -114,7 +114,7 @@ describe('Lomba Agustusan', () => {
     const s = prepared();
     toggleContest(s, 'balapKarung');
     toggleContest(s, 'makanKerupuk');
-    until(s, 19);
+    until(s, 31);
     const r = finishLomba(s, { balapKarung: true, makanKerupuk: false }, []);
     expect(r.trophy).toBe(false);
     const t = finishLomba(s, {}, []);

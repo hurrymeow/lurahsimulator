@@ -18,9 +18,9 @@ export interface JobDef {
 
 // Slots come from buildings (see jobSlots in data/buildings.ts).
 export const JOBS: JobDef[] = [
-  { id: 'pns', appeal: 20, name: 'PNS', blurb: 'Produces nothing. Only stat: Pensiun, which fills for 10 years then costs the kas a payout.', perMonth: {}, perLevel: { resources: [], boost: 0 } },
+  { id: 'pns', appeal: 20, name: 'PNS', blurb: 'Produces nothing. Only stat: Pensiun, which fills for 120 weeks then costs the kas a payout.', perMonth: {}, perLevel: { resources: [], boost: 0 } },
   { id: 'ojol', appeal: 90, name: 'Ojol', blurb: 'Komisi to the kas, paid for in Popularitas by hujan and macet.', perMonth: { rupiah: 90_000, sabar: -0.3 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
-  { id: 'influencer', appeal: 50, name: 'Influencer', blurb: 'Makes real Virality. It decays 10% a month, so keep posting.', perMonth: { viral: 3 }, perLevel: { resources: ['viral'], boost: 0.25 } },
+  { id: 'influencer', appeal: 50, name: 'Influencer', blurb: 'Makes real Virality. It decays 10% a week, so keep posting.', perMonth: { viral: 3 }, perLevel: { resources: ['viral'], boost: 0.25 } },
   { id: 'petani', appeal: 60, name: 'Petani', blurb: 'Works the fields. Steady rupiah and a calmer mind. Needs a kebun or sawah.', perMonth: { rupiah: 70_000, sabar: 0.1 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
   { id: 'peternak', appeal: 40, name: 'Peternak', blurb: 'Tends the lele and the ayam. Cheap protein pays a little and settles the neighbours.', perMonth: { rupiah: 50_000, sabar: 0.2 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },
   { id: 'pengepul', appeal: 40, name: 'Pengepul', blurb: 'Weighs plastic at the Bank Sampah. Pays a little and keeps the street tidy.', perMonth: { rupiah: 40_000, sabar: 0.2 }, perLevel: { resources: ['rupiah'], boost: 0.2 } },

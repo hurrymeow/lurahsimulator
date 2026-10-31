@@ -472,7 +472,7 @@ test.describe('events, ranking, settings', () => {
     // An arrival on the month before the report can show a tip first, so the loop below taps tips away.
     await skipTips(page);
     await seed(page);
-    const title = (n: number) => ({ id: `Laporan tahun ${n}`, en: `Year ${n} report` })[lang()];
+    const title = (n: number) => ({ id: `Laporan triwulan ${n}`, en: `Quarter ${n} report` })[lang()];
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.s.month = 10;
@@ -885,7 +885,7 @@ test.describe('slim HUD and one menu', () => {
     await expect(page.locator('#sheet h2')).toHaveText(info.name);
   });
 
-  test('pause toggles and speed cycles 1x, 2x (4x only from year 10)', async ({ page }) => {
+  test('pause toggles and speed cycles 1x, 2x (no 4x)', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     const speed = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.speed);
@@ -894,14 +894,11 @@ test.describe('slim HUD and one menu', () => {
       expect(await speed()).toBe(want);
       await expect(page.locator('#speed-btn')).toHaveText(`${want}x`);
     }
-    await page.evaluate(() => { (window as unknown as { pakrt: any }).pakrt.s.month = 108; });
-    await page.locator('#speed-btn').click();
-    expect(await speed()).toBe(4);
     await page.locator('#pause-btn').click();
     expect(await speed()).toBe(0);
     await expect(page.locator('#pause-btn')).toHaveAttribute('aria-label', WORDS[lang()].play);
     await page.locator('#pause-btn').click();
-    expect(await speed()).toBe(4);
+    expect(await speed()).toBe(2);
   });
 });
 

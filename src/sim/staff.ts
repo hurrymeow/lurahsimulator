@@ -1,6 +1,7 @@
 // The staff: hiring through a Lowongan, levels, raises, Bimtek, firing, mutasi to a neighbouring RT, what
 // each role does, and Inem's gigs. Rolls hash the seed, month and ids, so staff never shift the shared random
 // stream that events and arrivals draw from.
+import { atMonth } from './calendar';
 import { gName, gReward, t } from '../i18n';
 import { rupiah } from '../format';
 import {
@@ -399,7 +400,7 @@ function gigDone(s: GameState, id: string, fx: Fx, level: number): void {
 /** Monthly: Inem's sub-goals. They never gate stars. */
 export function gigSystem(s: GameState, fx: Fx): void {
   const done = (id: string) => s.gigs!.includes(id);
-  if (!done('agustus') && s.month % 12 === 7 && s.buildings.some((b) => b.def === 'lapangan' && isWorking(b)) && s.res.sabar >= 50) {
+  if (!done('agustus') && atMonth(s.month, 7) && s.buildings.some((b) => b.def === 'lapangan' && isWorking(b)) && s.res.sabar >= 50) {
     gain(s, fx, 'viral', 5);
     gigDone(s, 'agustus', fx, 2);
   }

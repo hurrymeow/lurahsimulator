@@ -72,9 +72,9 @@ export interface StageJobDef {
   scandal?: { chance: number; sabar: number };
   /** Output falls this fraction a year unless the Apresiasi is paid. */
   decay?: { perYear: number; apresiasi: number };
-  /** Honorer: pay as a share of PNS, and the yearly chance of promotion after `afterYears`. */
+  /** Honorer: pay as a share of PNS, and the weekly chance of promotion after `afterWeeks`. */
   pay?: number;
-  promote?: { afterYears: number; chancePerYear: number };
+  promote?: { afterWeeks: number; chancePerWeek: number };
 }
 
 export type StageEventChoice = EventChoice & {

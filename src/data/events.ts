@@ -95,7 +95,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatan',
     name: 'Kecamatan Inspection',
-    body: 'The Kampung Bersih team from the Kecamatan comes in 2 months to score drainage, Popularitas, abandoned projects and parkir liar. Good scores earn Orang Inside. Bad ones cost Popularitas.',
+    body: 'The Kampung Bersih team from the Kecamatan comes in 2 weeks to score drainage, Popularitas, abandoned projects and parkir liar. Good scores earn Orang Inside. Bad ones cost Popularitas.',
     // Raised by the inspection system on its own schedule, never at random.
     when: { chance: 0 },
     choices: [
@@ -118,7 +118,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatanTertib',
     name: 'Ketertiban Inspection',
-    body: 'A Satpol PP team comes in 2 months to score parkir liar, abandoned projects, Aman and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
+    body: 'A Satpol PP team comes in 2 weeks to score parkir liar, abandoned projects, Aman and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
     when: { chance: 0 },
     choices: [
       { label: 'Carry on as usual', result: 'The team will see the kampung as it is.' },
@@ -139,7 +139,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatanSehat',
     name: 'Kampung Sehat Inspection',
-    body: 'A Puskesmas team comes in 2 months to score drainage, Perut, health posts and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
+    body: 'A Puskesmas team comes in 2 weeks to score drainage, Perut, health posts and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
     when: { chance: 0 },
     choices: [
       { label: 'Carry on as usual', result: 'The team will see the kampung as it is.' },
@@ -160,7 +160,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatanDigital',
     name: 'Kampung Digital Inspection',
-    body: 'A Diskominfo team comes in 2 months to score WiFi, Virality, abandoned projects and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
+    body: 'A Diskominfo team comes in 2 weeks to score WiFi, Virality, abandoned projects and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
     when: { chance: 0 },
     choices: [
       { label: 'Carry on as usual', result: 'The team will see the kampung as it is.' },

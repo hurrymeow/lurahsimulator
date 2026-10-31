@@ -185,16 +185,16 @@ describe('RW building effects', () => {
   it('Gapura gives +5 Viral in August, charges the repaint, and does nothing in other months', () => {
     const s = rw(2);
     put(s, 'gapura', 13, 3);
-    s.month = 6;
+    s.month = 27;
     s.res.viral = 0;
     s.res.rupiah = 5_000_000;
-    tick(s); // month 7 = August
+    tick(s); // week 28 = first week of August
     expect(s.res.viral).toBeGreaterThanOrEqual(4); // +5, less a month of decay
     expect(s.res.rupiah).toBeLessThan(5_000_000);
     s.pendingEvent = null;
     s.res.viral = 0;
     const cash = s.res.rupiah;
-    tick(s); // September
+    tick(s); // the next week
     expect(s.res.viral).toBeLessThan(1);
     expect(s.res.rupiah).toBeGreaterThanOrEqual(cash - 200_000);
   });
@@ -211,17 +211,17 @@ describe('RW jobs', () => {
     expect(assign(s, addResident(s), 'calo').ok).toBe(true);
   });
 
-  it('Kader lose 20% a year without an Apresiasi and recover when it is paid', () => {
+  it('Kader lose 40% a year without an Apresiasi and recover when it is paid', () => {
     const s = rw(1);
     put(s, 'posyandu', 13, 3);
     hire(s, 'kaderPosyandu');
     s.res.rupiah = 0;
-    s.month = 11;
+    s.month = 47;
     s.pendingEvent = null;
     tick(s); // year end with an empty kas
-    expect(s.rw.kaderDecay).toBeCloseTo(0.2);
+    expect(s.rw.kaderDecay).toBeCloseTo(0.4);
     s.res.rupiah = 5_000_000;
-    s.month = 23;
+    s.month = 95;
     s.pendingEvent = null;
     tick(s);
     expect(s.rw.kaderDecay).toBe(0);

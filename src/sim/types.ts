@@ -146,7 +146,7 @@ export interface PlayerInfo {
 /** What is true for the warga: fed, in work, safe. Sejahtera is their average. */
 /** The Lomba Agustusan being prepared or just held. */
 export interface LombaState {
-  /** Game year (month / 12) it belongs to. */
+  /** Calendar year (month / 48) it belongs to. */
   year: number;
   /** Contest ids picked, paid for already. */
   contests: string[];

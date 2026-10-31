@@ -9,6 +9,7 @@ import { activeCombos } from './combos';
 import { def, isCover } from './content';
 import { gateOpen } from './gate';
 import { LOMBA } from '../data/lomba';
+import { GRACE_WEEKS, WEEKS_PER_YEAR, inMonths, weekOfYear } from './calendar';
 import { banjirCut, wacanaNoReceipt } from './kel';
 import type { StageEventChoice } from '../data/higher';
 import { gain, type Fx } from './gain';
@@ -64,7 +65,7 @@ function eligible(s: GameState, e: EventDef): boolean {
   if (w.minMonth !== undefined && s.month < w.minMonth) return false;
   if (w.maxMonth !== undefined && s.month > w.maxMonth) return false;
   if (w.minStars !== undefined && s.stage.stars.rt < w.minStars) return false;
-  if (w.months && !w.months.includes(s.month % 12)) return false;
+  if (w.months && !inMonths(s.month, w.months)) return false;
   if (w.needs && !s.buildings.some((b) => b.def === w.needs && b.status === 'active')) return false;
   const last = s.lastEvent?.[e.id];
   const gap = w.chance < 1 ? Math.max(w.cooldown ?? 0, MIN_REPEAT_GAP) : (w.cooldown ?? 0);
@@ -97,13 +98,13 @@ function crowded(s: GameState): boolean {
   const last = Object.values(s.lastEvent ?? {});
   if (last.length && s.month - Math.max(...last) < EVENT_CLEAR) return true;
   // 17 Agustus is a popup too: random events keep clear of the Lomba day, before and after.
-  const m = s.month % 12;
-  const toDay = (LOMBA.day - m + 12) % 12;
-  const sinceDay = (m - LOMBA.day + 12) % 12;
+  const wk = weekOfYear(s.month);
+  const toDay = (LOMBA.dayWeek - wk + WEEKS_PER_YEAR) % WEEKS_PER_YEAR;
+  const sinceDay = (wk - LOMBA.dayWeek + WEEKS_PER_YEAR) % WEEKS_PER_YEAR;
   if (s.month + toDay >= LOMBA.fromMonth && (toDay < EVENT_CLEAR || sinceDay < EVENT_CLEAR)) return true;
   for (let k = 1; k < EVENT_CLEAR; k++) {
     // A yearly one on its month, or a one-off (no months list) on the month it first comes due.
-    const due = EVENTS.some((e) => e.when.chance >= 1 && (e.when.months ? e.when.months.includes((s.month + k) % 12) && (e.when.minMonth ?? 0) <= s.month + k : e.when.minMonth === s.month + k && !(s.lastEvent ?? {})[e.id]));
+    const due = EVENTS.some((e) => e.when.chance >= 1 && (e.when.months ? inMonths(s.month + k, e.when.months) && (e.when.minMonth ?? 0) <= s.month + k : e.when.minMonth === s.month + k && !(s.lastEvent ?? {})[e.id]));
     if (due) return true;
     if (s.inspection && s.inspection.visitAt === undefined && s.inspection.warnAt === s.month + k) return true;
   }
@@ -149,7 +150,7 @@ function floodDamage(s: GameState, fx: Fx): string {
   const targets = s.buildings.filter((b) => b.status === 'active' && b.def !== 'rumah' && b.def !== 'parkir' && b.def !== 'biopori' && !isCover(def(b.def)));
   let hit = 0;
   for (const b of targets) {
-    if (s.month < 12 && hit >= 1) break;
+    if (s.month < GRACE_WEEKS && hit >= 1) break;
     if (chance(s, BANJIR_HIT_CHANCE * (1 - protect))) {
       b.status = 'damaged';
       hit++;

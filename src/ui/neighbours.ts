@@ -31,7 +31,7 @@ function rankLine(app: App, n: Neighbour): Node {
   const target = rivalTarget(next.year);
   const wins = n.ranking.filter((r) => r.won).length;
   return h('div', { class: 'nb-rank' },
-    h('p', { class: `meta${p.total > target ? '' : ' warn'}` }, t('grow.rank', { score: p.total, target, n: next.months, wins })),
+    h('p', { class: `meta${p.total > target ? '' : ' warn'}` }, t('grow.rank', { score: p.total, target, n: next.weeks, wins })),
     h('p', { class: 'meta' }, t('grow.rankParts', { residents: p.residents, buildings: p.buildings, combos: p.combos, sabar: p.sabar })),
   );
 }
