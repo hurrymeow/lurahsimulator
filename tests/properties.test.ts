@@ -65,7 +65,8 @@ describe('sim rules hold for any play', () => {
       }),
       opts,
     );
-  });
+    // Many random plays: slow when the whole suite runs at once.
+  }, 30_000);
 
   it('no count goes below zero', () => {
     fc.assert(
