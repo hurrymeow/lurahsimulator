@@ -338,16 +338,21 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
     const dominated: string[] = [];
     for (const e of EVENTS) {
       const fixed = e.choices.map((c, i) => ({ c, i })).filter(({ c }) => !c.outcomes && !c.special && !c.modifier && !c.incomePct);
-      const price = (c: (typeof e.choices)[number]) => (c.cost?.rupiah ?? 0) + 1e6 * (c.cost?.orangDalam ?? 0);
-      const gain = (c: (typeof e.choices)[number]) => c.res ?? {};
+      // Cost is a vector: a choice only beats another when it is no dearer in rupiah, Orang Dalam and income months at once.
+      const price = (c: (typeof e.choices)[number]) => [c.cost?.rupiah ?? 0, c.cost?.orangDalam ?? 0, c.cost?.incomeMonths ?? 0];
+      const gain = (c: (typeof e.choices)[number]) => ({ ...(c.res ?? {}), ...(c.inspectPrep ? { inspectPrep: c.inspectPrep } : {}) });
       for (const a of fixed) for (const b of fixed) {
         if (a.i === b.i) continue;
         const ga = gain(a.c) as Record<string, number>;
         const gb = gain(b.c) as Record<string, number>;
         const keys = new Set([...Object.keys(ga), ...Object.keys(gb)]);
+        const pa = price(a.c);
+        const pb = price(b.c);
+        const cheaper = pb.every((v, k) => v <= pa[k]);
         const geq = [...keys].every((k) => (gb[k] ?? 0) >= (ga[k] ?? 0));
-        const gt = [...keys].some((k) => (gb[k] ?? 0) > (ga[k] ?? 0)) || price(b.c) < price(a.c);
-        if (price(b.c) <= price(a.c) && geq && gt) dominated.push(`${e.id}#${a.i}`);
+        const gt = [...keys].some((k) => (gb[k] ?? 0) > (ga[k] ?? 0)) || pb.some((v, k) => v < pa[k]);
+        // Gunting Pita is the first popup: a light joke with one clear winner on purpose (GAME-DESIGN.md target 3).
+        if (e.id !== 'guntingPita' && cheaper && geq && gt) dominated.push(`${e.id}#${a.i}`);
       }
     }
     add(18, 'Every choice has a cost', 'T1', verdict(dominated.length === 0), dominated.length ? `Strictly dominated options: ${[...new Set(dominated)].join(', ')}. Only options with fixed results are compared; advice with rolled outcomes is skipped.` : 'No strictly dominated option among fixed-result choices. Rolled outcomes are skipped.');
