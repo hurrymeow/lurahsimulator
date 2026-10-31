@@ -1460,7 +1460,7 @@ test.describe('stars', () => {
       s.discovered.push('a', 'b', 'c');
       s.ranking = [{ year: 1, us: 1, them: 0, won: true }, { year: 2, us: 1, them: 0, won: true }];
       const r = s.residents[0];
-      for (let i = 0; i < 40; i++) s.residents.push({ ...r, id: 500 + i });
+      for (let i = 0; i < 55; i++) s.residents.push({ ...r, id: 500 + i });
       (window as unknown as { pakrt: any }).pakrt.runTick();
     });
     await expect(page.locator('#modal .card.fanfare').first()).toContainText('3★');
