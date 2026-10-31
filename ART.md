@@ -251,7 +251,11 @@ faceless, so the map stays readable.
   Every other sprite gets the upgrade kit along its front edges: a tidy wooden plank fence at level
   2, a clean stone wall with a light cap, potted plants and a lamp at level 3. It is drawn in native
   1px lines after the ink pass, so it is as fine on a 3x3 as on one tile. Ground pieces skip it.
-- The inspector shows every level side by side, the current one framed.
+- The inspector shows the level as a roof badge beside the name: a pixel gable roof with a 1px
+  coloured edge, an eave that overhangs and droops at the tips (so it never reads as a warning
+  triangle), and the number in cream in its lower half. A small green arrow over the peak means an
+  upgrade is affordable; the top level is a gold roof with one sparkle pixel and MAKS under it. The
+  level art itself shows on the map, in Build and while moving.
 
 ## Roofs and walls
 

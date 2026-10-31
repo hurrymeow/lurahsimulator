@@ -6,14 +6,15 @@ import { def } from '../sim/content';
 import { checkDemolish, checkRotate, checkSkipPermit, checkUpgrade, demolish, rotateBuilding, skipPermit, upgrade } from '../sim/rules';
 import { PARKIR, REFUND } from '../sim/balance';
 import { checkTertibkan, tertibkan, tertibkanFree } from '../sim/parkir';
-import { bedsOf, byUid, levelMult, pathMult, upgradeCost } from '../sim/state';
+import { bedsOf, byUid, levelMult, occupants, pathMult, upgradeCost } from '../sim/state';
 import { brandKind, brandOf, displayName, hasBrand, hasOwnName, kanibal, nextBrand, rename, sisterOutlets } from '../sim/brands';
 import { FRANCHISE, KANIBAL, NAME_MAX, RENAMABLE } from '../data/brands';
 import { premanTake } from '../sim/needs';
 import { buildingIncome, buildingUpkeep } from '../sim/tick';
-import type { Building, CheckResult } from '../sim/types';
+import type { Building, BuildingDef, CheckResult } from '../sim/types';
 import { spriteImg } from './build';
-import { h, missingList } from './dom';
+import { h } from './dom';
+import { levelBadge, type BadgeState } from './levelBadge';
 import { closeSheet, openSheet } from './sheet';
 
 /** Extra rows and buttons later systems add to the inspector. */
@@ -23,8 +24,35 @@ export const inspectExtras: InspectExtra[] = [];
 export function actionButton(label: string | (string | Node)[], check: CheckResult, run: () => void, primary = false): Node {
   return h('div', { class: 'action' },
     h('button', { class: `btn ${primary ? 'btn-primary' : ''}`, disabled: !check.ok, onclick: run }, ...(typeof label === 'string' ? [label] : label)),
-    check.ok ? null : missingList(check.missing),
+    check.ok ? null : reasonLine(check.missing),
   );
+}
+
+/** Why a button is disabled: one grey line, not a red list. */
+export const reasonLine = (missing: string[]): HTMLElement => h('p', { class: 'meta reason' }, missing.join(' · '));
+
+/** What the building does at a level, from that level's numbers: the one source for the panel's description. */
+function effectLine(d: BuildingDef, b: Building): string {
+  const bits: string[] = [];
+  if (d.housing) bits.push(t('insp.houses', { n: bedsOf(b) }));
+  if (d.attract) bits.push(t('insp.attracts'));
+  return bits.join(' · ');
+}
+
+/** The gains of the next level, as "now → next" pairs. */
+function upgradeDiff(d: BuildingDef, b: Building): string {
+  const next = { ...b, level: b.level + 1 };
+  const bits: string[] = [];
+  if (d.housing) bits.push(t('insp.diffBeds', { a: bedsOf(b), b: bedsOf(next) }));
+  if (d.income) bits.push(t('insp.diffIncome', { a: rupiah(Math.round(d.income * levelMult(b.level))), b: rupiah(Math.round(d.income * levelMult(b.level + 1))) }));
+  for (const [k, v] of Object.entries(d.perMonth ?? {})) {
+    const at = (lv: number) => {
+      const n = Math.round(v * levelMult(lv) * 100) / 100;
+      return `${n >= 0 ? '+' : ''}${n}`;
+    };
+    bits.push(t('insp.diffRes', { res: t(`res.${k}` as Key), a: at(b.level), b: at(b.level + 1) }));
+  }
+  return bits.join(' · ');
 }
 
 export function inspect(app: App, uid: number): void {
@@ -38,10 +66,16 @@ export function inspect(app: App, uid: number): void {
     app.refresh();
     inspect(app, uid);
   };
+  // Status shows only when the building is not working: a dot and a word, never colour alone.
+  const left = b.timer > 0 && (b.status === 'permit' || b.status === 'building') ? t('insp.left', { n: b.timer }) : '';
+  const effect = effectLine(d, b);
   const lines: Node[] = [
     h('div', { class: 'inspect-head' }, spriteImg(d.sprite, 40, b.level), h('div', {},
-      h('p', { class: 'meta' }, t('insp.status', { status: t(`status.${b.status}`), left: b.timer > 0 && (b.status === 'permit' || b.status === 'building') ? t('insp.left', { n: b.timer }) : '', level: b.level, max: d.maxLevel })),
-      h('p', {}, bBlurb(d)),
+      b.status === 'active' ? null : h('p', { class: `meta status status-${b.status}` }, h('span', { class: 'status-dot', 'aria-hidden': 'true' }), `${t(`status.${b.status}`)}${left}`),
+      effect ? h('p', { class: 'effect' }, effect) : null,
+      d.housing ? h('p', { class: 'meta occupancy' }, t('insp.occupancy', { n: occupants(s, b), max: bedsOf(b) })) : null,
+      // Housing says it all in numbers; other buildings keep their blurb for what the numbers do not say.
+      d.housing ? null : h('p', {}, bBlurb(d)),
     )),
   ];
   // A building waiting for a permit leads with the way out: Orang Dalam skips the queue. Above the fold.
@@ -65,12 +99,6 @@ export function inspect(app: App, uid: number): void {
     }, true));
     lines.push(h('p', { class: 'meta' }, tertibkanFree(s) ? t('insp.tertibkanHansip') : t('insp.tertibkanOd', { n: PARKIR.orangDalam })));
   }
-  // Every level side by side, like a building card: what it looks like now and what the next upgrade brings.
-  if (d.maxLevel > 1)
-    lines.push(h('div', { class: 'level-strip', role: 'list', 'aria-label': t('insp.levels') },
-      ...Array.from({ length: d.maxLevel }, (_, k) => k + 1).map((lv) =>
-        h('figure', { class: `lv${lv === b.level ? ' current' : ''}`, role: 'listitem', 'aria-current': lv === b.level ? 'true' : undefined }, spriteImg(d.sprite, 48, lv), h('figcaption', {}, t('res.level', { n: lv })))),
-    ));
   // A chain shows its brand and what the brand does here; any building can be given a name.
   if (hasBrand(b.def)) {
     const k = sisterOutlets(s, b);
@@ -105,21 +133,21 @@ export function inspect(app: App, uid: number): void {
     });
     lines.push(h('p', { class: 'meta' }, t('insp.perMonth', { bits: bits.join(' · ') })));
   }
-  const popBits: string[] = [];
-  if (d.housing) popBits.push(t('insp.houses', { n: bedsOf(b) }));
-  if (d.attract) popBits.push(t('insp.attracts', { n: Math.round(d.attract * levelMult(b.level) * 10) / 10 }));
-  if (popBits.length) lines.push(h('p', { class: 'meta' }, popBits.join(' · ')));
   const pm = pathMult(s, b);
   if (b.noRoad) lines.push(h('p', { class: 'meta warn' }, t('insp.noRoad')));
   if (pm > 1 && b.status === 'active') lines.push(h('p', { class: 'meta' }, t('insp.pathBonus', { pct: Math.round((pm - 1) * 100) })));
   for (const extra of inspectExtras) lines.push(...extra(app, b));
-  if (d.maxLevel > 1) {
-    lines.push(actionButton(b.level >= d.maxLevel ? t('insp.maxLevel') : t('insp.upgrade', { cost: rupiah(upgradeCost(s, b)) }), checkUpgrade(s, b), () => {
+  // The top level needs no button and no message: the gold badge says it.
+  const upCheck = checkUpgrade(s, b);
+  if (b.level < d.maxLevel) {
+    lines.push(actionButton(t('insp.upgradeTo', { n: b.level + 1, cost: rupiah(upgradeCost(s, b)) }), upCheck, () => {
       upgrade(s, b);
       app.view.burst(b.x, b.y);
       app.tap(15);
       done();
     }, b.status === 'active'));
+    const diff = upgradeDiff(d, b);
+    if (diff) lines.push(h('p', { class: 'meta upgrade-diff' }, diff));
   }
   // Moving and turning a building cost nothing. Paths are tiles, so they just get demolished.
   if (!d.pathIncome) {
@@ -133,7 +161,7 @@ export function inspect(app: App, uid: number): void {
         done();
       } }, t('insp.rotate')),
     ));
-    if (!turn.ok) lines.push(missingList(turn.missing));
+    if (!turn.ok) lines.push(reasonLine(turn.missing));
   }
   const dem = checkDemolish(s, b);
   lines.push(actionButton(dem.ok ? t('insp.demolishRefund', { amt: rupiah(Math.round((b.invested * REFUND) / 1000) * 1000) }) : t('insp.demolish'), dem, () => {
@@ -149,7 +177,8 @@ export function inspect(app: App, uid: number): void {
     nameForm.hidden = false;
     nameInput.focus();
   } }, h('img', { src: iconURL('scroll', 2), alt: '', width: 16, height: 16, class: 'pixel' })) : null;
-  const title = h('span', { class: 'insp-title' }, hasOwnName(b) ? displayName(b) : bName(d), pencil);
+  const badge: BadgeState = b.level >= d.maxLevel ? 'max' : upCheck.ok ? 'up' : 'normal';
+  const title = h('span', { class: 'insp-title' }, hasOwnName(b) ? displayName(b) : bName(d), d.maxLevel > 1 ? levelBadge(b.level, badge) : null, pencil);
   openSheet(title, lines, () => {
     app.view.selected = null;
   });
