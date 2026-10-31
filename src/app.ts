@@ -32,6 +32,7 @@ import { lombaDayOpen, openLombaDay } from './ui/lomba';
 import { comboPics } from './ui/lists';
 import { RIVAL_NAMES } from './data/ranking';
 import { areaScore } from './sim/ranking';
+import { openDistrict } from './ui/neighbours';
 import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
 import { autoPauseStarted, showPausedBadge, simRunning, type PauseInputs } from './ui/autopause';
 import { canShowQueued, type PopupQueueState } from './ui/popupQueue';
@@ -585,6 +586,7 @@ export class App {
   }
 
   refresh(): void {
+    this.view.setRing(this.s.stage.current === 'kecamatan');
     const r = this.s.res;
     const set = (id: string, v: string, label: string) => {
       const chip = document.getElementById(`chip-${id}`);
@@ -790,7 +792,12 @@ export class App {
       if (wasDrag) return;
       const rect = canvas.getBoundingClientRect();
       const tile = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top);
-      if (!tile) return;
+      if (!tile) {
+        // Past the Kelurahan, a tap on a district block of the Kecamatan opens its card.
+        const district = this.placing ? null : this.view.districtAt(e.clientX - rect.left, e.clientY - rect.top);
+        if (district) openDistrict(this, district);
+        return;
+      }
       if (this.placing) {
         this.tapPlacing(tile);
         return;
