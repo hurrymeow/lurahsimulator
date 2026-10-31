@@ -4,6 +4,12 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Tasks
 
+- [ ] **Make the phone's back gesture and map gestures safe.**
+  - Problem: `src/` has no history handling, so Android back does not close panels. Map gestures may also trigger pull-to-refresh, double-tap zoom or edge-swipe back.
+  - Why: back that quits the app loses the session, and a pull-down reload loses the month. UI.md review checklist items 7 and 8 fail or are untested.
+  - Suggested solution: push a history entry per open panel and close the top panel on popstate; on the bare map, ask before leaving. Set `overscroll-behavior: contain` and `touch-action` on the map and sheets. Add the T2 checks from items 7 and 8 to `tests/e2e/ui.spec.ts`.
+  - Source: UI.md, Review checklist, items 7 and 8
+  - `open · — · — · done when:` back closes the top panel on every sheet, and the item 8 gesture checks pass.
 - [ ] **Cap Pos Ronda so players use the other Popularitas buildings.**
   - Problem: Pos Ronda has no `maxCount`. The Kelurahan bot built 20 to 90 of them to hold Popularitas in a big kampung.
   - Why: A wall of Pos Ronda is the cheapest Popularitas, so Praktik Bidan, Panggung Senam and Kolam Pancing (#180) are skipped and the map looks the same.
