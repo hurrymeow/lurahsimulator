@@ -118,8 +118,6 @@ export function openBuild(app: App): void {
     press(c);
   };
   for (const c of tabs) bar.append(h('button', { class: 'btn tab', 'data-tab': c, 'aria-pressed': 'false', onclick: () => show(c) }, t(`build.cat.${c}` as Key), visible.some((d) => categoryOf(d) === c && fresh.has(d.id)) ? newTag(true) : null));
-  // Four tabs sit 2 + 2, so no tab ends up alone on a row.
-  if (tabs.length === 4) bar.classList.add('two-col');
   if (tab) show(tab);
   // The two population levers, and what the next star wants, right where the player acts.
   const goal = nextStarChecklist(s)?.find((l) => !l.done);
