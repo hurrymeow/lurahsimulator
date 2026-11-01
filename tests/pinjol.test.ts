@@ -58,6 +58,8 @@ describe('pinjol', () => {
   it('does not make a household hungry when only one member in three is idle', () => {
     const s = kec();
     s.res.viral = 0;
+    // Only whole households: a lone resident left over would be a household of one, and one idle of one is most of it.
+    s.residents.length -= s.residents.length % PINJOL.household;
     s.residents.forEach((r, i) => { r.idle = i % PINJOL.household === 0 ? PINJOL.idleWeeks : 0; });
     const hungry = Math.max(0, households(s) - fedBase(s));
     run(s, 200);

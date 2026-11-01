@@ -3,12 +3,12 @@ export type SeedId = 'rt3' | 'rw' | 'kel';
 // Regenerate with `SEED_WRITE=1 npx vitest run tests/seed.test.ts`.
 import { checkRepair, repair, resolveEvent } from '../src/sim/events';
 import { fundNeighbour, promote, setAutoFund } from '../src/sim/grow';
-import { connectedRoad, FLAT, hasRoadBeside } from '../src/sim/access';
+import { connectedRoad, FLAT, hasRoadBeside, setRoadRule } from '../src/sim/access';
 import { lotAt } from '../src/sim/area';
 import { placeableDefs } from '../src/sim/content';
 import { checkRestart, restart } from '../src/sim/projects';
 import { checkPlace, checkUpgrade, place, skipPermit, upgrade } from '../src/sim/rules';
-import { newGame } from '../src/sim/state';
+import { newGame, tilesOf } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
 import { GRID_H, GRID_W, RT_H, RT_W, setGrid, type GameState } from '../src/sim/types';
 
@@ -50,7 +50,9 @@ function play(s: GameState, months: number, scopes: string[]): void {
       const scope = d.scope ?? 'rt';
       if (d.id === 'jalan' || !scopes.includes(scope) || s.res.rupiah < 200_000) continue;
       if (count(s, d.id) >= capOf(d.id, d.maxCount)) continue;
-      const free = (p: { x: number; y: number }) => checkPlace(s, d.id, p.x, p.y).ok;
+      // Never build over a street: placing on a Jalan Setapak replaces it, which cut the streets off the Kantor.
+      const onStreet = (p: { x: number; y: number }) => tilesOf({ def: d.id, x: p.x, y: p.y, rot: 0 }).some((t) => s.buildings.some((o) => o.def === 'jalan' && o.x === t.x && o.y === t.y));
+      const free = (p: { x: number; y: number }) => checkPlace(s, d.id, p.x, p.y).ok && !onStreet(p);
       const needsRoad = scope === 'rt' && d.category !== 'decoration' && !FLAT.has(d.id) && !d.id.startsWith('kantor');
       // Road-fed buildings stand beside a street, nearest the Kantor first. Flat pieces and decor fill the gaps away from the streets.
       let spot: { x: number; y: number } | undefined;
@@ -75,6 +77,16 @@ function play(s: GameState, months: number, scopes: string[]): void {
 
 /** Builds a seeded save for the given stage. Leaves the grid set to that stage. */
 export function seedGame(id: SeedId): GameState {
+  // Tests switch the road rule off for speed. A seed is played with it on, so every building ends up with a road.
+  setRoadRule(true);
+  try {
+    return build(id);
+  } finally {
+    setRoadRule(false);
+  }
+}
+
+function build(id: SeedId): GameState {
   setGrid('rt');
   const s = newGame(SEED);
   s.res.rupiah = 5_000_000;
