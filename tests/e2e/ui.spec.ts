@@ -1,5 +1,21 @@
 import { expect, test, type Page } from '@playwright/test';
 import { scanLegibility } from './legibility';
+import { countScreen, LIMITS, type ScreenCount } from './density';
+
+/** Screens still over a limit: the cap is today's count, so they can only improve. */
+// Each entry is a TODO.md item ("Bring <screen> inside UI.md rules 13 and 14"). Caps are the highest count over the 8 CI viewports in both languages on 2026-11-01.
+const DENSITY_ALLOW: Record<string, Partial<Record<keyof typeof LIMITS, number>>> = {
+  'build': { wordsInView: 84 }, // Build, first tab
+  'build tab 2': { longestBlock: 21, wordsInView: 101 }, // Build tab 2
+  'build tab 3': { longestBlock: 21, wordsAll: 571, wordsInView: 82 }, // Build tab 3
+  'build tab 4': { wordsInView: 99, longestBlock: 24 }, // Build tab 4
+  'event': { primary: 2 }, // Event card: two filled choices
+  'howto': { wordsInView: 149, longestBlock: 29, wordsAll: 303 }, // How-to card
+  'neighbours': { wordsInView: 151, longestBlock: 32, wordsAll: 1202 }, // Neighbours
+  'settings': { primary: 2, wordsInView: 65 }, // Settings
+  'staff': { wordsInView: 71 }, // Staff
+  'stats': { wordsInView: 86 }, // Stats
+};
 
 /** The project name ends in -id or -en. See playwright.config.ts. */
 const lang = (): 'id' | 'en' => (test.info().project.name.endsWith('-en') ? 'en' : 'id');
@@ -2923,5 +2939,105 @@ test.describe('console frame and theme', () => {
     await page.goBack();
     await expect(page.locator('#back-hint')).toBeVisible();
     await expect(page.locator('#map')).toBeVisible();
+  });
+});
+
+// UI.md rules 13 and 14, counted on every sheet, pop-up and the home screens. Screens that still fail are in
+// DENSITY_ALLOW with a cap at today's counts, so a screen can only get better. When one is fixed, delete its entry.
+test.describe('density and hierarchy', () => {
+  test('every screen stays inside the word and primary-button limits', async ({ page }) => {
+    test.setTimeout(240_000);
+    page.setDefaultTimeout(8000);
+    const rows: ScreenCount[] = [];
+    const take = async (screen: string, sel: string) => {
+      const r = await countScreen(page, screen, sel);
+      if (r) rows.push(r);
+    };
+    const dismiss = async () => {
+      for (let i = 0; i < 20; i++) {
+        if (await page.locator('#howto').isVisible()) {
+          await take('howto', '#howto');
+          await page.locator('#howtoGo').click();
+          await page.waitForTimeout(300);
+        } else if (await page.locator('#modal').isVisible()) {
+          const title = ((await page.locator('#modal h2').first().textContent().catch(() => '')) ?? '').trim().slice(0, 24);
+          await take(`modal ${title}`, '#modal');
+          if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click();
+          else await page.locator('#modal').click({ position: { x: 8, y: 8 } });
+          await page.waitForTimeout(600);
+        } else return;
+      }
+    };
+    const closeSheet = async () => {
+      // A few Menu entries open a full screen or a card instead of the sheet. Nothing to close then.
+      if (await page.locator('#sheet').isVisible()) await page.locator('#sheet .sheet-head .btn-icon').last().click();
+      await page.waitForTimeout(250);
+    };
+    await page.goto(`/?debug&lang=${lang()}`);
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.evaluate(() => document.fonts.ready);
+    await take('home', '#home');
+    await page.locator('#home-start').click();
+    await take('home choose', '#home');
+    await page.locator('#home-new').click();
+    await take('setup', '#home');
+    await page.locator('#home-begin').click();
+    await dismiss();
+    await page.evaluate(() => (window as unknown as { pakrtTips: { seeAll(): void } }).pakrtTips.seeAll());
+    await page.evaluate(async () => { await (window as unknown as { pakrt: any }).pakrt.loadSeed('kel'); });
+    await page.waitForTimeout(800);
+    await dismiss();
+    await page.locator('#menu-btn').click();
+    await take('menu', '#sheet');
+    const ids = await page.$$eval('#sheet [id^="act-"]', (els) => els.map((e) => e.id.slice(4)));
+    await closeSheet();
+    for (const id of [...ids, 'build', 'warga']) {
+      await dismiss();
+      if (id === 'build' || id === 'warga') await page.locator(`#dock-${id}`).click();
+      else {
+        await page.locator('#menu-btn').click();
+        await page.waitForTimeout(200);
+        await page.locator(`#act-${id}`).click();
+      }
+      await page.waitForTimeout(400);
+      if (await page.locator('#sheet').isVisible()) await take(id, '#sheet');
+      if (id === 'build') {
+        const tabs = await page.$$('#sheet .tabs .tab');
+        for (let i = 1; i < tabs.length; i++) {
+          await tabs[i].click();
+          await page.waitForTimeout(200);
+          await take(`build tab ${i + 1}`, '#sheet');
+        }
+      }
+      if (id === 'wacana') {
+        await page.locator('#sheet .wac-row').first().click();
+        await take('wacana detail', '#sheet');
+      }
+      await closeSheet();
+    }
+    for (let i = 0; i < 60; i++) {
+      await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
+      if (await page.locator('#modal .card.event').isVisible()) {
+        await take('event', '#modal');
+        await page.locator('#modal .card.event .btn').first().click();
+        await page.waitForTimeout(400);
+        await take('event result', '#modal');
+        break;
+      }
+      if (await page.locator('#modal').isVisible()) {
+        await page.locator('#modal').click({ position: { x: 8, y: 8 } });
+        await page.waitForTimeout(500);
+      }
+    }
+    expect(rows.length, 'screens counted').toBeGreaterThan(10);
+    if (process.env.DENSITY_OUT) (await import('node:fs')).writeFileSync(`${process.env.DENSITY_OUT}-${test.info().project.name}.json`, JSON.stringify(rows, null, 1));
+    const over: string[] = [];
+    for (const r of rows) {
+      const cap = { ...LIMITS, ...DENSITY_ALLOW[r.screen] };
+      for (const k of Object.keys(LIMITS) as (keyof typeof LIMITS)[]) {
+        if (r[k] > cap[k]) over.push(`${r.screen}: ${k} ${r[k]} > ${cap[k]}`);
+      }
+    }
+    expect(over, 'screens over the UI.md rule 13 and 14 limits (or their allowlist cap)').toEqual([]);
   });
 });

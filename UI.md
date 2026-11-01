@@ -32,7 +32,7 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 
 ### Density
 
-13. **Each screen shows little text at a time, and detail waits behind a tap.** At most **50** words in view on any sheet, card or tip, and at most **20** words in one paragraph, row or button. A whole sheet holds at most **300** words when scrolled; more becomes tabs or detail screens. At most **2** levels below the map (a panel, then a detail). The one-primary limit is rule 14. Counted in the first viewport at 360px in both languages; numbers, icons and the player's own names are not words. List length is not capped. Why: adults read about 238 words a minute ([Brysbaert 2019](https://www.Gwern.net/doc/psychology/linguistics/2019-brysbaert.pdf)), people read about 20% of the words on a page ([NN/g](https://www.nngroup.com/articles/how-little-do-users-read/)), and "designs that go beyond 2 disclosure levels typically have low usability" ([NN/g](https://www.nngroup.com/articles/progressive-disclosure/)). Long lists are fine when items are recognisable ([NN/g](https://www.nngroup.com/articles/short-term-memory-and-web-usability/)). The 50 and 300 are judgement calls from reading speed. Known fails on 2026-10-31: Neighbours, the How-to card, Wacana, Stats and the Build tabs.
+13. **Each screen shows little text at a time, and detail waits behind a tap.** At most **50** words in view on any sheet, card or tip, and at most **20** words in one paragraph, row or button. A whole sheet holds at most **300** words when scrolled; more becomes tabs or detail screens. At most **2** levels below the map (a panel, then a detail). The one-primary limit is rule 14. Counted in the first viewport at 360px in both languages; numbers, icons and the player's own names are not words. List length is not capped. Why: adults read about 238 words a minute ([Brysbaert 2019](https://www.Gwern.net/doc/psychology/linguistics/2019-brysbaert.pdf)), people read about 20% of the words on a page ([NN/g](https://www.nngroup.com/articles/how-little-do-users-read/)), and "designs that go beyond 2 disclosure levels typically have low usability" ([NN/g](https://www.nngroup.com/articles/progressive-disclosure/)). Long lists are fine when items are recognisable ([NN/g](https://www.nngroup.com/articles/short-term-memory-and-web-usability/)). The 50 and 300 are judgement calls from reading speed. Screens still over the limits on 2026-11-01 are the allowlist `DENSITY_ALLOW` in `tests/e2e/ui.spec.ts`: Build (four tabs), How to Play, Neighbours, Settings, Staff and Stats. Wacana now passes.
 
 ### Hierarchy
 
@@ -49,12 +49,12 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 | 7, 8 | Word count over `src/i18n/en.ts` and the event data. Not automated. |
 | 2, 3, 6, 9, 11 | Review against the audit crawl screenshots |
 | 10 | e2e: at each tutorial step, tap outside the target and assert nothing changes. |
-| 14 | Review against the CSS classes. e2e: max 1 visible `.btn-primary` per screen, to be added to the rule 13 scan in `ui.spec.ts`. |
+| 14 | Review against the CSS classes. e2e: the same scan counts visible `.btn-primary` buttons, max 1 per screen. Event cards and Settings are allowlisted at 2. |
 | 15 | e2e: a list of each tab set and its item type; a tab with a different type fails. |
 | 16 | e2e: word cap on pills, chips and buttons, and a tap opens detail. |
 | 17 | Canvas test: place each building type and diff the neighbouring tiles before and after. |
 | 12 | Timed run. Not automated. |
-| 13 | Word counts per screen. Measure script in the project files (`plans/text-density-measure.spec.ts`); to be added to `ui.spec.ts`. |
+| 13 | e2e `density and hierarchy` in `ui.spec.ts` counts words in view, per block and per sheet on the home screens, every Menu panel, Build tabs, Wacana and event cards, at every CI width. A screen over a limit needs an entry in `DENSITY_ALLOW` capped at today's count (TODO.md); a fixed screen has its entry deleted. English runs locally. |
 | Layout drift | Screenshot baselines (`tests/e2e/visual.spec.ts`): home, HUD, Build sheet, event popup, tip card. 412px, Indonesian. |
 
 Every new panel or message needs a scan in `tests/e2e/ui.spec.ts`. CI runs the suite on every PR. The audit crawl scripts are in the project files, not in the repo.
