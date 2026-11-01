@@ -800,7 +800,7 @@ export const ID: Record<Key, string> = {
   'stage.goalShort.rwsAtStars': 'bawa {n} RW ke {stars}★',
   'stage.goalShort.sabar': 'capai Popularitas {n}',
   'stage.goalShort.serapanMonths': 'jaga Serapan {pct}% selama {n} minggu',
-  'stage.goalShort.stempelClear': 'jaga surat Stempel menunggu di bawah {under}, {n} minggu',
+  'stage.goalShort.stempelClear': 'jaga surat Stempel di bawah {under}',
   'stage.goalShort.tierWins': 'menang peringkat wilayah {n} kali',
   'stage.goalShort.winStreak': 'menang peringkat {n}x berturut-turut',
   'stage.goalTitle': 'Target untuk {title}',

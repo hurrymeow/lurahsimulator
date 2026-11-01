@@ -799,7 +799,7 @@ export const EN = {
   'stage.goalShort.rwsAtStars': 'get {n} RWs to {stars}★',
   'stage.goalShort.sabar': 'reach Popularitas {n}',
   'stage.goalShort.serapanMonths': 'keep Serapan at {pct}% for {n} weeks',
-  'stage.goalShort.stempelClear': 'keep Stempel letters waiting under {under}, {n} weeks',
+  'stage.goalShort.stempelClear': 'keep Stempel letters under {under}',
   'stage.goalShort.tierWins': 'win the area ranking {n} times',
   'stage.goalShort.winStreak': 'win the ranking {n} times in a row',
   'stage.goalTitle': 'Goals for {title}',
