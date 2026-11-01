@@ -101,7 +101,7 @@ jobs:
           KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
           mkdir -p "$RUNNER_TEMP/art"
-          git add -A -- . ':(exclude).executor'
+          git add -A
           git diff --cached --binary > "$RUNNER_TEMP/art/patch.diff"
           cp .executor/report.json "$RUNNER_TEMP/art/report.json" 2>/dev/null || true
           node -e '
