@@ -31,7 +31,8 @@ for (let i = start + 1; i < lines.length; i++) {
   }
 }
 const heading = lines[start];
-if (!/\(Haiku\)\s*$/.test(heading)) refuse(`${TASK} is not tagged (Haiku) in its heading`);
+// Haiku is the default tier. "Sonnet, executor trial" is an explicit one-off opt-in (Hari, 2026-11-01).
+if (!/\((Haiku|Sonnet, executor trial)\)\s*$/.test(heading)) refuse(`${TASK} is not tagged (Haiku) or (Sonnet, executor trial) in its heading`);
 
 const body = lines.slice(start + 1, end);
 const field = (name) => body.find((l) => new RegExp(`^\\s*(?:[-*]\\s*)?${name}:`, 'i').test(l));
