@@ -327,6 +327,8 @@ export interface BuildingDef {
   boost?: { radius: number; bonus: number };
   /** Orang Dalam spent when it is placed, on top of the rupiah. A shortcut through the paperwork. */
   orangDalamCost?: number;
+  /** Works with no path beside it: a signal tower needs none. */
+  roadless?: boolean;
 }
 
 export type BuildingStatus = 'permit' | 'building' | 'active' | 'mangkrak' | 'damaged';
