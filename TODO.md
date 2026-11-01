@@ -184,6 +184,12 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
     - Recommendation: B first. The score parts are already on the sheet, so the gap is wording, and it keeps the star path and bot results intact. If Hari's playtest still shows no way to act, fall back to A.
   - Source: Hari, 2026-11-01 (screenshot, project thread "Add goal how-to hints to TODO"). Related: "Show a how-to hint for every goal when it is tapped open" (above) and "Cut text on the 6 screens that fail UI rule 13" (Neighbours sheet fix).
   - `open · — · — · done when:` Hari has picked A or B, and the chosen option ships with its wording in EN and ID, or the star is removed and the RT and Kelurahan bots still reach their stars.
+- [ ] **Give the player more active ways to boost neighbour RTs.**
+  - Problem: Neighbour RTs feel passive. The Neighbours sheet offers a take-over (Ambil alih, for keys) and a funding choice (Dana ×1 or ×6), and the score parts are only listed. Hari: "felt very passive now, don't know what to do" (screenshot, Feb M1 T3, RT 4 at 2★).
+  - Why: With no clear action, the player waits for the neighbours to grow. That makes the neighbour stages slow, and it is the same gap that makes the ranking star feel impossible (see "Decide the neighbour RT ranking star" above).
+  - Suggested solution: Add two or three active levers, each tied to a score part the sheet already shows (warga, bangunan, combo, Popularitas). Candidates: a one-off gift of a building or Popularitas for an RT, a shared combo the player can help finish, or a visit that lifts an RT's warga for a few weeks. Pick one or two in the design pass, and say what each costs in Dana or keys. Keep the sheet within UI.md rule 13 caps and name each action in one plain line.
+  - Source: Hari, 2026-11-01 (screenshot, project thread "Add goal how-to hints to TODO"). Related: "Decide the neighbour RT ranking star" and "Cut text on the 6 screens that fail UI rule 13" (Neighbours sheet).
+  - `open · — · — · done when:` at least two active neighbour actions exist, each with a cost and a score effect shown on the sheet, in EN and ID, and the balance bots still reach their stars.
 
 ## Done
 
