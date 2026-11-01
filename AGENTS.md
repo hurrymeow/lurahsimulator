@@ -32,7 +32,8 @@ Unsure whether it conflicts? Treat it as a conflict and ask.
 
 ## Workflow rules
 
-- After opening a PR, enable auto-merge (squash). It merges when the required `ci` check is green.
+- After opening a PR, enable auto-merge (squash). It merges when the required `ci` check is green. Exception: executor PRs (opened by the DeepSeek executor workflow). Never enable auto-merge on them. The reviewer enables it after reading the full diff. See `decisions/deepseek-executor.md`.
+- Plans: a task marked Haiku lists exact file paths in `Files:`, not "grep X". It also has `Exact changes:`, `Done when:` and `Don't touch:` lines. The executor refuses a task without them.
 - After every push, check the PR for merge conflicts. A conflicted PR never starts CI. Merge main in and push again.
 - Before a push, run `npm run typecheck`, `npm test`, and only the e2e specs your change touches, for example `npx playwright test tests/e2e/ui.spec.ts`. Do not run the full `npm run e2e` (about 880 tests) locally. Text-only changes to docs or comments need no e2e run.
 - CI runs the full sharded e2e suite in id (the default language) at 320, 360, 412 and 430px on every PR. Let CI run it.
