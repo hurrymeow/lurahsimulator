@@ -55,6 +55,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
     permitMonths: 1,
     buildMonths: 1,
     maxLevel: 3,
+    maxCount: 8,
     placeable: true,
     removable: true,
     sprite: 'posRonda',

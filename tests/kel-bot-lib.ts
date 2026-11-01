@@ -3,8 +3,8 @@ import { checkRestart, restart } from '../src/sim/projects';
 import { fundNeighbour, promote, setAutoFund } from '../src/sim/grow';
 import { connectedRoad, hasRoadBeside } from '../src/sim/access';
 import { lotAt } from '../src/sim/area';
-import { placeableDefs } from '../src/sim/content';
-import { checkPlace, checkUpgrade, place, skipPermit, upgrade } from '../src/sim/rules';
+import { def, placeableDefs } from '../src/sim/content';
+import { checkPlace, checkUpgrade, place, requirementGaps, skipPermit, upgrade } from '../src/sim/rules';
 import { housing, newGame, population } from '../src/sim/state';
 import { checkPost, hire, postLowongan, queueMonths } from '../src/sim/staff';
 import { ROLE_FX } from '../src/data/staff';
@@ -50,6 +50,9 @@ export function kelWeek(s: GameState, seam: { x: number; y: number }[], all: { x
     const roadSpot = (id: string) => all.find((p) => checkPlace(s, id, p.x, p.y).ok && hasRoadBeside(conn, { def: id, x: p.x, y: p.y }));
     const placeFirst = (ids: string[]) => {
       for (const id of ids) {
+        // The placement rule check applies maxCount (ignoreLimit stays false), so a capped Pos Ronda is skipped
+        // and the next Popularitas building in the list gets the spot.
+        if (requirementGaps(s, def(id)).length) continue;
         const spot = roadSpot(id);
         if (spot && s.res.rupiah > 3_000_000) return void place(s, id, spot.x, spot.y);
       }

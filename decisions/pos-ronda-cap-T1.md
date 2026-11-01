@@ -1,0 +1,3 @@
+# Pos Ronda flat cap
+
+Pos Ronda now has `maxCount: 8`. The plan calls for one flat number rather than the TODO's per-stage 4/8/12, because `maxCount` is per building definition and a stage-aware cap would need a new mechanism; 8 is above what the RT bots build today (seed-bot caps at 4, scorecard at 3), so only the Kelurahan bot feels it. When the eighth stands, the Kelurahan bot's `placeFirst` uses the existing placement rule check (`requirementGaps`, `ignoreLimit` left false) to skip Pos Ronda and falls through its `SABAR` list to Kolam Pancing, Panggung Senam, Praktik Bidan or Bank Sampah, while the general placeable loop is refused a ninth by `checkPlace`.
