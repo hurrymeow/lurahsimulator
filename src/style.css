@@ -526,7 +526,7 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 
 /* Inspector: a building's own name, and its brand. */
 .name-row { display: flex; gap: 8px; align-items: stretch; }
-.name-input { flex: 1 1 auto; min-width: 0; min-height: var(--touch); padding: 0 10px; font: inherit; font-size: 16px; color: var(--text); background: var(--surface); border: 1px solid var(--muted); border-radius: 0; }
+.name-input { flex: 1 1 auto; min-width: 0; min-height: var(--touch); padding: 0 10px; font: inherit; font-size: 16px; color: var(--on-accent); background: #e9e2cc; border: 2px solid var(--muted); border-radius: 0; box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.2); }
 .brand-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .brand-row .meta { margin: 0; }
 .insp-type { margin: 0 0 4px; }
@@ -544,7 +544,9 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .realisasi p { margin: 0 0 4px; }
 .home-naming .name-row { display: flex; gap: 8px; align-items: center; }
 .name-label { font-size: 16px; font-weight: 700; color: var(--text); text-shadow: 0 1px 0 #000; }
-.name-prefix { flex: none; font-size: 16px; font-weight: 700; color: var(--text); text-shadow: 0 1px 0 #000; }
+.home-heading { margin: 0; text-align: center; font-family: var(--font-pixel); font-size: 20px; line-height: 1.3; color: var(--text); text-shadow: 0 1px 0 #000; }
+.home-actions .btn.home-back { width: auto; align-self: center; padding: 0 24px; }
+.home-naming .name-row .btn-icon { flex: none; width: var(--touch); }
 
 /* Staff panel. */
 .staff-card, .staff-applicant { align-items: flex-start; }

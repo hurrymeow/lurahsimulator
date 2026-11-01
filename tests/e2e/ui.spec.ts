@@ -1881,7 +1881,19 @@ test.describe('home screen', () => {
     await expect(page.locator('#home-name')).not.toHaveValue('');
     await expect(page.locator('#home-kampung')).not.toHaveValue('');
     await expectLegible(page, 'home naming');
+    // UI.md rule 14: Mulai is the only filled button, Pak/Bu is a choice, the dice are icon buttons.
+    await expect(page.locator('#home .btn-primary')).toHaveCount(1);
+    await expect(page.locator('#home-begin')).toHaveClass(/btn-primary/);
+    await expect(page.locator('.name-prefix')).toHaveCount(0);
+    const dice = page.locator('#home .name-row .btn-icon');
+    await expect(dice).toHaveCount(2);
+    await expect(dice.first()).toHaveAttribute('aria-label', /.+/);
+    await page.locator('#home-name').fill('');
+    await dice.first().click();
+    await expect(page.locator('#home-name')).not.toHaveValue('');
     await page.locator('[data-title="Bu"]').click();
+    await expect(page.locator('[data-title="Bu"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#home .btn-primary')).toHaveCount(1);
     await page.locator('#home-name').fill('Sari');
     await page.locator('#home-kampung').fill('Melati');
     await page.locator('#home-begin').click();
