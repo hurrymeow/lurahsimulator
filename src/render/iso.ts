@@ -878,29 +878,6 @@ const ART: Record<string, ArtFn> = {
       return j % 4 === 0 ? 'n' : null;
     });
   },
-  // Build phase: a tower crane at the back corner, its jib over the site and a hook on a cable.
-  crane: (p) => {
-    p.shadow(5);
-    // Concrete foot, then the lattice mast: yellow rails with dark cross-ties every few pixels.
-    p.box(11, 2, 'S', undefined, 0);
-    for (let k = 2; k < 40; k++) {
-      p.set(TW / 2 + 7, TOP + TH / 2 - k, k % 4 === 0 ? 'N' : 'y');
-      p.set(TW / 2 + 9, TOP + TH / 2 - k, k % 4 === 2 ? 'N' : 'a');
-      if (k % 4 === 1) p.set(TW / 2 + 8, TOP + TH / 2 - k, 'N');
-    }
-    // Operator's cab under the jib.
-    p.stroke(6, -40, 10, -40, 3, 'r');
-    p.set(TW / 2 + 9, TOP + TH / 2 - 41, 'l');
-    // The jib reaching over the site, the counter-jib and its concrete weight behind.
-    p.stroke(-12, -44, 8, -44, 2, 'y');
-    p.stroke(8, -44, 14, -44, 2, 'a');
-    p.stroke(13, -43, 15, -43, 3, 'S');
-    // Cable and hook, hanging over the middle of the site.
-    for (let k = 42; k > 24; k--) p.set(TW / 2 - 6, TOP + TH / 2 - k, 'S');
-    p.set(TW / 2 - 6, TOP + TH / 2 - 24, 'k');
-    p.set(TW / 2 - 7, TOP + TH / 2 - 23, 'k');
-    p.set(TW / 2 - 5, TOP + TH / 2 - 23, 'k');
-  },
   // Permit phase: the plot is staked out with string, nothing built yet. Bare, so the string stays one pixel thin.
   patok: (p) => {
     p.bare = true;
