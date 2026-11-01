@@ -28,7 +28,7 @@ export function easiestCombo(s: GameState) {
 
 /** The building that draws the most residents for its price, among those the player can build now. */
 function bestDraw(s: GameState): string | null {
-  const open = placeableDefs().filter((d) => d.attract > 0 && !d.housing && requirementGaps(s, d, { ignoreLimit: true }).length === 0);
+  const open = placeableDefs().filter((d) => d.attract > 0 && !d.housing && count(s, d.id) === 0 && requirementGaps(s, d, { ignoreLimit: true }).length === 0);
   const best = open.sort((a, b) => b.attract / buildCost(s, b) - a.attract / buildCost(s, a))[0];
   return best ? bName(best) : null;
 }

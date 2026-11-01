@@ -46,4 +46,15 @@ describe('short goal', () => {
     expect(population(s)).toBeLessThan(housing(s));
     expect(shortGoal(s)).toMatch(/^nobody new is coming, build a .+ to draw residents$/);
   });
+
+  it('does not draw a Warung Sembako that is already built', () => {
+    const s = newGame(1);
+    s.discovered.push('rapatMalam');
+    addBuilding(s, 'warung', 8, 12, 'active');
+    for (let i = 0; i < 4; i++) addBuilding(s, 'rumah', 3 + i, 12, 'active');
+    while (population(s) < attractTarget(s)) addResident(s);
+    expect(population(s)).toBeLessThan(housing(s));
+    const step = nextStep(s);
+    expect(step?.kind === 'draw' && step.text.includes('Warung Sembako')).toBe(false);
+  });
 });
