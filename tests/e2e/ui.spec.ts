@@ -1054,6 +1054,27 @@ test.describe('text is legible and never cut off', () => {
     await expect(page.locator('.sheet-head')).toContainText('Kantor RT');
   });
 
+  test('the click that follows a tap on a building does not close its sheet', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const box = (await page.locator('#map').boundingBox())!;
+    const base = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      return app.view.tileCentre(k.x, k.y);
+    });
+    const [x, y] = [box.x + base.x, box.y + base.y];
+    await page.touchscreen.tap(x, y);
+    await expect(page.locator('.sheet-head')).toContainText('Kantor RT');
+    // A phone fires the tap's click after pointerup, onto the scrim that has just appeared.
+    await page.evaluate(() => document.getElementById('scrim')!.click());
+    await page.waitForTimeout(600);
+    await expect(page.locator('#sheet')).toBeVisible();
+    // A deliberate tap outside, later, still closes it.
+    await page.locator('#scrim').click({ position: { x: 5, y: 5 } });
+    await expect(page.locator('#sheet')).toBeHidden();
+  });
+
   test('a combo fanfare message', async ({ page }) => {
     await start(page);
     await dismissModals(page);
