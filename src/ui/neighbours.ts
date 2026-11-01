@@ -152,11 +152,11 @@ export function openNeighbours(app: App, view: View = { kind: 'list' }): void {
   if (view.kind === 'detail') return detail(app, view);
   const help = h('button', { class: 'btn head-action', type: 'button', 'aria-label': t('grow.help'), onclick: () => openNeighbours(app, { kind: 'help' }) }, '?');
   const isStalled = (n: Neighbour) => chipOf(n).cls === 'nb-stalled';
-  const ordered = s.neighbours.map((n, i) => ({ n, i })).sort((a, b) => Number(isStalled(a.n)) - Number(isStalled(b.n)));
+  const ordered = s.neighbours.map((n, i) => ({ n, i })).sort((a, b) => Number(isStalled(b.n)) - Number(isStalled(a.n)));
   const rows = ordered.map(({ n, i }) => {
     const chip = chipOf(n);
     return h('button', {
-      class: `nb-list-row${n.run === 'player' ? ' nb-mine' : ''}`,
+      class: `btn nb-list-row${n.run === 'player' ? ' nb-mine' : ''}`,
       type: 'button',
       'data-nb-row': cellName(n),
       onclick: () => openNeighbours(app, { kind: 'detail', i }),
@@ -169,7 +169,7 @@ export function openNeighbours(app: App, view: View = { kind: 'list' }): void {
   const ai = s.neighbours.filter((n) => n.run !== 'player');
   const keep = ai[0]?.autoKeep ?? 0;
   const all = h('button', { class: 'btn', type: 'button', id: 'nb-auto-all', 'data-auto': String(keep), onclick: () => {
-    for (const n of s.neighbours) setAutoFund(n, nextAuto(keep));
+    for (const n of ai) setAutoFund(n, nextAuto(keep));
     app.tap(10);
     app.save();
     openNeighbours(app);

@@ -625,3 +625,7 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .wac-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--gap); margin-top: 12px; }
 .wac-col { display: flex; flex-direction: column; gap: 4px; padding: 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); }
 .wac-col .action { margin: auto 0 0; padding-top: 8px; }
+
+.nb-list-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--gap); width: 100%; text-align: left; padding: 8px; margin-bottom: var(--gap); }
+.nb-list-row .nb-need { grid-column: 1 / -1; }
+.nb-list-row.nb-mine { border-color: var(--accent, currentColor); }
