@@ -164,10 +164,9 @@ html:not(.theme-dark) :is(#hud, #bottombar, #goal, #ticker) :is(.missing, .warn)
 .cs-goal-float .goal-now { min-height: 30px; padding: 2px 8px; line-height: 1.2; }
 .cs-goal-float .goal-star { padding: 0 8px 6px; }
 /* One line, cut with an ellipsis; tapping the pill opens the whole line. UI.md rule 5 exception. */
-.cs-goal-float .goal-now { display: flex; align-items: center; gap: 4px; width: 100%; }
-.cs-goal-float .goal-text { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.cs-goal-float .goal-now { display: flex; align-items: flex-start; gap: 4px; width: 100%; }
+.cs-goal-float .goal-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .cs-goal-float .goal-now::after { flex: none; }
-#goal.cs-goal-float.open .goal-text { white-space: normal; overflow: visible; }
 @media (max-height: 640px) { .cs-goal-float { right: 6px; } }
 #dof { z-index: 1; }
 

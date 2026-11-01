@@ -4,7 +4,9 @@ import { agustusMult, banjirProtection } from '../src/sim/events';
 import { checkPlace, checkUpgrade } from '../src/sim/rules';
 import { deserialize, serialize } from '../src/sim/save';
 import { addBuilding, housing, newGame } from '../src/sim/state';
-import { canPromote, declineSK, nextStarChecklist, reofferSK, starsEarnable } from '../src/sim/stages';
+import { canPromote, declineSK, nextStarChecklist, reofferSK, starChecklist, starsEarnable } from '../src/sim/stages';
+import { STAGES } from '../src/data/stages';
+import { setLang, t } from '../src/i18n';
 import { tick } from '../src/sim/tick';
 
 const add = (s: ReturnType<typeof newGame>, id: string, x: number, y: number) => addBuilding(s, id, x, y, 'active');
@@ -150,5 +152,30 @@ describe('late-RT content', () => {
     add(s, 'wifi', 1, 1);
     expect(activeCombos(s).map((a) => a.combo.id)).toContain('anakKos');
     expect(comboIncomeMult(s, w)).toBeCloseTo(1.3);
+  });
+});
+
+describe('goal short lines', () => {
+  it('every goal kind has a short phrase in both languages, with no have and need and within two lines at 320px', () => {
+    const s = newGame(1);
+    const kinds = new Set<string>();
+    for (const lang of ['en', 'id'] as const) {
+      setLang(lang);
+      const label = t('goal.label', { goal: '' });
+      for (const st of STAGES) {
+        for (const stars of [0, 1, 2] as const) {
+          for (const l of starChecklist(s, st.id, stars) ?? []) {
+            kinds.add(l.goal.kind);
+            const line = t('goal.label', { goal: l.short });
+            expect(l.short, `${lang} ${l.goal.kind}`).not.toMatch(/\{|undefined|have|punya|\(|★ /);
+            expect(line.startsWith(label), line).toBe(true);
+            // About 8.2px a character in Pak Pixel at 16px; the pill text has about 188px a line at 320px.
+            expect(line.length * 8.2, `${lang} ${line}`).toBeLessThanOrEqual(2 * 188);
+          }
+        }
+      }
+    }
+    setLang('en');
+    expect(kinds.size).toBe(20);
   });
 });
