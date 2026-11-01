@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { seedGame, type SeedId } from './seed-bot';
-import { refreshAccess } from '../src/sim/access';
+import { refreshAccess, setRoadRule } from '../src/sim/access';
 import { deserialize, serialize } from '../src/sim/save';
 import { acceptSK, canPromote, nextStarChecklist } from '../src/sim/stages';
 import { setGrid } from '../src/sim/types';
@@ -34,7 +34,13 @@ describe('developer seeds', () => {
   for (const id of Object.keys(STAGE) as SeedId[]) {
     it(`${id} is a planned town: every building has a road and the mix is wide`, () => {
       const s = deserialize(readFileSync(file(id), 'utf8'))!;
-      refreshAccess(s);
+      // The test setup switches the road rule off; the game has it on.
+      setRoadRule(true);
+      try {
+        refreshAccess(s);
+      } finally {
+        setRoadRule(false);
+      }
       expect(s.buildings.filter((b) => b.noRoad).map((b) => b.def)).toEqual([]);
       expect(s.buildings.filter((b) => b.status === 'mangkrak').map((b) => b.def)).toEqual([]);
       expect(new Set(s.buildings.filter((b) => b.def !== 'jalan').map((b) => b.def)).size).toBeGreaterThanOrEqual(MIN_KINDS[id]);
