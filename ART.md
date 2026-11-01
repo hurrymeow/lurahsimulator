@@ -37,6 +37,13 @@ No third-party art or names. Everything is drawn in code.
   cannot say it.
 - Trees are sturdy: trunks at least 4 art pixels wide, crowns made of 2 or 3 overlapping clumps
   or at least 3-pixel-thick fronds (`Painter.leaf`). No 1-pixel stems.
+- Big buildings read wide, not tall. A 2x2 building is no taller than a 1x1 of its tier: its size
+  shows as width, a long low roof and a deep front, never as a house scaled up (playtest
+  2026-11-01: Gudang Material and Koperasi looked like a Rumah blown up). The same goes for 1x2 and
+  2x3.
+- Site sprites are drawn at native pixels for every footprint. The crane, scaffold and stakes over a
+  2x2 site are their own art at 1px lines, never a 1x1 sprite scaled 2x: big pixels look out of
+  scale next to the 1px world.
 
 ## Outlines
 
@@ -167,7 +174,7 @@ same look: flat fills, 1px rules, no gradients, no rounded corners.
 | Satellite view | 88x60, a 1px rule and a hard 2px drop shadow. No label. |
 | Toast | Full map width, 8px from the map's bottom edge. A 4px muted bar on the left, a 1px rule and a hard 2px drop shadow. Fades over 0.4s after 3s; with reduce motion it just goes. |
 | Month line | 4px across the full width, along the top edge of the bottom bar. Dark green fill on a darker cream track. |
-| Dock | Three equal buttons in a grid: Build, Warga, Menu. A 24px icon over a bold label, 52px tall, square, no shadows. Build and Warga use their menu icon plates; Menu is dark green with a three-bar icon. |
+| Dock | Four buttons in a grid: Build at its own width, then Warga, Staf and Menu sharing the rest. A 24px icon over a bold label, 52px tall, square, no shadows. Build and Warga use their menu icon plates; Menu is dark green with a three-bar icon. |
 
 | Sheets and pop-ups | Theme tokens: cream and ink in Light, Mono Dark in Dark. Square corners; in Light a 2px ink rule, sheets with a 4px ink lip on top, pop-ups with a hard 4px drop shadow. |
 | Combo card | One per row, the full width of the sheet, a 1px rule (2px green when active). Top line: the name in bold on the left; on the right up to three 24px building sprites joined by + and a 24px state square (✓ green, ★ amber, ? muted). Below: the effect in two muted lines. Not-yet cards show black silhouettes. |
@@ -175,7 +182,10 @@ same look: flat fills, 1px rules, no gradients, no rounded corners.
 | Resource amounts | A 16px icon, a 4px gap and a bold number in the resource's colour; amounts sit 8px apart and align right. |
 
 - Light and Dark use the same parts at the same sizes. Only the colour tokens change (GAME-DESIGN.md section 6, Themes).
-- Numbers use the body font, never the pixel font.
+- Numbers use the body font, never the pixel font. Where digits do show in the pixel font (pop-up
+  titles such as "Triwulan 2", the 2045 label), each digit must read at a glance, so the "2" is
+  redrawn until it cannot pass for a Z (`scripts/patch-pixel-font.py`, as for "f" in
+  `decisions/pixel-font-f.md`).
 
 ## Lighting and atmosphere
 

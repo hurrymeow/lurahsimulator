@@ -9,7 +9,7 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 ### Touch and layout
 
 1. **Tap targets are 48px or more, with 8px gaps.** Material says 48dp and 8dp ([Google](https://support.google.com/accessibility/android/answer/7101858)). Apple says 44pt ([Deque](https://dequeuniversity.com/rules/attest-ios/1.0/touch-target-size)). WCAG 2.2 AA says 24px ([W3C](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)). We use 48 because thumbs miss on 320px phones. Buttons side by side in one row are the same width (equal grid columns; a long label wraps inside its button), and a row that wraps keeps that width on every line. **Exception:** the two slim top rows and the goal pill on the map may use 28px controls, so more of the map shows. They hold glance-and-tap readouts (play, speed, the resources, the 2045 meter, the goal), not frequent actions; the frequent actions sit in the 48px+ dock at the bottom.
-2. **The main screen is two slim top rows (time: play, speed, date, 2045; money: the resources), the map with a goal pill and a small satellite view, and a bottom dock of three equal buttons: Build, Warga, Menu. Nothing else** (GAME-DESIGN.md section 6). Notices float over the map as a 3s toast and stay in the Log. Build and Warga live only in the dock; the Combo book opens from a button in the Build sheet header; everything else opens from Menu, and no panel appears in two places. On phones 640px tall or less the satellite view drops out. The satellite view's fold button (48px tap area) and the PAUSED pill are part of the map, not extra screen furniture.
+2. **The main screen is two slim top rows (time: play, speed, date, 2045; money: the resources), the map with a goal pill and a small satellite view, and a bottom dock: Build at its own width, then Warga, Staf and Menu. Nothing else** (GAME-DESIGN.md section 6). Notices float over the map as a 3s toast and stay in the Log. Build, Warga and Staf live only in the dock; the Combo book opens from a button in the Build sheet header; everything else opens from Menu, and no panel appears in two places. On phones 640px tall or less the satellite view drops out. The satellite view's fold button (48px tap area) and the PAUSED pill are part of the map, not extra screen furniture.
 3. **The primary action sits in the bottom third.** Reason: thumb reach in portrait.
 
 ### Legibility
@@ -206,7 +206,7 @@ Kairosoft's wiki pages cover mechanics, not UI, and most Kairosoft games are lan
 - **Ask:** is each unlock flagged until the player has really looked at it?
 - **What good looks like:**
   > "Feedback helps people know what's happening, discover what they can do next" (HIG-Feedback)
-- **Good here:** NEW on the card, its tab and the dock. It clears when the card is tapped or has been in view for 1s.
+- **Good here:** NEW on the card, its tab and the dock. It clears when the card is tapped or has been at least half on screen for 2s. Tab and dock badges stay while any card under them is unseen. (Playtest 2026-11-01: one star unlocks several things, and the tags cleared when the sheet opened.)
 - **Bad here:** no flag. A flag that never clears. A flag that clears just because the sheet opened.
 - **Sub-checks:** for each unlock on the dev seeds: the tag on card, tab and dock; that it survives opening the sheet without looking; that it clears on a real view.
 - **Pass:** 100% of unlocks.

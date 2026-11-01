@@ -66,25 +66,23 @@ Status 2026-10-27: the map engine, RT stars, RW and Kelurahan are built. Live gr
 The map never gets swapped out. At each promotion the scenery edge pulls back and shows the neighbours. The player's own area stays fully playable.
 
 ```
-Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
-9x13 tiles             18x26 tiles               36x52 tiles
+Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 
- scenery                +------+------+          +-------------+-------------+
- +------+               | YOU  | Kpg  |          |             |             |
- | YOU  |               |  RT  | Seb. |          |  YOUR RW    |    RW 2     |
- |  RT  |   ------->    +--[RW lots]--+  ----->  |             |             |
- +------+               |  RT3 |  RT4 |          +---[Kelurahan lots]--------+
- scenery                +------+------+          |    RW 3     |    RW 4     |
-                                                 +-------------+-------------+
-                        AI builds RT2-4.
-                        You steer with Dana.
+ scenery              +------+------+          +------+------+
+ +------+             | YOU  | Kpg  |          | YOU  | YOU  |   your RW: your RT and
+ | YOU  |   ------->  |  RT  | Seb. |  ----->  |  RT  | (was |   Kampung Sebelah, both
+ |  RT  |             +--[RW lots]--+          |      | Seb.)|   yours to build on
+ +------+                                      +--[Kelurahan lots]--+
+ scenery              AI builds Kampung        |  RT  |  RT  |   RW 2: two AI RTs
+                      Sebelah. You steer       |  AI  |  AI  |   you fund
+                      it with Dana.            +------+------+
 ```
 
-- RW = 2x2 RTs, about 18x26 tiles. Kampung Sebelah is the RT next door.
-- Kelurahan = 2x2 RWs, about 36x52 tiles.
+- RW = **2** RTs side by side: yours and Kampung Sebelah, the RT next door (playtest 2026-11-01: 4 RTs at the RW and 16 at the Kelurahan were too much to follow; `decisions/playtest-sk2.md`).
+- Kelurahan = **2 RWs of 2 RTs**, 2x2 RTs in all. At promotion Kampung Sebelah joins your RW as yours to build on, like a free takeover: its buildings and warga become yours and its lots open to Build. So the Kelurahan always brings new land. RW 2 is two new AI RTs you fund with Dana.
 - RW buildings go inside the player's RTs (their own and any taken over) or on lots along the seams between RTs. Kelurahan buildings go inside the player's RTs or on lots along the seams between RWs. RT buildings stay inside an RT. The seams sit between the RTs, so promotion never takes tiles from the player's RT.
 - RW keeps today's 64x32 tiles. A pinch out gives a view-only overview, and a tap there zooms back in.
-- Kelurahan defaults to half-size tiles. Kelurahan buildings take a 2x2 footprint, so a lot still taps like one RT tile today.
+- Kelurahan keeps full-size tiles: at 2x2 RTs it is the size the RW used to be (it was half-size at 4x4 RTs). Kelurahan buildings take a 2x2 footprint.
 - **Building sizes** (Oct 30): most buildings are 1x1. 1x2: Kos-kosan, Bengkel, Posyandu, Pasar Kaget. 2x2: Koperasi, Balai RW, Sawah, PAUD, Balai Warga, Taman Bermain, Gudang Material and the Kelurahan buildings. 2x3: Lapangan. 3x3: Terminal only. Range for combos, decorations and Kanibal counts from the nearest edge of each footprint.
 - **Building ladder** (Hari, Oct 30): each unlock tier costs about 1,5–2x the one before and earns about 1,5x, a payback near 9 months, and later tiers are bigger on the map. First pass: Apotek **6jt**, **550rb** a month; Koperasi **8jt**, **700rb**; Bengkel **4,5jt**, **420rb**; Pasar Kaget **450rb**. Problem unlocks and decorations stay cheap.
 - **Turning:** Rotate turns a building 90°. A square one only changes its picture. A long one swaps its sides round its top corner (1x2 to 2x1, 2x3 to 3x2), so it needs the room: the inspector lists what is in the way. While placing, Rotate turns the ghost and the free spots update.
@@ -120,8 +118,9 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 #### 0★ Pak RT (start)
 
 - Open: Rumah, Jalan Setapak, Kantor RT, Warung Sembako, Pos Ronda, Rumah Makan. Wifi at **8** residents.
+- **Roads:** a building works only once a Jalan Setapak joins it to the Kantor RT. Fields, ponds, paths, decor and the Menara Wifi need none: a mast needs power, not visitors.
 - **Problem unlocks** open when their trouble first shows up, with a notice saying why: Selokan after the first banjir; Gudang Material and Kebun Sayur when **3** warga have gone **6** months without work; Fotokopi when a permit queue forms. Pos Satpam moves to the first preman when preman exist.
-- **Rumah** levels up like any building: level 2 adds a teras and houses **5**, level 3 is a rumah tingkat and houses **7** (level 1 houses **3**). An upgrade costs the build price times the current level, so a house grows without a new lot.
+- **Rumah** levels up like any building: level 2 adds a teras and houses **4**, level 3 is a rumah tingkat and houses **5** (level 1 houses **3**), and needs RT 2★. Rumah is the fast house: no permit, no build time, and it draws new warga. Denser housing (Kos-kosan, Kontrakan) houses more per tile and pays rent (`decisions/playtest-sk2.md`). An upgrade costs the build price times the current level, so a house grows without a new lot.
 - **Goal for 1★:** **10** residents and **1** combo found.
 
 #### 1★ RT Rintisan
@@ -140,11 +139,11 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 #### 3★ RT Teladan
 
 - Unlocks Apotek, Koperasi, Balai Warga, Lampu Jalan and Mural.
-- The SK to RW arrives. Kontrakan, Kolam Lele and Patung Ikon open at RW.
+- The SK to RW arrives. Kontrakan, Kolam Lele and Patung Ikon open at RW. **Kontrakan** (2x2) houses **24** (level 2: **32**) and pays rent: the densest housing, at about 8 beds a tile against Rumah's 5.
 
 #### New RT content
 
-- **Kos-kosan:** a 1x2 row of rooms, houses **8**, costs **1** Sabar a month for the noise.
+- **Kos-kosan:** a 1x2 row of rooms, houses **10** (level 2: **14**) and pays rent, costs **1** Sabar a month for the noise.
 - **Lapangan:** a 2x3 field. Rent (sewa lapangan) earns **120rb** a month against its **100rb** upkeep, **+0.5** Popularitas a month. Doubles the Lomba Agustusan prizes, and is needed for Panjat Pinang.
 - **Bank Sampah:** earns up to **Rp 40rb** a month.
 - **Anak Kos** combo (Kos + Warung + Wifi): warung **x1.3**, **+1** Viral a month.
@@ -158,22 +157,22 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 
 #### 0★ Pak RW (promotion)
 
-- The map expands to 4 RTs.
+- The map expands to 2 RTs: yours and Kampung Sebelah.
 - Unlocks Balai RW, the Stempel resource and Dana allocation.
-- **Goal for 1★:** fund each neighbouring RT once, and keep the Stempel backlog under **5** for **6** months.
+- **Goal for 1★:** fund Kampung Sebelah once, and keep the Stempel backlog under **5** for **6** weeks.
 
 #### 1★ RW Rintisan
 
 - Unlocks Posyandu, Portal and the Kader Posyandu job.
-- **Goal for 2★:** every RT at 1★ or above, **1** win against RW Sebelah, and **2** RW combos.
+- **Goal for 2★:** Kampung Sebelah at 1★ or above, **1** win against RW Sebelah, and **2** RW combos.
 
 #### 2★ RW Berkembang
 
 - Unlocks Pasar Kaget, Gapura and the Calo job. The Musim Pindahan event starts.
 - **Goal for 3★:**
-  - every RT at 2★ or above, with at least **2** at 3★
+  - Kampung Sebelah at 3★
   - **2** wins in a row
-  - no RT in debt for **2** years
+  - no debt for **24** weeks
 
 #### 3★ RW Teladan
 
@@ -189,7 +188,7 @@ Stage 1: RT            Stage 2: RW               Stage 3: Kelurahan
 - **Gapura:** **+5** Viral in August and nothing otherwise. Repainting costs Rp every August.
 - **Portal:** **+1** Sabar a month, ojol income **-30%**. Riders stop at the barrier.
 - **Jalan Ditutup** combo (Pasar Kaget + Portal): market **x1.5**, ojol income **0** that month, **-1** Sabar.
-- **Grup Chat Warga** combo (two neighbouring RTs with the same trait): **+2** Viral, **-1** Sabar a month.
+- **Grup Chat Warga** combo (two neighbouring RTs with the same trait): **+2** Viral, **-1** Sabar a month. With one AI RT at the RW, it first happens at the Kelurahan, between RW 2's two RTs.
 - **Pos Siaga** combo (Posyandu + Portal): **+1** Sabar and **+1** Viral a month. It gives a 1★ player a second RW combo for the 2★ goal.
 - **Agustusan Akbar** combo (Gapura + Lapangan): 17 Agustus pays **x2**.
 - **Rivalitas Abadi** now also runs between your RT and Kampung Sebelah.
@@ -205,18 +204,19 @@ Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 
 #### 0★ Pak Lurah
 
+- Kampung Sebelah joins your RW as yours, and RW 2 (two AI RTs) appears. Stempel letters stop reaching you: your RW has no AI RT left, and RW 2 stamps its own.
 - Unlocks Kantor Kelurahan and Anggaran.
-- **Goal for 1★:** every RW at 1★ or above, serapan of at least **80%** for one year, and the player's own kampung at **50** residents and Popularitas **50**.
+- **Goal for 1★:** RW 2 at 1★ or above (an RW is as good as its weaker RT), serapan of at least **80%** for one year, and the player's own kampung at **50** residents and Popularitas **50**.
 
 #### 1★
 
 - Unlocks Puskesmas Pembantu and the Honorer job. Kelurahan gets Pasar.
-- **Goal for 2★:** every RW at 2★ or above, **1** Piala Kelurahan win, a clean Tim Audit, and the player's own kampung at **120** residents and Popularitas **45**.
+- **Goal for 2★:** RW 2 at 2★ or above, **1** Piala Kelurahan win, a clean Tim Audit, and the player's own kampung at **120** residents and Popularitas **45**.
 
 #### 2★
 
 - Unlocks Terminal and Taman. Terminal is the one 3x3 building, the Kelurahan landmark: **Rp 25jt**, and shops within **3** tiles earn **20%** more. A 3x3 never fits a 2-tile seam, so it stands inside the player's RT lots.
-- **Goal for 3★:** **3** Piala wins, every RW at 3★, and the player's own kampung at **200** residents and Popularitas **35**. A bigger kampung expects more, so holding Popularitas while growing is the work of this stage.
+- **Goal for 3★:** **3** Piala wins, RW 2 at 3★, and the player's own kampung at **200** residents and Popularitas **35**. A bigger kampung expects more, so holding Popularitas while growing is the work of this stage.
 
 #### 3★ Lurah Teladan
 
@@ -338,7 +338,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - **Staff** (`src/data/staff.ts`): the people the player manages, as Kairosoft's staff are; warga still pick their own jobs. Inem is staff number 1 (the first Asisten at the Kantor desk, see the desk queue below) and never leaves. Slots: 1 at the start, 3 at RT 1★, 4 at RT 3★, 6 at RW, 8 at Kelurahan, never more than **10**.
   - **Desk queue** (prototype, 2026-10-31, `decisions/desk-queue.md`): every permit is a pile of folders (berkas), one per permit month, and the Kantor clears them in the order buildings were placed. Each Asisten clears **0.85** folders a month per point of output, so Inem at level 1 clears about **1**; the Kantor never clears fewer than **0.5**. Each building still costs **1** Popularitas for every month it waits. More Asisten clear the queue sooner, and the Asisten role can be posted from RT 1★. The map badge shows the months to go, the Kantor carries a pile of folders while the queue has work, and once the queue is **3** months deep with a free slot, the goal strip says to post a lowongan for an Asisten. Rumah need no permit, so the first house is still instant.
   - **Stats** (`decisions/staff-stats.md`): Rajin, Lobi, Jujur, Gaul (1 to 99), each with its own icon and one meaning everywhere: Rajin is how much gets done, Lobi how smoothly things go through the people above, Jujur how much leaks, Gaul how liked. Output = level x the role's work stat / 50 x trait.
-  - **Roles**, each with a work stat and a risk stat: Asisten (Lobi: the desk queue; Jujur: a titipan folder jumps the queue, −2 Popularitas), Hansip (Rajin: Aman +2 per level, finds a preman work; Gaul: a scuffle, −2), Tukang Tagih Iuran (Rajin: up to +50% iuran; Jujur: skims Rp 150rb), Petugas PU (Rajin: repairs; Jujur: pads the bill, Rp 250rb), Admin Grup WA (Gaul: Viral; Jujur: a hoax, −3), Supir (Rajin: crews arrive sooner; Gaul: clips a gerobak, −1), Bendahara (Jujur: upkeep down; Rajin: the receipts go missing, Rp 300rb), Sekretaris (Lobi: Orang Inside; Jujur: a small scandal, −3).
+  - **Roles**, each with a work stat and a risk stat; every stat is the work stat of two roles and the risk stat of two (playtest 2026-11-01: Rajin was doing almost everything): Asisten (Lobi: the desk queue; Rajin: a folder is misfiled, −2 Popularitas), Sekretaris (Lobi: Orang Inside; Jujur: a small scandal, −3), Tukang Tagih Iuran (Gaul: talks warga into paying, up to +50% iuran; Jujur: skims Rp 150rb), Admin Grup WA (Gaul: Viral; Lobi: the group gets reported, −3), Hansip (Rajin: Aman +2 per level, finds a preman work; Gaul: a scuffle, −2), Petugas PU (Rajin: repairs; Lobi: no materials from the supplier, Rp 250rb), Bendahara (Jujur: upkeep down; Rajin: the receipts go missing, Rp 300rb), Supir (Jujur: no detours to his cousin's warung, crews arrive sooner; Gaul: clips a gerobak, −1).
   - **Mishaps:** below **60** in the risk stat, a mishap can strike any week, at 8% x (60 − stat) / 60: Jujur 30 is about one every half year. The notice names the person, the stat and its value ("Bu Sri (Jujur 25): menyunat iuran").
   - **Shown in numbers:** every staff card says what its work stat buys ("Lobi 60 → 1 berkas per minggu"); the detail view labels the two stats a job uses (work and risk, each with its effect) and greys the other two; an applicant shows what they would do in the posted role and their risk; trait chips name the stats a trait bends.
   - **Who do you send?** Some events ask you to send one of your staff. The card lists the best three for the stat with their odds (base + (stat − 50) x 1.2%, from 5% to 95%), and a success teaches them a point of it: a call from the Kecamatan (Lobi: stamps 4 folders), warga at the gate (Gaul), a hibah in cash (Jujur), leaking roofs (Rajin), and the Tim Audit (Lobi: a clean audit, or receipts cost double).
@@ -391,9 +391,9 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
   - a money row: the five resources;
   - the map, full width. A goal pill floats over its top-left corner (one goal at a time, up to two lines, "Goal: reach 10 residents"; tap for every goal left with have and need), and a small satellite view over its top-right corner pans the map when tapped;
   - the month as a thin line along the top edge of the bottom bar;
-  - a dock of three equal buttons, icon over label: Build, Warga, Menu.
+  - a dock, icon over label: Build at its own width, then Warga, Staf and Menu sharing the rest. Staf has its own button because staff run the desk queue and the send-someone events (playtest 2026-11-01).
 - Why this arrangement: time controls sit with the date, as in most city builders, and change speed without leaving the map. The resources get a row to themselves, so big numbers have room. The goal floats over the map, as quests do in mobile builders, so neither row wraps. Build and Warga are the panels used many times a minute, so they get their own buttons; the rest stay one tap away in Menu.
-- Build and Warga live only in the dock (`ActionButton.dock`), so the Menu does not list them twice. The Combo book opens from a header button inside Build. Every other panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game. A new panel registers an `ActionButton` with a `group` in the Menu. Don't add other main-screen buttons.
+- Build, Warga and Staf live only in the dock (`ActionButton.dock`), so the Menu does not list them twice. The Combo book opens from a header button inside Build. Every other panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game. A new panel registers an `ActionButton` with a `group` in the Menu. Don't add other main-screen buttons.
 - Notices are toasts, not a band: the latest one floats over the bottom of the map for 3 seconds, then fades. Tap it to open the Log. Every notice also stays in the Log (Menu > Log), so a missed toast is never lost. Important messages still use the pause-and-tap modal.
 - The satellite view hides while a building is being placed. A small square under it folds it away to a button in its corner, and back; the choice is saved in settings. The square is drawn 28px inside a 48px tap area.
 - While time stands still with the map in view (the player's pause, or build mode), a pixel **JEDA / PAUSED** pill shows near the bottom of the map. It hides under a toast. Ambient motion stops while paused (scenery, walkers, idle buildings, weather); feedback for what the player does (the ghost, bursts, coins) keeps moving.
@@ -403,7 +403,7 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
 - The map shows each phase of a building differently. Waiting for a permit: only the staked plot (stakes and string) under the permit sign; nothing is built yet. Being built: the half-made building in bamboo scaffolding with a tower crane over it. Mangkrak: the scaffolding without the crane.
 - Combo pop-ups show the buildings that made the combo, at their levels, under the title.
 - Picking a building drops nothing on the map: every free spot glows as a faint diamond, and the bar says to tap one. The first tap on a free tile puts the ghost there, with a pixel arrow over it and Cancel, Rotate and Place under it (Rotate turns the ghost, free, and the building keeps that facing; paths have no Rotate); a finger or mouse on the ghost drags it (a hovering mouse does not move it, or the Place buttons would slide away from the cursor). If no free spot is in view, the map pans to the best one (beside a connected road, nearest the middle of the view). Moving a placed building starts from where it stands.
-- Build cards show how many of each the player owns. Buildings not yet seen carry an animated pixel NEW tag on the card, its tab and the dock's Build button.
+- Build cards show how many of each the player owns. Buildings not yet seen carry an animated pixel NEW tag on the card, its tab and the dock's Build button. A card's tag stays until that card has been at least half on screen for **2s**, or has been tapped; opening the sheet is not seeing it, since one star can unlock several things at once.
 - Light and Dark share one layout: every size, gap and position is the same, and only colours change. An e2e test compares the boxes in both themes.
 - On short phones (640px tall or less) the satellite view drops out and the goal pill spans the map's width.
 - Sheets, pop-ups, tips and the tutorial follow the theme too, so an open panel matches the frame behind it (see Themes below). The home screen keeps its dark look over the map in both themes.
@@ -702,7 +702,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing
 
 #### 20. Management load
 - **Ask:** do the taps needed per minute stay bounded as the map grows?
-- **Why:** with 4, then 16+ RTs, micromanagement can turn fun into chores.
+- **Why:** each stage adds RTs to tend, and micromanagement can turn fun into chores. The playtest of 2026-11-01 found 16 RTs too many; the ladder is now 1, 2, then 4.
 - **Kairosoft:** Station Manager runs one station at a time; the others pay 40% of income on their own [SM].
 - **Good:** each stage brings a way to delegate (Auto-dana, staff) before the load doubles.
 - **Bad:** funding 16 RTs one by one every month.
