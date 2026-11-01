@@ -18,8 +18,8 @@ const CORE_BUILDINGS: BuildingDef[] = [
     income: 0,
     attract: 1,
     housing: 3,
-    // Level 2 adds a teras, level 3 a second floor: 2 more beds each.
-    housingLevels: [3, 5, 7],
+    // Level 2 adds a teras, level 3 a second floor: 1 more bed each.
+    housingLevels: [3, 4, 5],
     permitMonths: 0,
     buildMonths: 0,
     maxLevel: 3,
@@ -177,7 +177,8 @@ const CORE_BUILDINGS: BuildingDef[] = [
     upkeep: 80_000,
     income: 200_000,
     attract: 2,
-    housing: 8,
+    housing: 10,
+    housingLevels: [10, 14],
     perMonth: { sabar: -1 },
     permitMonths: 2,
     buildMonths: 2,

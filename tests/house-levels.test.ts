@@ -10,10 +10,10 @@ describe('rumah levels', () => {
     const before = housing(s);
     expect(bedsOf(b)).toBe(3);
     expect(upgrade(s, b).ok).toBe(true);
-    expect(bedsOf(b)).toBe(5);
+    expect(bedsOf(b)).toBe(4);
     expect(upgrade(s, b).ok).toBe(true);
-    expect(bedsOf(b)).toBe(7);
-    expect(housing(s)).toBe(before + 4);
+    expect(bedsOf(b)).toBe(5);
+    expect(housing(s)).toBe(before + 2);
     expect(upgrade(s, b).ok).toBe(false);
   });
 
@@ -24,7 +24,7 @@ describe('rumah levels', () => {
     upgrade(s, b);
     upgrade(s, b);
     while (s.residents.length < housing(s) - 3) s.residents.push({ id: s.nextResidentId++, name: 'Pak Budi', job: 'none', pensiun: 0, fake: 0, arrived: 0 } as never);
-    // Removing it would drop 7 beds, not the 3 a level 1 house had.
+    // Removing it would drop 5 beds, not the 3 a level 1 house had.
     expect(checkDemolish(s, b).ok).toBe(false);
   });
 
