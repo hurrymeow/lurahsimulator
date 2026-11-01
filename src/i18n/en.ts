@@ -534,7 +534,7 @@ export const EN = {
   'set.largeText': 'Large text',
   'set.largeTextHelp': 'Bigger text in panels and buttons.',
   'set.music': 'Music volume',
-  'set.musicHelp': 'Background tune. 0 turns it off.',
+  'set.musicHelp': 'Background music. 0 turns it off.',
   'set.newGame': 'New game',
   'set.newGameArmed': 'Tap again to wipe this kampung',
   'set.off': 'Off',
