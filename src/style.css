@@ -214,8 +214,12 @@ html.no-effects #dof { display: none; }
 .tabs .tab[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
 /* Buttons side by side are all the same width: one row of equal columns, and a long label wraps inside its button. */
 .tabs, .action-row, .lang-row .row, .nb-fund, .staff-actions, .home-naming .name-titles { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: stretch; gap: var(--gap); }
-/* Build's four building tabs and Combo do not fit one row on a phone, so they sit in three equal columns. */
+/* Build's building tabs sit in three equal columns, or 2 + 2 when there are four, so no tab sits alone. */
 .build-tabs { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.build-tabs.two-col { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* Header action beside the close button: Combo book in Build, Back in the Combo book. */
+.sheet-head h2 { flex: 1; min-width: 0; }
+.sheet-head .head-action { position: relative; min-height: 48px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex: none; }
 .card-btn.locked { border-style: dashed; cursor: default; }
 .card-btn.locked .pixel { filter: grayscale(1); }
 .card-text { flex: 1; min-width: 0; }
