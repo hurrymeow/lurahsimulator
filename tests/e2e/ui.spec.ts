@@ -2350,6 +2350,7 @@ test.describe('build mode', () => {
     }, uid);
     await expect.poll(() => page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.s.buildings.find((b: any) => b.uid === u).status, uid)).toBe('building');
     await page.locator('.sheet-head .btn-icon').click();
+    await dismissModals(page);
     const at = await page.evaluate((u) => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       const b = app.s.buildings.find((o: any) => o.uid === u);
