@@ -111,6 +111,7 @@ export const EN = {
   'first.star': 'First star earned!',
   'gig.doneTitle': 'Inem sang: {name}',
   'goal.label': 'Goal: {goal}',
+  'goal.onTrack': 'on track, keep it up',
   'goal.short.beds': 'build a Rumah to house more residents',
   'goal.short.combo': 'make a combo: {pieces}',
   'goal.short.desk': 'post a lowongan for an Asisten',

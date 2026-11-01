@@ -29,7 +29,7 @@ export function setupGoal(app: App): void {
     text.textContent = t('goal.label', { goal: stepLeads ? step!.text : left[0]?.short ?? '' });
     // Opened: every unmet goal, then the step when the line does not already say it.
     const rows = [
-      ...left.map((l) => h('p', { class: 'goal-row' }, `★ ${l.text}`)),
+      ...left.map((l) => h('p', { class: 'goal-row' }, l.holding ? `★ ${l.text} · ${t('goal.onTrack')}` : `★ ${l.text}`)),
       ...(step && !stepLeads ? [h('p', { class: 'goal-row goal-step' }, t('goal.step', { step: step.text }))] : []),
     ];
     const more = open || rows.length > 0;
