@@ -36,6 +36,7 @@ describe('developer seeds', () => {
       const s = deserialize(readFileSync(file(id), 'utf8'))!;
       refreshAccess(s);
       expect(s.buildings.filter((b) => b.noRoad).map((b) => b.def)).toEqual([]);
+      expect(s.buildings.filter((b) => b.status === 'mangkrak').map((b) => b.def)).toEqual([]);
       expect(new Set(s.buildings.filter((b) => b.def !== 'jalan').map((b) => b.def)).size).toBeGreaterThanOrEqual(MIN_KINDS[id]);
     });
   }
