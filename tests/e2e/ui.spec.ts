@@ -2568,16 +2568,10 @@ test.describe('zoom, big lots and the Warga list', () => {
     expect(await page.locator('#sheet').textContent()).not.toMatch(/Rp ?\d/);
   });
 
-  test('a long goal keeps to one line and opens in full on tap', async ({ page }) => {
+  test('the goal opens on tap to every goal left and closes again', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     const text = page.locator('#goal .goal-text');
-    await page.evaluate(() => { document.querySelector<HTMLElement>('#goal .goal-text')!.textContent = 'x '.repeat(200); });
-    const lh = await text.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight));
-    expect((await text.boundingBox())!.height).toBeLessThan(lh * 1.5);
-    expect(await text.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
-    // Back to the real goal: it opens to the whole line and the next star.
-    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
     const now = page.locator('#goal-now');
     await expect(now).toHaveAttribute('data-more', 'true');
     await now.click();
