@@ -173,6 +173,20 @@ describe('AI neighbours', () => {
     expect(n.stars).toBeGreaterThanOrEqual(1);
   });
 
+  it('earns its 2nd star on the RT checklist without a ranking win', () => {
+    const s = grown();
+    const n = s.neighbours[0];
+    n.stars = 1;
+    n.pop = 25;
+    n.discovered = ['tongkrongan', 'rapatMalam'];
+    // Two social buildings put its own Sabar over the 2nd-star bar.
+    const o = cellOrigin(n.cx, n.cy);
+    for (const [i, id] of ['posRonda', 'wifi'].entries()) n.buildings.push({ uid: s.nextUid++, def: id, x: o.x + 2 + i, y: o.y + 2, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+    expect(n.ranking).toEqual([]);
+    neighboursSystem(s, []);
+    expect(n.stars).toBe(2);
+  });
+
   it('pay iuran into the kas, Rajin more', () => {
     const s = grown();
     const a = s.neighbours[0];
