@@ -4,6 +4,37 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Tasks
 
+- [ ] **HIGH PRIORITY: Revamp the Neighbours sheet as a list, then a detail per RT, and remove the ranking star for AI RTs.**
+  - Problem: At Kelurahan (16 RTs) the sheet is one long scroll. Each RT repeats a red ranking line, the score parts, Dana ×1 and ×6, four Dana otomatis toggles and a help line, Ambil alih and a help line, the trait line, the status line and the full star checklist. Five rule paragraphs come before any RT. Hari, 2026-11-01 (screenshot at RT 16): "absolutely not usable, need total revamp". Neighbour RTs also carry the RT star goals "win the ranking once" (2★) and "twice in a row" (3★), which Hari could not act on.
+  - Why: The sheet is the only place the player acts on neighbours, and it fails UI.md rule 13 (50 words in view, 20 per block, 300 per sheet) and the #242 CI scan by far. Bot run on main (RW, seed 2, 40 quarters): funded RTs beat the ranking target every quarter by 2x to 5x, and unfunded RTs stall and never win again, so the ranking goal adds no decision beyond Dana. Its target also counts quarters since game start (`rivalTarget` in `src/sim/grow.ts`), so a late RT such as RT 16 faces 341 on day one.
+  - Decided (Hari, 2026-11-01, options 1A and 3A in `/mnt/project-files/plans/neighbour-options.md`):
+    - Remove `rankWins` and `winStreak` from the AI RT star check (`neighboursSystem` in `src/sim/grow.ts`). The player's own RT keeps them. AI RTs still count in the player's area ranking (`areaScore`).
+    - Drop the per-RT ranking line and score parts (`grow.rank`, `grow.rankParts`) from the sheet.
+    - The sheet opens on a list: one row per RT with name, stars, the one blocking need (for example "needs 8 warga") and one status chip (Stalled, Building, Max). Stalled RTs sort first. One "Auto-fund all" control sits at the top.
+    - Tap a row for that RT's detail: unmet goals only, Dana ×6 as the filled button, Dana ×1, one Auto chip that cycles Off, 3, 6 and 12, then the actions from the next item. The rule paragraphs move to a "?" help sheet.
+    - Folds in the Neighbours part of "Cut text on the 6 screens that fail UI rule 13".
+  - Suggested solution: one PR (Sonnet). Files: `src/ui/neighbours.ts`, `src/sim/grow.ts`, `src/i18n/en.ts`, `src/i18n/id.ts`, the Neighbours e2e specs. Log the choice in `decisions/neighbour-sheet.md`.
+  - Source: Hari, 2026-11-01, planning thread "Plan neighbour RT boosts and sheet".
+  - `open · — · — · done when:` the sheet passes the rule 13 scan at 320 px in EN and ID with 16 RTs, every per-RT action is one tap from its row, AI RTs have no ranking goal, and the RW and Kelurahan bots still reach their stars.
+- [ ] **HIGH PRIORITY: Let the player build on AI-run RTs, and add Kunjungan (visit) as a one-tap boost.**
+  - Problem: Neighbour RTs feel passive. Dana is pay-and-wait, and the score parts are only a readout. Hari: "felt very passive now, don't know what to do". To build in a neighbour RT you must take it over (Ambil alih, 3 Orang Dalam, own RW only), and then the AI stops building there.
+  - Why: Building is the action the player already knows, and it lets the player choose exactly what clears the blocker (houses for warga, the missing combo partner). Orang Dalam piles up unused late on (114 in Hari's screenshot), so it needs a sink.
+  - Decided (Hari, 2026-11-01, options 2E and 2B in `/mnt/project-files/plans/neighbour-options.md`):
+    - Build on AI RTs (Hari's idea): place buildings on free lots in any AI-run RT cell at normal price. They count for that RT's score, combos and stars, and the AI keeps building on the lots left. Today `checkPlace` blocks AI cells via `neighbourAt` (`src/sim/rules.ts`), and `viewOf` (`src/sim/neighbourView.ts`) reads only the AI's own buildings. Both change, and the AI lot planner must skip the player's lots. The player's buildings there earn and cost upkeep in the player's kas, as takeover does today.
+    - Retire Ambil alih and Serahkan (takeover and hand-back). Decide in the PR what happens to saves with a player-run RT (no save migrations, so an incompatible save shows the start-new prompt).
+    - Kunjungan: 1 Orang Dalam, the RT builds its next build now and gains a few warga at once. One use per RT per quarter, so keys cannot buy stars too fast.
+    - Each row's detail gets "Go to RT", which closes the sheet and pans the map to that cell.
+  - Suggested solution: one PR (Sonnet), after the sheet revamp above. Files: `src/sim/rules.ts`, `src/sim/neighbourView.ts`, `src/sim/grow.ts`, `src/sim/balance.ts` (Kunjungan numbers), `src/ui/neighbours.ts`, i18n, `tests/grow.test.ts`. Log in `decisions/build-on-ai-rts.md`.
+  - Fallback if Hari's playtest finds panning across 16 RTs a chore: a per-RT build focus (Rumah or the missing combo) instead, and building only in the player's own RW.
+  - Source: Hari, 2026-11-01 ("shall we just allow user to build on rt that is controlled by ai as a way to speed up"), planning thread "Plan neighbour RT boosts and sheet".
+  - `open · — · — · done when:` a building the player places in an AI RT cell counts for that RT's stars and the AI never builds over it, Kunjungan shows its cost and effect in EN and ID, takeover is gone, and the RW and Kelurahan bots still reach their stars.
+- [ ] **HIGH PRIORITY: Replace the construction crane with a building that rises behind scaffolding.**
+  - Problem: The crane (`crane` in `src/render/iso.ts`, drawn by `site('crane', false)` in `src/render/map.ts`) is 44 px tall on a 1x1 tile. It overflows the footprint, floats over neighbouring trees, covers the "1" badges, and gives no sense of how far along the build is. Hari, 2026-11-01: it "looks bad and doesn't work".
+  - Why: UI.md rule 17 says map art stays in its footprint. A build site should show progress.
+  - Decided (Hari, 2026-11-01, option 4B in `/mnt/project-files/plans/neighbour-options.md`): drop the crane. While building, draw the full building art clipped from the ground up to its build progress, with the scaffold on top and the existing dust fx. Permit keeps the staked plot. Mangkrak keeps grey plus scaffold and does not rise, so a stalled site still looks different. Badges sit on the top of what is drawn.
+  - Suggested solution: one PR (Sonnet), independent of the neighbour items. Files: `src/render/map.ts`, `src/render/iso.ts`, `tests/e2e` build-phase specs. Update `decisions/crane-phases.md` via a new `decisions/rising-build.md`. If it reads too quiet, add a small hook and cable inside the footprint. This also removes the "native-size cranes" half of "Low and wide 2x2 art".
+  - Source: Hari, 2026-11-01, screenshot and planning thread "Plan neighbour RT boosts and sheet".
+  - `open · — · — · done when:` nothing on a build site draws outside its footprint, the site shows its progress, badges read clearly, and build-phase screenshots at 320 and 412 px pass in both languages.
 - [ ] **Ship the UI hierarchy plan: four button looks, Wacana list, setup screen.**
   - Problem: one accent fill marks primary buttons, selected tabs, the dock and Pak/Bu, so nothing stands out. Wacana shows 51 to 92 words and 2 buttons per policy. The setup screen's six boxes look alike.
   - Why: UI.md rule 14 (2026-11-01). Hari: "all buttons look the same, no hierarchy".
@@ -129,7 +160,7 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 - [ ] **Low and wide 2x2 art, and native-size cranes on big sites.**
   - Problem: Gudang Material and Koperasi look like a Rumah scaled up, too tall for 2x2. The crane over a 2x2 site is a 1x1 crane scaled 2x, with big pixels out of scale.
   - Why: size should read as width, and every sprite should keep the 1px grid.
-  - Suggested solution: redraw the 2x2 buildings (Gudang Material, Koperasi first, then any other 2x2 taller than its tier's 1x1) per ART.md's new geometry rules; draw crane, scaffold and stakes at native pixels for 1x2, 2x2, 2x3 and 3x3. Never overwrite the artist's sprites.
+  - Suggested solution: redraw the 2x2 buildings (Gudang Material, Koperasi first, then any other 2x2 taller than its tier's 1x1) per ART.md's new geometry rules; draw scaffold and stakes at native pixels for 1x2, 2x2, 2x3 and 3x3 (the crane is being replaced, see the rising-build item). Never overwrite the artist's sprites.
   - Source: `decisions/playtest-sk2.md`
   - `open · — · — · done when:` no 2x2 building stands taller than a 1x1 of its tier, site sprites have no scaled pixels, and `tests/art.test.ts` checks both.
 
@@ -157,12 +188,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: from year 2 the year-end notice is a banner card, "PERHATIAN: Biaya hidup naik {x}% tahun ini", with one reason a year from the bank in section 4 of `decisions/staff-requests.md`, never the same twice in a row, in ID and EN.
   - Source: voidinside99, 2026-11-01
   - `open · — · — · done when:` the banner shows every year from year 2 with a fresh reason, within UI.md rule 13.
-- [ ] **Make the construction crane sit inside its building footprint.**
-  - Problem: During the build phase the tall striped crane tower and its arm overflow the building footprint, float over neighbouring trees, cover the "1" badges, and the half-built box under it looks messy. Seen in Hari's screenshot of 2026-11-01.
-  - Why: UI.md rule 17 says map art stays in its footprint. The crane shadow was fixed in #221, but the crane itself still breaks the rule and reads as clutter at phone width.
-  - Suggested solution: Draw the crane and its scaffold within the building's own tiles, with a smaller tower and a shorter arm. Keep the "1" badges clear of the crane. Check the half-built box so it reads as a clean scaffold. See `decisions/crane-phases.md` (#164) for the phase design.
-  - Source: Hari, 2026-11-01 (screenshot)
-  - `open · — · — · done when:` the crane stays inside its footprint, the badges read clearly, and build-phase screenshots at 320 and 412 px show no overflow in both languages.
 - [ ] **Show a how-to hint for every goal when it is tapped open.**
   - Problem: The tapped goal line says what to reach, but not how to reach it. Hari could not tell how to win "menang peringkat tahunan wilayah 1 kali" (win a yearly wilayah ranking once). The "Langkah berikut" hint under it talked about Warung Sembako and residents, which is unrelated.
   - Why: A player who cannot see the next action stops playing or quits the goal. Hari asked for the hint in the tapped state, so it does not add clutter to the strip.
@@ -175,33 +200,6 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Cause, from `src/sim/nextstep.ts` on main: `bestDraw` picks the best attract-per-cost building from `placeableDefs()` with `ignoreLimit: true` and never checks whether that building is already built or at its cap. Once residents stop coming (`pop >= attractTarget`), the 'draw' step names a building the player already has. Fix: skip buildings already at their limit or count for the draw hint, and when no draw building is left, return null or name the real blocker (the pop cap, 71/77 here). Keep the goal line visible; the hint is a second line, never a replacement.
   - Source: Hari, 2026-11-01 (screenshot, project thread "Add goal how-to hints to TODO")
   - `open · — · — · done when:` a built Warung Sembako never appears as the draw hint, the strip names the real blocker, and the goal line stays visible in EN and ID at 320px. `tests/nextstep.test.ts` covers the built-draw case.
-- [ ] **Revamp the Neighbours sheet: it is unusable with 16 RTs.**
-  - Problem: At Kelurahan (16 RTs) the sheet is one long scroll. Each RT repeats a red ranking line, the score parts, Dana ×1 and ×6, four Dana otomatis toggles with a help line, Ambil alih with a help line, the trait line, the status line and the full star checklist. There is no hierarchy, so Hari cannot find which RT needs what (Hari, 2026-11-01, screenshot at RT 16: "absolutely not usable, need total revamp").
-  - Why: The sheet is the only place the player acts on neighbour RTs. UI.md rule 13 caps (50 words in view, 20 per block, 300 per sheet) and the #242 CI scan apply, and the sheet fails them by a wide margin.
-  - Suggested solution: a compact list first (one row per RT: name, stars, the one blocking need, one status chip), sorted so stalled RTs come first, with an "auto-fund all" control at the top. Tap a row to open that RT's detail with its actions. Fold in "Cut text on the 6 screens that fail UI rule 13" (Neighbours part), "Decide the neighbour RT ranking star" and "Give the player more active ways to boost neighbour RTs" below. Plan: `docs/plans/neighbour-sheet.md` (planning thread "Plan active neighbour boosts").
-  - Source: Hari, 2026-11-01 (screenshot, RT 16, Kelurahan).
-  - `open · — · — · done when:` the sheet passes the rule 13 scan at 320 px in EN and ID with 16 RTs, each RT row fits one screen line pair, and every per-RT action is one tap from its row.
-- [ ] **Let the player build on AI-run RTs to speed them up.**
-  - Problem: To build in a neighbour RT today you must take it over (Ambil alih, 3 Orang Dalam, own RW only), and then the AI stops building there. There is no way to help an AI RT with your own builds while it keeps growing.
-  - Why: Building is the core action the player already knows. It is the most direct answer to "neighbours feel passive" (see "Give the player more active ways to boost neighbour RTs").
-  - Suggested solution: allow placing buildings on free lots in any AI-run RT cell at normal price. Those buildings count toward that RT's score, combos and stars, and the AI keeps building on the lots left. Decide in the plan whether this replaces Ambil alih. Weighed in `/mnt/project-files/plans/neighbour-options.md` and the plan `docs/plans/neighbour-sheet.md`.
-  - Source: Hari, 2026-11-01 ("shall we just allow user to build on rt that is controlled by ai as a way to speed up").
-  - `open · — · — · done when:` a building placed in an AI RT cell counts for that RT's stars, the AI does not build over it, and the RW and Kelurahan bots still reach their stars.
-- [ ] **Decide the neighbour RT ranking star: remove it, or show the lever.**
-  - Problem: Neighbour RTs (Tetangga) carry the star goal "2 kali menang peringkat berturut-turut" (win the ranking twice in a row). The sheet shows the score parts (warga, bangunan, combo, Popularitas) but no action that moves them. Hari: "I have absolutely no idea how to do it", and he asks whether to remove it (screenshot, Feb M1 T3, RT 4 at 2★, 1 win).
-  - Why: A star the player cannot influence reads as a dead end, and it stalls 3★ for the neighbour. Removing it changes the stage's star path, and the ranking code and the balance bots assume it exists.
-  - Suggested solution: Two options.
-    - A. Remove the ranking goal from neighbour RT star lists. Replace it with a goal the player can act on, such as residents or combos. Pros: simple, no new text needed, faster to ship. Cons: the ranking stops being a goal on that sheet, and the 3★ band in GAME-DESIGN.md shifts, so the bots need a rerun.
-    - B. Keep it and show the lever. Add one line under the goal that names the action, for example "fund more builds to raise the score", tied to the score parts the sheet already lists. Pros: keeps the design, and the lever is the same one the ranking help already names. Cons: the lever is indirect (score is many parts, and the player only sees the total), so the line may still feel vague.
-    - Recommendation: B first. The score parts are already on the sheet, so the gap is wording, and it keeps the star path and bot results intact. If Hari's playtest still shows no way to act, fall back to A.
-  - Source: Hari, 2026-11-01 (screenshot, project thread "Add goal how-to hints to TODO"). Related: "Show a how-to hint for every goal when it is tapped open" (above) and "Cut text on the 6 screens that fail UI rule 13" (Neighbours sheet fix).
-  - `open · — · — · done when:` Hari has picked A or B, and the chosen option ships with its wording in EN and ID, or the star is removed and the RT and Kelurahan bots still reach their stars.
-- [ ] **Give the player more active ways to boost neighbour RTs.**
-  - Problem: Neighbour RTs feel passive. The Neighbours sheet offers a take-over (Ambil alih, for keys) and a funding choice (Dana ×1 or ×6), and the score parts are only listed. Hari: "felt very passive now, don't know what to do" (screenshot, Feb M1 T3, RT 4 at 2★).
-  - Why: With no clear action, the player waits for the neighbours to grow. That makes the neighbour stages slow, and it is the same gap that makes the ranking star feel impossible (see "Decide the neighbour RT ranking star" above).
-  - Suggested solution: Add two or three active levers, each tied to a score part the sheet already shows (warga, bangunan, combo, Popularitas). Candidates: a one-off gift of a building or Popularitas for an RT, a shared combo the player can help finish, or a visit that lifts an RT's warga for a few weeks. Pick one or two in the design pass, and say what each costs in Dana or keys. Keep the sheet within UI.md rule 13 caps and name each action in one plain line.
-  - Source: Hari, 2026-11-01 (screenshot, project thread "Add goal how-to hints to TODO"). Related: "Decide the neighbour RT ranking star" and "Cut text on the 6 screens that fail UI rule 13" (Neighbours sheet).
-  - `open · — · — · done when:` at least two active neighbour actions exist, each with a cost and a score effect shown on the sheet, in EN and ID, and the balance bots still reach their stars.
 
 ## Done
 
