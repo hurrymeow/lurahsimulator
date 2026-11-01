@@ -1,0 +1,3 @@
+# Event choice buttons are secondary
+
+Event choices and the "send someone" buttons in `showEvent` were styled `btn-primary` (the first choice plain, later choices and send buttons filled), which put several filled buttons on one card and made the choice look like the single next step. UI.md rule 14 defines `.btn` as the secondary role and allows one `.btn-primary` per screen for the next step; an event card has no such next step because the player must choose. The buttons now use `class: 'btn'`, so the card follows rule 14 instead of the doc changing. The result button after choosing is untouched.
