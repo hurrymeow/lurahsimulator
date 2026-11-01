@@ -20,7 +20,7 @@ Add the first playable Act 2 stage, Kecamatan (Pak Camat), so the run goes past 
 
 ## Mechanics (first pass)
 
-- **Pinjol:** a household (3 residents) with someone idle **24+** weeks, or one that is unfed, has a **3%** chance a week to borrow. In debt, it counts as unfed half the time. After **24** weeks in debt, a debt collector event cuts that RT's Aman by **5**. Meter: share of households in debt.
+- **Pinjol:** a household (3 residents) where most members have been idle **24+** weeks (Hari, 2026-11-01), or one that is unfed, has a **3%** chance a week to borrow. In debt, it counts as unfed half the time. After **24** weeks in debt, a debt collector event cuts that RT's Aman by **5**. Meter: share of households in debt.
 - **Judol:** spreads with Viral. Each **10** Viral above **20** adds **1%** a week to start. A judol household loses **30%** of its income and borrows at **2x** the rate. Meter: share of households on judol.
 - **Responses:**
   - Razia Satpol PP: **1** Orang Inside, Aman **+8** for **8** weeks, Popularitas **−3**, half the cases move to the next Kelurahan.

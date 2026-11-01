@@ -21,7 +21,7 @@ export const NEEDS = {
   /** Harga Sembako Naik (the cabai event) cuts what the warung can feed. */
   priceCut: 0.25,
   /** Aman falls as the kampung crowds and as idle warga hang about; lamps, ronda and Hansip lift it. */
-  aman: { base: 70, perPreman: 4, perLamp: 3, perPosRonda: 2, crowdFrom: 15, perResident: 0.3, idleMonths: 6, perIdle: 2 },
+  aman: { base: 70, perPreman: 4, perLamp: 3, perPosRonda: 2, crowdFrom: 15, perResident: 0.3, /** In the Kecamatan the crowd weighs this much per resident: 250 residents are a goal there, not a crisis. */ perResidentKec: 0.1, idleMonths: 6, perIdle: 2 },
   preman: {
     /** Months idle before a resident can turn. */
     idle: 12,
@@ -87,7 +87,7 @@ export function meters(s: GameState): Meters {
   const working = (id: string) => s.buildings.filter((b) => b.def === id && isWorking(b)).length;
   const a = NEEDS.aman;
   const idle = s.residents.filter((r) => !r.preman && (r.idle ?? 0) >= a.idleMonths).length;
-  const crowd = Math.max(0, pop - a.crowdFrom) * a.perResident;
+  const crowd = Math.max(0, pop - a.crowdFrom) * (s.stage.current === 'kecamatan' ? a.perResidentKec : a.perResident);
   const aman = a.base - crowd - a.perIdle * idle - a.perPreman * premanList(s).length + a.perLamp * working('lampuTaman') + a.perPosRonda * working('posRonda') + stageAman(s) + realisasiSum(s, 'aman') + hansipAman(s) - collectorAman(s) + raziaAman(s);
   return { perut: clamp(perut), kerja: clamp(kerja), aman: clamp(aman), cap: sejahteraCap(pop) };
 }

@@ -148,10 +148,14 @@ async function seed(page: Page): Promise<void> {
 }
 
 test.describe('opener', () => {
-  test('the goal shows on one line, expands to the next star on tap, and names the first combo at minute 4', async ({ page }) => {
+  test('the goal shows one goal, expands to the next star on tap, and names the first combo at minute 4', async ({ page }) => {
     await start(page);
     const goal = page.locator('#goal');
     await expect(goal.locator('.goal-now')).toBeVisible();
+    // The closed line is one plain goal: a label, no star, no have and need.
+    const closed = (await goal.locator('.goal-text').textContent())!;
+    expect(closed).toMatch(lang() === 'id' ? /^Target: / : /^Goal: /);
+    expect(closed).not.toMatch(/★|punya|\bhave\b|goals? left|target lagi/);
     // Next star hides behind a tap on the goal line.
     await expect(goal.locator('.goal-star')).toBeHidden();
     // The How to play card is still up in this test, so press the line directly.
@@ -172,7 +176,10 @@ test.describe('opener', () => {
     const vw = page.viewportSize()!.width;
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(vw);
-    expect(await goal.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+    const text = goal.locator('.goal-text');
+    expect(await text.evaluate((el) => getComputedStyle(el).textOverflow)).not.toBe('ellipsis');
+    const lines = await text.evaluate((el) => Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)));
+    expect(lines).toBeLessThanOrEqual(2);
     expect(await scanLegibility(page)).toEqual([]);
   });
 
@@ -2569,16 +2576,10 @@ test.describe('zoom, big lots and the Warga list', () => {
     expect(await page.locator('#sheet').textContent()).not.toMatch(/Rp ?\d/);
   });
 
-  test('a long goal keeps to one line and opens in full on tap', async ({ page }) => {
+  test('the goal opens on tap to every goal left and closes again', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     const text = page.locator('#goal .goal-text');
-    await page.evaluate(() => { document.querySelector<HTMLElement>('#goal .goal-text')!.textContent = 'x '.repeat(200); });
-    const lh = await text.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight));
-    expect((await text.boundingBox())!.height).toBeLessThan(lh * 1.5);
-    expect(await text.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
-    // Back to the real goal: it opens to the whole line and the next star.
-    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
     const now = page.locator('#goal-now');
     await expect(now).toHaveAttribute('data-more', 'true');
     await now.click();

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { seedGame, type SeedId } from './seed-bot';
 import { refreshAccess } from '../src/sim/access';
 import { deserialize, serialize } from '../src/sim/save';
+import { acceptSK, canPromote, nextStarChecklist } from '../src/sim/stages';
 import { setGrid } from '../src/sim/types';
 
 afterEach(() => setGrid('rt'));
@@ -38,4 +39,23 @@ describe('developer seeds', () => {
       expect(new Set(s.buildings.filter((b) => b.def !== 'jalan').map((b) => b.def)).size).toBeGreaterThanOrEqual(MIN_KINDS[id]);
     });
   }
+});
+
+describe('developer seeds can advance', () => {
+  for (const id of ['rt3', 'rw'] as const) {
+    it(`${id} offers the SK and accepting it promotes`, () => {
+      const s = deserialize(readFileSync(file(id), 'utf8'))!;
+      expect(s.stage.sk).toBe('offered');
+      expect(canPromote(s)).toBe(true);
+      const from = s.stage.current;
+      expect(acceptSK(s)).toBe(true);
+      expect(s.stage.current).not.toBe(from);
+      expect(s.stage.sk).toBeUndefined();
+    });
+  }
+  it('kel has a next-star checklist to work toward', () => {
+    const s = deserialize(readFileSync(file('kel'), 'utf8'))!;
+    expect(s.stage.stars.kelurahan).toBeLessThan(3);
+    expect(nextStarChecklist(s)?.length).toBeGreaterThan(0);
+  });
 });

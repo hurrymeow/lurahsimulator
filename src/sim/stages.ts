@@ -102,6 +102,8 @@ export interface ChecklistLine {
   done: boolean;
   /** Says exactly what is missing, for example "25 residents (have 18)". */
   text: string;
+  /** The goal alone as a short phrase with no have and need, for example "reach 25 residents". */
+  short: string;
 }
 
 /** The checklist for the next star, or null at 3 stars. */
@@ -115,7 +117,8 @@ export function starChecklist(s: GameState, id: StageId, stars: Stars): Checklis
   return stageDef(id).stars[stars].goals.map((goal) => {
     const { have, need, under } = goalProgress(s, goal);
     const name = goal.kind === 'built' ? (hasDef(goal.def) ? bName(def(goal.def)) : goal.def) : '';
-    return { goal, done: under ? have < need : have >= need, text: t(GOAL_KEYS[goal.kind], { ...goal, n: need, have, name }) };
+    const vars = { ...goal, n: need, have, name };
+    return { goal, done: under ? have < need : have >= need, text: t(GOAL_KEYS[goal.kind], vars), short: t(`stage.goalShort.${goal.kind}` as Key, vars) };
   });
 }
 
