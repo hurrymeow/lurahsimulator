@@ -228,7 +228,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
   {
     id: 'parkir',
     name: 'Tukang Parkir Liar',
-    blurb: 'Turns up beside some new shops. Pays small retribusi to the kas, costs Popularitas. Tertibkan him with a Hansip or Orang Inside; he may come back.',
+    blurb: 'Turns up beside new shops. Pays small retribusi to the kas, costs Popularitas. Tertibkan him with a Hansip or Orang Inside; he may come back.',
     cost: 300_000,
     upkeep: 0,
     income: 60_000,
