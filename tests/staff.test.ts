@@ -106,9 +106,9 @@ describe('staff', () => {
   it('Bimtek raises the role stat and sends them away a month; firing pays pesangon', () => {
     const s = game(8);
     const x = hand(s);
-    const before = x.stats.rajin;
+    const before = x.stats.gaul;
     expect(bimtek(s, x)).toBe(true);
-    expect(x.stats.rajin).toBe(before + 5);
+    expect(x.stats.gaul).toBe(before + 5);
     expect(x.away).toBe(1);
     const cash = s.res.rupiah;
     expect(fire(s, x)).toBe(true);
