@@ -1,0 +1,1 @@
+The Kelurahan developer seed (`src/sim/seeds/kel.json`) now starts with all four previously stalled (`mangkrak`) buildings active, so a dev load begins with no stalled project. `tests/seed.test.ts` now asserts a planned seed has no `mangkrak` buildings, which failed on the old seed and passes with this change.
