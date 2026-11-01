@@ -119,7 +119,7 @@ export function starChecklist(s: GameState, id: StageId, stars: Stars): Checklis
   return stageDef(id).stars[stars].goals.map((goal) => {
     const { have, need, under } = goalProgress(s, goal);
     const name = goal.kind === 'built' ? (hasDef(goal.def) ? bName(def(goal.def)) : goal.def) : '';
-    const vars = { ...goal, n: need, have, name };
+    const vars = { ...goal, n: need, have, name, backlog: s.stempel.backlog };
     return { goal, done: under ? have < need : have >= need, text: t(GOAL_KEYS[goal.kind], vars), short: t(`stage.goalShort.${goal.kind}` as Key, vars) };
   });
 }
