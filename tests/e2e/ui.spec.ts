@@ -2102,10 +2102,20 @@ test.describe('build mode', () => {
     await dismissModals(page);
     await page.evaluate(() => { (window as unknown as { pakrt: any }).pakrt.s.res.rupiah = 50_000_000; });
     await openPanel(page, 'wacana');
-    await expect(page.locator('#sheet .realisasi')).toHaveCount(5);
-    await expectLegible(page, 'wacana and realisasi');
-    await page.locator('#sheet .realisasi .btn-primary').last().click();
-    await expect(page.locator('#sheet .realisasi .good').last()).toBeVisible();
+    await expect(page.locator('#sheet .wac-row')).toHaveCount(5);
+    await expectLegible(page, 'wacana list');
+    await page.locator('#sheet .wac-row').last().click();
+    await expect(page.locator('#sheet [data-col="announce"]')).toBeVisible();
+    await expect(page.locator('#sheet [data-col="realisasi"]')).toBeVisible();
+    await expect(page.locator('#sheet .btn-primary')).toHaveCount(1);
+    await expectLegible(page, 'wacana detail');
+    // Announcing keeps the detail open, so repeating it is one tap.
+    await page.locator('#sheet [data-col="announce"] .btn').click();
+    await expect(page.locator('#sheet [data-col="announce"]')).toBeVisible();
+    await page.locator('#sheet [data-col="realisasi"] .btn-primary').click();
+    await expect(page.locator('#sheet [data-col="realisasi"] .good')).toBeVisible();
+    await page.locator('#sheet .sheet-head .btn-icon').first().click();
+    await expect(page.locator('#sheet .wac-row')).toHaveCount(5);
     await page.locator('.sheet-head .btn-icon').click();
     await page.locator('#emas').click();
     await expect(page.locator('#modal .card')).toContainText('Perut');
