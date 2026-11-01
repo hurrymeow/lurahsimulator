@@ -190,8 +190,9 @@ export class Painter {
   /** A hipped (limasan) roof over a box of the same inset and height. */
   roof(inset: number, h: number, rise: number, colour: string, paint: (x: number, y: number) => string | undefined = () => undefined): void {
     const n = this.n;
-    const hw = (TW / 2 - inset * 2 + 2) * n;
-    const hh = (TH / 2 - inset + 1) * n;
+    // Clamped: a negative radius would flip the test and fill the whole box with a dark rectangle.
+    const hw = Math.max(2, TW / 2 - inset * 2 + 2) * n;
+    const hh = Math.max(1, TH / 2 - inset + 1) * n;
     const cx = (TW / 2) * n + this.ox;
     const cy = (TOP + TH / 2 - h) * n + this.oy;
     const apex = [cx, cy - rise * n];
@@ -236,8 +237,9 @@ export class Painter {
       return;
     }
     const n = this.n;
-    const hw = (TW / 2 - inset * 2 + 2) * n;
-    const hh = (TH / 2 - inset + 1) * n;
+    // Clamped: a negative radius would flip the test and fill the whole box with a dark rectangle.
+    const hw = Math.max(2, TW / 2 - inset * 2 + 2) * n;
+    const hh = Math.max(1, TH / 2 - inset + 1) * n;
     const cx = (TW / 2) * n + this.ox;
     const cy = (TOP + TH / 2 - h) * n + this.oy;
     const up = (p: number[]) => [p[0], p[1] - rise * n];
@@ -287,8 +289,9 @@ export class Painter {
 
   shadow(inset: number): void {
     const n = this.n;
-    const hw = (TW / 2 - inset * 2 + 2) * n;
-    const hh = (TH / 2 - inset + 1) * n;
+    // Clamped: a negative radius would flip the test and fill the whole box with a dark rectangle.
+    const hw = Math.max(2, TW / 2 - inset * 2 + 2) * n;
+    const hh = Math.max(1, TH / 2 - inset + 1) * n;
     const cx = (TW / 2 + 2) * n + this.ox;
     const cy = (TOP + TH / 2) * n + this.oy;
     for (let y = TOP * n + this.oy; y < (TOP + TH) * n + this.oy; y++)
@@ -877,7 +880,7 @@ const ART: Record<string, ArtFn> = {
   },
   // Build phase: a tower crane at the back corner, its jib over the site and a hook on a cable.
   crane: (p) => {
-    p.shadow(10);
+    p.shadow(5);
     // Concrete foot, then the lattice mast: yellow rails with dark cross-ties every few pixels.
     p.box(11, 2, 'S', undefined, 0);
     for (let k = 2; k < 40; k++) {
