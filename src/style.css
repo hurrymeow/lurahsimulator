@@ -15,6 +15,7 @@
   --orang: #fbbf24;
   --viral: #f472b6;
   --danger: #f87171;
+  --disabled: #52525b;
   --touch: 48px;
   --gap: 8px;
   --radius: 10px;
@@ -166,7 +167,6 @@ html.no-effects #dof { display: none; }
 .row { display: flex; gap: var(--gap); align-items: center; }
 #speed-btn { min-width: 56px; padding: 0 8px; font-weight: 700; font-variant-numeric: tabular-nums; }
 #pause-btn { font-size: 18px; }
-#pause-btn[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
 /* Paused: a pixel pill near the bottom of the map, in play and build mode. Hidden under a toast, which sits there too. */
 #auto-pause { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 5; padding: 4px 14px; border: 2px solid var(--text); border-radius: 0; background: var(--surface-2); color: var(--text); font-family: var(--font-pixel); font-size: 16px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; box-shadow: 2px 2px 0 var(--text); pointer-events: none; }
 #stage:has(#ticker:not([hidden])) #auto-pause { visibility: hidden; }
@@ -212,7 +212,7 @@ html.no-effects #dof { display: none; }
 .build-list { min-height: 100dvh; }
 .tabs { margin: var(--gap) 0; }
 .tabs .tab { padding: 0 6px; }
-.tabs .tab[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
+.tabs .tab[aria-pressed='true'] { font-weight: 700; }
 /* Buttons side by side are all the same width: one row of equal columns, and a long label wraps inside its button. */
 .tabs, .action-row, .lang-row .row, .nb-fund, .staff-actions, .home-naming .name-titles { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: stretch; gap: var(--gap); }
 /* Build's building tabs (four at most) share one row of equal columns, so the first card stays on screen. */
@@ -300,10 +300,16 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
   cursor: pointer;
 }
 .btn:active { transform: translateY(1px); }
-.btn:disabled { color: var(--muted); border-style: dashed; background: transparent; cursor: not-allowed; }
+.btn:disabled { color: var(--muted); cursor: not-allowed; }
+.btn-primary:disabled { background: var(--disabled); border-color: var(--disabled); color: #fff; }
+.btn-primary:disabled * { color: inherit; }
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .btn-primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
 .btn-ghost { background: transparent; }
+/* UI.md rule 14: the four roles. Primary = accent fill (above). Secondary = .btn-secondary, outline only.
+   Choice = .btn-choice or any [aria-pressed]: accent border and underline when on, never the fill. Input = .name-input. */
+.btn-secondary { background: transparent; }
+.btn-choice[aria-pressed='true'], .btn[aria-pressed='true'], .toggle[aria-checked='true'] { background: var(--surface); color: var(--text); border-color: var(--accent); box-shadow: inset 0 -3px 0 var(--accent); }
 .btn-icon { padding: 0; font-size: 22px; }
 
 .banner {
@@ -388,7 +394,6 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
 .emas-value { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .toggle { width: 100%; display: flex; justify-content: space-between; align-items: center; }
 .toggle b { min-width: 3ch; text-align: right; }
-.toggle[aria-checked='true'] { border-color: var(--accent); }
 .toggle[aria-checked='true'] b::before { content: '✓ '; }
 .modal .card.event .price { white-space: nowrap; }
 .modal .card.event { max-height: 90dvh; overflow-y: auto; cursor: default; }

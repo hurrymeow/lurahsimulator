@@ -47,7 +47,7 @@ export function openResident(app: App, id: number): void {
     const check = checkAssign(app.s, r, job);
     const label = job === 'none' ? t('res.noJob') : jName(jobDef(job)!);
     return h('div', { class: 'action' },
-      h('button', { class: `btn ${r.job === job ? 'btn-primary' : ''}`, disabled: !check.ok, 'aria-pressed': String(r.job === job), onclick: () => { assign(app.s, r, job, true); app.save(); app.refresh(); openResidents(app, r.id); } }, r.job === job ? t('res.current', { label }) : label),
+      h('button', { class: 'btn btn-choice', disabled: !check.ok, 'aria-pressed': String(r.job === job), onclick: () => { assign(app.s, r, job, true); app.save(); app.refresh(); openResidents(app, r.id); } }, r.job === job ? t('res.current', { label }) : label),
       job !== 'none' ? h('p', { class: 'meta' }, jBlurb(jobDef(job)!)) : null,
       check.ok ? null : h('ul', { class: 'missing' }, ...check.missing.map((m) => h('li', {}, m))),
     );
