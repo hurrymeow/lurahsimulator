@@ -175,6 +175,15 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Cause, from `src/sim/nextstep.ts` on main: `bestDraw` picks the best attract-per-cost building from `placeableDefs()` with `ignoreLimit: true` and never checks whether that building is already built or at its cap. Once residents stop coming (`pop >= attractTarget`), the 'draw' step names a building the player already has. Fix: skip buildings already at their limit or count for the draw hint, and when no draw building is left, return null or name the real blocker (the pop cap, 71/77 here). Keep the goal line visible; the hint is a second line, never a replacement.
   - Source: Hari, 2026-11-01 (screenshot, project thread "Add goal how-to hints to TODO")
   - `open · — · — · done when:` a built Warung Sembako never appears as the draw hint, the strip names the real blocker, and the goal line stays visible in EN and ID at 320px. `tests/nextstep.test.ts` covers the built-draw case.
+- [ ] **Decide the neighbour RT ranking star: remove it, or show the lever.**
+  - Problem: Neighbour RTs (Tetangga) carry the star goal "2 kali menang peringkat berturut-turut" (win the ranking twice in a row). The sheet shows the score parts (warga, bangunan, combo, Popularitas) but no action that moves them. Hari: "I have absolutely no idea how to do it", and he asks whether to remove it (screenshot, Feb M1 T3, RT 4 at 2★, 1 win).
+  - Why: A star the player cannot influence reads as a dead end, and it stalls 3★ for the neighbour. Removing it changes the stage's star path, and the ranking code and the balance bots assume it exists.
+  - Suggested solution: Two options.
+    - A. Remove the ranking goal from neighbour RT star lists. Replace it with a goal the player can act on, such as residents or combos. Pros: simple, no new text needed, faster to ship. Cons: the ranking stops being a goal on that sheet, and the 3★ band in GAME-DESIGN.md shifts, so the bots need a rerun.
+    - B. Keep it and show the lever. Add one line under the goal that names the action, for example "fund more builds to raise the score", tied to the score parts the sheet already lists. Pros: keeps the design, and the lever is the same one the ranking help already names. Cons: the lever is indirect (score is many parts, and the player only sees the total), so the line may still feel vague.
+    - Recommendation: B first. The score parts are already on the sheet, so the gap is wording, and it keeps the star path and bot results intact. If Hari's playtest still shows no way to act, fall back to A.
+  - Source: Hari, 2026-11-01 (screenshot, project thread "Add goal how-to hints to TODO"). Related: "Show a how-to hint for every goal when it is tapped open" (above) and "Cut text on the 6 screens that fail UI rule 13" (Neighbours sheet fix).
+  - `open · — · — · done when:` Hari has picked A or B, and the chosen option ships with its wording in EN and ID, or the star is removed and the RT and Kelurahan bots still reach their stars.
 
 ## Done
 
