@@ -34,7 +34,8 @@ const visible = (el: Element | null): el is HTMLElement => !!el && (el as HTMLEl
 export function setupCoach(app: App): void {
   if (!enabled) return;
   const text = h('p', { class: 'coach-text', role: 'status', 'aria-live': 'polite' });
-  const next = h('button', { class: 'btn', id: 'coach-skip', onclick: () => finish() }, t('coach.skip'));
+  // No Skip: the button only appears on the last note, as "Got it".
+  const next = h('button', { class: 'btn', id: 'coach-skip', hidden: true, onclick: () => finish() }, t('coach.gotIt'));
   // Inem guides the first build, so her face sits beside the words.
   const face = h('img', { src: inemURL(), alt: '', width: 44, height: 60, class: 'pixel coach-face' });
   const bar = h('div', { id: 'coach', class: 'coach', hidden: true }, face, text, next);
@@ -44,7 +45,21 @@ export function setupCoach(app: App): void {
   let doneAt = 0;
   let marked: Element | null = null;
 
+  // While a step names one control, taps land only there. Null means no lock (welcome, last note).
+  let allowed: string[] | null = null;
+  const lock = (e: Event) => {
+    if (!allowed || !(e.target instanceof Element)) return;
+    // Event pop-ups and the coach note itself always work, so nothing can trap the player.
+    // Placing is checked live: the step note catches up within a quarter second of the tap that started it.
+    const placing = app.placing ? ', #map, #placebar, #place-float' : '';
+    if (e.target.closest(`#coach, #modal, ${allowed.join(', ')}${placing}`)) return;
+    e.stopPropagation();
+    e.preventDefault();
+  };
+  for (const ev of ['click', 'pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend']) document.addEventListener(ev, lock, true);
+
   const finish = () => {
+    allowed = null;
     storage.set(KEY, 'done');
     doneAt = 0;
     running = false;
@@ -98,9 +113,10 @@ export function setupCoach(app: App): void {
     if (r) bar.style.setProperty('--ax', `${Math.min(Math.max(r.left + r.width / 2 - 12 - b.left, 24), b.width - 48)}px`);
   };
 
-  const show = (key: Key, target: Element | null, label: Key = 'coach.skip') => {
+  const show = (key: Key, target: Element | null, label: Key | null = null) => {
     text.textContent = t(key);
-    next.textContent = t(label);
+    next.hidden = !label;
+    if (label) next.textContent = t(label);
     bar.hidden = false;
     if (marked !== target) {
       marked?.classList.remove('coach-pulse');
@@ -125,6 +141,7 @@ export function setupCoach(app: App): void {
     running = true;
     if (doneAt) {
       app.held = true;
+      allowed = null;
       show('coach.done', null, 'coach.gotIt');
       if (Date.now() - doneAt > DONE_MS) finish();
       return;
@@ -140,13 +157,18 @@ export function setupCoach(app: App): void {
     // Time holds while the welcome is up, so nothing happens before the first tap.
     app.held = !app.placing && !visible(list);
     if (app.placing) {
+      allowed = ['#map', '#placebar', '#place-float'];
       const ok = document.getElementById('place-ok');
       if (visible(ok) && !(ok as HTMLButtonElement).disabled) show('coach.place', ok);
       else show('coach.tile', null);
     } else if (visible(list)) {
+      allowed = card ? ['#sheet .build-list .card-btn.coach-pulse'] : ['#sheet .tab[data-tab="housing"]'];
       if (card) show('coach.pick', card);
       else show('coach.housing', document.querySelector('.tab[data-tab="housing"]'));
-    } else show('coach.menu', build);
+    } else {
+      allowed = ['#dock-build'];
+      show('coach.menu', build);
+    }
   };
   setInterval(step, 250);
 }

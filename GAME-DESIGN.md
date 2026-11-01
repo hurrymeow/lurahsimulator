@@ -35,7 +35,7 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 
 - Unmet requirements always say exactly what is missing.
 - Discovered combos are auto-logged in the in-game Combo.
-- The Combo book is the last tab of the Build sheet, after the building tabs, and is not in the Menu. Build still opens on the last building tab used.
+- The Combo book opens from a button (book icon plus found/total) in the Build sheet header, left of the close button, and is not in the Menu. Build still opens on the last building tab used.
 - The Combo book is a column of full-width cards, one per row, under filter buttons (All, ✓ active, ★ found, ? not yet, each with its count). A card shows the name, the buildings (greyed when missing, silhouettes before it is in town) and a state mark on one line, and the effect in two lines below. Tapping a card opens the whole entry below it: effect, conditions, status and, once discovered, the story (`src/ui/lists.ts`).
 - The Warga list opens on a summary line (headcount and what everyone makes a month) and filter buttons: By job (default) and No job (with its count). People sit in boxes per job, headed by the workplace sprite, the headcount and the group's monthly output; each person is a chip with their name. Warga have no star rating (stars are for staff); a resident's own sheet shows their experience as a line, such as "18 months in this job: output +40%". No job comes first, marked red.
 - Speed control: pause, 1x, 2x. No 4x (Hari, 2026-10-31; removed in code, see `decisions/weekly-calendar.md`).
@@ -355,7 +355,7 @@ These are the design-level UI rules. Measurable checks are in [UI.md](UI.md). Ar
   - the month as a thin line along the top edge of the bottom bar;
   - a dock of three equal buttons, icon over label: Build, Warga, Menu.
 - Why this arrangement: time controls sit with the date, as in most city builders, and change speed without leaving the map. The resources get a row to themselves, so big numbers have room. The goal floats over the map, as quests do in mobile builders, so neither row wraps. Build and Warga are the panels used many times a minute, so they get their own buttons; the rest stay one tap away in Menu.
-- Build and Warga live only in the dock (`ActionButton.dock`), so the Menu does not list them twice. The Combo book is a tab inside Build. Every other panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game. A new panel registers an `ActionButton` with a `group` in the Menu. Don't add other main-screen buttons.
+- Build and Warga live only in the dock (`ActionButton.dock`), so the Menu does not list them twice. The Combo book opens from a header button inside Build. Every other panel opens from the single Menu button, grouped as Kampung, Records and Game. Settings and How to play live under Game. A new panel registers an `ActionButton` with a `group` in the Menu. Don't add other main-screen buttons.
 - Notices are toasts, not a band: the latest one floats over the bottom of the map for 3 seconds, then fades. Tap it to open the Log. Every notice also stays in the Log (Menu > Log), so a missed toast is never lost. Important messages still use the pause-and-tap modal.
 - The satellite view hides while a building is being placed. A small square under it folds it away to a button in its corner, and back; the choice is saved in settings. The square is drawn 28px inside a 48px tap area.
 - While time stands still with the map in view (the player's pause, or build mode), a pixel **JEDA / PAUSED** pill shows near the bottom of the map. It hides under a toast. Ambient motion stops while paused (scenery, walkers, idle buildings, weather); feedback for what the player does (the ghost, bursts, coins) keeps moving.
@@ -642,7 +642,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing
 - **Good:** several plans reach the stars. They differ in score, meters or ending, not only speed.
 - **Bad:** one build order that wins on every metric.
 - **Evidence:** T1. Builder, shopkeeper, safety-first and Pencitraan bots.
-- **Pass:** no bot wins every metric. For each star, slowest over fastest ≤1.3. The cheapskate bot has its own bar: every star within 2x.
+- **Pass:** no bot wins every metric. For each star, slowest over fastest ≤1.3. The cheapskate bot has its own bar: it is never stranded. It reaches RT 2★ in at least half the seeds, and a builder bot can take over its game and still progress. It does not have to reach RT 3★, because neglect is allowed to cost the player (Hari, 2026-11-01).
 
 #### 18. Every choice has a cost
 - **Ask:** does each event option trade something?

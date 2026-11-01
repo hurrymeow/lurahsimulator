@@ -126,6 +126,7 @@ html.no-effects #dof { display: none; }
 .coach[hidden] { display: none; }
 .coach { pointer-events: none; }
 .coach .btn { pointer-events: auto; }
+.coach .btn[hidden] { display: none; }
 .coach::after { content: ''; position: absolute; bottom: -9px; left: var(--ax, 50%); width: 14px; height: 14px; background: var(--surface); border-right: 2px solid #fbbf24; border-bottom: 2px solid #fbbf24; transform: rotate(45deg); }
 .coach.arrow-up::after { top: -9px; bottom: auto; transform: rotate(225deg); }
 .coach.no-arrow::after { display: none; }
@@ -176,7 +177,9 @@ html.no-effects #dof { display: none; }
 #month-progress { height: 100%; width: 0; background: var(--muted); }
 .place-info { flex: 1; min-width: 0; font-size: 16px; display: flex; flex-direction: column; }
 .place-info .missing { margin: 4px 0 0; }
-.place-float { position: absolute; left: 0; top: 0; z-index: 4; display: flex; gap: var(--gap); padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.place-float { position: absolute; left: 0; top: 0; z-index: 4; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--gap); padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+/* Equal columns take the widest label, so the three buttons keep a little less padding to fit 320px. */
+.place-float .btn { padding: 0 10px; }
 .place-float[hidden] { display: none; }
 
 .scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 15; }
@@ -188,7 +191,6 @@ html.no-effects #dof { display: none; }
 .action { display: flex; flex-direction: column; gap: 4px; margin: 12px 0; }
 .action .btn { width: 100%; }
 .action-row { margin: 12px 0; }
-.action-row .btn { flex: 1; }
 .btn-danger { border-color: var(--danger); color: var(--danger); }
 .pixel { image-rendering: pixelated; flex: none; object-fit: contain; }
 
@@ -208,11 +210,17 @@ html.no-effects #dof { display: none; }
 }
 /* The Build sheet always fills to its max height, so the tab row stays put when switching. */
 .build-list { min-height: 100dvh; }
-.tabs { display: flex; flex-wrap: wrap; gap: var(--gap); margin: var(--gap) 0; }
-.tabs .tab { flex: 1 1 auto; padding: 0 6px; }
+.tabs { margin: var(--gap) 0; }
+.tabs .tab { padding: 0 6px; }
 .tabs .tab[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
-/* Build has four building tabs and Combo. Below 412px five do not fit on a row, so they sit three and two instead of leaving Combo alone. */
-@media (max-width: 411px) { .build-tabs .tab { flex-basis: 30%; } }
+/* Buttons side by side are all the same width: one row of equal columns, and a long label wraps inside its button. */
+.tabs, .action-row, .lang-row .row, .nb-fund, .staff-actions, .home-naming .name-titles { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: stretch; gap: var(--gap); }
+/* Build's building tabs (four at most) share one row of equal columns, so the first card stays on screen. */
+.build-tabs { gap: 4px; }
+.build-tabs .tab { padding: 0 1px; }
+/* Header action beside the close button: Combo book in Build, Back in the Combo book. */
+.sheet-head h2 { flex: 1; min-width: 0; }
+.sheet-head .head-action { position: relative; min-height: 48px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex: none; }
 .card-btn.locked { border-style: dashed; cursor: default; }
 .card-btn.locked .pixel { filter: grayscale(1); }
 .card-text { flex: 1; min-width: 0; }
@@ -423,12 +431,9 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .slider-row { display: flex; justify-content: space-between; gap: var(--gap); }
 .slider { width: 100%; min-height: 44px; accent-color: var(--accent); }
 
-.lang-row .row { flex-wrap: wrap; }
-.lang-row .row .btn { flex: 1 1 140px; }
 /* Neighbours: the Dana buttons keep each price in one piece, and the four auto-dana levels share one row. */
-.nb-fund .btn { flex: 1 1 0; }
 .nb-fund .price, .nb-boost { white-space: nowrap; }
-.nb-auto .row .btn { flex: 1 1 56px; padding-left: 4px; padding-right: 4px; }
+.nb-auto .row .btn { padding-left: 4px; padding-right: 4px; }
 .nb-auto, .nb-take { margin-top: var(--gap); }
 
 /* stage header in the Menu */
@@ -533,8 +538,6 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .realisasi { margin-top: 12px; padding-top: 8px; border-top: 1px dashed var(--muted); }
 .realisasi p { margin: 0 0 4px; }
 .home-naming .name-row { display: flex; gap: 8px; align-items: center; }
-.home-naming .name-titles { display: flex; gap: 8px; }
-.home-naming .name-titles .btn { flex: 1; }
 .name-label { font-size: 16px; font-weight: 700; color: var(--text); text-shadow: 0 1px 0 #000; }
 .name-prefix { flex: none; font-size: 16px; font-weight: 700; color: var(--text); text-shadow: 0 1px 0 #000; }
 
@@ -560,7 +563,6 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .send-label { margin: 0; }
 .staff-stat .meter { height: 8px; }
 .staff-stat-value { text-align: right; font-weight: 700; }
-.staff-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .staff-lowongan, .staff-dream { margin-top: 16px; }
 .staff-gig { padding: 6px 0; border-top: 1px dashed var(--muted); }
 .staff-gig p { margin: 0 0 2px; }
@@ -569,8 +571,8 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 
 /* Lomba Agustusan: the panitia panel and the full-screen day. */
 .lomba-contest.on { border-color: var(--accent); }
-.lomba-stages, .lomba-ketua { flex-wrap: wrap; }
-.lomba-stages .btn, .lomba-ketua .btn { flex: 1 1 130px; }
+/* These rows can wrap, so their equal columns fill row by row. */
+.lomba-stages, .lomba-ketua { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); align-items: stretch; }
 .lomba-stages .btn, .lomba-ketua .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .lomba-stages .price { white-space: nowrap; font-weight: 400; }
 #lomba-day { position: fixed; inset: 0; z-index: 50; background: var(--bg); overflow-y: auto; padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom)); }

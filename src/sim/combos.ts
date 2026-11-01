@@ -137,9 +137,16 @@ export function discoverCombos(s: GameState, fx: Fx): void {
   }
 }
 
+/** How many working copies of one combo add their monthly effect. */
+export const COMBO_STACK_MAX = 3;
+
 /** Monthly system: applies combo effects and announces first discoveries. */
 export function comboSystem(s: GameState, fx: Fx): void {
+  const seen: Record<string, number> = {};
   for (const a of activeCombos(s)) {
+    // A pile of one kind (30 wifi towers, 30 price wars) still counts a few times, so a spam never swamps a meter.
+    seen[a.combo.id] = (seen[a.combo.id] ?? 0) + 1;
+    if (seen[a.combo.id] > COMBO_STACK_MAX) continue;
     const centre = a.members[0];
     for (const [res, v] of Object.entries(a.combo.perMonth ?? {})) gain(s, fx, res as 'sabar', v as number, centre);
   }
