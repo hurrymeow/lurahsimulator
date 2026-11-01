@@ -131,6 +131,31 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Source: `decisions/playtest-sk2.md`
   - `open · — · — · done when:` no 2x2 building stands taller than a 1x1 of its tier, site sprites have no scaled pixels, and `tests/art.test.ts` checks both.
 
+- [ ] **A portrait for every staff member.**
+  - Problem: only Inem and the specials have faces; every other hire is a star badge.
+  - Why: a face makes a hire feel like a person, which the personal requests rely on.
+  - Suggested solution: paint generic hires with `src/render/portraits.ts`, seeded by their staff id, with the outfit of their job (`decisions/staff-requests.md`, section 1). Show it on the card, the detail view, the applicant card and the request card.
+  - Source: voidinside99, 2026-11-01
+  - `open · — · — · done when:` every staff member and applicant has a lasting portrait whose outfit reads as their job.
+- [ ] **Urusan Pribadi: personal requests and Akrab.**
+  - Problem: staff never want anything, so they feel like modifiers, not people.
+  - Why: Kairosoft staff feel alive because they ask; a yes or no with a cost makes managing them a choice.
+  - Suggested solution: build section 2 of `decisions/staff-requests.md`: requests every 24 weeks from level 2, at most 2 open, deadlines, Akrab hearts, loans rolled on Jujur (repaid, flop, or a small shop), costs scaled to income, and the line bank in ID and EN, each line 20 words or fewer. Never gate stars. Add the card's word count to the rule 13 scan.
+  - Source: voidinside99, 2026-11-01
+  - `open · — · — · done when:` requests arrive, answer and pay out as written, in ID and EN, within UI.md rule 13, with unit tests for timing, Akrab and loans.
+- [ ] **Quest chains for the named specials.**
+  - Problem: only Inem has a dream; the 13 specials have a quirk and nothing to chase.
+  - Why: a three-step chain gives a special a story, and chains that need another special give the staff an ensemble.
+  - Suggested solution: build the table in section 3 of `decisions/staff-requests.md`, on Inem's gig system. Start with the linked pair: Pak Purna's memoir (needs Bu Juru Ketik) and Bu Juru Ketik's typewriter (needs Bang Rental PS).
+  - Source: voidinside99, 2026-11-01
+  - `open · — · — · done when:` every special has a chain with its payoff, and the linked chains check for the other special.
+- [ ] **The yearly price banner.**
+  - Problem: the year's price rise is one quiet notice line.
+  - Why: inflation is a real cost the player should feel, and a reason a year is a running joke.
+  - Suggested solution: from year 2 the year-end notice is a banner card, "PERHATIAN: Biaya hidup naik {x}% tahun ini", with one reason a year from the bank in section 4 of `decisions/staff-requests.md`, never the same twice in a row, in ID and EN.
+  - Source: voidinside99, 2026-11-01
+  - `open · — · — · done when:` the banner shows every year from year 2 with a fresh reason, within UI.md rule 13.
+
 ## Done
 
 - [x] **Fix the balance failures on the scorecard (first wave).** RT 3★ is a 9 to 12 min band and builder lands at 10.2 min in 10 of 10 seeds; combo hint at week 12; Kecamatan dominated options (item 18, now Unknown); soft-lock takeovers 15 of 15; wifi pile death spiral fixed by capping combo stacking at 3; cheapskate bar is "never stranded"; nightly now runs in about 45 min and uploads its cache. #203, #210, #211, #212, #219, #224; `decisions/rt-3star-pace.md`, `decisions/combo-stack-cap.md`, `decisions/cheapskate-bar.md`. Proof: Nightly run 41262187917, 3 Pass, 12 Fail, 12 Unknown (was 4 / 13 / 10).
