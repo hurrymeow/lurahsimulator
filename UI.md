@@ -41,10 +41,6 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 16. **Pills, chips and buttons say it plainly in 6 words or fewer.** Lead with a verb or a plain label such as "Goal:", never a symbol or jargon such as "★ berikutnya, 2 target lagi". Numbers and icons are not words. Detail opens on tap. Why: the goal pill was cut and unclear.
 17. **Map art stays in its footprint.** A building, crane, effect or shadow draws only over its own tiles and the space above them, never over neighbouring tiles or roads. Why: the crane drew a dark box over the road (#221).
 
-### Hierarchy
-
-14. **Four roles, four looks.** The CSS classes are the source of truth. **Primary** (`.btn-primary`): filled accent, **1** per screen, the next step. **Secondary** (`.btn`, `.btn-secondary`): outline, no fill. **Choice** (`.btn-choice`, any `[aria-pressed]`, `.toggle`): accent border and underline when on, never the primary fill. **Input** (`.name-input`): light field with an inset border. Section labels and headings are plain text, never a box. A disabled button keeps its role's shape, muted, with a solid border, never dashed. Why: one fill for "go" and "selected" makes the two look alike, and a screen with several loud buttons has no obvious next step ([NN/g](https://www.nngroup.com/articles/visual-hierarchy-ux-definition/)).
-
 ## How each rule is checked
 
 | Rules | Check |
@@ -59,7 +55,6 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 | 17 | Canvas test: place each building type and diff the neighbouring tiles before and after. |
 | 12 | Timed run. Not automated. |
 | 13 | Word counts per screen. Measure script in the project files (`plans/text-density-measure.spec.ts`); to be added to `ui.spec.ts`. |
-| 14 | Review against the CSS classes. Max 1 visible `.btn-primary` is to be added to the rule 13 scan in `ui.spec.ts`. |
 | Layout drift | Screenshot baselines (`tests/e2e/visual.spec.ts`): home, HUD, Build sheet, event popup, tip card. 412px, Indonesian. |
 
 Every new panel or message needs a scan in `tests/e2e/ui.spec.ts`. CI runs the suite on every PR. The audit crawl scripts are in the project files, not in the repo.
