@@ -102,6 +102,8 @@ export function goalProgress(s: GameState, g: Goal): GoalProgress {
 export interface ChecklistLine {
   goal: Goal;
   done: boolean;
+  /** The goal is unmet but in no danger right now, such as the Stempel backlog under its limit. */
+  holding: boolean;
   /** Says exactly what is missing, for example "25 residents (have 18)". */
   text: string;
   /** The goal alone as a short phrase with no have and need, for example "reach 25 residents". */
@@ -118,9 +120,10 @@ export function starChecklist(s: GameState, id: StageId, stars: Stars): Checklis
   if (stars === 3) return null;
   return stageDef(id).stars[stars].goals.map((goal) => {
     const { have, need, under } = goalProgress(s, goal);
+    const done = under ? have < need : have >= need;
     const name = goal.kind === 'built' ? (hasDef(goal.def) ? bName(def(goal.def)) : goal.def) : '';
     const vars = { ...goal, n: need, have, name, backlog: s.stempel.backlog };
-    return { goal, done: under ? have < need : have >= need, text: t(GOAL_KEYS[goal.kind], vars), short: t(`stage.goalShort.${goal.kind}` as Key, vars) };
+    return { goal, done, holding: goal.kind === 'stempelClear' && !done && s.stempel.backlog < goal.under, text: t(GOAL_KEYS[goal.kind], vars), short: t(`stage.goalShort.${goal.kind}` as Key, vars) };
   });
 }
 

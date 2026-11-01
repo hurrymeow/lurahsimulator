@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BIMTEK, COURSE_COST, LEVEL_STAT_GAIN, RISK, ROLES, STAFF_LEVEL_MONTHS } from '../src/data/staff';
+import { BIMTEK, COURSE_COST, LEVEL_STAT_GAIN, RISK, ROLES, STAFF_LEVEL_MONTHS, STATS } from '../src/data/staff';
 import { eventDef } from '../src/data/events';
 import { resolveEvent, sendCandidates, sendChance } from '../src/sim/events';
 import { bimtek, bimtekCost, ensureStaff, grupWaShift, mishapChance, roleGain, staffSystem } from '../src/sim/staff';
@@ -22,6 +22,14 @@ const hire = (s: GameState, over: Partial<Staff> = {}): Staff => {
 describe('two stats per role', () => {
   it('every role has a work stat and a different risk stat', () => {
     for (const r of ROLES) expect(r.risk, r.id).not.toBe(r.stat);
+  });
+
+  it('each stat is the work stat of two roles and the risk stat of two', () => {
+    const roles = ROLES.filter((r) => r.opens.stage !== 'kecamatan');
+    for (const stat of STATS) {
+      expect(roles.filter((r) => r.stat === stat).length, stat).toBe(2);
+      expect(roles.filter((r) => r.risk === stat).length, stat).toBe(2);
+    }
   });
 
   it('a low risk stat brings mishaps that name the person and the stat; a safe one never does', () => {
@@ -63,7 +71,7 @@ describe('training and growth', () => {
     const x = hire(s, { xp: STAFF_LEVEL_MONTHS[1] - 1 });
     staffSystem(s, []);
     expect(x.level).toBe(2);
-    expect(x.stats.rajin).toBe(50 + LEVEL_STAT_GAIN);
+    expect(x.stats.gaul).toBe(50 + LEVEL_STAT_GAIN);
   });
 });
 
