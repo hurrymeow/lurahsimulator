@@ -18,7 +18,7 @@ import { linePath, placeLine, type LineTile } from './sim/line';
 import { lotAt } from './sim/area';
 import { promote } from './sim/grow';
 import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, type FirstKind } from './sim/types';
-import { acceptSK } from './sim/stages';
+import { acceptSK, canPromote } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
 import { attractTarget, buildCost, buildingAt, byUid, newGame, population, housing, sizeOf } from './sim/state';
 import { tick } from './sim/tick';
@@ -422,6 +422,8 @@ export class App {
     const raw = (await load()).default;
     const s = deserialize(raw);
     if (!s) return false;
+    // A seed already at 3 stars never crosses the line itself, so offer the SK now.
+    if (s.stage.stars[s.stage.current] === 3 && canPromote(s) && !s.stage.sk) s.stage.sk = 'offered';
     this.s = s;
     ensureStaff(this.s);
     setPlayer(this.s.player);
