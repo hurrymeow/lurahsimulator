@@ -208,6 +208,10 @@ html.no-effects #dof { display: none; }
   border-radius: var(--radius);
   cursor: pointer;
 }
+.build-row { display: flex; gap: 8px; margin-bottom: var(--gap); }
+.build-row .card-btn { flex: 1; min-width: 0; margin-bottom: 0; }
+.build-info { flex: none; width: var(--touch); min-height: var(--touch); }
+.card-btn .owned img { vertical-align: middle; margin-left: 6px; }
 /* The Build sheet always fills to its max height, so the tab row stays put when switching. */
 .build-list { min-height: 100dvh; }
 .tabs { margin: var(--gap) 0; }

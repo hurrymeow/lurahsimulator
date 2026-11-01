@@ -26,13 +26,6 @@ function ownedLabel(s: GameState, d: { id: string; maxCount?: number }): string 
   return d.maxCount ? t('build.ownedOf', { n, max: d.maxCount }) : t('build.owned', { n });
 }
 
-function populationBits(d: { housing?: number; attract?: number }): string[] {
-  const bits: string[] = [];
-  if (d.housing) bits.push(t('build.houses', { n: d.housing }));
-  if (d.attract) bits.push(t('build.attracts', { n: d.attract }));
-  return bits;
-}
-
 const SEEN_KEY = 'pakrt.buildSeen';
 
 function loadSeen(): Set<string> | null {
@@ -92,17 +85,16 @@ export function openBuild(app: App): void {
     const missing = requirementGaps(s, d);
     if (s.res.rupiah < cost) missing.push(t('build.needMore', { amt: rupiah(cost - s.res.rupiah) }));
     const ok = missing.length === 0;
-    const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
-    const meta = [t('build.size', { w: sizeFor(d.id)[0], h: sizeFor(d.id)[1] }), instant ? t('build.noPermit') : t('build.permit', { permit: d.permitMonths, build: d.buildMonths }), ...populationBits(d)];
-    return h('button', { class: `card-btn ${ok ? '' : 'locked'}`, 'aria-disabled': String(!ok), onclick: () => (ok ? app.startPlacing(d.id) : undefined) },
+    const cardBtn = h('button', { class: `card-btn ${ok ? '' : 'locked'}`, 'aria-disabled': String(!ok), onclick: () => (ok ? app.startPlacing(d.id) : undefined) },
       spriteImg(d.sprite),
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, bName(d), fresh.has(d.id) ? newTag() : null), h('span', { class: 'cost' }, rupiah(cost))),
-        h('p', { class: 'owned' }, ownedLabel(s, d)),
-        h('p', {}, bBlurb(d)),
-        ok ? h('p', { class: 'meta' }, meta.join(' · ')) : missingList(missing),
+        h('p', { class: 'owned' }, ownedLabel(s, d), d.housing ? h('img', { src: menuIconURL('build') ?? '', alt: '', width: 16, height: 16, class: 'pixel' }) : null, d.housing ? String(d.housing) : null),
+        ok ? null : missingList(missing.slice(0, 1)),
       ),
     );
+    const infoBtn = h('button', { class: 'btn-icon build-info', type: 'button', 'aria-label': t('build.info', { name: bName(d) }), onclick: () => showDetail(d) }, 'i');
+    return h('div', { class: 'build-row' }, cardBtn, infoBtn);
   };
   const tabs = CATEGORIES.filter((c) => visible.some((d) => categoryOf(d) === c));
   let tab = lastTab && tabs.includes(lastTab) ? lastTab : tabs[0];
@@ -144,6 +136,27 @@ export function openBuild(app: App): void {
     } catch { /* storage may be unavailable */ }
     const back = h('button', { class: 'btn head-action', id: 'combo-back', onclick: showBuild }, '‹ ', t('build.title'));
     openSheet(t('menu.combo'), comboBook(app), onClosed, back);
+  };
+  const showDetail = (d: (typeof visible)[number]) => {
+    buildTop = sheetEl.scrollTop;
+    const cost = buildCost(s, d);
+    const missing = requirementGaps(s, d);
+    if (s.res.rupiah < cost) missing.push(t('build.needMore', { amt: rupiah(cost - s.res.rupiah) }));
+    const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
+    const body: Node[] = [
+      spriteImg(d.sprite, 64),
+      h('p', {}, rupiah(cost), ' · ', ownedLabel(s, d)),
+      h('p', {}, bBlurb(d)),
+      h('p', { class: 'meta' }, t('build.size', { w: sizeFor(d.id)[0], h: sizeFor(d.id)[1] }), ' · ', instant ? t('build.noPermit') : t('build.permit', { permit: d.permitMonths, build: d.buildMonths })),
+    ];
+    const bits: string[] = [];
+    if (d.housing) bits.push(t('build.houses', { n: d.housing }));
+    if (d.attract) bits.push(t('build.attracts', { n: d.attract }));
+    if (bits.length) body.push(h('p', { class: 'meta' }, bits.join(' · ')));
+    if (missing.length) body.push(missingList(missing));
+    else body.push(h('button', { class: 'btn btn-primary', id: 'build-place', type: 'button', onclick: () => app.startPlacing(d.id) }, t('page.place')));
+    const back = h('button', { class: 'btn head-action', onclick: showBuild }, '‹ ', t('build.title'));
+    openSheet(bName(d), body, onClosed, back);
   };
   function comboButton(): HTMLElement {
     const total = bookCombos(s).length;

@@ -1,0 +1,3 @@
+# ui-audit-fixes T6: Build cards, one line per card
+
+Each Build card is now a single tappable line (sprite, name, NEW tag, cost, owned count, and a house icon plus the housing number when the def houses) with a separate 48px info button that opens a detail sheet. The detail holds the blurb, size and permit, the housing and attract effects, a place button or the full missing list, and a back button to the Build tabs. The card keeps at most one missing reason, so a locked card still says why; the four Build entries were removed from `DENSITY_ALLOW`. Open question: two assertions outside the plan's test list still assume the old card text and now fail (see `progress/ui-audit-fixes-T6.md`); the plan needs to say whether those assertions may be updated.

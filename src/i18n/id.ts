@@ -16,6 +16,7 @@ export const ID: Record<Key, string> = {
   'build.emptyTile': 'Petak kosong',
   'build.emptyTileBody': 'Ketuk Bangun di bawah untuk menaruh sesuatu di sini.',
   'build.houses': 'Menampung {n}',
+  'build.info': 'Tentang {name}',
   'build.instant': 'Gratis · langsung jadi · ketuk petak lain untuk lanjut',
   'build.lineBlocked': '{n} petak terhalang dilewati.',
   'build.lineEnd': 'Ketuk petak terakhir jalan.',

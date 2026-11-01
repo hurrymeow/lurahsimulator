@@ -5,10 +5,6 @@ import { countScreen, LIMITS, type ScreenCount } from './density';
 /** Screens still over a limit: the cap is today's count, so they can only improve. */
 // Each entry is a TODO.md item ("Bring <screen> inside UI.md rules 13 and 14"). Caps are the highest count over the 8 CI viewports in both languages on 2026-11-01.
 const DENSITY_ALLOW: Record<string, Partial<Record<keyof typeof LIMITS, number>>> = {
-  'build': { wordsInView: 84 }, // Build, first tab
-  'build tab 2': { longestBlock: 21, wordsInView: 101 }, // Build tab 2
-  'build tab 3': { longestBlock: 21, wordsAll: 571, wordsInView: 82 }, // Build tab 3
-  'build tab 4': { wordsInView: 99, longestBlock: 24 }, // Build tab 4
   'event': { primary: 2 }, // Event card: two filled choices
   'howto': { wordsInView: 149, longestBlock: 29, wordsAll: 303 }, // How-to card
   'neighbours': { wordsInView: 151, longestBlock: 32, wordsAll: 1202 }, // Neighbours
@@ -2117,6 +2113,18 @@ test.describe('build mode', () => {
     await expectLegible(page, 'build sheet with NEW tags');
     await page.locator('.sheet-head .btn-icon').click();
     await expect(page.locator('#dock-build .new-tag')).toHaveCount(0);
+  });
+
+  test('the build info button opens the detail and places from it', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#dock-build').click();
+    const rumah = page.locator('#sheet .build-row', { hasText: /Rumah/ }).first();
+    await rumah.locator('.build-info').click();
+    await expect(page.locator('#sheet')).toContainText(lang() === 'en' ? 'Houses residents and attracts new ones.' : 'Menampung warga dan menarik warga baru.');
+    await expect(page.locator('#build-place')).toBeVisible();
+    await page.locator('#build-place').click();
+    await expect(page.locator('#place-info')).toContainText(lang() === 'en' ? 'Tap a glowing free tile' : 'Ketuk petak kosong');
   });
 
   test('a chain building shows its brand, a franchise line, and can be renamed', async ({ page }) => {
