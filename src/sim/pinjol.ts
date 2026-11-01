@@ -32,7 +32,8 @@ const working = (s: GameState, id: string): number => s.buildings.filter((b) => 
 /** Share of shop income judol takes: the cut times the share of households on it. 0 outside the Kecamatan. */
 export const judolIncomeCut = (s: GameState): number => (pinjolOn(s) ? JUDOL.incomeCut * (judolHouseholds(s) / Math.max(1, households(s))) : 0);
 
-const idleLong = (g: Resident[]): boolean => g.some((r) => (r.idle ?? 0) >= PINJOL.idleWeeks);
+/** A household is idle when most of its members have been out of work for a long time. One idle person is not enough. */
+const idleLong = (g: Resident[]): boolean => g.filter((r) => (r.idle ?? 0) >= PINJOL.idleWeeks).length * 2 > g.length;
 
 /** Weekly. Judol starts and quits, households borrow and repay, and the debt collector calls on long debts. */
 export function pinjolSystem(s: GameState, fx: Fx): void {

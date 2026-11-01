@@ -9,7 +9,7 @@ const C1: Gate = { stage: 'kecamatan', stars: 1 };
 export const PINJOL = {
   /** Residents to a household, as in NEEDS.household. */
   household: 3,
-  /** A household with someone idle this many weeks can borrow. */
+  /** A household where most members have been idle this many weeks can borrow. */
   idleWeeks: 24,
   /** Chance a week that an eligible household borrows. */
   borrow: 0.03,

@@ -55,6 +55,15 @@ describe('pinjol', () => {
     expect(debtHouseholds(s)).toBeLessThanOrEqual(hungry);
   });
 
+  it('does not make a household hungry when only one member in three is idle', () => {
+    const s = kec();
+    s.res.viral = 0;
+    s.residents.forEach((r, i) => { r.idle = i % PINJOL.household === 0 ? PINJOL.idleWeeks : 0; });
+    const hungry = Math.max(0, households(s) - fedBase(s));
+    run(s, 200);
+    expect(debtHouseholds(s)).toBeLessThanOrEqual(hungry);
+  });
+
   it('counts a household in debt as half unfed', () => {
     const s = kec();
     const before = fed(s);

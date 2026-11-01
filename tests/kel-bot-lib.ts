@@ -37,7 +37,7 @@ export function kelSetup(seed: number, auto = false) {
 }
 
 /** One week of the Kelurahan bot's routine, before the tick. `extra` lists more stage buildings to place on a seam lot. */
-export function kelWeek(s: GameState, seam: { x: number; y: number }[], all: { x: number; y: number }[], auto: boolean, extra: string[] = []): void {
+export function kelWeek(s: GameState, seam: { x: number; y: number }[], all: { x: number; y: number }[], auto: boolean, extra: string[] = [], homes = true): void {
     if (s.pendingEvent) resolveEvent(s, [], 0);
     if (!auto) for (const n of s.neighbours) if (s.res.rupiah > 3_000_000) fundNeighbour(s, n);
     for (const id of ['kantorKel', 'pasar', 'terminal', 'taman', 'studiBanding', 'embung', ...extra]) {
@@ -57,7 +57,7 @@ export function kelWeek(s: GameState, seam: { x: number; y: number }[], all: { x
     if (s.res.sabar < 70) placeFirst(SABAR);
     // Short of the star's Popularitas: a second one the same week.
     if (s.res.sabar < 50) placeFirst(SABAR);
-    if (s.res.sabar >= GROW_FROM && population(s) >= housing(s) - 1) placeFirst(HOMES);
+    if (homes && s.res.sabar >= GROW_FROM && population(s) >= housing(s) - 1) placeFirst(HOMES);
     // Spend like a player would: anything placeable that fits, plus upgrades. No new homes while Popularitas is low,
     // and nothing new while the permit queue is deep: the goal strip says to hire first.
     const deep = queueMonths(s) >= ROLE_FX.asisten.hireAfter;
