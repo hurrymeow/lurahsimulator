@@ -1,0 +1,3 @@
+# Dense housing numbers
+
+Hari approved the balance change (2026-11-01): Rumah `housingLevels` goes from `[3, 5, 7]` to `[3, 4, 5]`, Kos-kosan `housing` from 8 to 10 with `housingLevels: [10, 14]`, and Kontrakan `housing` from 12 to 24 with `housingLevels: [24, 32]`. The expectations that moved with them: `tests/house-levels.test.ts` beds 3 → 4 → 5 and `before + 2` (the demolish comment now says 5 beds); `tests/content-shops.test.ts` kontrakan adds 24 beds; `tests/stages.test.ts` "Kos-kosan houses 10" and `before + 10`; `tests/e2e/ui.spec.ts` the bed table is `{ rumah: [3, 4, 5] }`, level 2 reads 4 residents / `/4`, and the upgrade diff is `4 → 5`. No other expectation changed.
