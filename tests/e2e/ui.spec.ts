@@ -2131,6 +2131,11 @@ test.describe('build mode', () => {
     await page.locator('.sheet-head .btn-icon').click();
     await page.locator('#emas').click();
     await expect(page.locator('#modal .card')).toContainText('Perut');
+    // The meter line shows an icon for each meter, not the word beside its number, and a tap on one names it.
+    for (const m of ['perut', 'kerja', 'aman']) await expect(page.locator(`#modal .card [data-stat="${m}"]`)).toHaveCount(1);
+    expect(await page.locator('#modal .card').textContent()).not.toMatch(/(Perut|Kerja|Aman) \d/);
+    await page.locator('#modal .card [data-stat="kerja"]').click();
+    await expect(page.locator('.stat-toast')).toContainText('Kerja');
     // Inem only brings events and her own news, not every card.
     await expect(page.locator('#modal .inem-head')).toHaveCount(0);
     await expectLegible(page, 'sejahtera card');
@@ -2593,6 +2598,9 @@ test.describe('zoom, big lots and the Warga list', () => {
     await page.locator('.sheet-head .btn-icon').click();
     await openPanel(page, 'wacana');
     await page.locator('#sheet [data-wacana="digital"]').click();
+    // Kerja +5 in a policy's effect is the Kerja icon and the number.
+    await expect(page.locator('#sheet [data-col="realisasi"] [data-stat="kerja"]')).toHaveCount(1);
+    expect(await page.locator('#sheet').textContent()).not.toMatch(/Kerja \+?\d/);
     // Money in running text is the coin and the amount, never "Rp".
     await expect(page.locator('#sheet .stat-pair', { hasText: /40(rb|k)/ }).first()).toBeVisible();
     await expect(page.locator('#sheet .stat-pair', { hasText: /40(rb|k)/ }).first().locator('[data-stat="rupiah"]')).toHaveCount(1);

@@ -86,3 +86,18 @@ describe('number grouping ignores sentence punctuation', () => {
     expect(pair.before).toBe('');
   });
 });
+
+describe('warga meters', () => {
+  it('turn into icons only when a number follows', () => {
+    expect(stats('Kerja +5 dan Aman −3, Perut 60', 'id')).toEqual(['kerja', 'aman', 'perut']);
+    expect(stats('Perut 60 · Kerja 12 · Aman 8', 'en')).toEqual(['perut', 'kerja', 'aman']);
+    // Words without a number stay words: Aman is also "safe", Kerja Bakti is a policy.
+    expect(stats('Kerja Bakti Rutin. Aman across the Kecamatan', 'en')).toEqual([]);
+    expect(stats('Sejahtera: the average of Perut, Kerja and Aman', 'en')).toEqual([]);
+  });
+
+  it('keeps a minus sign with its number', () => {
+    const pair = groupStatSegments(segs('Aman −3 untuk 4 minggu', 'id')).find((g) => g.kind === 'pair') as { before: string; after: string };
+    expect(pair.after).toBe('−3');
+  });
+});
