@@ -315,7 +315,7 @@ export class App {
         const stat = c.send.stat;
         return h('div', { class: 'action send-choice', 'data-stat': stat },
           h('p', { class: 'meta send-label' }, eLabel(e, i, c)),
-          ...sendCandidates(this.s, c).map((x) => h('button', { class: 'btn btn-primary send-btn', 'data-staff': String(x.id), onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i, x.id); } },
+          ...sendCandidates(this.s, c).map((x) => h('button', { class: 'btn send-btn', 'data-staff': String(x.id), onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i, x.id); } },
             t('event.send', { name: x.name }), ' · ',
             h('span', { class: 'send-odds' }, h('img', { src: iconURL(STAT_ICON[stat], 2), alt: t(`staff.stat.${stat}` as Key), width: 18, height: 18, class: 'inline-icon pixel' }), ` ${x.stats[stat]} · ${t('event.sendOdds', { pct: Math.round(sendChance(c, x) * 100) })}`),
           )),
@@ -328,7 +328,7 @@ export class App {
       const od = cost.orangDalam ? [`${cost.orangDalam} `, h('img', { src: iconURL('orangDalam'), alt: t('res.orangDalam'), width: 18, height: 18, class: 'inline-icon' })] : [];
       const price: Node[] = [...(cost.rupiah ? [document.createTextNode(rupiah(cost.rupiah))] : []), ...(cost.rupiah && od.length ? [document.createTextNode(' + ')] : []), ...od.map((x) => (x instanceof Node ? x : document.createTextNode(x)))];
       return h('div', { class: 'action' },
-        h('button', { class: `btn ${i === 0 ? '' : 'btn-primary'}`, disabled: !check.ok, onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i); } }, label, ...(price.length ? [' · ', h('span', { class: 'price' }, ...price)] : [])),
+        h('button', { class: 'btn', disabled: !check.ok, onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i); } }, label, ...(price.length ? [' · ', h('span', { class: 'price' }, ...price)] : [])),
         check.ok ? null : missingList(check.missing),
       );
     });
