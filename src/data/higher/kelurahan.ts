@@ -103,7 +103,7 @@ export const KEL_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'terminal',
     name: 'Terminal',
-    blurb: 'The kelurahan landmark, 3x3. Income from every bus and ojol, and shops within 3 tiles earn 20% more from the crowd. -1 Popularitas a week for the horns.',
+    blurb: 'The kelurahan landmark, 3x3. Income from every bus and ojol; shops within 3 tiles earn 20% more. -1 Popularitas a week for the horns.',
     cost: 25_000_000,
     upkeep: 350_000,
     income: 1_000_000,
