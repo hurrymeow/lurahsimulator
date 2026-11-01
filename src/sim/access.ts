@@ -5,7 +5,7 @@ import { def } from './content';
 import { GRID_H, GRID_W, type Building, type GameState } from './types';
 
 /** Flat pieces are ground, not destinations: they need no road and block nothing. Decorations need no road either. */
-export const FLAT = new Set(['selokan', 'biopori', 'kolamIkan', 'kebunSayur', 'sawah', 'kolamLele', 'parkir', 'jalan', 'aspalUlang', 'sawahIrigasi', 'embung', 'taman']);
+export const FLAT = new Set(['selokan', 'biopori', 'kolamIkan', 'kebunSayur', 'sawah', 'kolamLele', 'parkir', 'jalan', 'aspalUlang', 'taman']);
 const ROADS = new Set(['jalan', 'aspalUlang']);
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 

@@ -32,7 +32,7 @@ export function reportExtra(s: GameState, r: QuarterReport): { title: string; bo
   const stars = starsOf(s);
   const open = nextStarChecklist(s)?.find((l) => !l.done);
   rows.push(h('div', { class: 'outcome-mod' },
-    h('span', { 'aria-label': t('stage.aria', { title: stageTitle(s.stage.current, stars, s.stage.path), n: stars }) }, `${stageTitle(s.stage.current, stars, s.stage.path)} ${starRow(stars)}`),
+    h('span', { 'aria-label': t('stage.aria', { title: stageTitle(s.stage.current, stars), n: stars }) }, `${stageTitle(s.stage.current, stars)} ${starRow(stars)}`),
     open ? h('div', {}, t('stage.next', { goal: open.text })) : null,
   ));
   const bonus = Object.entries(r.bonus) as [ResourceId, number][];

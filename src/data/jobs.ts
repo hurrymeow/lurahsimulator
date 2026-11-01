@@ -32,7 +32,7 @@ export const JOBS: JobDef[] = [
 ];
 
 /** Auto-pick odds for later-stage jobs. Calo is only ever assigned by the player. */
-const STAGE_APPEAL: Record<string, number> = { kaderPosyandu: 25, calo: 0, honorer: 15, pendampingDesa: 15 };
+const STAGE_APPEAL: Record<string, number> = { kaderPosyandu: 25, calo: 0, honorer: 15 };
 
 const stageJobs: JobDef[] = STAGE_JOBS.map((j) => ({ id: j.id as JobDef['id'], appeal: STAGE_APPEAL[j.id] ?? 0, name: j.name, blurb: j.blurb, perMonth: j.perMonth, perLevel: { resources: [], boost: 0 }, gate: j.gate, stage: j }));
 

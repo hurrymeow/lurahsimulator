@@ -12,8 +12,6 @@ const BY_ID: Record<string, BuildCategory> = {
   alfamart: 'shops',
   pasar: 'shops',
   taman: 'decoration',
-  sawahIrigasi: 'farm',
-  embung: 'farm',
   jalan: 'paths',
   selokan: 'paths',
   aspalUlang: 'paths',

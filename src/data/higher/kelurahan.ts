@@ -1,14 +1,11 @@
 import type { Gate, MeterDef, StageBuildingDef, StageComboDef, StageEventDef, StageJobDef } from './types';
 
-// No path means both paths. Kelurahan and Desa share the same stars.
+// Star gates for the Kelurahan stage. A path gate keeps a building to the Kelurahan path.
 const K0: Gate = { stage: 'kelurahan', stars: 0 };
 const K1: Gate = { stage: 'kelurahan', stars: 1 };
 const K2: Gate = { stage: 'kelurahan', stars: 2 };
 const KP1: Gate = { ...K1, path: 'kelurahan' };
 const KP2: Gate = { ...K2, path: 'kelurahan' };
-const D0: Gate = { ...K0, path: 'desa' };
-const D1: Gate = { ...K1, path: 'desa' };
-const D2: Gate = { ...K2, path: 'desa' };
 
 export const KEL_METERS: MeterDef[] = [
   {
@@ -40,26 +37,6 @@ export const KEL_BUILDINGS: StageBuildingDef[] = [
     jobSlots: { pns: 4, honorer: 2 },
     sprite: 'kantorKel',
     gate: { ...K0, path: 'kelurahan' },
-    fx: { pnsSlots: 4 },
-  },
-  {
-    id: 'balaiDesa',
-    name: 'Balai Desa',
-    blurb: '4 PNS desks. The Dana Desa account lives here.',
-    cost: 20_000_000,
-    upkeep: 350_000,
-    income: 0,
-    attract: 3,
-    permitMonths: 3,
-    buildMonths: 3,
-    maxLevel: 3,
-    maxCount: 1,
-    placeable: true,
-    removable: false,
-    removeBlockedReason: 'The balai desa outlives every Pak Kades.',
-    jobSlots: { pns: 4, honorer: 2, pendampingDesa: 1 },
-    sprite: 'balaiDesa',
-    gate: D0,
     fx: { pnsSlots: 4 },
   },
   {
@@ -175,79 +152,6 @@ export const KEL_BUILDINGS: StageBuildingDef[] = [
     gate: K1,
     fx: { randomWacana: true, countsAsSpent: true },
   },
-  // Desa path.
-  {
-    id: 'bumdes',
-    name: 'BUMDes',
-    blurb: 'Village enterprise. Good income, and a 30% chance of going mangkrak at 80%.',
-    cost: 10_000_000,
-    upkeep: 150_000,
-    income: 900_000,
-    attract: 3,
-    permitMonths: 3,
-    buildMonths: 2,
-    maxLevel: 3,
-    maxCount: 1,
-    placeable: true,
-    removable: true,
-    mangkrakChance: 0.3,
-    sprite: 'bumdes',
-    gate: D1,
-  },
-  {
-    id: 'sawahIrigasi',
-    name: 'Sawah Irigasi',
-    blurb: 'Turns the sawah ring into paddies that pay. A harvest every season.',
-    cost: 8_000_000,
-    upkeep: 100_000,
-    income: 700_000,
-    attract: 2,
-    permitMonths: 2,
-    buildMonths: 2,
-    maxLevel: 3,
-    maxCount: 3,
-    placeable: true,
-    removable: true,
-    sprite: 'sawahIrigasi',
-    gate: D2,
-  },
-  {
-    id: 'embung',
-    name: 'Embung',
-    blurb: 'Cuts banjir damage by 30% more. The 80% cap stays.',
-    cost: 7_000_000,
-    upkeep: 80_000,
-    income: 0,
-    attract: 1,
-    permitMonths: 3,
-    buildMonths: 2,
-    maxLevel: 2,
-    maxCount: 2,
-    placeable: true,
-    removable: true,
-    sprite: 'embung',
-    gate: D2,
-    fx: { banjirCut: 0.3 },
-  },
-  {
-    id: 'desaWisata',
-    name: 'Desa Wisata',
-    blurb: '+2 Virality a week and tourist income. The selfie spot gets more traffic than the sawah.',
-    cost: 11_000_000,
-    upkeep: 220_000,
-    income: 800_000,
-    attract: 4,
-    perMonth: { viral: 2 },
-    permitMonths: 3,
-    buildMonths: 2,
-    maxLevel: 3,
-    maxCount: 1,
-    placeable: true,
-    removable: true,
-    shop: true,
-    sprite: 'desaWisata',
-    gate: D2,
-  },
 ];
 
 export const KEL_COMBOS: StageComboDef[] = [
@@ -289,27 +193,6 @@ export const KEL_COMBOS: StageComboDef[] = [
     effect: '+3 Virality a week. Taman upkeep doubles.',
     gate: KP2,
   },
-  {
-    id: 'panenRaya',
-    name: 'Panen Raya',
-    needs: ['bumdes', 'sawahIrigasi'],
-    radius: 2,
-    hint: 'Enterprise meets paddy. Harvest time.',
-    story: 'The BUMDes buys the whole panen, in cash, on time. Nobody checks the invoice.',
-    effect: 'Rp 8.000.000 harvest bonus every harvest.',
-    gate: D2,
-  },
-  {
-    id: 'wisataEdukasi',
-    name: 'Wisata Edukasi',
-    needs: ['desaWisata', 'sawahIrigasi'],
-    radius: 2,
-    hint: 'Tourists who want to hold a cangkul for ten minutes.',
-    story: 'School trips plant rice at noon and post it by one. The rice never gets planted straight.',
-    perMonth: { viral: 4, sabar: -1 },
-    effect: '+4 Virality and -1 Popularitas a week.',
-    gate: D2,
-  },
 ];
 
 export const KEL_JOBS: StageJobDef[] = [
@@ -321,13 +204,6 @@ export const KEL_JOBS: StageJobDef[] = [
     perMonth: {},
     pay: 0.5,
     promote: { afterWeeks: 60, chancePerWeek: 0.2 / 12 },
-  },
-  {
-    id: 'pendampingDesa',
-    name: 'Pendamping Desa',
-    blurb: 'Dana Desa only pays out with one employed. The reports are the product.',
-    gate: D2,
-    perMonth: { rupiah: 150_000 },
   },
 ];
 
