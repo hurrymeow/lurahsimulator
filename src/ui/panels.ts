@@ -1,6 +1,6 @@
 import { REALISASI } from '../data/realisasi';
 import { checkRealisasi, realisasiCost, startRealisasi } from '../sim/realisasi';
-import { rEffect, rLine, rName } from '../i18n';
+import { rEffect, rName } from '../i18n';
 import { jBlurb, jName, t, wLine, wName, wTrade } from '../i18n';
 import { LEVEL_MONTHS, PNS_PAYOUT_PER_LEVEL, jobDef } from '../data/jobs';
 import { RAZIA } from '../data/higher/kecamatan';
@@ -58,28 +58,14 @@ export function openResident(app: App, id: number): void {
 }
 
 // ---------- Wacana and Realisasi ----------
-/** The real version of a policy under its announcement: what it does, its state, and the button to do it. */
-function realisasiPart(app: App, wacanaId: string): Node[] {
+/** What a running Realisasi says about itself, or null when it is not running. */
+function realisasiState(app: App, wacanaId: string): string | null {
   const s = app.s;
   const d = REALISASI.find((r) => r.wacana === wacanaId);
-  if (!d) return [];
+  if (!d) return null;
   const run = (s.realisasi ?? []).filter((r) => r.id === d.id).at(-1);
-  const state = !run || s.month >= run.endsAt ? null : run.landsAt > s.month ? t('wac.landsIn', { n: run.landsAt - s.month }) : run.endsAt === Infinity ? t('wac.lasting') : t('wac.workingFor', { n: run.endsAt - s.month });
-  return [
-    h('div', { class: 'realisasi' },
-      h('p', {}, h('strong', {}, t('wac.realHead', { name: rName(d) }))),
-      h('p', { class: 'meta' }, rLine(d)),
-      h('p', { class: 'meta' }, rEffect(d)),
-      state ? h('p', { class: 'meta good' }, state) : null,
-      actionButton(t('wac.realisasi', { cost: rupiah(realisasiCost(s, d)) }), checkRealisasi(s, d.id), () => {
-        startRealisasi(s, d.id);
-        app.tap(15);
-        app.save();
-        app.refresh();
-        openWacana(app);
-      }, true),
-    ),
-  ];
+  if (!run || s.month >= run.endsAt) return null;
+  return run.landsAt > s.month ? t('wac.landsIn', { n: run.landsAt - s.month }) : run.endsAt === Infinity ? t('wac.lasting') : t('wac.workingFor', { n: run.endsAt - s.month });
 }
 
 /** The razia, offered in the Kecamatan above the policies. */
@@ -107,32 +93,65 @@ function raziaPart(app: App): Node[] {
   ];
 }
 
+/** The list: one row per policy. A tap opens the detail, where announcing and doing it sit side by side. */
 export function openWacana(app: App): void {
   const s = app.s;
   const rows = availableWacana(s).map((w) => {
     const state = s.wacana.find((x) => x.id === w.id);
-    const check = checkAnnounce(s, w.id);
-    return h('div', { class: 'card-btn static' },
+    const running = realisasiState(app, w.id);
+    return h('button', { class: 'card-btn wac-row', type: 'button', 'data-wacana': w.id, onclick: () => openWacanaDetail(app, w.id) },
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, wName(w)), h('span', { class: 'meta' }, state ? t('wac.approval', { n: Math.round(state.power * 10) }) : t('wac.none'))),
-        h('p', {}, wLine(w)),
-        h('p', { class: 'meta' }, wTrade(w)),
-        state?.times ? h('p', { class: 'meta' }, t('wac.times', { n: state.times })) : null,
         h('div', { class: 'meter', 'aria-hidden': 'true' }, h('div', { style: `width:${Math.min(100, (state?.power ?? 0) * 10)}%` })),
-        actionButton(t('wac.announce', { cost: rupiah(wacanaCost(s, w.id)) }), check, () => {
-          const paid = wacanaCost(s, w.id);
-          announce(s, w.id);
-          app.view.pop(s.buildings.find((b) => b.def === 'kantorRT')!.x, s.buildings.find((b) => b.def === 'kantorRT')!.y, 'rupiah', -paid);
-          app.tap(10);
-          app.save();
-          app.refresh();
-          openWacana(app);
-        }),
-        ...realisasiPart(app, w.id),
+        running ? h('p', { class: 'meta good' }, running) : null,
       ),
+      h('span', { class: 'wac-chevron', 'aria-hidden': 'true' }, '›'),
     );
   });
   openSheet(t('menu.wacana'), [h('p', { class: 'meta' }, t('wac.intro')), ...raziaPart(app), ...rows]);
+}
+
+/** One policy: the joke line, then Umumkan (secondary) beside Kerjakan (primary). It stays open after announcing. */
+function openWacanaDetail(app: App, id: string): void {
+  const s = app.s;
+  const w = availableWacana(s).find((x) => x.id === id);
+  if (!w) return openWacana(app);
+  const d = REALISASI.find((r) => r.wacana === id);
+  const state = s.wacana.find((x) => x.id === id);
+  const running = realisasiState(app, id);
+  const redo = () => {
+    app.save();
+    app.refresh();
+    openWacanaDetail(app, id);
+  };
+  const back = h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': t('page.back'), onclick: () => openWacana(app) }, '‹');
+  const announceCol = h('div', { class: 'wac-col', 'data-col': 'announce' },
+    h('strong', {}, t('wac.announceHead')),
+    h('p', { class: 'meta' }, wTrade(w)),
+    h('p', { class: 'meta' }, state ? t('wac.approval', { n: Math.round(state.power * 10) }) : t('wac.none')),
+    state?.times ? h('p', { class: 'meta' }, t('wac.times', { n: state.times })) : null,
+    actionButton(t('wac.announce', { cost: rupiah(wacanaCost(s, id)) }), checkAnnounce(s, id), () => {
+      const paid = wacanaCost(s, id);
+      announce(s, id);
+      const k = s.buildings.find((b) => b.def === 'kantorRT')!;
+      app.view.pop(k.x, k.y, 'rupiah', -paid);
+      app.tap(10);
+      redo();
+    }),
+  );
+  const doCol = d
+    ? h('div', { class: 'wac-col', 'data-col': 'realisasi' },
+        h('strong', {}, rName(d)),
+        h('p', { class: 'meta' }, rEffect(d)),
+        h('p', { class: running ? 'meta good' : 'meta' }, running ?? t('wac.delay', { n: d.delay })),
+        actionButton(t('wac.realisasi', { cost: rupiah(realisasiCost(s, d)) }), checkRealisasi(s, d.id), () => {
+          startRealisasi(s, d.id);
+          app.tap(15);
+          redo();
+        }, true),
+      )
+    : null;
+  openSheet(wName(w), [h('p', {}, wLine(w)), h('div', { class: 'wac-cols' }, announceCol, doCol)], undefined, back);
 }
 
 // ---------- Inspector extras ----------
