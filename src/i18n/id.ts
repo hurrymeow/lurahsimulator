@@ -112,6 +112,7 @@ export const ID: Record<Key, string> = {
   'first.star': 'Bintang pertama!',
   'gig.doneTitle': 'Inem manggung: {name}',
   'goal.label': 'Target: {goal}',
+  'goal.onTrack': 'aman, pertahankan',
   'goal.short.beds': 'bangun Rumah untuk menampung warga',
   'goal.short.combo': 'buat combo: {pieces}',
   'goal.short.desk': 'pasang lowongan Asisten',
