@@ -3,8 +3,8 @@ import type { Path } from './types';
 
 // stars[0] is what it takes to earn 1 star, stars[1] 2 stars, stars[2] 3 stars.
 // `unlocks` lists building ids that open on that star. Jobs, combos, events and meters
-// open by their own `gate`. Buildings that depend on the Kelurahan or Desa path open from
-// PATH_UNLOCKS, so the two paths can share one ladder.
+// open by their own `gate`. Buildings that depend on the Kelurahan path open from
+// PATH_UNLOCKS.
 
 export const RW_STAGE: StageDef = {
   id: 'rw',
