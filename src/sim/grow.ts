@@ -17,7 +17,7 @@ import { pick } from './rng';
 import { score } from './ranking';
 import { stageDef, goalProgress } from './stages';
 import { addResident, bedsOf, covers, housing, price, tilesOf } from './state';
-import { RT_H, RT_W, mapSpan, setGrid, type Building, type GameState, type Neighbour, type RtTrait, type StageId } from './types';
+import { RT_H, RT_W, mapSpan, setGrid, type Building, type GameState, type Goal, type Neighbour, type RtTrait, type StageId } from './types';
 
 /** The ladder this engine climbs. Matches `next` in the stage data. */
 const NEXT: Partial<Record<StageId, StageId>> = { rt: 'rw', rw: 'kelurahan', kelurahan: 'kecamatan' };
@@ -348,6 +348,9 @@ const ownRw = (n: { cx: number; cy: number }): boolean => {
   return rx === 0 && ry === 0;
 };
 
+/** The RT star goals an AI RT must meet: all of them but the ranking wins, which only the player's own RT chases. */
+export const aiGoals = (goals: Goal[]): Goal[] => goals.filter((g) => g.kind !== 'rankWins' && g.kind !== 'winStreak');
+
 /** Month by month: build when funded, grow, and earn stars by the same checklist the player uses. */
 export function neighboursSystem(s: GameState, fx: Fx): void {
   autoFund(s);
@@ -375,7 +378,7 @@ export function neighboursSystem(s: GameState, fx: Fx): void {
     const v = viewOf(s, n);
     n.discovered = [...new Set([...n.discovered, ...activeCombos(v).map((a) => a.combo.id)])];
     while (n.stars < 3) {
-      const goals = stageDef('rt').stars[n.stars as 0 | 1 | 2].goals;
+      const goals = aiGoals(stageDef('rt').stars[n.stars as 0 | 1 | 2].goals);
       // The player's RT 3★ asks for more residents (pace, decisions/rt-3star-pace.md); the AI RTs keep the old bar.
       if (!goals.every((g) => goalProgress(viewOf(s, n), g).have >= (g.kind === 'residents' ? Math.min(g.n, NEIGHBOUR_RESIDENTS_BAR) : g.n))) break;
       n.stars++;
