@@ -3,6 +3,7 @@ import { SAVE_KEY, type App } from '../app';
 import { deserialize } from '../sim/save';
 import { storage } from '../storage';
 import { h } from './dom';
+import { iconURL } from '../render/sprites';
 import { hasSeenHowto, resetHowto, showHowto, skipHowto } from './howto';
 import { coachPending, resetCoach } from './coach';
 import { resetBuildSeen } from './build';
@@ -75,15 +76,14 @@ export function showHome(app: App, install: HTMLButtonElement): void {
     let title: 'Pak' | 'Bu' = 'Pak';
     const nameIn = h('input', { type: 'text', id: 'home-name', class: 'name-input', maxlength: String(PLAYER_NAME_MAX), value: pick(NAMES), 'aria-label': t('name.name') }) as HTMLInputElement;
     const kampungIn = h('input', { type: 'text', id: 'home-kampung', class: 'name-input', maxlength: String(PLAYER_NAME_MAX), value: pick(KAMPUNG_NAMES), 'aria-label': t('name.kampung') }) as HTMLInputElement;
-    const titleBtn = (v: 'Pak' | 'Bu') => h('button', { class: `btn ${v === title ? 'btn-primary' : ''}`, type: 'button', 'data-title': v, 'aria-pressed': String(v === title), onclick: () => {
+    const titleBtn = (v: 'Pak' | 'Bu') => h('button', { class: 'btn btn-choice', type: 'button', 'data-title': v, 'aria-pressed': String(v === title), onclick: () => {
       title = v;
       titles.querySelectorAll('button').forEach((b) => {
-        b.classList.toggle('btn-primary', b.getAttribute('data-title') === v);
         b.setAttribute('aria-pressed', String(b.getAttribute('data-title') === v));
       });
     } }, t(v === 'Pak' ? 'name.pak' : 'name.bu'));
     const titles = h('div', { class: 'row name-titles', role: 'group', 'aria-label': t('name.title') }, titleBtn('Pak'), titleBtn('Bu'));
-    const dice = (input: HTMLInputElement, list: string[]) => h('button', { class: 'btn', type: 'button', onclick: () => (input.value = pick(list)) }, t('name.dice'));
+    const dice = (input: HTMLInputElement, list: string[]) => h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': t('name.dice'), onclick: () => (input.value = pick(list)) }, h('img', { class: 'pixel', src: iconURL('dice'), alt: '', width: 24, height: 24 }));
     const clean = (v: string, fallback: string) => v.replace(/\s+/g, ' ').trim().slice(0, PLAYER_NAME_MAX) || fallback;
     el.replaceChildren(
       h('h1', { class: 'home-title' }, document.title),
@@ -92,14 +92,14 @@ export function showHome(app: App, install: HTMLButtonElement): void {
         e.preventDefault();
         begin(true, { title, name: clean(nameIn.value, 'RT'), kampung: `Kampung ${clean(kampungIn.value, KAMPUNG_NAMES[0])}` });
       } },
-        h('p', { class: 'home-warn' }, t('name.title')),
+        h('h2', { class: 'home-heading' }, t('name.title')),
         titles,
         h('label', { class: 'name-label' }, t('name.name')),
         h('div', { class: 'name-row' }, nameIn, dice(nameIn, NAMES)),
         h('label', { class: 'name-label' }, t('name.kampung')),
-        h('div', { class: 'name-row' }, h('span', { class: 'name-prefix' }, 'Kampung'), kampungIn, dice(kampungIn, KAMPUNG_NAMES)),
+        h('div', { class: 'name-row' }, kampungIn, dice(kampungIn, KAMPUNG_NAMES)),
         h('button', { class: 'btn btn-primary', id: 'home-begin', type: 'submit' }, t('name.begin')),
-        h('button', { class: 'btn', type: 'button', onclick: choose }, t('home.back')),
+        h('button', { class: 'btn btn-secondary home-back', type: 'button', onclick: choose }, t('home.back')),
       ),
     );
   };

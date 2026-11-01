@@ -3,6 +3,24 @@
 // Rajin a broom (how much gets done), Lobi a handshake (how smoothly), Jujur scales (how much leaks),
 // Gaul a speech bubble (how liked).
 export const STAT_ART: Record<string, string[]> = {
+  dice: [
+    '................',
+    '.dddddddddddddd.',
+    '.deeeeeeeeeeeed.',
+    '.deddeeeeeedded.',
+    '.deddeeeeeedded.',
+    '.deeeeeeeeeeeed.',
+    '.deeeeeeeeeeeed.',
+    '.deeeeeddeeeeed.',
+    '.deeeeeddeeeeed.',
+    '.deeeeeeeeeeeed.',
+    '.deeeeeeeeeeeed.',
+    '.deddeeeeeedded.',
+    '.deddeeeeeedded.',
+    '.dffffffffffffd.',
+    '.dddddddddddddd.',
+    '................',
+  ],
   statRajin: [
     '................',
     '.............dd.',
