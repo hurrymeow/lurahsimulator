@@ -121,6 +121,7 @@ export const ID: Record<Key, string> = {
   'goal.short.stempel': 'surat menumpuk: jalankan Calo atau bangun Balai RW',
   'goal.short.wait': 'tunggu {name} buka',
   'goal.step': 'Langkah berikut: {step}',
+  'goal.stempelHelp': 'RT tetangga mengirim surat tiap membangun. Tiap surat butuh satu Stempel. Kamu dapat {base} sebulan, +{perBalai} per Balai RW.',
   'grow.auto': 'Dana otomatis',
   'grow.autoHelp': 'Mati. Nyalakan supaya RT ini tetap didanai tiap minggu tanpa diketuk.',
   'grow.autoKeep': 'Jaga {n}',

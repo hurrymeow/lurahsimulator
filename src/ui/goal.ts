@@ -1,5 +1,6 @@
 import { t } from '../i18n';
 import type { App } from '../app';
+import { STEMPEL } from '../sim/balance';
 import { nextStep } from '../sim/nextstep';
 import { nextStarChecklist } from '../sim/stages';
 import { h } from './dom';
@@ -31,6 +32,9 @@ export function setupGoal(app: App): void {
     const rows = [
       ...left.map((l) => h('p', { class: 'goal-row' }, l.holding ? `★ ${l.text} · ${t('goal.onTrack')}` : `★ ${l.text}`)),
       ...(step && !stepLeads ? [h('p', { class: 'goal-row goal-step' }, t('goal.step', { step: step.text }))] : []),
+      ...(left.some((l) => l.goal.kind === 'stempelClear')
+        ? [h('p', { class: 'goal-row goal-step' }, t('goal.stempelHelp', { base: STEMPEL.base, perBalai: STEMPEL.perBalai }))]
+        : []),
     ];
     const more = open || rows.length > 0;
     el.classList.toggle('open', open);
