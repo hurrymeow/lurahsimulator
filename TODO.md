@@ -152,7 +152,8 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Why: every stat should decide something.
   - Suggested solution: use the table in GAME-DESIGN.md section 4 (Tukang Tagih works on Gaul, Supir on Jujur; Admin Grup WA and Petugas PU risk Lobi; Asisten and Bendahara risk Rajin), with the new mishap texts. Re-lean the specials' stats to their role's new work stat.
   - Source: `decisions/playtest-sk2.md`
-  - `open · — · — · done when:` each stat is the work stat of two roles and the risk stat of two, in ID and EN, with the staff tests passing.
+  - Plan: `docs/plans/staff-stat-spread.md` T1.
+  - `claimed · DeepSeek executor · 2026-11-01 · done when:` each stat is the work stat of two roles and the risk stat of two, in ID and EN, with the staff tests passing.
 - [ ] **CI and test config: flaky reports, English, WebKit, nightly, console-error fixture and canaries.**
   - Problem: a test that passes on retry leaves no record; English is only checked weekly; tests run in Chromium only; there is no nightly workflow.
   - Why: TESTING.md items 2, 9 and 13 fail today, and items 6, 11, 12 and 17 need a nightly run. Items 5 and 15 (merged in from the console-error task): e2e does not fail on `pageerror` or `console.error`, and nothing proves the legibility scan or visual diff can fail.
