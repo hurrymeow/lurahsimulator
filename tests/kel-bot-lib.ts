@@ -62,7 +62,7 @@ export function kelWeek(s: GameState, seam: { x: number; y: number }[], all: { x
     // and nothing new while the permit queue is deep: the goal strip says to hire first.
     const deep = queueMonths(s) >= ROLE_FX.asisten.hireAfter;
     for (const d of placeableDefs()) {
-      if (!deep && (d.scope ?? 'rt') !== 'kel' && s.res.rupiah > 20_000_000 && !(d.housing && s.res.sabar < GROW_FROM)) {
+      if (!deep && (d.scope ?? 'rt') !== 'kel' && s.res.rupiah > 20_000_000 && !(d.housing && (s.res.sabar < GROW_FROM || !homes))) {
         const spot = all.find((p) => checkPlace(s, d.id, p.x, p.y).ok);
         if (spot) place(s, d.id, spot.x, spot.y);
       }

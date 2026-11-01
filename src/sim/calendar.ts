@@ -7,6 +7,8 @@ export const WEEKS_PER_YEAR = WEEKS_PER_MONTH * MONTHS_PER_YEAR;
 export const YEAR_SCALE = WEEKS_PER_YEAR / 12;
 /** The ranking runs every 12 weeks (a Triwulan, a quarter), so the star pacing of the 12-tick year holds. */
 export const RANKING_WEEKS = 12;
+/** Quarterly rankings to a yearly one. Tier-win goals count only the yearly ones. */
+export const YEARLY_EVERY = 4;
 /** The soft start: 12 weeks (3 months) with a bailout and a gentler flood. */
 export const GRACE_WEEKS = 12;
 
