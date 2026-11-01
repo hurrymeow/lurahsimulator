@@ -13,6 +13,8 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 - [ ] **Cut text on the 6 screens that fail UI rule 13: Build cards, Staff, Neighbours, Stats, the opener and How to Play.**
   - Problem: audit 2026-11-01, words in view at 320 ID → 412 EN: Build tabs 38–51 → 80–101 (block 24, 573 per tab), Neighbours 97 → 146 (block 32, 1,202 per sheet), Stats 54 → 83, Staff 43 → 71, opener 95 → 113 (block 28), How-to 94. Rule 13 allows 50 in view, 20 per block, 300 per sheet; rule 7 allows 20 per tip.
   - Why: players skim about 20% of the words; a wall of text hides the one line that matters.
+  - Neighbours (Tetangga), Hari 2026-11-01 (screenshot): the sheet opens with five rule paragraphs before any RT data, so it is too texty and too long, with no hierarchy. Each RT row is plain text, so the scores do not stand out.
+  - Neighbours fix: show the RT rows first, with the score and star as the one emphasised number per row. Move the rules out of the sheet or cut them to one short line. Turn each row into a tappable list item with a clear secondary action, following the Wacana list (#230) and UI.md rule 14 button roles. Keep it within the rule 13 caps.
   - Suggested solution: `docs/plans/ui-audit-fixes.md` T6 (Build cards), T7 (Neighbours, Stats, Staff) and T8 (opener, How-to, toasts). Wacana is in the hierarchy plan.
   - Source: UI.md rules 7 and 13; audit `audit/ui-rules-2026-11-01/report.md`
   - `open · — · — · done when:` all six pass rules 7 and 13 at 320 to 430px in EN and ID.
