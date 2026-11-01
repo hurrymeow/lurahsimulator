@@ -2325,6 +2325,44 @@ test.describe('build mode', () => {
     expect(await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.s.buildings.find((b: any) => b.uid === u).status, uid)).toBe('building');
   });
 
+  test('a building site under construction still opens its panel on tap', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    const uid = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.res.orangDalam = 3;
+      app.s.stage.stars.rt = 2;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      const uid = app.s.nextUid++;
+      app.s.buildings.push({ uid, def: 'kosan', x: k.x + 2, y: k.y + 1, level: 1, status: 'permit', timer: 2, invested: 0, placedAt: 0 });
+      app.refresh();
+      app.inspect(uid);
+      return uid;
+    });
+    await page.locator('#sheet .btn-primary').first().click();
+    // Halfway through the build, so the building is drawn at a partial height.
+    await page.evaluate((u) => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.buildings.find((b: any) => b.uid === u).timer = 1;
+      app.refresh();
+    }, uid);
+    await expect.poll(() => page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.s.buildings.find((b: any) => b.uid === u).status, uid)).toBe('building');
+    await page.locator('.sheet-head .btn-icon').click();
+    const at = await page.evaluate((u) => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const b = app.s.buildings.find((o: any) => o.uid === u);
+      const r = document.getElementById('map')!.getBoundingClientRect();
+      const c = app.view.tileCentre(b.x, b.y);
+      return { x: r.left + c.x, y: r.top + c.y };
+    }, uid);
+    await page.mouse.click(at.x, at.y);
+    await expect(page.locator('#sheet')).toBeVisible();
+    await expect(page.locator('#sheet h2').first()).toContainText('Kos');
+    expect(errors).toEqual([]);
+  });
+
   test('the satellite view folds away to a small button, and the choice survives a reload', async ({ page }) => {
     // Below 640px tall the satellite view is not shown at all, so use a phone tall enough for it.
     await page.setViewportSize({ width: page.viewportSize()!.width, height: 760 });

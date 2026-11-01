@@ -643,7 +643,7 @@ export class MapView {
       const sh = this.look(b);
       const { sprite, variant, n, level, flip } = sh;
       const art = iso(sprite, variant, n, level, sh.fa, sh.fb);
-      // Site sprites (stakes, scaffold) are one per tile on a long lot; the crane stands on its back tile.
+      // Site sprites (stakes, scaffold) are one per tile on a long lot.
       const site = (name: string, all = true): Hit | undefined => {
         if (sh.fa === sh.fb) return this.art(ctx, iso(name, undefined, n), b.x, b.y, 1, 0, n, flip);
         let first: Hit | undefined;
@@ -664,12 +664,20 @@ export class MapView {
         this.hits.push(site('patok')!);
         this.sign(ctx, 'permit', b.x, b.y);
       } else if (b.status === 'building') {
-        // Being built: the half-made building in its scaffold, with a crane over the site.
-        ctx.globalAlpha = 0.5;
+        // Being built: the building rises out of its plot as the months pass, behind scaffolding.
+        const progress = Math.max(0, Math.min(1, 1 - b.timer / Math.max(1, def(b.def).buildMonths)));
+        const c = this.corner(b.x, b.y);
+        const k = (this.scale * n) / art.n;
+        const top = this.artTop(b.x, b.y, art, sh);
+        const ground = this.tileCentre(b.x + (sh.w - 1) / 2, b.y + (sh.h - 1) / 2).y;
+        const h = (ground - top) * progress;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(c.x - art.cornerX * k, ground - h, art.canvas.width * k, h);
+        ctx.clip();
         this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
-        ctx.globalAlpha = 1;
+        ctx.restore();
         site('scaffold');
-        site('crane', false);
         if (this.effects) this.fx.construct(b.x, b.y, world);
       } else if (b.status === 'mangkrak') {
         ctx.filter = 'grayscale(1) brightness(0.7)';
@@ -706,7 +714,7 @@ export class MapView {
         this.idle(ctx, b, world);
       }
       const siteArt = (name: string) => (sh.fa === sh.fb ? iso(name, undefined, n) : iso(name));
-      const topArt = b.status === 'building' ? siteArt('crane') : b.status === 'mangkrak' ? siteArt('scaffold') : b.status === 'permit' ? siteArt('patok') : art;
+      const topArt = b.status === 'building' || b.status === 'mangkrak' ? siteArt('scaffold') : b.status === 'permit' ? siteArt('patok') : art;
       tops.set(b.y * GRID_W + b.x, this.artTop(b.x, b.y, topArt, topArt === art || sh.fa === sh.fb ? sh : { ...sh, n: 1 }));
     };
     // Flat pieces are ground: paths, fields and ponds draw first, so no walker or building ever hides under them.
