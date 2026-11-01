@@ -46,7 +46,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
   {
     id: 'posRonda',
     name: 'Pos Ronda',
-    blurb: 'Night watch hut. +2 Popularitas a week. Nobody has seen anyone on watch.',
+    blurb: 'Night watch hut. Adds Popularitas every week. Nobody has seen anyone on watch.',
     cost: 800_000,
     upkeep: 50_000,
     income: 0,
@@ -171,7 +171,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
   {
     id: 'kosan',
     name: 'Kos-kosan',
-    blurb: 'A row of rooms: houses 8 and pays rent. The noise costs 1 Popularitas a week.',
+    blurb: 'A row of rooms that houses residents and pays rent. The noise costs Popularitas every week.',
     cost: 4_000_000,
     upkeep: 80_000,
     income: 200_000,
@@ -208,7 +208,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
   {
     id: 'bankSampah',
     name: 'Bank Sampah',
-    blurb: 'Trades plastic for pocket money. Earns up to Rp 60rb a week and +0.8 Popularitas. Opens a pengepul job.',
+    blurb: 'Trades plastic for pocket money. Earns income and adds Popularitas. Opens a pengepul job.',
     cost: 2_000_000,
     upkeep: 0,
     income: 60_000,
