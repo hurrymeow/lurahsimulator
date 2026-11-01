@@ -15,6 +15,7 @@ export const EN = {
   'build.emptyTile': 'Empty tile',
   'build.emptyTileBody': 'Tap Build below to put something here.',
   'build.houses': 'Houses {n}',
+  'build.info': 'About {name}',
   'build.instant': 'Free · built at once · tap more tiles to keep going',
   'build.lineBlocked': '{n} blocked tiles are skipped.',
   'build.lineEnd': 'Tap the last tile of the path.',
