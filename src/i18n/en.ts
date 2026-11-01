@@ -116,6 +116,7 @@ export const EN = {
   'goal.short.desk': 'post a lowongan for an Asisten',
   'goal.short.draw': 'nobody new is coming, build a {name} to draw residents',
   'goal.short.house': 'build your first Rumah',
+  'goal.short.stempel': 'letters are piling up: run a Calo job or build a Balai RW',
   'goal.short.wait': 'wait for {name} to open',
   'goal.step': 'Next step: {step}',
   'grow.auto': 'Auto-dana',
