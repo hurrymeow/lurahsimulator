@@ -1,0 +1,1 @@
+The blurb limit is checked through `bBlurb` from `src/i18n`, the same accessor the building panel (`src/ui/inspect.ts`) uses, so the test counts the text the player actually sees in both English and Indonesian. `BUILDINGS` already merges the core, shop, farm and decoration sets, and `STAGE_BUILDINGS` adds every higher-stage building; a word is any whitespace-separated token.
