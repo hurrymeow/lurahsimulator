@@ -7,7 +7,7 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 ## Contents
 
 1. [Pitch and core loop](#1-pitch-and-core-loop)
-2. [Stage ladder](#2-stage-ladder): RT, RW, Kelurahan, with stars and unlocks
+2. [Stage ladder](#2-stage-ladder): RT, RW, Kelurahan, Kecamatan, with stars and unlocks
 3. [Pacing targets](#3-pacing-targets), with status
 4. [Economy and balance](#4-economy-and-balance)
 5. [Tone and politics guardrails](#5-tone-and-politics-guardrails)
@@ -43,7 +43,7 @@ Builder rules stay in their own files: [UI.md](UI.md), [ART.md](ART.md) and [CON
 
 ## 2. Stage ladder
 
-The full ladder runs RT, RW, Kelurahan, Kecamatan, Kabupaten/Kota, Provinsi and Pusat. Only stages 1 to 3 are specified. Kecamatan and above wait for a playtest of the Kelurahan. Approved by Hari on 2026-10-26.
+The full ladder runs RT, RW, Kelurahan, Kecamatan, Kabupaten/Kota, Provinsi and Pusat. Stages 1 to 4 are specified. Kabupaten/Kota and above wait for a playtest of the Kecamatan. Approved by Hari on 2026-10-26.
 
 The ladder reads as three acts (approved by Hari, 2026-10-28): **Act 1 Kampung** (RT, RW, Lurah; pressure: Perut and Kerja), **Act 2 Kota** (Camat, Pj. Wali Kota, Pj. Gubernur; pressure: pinjol, judol and Aman), **Act 3 Pusat** (Pejabat Pusat; Laporan against what is real). City and province posts are Pj. (acting) posts given by SK, so the player still never runs for office. Only Act 1 is built.
 
@@ -236,6 +236,44 @@ Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 - **Tim Audit** event: comes every March once the Kelurahan has 1★, so the 2★ goal never waits on luck. Each wacana with no receipt costs **2** Sabar; with none missing (or a paid rapi-rapi) the audit is clean.
 - **Lomba Kelurahan** event: paint spending raises the score for one month.
 - **Kunjungan** event: one month warning before a visit.
+
+### Stage 4: Kecamatan
+
+The first Act 2 stage (Pak Camat). Built in `docs/plans/kecamatan-slice.md`; numbers below are the shipped, bot-tuned ones. The player's Kelurahan stays the live tile map. The other three Kelurahan (Mawar, Melati, Kenanga) are modelled: each has stars, a pinjol share and an Aman value, and shows as a block around the map. Tapping a block opens its card.
+
+#### 0★ Pak Camat
+
+- Unlocks Kantor Kecamatan, Pos Satpol PP, Koperasi Simpan Pinjam and Balai Latihan Kerja. Pinjol and judol start here. Act 1 stages never run them.
+- **Goal for 1★:** build the Kantor Kecamatan, every Kelurahan at 1★, pinjol under **25%** of households, and the player's own kampung at **250** residents.
+
+#### 1★
+
+- Unlocks Baliho and Taman Kota.
+- **Goal for 2★:** every Kelurahan at 2★, **1** yearly ranking win, Aman **60+** across the Kecamatan for **24** weeks, Popularitas **35**.
+
+#### 2★
+
+- **Goal for 3★:** every Kelurahan at 3★, **3** yearly ranking wins, pinjol under **10%**, Aman **65+** with no razia in the last **48** weeks.
+
+#### 3★ Camat Teladan
+
+- The SK to Pj. Wali Kota arrives. That stage is not built; play continues. Rival: Kecamatan Sebelah.
+
+#### How the stage works
+
+- **Districts:** each modelled Kelurahan earns a star after **90**, **200** and **340** weeks of progress. Progress a week is **1.2** for a Rajin district, **1.0** for Hobi and **0.8** for Jarang. The slowest district sets the 3★ time: 340 / 0.8 = **425** weeks, about **57** min at 1x.
+- **Pinjol:** households are groups of 3 residents. A household can borrow (**3%** a week) when most members have been idle **24+** weeks, or when it is unfed. In debt it counts as half unfed. After **24** weeks in debt the debt collector costs **5** Aman for **12** weeks. Meter: share of households in debt.
+- **Judol:** each **10** Viral above **20** adds **1%** a week to start. A judol household loses **30%** of its income and borrows at **2x**.
+- **Responses:** Razia Satpol PP (**1** Orang Inside, Aman +8 for 8 weeks, Popularitas -3, half the cases move to the next Kelurahan: the problem is somewhere else, which is the joke). Literasi Keuangan (Realisasi, Rp 3jt, lands after 8 weeks, new cases -50% for 48 weeks). Spanduk Anti Judol (Wacana: Laporan up, nothing real). Koperasi Simpan Pinjam cuts new cases 25% each, two count. Balai Latihan Kerja retrains one idle warga a week.
+- **Crowd and expectations:** in the Kecamatan each resident weighs **0.1** Aman (0.3 elsewhere) and drains **0.6x** the Popularitas. 250 residents are a goal here, not a crisis (decisions/kecamatan-balance-1.md and -2.md).
+- **Tier-win goals** (RW, Kelurahan, Kecamatan) count only yearly rankings won in that stage. The ranking runs every 12 weeks, so every fourth one counts.
+
+#### New Kecamatan content
+
+- **Buildings (6):** Kantor Kecamatan (Rp 30jt, **4** PNS and **2** Honorer slots), Pos Satpol PP (Rp 8jt, **+4** Aman), Koperasi Simpan Pinjam (Rp 10jt), Balai Latihan Kerja (Rp 9jt), Baliho (Rp 4jt, ad income, **+1** Viral a week, speeds judol), Taman Kota (Rp 12jt, **+2** Popularitas a week, shops within 3 tiles **+8%**).
+- **Combos (4):** Modal Usaha (Koperasi Simpan Pinjam + Balai Latihan Kerja), Razia Pasar (Pos Satpol PP + Pasar), Iklan Bertarget (Baliho + Wifi: income and judol both up), Kampung Tertib (Pos Satpol PP + Lampu Jalan).
+- **Events (6):** SMS Pinjol, Iklan Judol, Penagih di Gang, Razia Pindah, Utang Viral, Tim Literasi.
+- **Staff:** a Satpol PP role.
 
 ## 3. Pacing targets
 
@@ -470,7 +508,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing
 | B2 First session | 5–15 min | Finish RT, first SK | 30s | 2 min | RT 4 min | first SK |
 | B3 Promotion | 15–30 min | Learn RW's new rule | 45s | 3 min | RW 7 min | 15 min |
 | B4 Act 1 end | 30–60 min | Kelurahan, budget cycle, Lurah 3★ | 60s | 4 min | Kel 10 min | 15 min |
-| B5 Act 2 start | 1–2h | Camat: first Act 2 rule | 90s | 5 min | TBD | 20 min |
+| B5 Act 2 start | 1–2h | Camat: first Act 2 rule | 90s | 5 min | Kec 15 to 25 min | 20 min |
 | B6 Act 2 | 2–4h | New pressure: pinjol, judol, Aman | 2 min | 6 min | TBD | 20 min |
 | B7 Act 2 to 3 | 4–6h | Province, then Pusat | 2 min | 8 min | TBD | 20 min |
 | B8 Endgame | 6–8h | Laporan vs Sejahtera decides | 3 min | 10 min | TBD | 20 min |
@@ -478,7 +516,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing
 
 - **Novelty** = any resident arrival, event, combo, unlock, building level or staff hire (same as section 3 target 5). Item 11 weights them by kind.
 - **Goal** = a star checklist line, an SK, Lomba Agustusan, or an Inem gig. Inspections and resident arrivals do not count, so they cannot pad the bar.
-- **Star gap** uses the section 2 targets. Act 1 keeps its length for now, so it ends near 52 min, inside B4 (Hari, 2026-10-31). Act 2–3 targets do not exist yet.
+- **Star gap** uses the section 2 targets. Act 1 keeps its length for now, so it ends near 52 min, inside B4 (Hari, 2026-10-31). The Kecamatan runs 0 to 3★ in **55 to 65** min at 1x (the bot fails below 45 or above 70), a star every 15 to 25 min; the shipped bot times are 15, 33 and 57 min. Act 2 targets after the Kecamatan, and Act 3, do not exist yet.
 
 
 ### A. Core loop
