@@ -2580,6 +2580,7 @@ test.describe('zoom, big lots and the Warga list', () => {
     await expect(page.locator('.stat-toast')).toHaveAttribute('data-plain', '');
     await page.locator('.sheet-head .btn-icon').click();
     await openPanel(page, 'wacana');
+    await page.locator('#sheet [data-wacana="digital"]').click();
     // Money in running text is the coin and the amount, never "Rp".
     await expect(page.locator('#sheet .stat-pair', { hasText: /40(rb|k)/ }).first()).toBeVisible();
     await expect(page.locator('#sheet .stat-pair', { hasText: /40(rb|k)/ }).first().locator('[data-stat="rupiah"]')).toHaveCount(1);
