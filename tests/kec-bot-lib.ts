@@ -5,6 +5,7 @@ import { checkPlace, demolish, place } from '../src/sim/rules';
 import { checkRazia, startRazia } from '../src/sim/kec';
 import { pinjolShare } from '../src/sim/pinjol';
 import { occupants, population } from '../src/sim/state';
+import { nextStarChecklist } from '../src/sim/stages';
 import { tick } from '../src/sim/tick';
 import type { GameState } from '../src/sim/types';
 import { kelSetup, kelWeek } from './kel-bot-lib';
@@ -42,6 +43,9 @@ export function kecWeek(s: GameState, seam: { x: number; y: number }[], all: { x
   if (victim) demolish(s, victim);
 }
 
+/** Goal lines done on the next star's checklist, plus 10 for each star earned so a new star always counts as progress. */
+const doneGoals = (s: GameState): number => (nextStarChecklist(s) ?? []).filter((l) => l.done).length;
+
 export interface KecRun {
   seed: number;
   /** Week the Kelurahan reached 3 stars and the bot was promoted. */
@@ -52,6 +56,9 @@ export interface KecRun {
   pinjol: number;
   stars: string;
   razias: number;
+  /** Longest wait, in weeks, between two novelties and between two goal lines done, after promotion. A week is 8s at 1x. */
+  noveltyGap?: number;
+  goalGap?: number;
 }
 
 /**
@@ -69,6 +76,12 @@ export function playKec(seed: number, kelWeeks = 200, kecWeeks = 700, jobShare =
   run.promoted = s.month;
   promote(s, []);
   const from = s.month;
+  let lastNov = s.lastNovelty;
+  let novAt = s.month;
+  let goalAt = s.month;
+  let goals = doneGoals(s) + s.stage.stars.kecamatan * 10;
+  let noveltyGap = 0;
+  let goalGap = 0;
   for (let w = 0; w < kecWeeks && s.stage.stars.kecamatan < 3; w++) {
     kecWeek(s, seam, all, jobShare);
     if (s.stage.stars.kecamatan < 2 && pinjolShare(s) >= 30 && checkRazia(s).ok) {
@@ -78,7 +91,18 @@ export function playKec(seed: number, kelWeeks = 200, kecWeeks = 700, jobShare =
     const before = s.stage.stars.kecamatan;
     tick(s);
     if (s.stage.stars.kecamatan > before) run.at.push(s.month - from);
+    if (s.lastNovelty !== lastNov) {
+      noveltyGap = Math.max(noveltyGap, s.month - novAt);
+      novAt = s.month;
+      lastNov = s.lastNovelty;
+    }
+    const now = doneGoals(s) + s.stage.stars.kecamatan * 10;
+    if (now !== goals) {
+      goalGap = Math.max(goalGap, s.month - goalAt);
+      goalAt = s.month;
+      goals = now;
+    }
   }
-  return { ...run, pop: population(s), pinjol: Math.round(pinjolShare(s)), stars: `${s.stage.stars.kecamatan}` };
+  return { ...run, pop: population(s), pinjol: Math.round(pinjolShare(s)), stars: `${s.stage.stars.kecamatan}`, noveltyGap, goalGap };
 }
 
