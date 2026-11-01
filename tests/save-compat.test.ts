@@ -14,6 +14,11 @@ describe('incompatible saves', () => {
     s.buildings[0].def = 'no-such-building';
     expect(load(s)).toBeNull();
   });
+  it('rejects a save on the cut Desa path', () => {
+    const s = fresh();
+    s.stage.path = 'desa';
+    expect(load(s)).toBeNull();
+  });
   it('rejects corrupt JSON, empty and missing saves', () => {
     expect(deserialize('{not json')).toBeNull();
     expect(deserialize('')).toBeNull();

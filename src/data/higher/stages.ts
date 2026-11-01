@@ -3,8 +3,8 @@ import type { Path } from './types';
 
 // stars[0] is what it takes to earn 1 star, stars[1] 2 stars, stars[2] 3 stars.
 // `unlocks` lists building ids that open on that star. Jobs, combos, events and meters
-// open by their own `gate`. Buildings that depend on the Kelurahan or Desa path open from
-// PATH_UNLOCKS, so the two paths can share one ladder.
+// open by their own `gate`. Buildings that depend on the Kelurahan path open from
+// PATH_UNLOCKS.
 
 export const RW_STAGE: StageDef = {
   id: 'rw',
@@ -74,13 +74,9 @@ export const KECAMATAN_STAGE: StageDef = {
   ],
 };
 
-/** Titles for the Desa path. Same stars and goals as the Kelurahan. */
-export const DESA_TITLES: [string, string, string, string] = ['Pak Kades', 'Desa Rintisan', 'Desa Berkembang', 'Kades Teladan'];
-
 /** Path buildings by the star that opens them: index 0 opens on 1 star. The 0-star set opens on promotion. */
 export const PATH_UNLOCKS: Record<Path, { start: string[]; stars: [string[], string[], string[]] }> = {
   kelurahan: { start: ['kantorKel'], stars: [['pasar'], ['terminal', 'taman'], []] },
-  desa: { start: ['balaiDesa'], stars: [['bumdes'], ['sawahIrigasi', 'embung', 'desaWisata'], []] },
 };
 
 /** Free on promotion into the stage, on both paths. */

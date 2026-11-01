@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { YEAR_SCALE } from '../src/sim/calendar';
 import { activeCombos } from '../src/sim/combos';
-import { banjirProtection, resolveEvent } from '../src/sim/events';
+import { resolveEvent } from '../src/sim/events';
 import { assign, liveJobs } from '../src/sim/jobs';
 import { kelSystem, serapan, wacanaNoReceipt } from '../src/sim/kel';
 import { onBuildingFinished } from '../src/sim/projects';
@@ -15,7 +15,7 @@ import { jobsSystemForTest } from './rw-helpers';
 afterEach(() => setGrid('rt'));
 
 /** A Kelurahan-stage game. Tests place buildings by hand, so lots do not matter. */
-function kel(stars: 0 | 1 | 2 = 2, path: 'kelurahan' | 'desa' = 'kelurahan'): GameState {
+function kel(stars: 0 | 1 | 2 = 2, path: 'kelurahan' = 'kelurahan'): GameState {
   const s = newGame(5);
   s.stage.current = 'kelurahan';
   s.stage.path = path;
@@ -95,16 +95,6 @@ describe('Anggaran and serapan', () => {
     expect(s.res.rupiah).toBeGreaterThanOrEqual(0);
   });
 
-  it('halves Dana Desa without a Pendamping Desa, from 2 stars on', () => {
-    const s = kel(2, 'desa');
-    at(s, 1);
-    expect(s.kel.budget).toBe(12_000_000 * YEAR_SCALE * s.inflation);
-    const t = kel(2, 'desa');
-    hire(t, 'pendampingDesa');
-    put(t, 'balaiDesa', 3, 3);
-    at(t, 1);
-    expect(t.kel.budget).toBe(24_000_000 * YEAR_SCALE * t.inflation);
-  });
 });
 
 describe('Tim Audit', () => {
@@ -168,23 +158,6 @@ describe('Kelurahan combos, jobs and buildings', () => {
     put(s, 'wifi', 4, 4);
     expect(activeCombos(s).map((a) => a.combo.id)).toContain('spotInstagramable');
     expect(buildingUpkeep(s, taman)).toBe(plain * 2);
-  });
-
-  it('Panen Raya pays Rp 8.000.000 each October', () => {
-    const s = kel(2, 'desa');
-    put(s, 'bumdes', 3, 3);
-    put(s, 'sawahIrigasi', 4, 4);
-    s.kel.budget = 1;
-    const before = s.res.rupiah;
-    at(s, 36); // first week of October
-    expect(s.res.rupiah - before).toBe(2_000_000 * YEAR_SCALE * s.inflation);
-  });
-
-  it('Embung cuts banjir damage by 30%', () => {
-    const s = kel(2, 'desa');
-    const none = banjirProtection(s);
-    put(s, 'embung', 3, 3);
-    expect(banjirProtection(s)).toBeCloseTo(none + 0.3);
   });
 
   it('Studi Banding returns one wacana when it opens', () => {

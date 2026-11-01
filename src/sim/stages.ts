@@ -1,5 +1,4 @@
 import { RW_COMBOS } from '../data/higher/rw';
-import { DESA_TITLES } from '../data/higher/stages';
 import { rwOf } from './area';
 import { promote } from './grow';
 import { STAGES } from '../data/stages';
@@ -130,8 +129,7 @@ export function starChecklist(s: GameState, id: StageId, stars: Stars): Checklis
 export const starsEarnable = (s: GameState, id: StageId = s.stage.current): boolean => nextStarChecklist(s, id)?.every((l) => l.done) ?? false;
 
 /** Stage title for a star count, for example "RT Rintisan" at 1 star. */
-export const stageTitle = (id: StageId, stars: number, path?: 'kelurahan' | 'desa'): string =>
-  id === 'kelurahan' && path === 'desa' ? tr(`stage.desa.title${stars}`, DESA_TITLES[stars]) : tr(`stage.${id}.title${stars}`, stageDef(id).titles[stars]);
+export const stageTitle = (id: StageId, stars: number): string => tr(`stage.${id}.title${stars}`, stageDef(id).titles[stars]);
 
 /** Monthly system: earns the next star when its checklist is done. At most one star a month, so each gets its fanfare. */
 export function stageSystem(s: GameState, fx: Fx): void {
@@ -150,7 +148,7 @@ export function stageSystem(s: GameState, fx: Fx): void {
   for (const unlock of star.unlocks) if (!s.unlocked.includes(unlock)) s.unlocked.push(unlock);
   for (const [res, v] of Object.entries(star.reward ?? {})) gain(s, fx, res as 'sabar', v as number);
   const opens = star.unlocks.map((u) => bName(def(u))).join(', ');
-  fx.push({ kind: 'notice', title: t('sim.starTitle', { stars, title: stageTitle(id, stars, s.stage.path) }), body: opens ? t('sim.starBody', { list: opens }) : t('sim.starBodyNone'), tone: 'good', fanfare: true });
+  fx.push({ kind: 'notice', title: t('sim.starTitle', { stars, title: stageTitle(id, stars) }), body: opens ? t('sim.starBody', { list: opens }) : t('sim.starBodyNone'), tone: 'good', fanfare: true });
   first(s, fx, 'star');
   if (stars === 3 && stageDef(id).next) {
     s.stage.sk = 'offered';
@@ -166,7 +164,7 @@ export const canPromote = (s: GameState): boolean => {
 };
 
 /** Accepting the SK raises the stage and grows the map (see promote in grow.ts). */
-export function acceptSK(s: GameState, fx: Fx = [], path?: 'kelurahan' | 'desa'): boolean {
+export function acceptSK(s: GameState, fx: Fx = [], path?: 'kelurahan'): boolean {
   if (!canPromote(s)) return false;
   // The Kelurahan promotion is where the player picks a path. Kelurahan is the default.
   if (currentStage(s).next === 'kelurahan') s.stage.path = path ?? 'kelurahan';

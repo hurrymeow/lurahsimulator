@@ -382,7 +382,7 @@ export class App {
   }
 
   /** The player accepts the SK: the stage rises and the map grows. */
-  accept(path?: 'kelurahan' | 'desa'): void {
+  accept(path?: 'kelurahan'): void {
     const fx: SimEffect[] = [];
     if (!acceptSK(this.s, fx, path)) return;
     this.view.regrid();

@@ -104,11 +104,11 @@ describe('lots', () => {
     };
     const inRt = (x: number, y: number) => x < RT_W - 1 && y < RT_H - 1;
     expect(free('balaiRW', inRt)).not.toBeNull();
-    expect(free('balaiDesa', inRt)).not.toBeNull();
+    expect(free('kantorKel', inRt)).not.toBeNull();
     expect(free('balaiRW', (x, y) => lotAt(x, y) === 'rw')).not.toBeNull();
     // Each keeps to its own seam: an RW building never on the Kelurahan seam, nor the other way round.
     expect(siteGaps(s, def('balaiRW'), 2 * CELL_W - SEAM, 3)).toEqual(['Goes inside your RT or on a seam lot between your RTs.']);
-    expect(siteGaps(s, def('balaiDesa'), RT_W, 3)).toEqual(['Goes inside your RT or on the wide seam between the RWs.']);
+    expect(siteGaps(s, def('kantorKel'), RT_W, 3)).toEqual(['Goes inside your RT or on the wide seam between the RWs.']);
     // RT buildings still stay off the seams.
     expect(siteGaps(s, def('warung'), RT_W, 3)).toHaveLength(1);
   });
