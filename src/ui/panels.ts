@@ -3,19 +3,21 @@ import { checkRealisasi, realisasiCost, startRealisasi } from '../sim/realisasi'
 import { rEffect, rLine, rName } from '../i18n';
 import { jBlurb, jName, t, wLine, wName, wTrade } from '../i18n';
 import { LEVEL_MONTHS, PNS_PAYOUT_PER_LEVEL, jobDef } from '../data/jobs';
-import { WACANA } from '../data/wacana';
+import { RAZIA } from '../data/higher/kecamatan';
+import type { SimEffect } from '../sim/types';
+import { checkRazia, startRazia } from '../sim/kec';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { checkAssign, assign, levelOf, liveJobs } from '../sim/jobs';
 import { checkRepair, repair, repairCost } from '../sim/events';
 import { checkRestart, checkRestartODn, RESTART_ODN, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
-import { announce, checkAnnounce, wacanaCost } from '../sim/wacana';
+import { announce, availableWacana, checkAnnounce, wacanaCost } from '../sim/wacana';
 import { iconURL } from '../render/sprites';
 import type { Building, JobId, Resident } from '../sim/types';
 import { actionButton } from './inspect';
 import { h } from './dom';
 import { openSheet } from './sheet';
-import { openComboBook, openWargaList } from './lists';
+import { openWargaList } from './lists';
 
 // ---------- Warga ----------
 /** focus: the resident just edited. The list opens scrolled to their row instead of the top. */
@@ -80,9 +82,34 @@ function realisasiPart(app: App, wacanaId: string): Node[] {
   ];
 }
 
+/** The razia, offered in the Kecamatan above the policies. */
+function raziaPart(app: App): Node[] {
+  const s = app.s;
+  if (s.stage.current !== 'kecamatan' || !s.kec) return [];
+  const left = s.kec.razia ? s.kec.razia.until - s.month : 0;
+  return [
+    h('div', { class: 'card-btn static' },
+      h('div', { class: 'card-text' },
+        h('div', { class: 'card-title' }, h('strong', {}, t('razia.head'))),
+        h('p', {}, t('razia.line')),
+        left > 0 ? h('p', { class: 'meta good' }, t('razia.until', { n: left })) : null,
+        actionButton(t('razia.button', { n: RAZIA.orangDalam }), checkRazia(s), () => {
+          const fx: SimEffect[] = [];
+          startRazia(s, fx);
+          app.handleFx(fx);
+          app.tap(15);
+          app.save();
+          app.refresh();
+          openWacana(app);
+        }, true),
+      ),
+    ),
+  ];
+}
+
 export function openWacana(app: App): void {
   const s = app.s;
-  const rows = WACANA.map((w) => {
+  const rows = availableWacana(s).map((w) => {
     const state = s.wacana.find((x) => x.id === w.id);
     const check = checkAnnounce(s, w.id);
     return h('div', { class: 'card-btn static' },
@@ -105,12 +132,7 @@ export function openWacana(app: App): void {
       ),
     );
   });
-  openSheet(t('menu.wacana'), [h('p', { class: 'meta' }, t('wac.intro')), ...rows]);
-}
-
-// ---------- Buku Combo ----------
-export function openBukuCombo(app: App): void {
-  openComboBook(app);
+  openSheet(t('menu.wacana'), [h('p', { class: 'meta' }, t('wac.intro')), ...raziaPart(app), ...rows]);
 }
 
 // ---------- Inspector extras ----------

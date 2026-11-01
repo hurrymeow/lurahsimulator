@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { INK, Painter, paint, TOP, TH, TW } from '../src/render/iso';
+import { ROOF_COLOURS, ROOF_SHAPES, WALL_COLOURS } from '../src/render/sprites';
 import { allDefs } from '../src/sim/content';
 
 /** Opaque pixels in one row, left to right, as brightness. */
@@ -128,6 +129,23 @@ describe('rumah roof shapes', () => {
       }
       expect(seen.size).toBe(5);
     }
+  });
+
+  it('at every level, every house stays inside its one tile: nothing stands past the tile\'s front edges', () => {
+    for (const roof of ROOF_COLOURS)
+      for (const shape of ROOF_SHAPES)
+        for (const wall of WALL_COLOURS)
+          for (const level of [1, 2, 3]) {
+            const d = draw(roof + shape + wall, level);
+            const out: string[] = [];
+            for (let y = 0; y < TOP + TH; y++)
+              for (let x = 0; x < TW; x++) {
+                // The tile's two front edges run 2:1 from its side corners down to its bottom corner.
+                const edge = TOP + TH - Math.abs(x + 0.5 - TW / 2) / 2;
+                if (d[(y * TW + x) * 4 + 3] === 255 && y + 0.5 > edge + 0.5) out.push(`${x},${y}`);
+              }
+            expect(out, `${roof}${shape}${wall} level ${level}`).toEqual([]);
+          }
   });
 
   it('a one-letter variant still means a hipped roof in that colour, as old saves and icons use it', () => {

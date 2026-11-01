@@ -12,7 +12,7 @@ const add = (s: ReturnType<typeof newGame>, id: string, x: number, y: number) =>
 describe('stage checklist', () => {
   it('starts at 0 stars and names exactly what is missing', () => {
     const s = newGame(1);
-    expect(s.stage).toEqual({ current: 'rt', stars: { rt: 0, rw: 0, kelurahan: 0 } });
+    expect(s.stage).toEqual({ current: 'rt', stars: { rt: 0, rw: 0, kelurahan: 0, kecamatan: 0 } });
     const lines = nextStarChecklist(s)!;
     expect(lines.map((l) => l.text)).toEqual(['10 residents (have 4)', 'Combos found: 0 of 1']);
     expect(starsEarnable(s)).toBe(false);
@@ -101,7 +101,7 @@ describe('star engine', () => {
     const s = newGame(1);
     s.stage.stars.rt = 2;
     s.discovered.push('a', 'b', 'c');
-    s.residents.push(...Array.from({ length: 40 }, (_, i) => ({ ...s.residents[0], id: 100 + i })));
+    s.residents.push(...Array.from({ length: 55 }, (_, i) => ({ ...s.residents[0], id: 100 + i })));
     s.ranking = [true, true].map((won, i) => ({ year: i + 1, us: 1, them: 1, won }));
     const fx = run(s);
     expect(s.stage.stars.rt).toBe(3);

@@ -10,7 +10,8 @@ import { MapView, RES_VAR, shapeOf } from './render/map';
 import { iconURL } from './render/sprites';
 import { def } from './sim/content';
 import { eventDef } from './data/events';
-import { checkChoice, eventCost, resolveEvent } from './sim/events';
+import { checkChoice, eventCost, resolveEvent, sendCandidates, sendChance } from './sim/events';
+import { STAT_ICON } from './data/staff';
 import { discoverCombos } from './sim/combos';
 import { checkMove, checkPlace, moveBuilding, place } from './sim/rules';
 import { linePath, placeLine, type LineTile } from './sim/line';
@@ -31,6 +32,7 @@ import { lombaDayOpen, openLombaDay } from './ui/lomba';
 import { comboPics } from './ui/lists';
 import { RIVAL_NAMES } from './data/ranking';
 import { areaScore } from './sim/ranking';
+import { openDistrict } from './ui/neighbours';
 import { closeSheet, openSheet, sheetOpen } from './ui/sheet';
 import { autoPauseStarted, showPausedBadge, simRunning, type PauseInputs } from './ui/autopause';
 import { canShowQueued, type PopupQueueState } from './ui/popupQueue';
@@ -308,6 +310,17 @@ export class App {
     // frame loop shows it once the sheet closes, and time is already held.
     if (sheetOpen()) return;
     const choices = e.choices.map((c, i) => {
+      // Sending someone: one button per candidate, best for the stat first, each with the stat and the odds.
+      if (c.send) {
+        const stat = c.send.stat;
+        return h('div', { class: 'action send-choice', 'data-stat': stat },
+          h('p', { class: 'meta send-label' }, eLabel(e, i, c)),
+          ...sendCandidates(this.s, c).map((x) => h('button', { class: 'btn btn-primary send-btn', 'data-staff': String(x.id), onclick: (ev: Event) => { ev.stopPropagation(); this.chooseEvent(i, x.id); } },
+            t('event.send', { name: x.name }), ' · ',
+            h('span', { class: 'send-odds' }, h('img', { src: iconURL(STAT_ICON[stat], 2), alt: t(`staff.stat.${stat}` as Key), width: 18, height: 18, class: 'inline-icon pixel' }), ` ${x.stats[stat]} · ${t('event.sendOdds', { pct: Math.round(sendChance(c, x) * 100) })}`),
+          )),
+        );
+      }
       const check = checkChoice(this.s, c);
       const cost = eventCost(this.s, c);
       const label = eLabel(e, i, c).replace(/ · Rp [\d.]+/, '').replace(/ · \d Orang (Inside|Dalam)/, '');
@@ -333,9 +346,9 @@ export class App {
     el.hidden = false;
   }
 
-  private chooseEvent(i: number): void {
+  private chooseEvent(i: number, staffId?: number): void {
     const fx: SimEffect[] = [];
-    const out = resolveEvent(this.s, fx, i);
+    const out = resolveEvent(this.s, fx, i, staffId);
     if (!out.ok) return;
     document.getElementById('modal')!.hidden = true;
     this.handleFx(fx);
@@ -575,6 +588,7 @@ export class App {
   }
 
   refresh(): void {
+    this.view.setRing(this.s.stage.current === 'kecamatan');
     const r = this.s.res;
     const set = (id: string, v: string, label: string) => {
       const chip = document.getElementById(`chip-${id}`);
@@ -780,7 +794,12 @@ export class App {
       if (wasDrag) return;
       const rect = canvas.getBoundingClientRect();
       const tile = this.view.tileAt(e.clientX - rect.left, e.clientY - rect.top);
-      if (!tile) return;
+      if (!tile) {
+        // Past the Kelurahan, a tap on a district block of the Kecamatan opens its card.
+        const district = this.placing ? null : this.view.districtAt(e.clientX - rect.left, e.clientY - rect.top);
+        if (district) openDistrict(this, district);
+        return;
+      }
       if (this.placing) {
         this.tapPlacing(tile);
         return;

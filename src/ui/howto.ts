@@ -60,7 +60,7 @@ export const STEPS: Step[] = [
     pics: [{ sprite: 'warung' }, { text: '+' }, { sprite: 'posRonda' }],
   },
   // The first combo is found: say where it is kept and what it does.
-  { id: 'comboFound', n: 13, tipOnly: true, when: (s) => s.discovered.length >= 1, pics: [{ word: 'menu.combo' }, { text: '★' }] },
+  { id: 'comboFound', n: 13, tipOnly: true, when: (s) => s.discovered.length >= 1, pics: [{ word: 'menu.build' }, { text: '›' }, { word: 'menu.combo' }, { text: '★' }] },
   { id: 'jobs', n: 5, when: someoneWorks, pics: [{ word: 'how.pic.resident' }, { text: '›' }, { word: 'how.pic.job' }] },
   // Popularitas has fallen (its one-time warning) or sits low: a Wacana is the quick fix.
   { id: 'wacana', n: 6, when: (s) => s.buildings.some((b) => b.def === 'kantorRT' && b.status === 'active') && (!!s.warned?.includes('sabar') || s.res.sabar < 45), pics: [{ sprite: 'kantorRT' }, { icon: 'sabar' }] },

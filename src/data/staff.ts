@@ -10,14 +10,24 @@ import type { StageId } from '../sim/types';
 export type StatId = 'rajin' | 'lobi' | 'jujur' | 'gaul';
 export const STATS: StatId[] = ['rajin', 'lobi', 'jujur', 'gaul'];
 
-export type RoleId = 'asisten' | 'hansip' | 'penagih' | 'pu' | 'adminWa' | 'supir' | 'bendahara' | 'sekretaris';
+/**
+ * Each stat always controls the same kind of thing, so the player can predict it: Rajin how much gets done,
+ * Lobi how smoothly things go through the people above, Jujur how much leaks, Gaul how liked. One icon each.
+ */
+export const STAT_ICON: Record<StatId, string> = { rajin: 'statRajin', lobi: 'statLobi', jujur: 'statJujur', gaul: 'statGaul' };
+
+export type RoleId = 'asisten' | 'hansip' | 'penagih' | 'pu' | 'adminWa' | 'supir' | 'bendahara' | 'sekretaris' | 'satpol';
 
 export interface RoleDef {
   id: RoleId;
   name: string;
   blurb: string;
-  /** The stat that drives it. */
+  /** The stat that drives its output. */
   stat: StatId;
+  /** The stat that keeps it out of trouble: below RISK.safeFrom, a mishap can strike any week. */
+  risk: StatId;
+  /** What a mishap costs: Popularitas, or rupiah before inflation. */
+  mishap: { res: 'sabar' | 'rupiah'; amount: number };
   /** Opens at this stage and star count. */
   opens: { stage: StageId; stars: number };
   /** Only Inem holds it, and it is never posted. */
@@ -25,14 +35,15 @@ export interface RoleDef {
 }
 
 export const ROLES: RoleDef[] = [
-  { id: 'asisten', name: 'Asisten', blurb: 'Works a desk at the Kantor and clears the permit queue, folder by folder.', stat: 'lobi', opens: { stage: 'rt', stars: 1 } },
-  { id: 'hansip', name: 'Hansip', blurb: 'Keeps the gang safe: Aman rises, and a preman on the beat finds work as a guard.', stat: 'rajin', opens: { stage: 'rt', stars: 1 } },
-  { id: 'penagih', name: 'Tukang Tagih Iuran', blurb: 'Finds the warga who are "never home". More iuran comes in; a low Jujur keeps some.', stat: 'rajin', opens: { stage: 'rt', stars: 1 } },
-  { id: 'pu', name: 'Petugas PU', blurb: 'Fixes damaged buildings on his own, one a week per level.', stat: 'rajin', opens: { stage: 'rt', stars: 3 } },
-  { id: 'adminWa', name: 'Admin Grup WA', blurb: 'Runs the warga group chat: Virality every week, and bad news lands softer.', stat: 'gaul', opens: { stage: 'rt', stars: 3 } },
-  { id: 'supir', name: 'Supir', blurb: 'Drives the official car. Building crews arrive sooner.', stat: 'rajin', opens: { stage: 'rw', stars: 0 } },
-  { id: 'bendahara', name: 'Bendahara', blurb: 'Keeps the kas. Upkeep leaks less, unless Jujur is low.', stat: 'jujur', opens: { stage: 'kelurahan', stars: 0 } },
-  { id: 'sekretaris', name: 'Sekretaris', blurb: 'Knows who to call. Orang Inside every week.', stat: 'lobi', opens: { stage: 'kelurahan', stars: 0 } },
+  { id: 'asisten', name: 'Asisten', blurb: 'Works a desk at the Kantor and clears the permit queue, folder by folder.', stat: 'lobi', risk: 'jujur', mishap: { res: 'sabar', amount: 2 }, opens: { stage: 'rt', stars: 1 } },
+  { id: 'hansip', name: 'Hansip', blurb: 'Keeps the gang safe: Aman rises, and a preman on the beat finds work as a guard.', stat: 'rajin', risk: 'gaul', mishap: { res: 'sabar', amount: 2 }, opens: { stage: 'rt', stars: 1 } },
+  { id: 'penagih', name: 'Tukang Tagih Iuran', blurb: 'Finds the warga who are "never home". More iuran comes in.', stat: 'rajin', risk: 'jujur', mishap: { res: 'rupiah', amount: 150_000 }, opens: { stage: 'rt', stars: 1 } },
+  { id: 'pu', name: 'Petugas PU', blurb: 'Fixes damaged buildings on his own, one a week per level.', stat: 'rajin', risk: 'jujur', mishap: { res: 'rupiah', amount: 250_000 }, opens: { stage: 'rt', stars: 3 } },
+  { id: 'adminWa', name: 'Admin Grup WA', blurb: 'Runs the warga group chat: Virality every week, and bad news lands softer.', stat: 'gaul', risk: 'jujur', mishap: { res: 'sabar', amount: 3 }, opens: { stage: 'rt', stars: 3 } },
+  { id: 'supir', name: 'Supir', blurb: 'Drives the official car. Building crews arrive sooner.', stat: 'rajin', risk: 'gaul', mishap: { res: 'sabar', amount: 1 }, opens: { stage: 'rw', stars: 0 } },
+  { id: 'bendahara', name: 'Bendahara', blurb: 'Keeps the kas. Upkeep leaks less.', stat: 'jujur', risk: 'rajin', mishap: { res: 'rupiah', amount: 300_000 }, opens: { stage: 'kelurahan', stars: 0 } },
+  { id: 'sekretaris', name: 'Sekretaris', blurb: 'Knows who to call. Orang Inside every week.', stat: 'lobi', risk: 'jujur', mishap: { res: 'sabar', amount: 3 }, opens: { stage: 'kelurahan', stars: 0 } },
+  { id: 'satpol', name: 'Satpol PP', blurb: 'Mans the razia. Rajin makes it work; a low Gaul risks a scuffle.', stat: 'rajin', risk: 'gaul', mishap: { res: 'sabar', amount: 3 }, opens: { stage: 'kecamatan', stars: 0 } },
 ];
 
 export const roleDef = (id: RoleId): RoleDef => ROLES.find((r) => r.id === id)!;
@@ -45,6 +56,7 @@ export const SLOTS: { stage: StageId; stars: number; slots: number }[] = [
   { stage: 'rt', stars: 3, slots: 4 },
   { stage: 'rw', stars: 0, slots: 6 },
   { stage: 'kelurahan', stars: 0, slots: 8 },
+  { stage: 'kecamatan', stars: 0, slots: 9 },
 ];
 
 /** Stars set only the starting stat total and the salary. The kampung act never sees 5 or 6 stars. */
@@ -145,6 +157,13 @@ export const SPECIALS: SpecialDef[] = [
   { id: 'buSinetron', name: 'Bu Sinetron', type: 'Soap-opera mother', role: 'adminWa', stats: { rajin: 55, lobi: 50, jujur: 55, gaul: 50 }, quirk: 'Every bad event zooms in three times.' },
   { id: 'masKonten', name: 'Mas Konten', type: 'Prank content creator', role: 'adminWa', stats: { rajin: 45, lobi: 35, jujur: 35, gaul: 95 }, quirk: 'Virality x1.5, the odd prank costs Popularitas.', output: 1.5 },
   { id: 'pakPurna', name: 'Pak Purna', type: 'Retired senior PNS', role: 'hansip', stats: { rajin: 60, lobi: 90, jujur: 60, gaul: 30 }, quirk: 'Lobi 90. Sleeps through rapat.' },
+  // 90s TV and radio types. Types only: never one real person, and never anyone else's character.
+  { id: 'bangLawak', name: 'Bang Lawak', type: 'Comic from a campus-radio trio', role: 'adminWa', stats: { rajin: 40, lobi: 45, jujur: 50, gaul: 85 }, quirk: 'Every bad event gets a punchline: Virality x1.5.', output: 1.5 },
+  { id: 'omLaluLintas', name: 'Om Lalu Lintas', type: 'Radio traffic reporter', role: 'supir', stats: { rajin: 75, lobi: 45, jujur: 50, gaul: 45 }, quirk: 'Knows every macet before it happens: crews arrive 1.5x sooner.', output: 1.5 },
+  { id: 'buJuruKetik', name: 'Bu Juru Ketik', type: 'Typewriter typist from the old kantor', role: 'asisten', stats: { rajin: 60, lobi: 70, jujur: 65, gaul: 25 }, quirk: 'Ten fingers, carbon paper, no mistakes: folders x1.5.', output: 1.5 },
+  { id: 'pakKuis', name: 'Pak Kuis', type: 'TV quiz-show host', role: 'sekretaris', stats: { rajin: 40, lobi: 85, jujur: 40, gaul: 55 }, quirk: 'Every caller wins something: Orang Inside x1.5.', output: 1.5 },
+  { id: 'mbakSenam', name: 'Mbak Senam Pagi', type: 'Morning-aerobics instructor', role: 'hansip', stats: { rajin: 80, lobi: 30, jujur: 50, gaul: 70 }, quirk: 'Senam at six in the lapangan: Aman x1.5.', output: 1.5 },
+  { id: 'bangRentalPS', name: 'Bang Rental PS', type: 'Games-rental repairman', role: 'pu', stats: { rajin: 80, lobi: 35, jujur: 45, gaul: 55 }, quirk: 'Fixes anything with one screwdriver: repairs x1.5.', output: 1.5 },
 ];
 
 /** Months worked to reach levels 2 to 5, as warga jobs. */
@@ -153,6 +172,15 @@ export const RAISE = 0.15;
 /** Chance a month that Kampung Sebelah poaches someone whose raise was refused. */
 export const POACH_CHANCE = 0.1;
 export const BIMTEK = { cost: 2_000_000, gain: 5, away: 1 };
+/** Bimtek picks the stat. The anti-corruption course costs the most, which is the joke. */
+export const COURSE_COST: Record<StatId, number> = { rajin: 1, lobi: 1, jujur: 1.5, gaul: 1 };
+/** Every level-up raises the role's main stat: people get better at what they do. */
+export const LEVEL_STAT_GAIN = 2;
+/**
+ * Mishaps: below safeFrom in the role's risk stat, a mishap can strike each week, at base x (safeFrom - stat) / safeFrom.
+ * Jujur 30 is about 4% a week, one every half year; Jujur 60 or more never.
+ */
+export const RISK = { base: 0.08, safeFrom: 60 };
 export const PESANGON_MONTHS = 2;
 /** Mutasi to Ketua RT: needs this many stars and this level. */
 export const MUTASI = { stars: 3, level: 3 };
@@ -160,18 +188,20 @@ export const MUTASI = { stars: 3, level: 3 };
 /** What each role does per level, before the stat and trait multipliers. */
 export const ROLE_FX = {
   /**
-   * The desk queue: every permit is a pile of folders (its permitMonths), cleared in order. Each Asisten clears
-   * output x berkasPerOutput folders a month (Inem at level 1: about 1). The Kantor never stops: at least floor a month.
-   * The goal strip says to hire once the queue is hireAfter months deep.
+   * The desk queue: every permit is a pile of folders (its permitMonths, which count weekly ticks), cleared in order.
+   * Each Asisten clears output x berkasPerOutput folders a week (Inem at level 1: about 1). The Kantor never stops:
+   * at least floor a week. The goal strip says to hire once the queue is hireAfter weeks deep (a month is 4 weeks).
    */
-  asisten: { berkasPerOutput: 0.85, floor: 0.5, hireAfter: 3 },
+  asisten: { berkasPerOutput: 0.85, floor: 0.5, hireAfter: 12 },
   hansip: { amanPerLevel: 2 },
-  penagih: { iuranPerLevel: 0.1, iuranMax: 0.5, skimBelowJujur: 40, skim: 0.1 },
+  penagih: { iuranPerLevel: 0.1, iuranMax: 0.5 },
   pu: { repairsPerLevel: 1 },
   adminWa: { viralPerLevel: 0.5, softenBad: 0.2 },
   supir: { buildBoostPerLevel: 0.1 },
   bendahara: { upkeepCutPerLevel: 0.03, upkeepCutMax: 0.15 },
   sekretaris: { orangDalamPerLevel: 0.05 },
+  /** Extra Aman a razia gives, per level of output. The razia itself lands in the responses task. */
+  satpol: { raziaAmanPerLevel: 1 },
 };
 
 /** Inem: staff number 1, the Asisten. Fixed stats, a modest salary, and a dream. */

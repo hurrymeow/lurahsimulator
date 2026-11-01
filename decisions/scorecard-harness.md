@@ -5,3 +5,8 @@
 - **Proxies.** Item 1 uses "cheapest next building costs more than cash" in place of a goal ETA. Item 6 checks that a cause is logged, not that it is shown. Item 11 ends its depth check at the last new unlock, combo or stage.
 - **Runs end** when a bot has all nine stars or after 450 ticks (60 min at 1x).
 - **Nightly, not per PR.** About 10 min of CPU on four cores. Heavy checks stay out of PR CI (CLAUDE.md).
+
+## Nightly split (2026-10-31)
+
+- The first manual nightly run hit the 20 min cap in all three bot groups. A bot that stalls late plays 450 ticks on the big Kelurahan map and takes several minutes a seed.
+- The workflow now runs one bot on two seeds per job (9 bots x 5 seed pairs, 30 min cap each) plus one takeover job. Chunks write `<bot>-<first seed>.json`; the report job merges them. `npm run scorecard` still plays everything in one go and is only practical on a fast machine (over 2 hours in a 4 core sandbox).

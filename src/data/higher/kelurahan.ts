@@ -352,6 +352,15 @@ export const KEL_EVENTS: StageEventDef[] = [
         fx: { cleanAudit: 1 },
         result: 'Every receipt found. The audit is clean, and so is the shredder.',
       },
+      {
+        label: 'Send someone to talk it through',
+        send: { stat: 'lobi', base: 0.45, perPoint: 0.012 },
+        outcomes: [
+          { weight: 1, cleanAudit: 1, result: '"An administrative oversight," they agree. The audit is clean.' },
+          { weight: 1, perWacana: 4, result: 'The talk goes badly. Every missing receipt now costs double.' },
+        ],
+        result: '',
+      },
     ],
   },
   {

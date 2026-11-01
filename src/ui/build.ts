@@ -11,6 +11,9 @@ import type { BuildCategory, GameState } from '../sim/types';
 import { h, missingList } from './dom';
 import { storage } from '../storage';
 import { openSheet } from './sheet';
+import { comboBook } from './lists';
+import { bookCombos } from '../sim/combos';
+import { menuIconURL } from './icons';
 
 function spriteImg(name: string, size = 40, level = 1): HTMLImageElement {
   return h('img', { src: isoURL(name, 3, level), alt: '', width: size, height: size, class: 'pixel' });
@@ -41,9 +44,27 @@ function loadSeen(): Set<string> | null {
   }
 }
 
+const COMBO_SEEN_KEY = 'pakrt.comboSeen';
+
+function comboSeen(): Set<string> {
+  try {
+    const v = JSON.parse(storage.get(COMBO_SEEN_KEY) ?? 'null');
+    return new Set(Array.isArray(v) ? v : []);
+  } catch {
+    return new Set();
+  }
+}
+
+/** True when a combo was found since the player last viewed the Combo book. */
+export function hasUnseenCombo(s: GameState): boolean {
+  const seen = comboSeen();
+  return s.discovered.some((id) => !seen.has(id));
+}
+
 /** New game: the next Build screen counts everything on it as already seen. */
 export function resetBuildSeen(): void {
   storage.remove(SEEN_KEY);
+  storage.remove(COMBO_SEEN_KEY);
 }
 
 /** Buildings the player can place now that they have not seen on the Build screen yet. */
@@ -86,14 +107,15 @@ export function openBuild(app: App): void {
   const tabs = CATEGORIES.filter((c) => visible.some((d) => categoryOf(d) === c));
   let tab = lastTab && tabs.includes(lastTab) ? lastTab : tabs[0];
   const list = h('div', { class: 'build-list' });
-  const bar = h('div', { class: 'tabs', role: 'group', 'aria-label': t('build.cat.tabs') });
+  const bar = h('div', { class: 'tabs build-tabs', role: 'group', 'aria-label': t('build.cat.tabs') });
+  const press = (key: string) => bar.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tab === key)));
   const show = (c: BuildCategory) => {
     tab = c;
     lastTab = c;
     // Jalan Setapak leads the Decor tab it lives on, since nothing works without a path.
     const rows = visible.filter((d) => categoryOf(d) === c).sort((a, b) => Number(b.id === 'jalan') - Number(a.id === 'jalan'));
     list.replaceChildren(...rows.map(card));
-    bar.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tab === c)));
+    press(c);
   };
   for (const c of tabs) bar.append(h('button', { class: 'btn tab', 'data-tab': c, 'aria-pressed': 'false', onclick: () => show(c) }, t(`build.cat.${c}` as Key), visible.some((d) => categoryOf(d) === c && fresh.has(d.id)) ? newTag(true) : null));
   if (tab) show(tab);
@@ -103,10 +125,36 @@ export function openBuild(app: App): void {
     h('p', { class: 'meta' }, t('pop.line', { pop: population(s), housing: housing(s), attract: attractTarget(s) })),
   ];
   if (goal) head.push(h('p', { class: 'meta' }, t('stage.next', { goal: goal.text })));
-  openSheet(t('build.title'), [...head, bar, list], () => {
+  const onClosed = () => {
     storage.set(SEEN_KEY, JSON.stringify(visible.map((d) => d.id)));
     app.refresh();
-  });
+  };
+  const sheetEl = document.getElementById('sheet') as HTMLElement;
+  // The Combo book is not a building tab: it opens from the header and swaps the sheet body.
+  // It is never remembered, so the next Build still opens on buildings.
+  let buildTop = 0;
+  const showBuild = () => {
+    openSheet(t('build.title'), [...head, bar, list], onClosed, comboButton());
+    sheetEl.scrollTop = buildTop;
+  };
+  const showCombos = () => {
+    buildTop = sheetEl.scrollTop;
+    try {
+      storage.set(COMBO_SEEN_KEY, JSON.stringify(s.discovered));
+    } catch { /* storage may be unavailable */ }
+    const back = h('button', { class: 'btn head-action', id: 'combo-back', onclick: showBuild }, '‹ ', t('build.title'));
+    openSheet(t('menu.combo'), comboBook(app), onClosed, back);
+  };
+  function comboButton(): HTMLElement {
+    const total = bookCombos(s).length;
+    const found = bookCombos(s).filter((c) => s.discovered.includes(c.id)).length;
+    const url = menuIconURL('combo');
+    return h('button', { class: 'btn head-action', id: 'combo-open', 'aria-label': t('combo.open'), onclick: showCombos },
+      url ? h('img', { src: url, alt: '', width: 20, height: 20, class: 'pixel' }) : null,
+      h('span', {}, `${found}/${total}`),
+      hasUnseenCombo(s) ? newTag(true) : null);
+  }
+  showBuild();
 }
 
 export { spriteImg };

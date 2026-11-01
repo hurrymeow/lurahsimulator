@@ -1,15 +1,17 @@
 // The Staff panel: one card per person with one main action, as in Kairosoft's staff screens. Tapping a card
 // opens that person's detail view, where the rare actions sit (stats, refuse a raise, mutasi, let go). Posting a
 // lowongan is one button per role; the channel is picked in the next view. Inem's dream sits at the bottom.
-import { chBlurb, chName, gName, gNeeds, gReward, roleBlurb, roleName, spType, t, traitEffect, traitName, type Key } from '../i18n';
+import { chBlurb, chName, getLang, gName, gNeeds, gReward, roleBlurb, roleName, spType, t, traitEffect, traitName, type Key } from '../i18n';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { inemURL } from '../render/inem';
-import { CHANNELS, GIGS, RAISE, SPECIALS, STATS, STAT_MAX, roleDef, traitDef, type RoleId } from '../data/staff';
+import { portraitURL } from '../render/portraits';
+import { BIMTEK, CHANNELS, GIGS, RAISE, SPECIALS, STATS, STAT_ICON, STAT_MAX, roleDef, traitDef, type RoleId, type StatId } from '../data/staff';
 import {
-  answerRaise, bimtek, bimtekCost, cancelLowongan, checkBimtek, checkFire, checkHire, checkMutasi, checkPost, ensureStaff, fire, hire,
-  lowonganCost, mutasi, openRoles, pesangon, postLowongan, staffSlots,
+  answerRaise, bimtek, bimtekCost, cancelLowongan, checkBimtek, checkFire, checkHire, checkMutasi, checkPost, ensureStaff, fire, grupWaShift, hire,
+  lowonganCost, mishapChance, mutasi, openRoles, pesangon, postLowongan, roleGain, staffSlots, type InRole,
 } from '../sim/staff';
+import { iconURL } from '../render/sprites';
 import { price } from '../sim/state';
 import type { Applicant, Staff } from '../sim/types';
 import { actionButton } from './inspect';
@@ -21,14 +23,52 @@ type View = { kind: 'list' } | { kind: 'person'; id: number } | { kind: 'post'; 
 
 const stars = (n: number) => t('staff.stars', { stars: n });
 
-function statBars(stats: Applicant['stats']): HTMLElement {
+/** A number as the player reads it: one decimal at most, with a comma in Bahasa Indonesia. */
+const num = (n: number) => {
+  const r = String(Math.round(n * 10) / 10);
+  return getLang() === 'id' ? r.replace('.', ',') : r;
+};
+const statName = (st: StatId) => t(`staff.stat.${st}` as Key);
+const statIcon = (st: StatId) => h('img', { src: iconURL(STAT_ICON[st], 2), alt: '', width: 20, height: 20, class: 'pixel staff-stat-icon' });
+
+/** What this person's work stat buys in their role, in the role's own unit. */
+const workFx = (x: InRole) => t(`staff.fx.${x.role}` as Key, { n: num(roleGain(x)) });
+/** What their risk stat risks: the weekly chance and what goes wrong, or no risk at all. */
+const riskFx = (x: InRole) => {
+  const p = mishapChance(x);
+  return p > 0 ? t('staff.risk', { n: num(p * 100), what: t(`staff.mishapWhat.${x.role}` as Key) }) : t('staff.riskNone');
+};
+
+/**
+ * The four stats, each with its icon and what it always controls. In a role, the work stat and the risk stat say
+ * what they buy in numbers; the other two are greyed, since this job does not use them.
+ */
+function statBars(stats: Applicant['stats'], x?: InRole): HTMLElement {
+  const role = x && roleDef(x.role);
   return h('div', { class: 'staff-stats' },
-    ...STATS.map((st) => h('div', { class: 'staff-stat' },
-      h('span', { class: 'staff-stat-name' }, t(`staff.stat.${st}` as Key)),
-      h('div', { class: 'meter', 'aria-hidden': 'true' }, h('div', { style: `width:${(stats[st] / STAT_MAX) * 100}%` })),
-      h('span', { class: 'staff-stat-value' }, String(stats[st])),
-    )),
+    ...STATS.map((st) => {
+      const kind = !role ? '' : st === role.stat ? 'main' : st === role.risk ? 'risk' : 'other';
+      const note = kind === 'main' ? `${t('staff.statMain')}: ${workFx(x!)}` : kind === 'risk' ? `${t('staff.statRisk')}: ${riskFx(x!)}` : kind === 'other' ? t('staff.statOther') : t(`staff.statVerb.${st}` as Key);
+      return h('div', { class: `staff-stat${kind ? ` staff-stat-${kind}` : ''}`, 'data-stat': st },
+        statIcon(st),
+        h('span', { class: 'staff-stat-name' }, statName(st)),
+        h('div', { class: 'meter', 'aria-hidden': 'true' }, h('div', { style: `width:${(stats[st] / STAT_MAX) * 100}%` })),
+        h('span', { class: 'staff-stat-value' }, String(stats[st])),
+        h('span', { class: 'staff-stat-note meta' }, note),
+      );
+    }),
   );
+}
+
+/** The trait as chips: which stats it bends, and by how much. */
+function traitChips(a: Applicant): Node | null {
+  if (!a.trait) return null;
+  const tr = traitDef(a.trait);
+  const chips: Node[] = Object.entries(tr.stats ?? {}).map(([st, v]) =>
+    h('span', { class: 'trait-chip' }, statIcon(st as StatId), ` ${statName(st as StatId)} ${v! > 0 ? '+' : '−'}${Math.abs(v!)}`));
+  if (tr.output && tr.output !== 1) chips.push(h('span', { class: 'trait-chip' }, t('staff.traitOutput', { n: num(tr.output) })));
+  if (tr.xp) chips.push(h('span', { class: 'trait-chip' }, t('staff.traitXp', { n: num(tr.xp) })));
+  return chips.length ? h('p', { class: 'trait-chips' }, ...chips) : null;
 }
 
 /** Who they are: a special's type, their trait. */
@@ -37,11 +77,16 @@ function aboutLines(a: Applicant): Node[] {
   const sp = a.special ? SPECIALS.find((p) => p.id === a.special) : undefined;
   if (sp) out.push(h('p', { class: 'meta' }, spType(sp)));
   if (a.trait) out.push(h('p', { class: 'meta' }, h('strong', {}, traitName(traitDef(a.trait))), ` · ${traitEffect(traitDef(a.trait))}`));
+  const chips = traitChips(a);
+  if (chips) out.push(chips);
   return out;
 }
 
-const face = (x: Staff) =>
-  x.inem ? h('img', { src: inemURL(), alt: '', width: 44, height: 60, class: 'pixel staff-face' }) : h('span', { class: 'staff-badge', 'aria-hidden': 'true' }, stars(x.stars));
+/** Inem's face, a special's portrait, or a star badge for everyone else. */
+const face = (x: Applicant & { inem?: boolean }) => {
+  const url = x.inem ? inemURL() : portraitURL(x.special);
+  return url ? h('img', { src: url, alt: '', width: 44, height: 60, class: 'pixel staff-face' }) : h('span', { class: 'staff-badge', 'aria-hidden': 'true' }, stars(x.stars));
+};
 
 /** Lines that need the player's eye, shown on the card and in the detail view. */
 function flags(x: Staff): Node[] {
@@ -66,6 +111,7 @@ function staffCard(app: App, x: Staff, done: () => void): HTMLElement {
       h('button', { class: 'staff-open', type: 'button', 'aria-label': t('staff.details', { name: x.name }), onclick: () => openStaff(app, { kind: 'person', id: x.id }) },
         h('span', { class: 'card-title' }, h('strong', {}, x.name), h('span', { class: 'meta' }, t('staff.level', { n: x.level }))),
         h('span', { class: 'meta' }, t('staff.roleLine', { role: roleName(roleDef(x.role)), stars: x.stars })),
+        h('span', { class: 'meta staff-work' }, statIcon(roleDef(x.role).stat), ` ${statName(roleDef(x.role).stat)} ${x.stats[roleDef(x.role).stat]} → ${workFx(x)}`),
         h('span', { class: 'meta' }, t('staff.salary', { amt: rupiah(price(s, x.salary)) })),
       ),
       ...flags(x),
@@ -84,7 +130,7 @@ function personView(app: App, x: Staff, done: () => void): Node[] {
     h('p', { class: 'meta' }, t('staff.roleLine', { role: roleName(role), stars: x.stars })),
     h('p', {}, roleBlurb(role)),
     ...aboutLines(x),
-    statBars(x.stats),
+    statBars(x.stats, x),
     h('p', { class: 'meta' }, t('staff.salary', { amt: rupiah(price(s, x.salary)) })),
     ...flags(x),
   ];
@@ -96,7 +142,13 @@ function personView(app: App, x: Staff, done: () => void): Node[] {
     ));
   }
   if (!x.inem) {
-    if (!x.raiseAsked) parts.push(actionButton(t('staff.bimtek', { cost: rupiah(bimtekCost(s)) }), checkBimtek(s, x), () => { bimtek(s, x); app.tap(15); done(); }, true));
+    if (!x.raiseAsked) {
+      parts.push(h('p', { class: 'meta' }, t('staff.courses')));
+      const own = roleDef(x.role).stat;
+      for (const st of [own, ...STATS.filter((q) => q !== own)])
+        parts.push(h('div', { class: 'staff-course', 'data-course': st },
+          actionButton([statIcon(st), ` ${t('staff.course', { course: t(`staff.course.${st}` as Key), stat: statName(st), n: BIMTEK.gain, cost: rupiah(bimtekCost(s, st)) })}`], checkBimtek(s, x, st), () => { bimtek(s, x, st); app.tap(15); done(); }, st === own)));
+    }
     const mut = checkMutasi(s, x);
     if (mut.ok) {
       s.neighbours.forEach((_n, i) => parts.push(actionButton(t('staff.mutasi', { name: `RT ${i + 2}` }), mut, () => {
@@ -123,6 +175,7 @@ function postView(app: App, role: RoleId): Node[] {
       return h('div', { class: 'staff-channel', 'data-channel': c.id },
         actionButton(t('staff.postVia', { channel: chName(c), cost: cost ? rupiah(cost) : t('staff.free') }), checkPost(s, role, c.id), () => { postLowongan(s, role, c.id); app.tap(15); app.save(); app.refresh(); openStaff(app); }),
         h('p', { class: 'meta' }, chBlurb(c)),
+        c.local && grupWaShift(s) ? h('p', { class: 'meta staff-gaul' }, statIcon('gaul'), ` ${t('staff.channelGaul', { stat: statName('gaul'), n: grupWaShift(s)!.x.stats.gaul, sign: grupWaShift(s)!.pts >= 0 ? '+' : '−', pct: Math.abs(grupWaShift(s)!.pts) })}`) : null,
       );
     }),
   ];
@@ -148,11 +201,12 @@ function lowongan(app: App, done: () => void): HTMLElement {
     const head = h('p', { class: 'meta' }, t('staff.waiting', { role: roleName(roleDef(lw.role)), channel: chName(ch), n: Math.max(0, lw.arriveAt - s.month) }));
     const req = h('p', { class: 'meta staff-req' }, t('staff.reqHead', { line: t(`staff.req.${lw.req}` as Key) }));
     const apps = lw.applicants.map((a) => h('div', { class: 'card-btn static staff-applicant', 'data-applicant': String(a.id) },
-      h('span', { class: 'staff-badge', 'aria-hidden': 'true' }, stars(a.stars)),
+      face(a),
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, a.name), h('span', { class: 'meta' }, stars(a.stars))),
         ...aboutLines(a),
-        statBars(a.stats),
+        statBars(a.stats, { ...a, role: lw.role }),
+        h('p', { class: 'meta staff-if' }, t('staff.ifHired', { role: roleName(roleDef(lw.role)), fx: workFx({ ...a, role: lw.role }), risk: riskFx({ ...a, role: lw.role }) })),
         actionButton(t('staff.hire', { amt: rupiah(price(s, a.salary)) }), checkHire(s, a.id), () => { hire(s, a.id); app.tap(15); done(); }, true),
       ),
     ));

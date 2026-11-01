@@ -1,6 +1,6 @@
 # UI rules
 
-Thirteen measurable UI and UX rules for Pak Pejabat. A PR that touches a screen, text or layout is checked against them. Approved by Hari, 2026-10-27. The [Review checklist](#review-checklist) below adds bars for six rules and 23 more items (2026-10-31).
+Seventeen measurable UI and UX rules for Pak Pejabat. A PR that touches a screen, text or layout is checked against them. Approved by Hari, 2026-10-27. The [Review checklist](#review-checklist) below adds bars for six rules and 23 more items (2026-10-31). Rules 14 to 17 and the changes to 5, 10 and 13 were approved by Hari on 2026-11-01 (decisions/ui-rules-2026-11-01.md).
 
 Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) section 6. Pacing targets live in section 3. This file holds only the numbers and limits.
 
@@ -8,14 +8,14 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 
 ### Touch and layout
 
-1. **Tap targets are 48px or more, with 8px gaps.** Material says 48dp and 8dp ([Google](https://support.google.com/accessibility/android/answer/7101858)). Apple says 44pt ([Deque](https://dequeuniversity.com/rules/attest-ios/1.0/touch-target-size)). WCAG 2.2 AA says 24px ([W3C](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)). We use 48 because thumbs miss on 320px phones. **Exception:** the two slim top rows and the goal pill on the map may use 28px controls, so more of the map shows. They hold glance-and-tap readouts (play, speed, the resources, the 2045 meter, the goal), not frequent actions; the frequent actions sit in the 48px+ dock at the bottom.
-2. **The main screen is two slim top rows (time: play, speed, date, 2045; money: the resources), the map with a goal pill and a small satellite view, and a bottom dock of three equal buttons: Build, Warga, Menu. Nothing else** (GAME-DESIGN.md section 6). Notices float over the map as a 3s toast and stay in the Log. Build and Warga live only in the dock; everything else opens from Menu, and no panel appears in two places. On phones 640px tall or less the satellite view drops out. The satellite view's fold button (48px tap area) and the PAUSED pill are part of the map, not extra screen furniture.
+1. **Tap targets are 48px or more, with 8px gaps.** Material says 48dp and 8dp ([Google](https://support.google.com/accessibility/android/answer/7101858)). Apple says 44pt ([Deque](https://dequeuniversity.com/rules/attest-ios/1.0/touch-target-size)). WCAG 2.2 AA says 24px ([W3C](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)). We use 48 because thumbs miss on 320px phones. Buttons side by side in one row are the same width (equal grid columns; a long label wraps inside its button), and a row that wraps keeps that width on every line. **Exception:** the two slim top rows and the goal pill on the map may use 28px controls, so more of the map shows. They hold glance-and-tap readouts (play, speed, the resources, the 2045 meter, the goal), not frequent actions; the frequent actions sit in the 48px+ dock at the bottom.
+2. **The main screen is two slim top rows (time: play, speed, date, 2045; money: the resources), the map with a goal pill and a small satellite view, and a bottom dock of three equal buttons: Build, Warga, Menu. Nothing else** (GAME-DESIGN.md section 6). Notices float over the map as a 3s toast and stay in the Log. Build and Warga live only in the dock; the Combo book opens from a button in the Build sheet header; everything else opens from Menu, and no panel appears in two places. On phones 640px tall or less the satellite view drops out. The satellite view's fold button (48px tap area) and the PAUSED pill are part of the map, not extra screen furniture.
 3. **The primary action sits in the bottom third.** Reason: thumb reach in portrait.
 
 ### Legibility
 
 4. **Body text is 16px or more, contrast 4.5:1 or more.** Disabled buttons stay readable, never faded. Reason: glare and small screens.
-5. **Nothing clips, ellipsizes or leaves the screen** at 320, 360, 412 and 430px, in English and Indonesian. Indonesian runs longer, so 320px in Indonesian is the stress case. **Exception:** a line may be clamped (marked `data-clamp`) when it sits inside a button that opens the whole text in one tap. Two places use it: the goal pill (one line) and the effect on a Combo card (two lines). The e2e scan skips ellipsis and clipping only there.
+5. **Nothing clips, ellipsizes or leaves the screen** at 320, 360, 412 and 430px, in English and Indonesian. Indonesian runs longer, so 320px in Indonesian is the stress case. There are no exceptions: text that does not fit is rewritten shorter, never cut with "…". Known fails on 2026-11-01: the goal pill and the Combo card effect still clamp (`data-clamp`); the scan skips them until they are fixed.
 6. **One icon, one meaning, a familiar shape,** always with a label or a number. Colour never carries meaning alone.
 
 ### Text
@@ -26,13 +26,20 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 
 ### Tutorial and feedback
 
-10. **The tutorial never covers the control it points at.** Text advances on tap, never on a timer. Only the multi-step first-build tutorial has Skip. One-card tips say "Tap to continue" and nothing else.
+10. **The tutorial never covers the control it points at, and has no Skip.** Text advances on tap, never on a timer. While a step names a control, only that control takes taps; the coach note, event pop-ups and Cancel are the only other things that respond. One-card tips say "Tap to continue" and nothing else.
 11. **Feedback follows a ladder.** Routine income gets a small number pop. A combo or unlock gets fanfare. The game works with effects, motion and sound off.
 12. **Every tap shows feedback within 100ms.** The first house is built within 30s of New Game (target 1 in GAME-DESIGN.md section 3).
 
 ### Density
 
-13. **Each screen shows little text at a time, and detail waits behind a tap.** At most **50** words in view on any sheet, card or tip, and at most **20** words in one paragraph, row or button. A whole sheet holds at most **300** words when scrolled; more becomes tabs or detail screens. At most **2** levels below the map (a panel, then a detail), and **1** primary button per screen. Counted in the first viewport at 360px in both languages; numbers, icons and the player's own names are not words. List length is not capped. Why: adults read about 238 words a minute ([Brysbaert 2019](https://www.Gwern.net/doc/psychology/linguistics/2019-brysbaert.pdf)), people read about 20% of the words on a page ([NN/g](https://www.nngroup.com/articles/how-little-do-users-read/)), and "designs that go beyond 2 disclosure levels typically have low usability" ([NN/g](https://www.nngroup.com/articles/progressive-disclosure/)). Long lists are fine when items are recognisable ([NN/g](https://www.nngroup.com/articles/short-term-memory-and-web-usability/)). The 50 and 300 are judgement calls from reading speed. Known fails on 2026-10-31: Neighbours, the How-to card, Wacana, Stats and the Build tabs.
+13. **Each screen shows little text at a time, and detail waits behind a tap.** At most **50** words in view on any sheet, card or tip, and at most **20** words in one paragraph, row or button. A whole sheet holds at most **300** words when scrolled; more becomes tabs or detail screens. At most **2** levels below the map (a panel, then a detail). The one-primary limit is rule 14. Counted in the first viewport at 360px in both languages; numbers, icons and the player's own names are not words. List length is not capped. Why: adults read about 238 words a minute ([Brysbaert 2019](https://www.Gwern.net/doc/psychology/linguistics/2019-brysbaert.pdf)), people read about 20% of the words on a page ([NN/g](https://www.nngroup.com/articles/how-little-do-users-read/)), and "designs that go beyond 2 disclosure levels typically have low usability" ([NN/g](https://www.nngroup.com/articles/progressive-disclosure/)). Long lists are fine when items are recognisable ([NN/g](https://www.nngroup.com/articles/short-term-memory-and-web-usability/)). The 50 and 300 are judgement calls from reading speed. Known fails on 2026-10-31: Neighbours, the How-to card, Wacana, Stats and the Build tabs.
+
+### Hierarchy
+
+14. **Four roles, four looks.** The CSS classes are the source of truth. **Primary** (`.btn-primary`): filled accent, **1** per screen, the next step. **Secondary** (`.btn`, `.btn-secondary`): outline, no fill. **Choice** (`.btn-choice`, any `[aria-pressed]`, `.toggle`): accent border and underline when on, never the primary fill. **Input** (`.name-input`): light field with an inset border. Section labels and headings are plain text, never a box. A disabled button keeps its role's shape, muted, with a solid border, never dashed. Why: one fill for "go" and "selected" makes the two look alike, and a screen with several loud buttons has no obvious next step ([NN/g](https://www.nngroup.com/articles/visual-hierarchy-ux-definition/)).
+15. **One tab set holds one kind of thing.** Tabs show siblings of the same type, such as things to place. Collections and records (Combo book, Log, Stats) open from a header button, never as a tab. Why: the Combo tab in Build mixed "what can I place" with "what have I found".
+16. **Pills, chips and buttons say it plainly in 6 words or fewer.** Lead with a verb or a plain label such as "Goal:", never a symbol or jargon such as "★ berikutnya, 2 target lagi". Numbers and icons are not words. Detail opens on tap. Why: the goal pill was cut and unclear.
+17. **Map art stays in its footprint.** A building, crane, effect or shadow draws only over its own tiles and the space above them, never over neighbouring tiles or roads. Why: the crane drew a dark box over the road (#221).
 
 ## How each rule is checked
 
@@ -40,7 +47,12 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 | --- | --- |
 | 1, 4, 5 | `npm run e2e` legibility scan, 4 widths. CI runs Indonesian; local runs add English. |
 | 7, 8 | Word count over `src/i18n/en.ts` and the event data. Not automated. |
-| 2, 3, 6, 9, 10, 11 | Review against the audit crawl screenshots |
+| 2, 3, 6, 9, 11 | Review against the audit crawl screenshots |
+| 10 | e2e: at each tutorial step, tap outside the target and assert nothing changes. |
+| 14 | Review against the CSS classes. e2e: max 1 visible `.btn-primary` per screen, to be added to the rule 13 scan in `ui.spec.ts`. |
+| 15 | e2e: a list of each tab set and its item type; a tab with a different type fails. |
+| 16 | e2e: word cap on pills, chips and buttons, and a tap opens detail. |
+| 17 | Canvas test: place each building type and diff the neighbouring tiles before and after. |
 | 12 | Timed run. Not automated. |
 | 13 | Word counts per screen. Measure script in the project files (`plans/text-density-measure.spec.ts`); to be added to `ui.spec.ts`. |
 | Layout drift | Screenshot baselines (`tests/e2e/visual.spec.ts`): home, HUD, Build sheet, event popup, tip card. 412px, Indonesian. |

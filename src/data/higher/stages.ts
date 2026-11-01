@@ -36,6 +36,7 @@ export const KELURAHAN_STAGE: StageDef = {
   id: 'kelurahan',
   playable: true,
   titles: ['Pak Lurah', 'Kelurahan Rintisan', 'Kelurahan Berkembang', 'Lurah Teladan'],
+  next: 'kecamatan',
   stars: [
     {
       goals: [{ kind: 'rwsAtStars', n: 4, stars: 1 }, { kind: 'serapanMonths', n: 12, pct: 80 }, { kind: 'residents', n: 50 }, { kind: 'sabar', n: 50 }],
@@ -46,7 +47,28 @@ export const KELURAHAN_STAGE: StageDef = {
       unlocks: [],
     },
     {
-      goals: [{ kind: 'tierWins', n: 3, tier: 'kelurahan' }, { kind: 'rwsAtStars', n: 4, stars: 3 }, { kind: 'residents', n: 200 }, { kind: 'sabar', n: 40 }],
+      goals: [{ kind: 'tierWins', n: 3, tier: 'kelurahan' }, { kind: 'rwsAtStars', n: 4, stars: 3 }, { kind: 'residents', n: 200 }, { kind: 'sabar', n: 35 }],
+      unlocks: [],
+    },
+  ],
+};
+
+// Numbers are a first pass (docs/plans/kecamatan-slice.md). The balance bots tune them.
+export const KECAMATAN_STAGE: StageDef = {
+  id: 'kecamatan',
+  playable: true,
+  titles: ['Pak Camat', 'Kecamatan Rintisan', 'Kecamatan Berkembang', 'Camat Teladan'],
+  stars: [
+    {
+      goals: [{ kind: 'built', n: 1, def: 'kantorKec' }, { kind: 'kelsAtStars', n: 4, stars: 1 }, { kind: 'pinjolUnder', n: 25 }, { kind: 'residents', n: 250 }],
+      unlocks: ['baliho', 'tamanKota'],
+    },
+    {
+      goals: [{ kind: 'kelsAtStars', n: 4, stars: 2 }, { kind: 'tierWins', n: 1, tier: 'kecamatan' }, { kind: 'amanWeeks', n: 24, min: 60 }, { kind: 'sabar', n: 35 }],
+      unlocks: [],
+    },
+    {
+      goals: [{ kind: 'kelsAtStars', n: 4, stars: 3 }, { kind: 'tierWins', n: 3, tier: 'kecamatan' }, { kind: 'pinjolUnder', n: 10 }, { kind: 'amanNow', n: 65 }, { kind: 'noRaziaWeeks', n: 48 }],
       unlocks: [],
     },
   ],
@@ -62,6 +84,6 @@ export const PATH_UNLOCKS: Record<Path, { start: string[]; stars: [string[], str
 };
 
 /** Free on promotion into the stage, on both paths. */
-export const PROMOTION_UNLOCKS: Record<'rw' | 'kelurahan', string[]> = { rw: ['balaiRW'], kelurahan: ['aspalUlang'] };
+export const PROMOTION_UNLOCKS: Record<'rw' | 'kelurahan' | 'kecamatan', string[]> = { rw: ['balaiRW'], kelurahan: ['aspalUlang'], kecamatan: ['kantorKec', 'posSatpol', 'koperasiSP', 'balaiLatihanKerja'] };
 
-export const HIGHER_STAGES: StageDef[] = [RW_STAGE, KELURAHAN_STAGE];
+export const HIGHER_STAGES: StageDef[] = [RW_STAGE, KELURAHAN_STAGE, KECAMATAN_STAGE];

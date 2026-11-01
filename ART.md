@@ -238,9 +238,11 @@ faceless, so the map stays readable.
   Warung: tarp-roofed gerobak, zinc-roofed kiosk, whitewashed brick with a tile roof and an awning.
   Pos ronda: bamboo balai-balai under rumbia, wooden hut, green-and-white siskamling post. Kantor RT:
   a front room with a nameboard, the office with a flag, a pendopo under a joglo roof.
-- Houses grow, not just fence in. Rumah: the bungalow, then a teras canopy in the roof colour on
-  two posts over the door, then a rumah tingkat with a balcony rail on the upper floor. Every roof
-  shape and colour carries through all three levels. Kos-kosan is tall and narrow from level 1 (two
+- Houses grow, not just fence in. Rumah: the bungalow, then a teras set into the front wall under a
+  strip of the roof colour (door in its shade, a pot plant) with a low white pagar one pixel inside
+  the tile's front edges, then a rumah tingkat with a balcony rail on the upper floor. Every roof
+  shape and colour carries through all three levels, and every level stays on its one tile
+  (`tests/art.test.ts` checks every variant). Kos-kosan is tall and narrow from level 1 (two
   floors of rooms under a pelana, a steel stair up the side), then a third floor with a flat dak, a
   tandon and a jemuran on the deck. A house's housing type reads from its silhouette: squat rumah,
   long low kontrakan, tall kos.

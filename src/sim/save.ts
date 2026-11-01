@@ -37,6 +37,7 @@ export function deserialize(raw: string | null): GameState | null {
     s.rw ??= { kaderDecay: 0 };
     // Saves from before the rarer tukang parkir: any open shop means the first one has already come.
     s.parkirSeen ??= s.buildings.some((b) => b.def === 'parkir' || (def(b.def).shop && b.status === 'active'));
+    s.stage.stars.kecamatan ??= 0;
     s.kel ??= { budget: 0, spentBase: 0, serapanRun: 0, cleanAudits: 0 };
     if (!s.gapped) ungap(s);
     setGrid(s.stage.current);

@@ -4,7 +4,7 @@ import type { ChannelId, RoleId, TraitId } from '../data/staff';
 export type ResourceId = 'rupiah' | 'sabar' | 'orangDalam' | 'viral';
 export type Resources = Record<ResourceId, number>;
 
-export type StageId = 'rt' | 'rw' | 'kelurahan';
+export type StageId = 'rt' | 'rw' | 'kelurahan' | 'kecamatan';
 export type Stars = 0 | 1 | 2 | 3;
 
 /**
@@ -31,12 +31,25 @@ export type Goal =
   /** Combos found that belong to the RW stage. */
   | { kind: 'rwCombos'; n: number }
   /** Ranking wins against the rival of this tier: RW Sebelah, or the Piala Kelurahan. */
-  | { kind: 'tierWins'; n: number; tier: 'rw' | 'kelurahan' }
+  | { kind: 'tierWins'; n: number; tier: 'rw' | 'kelurahan' | 'kecamatan' }
   /** Months in a row with no RT in debt. */
   | { kind: 'noDebtMonths'; n: number }
   /** Months in a row with serapan at or above `pct` percent. */
   | { kind: 'serapanMonths'; n: number; pct: number }
-  | { kind: 'cleanAudits'; n: number };
+  | { kind: 'cleanAudits'; n: number }
+  // Kecamatan kinds. They read GameState.kec (sim/kec.ts).
+  /** Kelurahan holding at least `stars`: the player's own and the three modelled ones. */
+  | { kind: 'kelsAtStars'; n: number; stars: Stars }
+  /** Buildings of this def standing and working. */
+  | { kind: 'built'; n: number; def: string }
+  /** Households in debt stay under `n` percent. The only goal that is met from below: see GoalProgress.under. */
+  | { kind: 'pinjolUnder'; n: number }
+  /** Weeks in a row with Aman across the Kecamatan at `min` or more. */
+  | { kind: 'amanWeeks'; n: number; min: number }
+  /** Aman across the Kecamatan right now. */
+  | { kind: 'amanNow'; n: number }
+  /** Weeks since the last razia (or since promotion). */
+  | { kind: 'noRaziaWeeks'; n: number };
 
 /** What it takes to earn star number `index + 1`, and what that star gives. */
 export interface StarDef {
@@ -61,7 +74,7 @@ export interface StageState {
   current: StageId;
   /** Chosen at the Kelurahan promotion. */
   path?: 'kelurahan' | 'desa';
-  /** Stars per stage. They only ever go up. */
+  /** Stars per stage. They only ever go up. Saves from before Kecamatan lack that key; deserialize fills it. */
   stars: Record<StageId, Stars>;
   /** The SK at 3 stars. Absent until it arrives. Declining keeps the player in the stage. */
   sk?: 'offered' | 'declined';
@@ -84,6 +97,36 @@ export interface RwState {
   letterMult?: { mult: number; until: number };
   /** Population the player reported to Pusat, as a percent over the true count. */
   popReport?: { pct: number; until: number };
+}
+
+/** One of the three Kelurahan around the player's in a Kecamatan. Modelled, not simulated, like an AI RT's stars. */
+export interface District {
+  id: 'mawar' | 'melati' | 'kenanga';
+  trait: RtTrait;
+  /** Weeks of progress towards the next star. Bantuan will add to it. */
+  progress: number;
+  stars: Stars;
+  /** Share of households in debt, 0 to 100. */
+  pinjol: number;
+  /** Aman, 0 to 100. */
+  aman: number;
+}
+
+/** State only the Kecamatan stage uses. Absent until promotion; saves from before it load without it. */
+export interface KecState {
+  districts: District[];
+  /** Share of the player's households in debt, 0 to 100. Set by the pinjol rules. */
+  pinjol: number;
+  /** Weeks in a row with Aman across the Kecamatan at the 2-star bar. */
+  amanRun: number;
+  /** Weeks the debt collector's Aman cut ends, one per visit. */
+  hits?: number[];
+  /** A razia in force: Aman is up until this week. */
+  razia?: { until: number };
+  /** Week of the last razia. Absent if none. */
+  lastRazia?: number;
+  /** Week the player was promoted. */
+  since: number;
 }
 
 /** State only the Kelurahan or Desa stage uses. */
@@ -337,6 +380,10 @@ export interface Resident {
   preman?: boolean;
   /** Hired onto the staff: counts as in work, never picks a job of their own. */
   staffId?: number;
+  /** Kecamatan only: weeks this resident's household has owed a pinjol. Absent when out of debt. */
+  debt?: number;
+  /** Kecamatan only: this resident's household is on judol. */
+  judol?: boolean;
 }
 
 export interface WacanaState {
@@ -456,6 +503,8 @@ export interface GameState {
   rw: RwState;
   /** Kelurahan stage state. Absent in older saves. */
   kel: KelState;
+  /** Kecamatan stage state. Absent before promotion and in older saves. */
+  kec?: KecState;
   /** Month of the last thing the player saw as new. Drives the pacing director. */
   lastNovelty: number;
   /** This year's Lomba Agustusan, from the panitia's card in May to the day. Missing until the first one. */
@@ -509,8 +558,8 @@ export const RT_H = 17;
 export let GRID_W = RT_W;
 export let GRID_H = RT_H;
 
-/** RTs along each side of the map at a stage. */
-export const STAGE_SPAN: Record<StageId, number> = { rt: 1, rw: 2, kelurahan: 4 };
+/** RTs along each side of the map at a stage. The Kecamatan keeps the Kelurahan's tile map. The other Kelurahan are district blocks, not tiles (decisions/kecamatan-slice.md). */
+export const STAGE_SPAN: Record<StageId, number> = { rt: 1, rw: 2, kelurahan: 4, kecamatan: 4 };
 
 /** Tiles of dirt road between two RT cells. The bands sit between cells, so every RT keeps its full size. */
 export const SEAM = 2;

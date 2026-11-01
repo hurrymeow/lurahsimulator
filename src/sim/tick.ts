@@ -29,7 +29,9 @@ import { lombaSystem } from './lomba';
 import { monthWarnings, type SabarCause } from './warnings';
 import { parkirSystem } from './parkir';
 import { needsSystem, premanTake } from './needs';
-import { buildBoost, clearPermits, staffSystem, upkeepCut } from './staff';
+import { judolIncomeCut, pinjolSystem } from './pinjol';
+import { buildBoost, clearPermits, permitQueue, queueMonths, staffSystem, upkeepCut } from './staff';
+import { ROLE_FX } from '../data/staff';
 import { realisasiSystem, realisasiWarungMult } from './realisasi';
 import { addBuilding, addResident, attractTarget, decorMult, emptyTiles, housing, isWorking, levelMult, neighbours, pathMult, population } from './state';
 import { gain, type Fx } from './gain';
@@ -42,7 +44,7 @@ export type { Fx };
 export function incomeMult(s: GameState, b: Building): number {
   let m = comboIncomeMult(s, b);
   for (const mod of s.modifiers) if (mod.target === '*' || mod.target === b.def) m *= mod.incomeMult;
-  if (def(b.def).shop) m *= 1 + s.res.viral * VIRAL_INCOME;
+  if (def(b.def).shop) m *= (1 + s.res.viral * VIRAL_INCOME) * (1 - judolIncomeCut(s));
   return m;
 }
 
@@ -71,13 +73,14 @@ function novelty(s: GameState): void {
 export function advanceConstruction(s: GameState, fx: Fx): void {
   // Each tukang on the crew gives every site an extra month of progress one month in four.
   const crew = Math.min(TUKANG_MAX, used(s, 'tukang'));
+  // The permit queue costs Popularitas as a whole, not per building, so a long line does not snowball:
+  // 1 a week while anything waits, twice that once the queue is deep enough that the goal strip says to hire.
+  const queue = permitQueue(s);
+  if (queue.length) gain(s, fx, 'sabar', -QUEUE_SABAR_DRAIN * (queueMonths(s) >= ROLE_FX.asisten.hireAfter ? 2 : 1), queue[0]);
   for (const b of s.buildings) {
     if (b.status !== 'permit' && b.status !== 'building') continue;
-    // A permit waits for the desks (clearPermits, below); every month in the queue costs Popularitas.
-    if (b.status === 'permit') {
-      gain(s, fx, 'sabar', -QUEUE_SABAR_DRAIN, b);
-      continue;
-    }
+    // A permit waits for the desks (clearPermits, below).
+    if (b.status === 'permit') continue;
     b.timer -= (s.month + b.uid) % 4 < crew ? 2 : 1;
     // A Supir gets crews to site sooner: a share of months count twice.
     const extra = buildBoost(s);
@@ -250,6 +253,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   realisasiSystem,
   staffSystem,
   needsSystem,
+  pinjolSystem,
   wacanaSystem,
   mangkrakSystem,
   expectations,

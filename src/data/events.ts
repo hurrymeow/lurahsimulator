@@ -1,5 +1,7 @@
 import type { Resources } from '../sim/types';
 import { MORE_EVENTS } from './eventsMore';
+import { STAFF_EVENTS } from './eventsStaff';
+import type { StatId } from './staff';
 import { STAGE_EVENTS } from './higher';
 
 /** One possible result of an advice choice. The game rolls one by weight and reveals it in the result popup. */
@@ -8,6 +10,12 @@ export interface EventOutcome {
   res?: Partial<Resources>;
   /** Rupiah as a fraction of one month's net income (-0.1 = lose 10%). Scales with the economy. */
   incomePct?: number;
+  /** Folders taken off the permit queue, first placed first. */
+  stamp?: number;
+  /** Tim Audit: counts as a clean audit. */
+  cleanAudit?: number;
+  /** Tim Audit: Popularitas lost for each wacana with no receipt. */
+  perWacana?: number;
   result: string;
 }
 
@@ -21,6 +29,11 @@ export interface EventChoice {
   incomePct?: number;
   /** Advice: roll one of these instead of the fixed result. Costs and `res` still apply first. */
   outcomes?: EventOutcome[];
+  /**
+   * Send one of your staff. The odds are base + (their stat - 50) x perPoint, from 5% to 95%; outcomes[0] is the
+   * success and outcomes[1] the failure. The card offers the best three for the stat, each with their odds.
+   */
+  send?: { stat: StatId; base: number; perPoint: number };
   /** Timed income multiplier. */
   modifier?: { label: string; target: string; incomeMult: number; months: number };
   /** Special handling in code, for effects that need the map. */
@@ -50,6 +63,8 @@ export interface EventDef {
     needs?: string;
     /** Months before the same event can come back. */
     cooldown?: number;
+    /** Only while something waits in the permit queue. */
+    queue?: boolean;
   };
   /** The first choice must always be free so an event can never soft-lock. */
   choices: EventChoice[];
@@ -179,6 +194,7 @@ export const EVENTS: EventDef[] = [
     ],
   },
   ...MORE_EVENTS,
+  ...STAFF_EVENTS,
 ];
 
 export const eventDef = (id: string): EventDef | undefined => EVENTS.find((e) => e.id === id) ?? STAGE_EVENTS.find((e) => e.id === id);

@@ -190,8 +190,9 @@ export class Painter {
   /** A hipped (limasan) roof over a box of the same inset and height. */
   roof(inset: number, h: number, rise: number, colour: string, paint: (x: number, y: number) => string | undefined = () => undefined): void {
     const n = this.n;
-    const hw = (TW / 2 - inset * 2 + 2) * n;
-    const hh = (TH / 2 - inset + 1) * n;
+    // Clamped: a negative radius would flip the test and fill the whole box with a dark rectangle.
+    const hw = Math.max(2, TW / 2 - inset * 2 + 2) * n;
+    const hh = Math.max(1, TH / 2 - inset + 1) * n;
     const cx = (TW / 2) * n + this.ox;
     const cy = (TOP + TH / 2 - h) * n + this.oy;
     const apex = [cx, cy - rise * n];
@@ -236,8 +237,9 @@ export class Painter {
       return;
     }
     const n = this.n;
-    const hw = (TW / 2 - inset * 2 + 2) * n;
-    const hh = (TH / 2 - inset + 1) * n;
+    // Clamped: a negative radius would flip the test and fill the whole box with a dark rectangle.
+    const hw = Math.max(2, TW / 2 - inset * 2 + 2) * n;
+    const hh = Math.max(1, TH / 2 - inset + 1) * n;
     const cx = (TW / 2) * n + this.ox;
     const cy = (TOP + TH / 2 - h) * n + this.oy;
     const up = (p: number[]) => [p[0], p[1] - rise * n];
@@ -287,8 +289,9 @@ export class Painter {
 
   shadow(inset: number): void {
     const n = this.n;
-    const hw = (TW / 2 - inset * 2 + 2) * n;
-    const hh = (TH / 2 - inset + 1) * n;
+    // Clamped: a negative radius would flip the test and fill the whole box with a dark rectangle.
+    const hw = Math.max(2, TW / 2 - inset * 2 + 2) * n;
+    const hh = Math.max(1, TH / 2 - inset + 1) * n;
     const cx = (TW / 2 + 2) * n + this.ox;
     const cy = (TOP + TH / 2) * n + this.oy;
     for (let y = TOP * n + this.oy; y < (TOP + TH) * n + this.oy; y++)
@@ -419,20 +422,6 @@ function inTri(x: number, y: number, a: number[], b: number[], c: number[]): boo
 
 const within = (v: number, lo: number, hi: number) => v >= lo && v < hi;
 
-/** A flat polygon in one-tile art pixels from the ground centre (up is negative), as one shape. */
-function slab(p: Painter, pts: number[][], colour: string): void {
-  p.id++;
-  const xs = pts.map((q) => q[0]);
-  const ys = pts.map((q) => q[1]);
-  for (let y = Math.floor(Math.min(...ys)); y <= Math.ceil(Math.max(...ys)); y++)
-    for (let x = Math.floor(Math.min(...xs)); x <= Math.ceil(Math.max(...xs)); x++)
-      for (let k = 1; k + 1 < pts.length; k++)
-        if (inTri(x + 0.5, y + 0.5, pts[0], pts[k], pts[k + 1])) {
-          p.set(TW / 2 + x, TOP + TH / 2 + y, colour);
-          break;
-        }
-}
-
 /**
  * A soft transition from a flat piece to the grass round it: a half-transparent checker of the edge
  * colour on the ground just outside the silhouette, instead of a hard stair-stepped stop. Runs after
@@ -555,6 +544,17 @@ const ART: Record<string, ArtFn> = {
     p.shadow(3);
     p.box(3, ground, wall, (face, u, j, i) => {
       if (face === 'T') return undefined;
+      // Level 2's teras is set into the front-left wall under the main roof, so it never leaves the tile:
+      // a strip of roof over it, the door in its shade, a tiled floor, a pot plant and a corner post.
+      if (level === 2 && face === 'L' && within(u, 0.46, 0.9)) {
+        if (j === 6) return roof;
+        if (j < 6) {
+          if (j === 0) return 's';
+          if (within(u, 0.62, 0.8) && j < 5) return 'N';
+          if (within(u, 0.5, 0.56) && j < 3) return j === 0 ? 'n' : 'G';
+          return 'S';
+        }
+      }
       // Roster: a band of ventilation blocks under the eave, open and solid in turn.
       if (!tall && j === 7 && (face === 'R' || within(u, 0.12, 0.45))) return i % 2 ? 'S' : 'w';
       if (face === 'L' && within(u, 0.6, 0.82) && j < 6) return modern ? 'k' : 'N';
@@ -584,18 +584,20 @@ const ART: Record<string, ArtFn> = {
     p.roofShape(shape, inset, top, shape === 'shed' ? 2 : shape === 'hip' ? (tall ? 7 : 8) : tall ? 4 : 5, roof, wall);
     // A tandon air on the deck of a flat roof, orange or blue.
     if (shape === 'flat') p.box(6, 3, roof === 'l' || roof === 'G' ? 'b' : 'o', (face) => (face === 'T' ? 'w' : undefined), top + 2);
-    if (level === 2) {
-      // A teras: a canopy in the roof colour out from the front-left wall over the door, on two posts.
-      const at = (u: number, up: number) => [-10 + 10 * u, 5 * u - up];
-      const out = (q: number[], k: number) => [q[0] - 2 * k, q[1] + k];
-      const w1 = at(0.4, 7);
-      const w2 = at(1, 7);
-      const o1 = out(at(0.4, 5), 3);
-      const o2 = out(at(1, 5), 3);
-      p.stroke(o1[0], o1[1], o1[0], o1[1] + 5, 1, 'N');
-      p.stroke(o2[0], o2[1], o2[0], o2[1] + 5, 1, 'N');
-      slab(p, [w1, w2, o2, o1], roof);
-    }
+    // Level 2 also gets a low pagar one pixel inside the tile's front edges, open in front of the door.
+    if (level === 2)
+      p.overlay.push((q) => {
+        const { gx, gy } = q;
+        for (const side of [-1, 1])
+          for (let k = 1; k < gx - 1; k++) {
+            if (side < 0 && k >= 11 && k <= 14) continue;
+            const x = side < 0 ? k : 2 * gx - 1 - k;
+            const y = Math.round(gy + k / 2) - 1;
+            const post = k % 3 === 1;
+            q.px(x, y - 2, post ? 'S' : 'w');
+            if (post) q.px(x, y - 1, 'S');
+          }
+      });
   },
   kantorRT: (p, _v, level = 1) => {
     if (level <= 1) {
@@ -878,7 +880,7 @@ const ART: Record<string, ArtFn> = {
   },
   // Build phase: a tower crane at the back corner, its jib over the site and a hook on a cable.
   crane: (p) => {
-    p.shadow(10);
+    p.shadow(5);
     // Concrete foot, then the lattice mast: yellow rails with dark cross-ties every few pixels.
     p.box(11, 2, 'S', undefined, 0);
     for (let k = 2; k < 40; k++) {

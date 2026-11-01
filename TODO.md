@@ -4,12 +4,36 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Tasks
 
-- [ ] **Cut text on the 5 screens that fail UI rule 13.**
-  - Problem: measured at 360px on 2026-10-31, words in view: Neighbours 113 (1,201 in the sheet, longest block 31), How-to card 94 (block 29), Wacana 66, Stats 64, Build tabs 59 to 71 (block 24, 572 words on one tab). Rule 13 allows 50 in view, 20 per block, 300 per sheet.
+- [ ] **Ship the UI hierarchy plan: four button looks, Wacana list, setup screen.**
+  - Problem: one accent fill marks primary buttons, selected tabs, the dock and Pak/Bu, so nothing stands out. Wacana shows 51 to 92 words and 2 buttons per policy. The setup screen's six boxes look alike.
+  - Why: UI.md rule 14 (2026-11-01). Hari: "all buttons look the same, no hierarchy".
+  - Suggested solution: `docs/plans/ui-hierarchy.md` tasks T1 to T5. T1 is PR #225.
+  - Source: UI.md rules 13 and 14; audit `audit/ui-rules-2026-11-01/report.md` in the project files
+  - `claimed · coordinator threads · 2026-11-01 · done when:` T1 to T5 merged and the setup, Wacana, tab, dock and Settings rows of the audit pass.
+- [ ] **Cut text on the 6 screens that fail UI rule 13: Build cards, Staff, Neighbours, Stats, the opener and How to Play.**
+  - Problem: audit 2026-11-01, words in view at 320 ID → 412 EN: Build tabs 38–51 → 80–101 (block 24, 573 per tab), Neighbours 97 → 146 (block 32, 1,202 per sheet), Stats 54 → 83, Staff 43 → 71, opener 95 → 113 (block 28), How-to 94. Rule 13 allows 50 in view, 20 per block, 300 per sheet; rule 7 allows 20 per tip.
   - Why: players skim about 20% of the words; a wall of text hides the one line that matters.
-  - Suggested solution: one line per row with detail behind a tap; split Neighbours and the long Build tab; shorten How-to pages to one idea each. Add the word-count scan to `tests/e2e/ui.spec.ts` (start from the measure script in the project files, `plans/text-density-measure.spec.ts`).
-  - Source: UI.md rule 13
-  - `open · — · — · done when:` all screens pass rule 13 in both languages, and the scan runs in CI.
+  - Suggested solution: `docs/plans/ui-audit-fixes.md` T6 (Build cards), T7 (Neighbours, Stats, Staff) and T8 (opener, How-to, toasts). Wacana is in the hierarchy plan.
+  - Source: UI.md rules 7 and 13; audit `audit/ui-rules-2026-11-01/report.md`
+  - `open · — · — · done when:` all six pass rules 7 and 13 at 320 to 430px in EN and ID.
+- [ ] **Events with no primary choice, Combo cards with no clamp, short toasts.**
+  - Problem: 2 of 3 event choices use the primary fill; Combo card effects cut with "…"; toasts run past 12 words.
+  - Why: UI.md rules 5, 14 and 16 (2026-11-01).
+  - Suggested solution: `docs/plans/ui-audit-fixes.md` T9 (events, Combo) and the toast part of T8.
+  - Source: audit `audit/ui-rules-2026-11-01/report.md`
+  - `open · — · — · done when:` 0 primaries on event choices, no Combo clamp at 320px ID, toasts 8 words or fewer.
+- [ ] **Goal pill: one plain goal, and close the expanded list when a sheet opens.**
+  - Problem: the pill reads "★ berikutnya, 3 target lagi: …" and clamps. In the audit, the expanded goal list stayed open over every sheet after one tap.
+  - Why: UI.md rules 5 and 16.
+  - Suggested solution: `docs/plans/goal-line-one-goal.md`, plus collapse the list on sheet open (verify the bug first).
+  - Source: audit `audit/ui-rules-2026-11-01/report.md`
+  - `open · — · — · done when:` the pill shows "Goal: …" with no "…" at 320px ID, and opening any sheet closes the list.
+- [ ] **CI checks for UI rules 10, 15, 16 and 17, then a full re-audit.**
+  - Problem: rules 10 (tutorial tap lock) and 17 (map art footprint) have no test; 15 and 16 are checked by eye; the audit skipped 360px, the dark theme and Kecamatan.
+  - Why: a rule nothing enforces drifts, as rule 13 did with Wacana.
+  - Suggested solution: `docs/plans/ui-audit-fixes.md` T10 (checks, remove the `data-clamp` skip) and T11 (re-audit at 4 widths, both themes, RT, Kelurahan and Kecamatan seeds).
+  - Source: UI.md "How each rule is checked"
+  - `open · — · — · done when:` the checks run in CI, and the re-audit report shows every screen passing or lists the rest as TODO items.
 - [ ] **CI and test config: flaky reports, English, WebKit, nightly, console-error fixture and canaries.**
   - Problem: a test that passes on retry leaves no record; English is only checked weekly; tests run in Chromium only; there is no nightly workflow.
   - Why: TESTING.md items 2, 9 and 13 fail today, and items 6, 11, 12 and 17 need a nightly run. Items 5 and 15 (merged in from the console-error task): e2e does not fail on `pageerror` or `console.error`, and nothing proves the legibility scan or visual diff can fail.
@@ -69,8 +93,17 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Source: voidinside99, 2026-10-31
   - `claimed · voidinside99 · 2026-10-31 · done when:` Hari has played the prototype and it merges (or is dropped), with the bite tuned in `decisions/desk-queue.md`.
 
+- [ ] **Stop a big kampung getting stuck under the Kelurahan 3★ Popularitas bar.**
+  - Problem: residents never leave while Popularitas is above 15, and each resident lowers it. A kampung that grows well past 200 settles in the low 30s and cannot get back over the 3★ bar (35). One Kelurahan bot seed of three stays at 2★ for good (#204).
+  - Why: a player who grew too fast is soft-locked out of 3★, with no way to see why or fix it.
+  - Suggested solution: let the bar scale down with residents over 200, or give the player a way out (a Popularitas building that ignores the roadside limit, or warga who move to the neighbours when the kampung is crowded). Check with `tests/kel-bot.test.ts` that all three seeds reach 3★.
+  - Source: `decisions/kelurahan-own-kampung.md`, `decisions/desk-queue-weeks.md`
+  - `open · — · — · done when:` a kampung of any size can reach Kelurahan 3★, and the bot test asks for all three seeds.
+
 ## Done
 
+- [x] **Make the four staff stats obvious and decisive.** One meaning and icon per stat; a work and a risk stat per role, with named weekly mishaps; cards and applicants say what each stat buys; "who do you send?" events with odds by stat; Bimtek picks the stat; trait chips. #206, `decisions/staff-stats.md`.
+- [x] **90s special hires and a portrait for every special.** Six 90s TV and radio types (types, never real people or others' characters) and a 44x60 portrait for all 13 specials. #207, `decisions/staff-portraits.md`.
 - [x] **Build the scorecard harness: timeline log and the 9 bots.** `npm run scorecard` plays 9 bots on 10 seeds and writes the section 8 scorecard and a golden-trend file; `nightly.yml` runs it. Soft-lock takeover check included. First result: 4 Pass, 13 Fail, 10 Unknown. See `progress/scorecard-harness.md` (#201).
 - [x] **17an (Agustusan) fanfares, SFX and key art.** Made in the engine: drumband fanfare, koplo sting, angklung call, slide whistles, sack hops, kerupuk crunch and a crowd cheer in `src/audio.ts`; a drawn panjat pinang pole, a confetti banner, and bunting and umbul-umbul in July and August. No recorded audio or AI art. #197, `decisions/17an-in-engine.md`.
 - [x] **Redo the building panel.** The description is built from the current level; a pixel roof badge (gold with MAKS at the top) replaces the level strip and the max-level messages; the upgrade button reads "Naikkan ke Lv n" with the gain under it and is hidden at the top; disabled reasons are one grey line; Bongkar names the warga still there; "Warga 4/5"; status only when not working. #194, `decisions/building-panel.md`.
