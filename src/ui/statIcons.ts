@@ -9,7 +9,7 @@
 import { getLang, t } from '../i18n';
 import { iconURL } from '../render/sprites';
 
-export type StatId = 'rupiah' | 'sabar' | 'orangDalam' | 'viral';
+export type StatId = 'rupiah' | 'sabar' | 'orangDalam' | 'viral' | 'perut' | 'kerja' | 'aman';
 
 /** The display name for a stat, in the current language, from the res.* strings. */
 export const statLabel = (stat: StatId): string => t(`res.${stat}` as 'res.rupiah');
@@ -20,6 +20,13 @@ export const statLabel = (stat: StatId): string => t(`res.${stat}` as 'res.rupia
  * "viral" in flavour text (a video goes viral) is slang and stays a word.
  * Money amounts ("Rp 40rb") are matched separately, by MONEY.
  */
+/**
+ * The three warga meters. Perut, Kerja and Aman are also plain Indonesian words ("aman" is "safe"), so they
+ * become an icon only when a number follows: "Kerja +5", "Aman -3", "Perut 60". Every other use stays a word.
+ */
+const METER_WORDS: [string, StatId][] = [['Perut', 'perut'], ['Kerja', 'kerja'], ['Aman', 'aman']];
+const NUM_AHEAD = String.raw`(?=\s[+\-−]?\d)`;
+
 const WORDS: Record<'id' | 'en', [string, StatId][]> = {
   id: [
     ['Orang Dalam', 'orangDalam'],
@@ -27,6 +34,7 @@ const WORDS: Record<'id' | 'en', [string, StatId][]> = {
     ['Viral', 'viral'],
     ['Rupiah', 'rupiah'],
     ['rupiah', 'rupiah'],
+    ...METER_WORDS,
   ],
   en: [
     ['Orang Inside', 'orangDalam'],
@@ -34,6 +42,7 @@ const WORDS: Record<'id' | 'en', [string, StatId][]> = {
     ['Virality', 'viral'],
     ['Rupiah', 'rupiah'],
     ['rupiah', 'rupiah'],
+    ...METER_WORDS,
   ],
 };
 
@@ -41,7 +50,7 @@ const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const RE_CACHE: Partial<Record<'id' | 'en', RegExp>> = {};
 // One compiled regex per language: the observer runs on every HUD text update.
 // Global flag is safe: matchAll clones the regex and search ignores lastIndex.
-const wordRe = (lang: 'id' | 'en') => (RE_CACHE[lang] ??= new RegExp(`\\b(${WORDS[lang].map(([w]) => esc(w)).join('|')})\\b`, 'g'));
+const wordRe = (lang: 'id' | 'en') => (RE_CACHE[lang] ??= new RegExp(`\\b(${WORDS[lang].map(([w, id]) => esc(w) + (METER_WORDS.some(([, m]) => m === id) ? NUM_AHEAD : '')).join('|')})\\b`, 'g'));
 const wordFor = (lang: 'id' | 'en', word: string): StatId => WORDS[lang].find(([w]) => w === word)![1];
 
 /**
@@ -99,8 +108,8 @@ export const hasStatWord = (str: string, lang: 'id' | 'en' = getLang()): boolean
   /\{plain:[^}]+\}/.test(str) || str.search(wordRe(lang)) >= 0 || str.search(MONEY) >= 0;
 
 /** A number token at the end of a text chunk, or at the start, with its sign and separator. */
-const TRAILING_NUM = /([+-]?(?:x)?\d(?:[\d.,]*\d)?)\s*$/;
-const LEADING_NUM = /^\s*([+-]?(?:x)?\d(?:[\d.,]*\d)?)/;
+const TRAILING_NUM = /([+\-−]?(?:x)?\d(?:[\d.,]*\d)?)\s*$/;
+const LEADING_NUM = /^\s*([+\-−]?(?:x)?\d(?:[\d.,]*\d)?)/;
 
 export type GroupedSegment =
   | { kind: 'text'; text: string }
