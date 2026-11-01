@@ -169,6 +169,12 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: In the expanded goal state, add one plain line per goal type that names the action (what to build, what to keep, which ranking to win). The hint must match the goal's own condition, not the next stage's. Generalise the Stempel work in `docs/plans/stempel-goal-actionable.md` (T2 matching hint, T4 tap explainer) from that one goal to every goal type. Write the line in EN and ID, and keep it within UI.md rule 13 word limits.
   - Source: Hari's playtest screenshot, 2026-11-01 (project thread "Add goal how-to hints to TODO")
   - `open · — · — · done when:` every goal type shows a matching how-to line in the tapped state, in EN and ID, with no clipping at 320px, and the goal tests cover each type.
+- [ ] **Stop the "build Warung Sembako" hint after Warung Sembako is built.**
+  - Problem: With Warung Sembako built, the goal strip still says "tak ada warga baru, bangun Warung Sembako untuk menarik warga" (no new residents, build Warung Sembako to attract residents). In Hari's screenshot (Jan M1 T3, 71/77 residents) it replaces the goal line itself.
+  - Why: The hint tells the player to do something already done, so they cannot tell what is blocking growth. The line also hides the goal it should explain.
+  - Suggested solution: Cause, from `src/sim/nextstep.ts` on main: `bestDraw` picks the best attract-per-cost building from `placeableDefs()` with `ignoreLimit: true` and never checks whether that building is already built or at its cap. Once residents stop coming (`pop >= attractTarget`), the 'draw' step names a building the player already has. Fix: skip buildings already at their limit or count for the draw hint, and when no draw building is left, return null or name the real blocker (the pop cap, 71/77 here). Keep the goal line visible; the hint is a second line, never a replacement.
+  - Source: Hari, 2026-11-01 (screenshot, project thread "Add goal how-to hints to TODO")
+  - `open · — · — · done when:` a built Warung Sembako never appears as the draw hint, the strip names the real blocker, and the goal line stays visible in EN and ID at 320px. `tests/nextstep.test.ts` covers the built-draw case.
 
 ## Done
 
