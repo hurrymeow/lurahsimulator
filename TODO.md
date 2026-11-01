@@ -100,6 +100,37 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Source: `decisions/kelurahan-own-kampung.md`, `decisions/desk-queue-weeks.md`
   - `open · — · — · done when:` a kampung of any size can reach Kelurahan 3★, and the bot test asks for all three seeds.
 
+- [ ] **Smaller map: RW of 2 RTs, Kelurahan of 2 RWs with Kampung Sebelah absorbed.**
+  - Problem: the RW has 4 RTs and the Kelurahan 16. In the playtest of 2026-11-01 the Kelurahan was overwhelming, and its 1★ waited on "4 RW at 1★" across mostly empty lots.
+  - Why: one AI RT to tend at the RW and one AI RW at the Kelurahan keep the management load small, and absorbing Kampung Sebelah guarantees new land when the own-kampung goals need it.
+  - Suggested solution: build GAME-DESIGN.md section 2 as now written. The RW map is 2 RTs side by side and the Kelurahan 2x2 RTs at full-size tiles. At promotion Kampung Sebelah becomes player-run (like a takeover), and RW 2 is two new AI RTs. RW goals read Kampung Sebelah; Kelurahan goals read RW 2. Stempel stops at the Kelurahan. Grup Chat Warga moves to RW 2's pair. Re-run the RW, Kelurahan and balance bots, and the frame-rate test. Old saves: decide in the PR (keep their old neighbours, or treat them as incompatible as with the Desa cut).
+  - Source: `decisions/playtest-sk2.md`
+  - `open · — · — · done when:` new games follow the new ladder, the stage goals read as in section 2, and the bot tests reach each stage's stars.
+- [ ] **Dense housing pays: Rumah 3/4/5, Kos-kosan 10/14, Kontrakan 24/32, rent on the panel.**
+  - Problem: 4 Rumah at level 3 house 28 on 4 tiles, instantly. A Kontrakan costs about 9x as much for 12 on 4 tiles, so bigger housing never pays.
+  - Why: each housing type needs its own reason. Rumah is fast and draws warga; Kos-kosan and Kontrakan house more per tile and pay rent.
+  - Suggested solution: Rumah `housingLevels` [3, 4, 5], with level 3 needing RT 2★; Kos-kosan [10, 14]; Kontrakan [24, 32]. The building panel shows rent per week. Old saves keep their houses at the new bed counts. Re-run the balance bots.
+  - Source: `decisions/playtest-sk2.md`
+  - `open · — · — · done when:` the numbers ship, rent shows on the panel, and the balance and pacing tests pass.
+- [ ] **Spread the staff stats: each stat works two roles and risks two.**
+  - Problem: Rajin is the work stat of most roles, so it is the only stat players look at.
+  - Why: every stat should decide something.
+  - Suggested solution: use the table in GAME-DESIGN.md section 4 (Tukang Tagih works on Gaul, Supir on Jujur; Admin Grup WA and Petugas PU risk Lobi; Asisten and Bendahara risk Rajin), with the new mishap texts. Re-lean the specials' stats to their role's new work stat.
+  - Source: `decisions/playtest-sk2.md`
+  - `open · — · — · done when:` each stat is the work stat of two roles and the risk stat of two, in ID and EN, with the staff tests passing.
+- [ ] **UI from the SK 2 playtest: NEW tags, the dock, the Wifi road, the pixel "2".**
+  - Problem: NEW tags clear when the Build sheet opens; Staf hides in the Menu; the Menara Wifi asks for a road; the pixel font's "2" reads like a Z.
+  - Why: unlocks come several at a time and are easy to miss; staff now matter every minute.
+  - Suggested solution: a card's NEW clears after it has been at least half on screen for 2s or been tapped, and tab and dock badges stay while any card under them is unseen (UI.md audit 4). The dock is Build at its own width, then Warga, Staf and Menu. Add Menara Wifi to the road-exempt list (`FLAT` in `src/sim/access.ts`). Redraw the "2" with `scripts/patch-pixel-font.py`. The visual baselines will change.
+  - Source: `decisions/playtest-sk2.md`
+  - `open · — · — · done when:` all four ship in ID and EN, nothing clips at 320px, and the UI and visual tests pass.
+- [ ] **Low and wide 2x2 art, and native-size cranes on big sites.**
+  - Problem: Gudang Material and Koperasi look like a Rumah scaled up, too tall for 2x2. The crane over a 2x2 site is a 1x1 crane scaled 2x, with big pixels out of scale.
+  - Why: size should read as width, and every sprite should keep the 1px grid.
+  - Suggested solution: redraw the 2x2 buildings (Gudang Material, Koperasi first, then any other 2x2 taller than its tier's 1x1) per ART.md's new geometry rules; draw crane, scaffold and stakes at native pixels for 1x2, 2x2, 2x3 and 3x3. Never overwrite the artist's sprites.
+  - Source: `decisions/playtest-sk2.md`
+  - `open · — · — · done when:` no 2x2 building stands taller than a 1x1 of its tier, site sprites have no scaled pixels, and `tests/art.test.ts` checks both.
+
 ## Done
 
 - [x] **Fix the balance failures on the scorecard (first wave).** RT 3★ is a 9 to 12 min band and builder lands at 10.2 min in 10 of 10 seeds; combo hint at week 12; Kecamatan dominated options (item 18, now Unknown); soft-lock takeovers 15 of 15; wifi pile death spiral fixed by capping combo stacking at 3; cheapskate bar is "never stranded"; nightly now runs in about 45 min and uploads its cache. #203, #210, #211, #212, #219, #224; `decisions/rt-3star-pace.md`, `decisions/combo-stack-cap.md`, `decisions/cheapskate-bar.md`. Proof: Nightly run 41262187917, 3 Pass, 12 Fail, 12 Unknown (was 4 / 13 / 10).
