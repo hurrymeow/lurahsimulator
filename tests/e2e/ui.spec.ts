@@ -2748,7 +2748,7 @@ test.describe('level art and menu icons', () => {
       const b = app.s.buildings.find((o: any) => o.def === 'rumah');
       b.level = lv;
       // Fill every bed, so this house cannot be torn down.
-      const beds = app.s.buildings.reduce((n: number, o: any) => n + (o.noRoad ? 0 : ({ rumah: [3, 5, 7] } as any)[o.def]?.[o.level - 1] ?? 0), 0);
+      const beds = app.s.buildings.reduce((n: number, o: any) => n + (o.noRoad ? 0 : ({ rumah: [3, 4, 5] } as any)[o.def]?.[o.level - 1] ?? 0), 0);
       while (app.s.residents.length < beds) app.s.residents.push({ id: app.s.nextResidentId++, name: 'Bu Sri', job: 'none', pensiun: 0, fake: 0, arrived: 0 });
       app.inspect(b.uid);
     }, level);
@@ -2759,10 +2759,10 @@ test.describe('level art and menu icons', () => {
     expect(await badge.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)).toBe(true);
     await expect(page.locator('#sheet .level-strip')).toHaveCount(0);
     // One source for the numbers: the description, the occupancy and the diff all read level 2.
-    await expect(page.locator('#sheet .inspect-head .effect')).toContainText(lang() === 'en' ? 'Houses 5 residents' : 'Menampung 5 warga');
-    await expect(page.locator('#sheet .occupancy')).toContainText('/5');
+    await expect(page.locator('#sheet .inspect-head .effect')).toContainText(lang() === 'en' ? 'Houses 4 residents' : 'Menampung 4 warga');
+    await expect(page.locator('#sheet .occupancy')).toContainText('/4');
     await expect(page.locator('#sheet .btn', { hasText: lang() === 'en' ? 'Upgrade to Lv 3' : 'Naikkan ke Lv 3' })).toBeEnabled();
-    await expect(page.locator('#sheet .upgrade-diff')).toContainText('5 → 7');
+    await expect(page.locator('#sheet .upgrade-diff')).toContainText('4 → 5');
     await expectLegible(page, 'building panel with an upgrade');
 
     await open(3);
