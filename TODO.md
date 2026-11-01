@@ -118,6 +118,13 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: audit `audit/ui-rules-2026-11-01/report.md`
   - `open · — · — · done when:` the pill shows "Goal: …" with no "…" at 320px ID, and opening any sheet closes the list.
 
+- [ ] **Centre button and bar text vertically.**
+  - Problem: Hari, 2026-11-01 (screenshot, 412 px, ID): the labels "Terima SK" and "Tetap di sini" on the Kelurahan promotion card sit against the top edge of their buttons, with the empty space below. The goal line "Target: menang peringkat wilayah 1 kali" also sits slightly high in its bar. Other buttons, pills and bars may do the same.
+  - Why: Off-centre labels look broken and make buttons read as unfinished. UI.md has no rule for it, so nothing catches it, and the audit crawl only measures words and clipping.
+  - Suggested solution: One PR (Sonnet). 1) Find the cause for the promotion buttons and the goal pill (likely a tall `min-height` or fixed height without flex centring or with unequal padding or line-height), and fix it in the shared button, pill and bar CSS, not per screen. 2) Add a UI.md rule: text inside buttons, pills and bars is vertically centred, with a bar of at most 2 px between the space above and below the text. Add a matching line to the UI.md review checklist. Log it in `decisions/vcenter.md`. 3) Run an all-pages check: reuse `/mnt/project-files/audit/ui-rules-2026-11-01/audit.spec.ts` at 320 and 412 px in EN and ID, and measure each button, pill and bar label's top and bottom gap inside its box (use a `Range` over the text node). Save screenshots under `/mnt/project-files/audit/vcenter-2026-11-01/` and list every failing screen and element here before fixing. 4) Turn the measure into a CI check beside the rule 13 scan so it stays fixed.
+  - Source: Hari, 2026-11-01, screenshot.
+  - `[ ] open · — · — · done when:` the measure finds 0 labels off-centre by more than 2 px on every audited screen at 320 and 412 px in EN and ID, and UI.md has the rule and checklist line.
+
 ### Later
 
 - [ ] **Fix the remaining scorecard Fails that have a clear cause.**
