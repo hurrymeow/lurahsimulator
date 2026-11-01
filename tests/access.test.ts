@@ -39,6 +39,18 @@ describe('road access', () => {
     expect(w.noRoad).toBe(true);
   });
 
+  it('a Wifi Tower needs no path, while a warung in the same spot does', () => {
+    const s = newGame(1);
+    const wifi = addBuilding(s, 'wifi', 0, 0, 'active');
+    refreshAccess(s);
+    expect(wifi.noRoad).toBeUndefined();
+    expect(isWorking(wifi)).toBe(true);
+    const warung = addBuilding(s, 'warung', 0, 0, 'active');
+    refreshAccess(s);
+    expect(warung.noRoad).toBe(true);
+    expect(isWorking(warung)).toBe(false);
+  });
+
   it('a path island that never touches the kantor does not count', () => {
     const s = newGame(1);
     const w = addBuilding(s, 'warung', 0, 0, 'active');

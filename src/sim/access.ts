@@ -12,7 +12,7 @@ const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 export const isRoadPiece = (b: Building) => ROADS.has(b.def) && b.status === 'active';
 const isHub = (b: Building) => b.def.startsWith('kantor');
 /** RW and Kelurahan buildings stand on seam lots, which are roads already. */
-const needsRoad = (b: Building) => !FLAT.has(b.def) && def(b.def).category !== 'decoration' && !isHub(b) && (def(b.def).scope ?? 'rt') === 'rt';
+const needsRoad = (b: Building) => !def(b.def).roadless && !FLAT.has(b.def) && def(b.def).category !== 'decoration' && !isHub(b) && (def(b.def).scope ?? 'rt') === 'rt';
 
 /** Tiles a walker or a delivery can stand on: active paths and the dirt seams between cells. */
 export function roadTiles(s: GameState): Uint8Array {

@@ -109,6 +109,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
     requires: { population: 8 },
     mangkrakChance: 0.25,
     jobSlots: { ojol: 3, influencer: 2, buzzer: 2 },
+    roadless: true,
     sprite: 'wifi',
   },
   {
