@@ -155,6 +155,12 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: from year 2 the year-end notice is a banner card, "PERHATIAN: Biaya hidup naik {x}% tahun ini", with one reason a year from the bank in section 4 of `decisions/staff-requests.md`, never the same twice in a row, in ID and EN.
   - Source: voidinside99, 2026-11-01
   - `open · — · — · done when:` the banner shows every year from year 2 with a fresh reason, within UI.md rule 13.
+- [ ] **Make the construction crane sit inside its building footprint.**
+  - Problem: During the build phase the tall striped crane tower and its arm overflow the building footprint, float over neighbouring trees, cover the "1" badges, and the half-built box under it looks messy. Seen in Hari's screenshot of 2026-11-01.
+  - Why: UI.md rule 17 says map art stays in its footprint. The crane shadow was fixed in #221, but the crane itself still breaks the rule and reads as clutter at phone width.
+  - Suggested solution: Draw the crane and its scaffold within the building's own tiles, with a smaller tower and a shorter arm. Keep the "1" badges clear of the crane. Check the half-built box so it reads as a clean scaffold. See `decisions/crane-phases.md` (#164) for the phase design.
+  - Source: Hari, 2026-11-01 (screenshot)
+  - `open · — · — · done when:` the crane stays inside its footprint, the badges read clearly, and build-phase screenshots at 320 and 412 px show no overflow in both languages.
 
 ## Done
 
