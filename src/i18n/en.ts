@@ -120,6 +120,7 @@ export const EN = {
   'goal.short.stempel': 'letters are piling up: run a Calo job or build a Balai RW',
   'goal.short.wait': 'wait for {name} to open',
   'goal.step': 'Next step: {step}',
+  'goal.stempelHelp': 'Neighbour RTs send you a letter for each build. Each letter needs a Stempel. You get {base} a month, +{perBalai} per Balai RW.',
   'grow.auto': 'Auto-dana',
   'grow.autoHelp': 'Off. Turn it on to keep this RT funded every week without tapping.',
   'grow.autoKeep': 'Keep {n}',
