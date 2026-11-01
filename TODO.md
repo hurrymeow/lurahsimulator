@@ -163,6 +163,12 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
   - Suggested solution: Draw the crane and its scaffold within the building's own tiles, with a smaller tower and a shorter arm. Keep the "1" badges clear of the crane. Check the half-built box so it reads as a clean scaffold. See `decisions/crane-phases.md` (#164) for the phase design.
   - Source: Hari, 2026-11-01 (screenshot)
   - `open · — · — · done when:` the crane stays inside its footprint, the badges read clearly, and build-phase screenshots at 320 and 412 px show no overflow in both languages.
+- [ ] **Show a how-to hint for every goal when it is tapped open.**
+  - Problem: The tapped goal line says what to reach, but not how to reach it. Hari could not tell how to win "menang peringkat tahunan wilayah 1 kali" (win a yearly wilayah ranking once). The "Langkah berikut" hint under it talked about Warung Sembako and residents, which is unrelated.
+  - Why: A player who cannot see the next action stops playing or quits the goal. Hari asked for the hint in the tapped state, so it does not add clutter to the strip.
+  - Suggested solution: In the expanded goal state, add one plain line per goal type that names the action (what to build, what to keep, which ranking to win). The hint must match the goal's own condition, not the next stage's. Generalise the Stempel work in `docs/plans/stempel-goal-actionable.md` (T2 matching hint, T4 tap explainer) from that one goal to every goal type. Write the line in EN and ID, and keep it within UI.md rule 13 word limits.
+  - Source: Hari's playtest screenshot, 2026-11-01 (project thread "Add goal how-to hints to TODO")
+  - `open · — · — · done when:` every goal type shows a matching how-to line in the tapped state, in EN and ID, with no clipping at 320px, and the goal tests cover each type.
 
 ## Done
 
