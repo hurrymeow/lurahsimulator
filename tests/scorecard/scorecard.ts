@@ -320,7 +320,9 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
         continue;
       }
       const ratio = Math.max(...ms) / Math.min(...ms);
-      if (ratio > 1.3) { ok = false; parts.push(`${STAR_NAMES[i]} ${ratio.toFixed(2)}x`); }
+      // A gap under two minutes is too small to feel, whatever the ratio (RT 1★ takes 18 to 100 seconds).
+      const gapSeconds = (Math.max(...ms) - Math.min(...ms)) * SECONDS_PER_TICK;
+      if (ratio > 1.3 && gapSeconds >= 120) { ok = false; parts.push(`${STAR_NAMES[i]} ${ratio.toFixed(2)}x`); }
     }
     // The cheapskate is never stranded: it reaches RT 2★ in at least half the seeds, and a builder can always take over its game.
     const cheap = runsOf(runs, 'cheapskate');
@@ -328,7 +330,7 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
     if (Number.isNaN(starMedian(cheap, 1))) cheapBad.push(`RT 2★ reached in ${reached(cheap, 1)} of ${cheap.length} seeds`);
     const cheapStuck = takeovers.filter((t) => t.from === 'cheapskate' && !t.gained);
     if (cheapStuck.length) cheapBad.push(`${cheapStuck.length} takeovers did not progress`);
-    add(17, 'No dominant strategy', 'T1', verdict(ok && cheapBad.length === 0), `Slowest over fastest of builder, shopkeeper, safety-first and Pencitraan (bar 1.3x): ${parts.length ? parts.join(', ') : 'all within'}. Cheapskate never stranded (reaches RT 2★, every takeover progresses): ${cheapBad.length ? cheapBad.join(', ') : 'yes'}. "No bot wins every metric" is not checked.`);
+    add(17, 'No dominant strategy', 'T1', verdict(ok && cheapBad.length === 0), `Slowest over fastest of builder, shopkeeper, safety-first and Pencitraan (bar 1.3x, and a gap of at least 2 min): ${parts.length ? parts.join(', ') : 'all within'}. Cheapskate never stranded (reaches RT 2★, every takeover progresses): ${cheapBad.length ? cheapBad.join(', ') : 'yes'}. "No bot wins every metric" is not checked.`);
   }
 
   // 18. Every choice has a cost.

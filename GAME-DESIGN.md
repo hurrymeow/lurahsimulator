@@ -680,7 +680,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing
 - **Good:** several plans reach the stars. They differ in score, meters or ending, not only speed.
 - **Bad:** one build order that wins on every metric.
 - **Evidence:** T1. Builder, shopkeeper, safety-first and Pencitraan bots.
-- **Pass:** no bot wins every metric. For each star, slowest over fastest ≤1.3. The cheapskate bot has its own bar: it is never stranded. It reaches RT 2★ in at least half the seeds, and a builder bot can take over its game and still progress. It does not have to reach RT 3★, because neglect is allowed to cost the player (Hari, 2026-11-01).
+- **Pass:** no bot wins every metric. For each star, slowest over fastest ≤1.3, unless the gap is under 2 minutes (too small to feel; Hari, 2026-11-01). The cheapskate bot has its own bar: it is never stranded. It reaches RT 2★ in at least half the seeds, and a builder bot can take over its game and still progress. It does not have to reach RT 3★, because neglect is allowed to cost the player (Hari, 2026-11-01).
 
 #### 18. Every choice has a cost
 - **Ask:** does each event option trade something?
