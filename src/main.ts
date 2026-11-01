@@ -19,7 +19,7 @@ import { seeAllTips, setupTips } from './ui/tips';
 import { openSettings } from './ui/settings';
 import { openNeighbours } from './ui/neighbours';
 import { openMenu } from './ui/menu';
-import { closeSheet } from './ui/sheet';
+import { closeSheet, scrimTap } from './ui/sheet';
 import { setupBack } from './ui/back';
 import { registerSystems } from './systems';
 import { setupConsole } from './ui/console';
@@ -52,7 +52,7 @@ $('place-cancel').addEventListener('click', () => app.stopPlacing());
 $('place-exit').addEventListener('click', () => app.stopPlacing());
 $('place-rot').addEventListener('click', () => app.rotatePlacing());
 $('place-ok').addEventListener('click', () => app.confirmPlace());
-$('scrim').addEventListener('click', closeSheet);
+$('scrim').addEventListener('click', scrimTap);
 
 setupInstall(installBtn, (text) => app.modal({ title: t('install.title'), body: text, tone: 'info' }));
 app.refresh();
