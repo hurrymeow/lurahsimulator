@@ -24,7 +24,7 @@ const jobless = (s: GameState): number => s.residents.filter((r) => r.job === 'n
  * What a player does when the pinjol meter says too many households are idle: stop adding homes and build places that
  * give work, one a week, beside a road, until the jobless share is down.
  */
-export function kecWeek(s: GameState, seam: { x: number; y: number }[], all: { x: number; y: number }[], jobShare = 0.2, stage: 'kelurahan' | 'kecamatan' = 'kecamatan'): void {
+export function kecWeek(s: GameState, seam: { x: number; y: number }[], all: { x: number; y: number }[], jobShare = 0.1, stage: 'kelurahan' | 'kecamatan' = 'kecamatan'): void {
   const short = jobless(s) > jobShare;
   // The Kecamatan asks for 250 residents, so a player stops adding homes a little past that: every resident drains Popularitas.
   const full = population(s) >= (stage === 'kecamatan' ? KEC_POP_CAP : KEL_POP_CAP);
@@ -58,7 +58,7 @@ export interface KecRun {
  * A Kecamatan bot: plays the Kelurahan routine to 3 stars on Auto-dana, takes the promotion, then keeps the same routine
  * and adds the Kecamatan buildings. It runs a razia while pinjol is high and the 3rd star is not yet near.
  */
-export function playKec(seed: number, kelWeeks = 200, kecWeeks = 700, jobShare = 0.2): KecRun {
+export function playKec(seed: number, kelWeeks = 200, kecWeeks = 700, jobShare = 0.1): KecRun {
   const { s, seam, all } = kelSetup(seed, true);
   const run: KecRun = { seed, at: [], pop: 0, pinjol: 0, stars: '', razias: 0 };
   for (let w = 0; w < kelWeeks && s.stage.stars.kelurahan < 3; w++) {

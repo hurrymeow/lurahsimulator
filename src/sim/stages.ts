@@ -8,6 +8,7 @@ import { def, hasDef } from './content';
 import { first } from './firsts';
 import { amanAcross, kecSystem, kelStars, weeksSinceRazia } from './kec';
 import { gain, type Fx } from './gain';
+import { YEARLY_EVERY } from './calendar';
 import { population } from './state';
 import type { GameState, Goal, StageDef, StageId, Stars } from './types';
 
@@ -54,7 +55,8 @@ const GOAL_CHECKS: { [K in Goal['kind']]: (s: GameState, g: Extract<Goal, { kind
   stempelClear: (s) => s.stempel.clear,
   rtsAtStars: (s, g) => [s.stage.stars.rt, ...s.neighbours.map((n) => n.stars)].filter((x) => x >= g.stars).length,
   rwsAtStars: (s, g) => rwStars(s).filter((x) => x >= g.stars).length,
-  tierWins: (s, g) => s.ranking.filter((r) => r.won && (r.tier ?? 'rt') === g.tier).length,
+  // Only the yearly rankings count (every fourth quarterly one), won in that stage since the promotion into it.
+  tierWins: (s, g) => s.ranking.filter((r) => r.won && (r.tier ?? 'rt') === g.tier && r.year % YEARLY_EVERY === 0).length,
   noDebtMonths: (s) => s.debtFree,
   serapanMonths: (s) => s.kel.serapanRun,
   cleanAudits: (s) => s.kel.cleanAudits,

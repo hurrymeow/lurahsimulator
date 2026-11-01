@@ -371,7 +371,7 @@ describe('RW goals and Stempel', () => {
     expect(line(s, 'rtsAtStars').done).toBe(true);
     s.ranking.push({ tier: 'rt', year: 1, us: 9, them: 1, won: true });
     expect(line(s, 'tierWins').done).toBe(false);
-    s.ranking.push({ tier: 'rw', year: 2, us: 9, them: 1, won: true });
+    s.ranking.push({ tier: 'rw', year: 4, us: 9, them: 1, won: true });
     expect(line(s, 'tierWins').done).toBe(true);
   });
 

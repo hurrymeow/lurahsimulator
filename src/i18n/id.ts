@@ -777,7 +777,7 @@ export const ID: Record<Key, string> = {
   'stage.goal.sabar': 'Popularitas minimal {n} (punya {have})',
   'stage.goal.serapanMonths': 'Serapan minimal {pct}% selama {n} minggu (punya {have})',
   'stage.goal.stempelClear': 'Antrean Stempel di bawah {under} selama {n} minggu (punya {have})',
-  'stage.goal.tierWins': '{n} kali menang di peringkat wilayah (punya {have})',
+  'stage.goal.tierWins': '{n} kali menang di peringkat tahunan wilayah (punya {have})',
   'stage.goal.winStreak': '{n} kali menang peringkat berturut-turut (punya {have})',
   'stage.goalShort.amanNow': 'jaga Aman Kecamatan {n}+',
   'stage.goalShort.amanWeeks': 'jaga Aman minimal {min} selama {n} minggu',

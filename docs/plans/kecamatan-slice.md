@@ -32,8 +32,8 @@ Add the first playable Act 2 stage, Kecamatan (Pak Camat), so the run goes past 
 
 - **0★ Pak Camat:** unlocks Kantor Kecamatan, Pos Satpol PP, the pinjol and judol meters, and Bantuan.
 - **Goal for 1★:** build the Kantor Kecamatan; every Kelurahan at 1★; pinjol under **25%** of households; own kampung **250** residents.
-- **Goal for 2★:** every Kelurahan at 2★; **1** Piala Kecamatan win; Aman **60+** across the Kecamatan for **24** weeks; Popularitas **35**.
-- **Goal for 3★:** every Kelurahan at 3★; **3** Piala wins; pinjol under **10%**; Aman **65+** with no razia in the last **48** weeks.
+- **Goal for 2★:** every Kelurahan at 2★; **1** yearly ranking win in the Kecamatan; Aman **60+** across the Kecamatan for **24** weeks; Popularitas **35**.
+- **Goal for 3★:** every Kelurahan at 3★; **3** yearly ranking wins in the Kecamatan; pinjol under **10%**; Aman **65+** with no razia in the last **48** weeks.
 - **3★:** the SK to Pj. Wali Kota arrives. That stage is not built; play continues. Rival: Kecamatan Sebelah.
 
 ## Pacing targets (band B5)

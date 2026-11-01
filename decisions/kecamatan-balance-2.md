@@ -1,0 +1,7 @@
+# Kecamatan balance pass 2 (Hari, 2026-11-01)
+
+- **Popularitas drain in the Kecamatan.** A resident expects 0.6 of what it does elsewhere (`EXPECT_KEC.share`). At 300+ residents the bot's Popularitas sat at 15 to 25 and the 35 bar for 2★ was out of reach. It now holds 40 to 58. Hari picked this over lowering the bar.
+- **Tier-win goals count yearly rankings only.** The ranking runs every 12 weeks, so "3 wins" could take 36 weeks. Only every fourth ranking (week 48, 96, ...) counts now, and only wins in that stage, so a win from an earlier stage never counts. "3 wins" takes about 3 years, about 19 minutes. Hari left this call to the coordinator. It applies to the RW and Kelurahan tier-win goals too. Goal text says "Yearly area ranking wins".
+- **Bot results (seeds 3 and 4, same times).** Kecamatan 1★ at week 113, 2★ at 250, 3★ at 425 after promotion. At 8 s a week that is 56.7 min, inside the 45 to 70 band. The district clock sets it (the slowest district needs 340 / 0.8 = 425 weeks), so a player who meets the goals gets about this time.
+- **Limits.** Seeds 5 and 7 never reached Kelurahan 3★ inside 200 weeks, so they never reached the Kecamatan. That is the Kelurahan bot (known TODO about Popularitas bars), not the Kecamatan. The 10-of-10 check is not met. Run with `KEC_BOT=1 SEEDS=3,4 npx vitest run tests/kec-bot.test.ts`; it takes about 10 minutes a seed, so it is for the nightly job.
+- **Bot fixes.** The bot keeps jobless under 10%, stops homes at 230 residents in the Kelurahan and 270 in the Kecamatan, and pulls down a home to make room for work.

@@ -1,7 +1,7 @@
 import { bBlurb, bName, t, type Key } from '../i18n';
 import {
   ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
-  EXPECT_PER_RESIDENT, NOVELTY_GAP, QUEUE_SABAR_DRAIN, SETORAN_RATE, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, TUKANG_MAX, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
+  EXPECT_KEC, EXPECT_PER_RESIDENT, NOVELTY_GAP, QUEUE_SABAR_DRAIN, SETORAN_RATE, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, TUKANG_MAX, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
 } from './balance';
 import { accessSystem, connectedRoad, hasRoadBeside } from './access';
 import { comboIncomeMult, comboSystem } from './combos';
@@ -127,7 +127,7 @@ export function collectIncome(s: GameState, fx: Fx): void {
 
 /** A bigger kampung expects more. Without this, jobs and policies pin Popularitas at the top. */
 export function expectations(s: GameState, fx: Fx): void {
-  gain(s, fx, 'sabar', -population(s) * EXPECT_PER_RESIDENT);
+  gain(s, fx, 'sabar', -population(s) * EXPECT_PER_RESIDENT * (s.stage.current === 'kecamatan' ? EXPECT_KEC.share : 1));
 }
 
 /** Year 1 safety net: upkeep can never push the kas below zero. */

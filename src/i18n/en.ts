@@ -776,7 +776,7 @@ export const EN = {
   'stage.goal.sabar': 'Popularitas of at least {n} (have {have})',
   'stage.goal.serapanMonths': 'Serapan of at least {pct}% for {n} weeks (have {have})',
   'stage.goal.stempelClear': 'Stempel backlog under {under} for {n} weeks (have {have})',
-  'stage.goal.tierWins': 'Area ranking wins: {have} of {n}',
+  'stage.goal.tierWins': 'Yearly area ranking wins: {have} of {n}',
   'stage.goal.winStreak': 'Ranking wins in a row: {have} of {n}',
   'stage.goalShort.amanNow': 'keep Kecamatan Aman at {n}+',
   'stage.goalShort.amanWeeks': 'keep Aman at {min} or more for {n} weeks',

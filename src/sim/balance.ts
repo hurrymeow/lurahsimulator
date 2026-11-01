@@ -22,6 +22,8 @@ export const SPRAWL_STEP = 0.03;
 export const SETORAN_RATE = 0.1;
 /** Popularitas lost each month per resident: bigger kampung, bigger expectations. */
 export const EXPECT_PER_RESIDENT = 0.14;
+/** In the Kecamatan a resident expects this share as much: 250 residents are a goal there, and 35 Popularitas must stay in reach. */
+export const EXPECT_KEC = { share: 0.6 };
 /** Months without anything new before the pacing director steps in. */
 export const NOVELTY_GAP = 8;
 /** Each Viral point adds this fraction to shop income. */
