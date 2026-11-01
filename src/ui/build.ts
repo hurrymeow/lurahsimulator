@@ -12,6 +12,8 @@ import { h, missingList } from './dom';
 import { storage } from '../storage';
 import { openSheet } from './sheet';
 import { comboBook } from './lists';
+import { bookCombos } from '../sim/combos';
+import { menuIconURL } from './icons';
 
 function spriteImg(name: string, size = 40, level = 1): HTMLImageElement {
   return h('img', { src: isoURL(name, 3, level), alt: '', width: size, height: size, class: 'pixel' });
@@ -42,9 +44,27 @@ function loadSeen(): Set<string> | null {
   }
 }
 
+const COMBO_SEEN_KEY = 'pakrt.comboSeen';
+
+function comboSeen(): Set<string> {
+  try {
+    const v = JSON.parse(storage.get(COMBO_SEEN_KEY) ?? 'null');
+    return new Set(Array.isArray(v) ? v : []);
+  } catch {
+    return new Set();
+  }
+}
+
+/** True when a combo was found since the player last viewed the Combo book. */
+export function hasUnseenCombo(s: GameState): boolean {
+  const seen = comboSeen();
+  return s.discovered.some((id) => !seen.has(id));
+}
+
 /** New game: the next Build screen counts everything on it as already seen. */
 export function resetBuildSeen(): void {
   storage.remove(SEEN_KEY);
+  storage.remove(COMBO_SEEN_KEY);
 }
 
 /** Buildings the player can place now that they have not seen on the Build screen yet. */
@@ -97,26 +117,44 @@ export function openBuild(app: App): void {
     list.replaceChildren(...rows.map(card));
     press(c);
   };
-  // The Combo book is the last tab: combos are made by building, so it sits beside the buildings.
-  // It is not remembered as the last tab, so the next Build still opens on buildings.
-  const showCombos = () => {
-    list.replaceChildren(...comboBook(app));
-    press('combo');
-  };
   for (const c of tabs) bar.append(h('button', { class: 'btn tab', 'data-tab': c, 'aria-pressed': 'false', onclick: () => show(c) }, t(`build.cat.${c}` as Key), visible.some((d) => categoryOf(d) === c && fresh.has(d.id)) ? newTag(true) : null));
-  bar.append(h('button', { class: 'btn tab', 'data-tab': 'combo', 'aria-pressed': 'false', onclick: showCombos }, t('menu.combo')));
   if (tab) show(tab);
-  else showCombos();
   // The two population levers, and what the next star wants, right where the player acts.
   const goal = nextStarChecklist(s)?.find((l) => !l.done);
   const head: Node[] = [
     h('p', { class: 'meta' }, t('pop.line', { pop: population(s), housing: housing(s), attract: attractTarget(s) })),
   ];
   if (goal) head.push(h('p', { class: 'meta' }, t('stage.next', { goal: goal.text })));
-  openSheet(t('build.title'), [...head, bar, list], () => {
+  const onClosed = () => {
     storage.set(SEEN_KEY, JSON.stringify(visible.map((d) => d.id)));
     app.refresh();
-  });
+  };
+  const sheetEl = document.getElementById('sheet') as HTMLElement;
+  // The Combo book is not a building tab: it opens from the header and swaps the sheet body.
+  // It is never remembered, so the next Build still opens on buildings.
+  let buildTop = 0;
+  const showBuild = () => {
+    openSheet(t('build.title'), [...head, bar, list], onClosed, comboButton());
+    sheetEl.scrollTop = buildTop;
+  };
+  const showCombos = () => {
+    buildTop = sheetEl.scrollTop;
+    try {
+      storage.set(COMBO_SEEN_KEY, JSON.stringify(s.discovered));
+    } catch { /* storage may be unavailable */ }
+    const back = h('button', { class: 'btn head-action', id: 'combo-back', onclick: showBuild }, '‹ ', t('build.title'));
+    openSheet(t('menu.combo'), comboBook(app), onClosed, back);
+  };
+  function comboButton(): HTMLElement {
+    const total = bookCombos(s).length;
+    const found = bookCombos(s).filter((c) => s.discovered.includes(c.id)).length;
+    const url = menuIconURL('combo');
+    return h('button', { class: 'btn head-action', id: 'combo-open', 'aria-label': t('combo.open'), onclick: showCombos },
+      url ? h('img', { src: url, alt: '', width: 20, height: 20, class: 'pixel' }) : null,
+      h('span', {}, `${found}/${total}`),
+      hasUnseenCombo(s) ? newTag(true) : null);
+  }
+  showBuild();
 }
 
 export { spriteImg };

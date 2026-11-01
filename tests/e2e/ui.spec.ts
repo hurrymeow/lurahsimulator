@@ -30,10 +30,10 @@ async function openPanel(page: Page, id: string): Promise<void> {
     await page.locator(`#dock-${id}`).click();
     return;
   }
-  // The Combo book is the Build sheet's last tab.
+  // The Combo book opens from a button in the Build sheet header.
   if (id === 'combo') {
     await page.locator('#dock-build').click();
-    await page.locator('#sheet .tabs [data-tab="combo"]').click();
+    await page.locator('#sheet #combo-open').click();
     return;
   }
   await page.locator('#menu-btn').click();
@@ -663,7 +663,7 @@ test.describe('events, ranking, settings', () => {
       await expect(t).toContainText(WORDS[lang()].onOff);
     }
     await expectLegible(page, 'settings toggled');
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     await expectLegible(page, 'game with every setting flipped');
     await page.reload();
     await passHome(page);
@@ -708,7 +708,7 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#sheet .sheet-head h2')).toHaveText('Settings');
     await expect(page.locator('#sheet [data-lang="en"]')).toHaveAttribute('aria-pressed', 'true');
     await expectLegible(page, 'settings after switching to English');
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     await expect(page.locator('#place-ok')).toHaveText('Place');
     await expect(page.locator('#pause-btn')).toHaveAttribute('aria-label', 'Pause');
     await page.reload();
@@ -730,11 +730,11 @@ test.describe('events, ranking, settings', () => {
     await expectLegible(page, 'large text main');
     await page.locator('#menu-btn').click();
     await expectLegible(page, 'large text menu');
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     for (const id of ['build', 'warga', 'wacana', 'combo']) {
       await openPanel(page, id);
       await expectLegible(page, `large text ${id}`);
-      await page.locator('.sheet-head .btn').click();
+      await page.locator('.sheet-head .btn-icon').click();
     }
   });
 
@@ -935,26 +935,26 @@ test.describe('text is legible and never cut off', () => {
 
     await page.locator('#menu-btn').click();
     await expectLegible(page, 'Menu');
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
 
     const panels = [['build', 'Build'], ['warga', 'Residents'], ['wacana', 'Policies'], ['combo', 'Combo'], ['log', 'Log'], ['stats', 'Ranking'], ['settings', 'Settings']] as const;
     for (const [id, name] of panels) {
       await openPanel(page, id);
       await expect(page.locator('#sheet')).toBeVisible();
       await expectLegible(page, `${name} panel`);
-      await page.locator('.sheet-head .btn').click();
+      await page.locator('.sheet-head .btn-icon').click();
     }
 
     await page.locator('#menu-btn').click();
     await page.locator('#act-stats').click();
     await expectLegible(page, 'Stats panel');
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
 
     // The toast opens the Log on tap while it shows.
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.toast());
     await page.locator('#ticker').click();
     await expectLegible(page, 'Log panel');
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
   });
 
   test('building inspector for every status', async ({ page }) => {
@@ -965,7 +965,7 @@ test.describe('text is legible and never cut off', () => {
     for (const uid of uids) {
       await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.inspect(u), uid);
       await expectLegible(page, `inspector uid ${uid}`);
-      await page.locator('.sheet-head .btn').click();
+      await page.locator('.sheet-head .btn-icon').click();
     }
   });
 
@@ -1597,7 +1597,7 @@ test.describe('growing map', () => {
     await expect(page.locator('.sheet .nb-mine .checklist li').first()).toBeVisible();
     await expectLegible(page, 'neighbours with a player-run RT');
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].run)).toBe('player');
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     await dismissModals(page);
     // A tap on its Kantor RT now opens the building, not the Neighbours panel.
     const at = await page.evaluate(async () => {
@@ -1616,7 +1616,7 @@ test.describe('growing map', () => {
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('.sheet')).toBeVisible();
     await expect(page.locator('.sheet .nb-row')).toHaveCount(0);
-    await page.locator('.sheet-head .btn').first().click();
+    await page.locator('.sheet-head .btn-icon').first().click();
     // Hand it back: the AI runs it again.
     await openPanel(page, 'neighbours');
     await page.locator('.sheet .nb-mine [data-handback]').click();
@@ -1658,7 +1658,7 @@ test.describe('Lomba Agustusan', () => {
     await page.locator('#sheet [data-stage="dangdut"]').click();
     await expect(page.locator('#sheet [data-stage="dangdut"]')).toHaveAttribute('aria-pressed', 'true');
     await expectLegible(page, 'lomba panel');
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     // Weeks pass to 17 Agustus; then time waits for the day screen.
     for (let i = 0; i < 12; i++) await page.evaluate(() => { const a = (window as unknown as { pakrt: any }).pakrt; a.s.pendingEvent = null; a.runTick(); });
     expect(await app('a.s.lomba.due')).toBe(true);
@@ -1742,20 +1742,28 @@ test.describe('RW stage', () => {
     await page.locator('#dock-build').click();
     // Build is split into tabs, so walk them until every RW building has shown up.
     const seen = new Set<string>();
-    const tabs = await page.locator('.sheet .tabs [data-tab]:not([data-tab="combo"])').count();
+    const tabs = await page.locator('.sheet .tabs [data-tab]').count();
     for (let i = 0; i < tabs; i++) {
-      await page.locator('.sheet .tabs [data-tab]:not([data-tab="combo"])').nth(i).click();
+      await page.locator('.sheet .tabs [data-tab]').nth(i).click();
       for (const name of ['Balai RW', 'Posyandu', 'Portal', 'Pasar Kaget', 'Gapura']) {
         if (await page.locator('.sheet .card-title strong', { hasText: new RegExp(`^${name}$`) }).count()) seen.add(name);
       }
       if (i === tabs - 1 || seen.size === 5) await expectLegible(page, `RW build menu tab ${i}`);
     }
     expect([...seen].sort()).toEqual(['Balai RW', 'Gapura', 'Pasar Kaget', 'Portal', 'Posyandu']);
-    await page.locator('.sheet .tabs [data-tab="combo"]').click();
+    const closeBox = await page.locator('#sheet .sheet-head .btn-icon').boundingBox();
+    const openBox = await page.locator('.sheet #combo-open').boundingBox();
+    expect(openBox!.height).toBeGreaterThanOrEqual(48);
+    expect(openBox!.x + openBox!.width).toBeLessThanOrEqual(closeBox!.x);
+    await page.locator('.sheet #combo-open').click();
+    expect((await page.locator('#sheet .sheet-head .btn-icon').boundingBox())!.x).toBe(closeBox!.x);
+    const backBox = await page.locator('#combo-back').boundingBox();
+    expect(backBox!.x + backBox!.width).toBeLessThanOrEqual(closeBox!.x);
     await page.locator('.sheet .ls-tile').first().click();
     await expect(page.locator('.sheet').getByText(lang() === 'en' ? /Needs .* within/ : /Butuh .* dalam jarak/).first()).toBeVisible();
     await expectLegible(page, 'RW Combo');
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head #combo-back').click();
+    await page.locator('#sheet .sheet-head .btn-icon').click();
 
     await page.locator('#dock-warga').click();
     await page.locator('.sheet .ls-chip').first().click();
@@ -2045,7 +2053,7 @@ test.describe('build mode', () => {
     const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
     const have = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'rumah').length);
     await expect(rumah.locator('.owned')).toHaveText(lang() === 'en' ? `${have} owned` : `${have} dimiliki`);
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     // Something opens: the dock's Build button and its card both say NEW.
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
@@ -2058,7 +2066,7 @@ test.describe('build mode', () => {
     await page.locator('#dock-build').click();
     await expect(page.locator('#sheet .new-tag').first()).toBeVisible();
     await expectLegible(page, 'build sheet with NEW tags');
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     await expect(page.locator('#dock-build .new-tag')).toHaveCount(0);
   });
 
@@ -2098,7 +2106,7 @@ test.describe('build mode', () => {
     await expectLegible(page, 'wacana and realisasi');
     await page.locator('#sheet .realisasi .btn-primary').last().click();
     await expect(page.locator('#sheet .realisasi .good').last()).toBeVisible();
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     await page.locator('#emas').click();
     await expect(page.locator('#modal .card')).toContainText('Perut');
     // Inem only brings events and her own news, not every card.
@@ -2121,7 +2129,7 @@ test.describe('build mode', () => {
     await page.locator('#sheet .staff-role[data-role="hansip"] .btn').click();
     await page.locator('#sheet .staff-channel[data-channel="online"] .btn').click();
     await expect(page.locator('#sheet .staff-req')).toBeVisible();
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     // The applicants arrive after the wait; a month at a time, clearing any message on the way.
     for (let i = 0; i < 3; i++) {
       if (await page.evaluate(() => ((window as unknown as { pakrt: any }).pakrt.s.lowongan?.applicants?.length ?? 0) > 0)) break;
@@ -2149,7 +2157,7 @@ test.describe('build mode', () => {
     // Online: the second channel, with the shorter wait.
     await page.locator('#sheet .staff-role[data-role="hansip"] .btn').click();
     await page.locator('#sheet .staff-channel[data-channel="online"] .btn').click();
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     const waiting = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.lowongan?.applicants?.length ?? 0);
     for (let i = 0; i < 3 && !(await waiting()); i++) await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
     expect(await waiting()).toBeGreaterThan(0);
@@ -2168,7 +2176,7 @@ test.describe('build mode', () => {
     await expect(page.locator('#modal')).toBeHidden();
     await expect(page.locator('#sheet .staff-applicant').first()).toBeVisible();
     const n = await waiting();
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     // They wait: half a year later they are all still there, and the Menu shows how many.
     for (let i = 0; i < 6; i++) {
       await runMonth(page);
@@ -2182,7 +2190,7 @@ test.describe('build mode', () => {
     await page.locator('#act-staff').click();
     await page.locator('#sheet .staff-applicant .btn-primary').first().click();
     await expect(page.locator('#sheet .staff-card')).toHaveCount(2);
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
   });
 
@@ -2204,7 +2212,7 @@ test.describe('build mode', () => {
       if (await page.evaluate(() => ((window as unknown as { pakrt: any }).pakrt.s.lowongan?.applicants?.length ?? 0) > 0)) break;
       await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
     }
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     await dismissModals(page);
     await openPanel(page, 'staff');
     await page.locator('#sheet .staff-applicant .btn-primary').first().click();
@@ -2220,7 +2228,7 @@ test.describe('build mode', () => {
       app.s.staff.find((x: any) => !x.inem).raiseAsked = true;
       app.refresh();
     });
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     await openPanel(page, 'staff');
     await hired.locator('.btn-primary').click();
     expect(await salary()).toBeGreaterThan(before);
@@ -2523,7 +2531,7 @@ test.describe('zoom, big lots and the Warga list', () => {
       sum += n;
     }
     expect(sum).toBe(all);
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
 
     await openPanel(page, 'warga');
     const people = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.residents.length);
@@ -2560,7 +2568,7 @@ test.describe('zoom, big lots and the Warga list', () => {
     await detail.locator('[data-stat]').first().click();
     await expect(page.locator('.stat-toast')).toBeVisible();
     await expect(page.locator('.stat-toast')).toHaveAttribute('data-plain', '');
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     await openPanel(page, 'wacana');
     // Money in running text is the coin and the amount, never "Rp".
     await expect(page.locator('#sheet .stat-pair', { hasText: /40(rb|k)/ }).first()).toBeVisible();
@@ -2792,7 +2800,7 @@ test.describe('console frame and theme', () => {
     await page.locator('#menu-btn').click();
     await expect(page.locator('#act-build')).toHaveCount(0);
     await expect(page.locator('#act-warga')).toHaveCount(0);
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     // No rail, quick tabs or SYSTEM button from earlier frames.
     for (const id of ['#cs-rail', '#cs-tabs', '#cs-system', '#cs-title']) await expect(page.locator(id)).toHaveCount(0);
     const dark = () => page.evaluate(() => document.documentElement.classList.contains('theme-dark'));
@@ -2811,7 +2819,7 @@ test.describe('console frame and theme', () => {
     await expect(page.locator('#sheet [data-theme="dark"]')).toHaveAttribute('aria-pressed', 'true');
     expect(await dark()).toBe(true);
     await expectLegible(page, 'settings, dark theme');
-    await page.locator('.sheet-head .btn').click();
+    await page.locator('.sheet-head .btn-icon').click();
     await expectLegible(page, 'console frame, dark');
     await page.reload();
     await passHome(page);
@@ -2866,7 +2874,7 @@ test.describe('console frame and theme', () => {
     for (const id of ['build', 'wacana', 'log', 'stats', 'warga', 'settings']) {
       await openPanel(page, id);
       await expect(page.locator('#sheet')).toBeVisible();
-      await page.locator('.sheet-head .btn').click();
+      await page.locator('.sheet-head .btn-icon').click();
       await expect(page.locator('#sheet')).toBeHidden();
     }
   });
