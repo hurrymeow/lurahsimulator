@@ -1810,7 +1810,7 @@ test.describe('RW stage', () => {
 });
 
 test.describe('Kelurahan stage', () => {
-  test('the RW SK offers Kelurahan or Desa, and the Desa path opens its build menu', async ({ page }) => {
+  test('the RW SK offers the Kelurahan', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     await seed(page);
@@ -1837,23 +1837,13 @@ test.describe('Kelurahan stage', () => {
     await page.locator('#stage-btn').click();
     await expect(page.locator('#sk-accept-kelurahan')).toBeEnabled();
     await expectLegible(page, 'path choice');
-    await page.locator('#sk-accept-desa').click();
+    await page.locator('#sk-accept-kelurahan').click();
     await dismissModals(page);
     const got = await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       return { stage: app.s.stage.current, path: app.s.stage.path };
     });
-    expect(got).toEqual({ stage: 'kelurahan', path: 'desa' });
-    await page.locator('#dock-build').click();
-    // Build is split into tabs, so walk them until Balai Desa shows up.
-    const tabs = await page.locator('.sheet .tabs .tab').count();
-    let found = false;
-    for (let i = 0; i < tabs && !found; i++) {
-      await page.locator('.sheet .tabs .tab').nth(i).click();
-      found = (await page.locator('.sheet .card-title strong', { hasText: /^Balai Desa$/ }).count()) > 0;
-    }
-    expect(found).toBe(true);
-    await expectLegible(page, 'Desa build menu');
+    expect(got).toEqual({ stage: 'kelurahan', path: 'kelurahan' });
   });
 });
 

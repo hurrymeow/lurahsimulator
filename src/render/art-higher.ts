@@ -1,6 +1,6 @@
 import { dither, type Painter } from './iso';
 
-// Sprites for the RW and Kelurahan/Desa buildings. Same rules as ART.md: straight isometric
+// Sprites for the RW and Kelurahan buildings. Same rules as ART.md: straight isometric
 // boxes, palette keys, the ink pass from Painter.finish. Registered in iso.ts.
 // Only `import type` from iso.ts, so there is no import cycle.
 
@@ -77,19 +77,6 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
     for (let k = 1; k <= 4; k++) for (const dy of [7, 6]) p.set(ax + k, ay - dy, 'r');
     for (let k = 1; k <= 4; k++) for (const dy of [5, 4]) p.set(ax + k, ay - dy, 'w');
   },
-  balaiDesa: (p) => {
-    p.shadow(2);
-    // A pendopo: open sides under a heavy joglo roof.
-    p.box(2, 8, 'n', (face, u, j) => {
-      if (face === 'T') return undefined;
-      if (j < 1) return 'N';
-      if (u < 0.16 || u > 0.84) return 'N';
-      return j < 6 ? null : 'N';
-    });
-    p.roof(2, 8, 5, 'N', (x, y) => ((x + y) % 4 === 0 ? 'n' : undefined));
-    p.box(8, 3, 'N', undefined, 8);
-    p.roof(8, 11, 4, 'N', (x, y) => ((x + y) % 4 === 0 ? 'n' : undefined));
-  },
   puskesmasPembantu: (p) => {
     p.shadow(2);
     p.box(2, 9, 'w', (face, u, j, i) => {
@@ -147,52 +134,6 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
     });
     p.box(7, 2, 'n', undefined, 7);
     p.box(8, 3, 'r', undefined, 9);
-  },
-  // Desa
-  bumdes: (p) => {
-    p.shadow(2);
-    p.box(2, 9, 't', (face, u, j, i) => {
-      if (face === 'T') return undefined;
-      if (j < 1) return 'N';
-      if (face === 'L' && within(j, 6, 9)) return 'G';
-      if (face === 'L' && within(u, 0.3, 0.7) && within(j, 1, 5)) return i % 3 === 0 ? 'y' : 'k';
-      return windows(face, u, j, i, [3, 5]);
-    });
-    p.roof(2, 9, 5, 'G');
-  },
-  sawahIrigasi: (p) => {
-    p.ground((a, b, px) => {
-      const e = Math.min(a, b, 1 - a, 1 - b);
-      if (e < 0.6 * px) return null;
-      if (within(b, 0.47, 0.53)) return 'l';
-      if (e < 1.8 * px || within(b, 0.4, 0.47) || within(b, 0.53, 0.6)) return 'n';
-      return Math.floor(a * 6) % 2 ? (b < 0.5 ? 'g' : 'a') : (b < 0.5 ? 'G' : 'y');
-    });
-  },
-  embung: (p) => {
-    p.ground((a, b, px) => {
-      const d = Math.max(Math.abs(a - 0.5), Math.abs(b - 0.5));
-      if (d > 0.48) return null;
-      if (d < 0.3) return Math.floor((a + b) * 10) % 4 === 0 ? 'c' : 'l';
-      // A stone lip two pixels wide round the water, at any size.
-      if (d < 0.3 + 2 * px) return 's';
-      return Math.floor(a * 5 + b * 5) % 2 ? 'g' : 'G';
-    });
-    p.overlay.push(dither);
-  },
-  desaWisata: (p) => {
-    p.shadow(3);
-    p.box(3, 7, 'n', (face, u, j) => {
-      if (face === 'T') return undefined;
-      if (j < 1) return 'N';
-      if (u < 0.16 || u > 0.84) return 'N';
-      return j < 5 ? null : 'N';
-    });
-    p.roof(3, 7, 6, 'p', (x, y) => ((x + y) % 4 === 0 ? 'w' : undefined));
-    // Selfie frame out front.
-    p.stroke(-8, -2, -8, -10, 2, 'y');
-    p.stroke(-12, -2, -12, -10, 2, 'y', false);
-    p.stroke(-12, -10, -8, -10, 2, 'y', false);
   },
   // Kecamatan
   kantorKec: (p) => {

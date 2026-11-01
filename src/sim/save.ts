@@ -16,6 +16,8 @@ export function deserialize(raw: string | null): GameState | null {
   try {
     const s = JSON.parse(raw) as GameState;
     if (!s || (s.version !== SAVE_VERSION)) return null;
+    // The Desa path was cut. Its saves cannot load, so the player is asked to start anew.
+    if ((s.stage?.path as string | undefined) === 'desa') return null;
     if (!Array.isArray(s.buildings) || !Array.isArray(s.residents) || typeof s.res?.rupiah !== 'number') return null;
     migrateSelokan(s);
     mendPaths(s);

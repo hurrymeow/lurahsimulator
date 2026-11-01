@@ -13,7 +13,7 @@ export const starRow = (n: number) => '★'.repeat(n) + '☆'.repeat(3 - n);
 export function stageHeader(app: App): HTMLElement {
   const s = app.s;
   const stars = starsOf(s);
-  const title = stageTitle(s.stage.current, stars, s.stage.path);
+  const title = stageTitle(s.stage.current, stars);
   const open = nextStarChecklist(s)?.find((l) => !l.done);
   return h(
     'button',
@@ -31,7 +31,7 @@ export function openStage(app: App): void {
   const body: Node[] = [h('p', { class: 'stage-stars big', 'aria-hidden': 'true' }, starRow(stars))];
   if (lines) {
     body.push(
-      h('h3', {}, t('stage.goalTitle', { title: stageTitle(s.stage.current, stars + 1, s.stage.path) })),
+      h('h3', {}, t('stage.goalTitle', { title: stageTitle(s.stage.current, stars + 1) })),
       h('ul', { class: 'checklist' }, ...lines.map((l) => h('li', { class: l.done ? 'done' : '' }, h('span', { 'aria-hidden': 'true' }, l.done ? '✓' : '○'), ' ', l.text, comboList(app, l.goal.kind)))),
     );
   }
@@ -44,7 +44,6 @@ export function openStage(app: App): void {
           ? [
               h('p', { class: 'meta' }, t('stage.pathBody')),
               h('button', { class: 'btn', id: 'sk-accept-kelurahan', disabled: !canPromote(s), onclick: () => (closeSheet(), app.accept('kelurahan')) }, t('stage.acceptKelurahan')),
-              h('button', { class: 'btn', id: 'sk-accept-desa', disabled: !canPromote(s), onclick: () => (closeSheet(), app.accept('desa')) }, t('stage.acceptDesa')),
             ]
           : [h('button', { class: 'btn', id: 'sk-accept', disabled: !canPromote(s), onclick: () => (closeSheet(), app.accept()) }, t('stage.accept'))]),
         h('button', { class: 'btn', id: 'sk-decline', onclick: () => (declineSK(s), openStage(app)) }, t('stage.decline')),
@@ -54,7 +53,7 @@ export function openStage(app: App): void {
       body.push(h('button', { class: 'btn', id: 'sk-reoffer', onclick: () => (reofferSK(s), openStage(app)) }, t('stage.reoffer')));
     }
   }
-  openSheet(stageTitle(s.stage.current, stars, s.stage.path), body);
+  openSheet(stageTitle(s.stage.current, stars), body);
 }
 
 /** Under a combo goal: every combo of that kind, what it needs, and whether it is active in town. */

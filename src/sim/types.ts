@@ -73,7 +73,7 @@ export interface StageDef {
 export interface StageState {
   current: StageId;
   /** Chosen at the Kelurahan promotion. */
-  path?: 'kelurahan' | 'desa';
+  path?: 'kelurahan';
   /** Stars per stage. They only ever go up. Saves from before Kecamatan lack that key; deserialize fills it. */
   stars: Record<StageId, Stars>;
   /** The SK at 3 stars. Absent until it arrives. Declining keeps the player in the stage. */
@@ -129,7 +129,7 @@ export interface KecState {
   since: number;
 }
 
-/** State only the Kelurahan or Desa stage uses. */
+/** State only the Kelurahan stage uses. */
 export interface KelState {
   /** The year's Anggaran. 0 until the first one arrives. */
   budget: number;
@@ -175,7 +175,7 @@ export interface Neighbour {
   ranking: RankingResult[];
 }
 
-export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'petani' | 'peternak' | 'pengepul' | 'guru' | 'satpam' | 'tukang' | 'panitia' | 'kaderPosyandu' | 'calo' | 'honorer' | 'pendampingDesa';
+export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'petani' | 'peternak' | 'pengepul' | 'guru' | 'satpam' | 'tukang' | 'panitia' | 'kaderPosyandu' | 'calo' | 'honorer';
 
 /** Trouble that has shown up at least once. Some buildings open only when their problem appears. */
 export type ProblemId = 'banjir' | 'jobless' | 'permitQueue' | 'preman';

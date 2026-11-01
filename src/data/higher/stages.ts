@@ -74,13 +74,9 @@ export const KECAMATAN_STAGE: StageDef = {
   ],
 };
 
-/** Titles for the Desa path. Same stars and goals as the Kelurahan. */
-export const DESA_TITLES: [string, string, string, string] = ['Pak Kades', 'Desa Rintisan', 'Desa Berkembang', 'Kades Teladan'];
-
 /** Path buildings by the star that opens them: index 0 opens on 1 star. The 0-star set opens on promotion. */
 export const PATH_UNLOCKS: Record<Path, { start: string[]; stars: [string[], string[], string[]] }> = {
   kelurahan: { start: ['kantorKel'], stars: [['pasar'], ['terminal', 'taman'], []] },
-  desa: { start: ['balaiDesa'], stars: [['bumdes'], ['sawahIrigasi', 'embung', 'desaWisata'], []] },
 };
 
 /** Free on promotion into the stage, on both paths. */

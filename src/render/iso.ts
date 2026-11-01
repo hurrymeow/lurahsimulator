@@ -526,7 +526,7 @@ const ROOF_KEYS: Record<string, RoofShape> = { h: 'hip', g: 'gable', y: 'gableY'
 /** Sprites that draw their own level progression. Everything else gets the upgrade kit. */
 const LEVELLED = new Set(['rumah', 'warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart', 'rumahMakan']);
 /** Ground pieces and the tukang parkir level up without a fence round them. */
-const NO_KIT = new Set(['parkir', 'biopori', 'drain', 'kebunSayur', 'sawah', 'kolamLele', 'kolamIkan', 'taman', 'sawahIrigasi', 'embung', 'aspalUlang', 'jalan', 'selokan']);
+const NO_KIT = new Set(['parkir', 'biopori', 'drain', 'kebunSayur', 'sawah', 'kolamLele', 'kolamIkan', 'taman', 'aspalUlang', 'jalan', 'selokan']);
 
 const ART: Record<string, ArtFn> = {
   // A house in a perumahan. The variant is up to three keys: roof colour, roof shape (h hip, g and
