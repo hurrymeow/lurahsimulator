@@ -147,12 +147,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: `decisions/playtest-sk2.md`
   - `open · — · — · done when:` no 2x2 building stands taller than a 1x1 of its tier, site sprites have no scaled pixels, and `tests/art.test.ts` checks both.
 
-- [ ] **Spread the staff stats: each stat works two roles and risks two.**
-  - Problem: Rajin is the work stat of most roles, so it is the only stat players look at.
-  - Why: every stat should decide something.
-  - Suggested solution: use the table in GAME-DESIGN.md section 4 (Tukang Tagih works on Gaul, Supir on Jujur; Admin Grup WA and Petugas PU risk Lobi; Asisten and Bendahara risk Rajin), with the new mishap texts. Re-lean the specials' stats to their role's new work stat.
-  - Source: `decisions/playtest-sk2.md`
-  - `open · — · — · done when:` each stat is the work stat of two roles and the risk stat of two, in ID and EN, with the staff tests passing.
 - [ ] **CI and test config: flaky reports, English, WebKit, nightly, console-error fixture and canaries.**
   - Problem: a test that passes on retry leaves no record; English is only checked weekly; tests run in Chromium only; there is no nightly workflow.
   - Why: TESTING.md items 2, 9 and 13 fail today, and items 6, 11, 12 and 17 need a nightly run. Items 5 and 15 (merged in from the console-error task): e2e does not fail on `pageerror` or `console.error`, and nothing proves the legibility scan or visual diff can fail.
@@ -193,6 +187,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **Spread the staff stats: each stat works two roles and risks two.** Tukang Tagih works on Gaul, Supir on Jujur; Asisten risks Rajin, Petugas PU and Admin Grup WA risk Lobi; new mishap texts; Om Motivasi and Om Lalu Lintas re-leaned. DeepSeek executor, #260, `docs/plans/staff-stat-spread.md` T1.
 - [x] **Stop the "build Warung Sembako" hint after Warung Sembako is built.** `bestDraw` skips buildings already built. #250, `docs/plans/warung-draw-hint.md`.
 - [x] **Dense housing pays: Rumah 3/4/5, Kos-kosan 10/14, Kontrakan 24/32.** #251, `docs/plans/executor-sonnet-batch.md` T2.
 - [x] **Take level-dependent numbers out of building blurbs.** #238, #239, #248, #249.

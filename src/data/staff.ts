@@ -35,12 +35,12 @@ export interface RoleDef {
 }
 
 export const ROLES: RoleDef[] = [
-  { id: 'asisten', name: 'Asisten', blurb: 'Works a desk at the Kantor and clears the permit queue, folder by folder.', stat: 'lobi', risk: 'jujur', mishap: { res: 'sabar', amount: 2 }, opens: { stage: 'rt', stars: 1 } },
+  { id: 'asisten', name: 'Asisten', blurb: 'Works a desk at the Kantor and clears the permit queue, folder by folder.', stat: 'lobi', risk: 'rajin', mishap: { res: 'sabar', amount: 2 }, opens: { stage: 'rt', stars: 1 } },
   { id: 'hansip', name: 'Hansip', blurb: 'Keeps the gang safe: Aman rises, and a preman on the beat finds work as a guard.', stat: 'rajin', risk: 'gaul', mishap: { res: 'sabar', amount: 2 }, opens: { stage: 'rt', stars: 1 } },
-  { id: 'penagih', name: 'Tukang Tagih Iuran', blurb: 'Finds the warga who are "never home". More iuran comes in.', stat: 'rajin', risk: 'jujur', mishap: { res: 'rupiah', amount: 150_000 }, opens: { stage: 'rt', stars: 1 } },
-  { id: 'pu', name: 'Petugas PU', blurb: 'Fixes damaged buildings on his own, one a week per level.', stat: 'rajin', risk: 'jujur', mishap: { res: 'rupiah', amount: 250_000 }, opens: { stage: 'rt', stars: 3 } },
-  { id: 'adminWa', name: 'Admin Grup WA', blurb: 'Runs the warga group chat: Virality every week, and bad news lands softer.', stat: 'gaul', risk: 'jujur', mishap: { res: 'sabar', amount: 3 }, opens: { stage: 'rt', stars: 3 } },
-  { id: 'supir', name: 'Supir', blurb: 'Drives the official car. Building crews arrive sooner.', stat: 'rajin', risk: 'gaul', mishap: { res: 'sabar', amount: 1 }, opens: { stage: 'rw', stars: 0 } },
+  { id: 'penagih', name: 'Tukang Tagih Iuran', blurb: 'Finds the warga who are "never home". More iuran comes in.', stat: 'gaul', risk: 'jujur', mishap: { res: 'rupiah', amount: 150_000 }, opens: { stage: 'rt', stars: 1 } },
+  { id: 'pu', name: 'Petugas PU', blurb: 'Fixes damaged buildings on his own, one a week per level.', stat: 'rajin', risk: 'lobi', mishap: { res: 'rupiah', amount: 250_000 }, opens: { stage: 'rt', stars: 3 } },
+  { id: 'adminWa', name: 'Admin Grup WA', blurb: 'Runs the warga group chat: Virality every week, and bad news lands softer.', stat: 'gaul', risk: 'lobi', mishap: { res: 'sabar', amount: 3 }, opens: { stage: 'rt', stars: 3 } },
+  { id: 'supir', name: 'Supir', blurb: 'Drives the official car. Building crews arrive sooner.', stat: 'jujur', risk: 'gaul', mishap: { res: 'sabar', amount: 1 }, opens: { stage: 'rw', stars: 0 } },
   { id: 'bendahara', name: 'Bendahara', blurb: 'Keeps the kas. Upkeep leaks less.', stat: 'jujur', risk: 'rajin', mishap: { res: 'rupiah', amount: 300_000 }, opens: { stage: 'kelurahan', stars: 0 } },
   { id: 'sekretaris', name: 'Sekretaris', blurb: 'Knows who to call. Orang Inside every week.', stat: 'lobi', risk: 'jujur', mishap: { res: 'sabar', amount: 3 }, opens: { stage: 'kelurahan', stars: 0 } },
   { id: 'satpol', name: 'Satpol PP', blurb: 'Mans the razia. Rajin makes it work; a low Gaul risks a scuffle.', stat: 'rajin', risk: 'gaul', mishap: { res: 'sabar', amount: 3 }, opens: { stage: 'kecamatan', stars: 0 } },
@@ -152,14 +152,14 @@ export const SPECIAL_CHANCE = 0.3;
 export const SPECIALS: SpecialDef[] = [
   { id: 'pakBreaking', name: 'Pak Breaking', type: 'TV news anchor who pauses... dramatically', role: 'adminWa', stats: { rajin: 45, lobi: 40, jujur: 50, gaul: 80 }, quirk: 'Every announcement is BREAKING: Virality x2.', output: 2 },
   { id: 'mbakGosip', name: 'Mbak Gosip', type: 'Infotainment host', role: 'adminWa', stats: { rajin: 50, lobi: 45, jujur: 30, gaul: 85 }, quirk: 'Leaks your own scandals for Virality.', output: 1.5 },
-  { id: 'omMotivasi', name: 'Om Motivasi', type: 'Success-seminar motivator', role: 'penagih', stats: { rajin: 70, lobi: 55, jujur: 40, gaul: 45 }, quirk: 'Talks warga into paying: iuran collection x1.5.', output: 1.5 },
+  { id: 'omMotivasi', name: 'Om Motivasi', type: 'Success-seminar motivator', role: 'penagih', stats: { rajin: 45, lobi: 55, jujur: 40, gaul: 70 }, quirk: 'Talks warga into paying: iuran collection x1.5.', output: 1.5 },
   { id: 'broKripto', name: 'Bro Kripto', type: 'Crypto flexer', role: 'bendahara', stats: { rajin: 40, lobi: 60, jujur: 25, gaul: 85 }, quirk: 'To the moon: the kas grows, until it does not.', output: 1.3 },
   { id: 'buSinetron', name: 'Bu Sinetron', type: 'Soap-opera mother', role: 'adminWa', stats: { rajin: 55, lobi: 50, jujur: 55, gaul: 50 }, quirk: 'Every bad event zooms in three times.' },
   { id: 'masKonten', name: 'Mas Konten', type: 'Prank content creator', role: 'adminWa', stats: { rajin: 45, lobi: 35, jujur: 35, gaul: 95 }, quirk: 'Virality x1.5, the odd prank costs Popularitas.', output: 1.5 },
   { id: 'pakPurna', name: 'Pak Purna', type: 'Retired senior PNS', role: 'hansip', stats: { rajin: 60, lobi: 90, jujur: 60, gaul: 30 }, quirk: 'Lobi 90. Sleeps through rapat.' },
   // 90s TV and radio types. Types only: never one real person, and never anyone else's character.
   { id: 'bangLawak', name: 'Bang Lawak', type: 'Comic from a campus-radio trio', role: 'adminWa', stats: { rajin: 40, lobi: 45, jujur: 50, gaul: 85 }, quirk: 'Every bad event gets a punchline: Virality x1.5.', output: 1.5 },
-  { id: 'omLaluLintas', name: 'Om Lalu Lintas', type: 'Radio traffic reporter', role: 'supir', stats: { rajin: 75, lobi: 45, jujur: 50, gaul: 45 }, quirk: 'Knows every macet before it happens: crews arrive 1.5x sooner.', output: 1.5 },
+  { id: 'omLaluLintas', name: 'Om Lalu Lintas', type: 'Radio traffic reporter', role: 'supir', stats: { rajin: 50, lobi: 45, jujur: 75, gaul: 45 }, quirk: 'Knows every macet before it happens: crews arrive 1.5x sooner.', output: 1.5 },
   { id: 'buJuruKetik', name: 'Bu Juru Ketik', type: 'Typewriter typist from the old kantor', role: 'asisten', stats: { rajin: 60, lobi: 70, jujur: 65, gaul: 25 }, quirk: 'Ten fingers, carbon paper, no mistakes: folders x1.5.', output: 1.5 },
   { id: 'pakKuis', name: 'Pak Kuis', type: 'TV quiz-show host', role: 'sekretaris', stats: { rajin: 40, lobi: 85, jujur: 40, gaul: 55 }, quirk: 'Every caller wins something: Orang Inside x1.5.', output: 1.5 },
   { id: 'mbakSenam', name: 'Mbak Senam Pagi', type: 'Morning-aerobics instructor', role: 'hansip', stats: { rajin: 80, lobi: 30, jujur: 50, gaul: 70 }, quirk: 'Senam at six in the lapangan: Aman x1.5.', output: 1.5 },
