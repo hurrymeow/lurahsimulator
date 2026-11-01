@@ -11,7 +11,6 @@ const DENSITY_ALLOW: Record<string, Partial<Record<keyof typeof LIMITS, number>>
   'build tab 4': { wordsInView: 99, longestBlock: 24 }, // Build tab 4
   'event': { primary: 2 }, // Event card: two filled choices
   'howto': { wordsInView: 149, longestBlock: 29, wordsAll: 303 }, // How-to card
-  'neighbours': { wordsInView: 151, longestBlock: 32, wordsAll: 1202 }, // Neighbours
   'settings': { primary: 2, wordsInView: 65 }, // Settings
   'staff': { wordsInView: 71 }, // Staff
   'stats': { wordsInView: 86 }, // Stats
@@ -1543,25 +1542,24 @@ test.describe('growing map', () => {
     await dismissModals(page);
     await page.locator('#menu-btn').click();
     await page.locator('#act-neighbours').click();
-    await expect(page.locator('.sheet .action')).toHaveCount(3);
+    await expect(page.locator('[data-nb-row]')).toHaveCount(3);
     await expectLegible(page, 'neighbours panel');
     const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.funded));
-    await page.locator('.sheet .action .btn').first().click();
+    // Each row opens its own detail, where the funding buttons live.
+    await page.locator('[data-nb-row]').first().click();
+    await page.locator('.sheet [data-fund="1"]').click();
     const after = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.funded));
     expect(after[0]).toBe(before[0] + 1);
     await expectLegible(page, 'neighbours panel after funding');
-    // Each RT shows what its next star still needs.
-    await expect(page.locator('.sheet .nb-row').first().locator('.checklist li').first()).toBeVisible();
-    // A big Dana banks six builds and shows the boost they give.
-    const row = page.locator('.sheet .nb-row').first();
-    await row.locator('[data-fund="6"]').click();
+    // A big Dana banks six builds.
+    await page.locator('.sheet [data-fund="6"]').click();
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].funded)).toBe(before[0] + 7);
-    await expect(page.locator('.sheet .nb-row').first().locator('.nb-boost')).toHaveText(lang() === 'en' ? /\+\d+% boost/ : /\+\d+% lebih cepat/);
-    // Auto-dana: pick a level, and it is saved on the RT.
-    await page.locator('.sheet .nb-row').first().locator('[data-auto="6"]').click();
-    await expect(page.locator('.sheet .nb-row').first().locator('[data-auto="6"]')).toHaveAttribute('aria-pressed', 'true');
+    // Auto-dana: one chip cycles Off, 3, 6, 12 and the level is saved on the RT.
+    await page.locator('.sheet .nb-auto .btn').click();
+    await page.locator('.sheet .nb-auto .btn').click();
+    await expect(page.locator('.sheet .nb-auto .btn')).toHaveAttribute('aria-pressed', 'true');
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].autoKeep)).toBe(6);
-    await expectLegible(page, 'neighbours panel with boost and auto-dana');
+    await expectLegible(page, 'neighbour detail with auto-dana');
   });
 
   test('a tap on an AI RT opens the Neighbours panel instead of a build menu', async ({ page }) => {
@@ -1587,7 +1585,7 @@ test.describe('growing map', () => {
     const box = (await page.locator('#map').boundingBox())!;
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('.sheet')).toBeVisible();
-    await expect(page.locator('.sheet .action')).toHaveCount(3);
+    await expect(page.locator('[data-nb-row]')).toHaveCount(3);
   });
 
   test('AI RTs lay Jalan Setapak and their warga walk it, never onto the player lots', async ({ page }) => {
@@ -1628,10 +1626,11 @@ test.describe('growing map', () => {
     });
     await dismissModals(page);
     await openPanel(page, 'neighbours');
-    const first = page.locator('.sheet .nb-row').first();
-    await first.locator('[data-takeover]').click();
-    await expect(page.locator('.sheet .nb-row.nb-mine')).toHaveCount(1);
-    await expect(page.locator('.sheet .nb-mine .checklist li').first()).toBeVisible();
+    await page.locator('[data-nb-row]').first().click();
+    await page.locator('.sheet [data-takeover]').click();
+    await expect(page.locator('.sheet .nb-mine')).toHaveCount(1);
+    await page.locator('.sheet .nb-mine').click();
+    await expect(page.locator('.sheet .checklist li').first()).toBeVisible();
     await expectLegible(page, 'neighbours with a player-run RT');
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].run)).toBe('player');
     await page.locator('.sheet-head .btn-icon').click();
@@ -1652,12 +1651,13 @@ test.describe('growing map', () => {
     const box = (await page.locator('#map').boundingBox())!;
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('.sheet')).toBeVisible();
-    await expect(page.locator('.sheet .nb-row')).toHaveCount(0);
+    await expect(page.locator('[data-nb-row]')).toHaveCount(0);
     await page.locator('.sheet-head .btn-icon').first().click();
     // Hand it back: the AI runs it again.
     await openPanel(page, 'neighbours');
-    await page.locator('.sheet .nb-mine [data-handback]').click();
-    await expect(page.locator('.sheet .nb-row.nb-mine')).toHaveCount(0);
+    await page.locator('.sheet .nb-mine').click();
+    await page.locator('.sheet [data-handback]').click();
+    await expect(page.locator('.sheet .nb-mine')).toHaveCount(0);
     // The toast says what happens next: it builds only with Dana banked.
     await expect(page.locator('#ticker')).toContainText(lang() === 'en' ? 'back with the AI' : 'kembali dijalankan AI');
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].run)).toBeUndefined();
