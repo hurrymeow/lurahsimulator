@@ -1,0 +1,3 @@
+# Blurbs without level numbers (T1)
+
+The blurbs for Pos Ronda, Kos-kosan and Bank Sampah stated exact per-week numbers (`+2 Popularitas`, `1 Popularitas`, `Rp 60rb`, `+0.8 Popularitas`). Those figures are tuning values that can change with balancing, and a blurb that quotes them goes stale or contradicts the numbers the engine actually applies. The three blurbs now describe what the building does (adds Popularitas, houses residents and brings in rent, earns income) without promising a specific amount; the engine's `perMonth`, `income` and `housing` fields remain the single source of truth for the numbers.
