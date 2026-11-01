@@ -1,0 +1,1 @@
+Added `tests/blurb-length.test.ts`, which walks every building definition fed to the game and asserts that its blurb, as rendered in English and Indonesian via `bBlurb`, stays at 25 words or fewer. All existing blurbs pass; `npm run typecheck` and `npm test` are green.
