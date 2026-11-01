@@ -183,7 +183,7 @@ test.describe('opener', () => {
     expect(await scanLegibility(page)).toEqual([]);
   });
 
-  test('a new game walks the first Rumah, shows the goal, and Skip ends it', async ({ page }) => {
+  test('a new game walks the first Rumah, shows the goal, and Got it ends it', async ({ page }) => {
     await page.goto(`/?debug&coach&lang=${lang()}`);
     await passHome(page);
     await page.evaluate(() => document.fonts.ready);
@@ -252,16 +252,19 @@ test.describe('opener', () => {
     await expect(page.locator('#coach')).toBeVisible();
   });
 
-  test('Skip ends the opener for good, even after a reload', async ({ page }) => {
+  test('the opener has no Skip and taps outside the step do nothing', async ({ page }) => {
     await page.goto(`/?debug&coach&lang=${lang()}`);
     await passHome(page);
     await expect(page.locator('#coach')).toBeVisible();
-    await page.locator('#coach-skip').click();
-    await expect(page.locator('#coach')).toBeHidden();
-    await page.reload();
-    await passHome(page);
-    await page.waitForTimeout(600);
-    await expect(page.locator('#coach')).toBeHidden();
+    await expect(page.locator('#coach-skip')).toBeHidden();
+    // Build step: another dock button does nothing.
+    await page.locator('#dock-warga').click({ force: true });
+    await expect(page.locator('#sheet')).toBeHidden();
+    await page.locator('#dock-build').click();
+    await expect(page.locator('#sheet .card-btn').first()).toBeVisible();
+    // Housing step: a different tab does nothing.
+    await page.locator('#sheet .tab:not([data-tab="housing"])').first().click({ force: true });
+    await expect(page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first()).toBeVisible();
   });
 });
 
