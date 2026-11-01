@@ -126,6 +126,7 @@ html.no-effects #dof { display: none; }
 .coach[hidden] { display: none; }
 .coach { pointer-events: none; }
 .coach .btn { pointer-events: auto; }
+.coach .btn[hidden] { display: none; }
 .coach::after { content: ''; position: absolute; bottom: -9px; left: var(--ax, 50%); width: 14px; height: 14px; background: var(--surface); border-right: 2px solid #fbbf24; border-bottom: 2px solid #fbbf24; transform: rotate(45deg); }
 .coach.arrow-up::after { top: -9px; bottom: auto; transform: rotate(225deg); }
 .coach.no-arrow::after { display: none; }

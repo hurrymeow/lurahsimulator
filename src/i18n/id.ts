@@ -43,7 +43,6 @@ export const ID: Record<Key, string> = {
   'coach.menu': 'Hai {pt} {pn}, saya Inem, asisten Anda. Ayo bikin {pk} sejahtera sebelum 2045. Mulai dari rumah: ketuk Bangun.',
   'coach.pick': 'Pilih Rumah. Satu rumah punya tempat untuk 3 warga baru.',
   'coach.place': 'Ini tempat yang pas. Ketuk Pasang, atau geser ke tempat lain.',
-  'coach.skip': 'Lewati',
   'coach.tile': 'Sekarang ketuk petak kosong dekat jalan.',
   'combo.anywhere': 'seluruh RW',
   'combo.atLevel': '{name} (level {n}+)',

@@ -42,7 +42,6 @@ export const EN = {
   'coach.menu': "Hi {pt} {pn}, I'm Inem, your assistant. Let's make {pk} sejahtera by 2045. Start with a house: tap Build.",
   'coach.pick': 'Pick Rumah. One house has beds for 3 more residents.',
   'coach.place': 'Here is a good spot. Tap Place, or drag it somewhere else.',
-  'coach.skip': 'Skip',
   'coach.tile': 'Now tap a free spot, close to the road.',
   'combo.anywhere': 'the whole RW',
   'combo.atLevel': '{name} (level {n}+)',
