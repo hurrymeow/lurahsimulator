@@ -16,6 +16,7 @@ import { JOBS } from '../src/data/jobs';
 import { STAGES } from '../src/data/stages';
 import { HIGHER_ART } from '../src/render/art-higher';
 import { ID_HIGHER_DATA } from '../src/i18n/higher-id';
+import { promote } from '../src/sim/grow';
 import { nextStarChecklist } from '../src/sim/stages';
 import { newGame } from '../src/sim/state';
 
@@ -109,5 +110,16 @@ describe('RW and Kelurahan content', () => {
     expect(lines).toEqual(['Fund 3 neighbouring RTs once (have 0)', 'Keep Stempel letters waiting under 5 for 6 weeks (held 0, 0 waiting now)']);
     s.stage.stars.rw = 2;
     expect(nextStarChecklist(s)!.map((l) => l.text)[1]).toBe('2 RTs at 3★ or above (have 0)');
+  });
+
+  it('marks the Stempel goal as on track while its backlog is under the limit', () => {
+    const s = newGame(1);
+    promote(s, []);
+    for (const n of s.neighbours) n.everFunded = true;
+    const line = () => nextStarChecklist(s)!.find((l) => l.goal.kind === 'stempelClear')!;
+    expect(line().done).toBe(false);
+    expect(line().holding).toBe(true);
+    s.stempel.backlog = 5;
+    expect(line().holding).toBe(false);
   });
 });

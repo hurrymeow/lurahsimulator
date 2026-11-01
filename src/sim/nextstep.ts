@@ -1,5 +1,6 @@
 import { COMBOS } from '../data/combos';
 import { bName, cName, t } from '../i18n';
+import { STEMPEL } from './balance';
 import { def } from './content';
 import { parseNeed } from './combos';
 import { requirementGaps } from './rules';
@@ -44,7 +45,7 @@ function comboGoalOpen(s: GameState): boolean {
   return (nextStarChecklist(s) ?? []).some((l) => !l.done && l.goal.kind === 'combos');
 }
 
-export type StepKind = 'house' | 'combo' | 'desk' | 'wait' | 'beds' | 'draw';
+export type StepKind = 'house' | 'combo' | 'desk' | 'wait' | 'beds' | 'draw' | 'stempel';
 
 /** True when the player can post a lowongan for an Asisten right now: the role is open, a slot is free, none is posted. */
 const canPostDesk = (s: GameState): boolean =>
@@ -57,6 +58,13 @@ const canPostDesk = (s: GameState): boolean =>
  */
 export function nextStep(s: GameState): { kind: StepKind; text: string } | null {
   if (!s.buildings.some((b) => b.def === 'rumah')) return { kind: 'house', text: t('goal.short.house') };
+  // Past the RT, a star that waits only on Stempel gets the Stempel step: say nothing else while it does.
+  if (s.stage.current !== 'rt') {
+    const open = nextStarChecklist(s)?.filter((l) => !l.done) ?? [];
+    if (open.length > 0 && open.every((l) => l.goal.kind === 'stempelClear')) {
+      return s.stempel.backlog >= STEMPEL.clearUnder - 1 ? { kind: 'stempel', text: t('goal.short.stempel') } : null;
+    }
+  }
   if ((s.month >= COMBO_HINT_MONTH && (s.discovered.length === 0 || comboGoalOpen(s))) || starWaitsOnCombo(s)) {
     const c = easiestCombo(s);
     if (c) return { kind: 'combo', text: t('goal.short.combo', { name: c.name, pieces: c.pieces }) };
