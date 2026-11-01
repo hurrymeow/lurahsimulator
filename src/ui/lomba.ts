@@ -51,7 +51,7 @@ export function openLomba(app: App): void {
     );
   });
   const stages = h('div', { class: 'row lomba-stages' }, ...STAGES_17.map((st, i) =>
-    h('button', { class: `btn ${l.stage === i ? 'btn-primary' : ''}`, 'data-stage': st.id, 'aria-pressed': String(l.stage === i), onclick: () => {
+    h('button', { class: 'btn btn-choice', 'data-stage': st.id, 'aria-pressed': String(l.stage === i), onclick: () => {
       const why = setStage(s, i);
       if (why) app.notice({ title: t('lomba.title'), body: why, tone: 'bad' });
       redo();
@@ -60,8 +60,8 @@ export function openLomba(app: App): void {
   const staff = s.staff ?? [];
   const k = ketua(s);
   const ketuas = h('div', { class: 'row lomba-ketua' },
-    h('button', { class: `btn ${!k ? 'btn-primary' : ''}`, 'aria-pressed': String(!k), 'data-ketua': 'none', onclick: () => { setKetua(s, undefined); redo(); } }, t('lomba.noKetua')),
-    ...staff.map((x) => h('button', { class: `btn ${k?.id === x.id ? 'btn-primary' : ''}`, 'aria-pressed': String(k?.id === x.id), 'data-ketua': String(x.id), onclick: () => { setKetua(s, x.id); redo(); } },
+    h('button', { class: 'btn btn-choice', 'aria-pressed': String(!k), 'data-ketua': 'none', onclick: () => { setKetua(s, undefined); redo(); } }, t('lomba.noKetua')),
+    ...staff.map((x) => h('button', { class: 'btn btn-choice', 'aria-pressed': String(k?.id === x.id), 'data-ketua': String(x.id), onclick: () => { setKetua(s, x.id); redo(); } },
       h('span', {}, x.name), h('span', { class: 'meta' }, t('lomba.ketuaStats', { rajin: x.stats.rajin, gaul: x.stats.gaul })))),
   );
   openSheet(t('lomba.title'), [
