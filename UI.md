@@ -15,7 +15,7 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 ### Legibility
 
 4. **Body text is 16px or more, contrast 4.5:1 or more.** Disabled buttons stay readable, never faded. Reason: glare and small screens.
-5. **Nothing clips, ellipsizes or leaves the screen** at 320, 360, 412 and 430px, in English and Indonesian. Indonesian runs longer, so 320px in Indonesian is the stress case. There are no exceptions: text that does not fit is rewritten shorter, never cut with "…". Known fails on 2026-11-01: the goal pill and the Combo card effect still clamp (`data-clamp`); the scan skips them until they are fixed.
+5. **Nothing clips, ellipsizes or leaves the screen** at 320, 360, 412 and 430px, in English and Indonesian. Indonesian runs longer, so 320px in Indonesian is the stress case. There are no exceptions: text that does not fit is rewritten shorter, never cut with "…". Known fail on 2026-11-01: the Combo card effect still clamps (`data-clamp`); the scan skips it until it is fixed. The goal pill wraps to at most two lines and has no clamp.
 6. **One icon, one meaning, a familiar shape,** always with a label or a number. Colour never carries meaning alone.
 
 ### Text
@@ -175,7 +175,7 @@ Kairosoft's wiki pages cover mechanics, not UI, and most Kairosoft games are lan
 - **Sub-checks:**
   - Date, Rupiah, goal pill and the 2045 meter are inside the viewport at all four widths, both languages, both themes.
   - Each readout's text is at least the rule 4 size.
-  - The goal pill shows its whole first line, clamped only as UI.md rule 5 allows.
+  - The goal pill shows its whole goal, wrapped to at most two lines, with no ellipsis.
   - Each alarm state (Rupiah below 0, preman present, Sabar falling) puts an icon on the affected number.
 - **Pass:** all sub-checks. No more than **9** readouts in the two top rows.
 
