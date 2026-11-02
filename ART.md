@@ -42,9 +42,11 @@ No third-party art or names. Everything is drawn in code.
 - Trees are sturdy: trunks at least 4 art pixels wide, crowns made of 2 or 3 overlapping clumps
   or at least 3-pixel-thick fronds (`Painter.leaf`). No 1-pixel stems.
 - Scenery trees (the woods round the kampung and on the islands, not a tree the player builds) are
-  the one sprite drawn smaller: the same art resampled once to 70% on whole art pixels, nearest
-  pixel, so the land can be thickly wooded (`TREE_SCALE` in `map.ts`, playtest 2026-11-02). The view
-  still scales them by a whole number. Their trunks come out about 3 pixels wide.
+  the one sprite drawn smaller: the same art resampled once on whole art pixels, nearest pixel, so the
+  land can be thickly wooded (`smallTree` in `map.ts`, playtest 2026-11-02). Palms (kelapa) are all
+  70%; every other scenery tree has its own size from 50% to 90% in 5% steps, so a stand of woods
+  reads as old and young trees together. The view still scales them by a whole number. Their trunks
+  come out 2 to 4 pixels wide.
 - Big buildings read wide, not tall. A 2x2 building is no taller than a 1x1 of its tier: its size
   shows as width, a long low roof and a deep front, never as a house scaled up (playtest
   2026-11-01: Gudang Material and Koperasi looked like a Rumah blown up). The same goes for 1x2 and
@@ -310,8 +312,15 @@ control map and index-map shader (`src/render/terrain.ts`, `controlAt` and `grou
 
 - Behind the ring road the land rolls into real hills: each tile is two flat-lit triangles over its
   corner heights, drawn back to front, with a soft grid line along every tile edge, like an old
-  train-and-city builder's map. The kampung, the ring road, the front sawah and the coast stay flat,
-  so plots, taps and the beach cliff never change.
+  train-and-city builder's map. The kampung, the ring road and the coast stay flat, so plots, taps
+  and the beach cliff never change. The front sawah is flat but for its karst knolls.
+- Karst knolls ring the kampung a few tiles past the ring road on every side, front sawah included:
+  steep, round-topped limestone hills like those of Gunung Kidul, part of the same corner-height
+  mesh. Steep facets show bare limestone (`batu`: `#9c958a` to `#c2baac` in 3px ledges, dark cracks
+  `#7d756b`, tufts of green), the rounded top carries a green cap of forest. They keep clear of the
+  coast, the volcanoes, the neighbours' roofs and the Kecamatan's district blocks; front knolls are
+  smaller, since the sawah there is narrow. A thick ring of trees stands at each knoll's foot behind
+  and beside it, thinning to bushes on the side facing the viewer so the limestone shows.
 - Toward the volcanoes the hills carry terraces: kebun teh on the left, sawah terasering on the
   right. Each terrace is a band of the real hill height. Its riser is a lit rim over a dark line,
   steps alternate light and dark, and slopes facing the top left are lit.

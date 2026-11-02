@@ -116,9 +116,10 @@ export function layoutWorld(): void {
   controls = null;
   macros = null;
   cloudList = null;
+  placeKnolls();
 }
 
-type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' | 'teh' | 'teras' | 'tanah' | 'abu';
+type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' | 'teh' | 'teras' | 'tanah' | 'abu' | 'batu';
 
 /**
  * Twin volcanoes on the island's back corner, part of the same corner-height mesh as the hills, so they
@@ -129,6 +130,79 @@ const VOLCS = [
   { a: -6.5, b: -3.5, r: 6.5, h: 156 },
   { a: -3, b: -7.5, r: 5.5, h: 120 },
 ];
+/**
+ * Karst knolls round the kampung: steep, round-topped limestone hills like the ones that rise out of
+ * the rice fields of Gunung Kidul. A ring of them stands a few tiles past the ring road on every
+ * side, clear of the coast, the volcanoes, the neighbours' roofs and the Kecamatan's district blocks.
+ * a, b: centre tile; r: foot radius in tiles; h: height in art pixels; s: squash and turn.
+ */
+let knolls: { a: number; b: number; r: number; h: number; sx: number; rot: number }[] = [];
+/** Knolls that reach each tile, keyed by tile, so a pixel only tests the few near it. */
+const knollsAt = new Map<number, number[]>();
+const tileKey = (tx: number, ty: number) => (tx + 512) * 1024 + ty + 512;
+function placeKnolls(): void {
+  knolls = [];
+  knollsAt.clear();
+  const ext = ringExt();
+  const blocked = (a: number, b: number, r: number) =>
+    coastAt(a, b) > -(r * 0.6 + 0.4) ||
+    volcano(a, b).h > 30 ||
+    knolls.some((k) => Math.hypot(k.a - a, k.b - b) < k.r + r + 1) ||
+    farRoofs().some((f) => Math.hypot(f.x + 0.5 - a, f.y + 0.5 - b) < r + 0.4) ||
+    ringBlocks().some((k) => a > k.x - r - 1 && b > k.y - r - 1 && a < k.x + RING_SIDE + r + 1 && b < k.y + RING_SIDE + r + 1);
+  // Walk round the ring road and drop knolls at hashed gaps and distances.
+  const W = GRID_W + ext;
+  const H = GRID_H + ext;
+  const perim = 2 * (W + H) + 8;
+  for (let i = 0, s = 0; s < perim && i < 200; i++) {
+    s += 1.5 + hash(i, 701) * 2.5;
+    // Smaller knolls on the front sides, where the sawah between the ring road and the sea is narrow.
+    const front = s >= W + 2 && s < 2 * W + H + 6;
+    const r = front ? 0.9 + hash(i, 702) * 0.6 : 1.2 + hash(i, 702) ** 1.5 * 1.6;
+    const gap = front ? 1.2 + r + hash(i, 703) * 2 : 1.4 + r * 0.8 + hash(i, 703) * 3;
+    // A point on the road loop, then out from it.
+    let a: number;
+    let b: number;
+    if (s < W + 2) [a, b] = [s - 1, -1 - gap];
+    else if (s < W + H + 4) [a, b] = [W + gap, s - W - 3];
+    else if (s < 2 * W + H + 6) [a, b] = [2 * W + H + 5 - s, H + gap];
+    else [a, b] = [-1 - gap, perim - s - 1];
+    if (blocked(a, b, r)) continue;
+    knolls.push({ a, b, r, h: Math.min(72, 10 + r * (16 + hash(i, 704) * 12)), sx: 0.7 + hash(i, 705) * 0.6, rot: hash(i, 706) * Math.PI });
+  }
+  // Index each knoll on every tile within its reach (the tree ring runs out to 2.4 radii, squashed up to 1.43x).
+  knolls.forEach((k, i) => {
+    const reach = Math.ceil(k.r * 2.4 * 1.45) + 1;
+    for (let ty = Math.floor(k.b) - reach; ty <= Math.floor(k.b) + reach; ty++)
+      for (let tx = Math.floor(k.a) - reach; tx <= Math.floor(k.a) + reach; tx++) {
+        const key = tileKey(tx, ty);
+        const list = knollsAt.get(key);
+        if (list) list.push(i);
+        else knollsAt.set(key, [i]);
+      }
+  });
+}
+
+/**
+ * Knoll height at a tile-space point, how far out from its centre it is (0 at the top, 1 at the
+ * foot), and whether the point is on the side facing the viewer (down the screen).
+ */
+function knoll(a: number, b: number): { h: number; d: number; front: boolean } {
+  let best = { h: 0, d: 9, front: false };
+  const near = knollsAt.get(tileKey(Math.floor(a), Math.floor(b)));
+  if (!near) return best;
+  for (const i of near) {
+    const k = knolls[i];
+    const da = a - k.a;
+    const db = b - k.b;
+    const u = (da * Math.cos(k.rot) + db * Math.sin(k.rot)) / k.sx;
+    const v = (-da * Math.sin(k.rot) + db * Math.cos(k.rot)) * k.sx;
+    const d = Math.hypot(u, v) / k.r + (vnoise(a * 3 + k.a, b * 3, 1) - 0.5) * 0.25;
+    if (d < best.d) best = { h: d < 1 ? k.h * (1 - d ** 3.2) : 0, d, front: da + db > 0 };
+  }
+  return best;
+}
+
 /** Volcano height at a tile-space point, in art pixels, and how far up the cone it is, 0..1. */
 function volcano(a: number, b: number): { h: number; f: number } {
   let best = { h: 0, f: 0 };
@@ -248,7 +322,13 @@ export function cornerHeight(vx: number, vy: number): number {
         const inland = Math.max(0, -coastAt(x, y));
         const hill = HILL_MAX * rise * smooth(inland / 5) * (0.2 + 0.8 * n);
         const volc = volcano(x, y).h * smooth(inland / 3.5) * smooth(out / 2);
-        const m = Math.max(hill, volc);
+        // Karst knolls stand on the flat land round the kampung, never on its tiles or the ring road.
+        const kh = exact(x, y) || exact(x - 1, y - 1) || exact(x - 1, y) || exact(x, y - 1) ? 0 : knoll(x, y).h;
+        const m = Math.max(hill, volc, kh);
+        if (kh > Math.max(hill, volc)) {
+          heights[(y - YMIN) * w + x - XMIN] = Math.round(kh + Math.min(hill, 6));
+          continue;
+        }
         const K = 0.15;
         heights[(y - YMIN) * w + x - XMIN] = Math.round(m + Math.log(Math.exp(K * (hill - m)) + Math.exp(K * (volc - m))) / K - Math.log(2) / K * Math.min(1, Math.min(hill, volc) / 8));
       }
@@ -276,7 +356,7 @@ function heightAtPixel(x: number, y: number): number {
 }
 
 /** Control-map material ids. 'tanah' is the bare earth the autoshader shows on steep hill faces. */
-const MATS: Terrain[] = ['grass', 'road', 'sawah', 'kebun', 'hutan', 'beach', 'sea', 'teh', 'teras', 'tanah', 'abu'];
+const MATS: Terrain[] = ['grass', 'road', 'sawah', 'kebun', 'hutan', 'beach', 'sea', 'teh', 'teras', 'tanah', 'abu', 'batu'];
 const TANAH = MATS.indexOf('tanah');
 /** Materials on hills, which the autoshader may wear down to bare earth. */
 const SLOPED = new Set((['kebun', 'teh', 'teras'] as Terrain[]).map((t) => MATS.indexOf(t)));
@@ -364,6 +444,8 @@ function materialHeight(t: Terrain, x: number, y: number, n: number): number {
       return 0.15 + 0.85 * vnoise(x + 31, y * 2, 4);
     case 'abu':
       return 0.3 + 0.6 * vnoise(x + 7, y * 2, 5);
+    case 'batu':
+      return 0.2 + 0.8 * vnoise(x + 53, y * 2, 3);
   }
 }
 
@@ -432,6 +514,13 @@ function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx
       if (speck < 0.015) return '#bdb4a3';
       if (speck > 0.99) return '#6d635a';
       return tone(n, TANAH_TONES);
+    case 'batu': {
+      // Pale limestone on the karst knolls, in ledges every few pixels with dark cracks and the odd
+      // tuft of green clinging on.
+      if (speck < 0.025) return '#6f8a3c';
+      if (speck > 0.975 || (x + Math.floor(y / 3) * 5) % 13 === 0) return '#7d756b';
+      return Math.floor(y / 3) % 2 ? tone(n, ['#9c958a', '#aaa397', '#b7afa2']) : tone(n, ['#a8a094', '#b6aea1', '#c2baac']);
+    }
     case 'abu':
       // Volcanic ash on the cap, pale and cool, with dark cinders.
       if (speck > 0.985) return '#8f8a86';
@@ -509,14 +598,14 @@ export function buildWorld(): HTMLCanvasElement {
   const depth = new Float32Array(WORLD_W * WORLD_H);
   // Kind numbers: 1-7 in this order, 8 is the cliff, 9 and 10 the terraced hills, 11 bare earth.
   const KINDS: Terrain[] = ['grass', 'road', 'sawah', 'kebun', 'hutan', 'beach', 'sea'];
-  const kindOf = (t: Terrain) => (t === 'teh' ? 9 : t === 'teras' ? 10 : t === 'tanah' ? 11 : t === 'abu' ? 12 : KINDS.indexOf(t) + 1);
+  const kindOf = (t: Terrain) => (t === 'teh' ? 9 : t === 'teras' ? 10 : t === 'tanah' ? 11 : t === 'abu' ? 12 : t === 'batu' ? 14 : KINDS.indexOf(t) + 1);
   // Each tile is two flat-lit triangles over its corner heights, drawn back to front so nearer
   // hills cover farther ones. Texture is sampled at the tile's flat position, so it sticks to the
   // ground as it rises. Outside the kampung each pixel's material comes from the corner control
   // map (groundAt), so land types meet along organic borders instead of tile edges. Slopes facing
   // the light (top left) brighten and the rest darken in a few flat steps, and a soft grid line
   // runs along every tile edge, like an old city-builder map.
-  const GRID_LINE = new Set<Terrain>(['grass', 'kebun', 'hutan', 'teh', 'teras', 'tanah', 'abu']);
+  const GRID_LINE = new Set<Terrain>(['grass', 'kebun', 'hutan', 'teh', 'teras', 'tanah', 'abu', 'batu']);
   const LIGHT = (() => {
     const v = [-0.75, -0.3, 1];
     const m = Math.hypot(v[0], v[1], v[2]);
@@ -540,6 +629,8 @@ export function buildWorld(): HTMLCanvasElement {
     const nm = Math.hypot(n[0], n[1], n[2]);
     const dot = (n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]) / nm;
     const lit = Math.max(0.7, Math.min(1.22, Math.round((1 + (dot - LIGHT[2]) * 1.9) / 0.06) * 0.06));
+    // How upright the facet is: 0 flat, 1 a wall. Karst knolls show bare limestone where it is steep.
+    const upright = 1 - Math.abs(n[2]) / nm;
     // Attribute gradients across the screen, for the grid-line test against the pixel up and left.
     const grad = (j: number) => {
       const d1 = v[1][j] - v[0][j];
@@ -571,6 +662,15 @@ export function buildWorld(): HTMLCanvasElement {
         // so the steep cone is not streaked by flat-world texture stretched up the slope.
         let sx = fx;
         let sy = fy;
+        if (t !== 'beach' && t !== 'sea' && !exact(tx, ty)) {
+          const kn = knoll(a, b);
+          if (kn.h > 2) {
+            // Bare limestone on the steep sides, a green cap of forest on the rounded top.
+            t = upright + (bayer(x, y) - 0.5) * 0.1 > 0.22 ? 'batu' : kn.d < 0.55 ? 'hutan' : 'grass';
+            sx = x;
+            sy = y * 2;
+          }
+        }
         if (t !== 'beach' && t !== 'sea') {
           const vo = volcano(a, b);
           if (vo.h > 6) {
@@ -635,7 +735,7 @@ export function buildWorld(): HTMLCanvasElement {
   // over road over cliff over beach over sea) takes a dark edge in its own colour. The lower side
   // gets a bright rim that eases back to its base colour over three pixels, so each transition
   // reads clearly without hard black lines. Sea meets sand with a line of foam.
-  const RANK = [2, 7, 5, 6, 8, 9, 3, 2, 4, 8, 6, 5, 10, 2];
+  const RANK = [2, 7, 5, 6, 8, 9, 3, 2, 4, 8, 6, 5, 10, 2, 8];
   const rank = (k: number) => RANK[land[k] || 7];
   const edits: [number, number, number][] = [];
   const NEAR: [number, number, number][] = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [2, 0, 2], [-2, 0, 2], [0, 2, 2], [0, -2, 2], [3, 0, 3], [-3, 0, 3]];
@@ -866,7 +966,7 @@ function drawIsle(img: ImageData, land: Uint8Array, depth: Float32Array, I: Isle
             const kk = y * WORLD_W + x;
             if (land[kk] && land[kk] !== 7 && land[kk] !== 13 && depth[kk] > a + b) return;
           }
-        isleTrees.push({ tree: { name, tx: Math.floor(a), ty: Math.floor(b), x: tx0, y: ty0 }, d: a + b });
+        isleTrees.push({ tree: { name, tx: Math.floor(a), ty: Math.floor(b), x: tx0, y: ty0, scale: treeScale(name, Math.floor(a * 97) + Math.floor(b * 31) + k) }, d: a + b });
       });
     }
   for (const k of keys) rank[k] = 0;
@@ -954,7 +1054,12 @@ export interface Tree {
   /** Art position of the tree art's top-left corner inside the world canvas. */
   x: number;
   y: number;
+  /** Drawn size against the full sprite. Palms keep one size; every other tree varies. */
+  scale: number;
 }
+
+/** A scenery tree's size: palms stay at 70%, every other tree somewhere from 50% to 90%, in 5% steps. */
+const treeScale = (name: string, seed: number): number => (name === 'kelapa' ? 0.7 : Math.round((0.5 + hash(seed, 811) * 0.4) * 20) / 20);
 
 
 /** True on a tile under a district block, where no tree grows. */
@@ -997,10 +1102,25 @@ export function worldTrees(): Tree[] {
       const slope = Math.max(...corners) - Math.min(...corners);
       // The volcanoes' forest belt is wooded up its slope; elsewhere steep faces stay open so the hills read.
       const onVolc = volcano(tx + 0.5, ty + 0.5).h > 9;
-      if (slope > (onVolc ? 30 : 16)) continue;
+      const steep = slope > (onVolc ? 30 : 16);
       SPOTS.forEach(([fa, fb], k) => {
         const a = tx + fa;
         const b = ty + fb;
+        const seed = tx * 977 + ty * 131 + k;
+        const push = (name: string) =>
+          list.push({ tree: { name, tx, ty, x: WORLD_OX + ((a - b) * TW) / 2 - TW / 2, y: WORLD_OY + ((a + b) * TH) / 2 - TOP - Math.round(heightAt(a, b)), scale: treeScale(name, seed) }, d: a + b });
+        // A thick ring of trees round each knoll's foot, a few on its green cap, none on the rock. On
+        // the side facing the viewer the ring thins to bushes and a few trees, so the limestone shows.
+        const kn = knoll(a, b);
+        if (kn.d < 2.4) {
+          const r = hash(seed, 821);
+          if (kn.d > 0.85 && !hidden(a, b)) {
+            if (!kn.front && kn.d < 1.8 && r < 0.85) push(r < 0.7 ? 'pohon' : 'bush');
+            else if (kn.front && r < 0.3) push(r < 0.12 ? 'pohon' : 'bush');
+          } else if (kn.d < 0.45 && r < 0.6 && !hidden(a, b)) push('pohon');
+          return;
+        }
+        if (steep) return;
         const [fx, fy] = flatPixel(a, b);
         const t = groundAt(a, b, fx, fy);
         const n = hash(tx * 5 + k * 31 + 1, ty * 3 + k * 17 + 2);
@@ -1017,7 +1137,7 @@ export function worldTrees(): Tree[] {
           : t === 'beach' ? (n < 0.12 && k === 0 ? 'kelapa' : null)
           : null;
         if (!name || hidden(a, b)) return;
-        list.push({ tree: { name, tx, ty, x: WORLD_OX + ((a - b) * TW) / 2 - TW / 2, y: WORLD_OY + ((a + b) * TH) / 2 - TOP - Math.round(heightAt(a, b)) }, d: a + b });
+        push(name);
       });
     }
   for (const t of isleTrees) list.push(t);

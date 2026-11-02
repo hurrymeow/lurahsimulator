@@ -54,21 +54,24 @@ function contactShadow(): HTMLCanvasElement {
   return (aoCache = c);
 }
 
-/** Scenery trees round the kampung are drawn smaller than buildable trees, so the land can be thickly wooded. */
-const TREE_SCALE = 0.7;
+/**
+ * Scenery trees round the kampung are drawn smaller than buildable trees, so the land can be thickly
+ * wooded: palms at 70%, every other tree at its own size from 50% to 90% (Tree.scale).
+ */
 const smallTrees = new Map<string, { canvas: HTMLCanvasElement; dx: number; dy: number; anchor: number }>();
 
 /**
- * A scenery tree's sprite, resampled once to TREE_SCALE on whole art pixels (nearest pixel, so the
+ * A scenery tree's sprite, resampled once to a size on whole art pixels (nearest pixel, so the
  * palette and crisp edges stay), with its offset from the full sprite's top-left so the roots stay put.
  * The view still scales it by a whole number.
  */
-function smallTree(name: string): { canvas: HTMLCanvasElement; dx: number; dy: number; anchor: number } {
-  const hit = smallTrees.get(name);
+function smallTree(name: string, scale: number): { canvas: HTMLCanvasElement; dx: number; dy: number; anchor: number } {
+  const key = `${name}@${scale}`;
+  const hit = smallTrees.get(key);
   if (hit) return hit;
   const src = iso(name).canvas;
-  const w = Math.max(1, Math.round(src.width * TREE_SCALE));
-  const h = Math.max(1, Math.round(src.height * TREE_SCALE));
+  const w = Math.max(1, Math.round(src.width * scale));
+  const h = Math.max(1, Math.round(src.height * scale));
   const from = src.getContext('2d')!.getImageData(0, 0, src.width, src.height);
   const c = document.createElement('canvas');
   c.width = w;
@@ -77,16 +80,16 @@ function smallTree(name: string): { canvas: HTMLCanvasElement; dx: number; dy: n
   const to = ctx.createImageData(w, h);
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
-      const sx = Math.min(src.width - 1, Math.floor((x + 0.5) / TREE_SCALE));
-      const sy = Math.min(src.height - 1, Math.floor((y + 0.5) / TREE_SCALE));
+      const sx = Math.min(src.width - 1, Math.floor((x + 0.5) / scale));
+      const sy = Math.min(src.height - 1, Math.floor((y + 0.5) / scale));
       const i = (sy * src.width + sx) * 4;
       to.data.set(from.data.subarray(i, i + 4), (y * w + x) * 4);
     }
   ctx.putImageData(to, 0, 0);
   // Roots sit at the middle of the ground anchor row; keep that point where it was.
   const anchor = TOP + TH / 2;
-  const out = { canvas: c, dx: Math.round(src.width / 2 - w / 2), dy: Math.round(anchor - anchor * TREE_SCALE), anchor: Math.round(anchor * TREE_SCALE) };
-  smallTrees.set(name, out);
+  const out = { canvas: c, dx: Math.round(src.width / 2 - w / 2), dy: Math.round(anchor - anchor * scale), anchor: Math.round(anchor * scale) };
+  smallTrees.set(key, out);
   return out;
 }
 
@@ -883,9 +886,9 @@ export class MapView {
       ctx.drawImage(c.art, left, top, c.art.width * s, c.art.height * s);
     });
 
-    // Scenery trees at TREE_SCALE; the stretch grows upward from the roots.
+    // Scenery trees at their own sizes; the stretch grows upward from the roots.
     for (const tree of worldTrees()) {
-      const art = smallTree(tree.name);
+      const art = smallTree(tree.name, tree.scale);
       const left = wx + (tree.x + art.dx) * s;
       const top = wy + (tree.y + art.dy) * s;
       const w = art.canvas.width * s;
