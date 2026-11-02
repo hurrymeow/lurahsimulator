@@ -47,7 +47,7 @@ The full ladder runs RT, RW, Kelurahan, Kecamatan, Kabupaten/Kota, Provinsi and 
 
 The ladder reads as three acts (approved by Hari, 2026-10-28): **Act 1 Kampung** (RT, RW, Lurah; pressure: Perut and Kerja), **Act 2 Kota** (Camat, Pj. Wali Kota, Pj. Gubernur; pressure: pinjol, judol and Aman), **Act 3 Pusat** (Pejabat Pusat; Laporan against what is real). City and province posts are Pj. (acting) posts given by SK, so the player still never runs for office. Only Act 1 is built.
 
-Status 2026-10-27: the map engine, RT stars, RW and Kelurahan are built. Live grid sizes are 13x17 (RT), 28x36 (RW) and 58x74 (Kelurahan): every RT is 13x17 and the seams are 2-tile dirt roads between them, outside the RTs. These replace the 9x13, 18x26 and 36x52 in the sketch below. See `decisions/growing-map-engine.md`.
+Status 2026-11-02: the map engine, RT stars, RW and Kelurahan are built. Live grid sizes are 13x17 (RT), 28x17 (RW) and 28x36 (Kelurahan and Kecamatan), after `decisions/smaller-map-T5.md`: every RT is 13x17 and the seams are 2-tile dirt roads between them, outside the RTs. These replace the 9x13, 18x26 and 36x52 in the sketch below. See `decisions/growing-map-engine.md`.
 
 ### Rules for every stage
 
@@ -106,7 +106,7 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 - Each Dana pays for one build, and an RT banks up to **12**. Dana comes **x1** or **x6** at a time. Banked Dana speeds the RT up with diminishing returns: boost = 1 − 0.8^(banked − 1), so 3 banked is **+36%**, 6 is **+67%** and 12 is **+91%**. The Neighbours screen shows it as "+N% boost".
 - **Auto-dana** per RT: Off, or keep **3**, **6** or **12** banked. Each month it tops the bank back up, and never spends the kas below **Rp 5jt** (with inflation). The screen shows about what it costs a month.
 - The Neighbours screen lists what each RT still needs for its next star, as the same checklist the player's own RT uses.
-- **Two ways to run a neighbour.** AI-run (the default): you fund it, as above. **Player-run:** take it over for **3** Orang Dalam (a word with Pak RW). Only RTs in your own RW. Its buildings join yours, its warga become your residents, you pay their upkeep, and banked Dana comes back to the kas. Its lots become yours to build on with the normal Build flow. Its stars use the same checklist, read from its own lots: the buildings there, your Sabar, and a share of your residents in proportion to the beds it holds. Its stars, ranking and combos stay with the RT. **Hand it back** any time, free: every building in its lots goes back to the AI as it stands (unfinished ones finish), with as many warga as its houses hold. Staff stay with you. Stars never drop. Its Auto-dana comes back on at the level it had before the takeover; with Auto-dana off, it waits for Dana, and the hand-back toast says so. An RT whose lot is full says so on its row.
+- **Two ways to run a neighbour.** AI-run (the default): you fund it, as above. **Player-run:** take it over for **3** Orang Dalam (a word with Pak RW). Only RTs in your own RW. Its buildings join yours, its warga become your residents, you pay their upkeep, and banked Dana comes back to the kas. Its lots become yours to build on with the normal Build flow. Its stars use the same checklist, read from its own lots: the buildings there, your Sabar, and a share of your residents in proportion to the beds it holds. Its stars, ranking and combos stay with the RT. **Hand it back** any time, free: every building in its lots goes back to the AI as it stands (unfinished ones finish), with as many warga as its houses hold. Staff stay with you. Stars never drop. Its Auto-dana comes back on at the level it had before the takeover; with Auto-dana off, it waits for Dana, and the hand-back toast says so. An RT whose lot is full says so on its row. Kampung Sebelah is the exception at the Kelurahan: it joins you free for good, with no hand-back, leaves the neighbour sheet and cannot be a Mutasi target.
 - **Combos count across RTs.** For an AI RT's combos goal, the count is the most combos any RT has found, the player's included. Residents, wins and Sabar stay per RT. The player's own RT still counts only its own combos. Without this, a Rajin RT finds only one combo and never passes 1★.
 - Ketua RT traits:
   - Rajin builds every **2** months and earns **x1.2**.
@@ -164,13 +164,14 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 #### 1★ RW Rintisan
 
 - Unlocks Posyandu, Portal and the Kader Posyandu job.
-- **Goal for 2★:** Kampung Sebelah at 1★ or above, **1** win against RW Sebelah, and **2** RW combos.
+- **Goal for 2★:** Kampung Sebelah at 1★ or above, **1** win against RW Sebelah, and **1** RW combo.
 
 #### 2★ RW Berkembang
 
 - Unlocks Pasar Kaget, Gapura and the Calo job. The Musim Pindahan event starts.
 - **Goal for 3★:**
   - Kampung Sebelah at 3★
+  - **2** RW combos
   - **2** wins in a row
   - no debt for **24** weeks
 
@@ -206,7 +207,7 @@ Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 
 - Kampung Sebelah joins your RW as yours, and RW 2 (two AI RTs) appears. Stempel letters stop reaching you: your RW has no AI RT left, and RW 2 stamps its own.
 - Unlocks Kantor Kelurahan and Anggaran.
-- **Goal for 1★:** RW 2 at 1★ or above (an RW is as good as its weaker RT), serapan of at least **80%** for one year, and the player's own kampung at **50** residents and Popularitas **50**.
+- **Goal for 1★:** RW 2 at 1★ or above (an RW is as good as its weaker RT), serapan of at least **80%** for **48** weeks, and the player's own kampung at **50** residents and Popularitas **50**.
 
 #### 1★
 

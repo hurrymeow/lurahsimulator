@@ -17,12 +17,13 @@ export const RW_STAGE: StageDef = {
       unlocks: ['posyandu', 'portal'],
     },
     {
-      goals: [{ kind: 'sebelahAtStars', n: 1 }, { kind: 'tierWins', n: 1, tier: 'rw' }, { kind: 'rwCombos', n: 2 }],
+      goals: [{ kind: 'sebelahAtStars', n: 1 }, { kind: 'tierWins', n: 1, tier: 'rw' }, { kind: 'rwCombos', n: 1 }],
       unlocks: ['pasarKaget', 'gapura'],
     },
     {
       goals: [
         { kind: 'sebelahAtStars', n: 3 },
+        { kind: 'rwCombos', n: 2 },
         { kind: 'winStreak', n: 2 },
         { kind: 'noDebtMonths', n: 24 },
       ],
@@ -38,7 +39,7 @@ export const KELURAHAN_STAGE: StageDef = {
   next: 'kecamatan',
   stars: [
     {
-      goals: [{ kind: 'rw2AtStars', n: 1 }, { kind: 'serapanMonths', n: 12, pct: 80 }, { kind: 'residents', n: 50 }, { kind: 'sabar', n: 50 }],
+      goals: [{ kind: 'rw2AtStars', n: 1 }, { kind: 'serapanMonths', n: 48, pct: 80 }, { kind: 'residents', n: 50 }, { kind: 'sabar', n: 50 }],
       unlocks: ['puskesmasPembantu', 'studiBanding'],
     },
     {
