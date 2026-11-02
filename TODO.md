@@ -56,7 +56,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Problem: the RW has 4 RTs and the Kelurahan 16. In the playtest of 2026-11-01 the Kelurahan was overwhelming, and its 1★ waited on "4 RW at 1★" across mostly empty lots.
   - Why: one AI RT to tend at the RW and one AI RW at the Kelurahan keep the management load small, and absorbing Kampung Sebelah guarantees new land when the own-kampung goals need it.
   - Suggested solution: build GAME-DESIGN.md section 2 as now written. The RW map is 2 RTs side by side and the Kelurahan 2x2 RTs at full-size tiles. At promotion Kampung Sebelah becomes player-run (like a takeover), and RW 2 is two new AI RTs. RW goals read Kampung Sebelah; Kelurahan goals read RW 2. Stempel stops at the Kelurahan. Grup Chat Warga moves to RW 2's pair. Re-run the RW, Kelurahan and balance bots, and the frame-rate test. Old saves: decide in the PR (keep their old neighbours, or treat them as incompatible as with the Desa cut).
-  - Decided: Hari said yes on 2026-11-01 (`decisions/smaller-map-go.md`). Needs a plan before any code, including how Kecamatan slice 1 changes.
+  - Decided: Hari said yes on 2026-11-01 (`decisions/smaller-map-go.md`). Plan: `docs/plans/smaller-map.md`, waiting for approval, including how Kecamatan slice 1 changes.
   - Source: `decisions/playtest-sk2.md`
   - `open · — · — · done when:` new games follow the new ladder, the stage goals read as in section 2, and the bot tests reach each stage's stars.
 - [ ] **HIGH PRIORITY: Let the player build on AI-run RTs, and add Kunjungan (visit) as a one-tap boost.**
