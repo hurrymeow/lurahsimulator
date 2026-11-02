@@ -258,7 +258,11 @@ faceless, so the map stays readable.
 
 - Every level looks different, like a building card in a mobile builder: level 1 is makeshift,
   the top level is built to last. The silhouette and the materials change, not just the size.
-  Warung: tarp-roofed gerobak, zinc-roofed kiosk, whitewashed brick with a tile roof and an awning.
+  Warung Sembako (`warung-art.ts`): a warung tenda under a red-and-white striped terpal on bamboo
+  poles over a crate counter; a gerobak (push cart with a glass snack case) parked under a zinc
+  lean-to with a plank back wall, a galon, an LPG melon and a bench; a whitewashed brick toko
+  kelontong under a flat dak with a big yellow nameboard and a blue rolling door half up. Every level
+  hangs rentengan sachet strips along its front, so it reads as a warung at a glance.
   Pos ronda: bamboo balai-balai under rumbia, wooden hut, green-and-white siskamling post. Kantor RT:
   a front room with a nameboard, the office with a flag, a pendopo under a joglo roof.
 - Houses grow, not just fence in. Rumah: the bungalow, then a teras set into the front wall under a
