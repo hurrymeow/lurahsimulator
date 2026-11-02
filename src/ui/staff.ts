@@ -7,9 +7,11 @@ import { rupiah } from '../format';
 import { inemURL } from '../render/inem';
 import { portraitURL } from '../render/portraits';
 import { BIMTEK, CHANNELS, GIGS, RAISE, SPECIALS, STATS, STAT_ICON, STAT_MAX, roleDef, traitDef, type RoleId, type StatId } from '../data/staff';
+import { RIVAL_NAMES } from '../data/ranking';
+import { cellName } from '../sim/grow';
 import {
   answerRaise, bimtek, bimtekCost, cancelLowongan, checkBimtek, checkFire, checkHire, checkMutasi, checkPost, ensureStaff, fire, grupWaShift, hire,
-  lowonganCost, mishapChance, mutasi, openRoles, pesangon, postLowongan, roleGain, staffSlots, type InRole,
+  lowonganCost, mishapChance, mutasi, mutasiTargets, openRoles, pesangon, postLowongan, roleGain, staffSlots, type InRole,
 } from '../sim/staff';
 import { iconURL } from '../render/sprites';
 import { price } from '../sim/state';
@@ -89,10 +91,10 @@ const face = (x: Applicant & { inem?: boolean }) => {
 };
 
 /** Lines that need the player's eye, shown on the card and in the detail view. */
-function flags(x: Staff): Node[] {
+function flags(x: Staff, rival: string): Node[] {
   const out: Node[] = [];
   if (x.away) out.push(h('p', { class: 'meta warn' }, t('staff.awayNow', { n: x.away })));
-  if (x.refused) out.push(h('p', { class: 'meta warn' }, t('staff.refused')));
+  if (x.refused) out.push(h('p', { class: 'meta warn' }, t('staff.refused', { rival })));
   return out;
 }
 
@@ -114,7 +116,7 @@ function staffCard(app: App, x: Staff, done: () => void): HTMLElement {
         h('span', { class: 'meta staff-work' }, statIcon(roleDef(x.role).stat), ` ${statName(roleDef(x.role).stat)} ${x.stats[roleDef(x.role).stat]} → ${workFx(x)}`),
         h('span', { class: 'meta' }, t('staff.salary', { amt: rupiah(price(s, x.salary)) })),
       ),
-      ...flags(x),
+      ...flags(x, RIVAL_NAMES[s.stage.current]),
       x.raiseAsked ? h('p', { class: 'meta' }, t('staff.raiseAsk', { amt: rupiah(price(s, Math.round(x.salary * (1 + RAISE)))) })) : null,
       main,
     ),
@@ -132,7 +134,7 @@ function personView(app: App, x: Staff, done: () => void): Node[] {
     ...aboutLines(x),
     statBars(x.stats, x),
     h('p', { class: 'meta' }, t('staff.salary', { amt: rupiah(price(s, x.salary)) })),
-    ...flags(x),
+    ...flags(x, RIVAL_NAMES[s.stage.current]),
   ];
   if (x.raiseAsked) {
     parts.push(h('p', { class: 'meta' }, t('staff.raiseAsk', { amt: rupiah(price(s, Math.round(x.salary * (1 + RAISE)))) })));
@@ -151,12 +153,12 @@ function personView(app: App, x: Staff, done: () => void): Node[] {
     }
     const mut = checkMutasi(s, x);
     if (mut.ok) {
-      s.neighbours.forEach((_n, i) => parts.push(actionButton(t('staff.mutasi', { name: `RT ${i + 2}` }), mut, () => {
+      for (const { n, i } of mutasiTargets(s)) parts.push(actionButton(t('staff.mutasi', { name: cellName(n) }), mut, () => {
         mutasi(s, x, i);
         app.notice({ title: t('staff.mutasiDone', { name: x.name }), body: '', tone: 'good' });
         app.tap(15);
         openStaff(app);
-      })));
+      }));
     } else parts.push(actionButton(t('staff.mutasi', { name: 'RT' }), mut, () => undefined));
     parts.push(h('div', { class: 'staff-fire' }, actionButton(t('staff.fire', { cost: rupiah(pesangon(s, x)) }), checkFire(s, x), () => { fire(s, x); app.tap(15); openStaff(app); })));
   }

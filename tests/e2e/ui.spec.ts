@@ -13,7 +13,7 @@ const DENSITY_ALLOW: Record<string, Partial<Record<keyof typeof LIMITS, number>>
   'howto': { wordsInView: 149, longestBlock: 29, wordsAll: 303 }, // How-to card
   'settings': { primary: 2, wordsInView: 65 }, // Settings
   'staff': { wordsInView: 71 }, // Staff
-  'warga': { wordsInView: 60, wordsAll: 486 }, // Warga: Kampung Sebelah's residents join at the Kelurahan, so the list is long
+  'warga': { wordsInView: 62, wordsAll: 488 }, // Warga: Kampung Sebelah's residents join at the Kelurahan, so the list is long
   'stats': { wordsInView: 86 }, // Stats
 };
 
@@ -1589,6 +1589,28 @@ test.describe('growing map', () => {
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('.sheet')).toBeVisible();
     await expect(page.locator('[data-nb-row]')).toHaveCount(1);
+  });
+
+  test('at the Kelurahan Kampung Sebelah leaves the Neighbours panel, and the notice says so', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const kampung = 'Kampung Sebelah';
+    const promote = () => page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.promote();
+    });
+    await promote();
+    await dismissModals(page);
+    await promote();
+    await expect(page.locator('#modal')).toContainText(kampung);
+    await expect(page.locator('#modal')).toContainText('RW 2');
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-neighbours').click();
+    await expect(page.locator('[data-nb-row]')).toHaveCount(2);
+    await expect(page.locator('.sheet')).not.toContainText(kampung);
+    await expectLegible(page, 'neighbours panel at the Kelurahan');
   });
 
   test('AI RTs lay Jalan Setapak and their warga walk it, never onto the player lots', async ({ page }) => {

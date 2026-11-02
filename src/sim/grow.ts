@@ -466,6 +466,6 @@ export function promote(s: GameState, fx: Fx): boolean {
   const ai = s.neighbours.filter((n) => n.run !== 'player');
   if (ai.length > 1 && new Set(ai.map((n) => n.trait)).size === ai.length) ai[ai.length - 1].trait = ai[0].trait;
   s.lastNovelty = s.month;
-  fx.push({ kind: 'notice', title: t('grow.promoted'), body: t(next === 'kecamatan' ? 'grow.promotedKecBody' : 'grow.promotedBody'), tone: 'good', fanfare: true });
+  fx.push({ kind: 'notice', title: t('grow.promoted'), body: t(next === 'kecamatan' ? 'grow.promotedKecBody' : next === 'kelurahan' ? 'grow.promotedKelBody' : 'grow.promotedBody'), tone: 'good', fanfare: true });
   return true;
 }
