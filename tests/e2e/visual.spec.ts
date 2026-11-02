@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Screenshot baselines for five key screens, at one phone width in Indonesian, the default language.
- * The clock is frozen, so the new game gets the same seed every run, and motion is off, so a diff means the screen changed.
+ * The clock is frozen and Math.random is seeded, so the new game and its walkers are the same every run, and motion is off, so a diff means the screen changed.
  * Baselines are drawn in CI's Playwright image. Refresh them only for an intended visual change: see UI.md.
  */
 test.skip(() => !process.env.CI, 'Baselines differ by machine fonts, so they run in CI only.');
@@ -17,6 +17,17 @@ const SHOT = { maxDiffPixelRatio: 0.002, animations: 'disabled', caret: 'hide' }
 const settle = (page: Page, ms = 800) => page.clock.runFor(ms);
 
 async function open(page: Page): Promise<void> {
+  // Walkers pick their start, wait and facing with Math.random, so under CI load the map behind a
+  // popup came out different from run to run. A seeded generator makes every run draw the same frame.
+  await page.addInitScript(() => {
+    let seed = 0x2545f491;
+    Math.random = () => {
+      seed ^= seed << 13;
+      seed ^= seed >>> 17;
+      seed ^= seed << 5;
+      return (seed >>> 0) / 4294967296;
+    };
+  });
   await page.clock.install({ time: new Date('2026-01-01T09:00:00Z') });
   await page.goto(`/?debug&lang=${lang()}`);
   await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
@@ -46,6 +57,13 @@ async function play(page: Page): Promise<void> {
   }
 }
 
+/**
+ * Runs the clock past the welcome toast, which hides 3.4 s after the game starts. play() runs 300 ms
+ * per tap it needs to clear the opener, and how many it needs depends on page-load timing, so the
+ * popups otherwise landed on either side of the toast's exit and the baseline flipped between runs.
+ */
+const pastWelcome = (page: Page) => settle(page, 3500);
+
 test.describe('visual baselines', () => {
   test('home', async ({ page }) => {
     await open(page);
@@ -73,6 +91,7 @@ test.describe('visual baselines', () => {
   test('event popup', async ({ page }) => {
     await open(page);
     await play(page);
+    await pastWelcome(page);
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.s.pendingEvent = 'cabai';
@@ -85,6 +104,7 @@ test.describe('visual baselines', () => {
   test('tip card', async ({ page }) => {
     await open(page);
     await play(page);
+    await pastWelcome(page);
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.modal({ title: 'Tip', body: 'A tip card keeps its look.', tone: 'info', tip: { pics: null } });

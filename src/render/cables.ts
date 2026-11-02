@@ -1,14 +1,12 @@
-// Electric poles and messy cables along the ring road, the most Indonesian thing on any kampung
-// street: wires sagging at different depths, loose loops, a drop line to the nearest house, a kite
-// caught on a wire, a single sandal, a row of birds. The kit grows with the stage: leaning wooden
+// Electric poles and messy cables beside the kampung's jalan setapak, the most Indonesian thing on
+// any kampung street: wires sagging at different depths, loose loops, a kite caught on a wire, a
+// single sandal, a row of birds. The ring road has none. The kit grows with the stage: leaning wooden
 // poles at RT, grey concrete PLN poles from RW, and black fibre bundles from Kelurahan.
 // Each span and pole is a small cached sprite, so a frame only blits what is on screen.
 import { GRID_H, GRID_W, type Building, type StageId } from '../sim/types';
 import { TH, TW } from './iso';
 import { WORLD_OX, WORLD_OY } from './scenery';
 
-/** Poles stand every POLE_STEP tiles along the outer edge of the ring road; most poles are inside, by the paths. */
-const POLE_STEP = 10;
 /** Pole height in art pixels, ground to the top of the crossarm. */
 const POLE_H = 26;
 /** Where the wires leave a pole, against its foot: four insulators on the crossarm, low ones for drops. */
@@ -46,26 +44,8 @@ interface Sprite {
 type Kit = 'kayu' | 'beton' | 'fiber';
 const kitOf = (stage: StageId): Kit => (stage === 'rt' ? 'kayu' : stage === 'rw' ? 'beton' : 'fiber');
 
+/** Rebuild key for the grid, the stage's kit and the world origin. */
 let cachedKey = '';
-let sprites: Sprite[] = [];
-
-/** Poles round the ring road, walking the loop so neighbours connect. */
-function poles(): Pole[] {
-  const out: Pole[] = [];
-  const at = (a: number, b: number, front: boolean, i: number) =>
-    out.push({ a, b, x: Math.round(WORLD_OX + ((a - b) * TW) / 2), y: Math.round(WORLD_OY + ((a + b) * TH) / 2), front, lean: hash(i, 3) < 0.25 ? (hash(i, 4) < 0.5 ? -1 : 1) : 0 });
-  const E = 0.85;
-  let i = 0;
-  // Back edge (b = -1 side), left to right along a.
-  for (let a = -1; a <= GRID_W; a += POLE_STEP) at(a + 0.5, -E, a + 0.5 > GRID_W, i++);
-  // Right-front edge (a = GRID_W side), down along b.
-  for (let b = POLE_STEP - 1; b <= GRID_H; b += POLE_STEP) at(GRID_W + E, b + 0.5, true, i++);
-  // Front edge (b = GRID_H side), back along a.
-  for (let a = GRID_W - POLE_STEP; a >= -1; a -= POLE_STEP) at(a + 0.5, GRID_H + E, true, i++);
-  // Left edge (a = -1 side), back up along b.
-  for (let b = GRID_H - POLE_STEP; b >= 0; b -= POLE_STEP) at(-E, b + 0.5, b + 0.5 > GRID_H, i++);
-  return out;
-}
 
 const hex = (c: string) => parseInt(c.slice(1), 16);
 
@@ -186,46 +166,15 @@ function spanSprite(p: Pole, q: Pole, kit: Kit, i: number): Sprite {
   return { canvas: cv, x: x0, y: y0, front: p.front || q.front, sway: true, phase: hash(i, 18) * Math.PI * 2 };
 }
 
-let ringPoles: Pole[] = [];
-
-/** Rebuilds the sprites when the grid or the stage changes. */
-function build(stage: StageId): Sprite[] {
-  const key = `${GRID_W}x${GRID_H}:${kitOf(stage)}:${WORLD_OX},${WORLD_OY}`;
-  if (key === cachedKey) return sprites;
-  cachedKey = key;
-  const kit = kitOf(stage);
-  const ps = poles();
-  ringPoles = ps;
-  sprites = [];
-  ps.forEach((p, i) => {
-    const q = ps[(i + 1) % ps.length];
-    sprites.push(spanSprite(p, q, kit, i));
-  });
-  ps.forEach((p, i) => sprites.push(poleSprite(p, kit, i)));
-  return sprites;
-}
-
-/**
- * Draws the poles and cables on one side of the kampung: the back side before the buildings, the
- * front side after them, so a pole never stands in front of a house it is behind.
- */
-export function drawCables(ctx: CanvasRenderingContext2D, stage: StageId, front: boolean, wx: number, wy: number, s: number, viewW: number, viewH: number, now: number, motion: boolean): void {
-  for (const sp of build(stage)) {
-    if (sp.front !== front) continue;
-    const left = wx + sp.x * s;
-    const top = wy + sp.y * s;
-    const w = sp.canvas.width * s;
-    const h = sp.canvas.height * s;
-    if (left > viewW || top > viewH || left + w < 0 || top + h < 0) continue;
-    const dy = sp.sway && motion ? Math.round((Math.sin(now / 1300 + sp.phase) + 1) / 2) : 0;
-    ctx.drawImage(sp.canvas, left, top + dy * s, w, h);
-  }
+/** Notes the grid, the stage's kit and the world origin, so the path poles rebuild when one changes. */
+function build(stage: StageId): void {
+  cachedKey = `${GRID_W}x${GRID_H}:${kitOf(stage)}:${WORLD_OX},${WORLD_OY}`;
 }
 
 // ---------------------------------------------------------------- Poles by the jalan setapak
 // Inside the kampung a pole goes up beside the jalan setapak every four to ten path tiles, counted in
 // the order the paths were built, so every few new paths raise a new pole. Each one is wired to the
-// nearest pole before it, or to the ring road, so the wires spread through the kampung as it grows.
+// nearest pole before it, so the wires spread through the kampung as it grows.
 
 export interface PathPole {
   /** The path tile it stands on, for the draw order. */
@@ -263,10 +212,10 @@ function buildPath(buildings: readonly Building[], stage: StageId): void {
     const bb = alongX ? b.y + side : b.y + 0.5;
     const i = 1000 + b.uid;
     const pole: Pole = { a, b: bb, x: Math.round(WORLD_OX + ((a - bb) * TW) / 2), y: Math.round(WORLD_OY + ((a + bb) * TH) / 2), front: true, lean: hash(i, 3) < 0.2 ? (hash(i, 4) < 0.5 ? -1 : 1) : 0 };
-    // Wire it to the nearest pole already up, inside or on the ring road, if one is in reach.
+    // Wire it to the nearest pole already up, if one is in reach.
     let best: Pole | null = null;
     let bd = 9;
-    for (const q of [...placed, ...ringPoles]) {
+    for (const q of placed) {
       const d = Math.hypot(q.a - a, q.b - bb);
       if (d < bd) [best, bd] = [q, d];
     }

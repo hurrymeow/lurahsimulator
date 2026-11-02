@@ -4,7 +4,7 @@ import { sizeOf, tilesOf, type Placed } from '../sim/state';
 import { sizeFor } from '../sim/content';
 import { GRID_H, GRID_W, RT_H, RT_W, type Building, type GameState, type ResourceId } from '../sim/types';
 import { Atmosphere } from './atmosphere';
-import { drawCables, drawPathCables, drawSprite, polesByPaths, type PathPole } from './cables';
+import { drawPathCables, drawSprite, polesByPaths, type PathPole } from './cables';
 import { drawBunting, drawUmbul } from './agustus';
 import { agustusan } from '../sim/lomba';
 import { permitEta, queueBerkas } from '../sim/staff';
@@ -525,8 +525,6 @@ export class MapView {
     const sh = Math.min(WORLD_H - sy, Math.ceil(this.viewH / sc) + 2);
     if (sw > 0 && sh > 0) ctx.drawImage(this.drawWorld(), sx, sy, sw, sh, wx + sx * sc, wy + sy * sc, sw * sc, sh * sc);
     this.drawBackdrop(ctx, wx, wy, world);
-    // Poles and cables on the back of the ring road stand behind every building.
-    drawCables(ctx, s.stage.current, false, wx, wy, sc, this.viewW, this.viewH, world, this.motion);
     // The other Kelurahan of the Kecamatan: one low-detail block each, past the ring road.
     for (const r of ringBlocks()) {
       const art = ringArt(r.id);
@@ -717,8 +715,6 @@ export class MapView {
 
     decoUntil(Infinity, 0);
     this.crowd.drawUntil(ctx, Infinity, this.project, sc, world, this.motion && !this.frozen);
-    // The front of the ring road's poles and cables stand in front of every building.
-    drawCables(ctx, s.stage.current, true, wx, wy, sc, this.viewW, this.viewH, world, this.motion);
     drawPathCables(ctx, s.buildings, s.stage.current, wx, wy, sc, this.viewW, this.viewH, world, this.motion);
     this.fx.drawPuffs(ctx, this.project, sc, now, (fx, fy) => {
       const k = Math.floor(fy) * GRID_W + Math.floor(fx);
