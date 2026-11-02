@@ -80,7 +80,7 @@ T1 to T5 replace the single PR first drafted here. voidinside99 asked for the De
 - Don't touch: `promote`, `checkTakeover`, `src/ui/`, TODO.md. Nothing calls `absorb` yet. No e2e needed.
 
 ### T3. Goals that name Kampung Sebelah and RW 2, not yet used (Sonnet, executor trial)
-- Files: `src/sim/types.ts`, `src/sim/stages.ts`, `src/i18n/en.ts`, `src/i18n/id.ts`, `tests/grow.test.ts`
+- Files: `src/sim/types.ts`, `src/sim/stages.ts`, `src/i18n/en.ts`, `src/i18n/id.ts`, `tests/grow.test.ts`, `tests/higher.test.ts`
 - Exact changes:
   - `src/sim/types.ts`: add goal kinds `{ kind: 'sebelahAtStars'; n: number }` and `{ kind: 'rw2AtStars'; n: number }`, where `n` is the stars asked for. Keep `rtsAtStars` and `rwsAtStars` for now.
   - `src/sim/stages.ts`: `sebelahAtStars` has the stars of the neighbour at cell (1,0), or 0. `rw2AtStars` has the lowest stars among neighbours with `cy === 1`, or 0 if there are none. Add both to the map of goal text keys.
@@ -98,7 +98,7 @@ T1 to T5 replace the single PR first drafted here. voidinside99 asked for the De
     - `'stage.goalShort.rw2AtStars'`: `'bawa RW 2 ke {n}★'`
     - `'stage.goal.fundedRts'` becomes `'Danai Kampung Sebelah satu kali (punya {have})'`
     - `'stage.goalShort.fundedRts'` becomes `'danai Kampung Sebelah satu kali'`
-  - `tests/grow.test.ts`: add tests for both kinds, with `goalProgress` on a state with the neighbours set by hand. If an existing test expects the old `fundedRts` text, update that text only.
+  - `tests/grow.test.ts`: add tests for both kinds, with `goalProgress` on a state with the neighbours set by hand. In `tests/grow.test.ts` or `tests/higher.test.ts`, if an existing test expects the old `fundedRts` text, update that text only.
 - Done when: `npm run typecheck` and `npm test` pass; the two notes exist as `decisions/smaller-map-T3.md` and `progress/smaller-map-T3.md`.
 - Don't touch: `src/data/higher/stages.ts`, other strings, `src/ui/`, TODO.md. No e2e needed. If typecheck asks for a change in a file not listed, set status `stopped` and name it.
 
