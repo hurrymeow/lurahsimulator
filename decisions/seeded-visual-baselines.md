@@ -1,0 +1,5 @@
+# Seeded Math.random in the screenshot baselines
+
+2026-11-02. The event popup and tip card baselines failed on PR CI for #279 and #280 while passing on other runs of the same code. Repeating the tip card 24 times under load gave 19 to 21 different images on this branch and on main from before #279 alike; with the map hidden all 24 matched. The map differed in its walkers: `src/render/people.ts` picks their start, wait and facing with `Math.random`, so the frame behind a popup depended on the random state, and under CI's load it stopped landing the same way.
+
+`tests/e2e/visual.spec.ts` now seeds `Math.random` with a small xorshift generator in an init script, before the app loads. With it, the tip card and event popup came out identical in 24 of 24 runs each under the same load. The game itself is unchanged and the tolerance is untouched; the baselines were redrawn once with the seed in place. Per TESTING.md item 1 (Fowler-ND), the source of non-determinism is removed rather than retried around.
