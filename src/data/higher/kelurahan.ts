@@ -17,7 +17,7 @@ export const KEL_METERS: MeterDef[] = [
   },
 ];
 
-// Kelurahan lots take 2x2 tiles at half zoom, so they tap like one RT tile.
+// Kelurahan buildings take 2x2 tiles.
 export const KEL_BUILDINGS: StageBuildingDef[] = [
   {
     id: 'kantorKel',
