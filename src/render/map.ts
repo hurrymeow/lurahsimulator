@@ -13,7 +13,7 @@ import { t } from '../i18n';
 import { Crowd } from './people';
 import { Weather } from './weather';
 import { placeBadge, type BadgeBox } from './badge';
-import { buildWorld, clouds, decoAt, farRoofs, layoutWorld, ringArt, ringBlocks, ringShown, RING_EXT, RING_SIDE, setRing, type DistrictId, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
+import { BACKDROP, buildWorld, clouds, decoAt, farRoofs, layoutWorld, ringArt, ringBlocks, ringShown, RING_EXT, RING_SIDE, setRing, type DistrictId, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
 import { ICONS, ROOF_COLOURS, ROOF_SHAPES, WALL_COLOURS, sprite } from './sprites';
 
 /** Resource colours for page elements: CSS variables, so they follow the Light or Dark theme. */
@@ -158,7 +158,7 @@ function measure(): void {
   MAP_W = ((GRID_W + GRID_H) * TW) / 2;
   MAP_H = TOP + ((GRID_W + GRID_H) * TH) / 2 + DEPTH;
   PAN_LEFT = ((GRID_H + ext) * TW) / 2 + TW;
-  PAN_TOP = WORLD_OY - HORIZON + 150;
+  PAN_TOP = WORLD_OY - HORIZON + (BACKDROP === 'b' ? 0 : 150);
   PAN_W = PAN_LEFT + ((GRID_W + ext) * TW) / 2 + TW;
   PAN_H = PAN_TOP + ((GRID_W + GRID_H + 2 * ext) * TH) / 2 + PAN_BELOW * TH;
 }
@@ -535,7 +535,7 @@ export class MapView {
     // Past the world's edges the sky and sea carry on.
     ctx.fillStyle = SEA;
     ctx.fillRect(0, 0, this.viewW, this.viewH);
-    ctx.fillStyle = SKY;
+    ctx.fillStyle = BACKDROP === 'b' ? SEA : SKY;
     ctx.fillRect(0, 0, this.viewW, Math.max(0, wy + HORIZON * sc));
     // Only the part of the world on screen, so a big map costs the same as a small one.
     const sx = Math.max(0, Math.floor(-wx / sc));
@@ -860,9 +860,11 @@ export class MapView {
     const sun = sunArt(blink);
     // A warm halo round the sun, like light blooming through haze.
     const halo = sunHalo();
+    if (BACKDROP !== 'b') {
     const hr = SUN_SIZE * 2.4 * s;
     ctx.drawImage(halo, wx + SUN_X * s - hr / 2, wy + (SUN_Y + bob) * s - hr / 2, hr, hr);
     ctx.drawImage(sun, wx + (SUN_X - SUN_SIZE / 2) * s, wy + (SUN_Y - SUN_SIZE / 2 + bob) * s, SUN_SIZE * s, SUN_SIZE * s);
+    }
 
     // Clouds slide slowly to and fro, and now and then one twitches up a pixel and settles.
     clouds().forEach((c, i) => {
