@@ -559,7 +559,7 @@ export type SimEffect =
 
 export type CheckResult = { ok: true } | { ok: false; missing: string[] };
 
-/** One RT. A RW is 2x2 RTs and a Kelurahan is 2x2 RWs, so the map only ever grows outwards from tile (0,0). */
+/** One RT. A RW is two RTs side by side and a Kelurahan is 2x2 RTs, so the map only ever grows outwards from tile (0,0). */
 export const RT_W = 13;
 export const RT_H = 17;
 /** Current map size in tiles. Live bindings: setGrid changes them for every importer. */
@@ -569,9 +569,9 @@ export let GRID_H = RT_H;
 /** RTs across and down the map at a stage. The Kecamatan keeps the Kelurahan's tile map. The other Kelurahan are district blocks, not tiles (decisions/kecamatan-slice.md). */
 export const STAGE_SPAN: Record<StageId, { w: number; h: number }> = {
   rt: { w: 1, h: 1 },
-  rw: { w: 2, h: 2 },
-  kelurahan: { w: 4, h: 4 },
-  kecamatan: { w: 4, h: 4 },
+  rw: { w: 2, h: 1 },
+  kelurahan: { w: 2, h: 2 },
+  kecamatan: { w: 2, h: 2 },
 };
 
 /** Tiles of dirt road between two RT cells. The bands sit between cells, so every RT keeps its full size. */

@@ -25,13 +25,13 @@ function playRw(seed: number, years: number, auto = false): GameState {
   for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (lotAt(x, y) === 'rw') seam.push({ x, y });
   for (let m = 0; m < years * 12; m++) {
     if (s.pendingEvent) resolveEvent(s, [], 0);
-    if (!auto) for (const n of s.neighbours) if (s.res.rupiah > 3_000_000) fundNeighbour(s, n);
     for (const id of ['balaiRW', 'posyandu', 'portal', 'pasarKaget', 'gapura']) {
       // Build close together: combos need their members within a few tiles.
       const anchor = s.buildings.find((x) => lotAt(x.x, x.y) === 'rw') ?? seam[0];
       const spot = seam.filter((p) => checkPlace(s, id, p.x, p.y).ok).sort((p, q) => Math.abs(p.x - anchor.x) + Math.abs(p.y - anchor.y) - Math.abs(q.x - anchor.x) - Math.abs(q.y - anchor.y))[0];
-      if (spot && s.res.rupiah > 6_000_000) place(s, id, spot.x, spot.y);
+      if (spot && !s.buildings.some((x) => x.def === id) && s.res.rupiah > 3_000_000) place(s, id, spot.x, spot.y);
     }
+    if (!auto) for (const n of s.neighbours) if (s.res.rupiah > 3_000_000) fundNeighbour(s, n);
     for (const b of s.buildings) {
       if (b.status === 'permit') skipPermit(s, b);
       else if (b.status === 'damaged' && checkRepair(s, b).ok) repair(s, b);
@@ -43,7 +43,7 @@ function playRw(seed: number, years: number, auto = false): GameState {
 }
 
 describe('RW bot', () => {
-  it('reaches 2 stars, with 2 RW combos, from a plain fund-and-build routine', () => {
+  it('reaches 2 stars from a plain fund-and-build routine, and 2 RW combos by year 12', () => {
     const got = [1, 2, 3, 4, 5].map((seed) => {
       const s = playRw(seed, 12);
       return { seed, stars: s.stage.stars.rw, combos: s.discovered.filter((d) => ['grupChatWarga', 'posSiaga', 'jalanDitutup', 'agustusanAkbar'].includes(d)), rts: s.neighbours.map((n) => n.stars), sabar: Math.round(s.res.sabar), clear: s.stempel.clear };
@@ -53,7 +53,7 @@ describe('RW bot', () => {
     for (const g of got) expect(g.combos.length, `seed ${g.seed}`).toBeGreaterThanOrEqual(2);
   }, 30_000);
 
-  it('reaches 3 stars on Auto-dana within 9 years: 4 RTs at 2 stars and 2 at 3', () => {
+  it('reaches 3 stars on Auto-dana within 9 years: Kampung Sebelah at 3 stars and 2 RW combos', () => {
     const got = [1, 2, 3, 4, 5].map((seed) => {
       const s = playRw(seed, 9, true);
       return { seed, stars: s.stage.stars.rw, rts: s.neighbours.map((n) => n.stars).join('') };

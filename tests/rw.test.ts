@@ -25,6 +25,17 @@ function rw(stars: 0 | 1 | 2 = 2, seed = 3): GameState {
   return s;
 }
 
+/** A player Kelurahan, where RW 2 holds the two AI RTs the Grup Chat Warga combo needs. */
+function kel(stars: 0 | 1 | 2 = 1, seed = 3): GameState {
+  const s = newGame(seed);
+  promote(s, []);
+  promote(s, []);
+  s.stage.stars.rw = stars;
+  s.res.rupiah = 1e9;
+  s.res.sabar = 60;
+  return s;
+}
+
 const put = (s: GameState, id: string, x: number, y: number, level = 1) => {
   const b = addBuilding(s, id, x, y, 'active');
   b.level = level;
@@ -47,14 +58,14 @@ describe('RW stage is playable', () => {
     expect(canPromote(s)).toBe(true);
     expect(acceptSK(s)).toBe(true);
     expect(s.stage.current).toBe('rw');
-    expect(s.neighbours).toHaveLength(3);
+    expect(s.neighbours).toHaveLength(1);
   });
 
   it('always draws two AI RTs of one trait, so Grup Chat Warga can be found', () => {
     for (let seed = 1; seed <= 40; seed++) {
-      const s = newGame(seed);
-      promote(s, []);
-      expect(new Set(s.neighbours.map((n) => n.trait)).size, `seed ${seed}`).toBeLessThan(3);
+      const s = kel(1, seed);
+      const ai = s.neighbours.filter((n) => n.run !== 'player');
+      expect(new Set(ai.map((n) => n.trait)).size, `seed ${seed}`).toBeLessThan(ai.length);
       setGrid('rt');
     }
   });
@@ -70,12 +81,13 @@ describe('RW stage is playable', () => {
 
 describe('RW combos', () => {
   it('finds Grup Chat Warga with a Balai RW and two same-trait RTs', () => {
-    const s = rw(1);
-    s.neighbours.forEach((n, i) => (n.trait = i === 2 ? 'jarang' : 'rajin'));
+    const s = kel(1);
+    const ai = s.neighbours.filter((n) => n.run !== 'player');
+    ai.forEach((n) => (n.trait = 'rajin'));
     expect(activeCombos(s).map((a) => a.combo.id)).not.toContain('grupChatWarga');
     put(s, 'balaiRW', 13, 3);
     expect(activeCombos(s).map((a) => a.combo.id)).toContain('grupChatWarga');
-    s.neighbours.forEach((n, i) => (n.trait = (['rajin', 'hobi', 'jarang'] as const)[i]));
+    ai.forEach((n, i) => (n.trait = (['rajin', 'hobi', 'jarang'] as const)[i]));
     expect(activeCombos(s).map((a) => a.combo.id)).not.toContain('grupChatWarga');
   });
 
@@ -91,13 +103,13 @@ describe('RW combos', () => {
   });
 
   it('reaches the two RW combos the 2★ goal needs using only 1★ buildings', () => {
-    const s = rw(1);
-    s.neighbours.forEach((n, i) => (n.trait = i === 0 ? 'hobi' : 'rajin'));
+    const s = kel(1);
+    s.neighbours.filter((n) => n.run !== 'player').forEach((n) => (n.trait = 'rajin'));
     put(s, 'balaiRW', 13, 3);
     put(s, 'posyandu', 14, 5);
     put(s, 'portal', 15, 5);
     tick(s);
-    const line = nextStarChecklist(s)!.find((l) => l.goal.kind === 'rwCombos')!;
+    const line = nextStarChecklist(s, 'rw')!.find((l) => l.goal.kind === 'rwCombos')!;
     expect(line.done).toBe(true);
   });
 
