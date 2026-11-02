@@ -31,7 +31,7 @@ No third-party art or names. Everything is drawn in code.
 ## Geometry
 
 - Straight lines and true isometric angles (2:1) everywhere: boxes, hipped roofs, ground
-  decals, terrain borders, volcano steps, rays.
+  decals, terrain borders, volcano facets, rays.
 - One projection for the whole world. Nothing is a flat painted backdrop: the volcanoes, the islands
   and the sea are drawn in the same isometric view as the kampung. There is no horizon and no sky,
   since an isometric view has no vanishing point (playtest 2026-11-02: painted mountains and a sun
@@ -144,7 +144,7 @@ Scenery colours:
 | Kebun, hutan | `#5f8a3c`, `#4a7334` |
 | Beach, sea | Sand `#e6c486` to `#f3daa2` with ripples, sea `#367f80` to `#4a9b96` with `#8fd0c2` wave dashes |
 | Clouds | Long thin streaks that taper at both ends: `#fbf8f2` top to `#c9c2d8` underside, no ink. They float over the open sea above the island's back corner, never over tiles. Drawn per frame (`clouds()`): they slide slowly to and fro and twitch a pixel now and then |
-| Volcanoes | Twin volcanoes on the island's back corner (`VOLCS` in `scenery.ts`), built as stacked isometric blocks on half-tile cells: each cell is a flat top at a whole number of 6px steps with two vertical faces, the left face 0.92x and the right 0.72x, so the silhouette is 2:1 edges and plumb lines but reads as a smooth slope. Tiers by height: forest (tops in the hutan colours over dark moss faces `#40592c` / `#374f28`), bare rock (tanah tops over `#8a5a32` / `#7a4c2a`), an ash cap `#b4aea6` to `#cac4bb` over `#a49e95` / `#968f86`. Tiers blend through the 4x4 dither across a band of height. Faces are striped every 3px, a soft lip line (0.76x) runs under each step's edge and each face's foot darkens through the dither. Light from the top left brightens the near flank and darkens the far one, also dithered. They run down to the beach and stop short of the ring road. No trees on a block, and none that a block would hide |
+| Volcanoes | Twin volcanoes on the island's back corner (`VOLCS` in `scenery.ts`), part of the same corner-height mesh as the hills: lit triangle facets with the soft tile grid line, joined to the hills by a soft maximum so the skirts flow into the slopes round them. Concave cones with shallow ravines. Materials follow each pixel's height: the hill's own ground at the foot, then forest (hutan), bare rock (tanah), and an ash cap `#b4aea6` to `#cac4bb` with dark cinders. Tiers blend through the 4x4 dither across a band of height. Texture on the cone is sampled on screen, not on the flat world, so the steep slope is not streaked. They run down to the beach and stop short of the ring road. A few trees on the gentle forest belt, none on steep faces or behind a slope |
 | Sea | Open sea on every side and past the world's edges, the same sea texture everywhere |
 | Coast | The main island is no diamond: each side's coastline wanders in bays and headlands of a few tiles (`coastAt` in `scenery.ts`) and the four corners are rounded. A beach with foam runs all the way round. The front sides only wander outward, so the sawah, the ring road and the neighbours' roofs stay on land |
 | Sea islands | 15 to 18 islands of mixed sizes, never touching land or each other: rocks, sandbars, wooded islets and a few big hilly islands. Each is a small corner-height mesh on half-tile facets, lit and gridded like the hills, painted in the beach, grass, hutan and tanah materials with coloured borders, a foam ring and a wet-sand bank on the near side, and planted with the map's own palms, shade trees and bushes. No perspective shrink and no haze |
@@ -156,8 +156,8 @@ Rules:
 - Warm first. Cool colours (teal, blue) are accents, never the main field.
 - Saturated, but not neon. If a colour glows on the dark UI, pull it toward cream or brown.
 - No aerial perspective: an isometric view has no near and far, so a far island is drawn like a near one.
-- Dithering is for the volcanoes and clouds only: the volcano tiers, flank light and step shadows,
-  and the clouds' thin ends, blend through a 4x4 ordered (Bayer) dither in a few flat steps.
+- Dithering is for the volcanoes and clouds only: the volcano tiers and the clouds' thin ends blend
+  through a 4x4 ordered (Bayer) dither in a few flat steps.
   Sprites and the rest of the ground never dither.
 - Ground texture uses clumps squashed 2:1, so they lie flat on the isometric plane.
 - The kampung is a raised block: where land meets the beach or the world's edge, a 7-pixel
