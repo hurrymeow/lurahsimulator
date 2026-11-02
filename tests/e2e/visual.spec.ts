@@ -57,6 +57,13 @@ async function play(page: Page): Promise<void> {
   }
 }
 
+/**
+ * Runs the clock past the welcome toast, which hides 3.4 s after the game starts. play() runs 300 ms
+ * per tap it needs to clear the opener, and how many it needs depends on page-load timing, so the
+ * popups otherwise landed on either side of the toast's exit and the baseline flipped between runs.
+ */
+const pastWelcome = (page: Page) => settle(page, 3500);
+
 test.describe('visual baselines', () => {
   test('home', async ({ page }) => {
     await open(page);
@@ -84,6 +91,7 @@ test.describe('visual baselines', () => {
   test('event popup', async ({ page }) => {
     await open(page);
     await play(page);
+    await pastWelcome(page);
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.s.pendingEvent = 'cabai';
@@ -96,6 +104,7 @@ test.describe('visual baselines', () => {
   test('tip card', async ({ page }) => {
     await open(page);
     await play(page);
+    await pastWelcome(page);
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.modal({ title: 'Tip', body: 'A tip card keeps its look.', tone: 'info', tip: { pics: null } });
