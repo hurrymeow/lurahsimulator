@@ -61,13 +61,12 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: Hari, 2026-11-02, thread "Log player-built second RT to TODO".
   - `open · — · — · done when:` after the 3★ expansion, a new player builds in the 2nd RT with a tutorial for each step, EN and ID at 320 px, and the AI-run RT step follows with its own tutorial.
 
-- [ ] **Smaller map: RW of 2 RTs, Kelurahan of 2 RWs with Kampung Sebelah absorbed.**
-  - Problem: the RW has 4 RTs and the Kelurahan 16. In the playtest of 2026-11-01 the Kelurahan was overwhelming, and its 1★ waited on "4 RW at 1★" across mostly empty lots.
-  - Why: one AI RT to tend at the RW and one AI RW at the Kelurahan keep the management load small, and absorbing Kampung Sebelah guarantees new land when the own-kampung goals need it.
-  - Suggested solution: build GAME-DESIGN.md section 2 as now written. The RW map is 2 RTs side by side and the Kelurahan 2x2 RTs at full-size tiles. At promotion Kampung Sebelah becomes player-run (like a takeover), and RW 2 is two new AI RTs. RW goals read Kampung Sebelah; Kelurahan goals read RW 2. Stempel stops at the Kelurahan. Grup Chat Warga moves to RW 2's pair. Re-run the RW, Kelurahan and balance bots, and the frame-rate test. Old saves: decide in the PR (keep their old neighbours, or treat them as incompatible as with the Desa cut).
-  - Decided: Hari said yes on 2026-11-01 (`decisions/smaller-map-go.md`). Plan: `docs/plans/smaller-map.md`, approved by voidinside99 on 2026-11-02, including how Kecamatan slice 1 changes.
-  - Source: `decisions/playtest-sk2.md`
-  - `claimed · DeepSeek executor · 2026-11-02 · done when:` new games follow the new ladder, the stage goals read as in section 2, and the bot tests reach each stage's stars.
+- [ ] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).**
+  - Problem: T1 to T8 are merged and tuned from bot numbers only. No person has played the new ladder.
+  - Why: T8 left questions bots cannot answer: stage lengths are short of target (RW about 7 min against 20, Kelurahan about 16 against 30), and preman can sink Aman at the Kecamatan.
+  - Suggested solution: play it, then log what changes in a new `decisions/` file. The notes are under "For Hari" in `decisions/smaller-map-balance.md`.
+  - Source: `docs/plans/smaller-map.md`, task T9.
+  - `open · Hari · — · done when:` a decisions file records the playtest and what it changes.
 - [ ] **HIGH PRIORITY: Let the player build on AI-run RTs, and add Kunjungan (visit) as a one-tap boost.**
   - Problem: Neighbour RTs feel passive. Dana is pay-and-wait, and the score parts are only a readout. Hari: "felt very passive now, don't know what to do". To build in a neighbour RT you must take it over (Ambil alih, 3 Orang Dalam, own RW only), and then the AI stops building there.
   - Why: Building is the action the player already knows, and it lets the player choose exactly what clears the blocker (houses for warga, the missing combo partner). Orang Dalam piles up unused late on (114 in Hari's screenshot), so it needs a sink.
@@ -203,6 +202,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **Smaller map: RW of 2 RTs, Kelurahan of 2 RWs with Kampung Sebelah absorbed.** New ladder, stage goals, camera and balance. #275, #276, #277, #278, `docs/plans/smaller-map.md`, `decisions/smaller-map-balance.md`.
 - [x] **Spread the staff stats: each stat works two roles and risks two.** Tukang Tagih works on Gaul, Supir on Jujur; Asisten risks Rajin, Petugas PU and Admin Grup WA risk Lobi; new mishap texts; Om Motivasi and Om Lalu Lintas re-leaned. DeepSeek executor, #260, `docs/plans/staff-stat-spread.md` T1.
 - [x] **Stop the "build Warung Sembako" hint after Warung Sembako is built.** `bestDraw` skips buildings already built. #250, `docs/plans/warung-draw-hint.md`.
 - [x] **Dense housing pays: Rumah 3/4/5, Kos-kosan 10/14, Kontrakan 24/32.** #251, `docs/plans/executor-sonnet-batch.md` T2.
