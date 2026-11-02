@@ -4,6 +4,7 @@ import { sizeOf, tilesOf, type Placed } from '../sim/state';
 import { sizeFor } from '../sim/content';
 import { GRID_H, GRID_W, RT_H, RT_W, type Building, type GameState, type ResourceId } from '../sim/types';
 import { Atmosphere } from './atmosphere';
+import { drawCables, drawPathCables, drawSprite, polesByPaths, type PathPole } from './cables';
 import { drawBunting, drawUmbul } from './agustus';
 import { agustusan } from '../sim/lomba';
 import { permitEta, queueBerkas } from '../sim/staff';
@@ -13,7 +14,7 @@ import { t } from '../i18n';
 import { Crowd } from './people';
 import { Weather } from './weather';
 import { placeBadge, type BadgeBox } from './badge';
-import { buildWorld, clouds, decoAt, farRoofs, layoutWorld, ringArt, ringBlocks, ringShown, RING_EXT, RING_SIDE, setRing, type DistrictId, HORIZON, shorePoints, SEA, SKY, SUN_SIZE, SUN_X, SUN_Y, sunArt, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
+import { buildWorld, clouds, smallTree, decoAt, farRoofs, layoutWorld, ringArt, ringBlocks, ringShown, RING_EXT, RING_SIDE, setRing, type DistrictId, shorePoints, SEA, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
 import { ICONS, ROOF_COLOURS, ROOF_SHAPES, WALL_COLOURS, sprite } from './sprites';
 
 /** Resource colours for page elements: CSS variables, so they follow the Light or Dark theme. */
@@ -52,21 +53,6 @@ function contactShadow(): HTMLCanvasElement {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 128, 128);
   return (aoCache = c);
-}
-
-let haloCache: HTMLCanvasElement | null = null;
-
-function sunHalo(): HTMLCanvasElement {
-  if (haloCache) return haloCache;
-  const c = document.createElement('canvas');
-  c.width = c.height = 128;
-  const ctx = c.getContext('2d')!;
-  const g = ctx.createRadialGradient(64, 64, 16, 64, 64, 64);
-  g.addColorStop(0, 'rgba(255, 236, 170, 0.75)');
-  g.addColorStop(1, 'rgba(255, 236, 170, 0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 128, 128);
-  return (haloCache = c);
 }
 
 interface Pop {
@@ -144,7 +130,7 @@ let MAP_W = 0;
 let MAP_H = 0;
 /** Extra pan below the grid's front corner, in tiles. The sea carries on past the world's edge, so it never runs out. */
 const PAN_BELOW = 7;
-/** How far dragging can go around the grid, in art pixels from tile (0,0)'s top corner. Up far enough to see the mountains. */
+/** How far dragging can go around the grid, in art pixels from tile (0,0)'s top corner. Up to the world's top edge, far enough to see the volcanoes and the islands behind them. */
 let PAN_LEFT = 0;
 let PAN_TOP = 0;
 let PAN_W = 0;
@@ -156,7 +142,7 @@ function measure(): void {
   MAP_W = ((GRID_W + GRID_H) * TW) / 2;
   MAP_H = TOP + ((GRID_W + GRID_H) * TH) / 2 + DEPTH;
   PAN_LEFT = ((GRID_H + ext) * TW) / 2 + TW;
-  PAN_TOP = WORLD_OY - HORIZON + 150;
+  PAN_TOP = WORLD_OY;
   PAN_W = PAN_LEFT + ((GRID_W + ext) * TW) / 2 + TW;
   PAN_H = PAN_TOP + ((GRID_W + GRID_H + 2 * ext) * TH) / 2 + PAN_BELOW * TH;
 }
@@ -529,11 +515,9 @@ export class MapView {
     ctx.imageSmoothingEnabled = false;
     const wx = this.ox - WORLD_OX * sc;
     const wy = this.oy - WORLD_OY * sc;
-    // Past the world's edges the sky and sea carry on.
+    // Past the world's edges the sea carries on.
     ctx.fillStyle = SEA;
     ctx.fillRect(0, 0, this.viewW, this.viewH);
-    ctx.fillStyle = SKY;
-    ctx.fillRect(0, 0, this.viewW, Math.max(0, wy + HORIZON * sc));
     // Only the part of the world on screen, so a big map costs the same as a small one.
     const sx = Math.max(0, Math.floor(-wx / sc));
     const sy = Math.max(0, Math.floor(-wy / sc));
@@ -541,6 +525,8 @@ export class MapView {
     const sh = Math.min(WORLD_H - sy, Math.ceil(this.viewH / sc) + 2);
     if (sw > 0 && sh > 0) ctx.drawImage(this.drawWorld(), sx, sy, sw, sh, wx + sx * sc, wy + sy * sc, sw * sc, sh * sc);
     this.drawBackdrop(ctx, wx, wy, world);
+    // Poles and cables on the back of the ring road stand behind every building.
+    drawCables(ctx, s.stage.current, false, wx, wy, sc, this.viewW, this.viewH, world, this.motion);
     // The other Kelurahan of the Kecamatan: one low-detail block each, past the ring road.
     for (const r of ringBlocks()) {
       const art = ringArt(r.id);
@@ -615,7 +601,7 @@ export class MapView {
     const tops = new Map<number, number>();
     this.hits = [];
     // Scenery on empty tiles joins the same back-to-front order, but never the tap list.
-    const deco: { x: number; y: number; name: string }[] = [];
+    const deco: { x: number; y: number; name: string; pole?: PathPole }[] = [];
     for (let d = 0; d < GRID_W + GRID_H - 1; d++)
       for (let x = Math.max(0, d - GRID_H + 1); x <= Math.min(d, GRID_W - 1); x++) {
         const y = d - x;
@@ -625,10 +611,16 @@ export class MapView {
       }
     // From 2 stars the scenery edge thins and the neighbours' roofs show beyond the road.
     if (s.stage.current === 'rt' && s.stage.stars.rt >= 2) for (const r of farRoofs()) if (this.onScreen(r.x, r.y)) deco.push(r);
+    // Poles beside the jalan setapak stand in the same order, so buildings in front hide their feet.
+    for (const p of polesByPaths(s.buildings, s.stage.current)) if (this.onScreen(p.x, p.y)) deco.push({ x: p.x, y: p.y, name: '', pole: p });
     deco.sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
     let di = 0;
     const decoUntil = (depth: number, x: number) => {
-      for (; di < deco.length && (deco[di].x + deco[di].y < depth || (deco[di].x + deco[di].y === depth && deco[di].x < x)); di++) this.art(ctx, iso(deco[di].name), deco[di].x, deco[di].y);
+      for (; di < deco.length && (deco[di].x + deco[di].y < depth || (deco[di].x + deco[di].y === depth && deco[di].x < x)); di++) {
+        const d = deco[di];
+        if (d.pole) drawSprite(ctx, d.pole.sprite, wx, wy, sc, world, false);
+        else this.art(ctx, iso(d.name), d.x, d.y);
+      }
     };
     this.night = this.effects ? darkness(this.clock) : 0;
     this.lights = [];
@@ -725,6 +717,9 @@ export class MapView {
 
     decoUntil(Infinity, 0);
     this.crowd.drawUntil(ctx, Infinity, this.project, sc, world, this.motion && !this.frozen);
+    // The front of the ring road's poles and cables stand in front of every building.
+    drawCables(ctx, s.stage.current, true, wx, wy, sc, this.viewW, this.viewH, world, this.motion);
+    drawPathCables(ctx, s.buildings, s.stage.current, wx, wy, sc, this.viewW, this.viewH, world, this.motion);
     this.fx.drawPuffs(ctx, this.project, sc, now, (fx, fy) => {
       const k = Math.floor(fy) * GRID_W + Math.floor(fx);
       return this.project(fx, fy).y - (tops.get(k) ?? this.project(fx, fy).y);
@@ -844,23 +839,12 @@ export class MapView {
   }
 
   /**
-   * The sun bobs and blinks, and the trees round the kampung bounce in a slow wave. Both are
-   * ambient life, so they hold still with reduce motion.
+   * Clouds drift and the trees round the kampung bounce in a slow wave. Both are ambient life, so
+   * they hold still with reduce motion.
    */
   private drawBackdrop(ctx: CanvasRenderingContext2D, wx: number, wy: number, now: number): void {
     const s = this.scale;
     const t = this.motion ? now : 0;
-    // Blink for 150 ms every 3.2 s, with a quick double blink every third time.
-    const beat = t % 9600;
-    const blink = this.motion && [0, 3200, 3450, 6400].some((at) => beat >= at && beat < at + 150);
-    const bob = Math.round(Math.sin(t / 450) * 2);
-    const sun = sunArt(blink);
-    // A warm halo round the sun, like light blooming through haze.
-    const halo = sunHalo();
-    const hr = SUN_SIZE * 2.4 * s;
-    ctx.drawImage(halo, wx + SUN_X * s - hr / 2, wy + (SUN_Y + bob) * s - hr / 2, hr, hr);
-    ctx.drawImage(sun, wx + (SUN_X - SUN_SIZE / 2) * s, wy + (SUN_Y - SUN_SIZE / 2 + bob) * s, SUN_SIZE * s, SUN_SIZE * s);
-
     // Clouds slide slowly to and fro, and now and then one twitches up a pixel and settles.
     clouds().forEach((c, i) => {
       const dx = Math.round(Math.sin(t / c.period * Math.PI * 2 + c.phase) * c.sway);
@@ -872,19 +856,18 @@ export class MapView {
       ctx.drawImage(c.art, left, top, c.art.width * s, c.art.height * s);
     });
 
-    // Ground anchor row in tree art: the stretch grows upward from the roots.
-    const anchor = TOP + TH / 2;
+    // Scenery trees at their own sizes; the stretch grows upward from the roots.
     for (const tree of worldTrees()) {
-      const art = iso(tree.name);
-      const left = wx + tree.x * s;
-      const top = wy + tree.y * s;
+      const art = smallTree(tree.name, tree.scale, (tree.tx * 7 + tree.ty * 3 + Math.round(tree.x)) & 3);
+      const left = wx + (tree.x + art.dx) * s;
+      const top = wy + (tree.y + art.dy) * s;
       const w = art.canvas.width * s;
       const h = art.canvas.height * s;
       if (left > this.viewW || left + w < 0 || top > this.viewH || top + h < 0) continue;
       // One art pixel of stretch and squash, so pixels stay whole.
       const dh = Math.round(Math.sin(t / 700 + (tree.tx * 0.9 + tree.ty * 0.4)) * 1.4);
-      const f = (anchor + dh) / anchor;
-      ctx.drawImage(art.canvas, left, top + anchor * s * (1 - f), w, h * f);
+      const f = (art.anchor + dh) / art.anchor;
+      ctx.drawImage(art.canvas, left, top + art.anchor * s * (1 - f), w, h * f);
     }
   }
 

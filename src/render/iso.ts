@@ -3,6 +3,7 @@
 // along every face edge. Geometry stays straight and isometric so the map never gets busy.
 import { CONTENT_ART } from './art-content';
 import { HIGHER_ART } from './art-higher';
+import { warungArt } from './warung-art';
 import { PALETTE } from './sprites';
 
 /** Art-pixel size of one ground diamond. The view scales these up by a whole number. */
@@ -655,44 +656,8 @@ const ART: Record<string, ArtFn> = {
       p.set(ax + k, ay - 2, 'w');
     }
   },
-  warung: (p, _v, level = 1) => {
-    if (level <= 1) {
-      // Warung tenda: a wooden gerobak counter under a blue terpal on bamboo poles, a red stool beside.
-      p.shadow(4);
-      posts(p, 4, 9, 'a');
-      p.box(6, 4, 'n', (face, _u, j, i) => (face === 'L' && j === 2 ? (i % 3 ? 'y' : 'c') : undefined));
-      p.roof(4, 9, 2, 'b', (x) => (x % 4 === 0 ? 'B' : undefined));
-      p.stroke(9, 5, 9, 3, 2, 'r');
-      return;
-    }
-    if (level >= 3) {
-      // A whitewashed brick warung: tile roof, a yellow nameboard band, a striped awning and a red cooler.
-      p.shadow(2);
-      p.box(2, 9, 'w', (face, u, j, i) => {
-        if (face === 'T') return undefined;
-        if (j >= 7) return 'y';
-        if (face === 'L' && within(u, 0.1, 0.9) && within(j, 2, 6)) return j === 2 ? 't' : i % 3 === 0 ? 'y' : i % 3 === 1 ? 'c' : 'p';
-        if (face === 'R' && within(u, 0.3, 0.7) && j < 6) return 'N';
-        return j === 0 ? 'S' : undefined;
-      });
-      p.roof(2, 9, 5, 'R');
-      // Awning over the counter, red and white.
-      p.id++;
-      for (let x = -13; x <= -1; x++) for (let k = 0; k < 2; k++) p.set(TW / 2 + x, TOP + TH / 2 - 6 + k + Math.round((x + 13) / 2), Math.floor((x + 13) / 2) % 2 ? 'w' : 'r');
-      p.stroke(10, 4, 11, 0, 3, 'r');
-      p.set(TW / 2 + 10, TOP + TH / 2 - 1, 'w');
-      return;
-    }
-    p.shadow(3);
-    p.box(3, 8, 'n', (face, u, j, i) => {
-      if (face === 'T') return undefined;
-      if (face === 'L' && within(u, 0.12, 0.88) && within(j, 3, 7)) return j === 3 ? 't' : i % 3 === 0 ? 'y' : i % 3 === 1 ? 'c' : 'k';
-      return j === 0 ? 'N' : undefined;
-    });
-    // Zinc roof with corrugations, sachet strips hanging from the eave.
-    p.roof(3, 8, 4, 's', (x) => (x % 2 ? 'S' : undefined));
-    for (const x of [-9, -6, -3]) p.stroke(x, -4 + (x + 12) / 2, x, -1 + (x + 12) / 2, 1, x === -6 ? 'p' : 'y');
-  },
+  // Warung tenda, then a gerobak under a zinc lean-to, then a brick toko kelontong (warung-art.ts).
+  warung: (p, _v, level = 1) => warungArt(p, level),
   posRonda: (p, _v, level = 1) => {
     // The kentongan: a slit log drum hanging by the post, at every level.
     const kentongan = () => {
