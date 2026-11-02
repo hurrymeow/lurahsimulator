@@ -8,7 +8,7 @@ import { lotAt, setPlayerCells } from './area';
 import { refreshAccess } from './access';
 import { GRID_H, GRID_W, setGrid, type Building, type BuildingDef, type GameState, type Resident, type StageState } from './types';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export const newStageState = (): StageState => ({ current: 'rt', stars: { rt: 0, rw: 0, kelurahan: 0, kecamatan: 0 } });
 
