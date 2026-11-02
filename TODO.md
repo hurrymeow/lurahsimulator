@@ -54,6 +54,13 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ### Next
 
+- [ ] **Let the player control and build on the 2nd RT after the RT reaches 3★, and add the AI-run RT later, each with a tutorial.**
+  - Problem: At 3★ the RT expands and the player has no clear next step in a second town. Hari, 2026-11-02: "after expanding from RT 3 star, let players control and build on the 2nd town, and introduce the RT AI later". The tutorial teaches only the first RT, so a new player gets no guidance when the second RT becomes theirs.
+  - Why: Building is the action the player already knows. Handing over the 2nd RT first gives the player a full loop before the AI-run RTs arrive, and it keeps the AI-run RT step small. Each step needs its own tutorial, so the player learns the new controls before they reach a larger map.
+  - Suggested solution: plan it after the RT 3★ expansion is settled. Step 1: the 2nd RT is player-controlled from the 3★ expansion, with its own tutorial steps (the lots, the first build, the stars). Step 2, later: the AI runs RTs, with a tutorial for that. Link it to the build-on-AI-RTs item above (the AI-run RT step), and to the smaller map in `decisions/smaller-map-go.md`, which sets the 2-RT RW and the 4-RT Kelurahan. Needs a planning thread first.
+  - Source: Hari, 2026-11-02, thread "Log player-built second RT to TODO".
+  - `open · — · — · done when:` after the 3★ expansion, a new player builds in the 2nd RT with a tutorial for each step, EN and ID at 320 px, and the AI-run RT step follows with its own tutorial.
+
 - [ ] **Smaller map: RW of 2 RTs, Kelurahan of 2 RWs with Kampung Sebelah absorbed.**
   - Problem: the RW has 4 RTs and the Kelurahan 16. In the playtest of 2026-11-01 the Kelurahan was overwhelming, and its 1★ waited on "4 RW at 1★" across mostly empty lots.
   - Why: one AI RT to tend at the RW and one AI RW at the Kelurahan keep the management load small, and absorbing Kampung Sebelah guarantees new land when the own-kampung goals need it.
