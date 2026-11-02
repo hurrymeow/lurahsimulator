@@ -10,6 +10,7 @@ import {
   type ChannelId, type RoleDef, type RoleId, type StatId, type TraitId,
 } from '../data/staff';
 import { NAMES, TITLES } from '../data/names';
+import { RIVAL_NAMES } from '../data/ranking';
 import { IURAN } from './balance';
 import { gain, type Fx } from './gain';
 import { isWorking, population, price } from './state';
@@ -444,7 +445,7 @@ export function staffSystem(s: GameState, fx: Fx): void {
     }
     if (x.refused && roll(s, s.month, x.id, 9) < POACH_CHANCE && !tr?.noFire) {
       release(s, x);
-      fx.push({ kind: 'notice', title: t('staff.poachedTitle', { name: x.name }), body: t('staff.poachedBody'), tone: 'bad' });
+      fx.push({ kind: 'notice', title: t('staff.poachedTitle', { name: x.name, rival: RIVAL_NAMES[s.stage.current] }), body: t('staff.poachedBody'), tone: 'bad' });
       continue;
     }
     if (tr?.quitsUnpaidAfter && s.month - (x.lastRaise ?? x.hiredAt) >= tr.quitsUnpaidAfter) {
