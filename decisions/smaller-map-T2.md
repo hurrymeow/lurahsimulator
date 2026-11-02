@@ -1,0 +1,3 @@
+# Absorbing an RT at promotion
+
+T2 adds `absorb(s, n)`, the free counterpart to `takeover`: an RT joined at promotion costs no Orang Dalam but is flagged `absorbed` and can never be handed back, so the map's free cells only shrink. The join itself (buildings, warga, banked-Dana refund, road relinking) moved into a private `joinPlayer` so takeover and absorption share it, while stars, ranking and combos stay with the RT. Two AI-facing rules now ignore absorbed RTs: `sameTraitNeighbours` pairs only AI-run RTs, and `mutasiTargets` leaves absorbed ones out while keeping each RT's original index, with `checkMutasi` testing that list. Nothing calls `absorb` yet; the UI wiring lands in a later task.

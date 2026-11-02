@@ -171,6 +171,8 @@ export interface Neighbour {
   pathsLaid?: boolean;
   /** 'player' when the player took this RT over: its buildings sit in the player's own list. Missing is AI-run. */
   run?: 'player';
+  /** Joined the player at promotion: it can never be handed back. */
+  absorbed?: boolean;
   discovered: string[];
   ranking: RankingResult[];
 }
