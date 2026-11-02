@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { cellOf, cellOrigin, lotAt, rwOf, ungapTile } from '../src/sim/area';
+import { cellOf, cellOrigin, lotAt, ungapTile } from '../src/sim/area';
 import { goalProgress, nextStarChecklist } from '../src/sim/stages';
 import { viewOf } from '../src/sim/neighbourView';
 import { FLAT, connectedRoad, hasRoadBeside } from '../src/sim/access';
@@ -32,24 +32,24 @@ const grown = (stage: 'rw' | 'kelurahan' = 'rw') => {
 };
 
 describe('growing map', () => {
-  it('doubles the grid at RW and again at Kelurahan, never moving what the player built', () => {
+  it('grows the grid at RW and again at Kelurahan, never moving what the player built', () => {
     const s = newGame(1);
     const before = s.buildings.map((b) => [b.x, b.y]);
     expect([GRID_W, GRID_H]).toEqual([RT_W, RT_H]);
     promote(s, []);
+    expect([GRID_W, GRID_H]).toEqual([RT_W * 2 + SEAM, RT_H]);
+    expect(s.neighbours).toHaveLength(1);
+    promote(s, []);
     expect([GRID_W, GRID_H]).toEqual([RT_W * 2 + SEAM, RT_H * 2 + SEAM]);
     expect(s.neighbours).toHaveLength(3);
-    promote(s, []);
-    expect([GRID_W, GRID_H]).toEqual([RT_W * 4 + 3 * SEAM, RT_H * 4 + 3 * SEAM]);
-    expect(s.neighbours).toHaveLength(15);
-    expect(s.buildings.map((b) => [b.x, b.y])).toEqual(before);
+    expect(s.buildings.slice(0, before.length).map((b) => [b.x, b.y])).toEqual(before);
   });
 
   it('reports the map span in RTs across and down', () => {
     const s = newGame(1);
     expect(mapSpan()).toEqual({ w: 1, h: 1 });
     promote(s, []);
-    expect(mapSpan()).toEqual({ w: 2, h: 2 });
+    expect(mapSpan()).toEqual({ w: 2, h: 1 });
   });
 
   it('keeps the same AI RTs when the RW becomes a Kelurahan', () => {
@@ -57,7 +57,10 @@ describe('growing map', () => {
     const first = s.neighbours.map((n) => n.buildings[0].uid);
     s.stage.current = 'rw';
     promote(s, []);
-    expect(s.neighbours.slice(0, 3).map((n) => n.buildings[0].uid)).toEqual(first);
+    // Kampung Sebelah joins the player at the Kelurahan, so its buildings move into the player's list.
+    const kept = s.buildings.map((b) => b.uid);
+    for (const uid of first) expect(kept).toContain(uid);
+    expect(s.neighbours).toHaveLength(3);
   });
 
   it('stops at the top of the ladder', () => {
@@ -75,23 +78,25 @@ describe('lots', () => {
   it('gives the RW seams to RW buildings and the other RTs to the AI', () => {
     grown();
     expect(lotAt(2, 2)).toBe('rt');
-    // The RT keeps its edge rows: the seam starts just past them.
+    // The RT keeps its edge rows: the seam starts just past them, and runs the full height.
     expect(lotAt(RT_W - 1, 2)).toBe('rt');
     expect(lotAt(2, RT_H - 1)).toBe('rt');
     expect(lotAt(RT_W, 2)).toBe('rw');
     expect(lotAt(RT_W + 1, 2)).toBe('rw');
-    expect(lotAt(2, RT_H)).toBe('rw');
+    expect(lotAt(RT_W, RT_H - 1)).toBe('rw');
     expect(lotAt(CELL_W, 3)).toBe('other');
     expect(lotAt(CELL_W + 3, 3)).toBe('other');
   });
 
   it('puts the RW boundary on the Kelurahan lots', () => {
     grown('kelurahan');
-    expect(lotAt(2 * CELL_W - SEAM, 3)).toBe('kel');
-    expect(lotAt(2 * CELL_W - 1, 3)).toBe('kel');
+    // The horizontal seam between the two RWs is the Kelurahan's.
+    expect(lotAt(3, CELL_H - SEAM)).toBe('kel');
+    expect(lotAt(3, CELL_H - 1)).toBe('kel');
     expect(lotAt(RT_W, 3)).toBe('rw');
-    expect(lotAt(3 * CELL_W - SEAM, 3)).toBe('other');
-    expect(lotAt(2 * CELL_W + RT_W, 2 * CELL_H + 3)).toBe('other');
+    // The vertical seam in RW 2 is not the player's.
+    expect(lotAt(CELL_W, CELL_H + 3)).toBe('other');
+    expect(lotAt(CELL_W + 2, CELL_H + 2)).toBe('other');
   });
 
   it('refuses to build in an AI RT or on a seam with an RT building', () => {
@@ -114,7 +119,7 @@ describe('lots', () => {
     expect(free('kantorKel', inRt)).not.toBeNull();
     expect(free('balaiRW', (x, y) => lotAt(x, y) === 'rw')).not.toBeNull();
     // Each keeps to its own seam: an RW building never on the Kelurahan seam, nor the other way round.
-    expect(siteGaps(s, def('balaiRW'), 2 * CELL_W - SEAM, 3)).toEqual(['Goes inside your RT or on a seam lot between your RTs.']);
+    expect(siteGaps(s, def('balaiRW'), 3, CELL_H - SEAM)).toEqual(['Goes inside your RT or on a seam lot between your RTs.']);
     expect(siteGaps(s, def('kantorKel'), RT_W, 3)).toEqual(['Goes inside your RT or on the wide seam between the RWs.']);
     // RT buildings still stay off the seams.
     expect(siteGaps(s, def('warung'), RT_W, 3)).toHaveLength(1);
@@ -278,8 +283,8 @@ describe('save', () => {
     setGrid('rt');
     const back = deserialize(raw)!;
     expect(back.stage.current).toBe('rw');
-    expect(back.neighbours).toHaveLength(3);
-    expect([GRID_W, GRID_H]).toEqual([RT_W * 2 + SEAM, RT_H * 2 + SEAM]);
+    expect(back.neighbours).toHaveLength(1);
+    expect([GRID_W, GRID_H]).toEqual([RT_W * 2 + SEAM, RT_H]);
   });
 
   it('moves an old grown map apart so the seams sit between the RTs', () => {
@@ -370,18 +375,14 @@ describe('RW goals and Stempel', () => {
     const s = grown('kelurahan');
     s.res.rupiah = 1e9;
     s.stempel.backlog = 0;
-    const inOwn = (n: (typeof s.neighbours)[number]) => rwOf(n.cx, n.cy).rx === 0 && rwOf(n.cx, n.cy).ry === 0;
-    const own = s.neighbours.find(inOwn)!;
-    const far = s.neighbours.find((n) => !inOwn(n))!;
+    // RW 2 stamps its own: no AI RT sits in the player's top row, so nothing reaches the player's backlog.
+    const far = s.neighbours.find((n) => n.cy === 1)!;
     s.neighbours.forEach((n) => { n.funded = 0; n.trait = 'rajin'; });
-    for (const n of [own, far]) {
-      fundNeighbour(s, n);
-      n.progress = 1;
-    }
+    fundNeighbour(s, far);
+    far.progress = 1;
     neighboursSystem(s, []);
-    expect(own.turns).toBe(1);
     expect(far.turns).toBe(1);
-    expect(s.stempel.backlog).toBe(1);
+    expect(s.stempel.backlog).toBe(0);
   });
 
   it('sends twice the letters for Jarang Muncul', () => {
@@ -396,14 +397,14 @@ describe('RW goals and Stempel', () => {
     expect(s.neighbours[0].buildings.length).toBeGreaterThan(2);
   });
 
-  it('counts RTs and RWs at a star, and ranking wins by tier', () => {
+  it('counts Kampung Sebelah at a star, and ranking wins by tier', () => {
     const s = grown();
     s.stage.current = 'rw';
     s.stage.stars.rt = 3;
     s.stage.stars.rw = 1;
     s.neighbours.forEach((n) => (n.stars = 1));
-    expect(line(s, 'rtsAtStars').goal).toMatchObject({ n: 4, stars: 1 });
-    expect(line(s, 'rtsAtStars').done).toBe(true);
+    expect(line(s, 'sebelahAtStars').goal).toMatchObject({ n: 1 });
+    expect(line(s, 'sebelahAtStars').done).toBe(true);
     s.ranking.push({ tier: 'rt', year: 1, us: 9, them: 1, won: true });
     expect(line(s, 'tierWins').done).toBe(false);
     s.ranking.push({ tier: 'rw', year: 4, us: 9, them: 1, won: true });
@@ -411,7 +412,7 @@ describe('RW goals and Stempel', () => {
   });
 
   it('names Kampung Sebelah as the neighbour at cell (1,0)', () => {
-    const s = grown();
+    const s = grown('kelurahan');
     s.neighbours.forEach((n) => (n.stars = 0));
     s.neighbours.find((n) => n.cx === 1 && n.cy === 1)!.stars = 3;
     expect(goalProgress(s, { kind: 'sebelahAtStars', n: 2 })).toEqual({ have: 0, need: 2 });
@@ -420,7 +421,7 @@ describe('RW goals and Stempel', () => {
   });
 
   it('reads RW 2 as the lowest star in the cy 1 row, or 0 when there are none', () => {
-    const s = grown();
+    const s = grown('kelurahan');
     s.neighbours.forEach((n) => (n.stars = 3));
     s.neighbours.find((n) => n.cx === 0 && n.cy === 1)!.stars = 1;
     expect(goalProgress(s, { kind: 'rw2AtStars', n: 2 })).toEqual({ have: 1, need: 2 });
@@ -446,14 +447,14 @@ describe('RW goals and Stempel', () => {
 
 describe('combos count across RTs', () => {
   it("an AI RT's combos goal uses the most combos any RT has, the player's own check stays its own", () => {
-    const s = grown();
-    const n = s.neighbours[0];
+    const s = grown('kelurahan');
+    const n = s.neighbours.find((x) => x.run !== 'player')!;
     s.discovered = ['a', 'b', 'c'];
     n.discovered = [];
     const combos = { kind: 'combos', n: 3 } as const;
     expect(goalProgress(viewOf(s, n), combos).have).toBe(3);
     s.discovered = [];
-    s.neighbours[1].discovered = ['x', 'y'];
+    s.neighbours[0].discovered = ['x', 'y'];
     expect(goalProgress(viewOf(s, n), combos).have).toBe(2);
     expect(goalProgress(s, combos).have).toBe(0);
   });
@@ -554,12 +555,13 @@ describe('player-run RTs', () => {
   });
 
   it('only RTs in the player own RW can be taken over', () => {
+    const rwMap = grown();
+    rwMap.res.orangDalam = 99;
+    expect(checkTakeover(rwMap, rwMap.neighbours[0])).toBeNull();
     const s = grown('kelurahan');
     s.res.orangDalam = 99;
-    const far = s.neighbours.find((n) => n.cx >= 2 || n.cy >= 2)!;
-    const near = s.neighbours.find((n) => n.cx < 2 && n.cy < 2)!;
+    const far = s.neighbours.find((n) => n.cy === 1)!;
     expect(checkTakeover(s, far)).not.toBeNull();
-    expect(checkTakeover(s, near)).toBeNull();
   });
 
   it('counts a player-run RT once in the area score', () => {

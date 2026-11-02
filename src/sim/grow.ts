@@ -445,7 +445,7 @@ export function neighboursYearEnd(s: GameState, year: number): void {
   }
 }
 
-export const cellName = (n: Neighbour): string => `RT ${n.cy * mapSpan().w + n.cx + 1}`;
+export const cellName = (n: Neighbour): string => (n.cx === 1 && n.cy === 0 ? 'Kampung Sebelah' : `RT ${n.cy * mapSpan().w + n.cx + 1}`);
 
 /** Moves the player up a stage: the map grows and the new cells fill with AI RTs. Everything the player built stays where it is. */
 export function promote(s: GameState, fx: Fx): boolean {
@@ -456,8 +456,15 @@ export function promote(s: GameState, fx: Fx): boolean {
   setGrid(next);
   syncArea(s);
   for (const c of neighbourCells()) if (!s.neighbours.some((n) => n.cx === c.cx && n.cy === c.cy)) s.neighbours.push(newNeighbour(s, c.cx, c.cy));
-  // Grup Chat Warga needs two RTs that think alike, so the draw never leaves every trait different.
-  if (s.neighbours.length > 1 && new Set(s.neighbours.map((n) => n.trait)).size === s.neighbours.length) s.neighbours[s.neighbours.length - 1].trait = s.neighbours[0].trait;
+  // Kampung Sebelah joins the player for free at the Kelurahan, and RW 2 stamps its own letters.
+  if (next === 'kelurahan') {
+    const sebelah = s.neighbours.find((n) => n.cx === 1 && n.cy === 0);
+    if (sebelah) absorb(s, sebelah);
+    s.stempel.backlog = 0;
+  }
+  // Grup Chat Warga needs two AI RTs that think alike, so the draw never leaves every AI trait different.
+  const ai = s.neighbours.filter((n) => n.run !== 'player');
+  if (ai.length > 1 && new Set(ai.map((n) => n.trait)).size === ai.length) ai[ai.length - 1].trait = ai[0].trait;
   s.lastNovelty = s.month;
   fx.push({ kind: 'notice', title: t('grow.promoted'), body: t(next === 'kecamatan' ? 'grow.promotedKecBody' : 'grow.promotedBody'), tone: 'good', fanfare: true });
   return true;
