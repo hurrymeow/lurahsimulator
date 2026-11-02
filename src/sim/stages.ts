@@ -54,6 +54,11 @@ const GOAL_CHECKS: { [K in Goal['kind']]: (s: GameState, g: Extract<Goal, { kind
   stempelClear: (s) => s.stempel.clear,
   rtsAtStars: (s, g) => [s.stage.stars.rt, ...s.neighbours.map((n) => n.stars)].filter((x) => x >= g.stars).length,
   rwsAtStars: (s, g) => rwStars(s).filter((x) => x >= g.stars).length,
+  sebelahAtStars: (s) => s.neighbours.find((n) => n.cx === 1 && n.cy === 0)?.stars ?? 0,
+  rw2AtStars: (s) => {
+    const row = s.neighbours.filter((n) => n.cy === 1);
+    return row.length ? Math.min(...row.map((n) => n.stars)) : 0;
+  },
   // Only the yearly rankings count (every fourth quarterly one), won in that stage since the promotion into it.
   tierWins: (s, g) => s.ranking.filter((r) => r.won && (r.tier ?? 'rt') === g.tier && r.year % YEARLY_EVERY === 0).length,
   noDebtMonths: (s) => s.debtFree,
@@ -81,6 +86,8 @@ const GOAL_KEYS: Record<Goal['kind'], Key> = {
   stempelClear: 'stage.goal.stempelClear',
   rtsAtStars: 'stage.goal.rtsAtStars',
   rwsAtStars: 'stage.goal.rwsAtStars',
+  sebelahAtStars: 'stage.goal.sebelahAtStars',
+  rw2AtStars: 'stage.goal.rw2AtStars',
   tierWins: 'stage.goal.tierWins',
   noDebtMonths: 'stage.goal.noDebtMonths',
   serapanMonths: 'stage.goal.serapanMonths',

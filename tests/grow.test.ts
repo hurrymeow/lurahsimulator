@@ -396,6 +396,27 @@ describe('RW goals and Stempel', () => {
     expect(line(s, 'tierWins').done).toBe(true);
   });
 
+  it('names Kampung Sebelah as the neighbour at cell (1,0)', () => {
+    const s = grown();
+    s.neighbours.forEach((n) => (n.stars = 0));
+    s.neighbours.find((n) => n.cx === 1 && n.cy === 1)!.stars = 3;
+    expect(goalProgress(s, { kind: 'sebelahAtStars', n: 2 })).toEqual({ have: 0, need: 2 });
+    s.neighbours.find((n) => n.cx === 1 && n.cy === 0)!.stars = 2;
+    expect(goalProgress(s, { kind: 'sebelahAtStars', n: 2 })).toEqual({ have: 2, need: 2 });
+  });
+
+  it('reads RW 2 as the lowest star in the cy 1 row, or 0 when there are none', () => {
+    const s = grown();
+    s.neighbours.forEach((n) => (n.stars = 3));
+    s.neighbours.find((n) => n.cx === 0 && n.cy === 1)!.stars = 1;
+    expect(goalProgress(s, { kind: 'rw2AtStars', n: 2 })).toEqual({ have: 1, need: 2 });
+    s.neighbours.find((n) => n.cx === 0 && n.cy === 1)!.stars = 3;
+    expect(goalProgress(s, { kind: 'rw2AtStars', n: 2 })).toEqual({ have: 3, need: 2 });
+    s.neighbours = [];
+    expect(goalProgress(s, { kind: 'rw2AtStars', n: 1 })).toEqual({ have: 0, need: 1 });
+    expect(goalProgress(s, { kind: 'sebelahAtStars', n: 1 })).toEqual({ have: 0, need: 1 });
+  });
+
   it('counts months out of debt', () => {
     const s = grown();
     s.stage.current = 'rw';
