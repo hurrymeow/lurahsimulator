@@ -82,7 +82,8 @@ function detail(app: App, view: { kind: 'detail'; i: number }): void {
   if (n.stars === 3) body.push(h('p', { class: 'meta' }, t('grow.maxStars')));
   else if (unmet.length) body.push(h('ul', { class: 'checklist' }, ...unmet.map((l) => h('li', {}, l.text))));
   if (n.run === 'player') {
-    body.push(h('div', { class: 'nb-take' },
+    // An absorbed RT joined at promotion for good; there is nothing to hand back.
+    if (!n.absorbed) body.push(h('div', { class: 'nb-take' },
       h('button', { class: 'btn', type: 'button', 'data-handback': '1', onclick: () => {
         handBack(s, n);
         // Say what happens next: building resumes only with Dana banked.
@@ -152,7 +153,8 @@ export function openNeighbours(app: App, view: View = { kind: 'list' }): void {
   if (view.kind === 'detail') return detail(app, view);
   const help = h('button', { class: 'btn head-action', type: 'button', 'aria-label': t('grow.help'), onclick: () => openNeighbours(app, { kind: 'help' }) }, '?');
   const isStalled = (n: Neighbour) => chipOf(n).cls === 'nb-stalled';
-  const ordered = s.neighbours.map((n, i) => ({ n, i })).sort((a, b) => Number(isStalled(b.n)) - Number(isStalled(a.n)));
+  // An absorbed RT is the player's land now, not a neighbour to run.
+  const ordered = s.neighbours.map((n, i) => ({ n, i })).filter(({ n }) => !n.absorbed).sort((a, b) => Number(isStalled(b.n)) - Number(isStalled(a.n)));
   const rows = ordered.map(({ n, i }) => {
     const chip = chipOf(n);
     return h('button', {

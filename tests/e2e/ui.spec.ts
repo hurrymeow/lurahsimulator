@@ -13,6 +13,7 @@ const DENSITY_ALLOW: Record<string, Partial<Record<keyof typeof LIMITS, number>>
   'howto': { wordsInView: 149, longestBlock: 29, wordsAll: 303 }, // How-to card
   'settings': { primary: 2, wordsInView: 65 }, // Settings
   'staff': { wordsInView: 71 }, // Staff
+  'warga': { wordsInView: 62, wordsAll: 488 }, // Warga: Kampung Sebelah's residents join at the Kelurahan, so the list is long
   'stats': { wordsInView: 86 }, // Stats
 };
 
@@ -1348,7 +1349,7 @@ test.describe('walkers and effects', () => {
       s.month = 2;
     });
     const small = await best(false);
-    // Then the whole Kelurahan, 16 times the tiles, with the same density.
+    // Then the whole Kelurahan, 4 times the tiles, with the same density.
     const size = await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.promote();
@@ -1357,22 +1358,24 @@ test.describe('walkers and effects', () => {
       const defs = ['rumah', 'warung', 'posRonda', 'wifi', 'indomaret', 'alfamart', 'biopori'];
       let n = 0;
       const { w, h } = app.rt;
-      for (let y = 0; y < h * 4; y++)
-        for (let x = 0; x < w * 4; x++) {
+      for (let y = 0; y < h * 2; y++)
+        for (let x = 0; x < w * 2; x++) {
           if ((x + y) % 2) continue;
           const b = { uid: s.nextUid++, def: defs[n++ % defs.length], x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 };
           const hit = s.neighbours.find((nb: any) => Math.floor(x / w) === nb.cx && Math.floor(y / h) === nb.cy);
           if (hit) hit.buildings.push(b);
           else if (!s.buildings.some((o: any) => o.x === x && o.y === y)) s.buildings.push(b);
         }
+      // The checkerboard has no paths, but a real kampung is linked: this test is about map size, not the grey no-road draw.
+      for (const b of s.buildings) b.noRoad = false;
       return { count: s.buildings.length + s.neighbours.reduce((t: number, nb: any) => t + nb.buildings.length, 0), cells: s.neighbours.length };
     });
-    expect(size.cells).toBe(15);
-    expect(size.count).toBeGreaterThan(1500);
+    expect(size.cells).toBe(3);
+    expect(size.count).toBeGreaterThan(400);
     const big = await best(false);
     const bigBusy = await best(true, 5);
     console.log(`RT ${small.toFixed(0)} fps, Kelurahan ${big.toFixed(0)} fps, Kelurahan with effects ${bigBusy.toFixed(0)} fps`);
-    // Only what is on screen costs anything, so 16 times the map must not cost more than 60% of the frames.
+    // Only what is on screen costs anything, so 4 times the map must not cost more than 60% of the frames.
     expect(big, `RT ${small.toFixed(0)} fps, Kelurahan ${big.toFixed(0)} fps`).toBeGreaterThan(small * 0.4);
     // The effects overhead is fixed, and the RT test above holds it to 80%. Here it only has to stay in the same league.
     // Shared runners swing this ratio between 0.4 and 0.6, so it takes the best of five and a 0.35 floor.
@@ -1542,7 +1545,7 @@ test.describe('growing map', () => {
     await dismissModals(page);
     await page.locator('#menu-btn').click();
     await page.locator('#act-neighbours').click();
-    await expect(page.locator('[data-nb-row]')).toHaveCount(3);
+    await expect(page.locator('[data-nb-row]')).toHaveCount(1);
     await expectLegible(page, 'neighbours panel');
     const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.funded));
     // Each row opens its own detail, where the funding buttons live.
@@ -1585,7 +1588,51 @@ test.describe('growing map', () => {
     const box = (await page.locator('#map').boundingBox())!;
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('.sheet')).toBeVisible();
-    await expect(page.locator('[data-nb-row]')).toHaveCount(3);
+    await expect(page.locator('[data-nb-row]')).toHaveCount(1);
+  });
+
+  test('every stage opens at full size with the player\'s Kantor RT in view', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    for (const stage of ['rw', 'kelurahan', 'kecamatan']) {
+      const got = await page.evaluate(() => {
+        const app = (window as unknown as { pakrt: any }).pakrt;
+        app.speed = 0;
+        app.promote();
+        const k = app.s.buildings.find((b: any) => b.def === 'kantorRT') ?? { x: 6, y: 8 };
+        const p = app.view.project(k.x, k.y);
+        return { stage: app.s.stage.current, scale: app.view.scale, x: p.x, y: p.y, w: app.view.viewW, h: app.view.viewH };
+      });
+      expect(got.stage).toBe(stage);
+      expect(got.scale, stage).toBe(2);
+      expect(got.x, stage).toBeGreaterThan(0);
+      expect(got.x, stage).toBeLessThan(got.w);
+      expect(got.y, stage).toBeGreaterThan(0);
+      expect(got.y, stage).toBeLessThan(got.h);
+      await dismissModals(page);
+    }
+  });
+
+  test('at the Kelurahan Kampung Sebelah leaves the Neighbours panel, and the notice says so', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const kampung = 'Kampung Sebelah';
+    const promote = () => page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.promote();
+    });
+    await promote();
+    await dismissModals(page);
+    await promote();
+    await expect(page.locator('#modal')).toContainText(kampung);
+    await expect(page.locator('#modal')).toContainText('RW 2');
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-neighbours').click();
+    await expect(page.locator('[data-nb-row]')).toHaveCount(2);
+    await expect(page.locator('.sheet')).not.toContainText(kampung);
+    await expectLegible(page, 'neighbours panel at the Kelurahan');
   });
 
   test('AI RTs lay Jalan Setapak and their warga walk it, never onto the player lots', async ({ page }) => {

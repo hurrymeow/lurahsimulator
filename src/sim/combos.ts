@@ -57,7 +57,10 @@ export const liveCombos = (s: GameState): ComboDef[] => [...COMBOS, ...STAGE_COM
 export const bookCombos = (s: GameState): ComboDef[] => [...COMBOS.filter((c) => !c.retired || s.discovered.includes(c.id)), ...STAGE_COMBOS.filter((c) => gateOpen(s, { ...c.gate, stars: 0 }))];
 
 /** Two AI RTs in the area share a trait. */
-const sameTraitNeighbours = (s: GameState): boolean => s.neighbours.some((n, i) => s.neighbours.some((o, j) => j > i && o.trait === n.trait));
+const sameTraitNeighbours = (s: GameState): boolean => {
+  const ai = s.neighbours.filter((n) => n.run !== 'player');
+  return ai.some((n, i) => ai.some((o, j) => j > i && o.trait === n.trait));
+};
 
 /**
  * Finds every working combo. One instance per anchor building.

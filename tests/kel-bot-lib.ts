@@ -38,7 +38,8 @@ export function kelSetup(seed: number, auto = false) {
 
 /** One week of the Kelurahan bot's routine, before the tick. `extra` lists more stage buildings to place on a seam lot. */
 export function kelWeek(s: GameState, seam: { x: number; y: number }[], all: { x: number; y: number }[], auto: boolean, extra: string[] = [], homes = true): void {
-    if (s.pendingEvent) resolveEvent(s, [], 0);
+    // Tim Audit: pay for the clean audit the 2-star goal asks for, as a player would. Otherwise the first choice.
+    if (s.pendingEvent) resolveEvent(s, [], s.pendingEvent === 'timAudit' && s.kel.cleanAudits < 1 && s.res.rupiah > 3_000_000 ? 1 : 0);
     if (!auto) for (const n of s.neighbours) if (s.res.rupiah > 3_000_000) fundNeighbour(s, n);
     for (const id of ['kantorKel', 'pasar', 'terminal', 'taman', 'studiBanding', 'embung', ...extra]) {
       const anchor = s.buildings.find((x) => lotAt(x.x, x.y) === 'kel') ?? seam[0];

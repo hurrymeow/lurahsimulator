@@ -13,17 +13,17 @@ export const RW_STAGE: StageDef = {
   next: 'kelurahan',
   stars: [
     {
-      goals: [{ kind: 'fundedRts', n: 3 }, { kind: 'stempelClear', n: 6, under: 5 }],
+      goals: [{ kind: 'fundedRts', n: 1 }, { kind: 'stempelClear', n: 6, under: 5 }],
       unlocks: ['posyandu', 'portal'],
     },
     {
-      goals: [{ kind: 'rtsAtStars', n: 4, stars: 1 }, { kind: 'tierWins', n: 1, tier: 'rw' }, { kind: 'rwCombos', n: 2 }],
+      goals: [{ kind: 'sebelahAtStars', n: 1 }, { kind: 'tierWins', n: 1, tier: 'rw' }, { kind: 'rwCombos', n: 1 }],
       unlocks: ['pasarKaget', 'gapura'],
     },
     {
       goals: [
-        { kind: 'rtsAtStars', n: 4, stars: 2 },
-        { kind: 'rtsAtStars', n: 2, stars: 3 },
+        { kind: 'sebelahAtStars', n: 3 },
+        { kind: 'rwCombos', n: 2 },
         { kind: 'winStreak', n: 2 },
         { kind: 'noDebtMonths', n: 24 },
       ],
@@ -39,15 +39,15 @@ export const KELURAHAN_STAGE: StageDef = {
   next: 'kecamatan',
   stars: [
     {
-      goals: [{ kind: 'rwsAtStars', n: 4, stars: 1 }, { kind: 'serapanMonths', n: 12, pct: 80 }, { kind: 'residents', n: 50 }, { kind: 'sabar', n: 50 }],
+      goals: [{ kind: 'rw2AtStars', n: 1 }, { kind: 'serapanMonths', n: 48, pct: 80 }, { kind: 'residents', n: 50 }, { kind: 'sabar', n: 50 }],
       unlocks: ['puskesmasPembantu', 'studiBanding'],
     },
     {
-      goals: [{ kind: 'rwsAtStars', n: 4, stars: 2 }, { kind: 'tierWins', n: 1, tier: 'kelurahan' }, { kind: 'cleanAudits', n: 1 }, { kind: 'residents', n: 120 }, { kind: 'sabar', n: 45 }],
+      goals: [{ kind: 'rw2AtStars', n: 2 }, { kind: 'tierWins', n: 1, tier: 'kelurahan' }, { kind: 'cleanAudits', n: 1 }, { kind: 'residents', n: 120 }, { kind: 'sabar', n: 45 }],
       unlocks: [],
     },
     {
-      goals: [{ kind: 'tierWins', n: 3, tier: 'kelurahan' }, { kind: 'rwsAtStars', n: 4, stars: 3 }, { kind: 'residents', n: 200 }, { kind: 'sabar', n: 35 }],
+      goals: [{ kind: 'tierWins', n: 3, tier: 'kelurahan' }, { kind: 'rw2AtStars', n: 3 }, { kind: 'residents', n: 200 }, { kind: 'sabar', n: 35 }],
       unlocks: [],
     },
   ],

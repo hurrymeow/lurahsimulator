@@ -1,0 +1,1 @@
+`STAGE_SPAN` is now `{ w, h }` per stage, `setGrid` and `mapSpan()` use both axes, and the callers in `area.ts`, `grow.ts` and `save.ts` read the axis they need. A new test in `tests/grow.test.ts` checks `mapSpan()` is `{ w: 1, h: 1 }` on a new game and `{ w: 2, h: 2 }` after one promotion. No existing test was edited and the map is still square.

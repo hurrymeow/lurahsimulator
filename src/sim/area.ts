@@ -28,30 +28,26 @@ export const cellOf = (x: number, y: number) => ({ cx: Math.floor(x / CELL_W), c
 export const cellOrigin = (cx: number, cy: number) => ({ x: cx * CELL_W, y: cy * CELL_H });
 
 export function lotAt(x: number, y: number): Lot {
-  const span = mapSpan();
   const sx = seam(x, CELL_W, RT_W);
   const sy = seam(y, CELL_H, RT_H);
-  if (sx < 0 && sy < 0) {
-    const c = cellOf(x, y);
-    return (c.cx === 0 && c.cy === 0) || playerCells.has(`${c.cx},${c.cy}`) ? 'rt' : 'other';
-  }
-  // The middle boundary of a four-RT-wide map separates two RWs.
-  if ((span === 4 && sx === 1) || (span === 4 && sy === 1)) return 'kel';
-  // Other seams belong to the RW, but only inside the player's own.
-  const own = span === 4 ? 2 : span;
-  return x < own * CELL_W - SEAM && y < own * CELL_H - SEAM ? 'rw' : 'other';
+  // The wide seam between the two RWs is the Kelurahan's.
+  if (sy >= 0) return 'kel';
+  // The seam between the RTs is the player's RW on the top row, and RW 2's on the bottom.
+  if (sx >= 0) return y < RT_H ? 'rw' : 'other';
+  const c = cellOf(x, y);
+  return (c.cx === 0 && c.cy === 0) || playerCells.has(`${c.cx},${c.cy}`) ? 'rt' : 'other';
 }
 
 /** Every RT cell on the map except the player's. */
 export function neighbourCells(): { cx: number; cy: number }[] {
   const out: { cx: number; cy: number }[] = [];
-  const span = mapSpan();
-  for (let cy = 0; cy < span; cy++) for (let cx = 0; cx < span; cx++) if (cx || cy) out.push({ cx, cy });
+  const { w, h } = mapSpan();
+  for (let cy = 0; cy < h; cy++) for (let cx = 0; cx < w; cx++) if (cx || cy) out.push({ cx, cy });
   return out;
 }
 
-/** The RW a cell belongs to, as a cell of RWs. Only meaningful on a Kelurahan map. */
-export const rwOf = (cx: number, cy: number) => ({ rx: Math.floor(cx / 2), ry: Math.floor(cy / 2) });
+/** The RW a cell belongs to: the top row is the player's, and each lower row is one more RW. Only meaningful on a Kelurahan map. */
+export const rwOf = (_cx: number, cy: number) => ({ rx: 0, ry: cy });
 
 /** True on the two-tile bands between cells. */
 export const isSeam = (x: number, y: number) => seam(x, CELL_W, RT_W) >= 0 || seam(y, CELL_H, RT_H) >= 0;

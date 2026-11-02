@@ -10,6 +10,7 @@ import {
   type ChannelId, type RoleDef, type RoleId, type StatId, type TraitId,
 } from '../data/staff';
 import { NAMES, TITLES } from '../data/names';
+import { RIVAL_NAMES } from '../data/ranking';
 import { IURAN } from './balance';
 import { gain, type Fx } from './gain';
 import { isWorking, population, price } from './state';
@@ -368,14 +369,14 @@ export function answerRaise(s: GameState, x: Staff, accept: boolean): void {
   else x.refused = true;
 }
 
-/** AI RTs that can take a Ketua RT. */
-export const mutasiTargets = (s: GameState) => s.neighbours.map((n, i) => ({ n, i }));
+/** AI RTs that can take a Ketua RT. Absorbed RTs stay out, each with its index in `s.neighbours`. */
+export const mutasiTargets = (s: GameState) => s.neighbours.map((n, i) => ({ n, i })).filter(({ n }) => !n.absorbed);
 
 export function checkMutasi(s: GameState, x: Staff): CheckResult {
   const missing: string[] = [];
   if (x.inem) missing.push(t('staff.inemStays'));
   if (x.stars < MUTASI.stars || x.level < MUTASI.level) missing.push(t('staff.mutasiNeeds', { stars: MUTASI.stars, level: MUTASI.level }));
-  if (!s.neighbours.length) missing.push(t('staff.mutasiNoRt'));
+  if (!mutasiTargets(s).length) missing.push(t('staff.mutasiNoRt'));
   return missing.length ? { ok: false, missing } : { ok: true };
 }
 
@@ -444,7 +445,7 @@ export function staffSystem(s: GameState, fx: Fx): void {
     }
     if (x.refused && roll(s, s.month, x.id, 9) < POACH_CHANCE && !tr?.noFire) {
       release(s, x);
-      fx.push({ kind: 'notice', title: t('staff.poachedTitle', { name: x.name }), body: t('staff.poachedBody'), tone: 'bad' });
+      fx.push({ kind: 'notice', title: t('staff.poachedTitle', { name: x.name, rival: RIVAL_NAMES[s.stage.current] }), body: t('staff.poachedBody'), tone: 'bad' });
       continue;
     }
     if (tr?.quitsUnpaidAfter && s.month - (x.lastRaise ?? x.hiredAt) >= tr.quitsUnpaidAfter) {

@@ -221,13 +221,10 @@ export function checkTakeover(s: GameState, n: Neighbour): string | null {
 }
 
 /**
- * The player takes an RT over: its buildings join the player's, its warga become the player's residents, and any
- * banked Dana comes back to the kas. Its stars, ranking and combos stay with the RT.
+ * Moves an RT's buildings and warga into the player's, and pays back any banked Dana. Its stars, ranking and combos
+ * stay with the RT.
  */
-export function takeover(s: GameState, n: Neighbour): string | null {
-  const why = checkTakeover(s, n);
-  if (why) return why;
-  s.res.orangDalam -= NEIGHBOUR.takeoverOd;
+function joinPlayer(s: GameState, n: Neighbour): void {
   s.res.rupiah += fundCost(s) * n.funded;
   s.buildings.push(...n.buildings);
   for (let i = 0; i < n.pop; i++) addResident(s);
@@ -243,7 +240,24 @@ export function takeover(s: GameState, n: Neighbour): string | null {
   // Its buildings were laid out by the AI, so link any that a path does not reach.
   s.roadsLaid = false;
   layRoads(s);
+}
+
+/**
+ * The player takes an RT over: its buildings join the player's, its warga become the player's residents, and any
+ * banked Dana comes back to the kas. Its stars, ranking and combos stay with the RT.
+ */
+export function takeover(s: GameState, n: Neighbour): string | null {
+  const why = checkTakeover(s, n);
+  if (why) return why;
+  s.res.orangDalam -= NEIGHBOUR.takeoverOd;
+  joinPlayer(s, n);
   return null;
+}
+
+/** Joins an RT to the player at promotion: no Orang Dalam cost, and it can never be handed back. */
+export function absorb(s: GameState, n: Neighbour): void {
+  if (n.run !== 'player') joinPlayer(s, n);
+  n.absorbed = true;
 }
 
 /**
@@ -251,7 +265,7 @@ export function takeover(s: GameState, n: Neighbour): string | null {
  * warga as its houses hold leave the player's list with it. Staff stay with the player.
  */
 export function handBack(s: GameState, n: Neighbour): void {
-  if (n.run !== 'player') return;
+  if (n.absorbed || n.run !== 'player') return;
   const mine = s.buildings.filter((b) => inCell(n, b));
   s.buildings = s.buildings.filter((b) => !inCell(n, b));
   for (const b of mine) {
@@ -431,7 +445,7 @@ export function neighboursYearEnd(s: GameState, year: number): void {
   }
 }
 
-export const cellName = (n: Neighbour): string => `RT ${n.cy * mapSpan() + n.cx + 1}`;
+export const cellName = (n: Neighbour): string => (n.cx === 1 && n.cy === 0 ? 'Kampung Sebelah' : `RT ${n.cy * mapSpan().w + n.cx + 1}`);
 
 /** Moves the player up a stage: the map grows and the new cells fill with AI RTs. Everything the player built stays where it is. */
 export function promote(s: GameState, fx: Fx): boolean {
@@ -442,9 +456,16 @@ export function promote(s: GameState, fx: Fx): boolean {
   setGrid(next);
   syncArea(s);
   for (const c of neighbourCells()) if (!s.neighbours.some((n) => n.cx === c.cx && n.cy === c.cy)) s.neighbours.push(newNeighbour(s, c.cx, c.cy));
-  // Grup Chat Warga needs two RTs that think alike, so the draw never leaves every trait different.
-  if (s.neighbours.length > 1 && new Set(s.neighbours.map((n) => n.trait)).size === s.neighbours.length) s.neighbours[s.neighbours.length - 1].trait = s.neighbours[0].trait;
+  // Kampung Sebelah joins the player for free at the Kelurahan, and RW 2 stamps its own letters.
+  if (next === 'kelurahan') {
+    const sebelah = s.neighbours.find((n) => n.cx === 1 && n.cy === 0);
+    if (sebelah) absorb(s, sebelah);
+    s.stempel.backlog = 0;
+  }
+  // Grup Chat Warga needs two AI RTs that think alike, so the draw never leaves every AI trait different.
+  const ai = s.neighbours.filter((n) => n.run !== 'player');
+  if (ai.length > 1 && new Set(ai.map((n) => n.trait)).size === ai.length) ai[ai.length - 1].trait = ai[0].trait;
   s.lastNovelty = s.month;
-  fx.push({ kind: 'notice', title: t('grow.promoted'), body: t(next === 'kecamatan' ? 'grow.promotedKecBody' : 'grow.promotedBody'), tone: 'good', fanfare: true });
+  fx.push({ kind: 'notice', title: t('grow.promoted'), body: t(next === 'kecamatan' ? 'grow.promotedKecBody' : next === 'kelurahan' ? 'grow.promotedKelBody' : 'grow.promotedBody'), tone: 'good', fanfare: true });
   return true;
 }

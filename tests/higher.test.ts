@@ -107,9 +107,9 @@ describe('RW and Kelurahan content', () => {
     const s = newGame(1);
     s.stage.current = 'rw';
     const lines = nextStarChecklist(s)!.map((l) => l.text);
-    expect(lines).toEqual(['Fund 3 neighbouring RTs once (have 0)', 'Keep Stempel letters waiting under 5 for 6 weeks (held 0, 0 waiting now)']);
+    expect(lines).toEqual(['Fund Kampung Sebelah once (have 0)', 'Keep Stempel letters waiting under 5 for 6 weeks (held 0, 0 waiting now)']);
     s.stage.stars.rw = 2;
-    expect(nextStarChecklist(s)!.map((l) => l.text)[1]).toBe('2 RTs at 3★ or above (have 0)');
+    expect(nextStarChecklist(s)!.map((l) => l.text)[0]).toBe('Kampung Sebelah at 3★ or above (now 0★)');
   });
 
   it('marks the Stempel goal as on track while its backlog is under the limit', () => {
