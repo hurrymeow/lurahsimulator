@@ -1,26 +1,22 @@
-// The land around the kampung: a ring road, sawah, kebun, a beach and sea in front, and the two
-// mountains with the sun between them from every kid's "pemandangan" drawing. Decorative only.
+// The island round the kampung: a ring road, sawah, kebun, terraced hills, twin volcanoes on its
+// back corner and a beach all round, set in an open sea dotted with islands. Decorative only.
 import { isSeam } from '../sim/area';
 import { GRID_H, GRID_W } from '../sim/types';
-import { INK, Painter, TH, TOP, TW, type Art } from './iso';
-import { autoBlend, baseOf, blendOf, encodeControl, heightBlend, pickMaterial } from './terrain';
+import { Painter, TH, TOP, TW, type Art } from './iso';
+import { sceneryTree, type SceneryTreeName } from './scenery-trees';
+import { autoBlend, baseOf, blendOf, encodeControl, pickMaterial } from './terrain';
 
-// Painterly ground (clumped grass, dirt with pebbles, fallen leaves) with ink lines where land
-// types meet, a raised kampung that drops to the beach in a cliff, a deep blue sunburst sky with
-// soft clouds, and a grinning sun.
-/** Top of the sky, also the fill past the world's top edge. */
-export const SKY = '#3f6fae';
+// Painterly ground (clumped grass, dirt with pebbles, fallen leaves) with coloured edges where land
+// types meet, and a raised kampung that drops to the beach in a cliff. Everything is drawn in the
+// one isometric projection: no horizon, no sky, so nothing breaks the diorama.
+/** The open sea, also the fill past the world's edges. */
 export const SEA = '#3f8f8c';
 
 /** World extent in tiles, beyond the buildable grid. */
-const XMIN = -12;
-const YMIN = -12;
-/** Headroom above the world's top corner, for the mountains. */
-const HEAD = 120;
-/** Tiles further back than this are sky. Rows of equal depth are level on screen, so the horizon is flat. */
-const FAR = -12;
-/** Sun art is this many art pixels square, centred on SUN_X, SUN_Y. */
-export const SUN_SIZE = 44;
+const XMIN = -16;
+const YMIN = -16;
+/** Sea above the world's top corner, for the volcano peaks and the islands behind the kampung. */
+const HEAD = 230;
 
 let trees: Tree[] | null = null;
 let shore: { x: number; y: number }[] | null = null;
@@ -35,13 +31,8 @@ export let WORLD_H = 0;
 /** Art position of grid tile (0,0)'s top corner inside the world canvas. */
 export let WORLD_OX = 0;
 export let WORLD_OY = 0;
-/** Art row of the horizon inside the world canvas. */
-export let HORIZON = 0;
-/** The sun sits in the valley between the two mountains, which stand on the horizon. */
-let M1 = 0;
-let M2 = 0;
-export let SUN_X = 0;
-export let SUN_Y = 0;
+/** Trees on the sea islands with their depth (a + b), merged into worldTrees. */
+let isleTrees: { tree: Tree; d: number }[] = [];
 
 // ---------------------------------------------------------------- Kecamatan ring
 // The Kecamatan keeps the Kelurahan's tile map. The three other Kelurahan are low-detail district blocks beside it:
@@ -113,26 +104,164 @@ export function ringArt(id: DistrictId): Art {
 
 /** Sizes the world for the current grid. Call after setGrid, then rebuild the cached canvas and trees. */
 export function layoutWorld(): void {
-  XMAX = GRID_W + 8 + ringExt();
-  YMAX = GRID_H + 8 + ringExt();
+  XMAX = GRID_W + 11 + ringExt();
+  YMAX = GRID_H + 11 + ringExt();
   WORLD_W = (XMAX - XMIN + (YMAX - YMIN)) * (TW / 2);
   WORLD_H = HEAD + (XMAX - XMIN + (YMAX - YMIN)) * (TH / 2);
   WORLD_OX = (YMAX - XMIN) * (TW / 2);
   WORLD_OY = HEAD - (XMIN + YMIN) * (TH / 2);
-  HORIZON = WORLD_OY + (FAR * TH) / 2;
-  M1 = WORLD_OX + (-8 * TW) / 2;
-  M2 = WORLD_OX + (4 * TW) / 2;
-  SUN_X = (M1 + M2) / 2;
-  SUN_Y = HORIZON - 70;
+  isleTrees = [];
   trees = null;
   shore = null;
   heights = null;
   controls = null;
   macros = null;
   cloudList = null;
+  placeKnolls();
+  placeSawit();
 }
 
-type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' | 'teh' | 'teras' | 'tanah';
+type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' | 'teh' | 'teras' | 'tanah' | 'abu' | 'batu';
+
+/**
+ * Twin volcanoes on the island's back corner, part of the same corner-height mesh as the hills, so they
+ * take the same facet light, tile grid and materials. a, b: the summit tile; r: foot radius in tiles;
+ * h: summit height in art pixels.
+ */
+const VOLCS = [
+  { a: -6.5, b: -3.5, r: 6.5, h: 156 },
+  { a: -3, b: -7.5, r: 5.5, h: 120 },
+];
+/**
+ * Karst knolls round the kampung: steep, round-topped limestone hills like the ones that rise out of
+ * the rice fields of Gunung Kidul. A ring of them stands a few tiles past the ring road on every
+ * side, clear of the coast, the volcanoes, the neighbours' roofs and the Kecamatan's district blocks.
+ * a, b: centre tile; r: foot radius in tiles; h: height in art pixels; s: squash and turn.
+ */
+let knolls: { a: number; b: number; r: number; h: number; sx: number; rot: number }[] = [];
+/**
+ * Hutan sawit: oil-palm plantation blocks on the lower aprons round the volcanoes' feet, tile-aligned
+ * rectangles planted in straight rows with a dirt track every few rows (see terrain and worldTrees).
+ */
+let sawit: { x: number; y: number; w: number; h: number }[] = [];
+function placeSawit(): void {
+  sawit = [];
+  const fits = (x: number, y: number, w: number, h: number) => {
+    if (sawit.some((o) => x < o.x + o.w + 1 && o.x < x + w + 1 && y < o.y + o.h + 1 && o.y < y + h + 1)) return false;
+    let apron = 0;
+    for (let ty = y; ty < y + h; ty++)
+      for (let tx = x; tx < x + w; tx++) {
+        const f = volcano(tx + 0.5, ty + 0.5).f;
+        if (f > 0.02) apron++;
+        // Only on the gentle lower aprons: a plantation never climbs onto the cone itself.
+        const c = [cornerHeight(tx, ty), cornerHeight(tx + 1, ty), cornerHeight(tx + 1, ty + 1), cornerHeight(tx, ty + 1)];
+        const steep = Math.max(...c) - Math.min(...c) > 9;
+        if (exact(tx, ty) || exact(tx - 1, ty - 1) || coastAt(tx + 0.5, ty + 0.5) > -1.2 || f > 0.14 || steep || knoll(tx + 0.5, ty + 0.5).d < 1.5 || inRing(tx, ty)) return false;
+      }
+    // Mostly on the volcanoes' lower aprons, round their feet.
+    return apron * 3 >= w * h;
+  };
+  // Scan the land round the volcanoes in a hashed order and keep the blocks that fit, up to eight.
+  const cands: [number, number, number, number, number][] = [];
+  for (const v of VOLCS)
+    for (let y = Math.floor(v.b - v.r * 2); y <= v.b + v.r * 2; y++)
+      for (let x = Math.floor(v.a - v.r * 2); x <= v.a + v.r * 2; x++) {
+        const w = 3 + Math.floor(hash(x, y + 40) * 2);
+        const h = 2 + Math.floor(hash(x + 9, y) * 3);
+        cands.push([hash(x * 3, y * 7), x, y, w, h]);
+      }
+  for (const [, x, y, w, h] of cands.sort((p, q) => p[0] - q[0])) {
+    if (sawit.length >= 8) break;
+    if (fits(x, y, w, h)) sawit.push({ x, y, w, h });
+  }
+}
+/** The plantation block a tile is in, or null. */
+const sawitAt = (tx: number, ty: number) => sawit.find((o) => tx >= o.x && ty >= o.y && tx < o.x + o.w && ty < o.y + o.h) ?? null;
+
+/** Knolls that reach each tile, keyed by tile, so a pixel only tests the few near it. */
+const knollsAt = new Map<number, number[]>();
+const tileKey = (tx: number, ty: number) => (tx + 512) * 1024 + ty + 512;
+function placeKnolls(): void {
+  knolls = [];
+  knollsAt.clear();
+  const ext = ringExt();
+  const blocked = (a: number, b: number, r: number) =>
+    coastAt(a, b) > -(r * 0.6 + 0.4) ||
+    volcano(a, b).h > 30 ||
+    knolls.some((k) => Math.hypot(k.a - a, k.b - b) < k.r + r + 1) ||
+    farRoofs().some((f) => Math.hypot(f.x + 0.5 - a, f.y + 0.5 - b) < r + 0.4) ||
+    ringBlocks().some((k) => a > k.x - r - 1 && b > k.y - r - 1 && a < k.x + RING_SIDE + r + 1 && b < k.y + RING_SIDE + r + 1);
+  // Walk round the ring road and drop knolls at hashed gaps and distances.
+  const W = GRID_W + ext;
+  const H = GRID_H + ext;
+  const perim = 2 * (W + H) + 8;
+  for (let i = 0, s = 0; s < perim && i < 200; i++) {
+    s += 1.5 + hash(i, 701) * 2.5;
+    // Smaller knolls on the front sides, where the sawah between the ring road and the sea is narrow.
+    const front = s >= W + 2 && s < 2 * W + H + 6;
+    const r = front ? 0.9 + hash(i, 702) * 0.6 : 1.2 + hash(i, 702) ** 1.5 * 1.6;
+    const gap = front ? 1.2 + r + hash(i, 703) * 2 : 1.4 + r * 0.8 + hash(i, 703) * 3;
+    // A point on the road loop, then out from it.
+    let a: number;
+    let b: number;
+    if (s < W + 2) [a, b] = [s - 1, -1 - gap];
+    else if (s < W + H + 4) [a, b] = [W + gap, s - W - 3];
+    else if (s < 2 * W + H + 6) [a, b] = [2 * W + H + 5 - s, H + gap];
+    else [a, b] = [-1 - gap, perim - s - 1];
+    if (blocked(a, b, r)) continue;
+    knolls.push({ a, b, r, h: Math.min(72, 10 + r * (16 + hash(i, 704) * 12)), sx: 0.7 + hash(i, 705) * 0.6, rot: hash(i, 706) * Math.PI });
+  }
+  // Index each knoll on every tile within its reach (the tree ring runs out to 2.4 radii, squashed up to 1.43x).
+  knolls.forEach((k, i) => {
+    const reach = Math.ceil(k.r * 2.4 * 1.45) + 1;
+    for (let ty = Math.floor(k.b) - reach; ty <= Math.floor(k.b) + reach; ty++)
+      for (let tx = Math.floor(k.a) - reach; tx <= Math.floor(k.a) + reach; tx++) {
+        const key = tileKey(tx, ty);
+        const list = knollsAt.get(key);
+        if (list) list.push(i);
+        else knollsAt.set(key, [i]);
+      }
+  });
+}
+
+/**
+ * Knoll height at a tile-space point, how far out from its centre it is (0 at the top, 1 at the
+ * foot), and whether the point is on the side facing the viewer (down the screen).
+ */
+function knoll(a: number, b: number): { h: number; d: number; front: boolean } {
+  let best = { h: 0, d: 9, front: false };
+  const near = knollsAt.get(tileKey(Math.floor(a), Math.floor(b)));
+  if (!near) return best;
+  for (const i of near) {
+    const k = knolls[i];
+    const da = a - k.a;
+    const db = b - k.b;
+    const u = (da * Math.cos(k.rot) + db * Math.sin(k.rot)) / k.sx;
+    const v = (-da * Math.sin(k.rot) + db * Math.cos(k.rot)) * k.sx;
+    const d = Math.hypot(u, v) / k.r + (vnoise(a * 3 + k.a, b * 3, 1) - 0.5) * 0.25;
+    if (d < best.d) best = { h: d < 1 ? k.h * (1 - d ** 3.2) : 0, d, front: da + db > 0 };
+  }
+  return best;
+}
+
+/** Volcano height at a tile-space point, in art pixels, and how far up the cone it is, 0..1. */
+function volcano(a: number, b: number): { h: number; f: number } {
+  let best = { h: 0, f: 0 };
+  for (const v of VOLCS) {
+    // Long concave aprons: the cone's foot reaches out to the shore, so the land climbs from the
+    // beach all the way to the crater with no flat ledge in between.
+    const d = Math.hypot(a - v.a, b - v.b) / (v.r * 1.9);
+    if (d >= 1) continue;
+    const crater = 0.07;
+    let p = (1 - Math.max(0, d - crater) / (1 - crater)) ** 2.8;
+    if (d < crater * 0.8) p -= 0.06;
+    // Ravines: shallow creases running down from the rim.
+    p *= 1 - 0.07 * (1 - Math.abs(vnoise(Math.atan2(b - v.b, a - v.a) * 6 + 40, 3, 1) * 2 - 1)) * Math.min(1, d * 3);
+    const h = v.h * p;
+    if (h > best.h) best = { h, f: p };
+  }
+  return best;
+}
 
 function hash(x: number, y: number): number {
   let h = (x * 374761393 + y * 668265263) ^ 0x5bd1e995;
@@ -143,16 +272,39 @@ function hash(x: number, y: number): number {
 /** The kampung and its ring road keep exact tile edges, so plots and the road read. */
 const exact = (tx: number, ty: number) => tx >= -1 && ty >= -1 && tx <= GRID_W && ty <= GRID_H;
 
+/**
+ * How far a tile-space point lies outside the ring road's outer edge, in tiles (negative on the road
+ * or inside), and a coordinate along that edge for noise.
+ */
+function pastRoad(a: number, b: number): { d: number; along: number } {
+  const e = [-1 - a, -1 - b, a - (GRID_W + 1), b - (GRID_H + 1)];
+  let k = 0;
+  for (let i = 1; i < 4; i++) if (e[i] > e[k]) k = i;
+  return { d: e[k], along: (k % 2 ? a : b) + k * 97 };
+}
+
+/**
+ * The ring road's outer edge is ragged: the verge bites into the road in bays and tufts up to half a
+ * tile deep, from a low noise along the edge plus a finer one, so the road never ends in a ruled line.
+ * The inner edge, against the kampung's plots, stays exact.
+ */
+const verge = (along: number, x: number, y: number) => 0.04 + vnoise(along * 1.3, 31, 1) ** 1.5 * 0.55 + vnoise(along * 5, 77, 1) * 0.14 + hash(x * 3 + 5, y * 7 + 1) * 0.04;
+
 function terrain(tx: number, ty: number): Terrain {
   // Seam lots between the RTs are packed dirt, so the bigger buildings have somewhere obvious to stand.
   if (tx >= 0 && ty >= 0 && tx < GRID_W && ty < GRID_H) return isSeam(tx, ty) ? 'road' : 'grass';
   if (tx >= -1 && ty >= -1 && tx <= GRID_W && ty <= GRID_H) return 'road';
-  // The front two sides run down to a beach and the sea, with a ragged coastline.
-  const coast = Math.max(tx - GRID_W - 3 - ringExt(), ty - GRID_H - 5 - ringExt()) + hash(tx, ty) * 1.2;
+  // Every side runs down to a beach and the sea along a wandering, round-cornered coast.
+  const coast = coastAt(tx, ty) + (hash(tx, ty) - 0.5) * 0.6;
   if (coast > 0.7) return 'sea';
   if (coast > -0.3) return 'beach';
+  // Oil-palm plantation: kebun ground under the rows, a dirt track every fourth row.
+  const plot = sawitAt(tx, ty);
+  if (plot) return (tx - plot.x) % 4 === 3 ? 'road' : 'kebun';
+  // Forest on the volcanoes; rock and ash take over up the cone per pixel (see buildWorld).
+  if (volcano(tx + 0.5, ty + 0.5).h > 9) return 'hutan';
   if (tx > GRID_W || ty > GRID_H) return 'sawah';
-  // Toward the mountains the land rises into terraced hills: kebun teh on the left, sawah terasering
+  // Toward the volcanoes the land rises into terraced hills: kebun teh on the left, sawah terasering
   // on the right. Shade trees stand on them (see worldTrees), so no square patch of forest breaks the flow.
   if (tx + ty < -5 && (tx < -1 || ty < -1)) return tx <= ty ? 'teh' : 'teras';
   if (tx < -1 && ty < -1) return 'kebun';
@@ -184,6 +336,26 @@ function vnoise(x: number, y: number, cell: number): number {
   return top + (bot - top) * sy;
 }
 
+/**
+ * How far a tile-space point lies past the island's coast, in tiles: above 0.7 is sea, above -0.3
+ * beach. Each side's line wanders by a low noise, in bays and headlands of a few tiles, and a soft
+ * maximum rounds the four corners, so the island is no diamond. The front sides only wander outward,
+ * so the sawah, the ring road and the neighbours' roofs always stay on land.
+ */
+function coastAt(a: number, b: number): number {
+  const ext = ringExt();
+  const wander = (s: number, k: number) => vnoise(s + k * 7, k, 5) * 0.6 + vnoise(s * 1.7 + k, k + 9, 2.2) * 0.3 + vnoise(s * 3 + k, k + 3, 1) * 0.1;
+  const e = [
+    a - (GRID_W + 4 + ext) - 4.5 * wander(b, 11),
+    b - (GRID_H + 5 + ext) - 4.5 * wander(a, 23),
+    XMIN + 1.6 - a + 1.4 * wander(b, 37),
+    YMIN + 1.6 - b + 1.4 * wander(a, 51),
+  ];
+  const K = 0.55;
+  const m = Math.max(...e);
+  return m + Math.log(e.reduce((sum, v) => sum + Math.exp(K * (v - m)), 0)) / K;
+}
+
 /** Tallest hill, in art pixels above the kampung. */
 const HILL_MAX = 44;
 const smooth = (k: number) => {
@@ -207,9 +379,20 @@ export function cornerHeight(vx: number, vy: number): number {
         const out = Math.max(-1 - x, -1 - y);
         const front = Math.max(x - GRID_W - 1, y - GRID_H - 1);
         const rise = smooth(out / 5) * smooth(1 - front / 3);
-        const edge = smooth(Math.min(x - XMIN, y - YMIN) / 3) * (0.55 + 0.45 * smooth((x + y - FAR) / 4));
         const n = vnoise(x + 40, y + 40, 4) * 0.7 + vnoise(x + 7, y + 90, 2) * 0.3;
-        heights[(y - YMIN) * w + x - XMIN] = Math.round(HILL_MAX * rise * edge * (0.2 + 0.8 * n));
+        // Both ease up from the beach over a few tiles, so every shore rises gradually.
+        const inland = Math.max(0, -coastAt(x, y));
+        const hill = HILL_MAX * rise * smooth(inland / 5) * (0.2 + 0.8 * n);
+        const volc = volcano(x, y).h * smooth(inland / 3.5) * smooth(out / 2);
+        // Karst knolls stand on the flat land round the kampung, never on its tiles or the ring road.
+        const kh = exact(x, y) || exact(x - 1, y - 1) || exact(x - 1, y) || exact(x, y - 1) ? 0 : knoll(x, y).h;
+        const m = Math.max(hill, volc, kh);
+        if (kh > Math.max(hill, volc)) {
+          heights[(y - YMIN) * w + x - XMIN] = Math.round(kh + Math.min(hill, 6));
+          continue;
+        }
+        const K = 0.15;
+        heights[(y - YMIN) * w + x - XMIN] = Math.round(m + Math.log(Math.exp(K * (hill - m)) + Math.exp(K * (volc - m))) / K - Math.log(2) / K * Math.min(1, Math.min(hill, volc) / 8));
       }
   }
   if (vx < XMIN || vy < YMIN || vx > XMAX || vy > YMAX) return 0;
@@ -235,7 +418,7 @@ function heightAtPixel(x: number, y: number): number {
 }
 
 /** Control-map material ids. 'tanah' is the bare earth the autoshader shows on steep hill faces. */
-const MATS: Terrain[] = ['grass', 'road', 'sawah', 'kebun', 'hutan', 'beach', 'sea', 'teh', 'teras', 'tanah'];
+const MATS: Terrain[] = ['grass', 'road', 'sawah', 'kebun', 'hutan', 'beach', 'sea', 'teh', 'teras', 'tanah', 'abu', 'batu'];
 const TANAH = MATS.indexOf('tanah');
 /** Materials on hills, which the autoshader may wear down to bare earth. */
 const SLOPED = new Set((['kebun', 'teh', 'teras'] as Terrain[]).map((t) => MATS.indexOf(t)));
@@ -321,6 +504,10 @@ function materialHeight(t: Terrain, x: number, y: number, n: number): number {
       return 0.3 + 0.4 * n;
     case 'tanah':
       return 0.15 + 0.85 * vnoise(x + 31, y * 2, 4);
+    case 'abu':
+      return 0.3 + 0.6 * vnoise(x + 7, y * 2, 5);
+    case 'batu':
+      return 0.2 + 0.8 * vnoise(x + 53, y * 2, 3);
   }
 }
 
@@ -389,6 +576,17 @@ function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx
       if (speck < 0.015) return '#bdb4a3';
       if (speck > 0.99) return '#6d635a';
       return tone(n, TANAH_TONES);
+    case 'batu': {
+      // Pale limestone on the karst knolls, in ledges every few pixels with dark cracks and the odd
+      // tuft of green clinging on.
+      if (speck < 0.025) return '#6f8a3c';
+      if (speck > 0.975 || (x + Math.floor(y / 3) * 5) % 13 === 0) return '#7d756b';
+      return Math.floor(y / 3) % 2 ? tone(n, ['#9c958a', '#aaa397', '#b7afa2']) : tone(n, ['#a8a094', '#b6aea1', '#c2baac']);
+    }
+    case 'abu':
+      // Volcanic ash on the cap, pale and cool, with dark cinders.
+      if (speck > 0.985) return '#8f8a86';
+      return tone(n, ['#b4aea6', '#bfb9b0', '#cac4bb']);
     case 'kebun':
       return speck < 0.03 ? '#7aa04a' : tone(n, KEBUN);
     case 'hutan':
@@ -429,152 +627,22 @@ function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
 const bayer = (x: number, y: number) => BAYER[(y & 3) * 4 + (x & 3)];
 
-/** Haze at the horizon, which the far land and the mountains' feet fade into. */
-const HAZE = [206, 214, 196];
-
-/** Ridged noise: sharp creases where smooth noise crosses its middle, for crags and gullies. */
-const ridged = (x: number, y: number, cell: number) => 1 - Math.abs(vnoise(x, y, cell) * 2 - 1);
-
-/**
- * One volcano, painted like an old landscape of a Javanese gunung: a broad cone with long concave
- * skirts and a blunt, notched crater top. Light comes from the left, so the cone turns from warm
- * white to cool blue across its face, with no hard ridge. Ravines run down from the summit as
- * thin light and dark streaks that fade out down the slope, and the foot melts into the haze.
- * Tones step through an ordered dither.
- *
- * Like the near ground, the cone is painted in materials: hazy forest on the lower slopes, bare
- * rock above it, the pale ash cap on top. Each zone fades in and out with altitude and the zones
- * meet through the same height-blended pick (heightBlend), so forest clumps climb the ravines and
- * rock pushes down the ridges instead of ringing the cone in straight bands. The forest feet run
- * into the far tree line, so the mountains stand on the land instead of floating behind it.
- */
-function mountain(img: ImageData, land: Uint8Array, cx: number, baseY: number, hw: number, h: number, seed: number, lean: number): void {
-  const topY = baseY - h;
-  // Height across the cone, 0..1: concave skirts, a flat crater a few pixels wide, a small
-  // shoulder cone on one flank, and a gently uneven rim.
-  const profile = (x: number): number => {
-    const u = (x - cx) / hw - lean;
-    const crater = 0.07;
-    const d = Math.max(0, Math.abs(u) - crater) / (1 - crater);
-    if (d >= 1) return 0;
-    let p = (1 - d) ** 2.1;
-    // A notch in the crater rim.
-    if (Math.abs(u) < crater) p -= 0.018 * (1 - Math.abs(u + crater * 0.3) / crater);
-    const su = u + 0.5 * Math.sign(lean || 1);
-    const shoulder = Math.abs(su) < 0.22 ? 0.3 * (1 - Math.abs(su) / 0.22) ** 1.6 : 0;
-    return Math.max(0, Math.max(p, shoulder) + (vnoise(x + seed, seed, 10) - 0.5) * 0.012 * (1 - d));
-  };
-  const RAMP = ['#f1f0ec', '#d3dce8', '#b8c6db', '#9fb1cc', '#8a9dbe', '#7689ad'];
-  // Rock and forest in the same lit-to-shade steps, already far in the blue air.
-  const ROCK = ['#d8d4cc', '#c0bcb8', '#a8a7ab', '#94959f', '#808494', '#6d7387'];
-  const FOREST = ['#a3bfa6', '#8fb096', '#7da087', '#6d917a', '#5e826e', '#517463'];
-  const ZONES = [RAMP, ROCK, FOREST];
-  const HAZE_RGB = [214, 222, 226];
-  const x0 = Math.max(0, Math.floor(cx - hw));
-  const x1 = Math.min(WORLD_W, Math.ceil(cx + hw));
-  const peakX = cx + lean * hw;
-  for (let x = x0; x < x1; x++) {
-    const top = Math.round(baseY - profile(x) * h);
-    for (let y = Math.max(0, top); y < Math.min(WORLD_H, HORIZON); y++) {
-      if (land[y * WORLD_W + x]) continue;
-      const dy = y - topY;
-      const dith = bayer(x, y);
-      // Across the face: lit on the left, cool on the right, with the turn drifting with height.
-      const across = (x - peakX) / (hw * (0.25 + (0.75 * Math.max(0, dy)) / h));
-      // Ravines radiate from the summit: ridged noise on the angle from the crater.
-      const angle = (x - peakX) / (dy + 10);
-      const ravine = ridged(angle * 9 + seed, dy * 0.02, 1) ** 3;
-      const fade = Math.max(0, 1 - dy / (h * 0.9));
-      let v = 0.42 + across * 0.38 + (dy / h) * 0.18 + (y - top < 2 ? -0.12 : 0);
-      v += ravine * fade * (across < 0 ? -0.22 : 0.26) + (vnoise(x * 0.7 + seed, y, 3) - 0.5) * 0.08;
-      const i = Math.max(0, Math.min(RAMP.length - 1, Math.floor(v * RAMP.length + dith - 0.5)));
-      // Altitude zones: the ash cap on the top quarter, rock above the middle, forest up to about 0.6.
-      const alt = 1 - dy / h;
-      const clump = vnoise(x * 1.3 + seed, y * 2, 4);
-      const zone = heightBlend(
-        [smooth((alt - 0.74) / 0.15), smooth((alt - 0.42) / 0.18) * smooth((0.9 - alt) / 0.15), smooth((0.64 - alt) / 0.18)],
-        [ravine * 0.6, 1 - ravine, clump * 0.5 + ravine * 0.7],
-        0.6,
-      );
-      const c = hex(ZONES[zone][i]);
-      let rgb = [c >> 16, (c >> 8) & 255, c & 255];
-      // The lower half dissolves into haze, as in a painting of a far volcano.
-      const mist = smooth((dy - h * 0.72) / (h * 0.35)) * 0.6;
-      const m = Math.max(0, Math.min(1, Math.round((mist + (dith - 0.5) * 0.3) * 5) / 5));
-      if (m) rgb = rgb.map((ch, k) => Math.round(ch + (HAZE_RGB[k] - ch) * m));
-      img.data.set([rgb[0], rgb[1], rgb[2], 255], (y * WORLD_W + x) * 4);
-    }
-  }
-}
-
 function put(img: ImageData, x: number, y: number, c: string): void {
   const n = hex(c);
   img.data.set([(n >> 16) & 255, (n >> 8) & 255, n & 255, 255], (y * WORLD_W + x) * 4);
 }
 
-/**
- * A golden-hour sky: deep blue overhead warming to a gold horizon, stepped between bands through
- * the 4x4 dither like the far haze, so it reads as air instead of stripes. Peach cloud banks rest
- * on the horizon (cloudBanks).
- */
-function paintSky(img: ImageData): void {
-  const SKY_STOPS: [number, number[]][] = [[0, [63, 111, 174]], [0.45, [118, 160, 204]], [0.75, [226, 200, 170]], [1, [246, 206, 148]]];
-  const skyRGB = (k: number, x: number, y: number): number[] => {
-    let i = 0;
-    while (i < SKY_STOPS.length - 2 && k > SKY_STOPS[i + 1][0]) i++;
-    const [k0, c0] = SKY_STOPS[i];
-    const [k1, c1] = SKY_STOPS[i + 1];
-    const f = Math.min(1, Math.max(0, (k - k0) / (k1 - k0)));
-    const q = Math.min(1, Math.floor(f * 8 + bayer(x, y)) / 8);
-    return [0, 1, 2].map((j) => Math.round(c0[j] + (c1[j] - c0[j]) * q));
-  };
+/** The open sea on every pixel no ground covers, so the corners of the world canvas are water too. */
+function paintSea(img: ImageData, land: Uint8Array): void {
+  const rgb = new Map<string, number[]>();
   for (let y = 0; y < WORLD_H; y++)
     for (let x = 0; x < WORLD_W; x++) {
-      if (y >= HORIZON) put(img, x, y, groundColour('sea', 0, 0, x, y, 0, 0));
-      else img.data.set([...skyRGB(Math.max(0, 1 - (HORIZON - y) / 190), x, y), 255], (y * WORLD_W + x) * 4);
+      if (land[y * WORLD_W + x]) continue;
+      const c = groundColour('sea', 0, 0, x, y, 0, 0);
+      let v = rgb.get(c);
+      if (!v) rgb.set(c, (v = [hex(c) >> 16, (hex(c) >> 8) & 255, hex(c) & 255, 255]));
+      img.data.set(v, (y * WORLD_W + x) * 4);
     }
-  cloudBanks(img);
-}
-
-/**
- * Banks of cumulus resting on the horizon behind the mountains, after the soft painted skies of
- * HD-2D vistas: round puffs (nature is round), lit warm cream on top and to the left, dusty rose in
- * the shade, and a flat underside that melts into the gold horizon haze through the dither. No ink.
- */
-function cloudBanks(img: ImageData): void {
-  const LIT = ['#fff4dc', '#f6dcc0', '#e8c4b4', '#d2b0b4'];
-  const HAZE_SKY = [240, 214, 170];
-  // A few separate banks with sky between them. Each is a heap of round puffs, tallest in its
-  // middle and trailing off to small puffs at its ends.
-  const puffs: [number, number, number][] = [];
-  for (let k = 0; k < Math.ceil(WORLD_W / 260); k++) {
-    const bx = (k + 0.2 + hash(k, 510) * 0.6) * 260;
-    const bw = 50 + hash(k, 511) * 90;
-    const bh = 14 + hash(k, 512) * 26;
-    for (let i = 0; i < bw / 7; i++) {
-      const t = hash(k * 50 + i, 501) * 2 - 1;
-      const prof = Math.sqrt(1 - t * t);
-      const r = 4 + bh * prof * (0.5 + hash(k * 50 + i, 502) * 0.5);
-      puffs.push([bx + t * bw, HORIZON - 4 - r * 0.6 - bh * prof * hash(k * 50 + i, 503) * 0.5, r]);
-    }
-  }
-  for (const [cx, cy, r] of puffs.sort((p, q) => p[1] - q[1]))
-    for (let y = Math.max(0, Math.floor(cy - r)); y < HORIZON; y++)
-      for (let x = Math.max(0, Math.floor(cx - r)); x < Math.min(WORLD_W, cx + r); x++) {
-        const dx = (x - cx) / r;
-        const dy = (y - cy) / r;
-        // Round top, flat base squashed toward the horizon.
-        if (dx * dx + (dy < 0 ? dy * dy : dy * dy * 0.25) > 1) continue;
-        // Light from the top left: cream cap, rose toward the bottom right.
-        const lit = -dx * 0.6 - dy * 0.9 + (vnoise(x, y, 5) - 0.5) * 0.4;
-        const i = lit > 0.5 ? 0 : lit > 0 ? 1 : lit > -0.45 ? 2 : 3;
-        const c = hex(LIT[i]);
-        let rgb = [c >> 16, (c >> 8) & 255, c & 255];
-        // Toward the horizon the bank melts into the haze.
-        const m = Math.max(0, Math.min(1, Math.round((0.25 + smooth((y - (HORIZON - 30)) / 28) * 0.7 + (bayer(x, y) - 0.5) * 0.3) * 5) / 5));
-        if (m) rgb = rgb.map((ch, k) => Math.round(ch + (HAZE_SKY[k] - ch) * m));
-        img.data.set([rgb[0], rgb[1], rgb[2], 255], (y * WORLD_W + x) * 4);
-      }
 }
 
 /** Renders the whole world at art resolution. Cached by the caller. */
@@ -585,24 +653,21 @@ export function buildWorld(): HTMLCanvasElement {
   const ctx = c.getContext('2d')!;
   const img = ctx.createImageData(WORLD_W, WORLD_H);
 
-  const base = HORIZON + 30;
-
-  paintSky(img);
 
   // Ground tiles. Each pixel remembers its terrain, so ink lines can follow every border.
   const land = new Uint8Array(WORLD_W * WORLD_H);
-  // Tile depth (a + b) of each land pixel, for the haze over the far land.
+  // Tile depth (a + b) of each land pixel, so islands drawn later sit behind nearer ground.
   const depth = new Float32Array(WORLD_W * WORLD_H);
   // Kind numbers: 1-7 in this order, 8 is the cliff, 9 and 10 the terraced hills, 11 bare earth.
   const KINDS: Terrain[] = ['grass', 'road', 'sawah', 'kebun', 'hutan', 'beach', 'sea'];
-  const kindOf = (t: Terrain) => (t === 'teh' ? 9 : t === 'teras' ? 10 : t === 'tanah' ? 11 : KINDS.indexOf(t) + 1);
+  const kindOf = (t: Terrain) => (t === 'teh' ? 9 : t === 'teras' ? 10 : t === 'tanah' ? 11 : t === 'abu' ? 12 : t === 'batu' ? 14 : KINDS.indexOf(t) + 1);
   // Each tile is two flat-lit triangles over its corner heights, drawn back to front so nearer
   // hills cover farther ones. Texture is sampled at the tile's flat position, so it sticks to the
   // ground as it rises. Outside the kampung each pixel's material comes from the corner control
   // map (groundAt), so land types meet along organic borders instead of tile edges. Slopes facing
   // the light (top left) brighten and the rest darken in a few flat steps, and a soft grid line
   // runs along every tile edge, like an old city-builder map.
-  const GRID_LINE = new Set<Terrain>(['grass', 'kebun', 'hutan', 'teh', 'teras']);
+  const GRID_LINE = new Set<Terrain>(['grass', 'kebun', 'hutan', 'teh', 'teras', 'tanah', 'abu', 'batu']);
   const LIGHT = (() => {
     const v = [-0.75, -0.3, 1];
     const m = Math.hypot(v[0], v[1], v[2]);
@@ -626,6 +691,8 @@ export function buildWorld(): HTMLCanvasElement {
     const nm = Math.hypot(n[0], n[1], n[2]);
     const dot = (n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]) / nm;
     const lit = Math.max(0.7, Math.min(1.22, Math.round((1 + (dot - LIGHT[2]) * 1.9) / 0.06) * 0.06));
+    // How upright the facet is: 0 flat, 1 a wall. Karst knolls show bare limestone where it is steep.
+    const upright = 1 - Math.abs(n[2]) / nm;
     // Attribute gradients across the screen, for the grid-line test against the pixel up and left.
     const grad = (j: number) => {
       const d1 = v[1][j] - v[0][j];
@@ -652,17 +719,60 @@ export function buildWorld(): HTMLCanvasElement {
         const fx = Math.floor(OX + ((a - b) * TW) / 2);
         const fy = Math.floor(OY + ((a + b) * TH) / 2);
         // Clamped into this tile, so a pixel on the shared edge never reads a kampung tile next door.
-        const t = blended ? groundAt(Math.min(Math.max(a, tx), tx + 0.9999), Math.min(Math.max(b, ty), ty + 0.9999), fx, fy) : tile;
+        let t = blended ? groundAt(Math.min(Math.max(a, tx), tx + 0.9999), Math.min(Math.max(b, ty), ty + 0.9999), fx, fy) : tile;
+        // The ring road's outer edge gives way to the verge along a ragged line.
+        if (!blended && t === 'road' && !(tx >= 0 && ty >= 0 && tx < GRID_W && ty < GRID_H)) {
+          const pr = pastRoad(a, b);
+          if (pr.d > -verge(pr.along, fx, fy)) {
+            // The material just outside the road at this point.
+            const oa = a + (pr.d === -1 - a ? -0.6 : pr.d === a - (GRID_W + 1) ? 0.6 : 0);
+            const ob = b + (pr.d === -1 - b ? -0.6 : pr.d === b - (GRID_H + 1) ? 0.6 : 0);
+            const out = terrain(Math.floor(oa), Math.floor(ob));
+            if (out !== 'road') t = out === 'sawah' ? 'grass' : out;
+          }
+        }
+        // Up a volcano the material follows the pixel's height, and its texture is sampled on screen,
+        // so the steep cone is not streaked by flat-world texture stretched up the slope.
+        let sx = fx;
+        let sy = fy;
+        if (t !== 'beach' && t !== 'sea' && !exact(tx, ty)) {
+          const kn = knoll(a, b);
+          if (kn.h > 2) {
+            // Bare limestone on the steep sides, a green cap of forest on the rounded top.
+            t = upright + (bayer(x, y) - 0.5) * 0.1 > 0.22 ? 'batu' : kn.d < 0.55 ? 'hutan' : 'grass';
+            sx = x;
+            sy = y * 2;
+          }
+        }
+        if (t !== 'beach' && t !== 'sea') {
+          const vo = volcano(a, b);
+          if (vo.h > 6) {
+            const hh = w0 * v[0][2] + w1 * v[1][2] + w2 * v[2][2];
+            const z = zone(hh / (vo.h / vo.f), x, y);
+            if (z) {
+              t = z;
+              sx = x;
+              sy = y * 2;
+            }
+          }
+        }
         const edge = GRID_LINE.has(t) && (Math.floor(a - dax) !== Math.floor(a) || Math.floor(b - dbx) !== Math.floor(b) || Math.floor(a - day) !== Math.floor(a) || Math.floor(b - dby) !== Math.floor(b));
         land[y * WORLD_W + x] = kindOf(t);
         depth[y * WORLD_W + x] = a + b;
-        const c = hex(groundColour(t, a - tx, b - ty, fx, fy, tx, ty));
+        const c = hex(groundColour(t, a - tx, b - ty, sx, sy, tx, ty));
         // Water lies level, so the sea never takes the facet light of a sloped tile it reaches into.
         const f = (t === 'sea' ? 1 : lit) * (edge ? (t === 'grass' ? 0.86 : 0.88) : 1);
         img.data.set([Math.min(255, Math.round(((c >> 16) & 255) * f)), Math.min(255, Math.round(((c >> 8) & 255) * f)), Math.min(255, Math.round((c & 255) * f)), 255], (y * WORLD_W + x) * 4);
       }
   };
-  for (let d = Math.max(FAR, XMIN + YMIN); d < XMAX + YMAX - 1; d++)
+  // Volcano materials by height: forest, bare rock, then the ash cap. The zone is picked per pixel
+  // with an ordered dither across a band of height, so tiers blend in a few flat steps instead of
+  // meeting along a hard line. Below the forest the hill's own ground carries on, dithered in too.
+  const zone = (frac: number, x: number, y: number): Terrain | null => {
+    const f = frac + (bayer(x, y) - 0.5) * 0.16;
+    return f > 0.76 ? 'abu' : f > 0.5 ? 'tanah' : f > 0.12 ? 'hutan' : null;
+  };
+  for (let d = XMIN + YMIN; d < XMAX + YMAX - 1; d++)
     for (let tx = XMIN; tx < XMAX; tx++) {
       const ty = d - tx;
       if (ty < YMIN || ty >= YMAX) continue;
@@ -692,11 +802,13 @@ export function buildWorld(): HTMLCanvasElement {
       }
     }
 
+  paintSea(img, land);
+
   // Borders between land types, coloured instead of inked. The higher ground (garden over grass
   // over road over cliff over beach over sea) takes a dark edge in its own colour. The lower side
   // gets a bright rim that eases back to its base colour over three pixels, so each transition
   // reads clearly without hard black lines. Sea meets sand with a line of foam.
-  const RANK = [2, 7, 5, 6, 8, 9, 3, 2, 4, 8, 6, 5];
+  const RANK = [2, 7, 5, 6, 8, 9, 3, 2, 4, 8, 6, 5, 10, 2, 8];
   const rank = (k: number) => RANK[land[k] || 7];
   const edits: [number, number, number][] = [];
   const NEAR: [number, number, number][] = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [2, 0, 2], [-2, 0, 2], [0, 2, 2], [0, -2, 2], [3, 0, 3], [-3, 0, 3]];
@@ -712,7 +824,7 @@ export function buildWorld(): HTMLCanvasElement {
         const yy = y + dy;
         const xx = x + dx;
         if (yy < 0 || yy >= WORLD_H || xx < 0 || xx >= WORLD_W) continue;
-        // Sky above a hilltop is no border: the haze pass softens that edge instead.
+        // Open sea behind a hilltop is no border: the hill's own silhouette shows against it.
         if (dy < 0 && !land[yy * WORLD_W + xx]) continue;
         const o = rank(yy * WORLD_W + xx);
         if (o === r) continue;
@@ -735,34 +847,6 @@ export function buildWorld(): HTMLCanvasElement {
     for (let c = 0; c < 3; c++) img.data[i + c] = Math.min(255, Math.round(img.data[i + c] * f));
   }
 
-  mountain(img, land, M1, base, 235, 122, 17, -0.06);
-  mountain(img, land, M2, base, 220, 106, 83, 0.08);
-
-  // A soft, distant tree line along the horizon in front of the mountains' feet: rounded canopy
-  // tops from smooth noise, deep in the haze, its top edge breaking up through the dither. Past the
-  // mountains the mainland ends: the line breaks into far islands of different sizes with open sea
-  // between them, so the horizon is never one straight rule.
-  const MAIN0 = M1 - 260;
-  const MAIN1 = M2 + 250;
-  for (let x = 0; x < WORLD_W; x++) {
-    const main = x >= MAIN0 && x < MAIN1 ? 1 : smooth(1 - Math.min(Math.abs(x - MAIN0), Math.abs(x - MAIN1)) / 40);
-    const rise = Math.max(main * (4 + vnoise(x, 5, 11) * 7 + vnoise(x + 50, 9, 4) * 2.5), farIsland(x));
-    if (rise < 1) continue;
-    const top = HORIZON - rise;
-    // A pale strip of sand along the island's foot at the waterline.
-    if (main < 0.5) put(img, x, HORIZON - 1, bayer(x, 0) > 0.5 ? '#d9d6bf' : '#c9d0c0');
-    for (let y = Math.max(0, Math.floor(top) - 1); y < HORIZON; y++) {
-      if (land[y * WORLD_W + x]) continue;
-      const dith = bayer(x, y);
-      if (y - top < 1.5 && dith > y - top + 0.4) continue;
-      const lit = vnoise(x * 1.7, y * 1.7, 3) > 0.55;
-      const base = hex(lit ? '#88a894' : '#71927f');
-      const m = Math.round((0.5 + (y - top) * 0.02 + (dith - 0.5) * 0.25) * 4) / 4;
-      const rgb = [base >> 16, (base >> 8) & 255, base & 255].map((ch, i) => Math.round(ch + (HAZE[i] - ch) * m));
-      img.data.set([rgb[0], rgb[1], rgb[2], 255], (y * WORLD_W + x) * 4);
-    }
-  }
-
   // Fallen leaves scattered over the grass, road and gardens, like an afternoon after a breeze.
   const LEAVES = ['#e57d2e', '#f4b935', '#df4a2c', '#c9a14a'];
   for (let y = 1; y < WORLD_H - 1; y++)
@@ -777,187 +861,317 @@ export function buildWorld(): HTMLCanvasElement {
       if (r < 0.0012) put(img, x + 1, y - 1, c);
     }
 
-  // Small far details along the hilltops: round tree clumps and a few hamlet roofs, painted before
-  // the haze so they sink into the same air.
-  const skyline = new Int32Array(WORLD_W).fill(-1);
-  for (let x = 0; x < WORLD_W; x++) {
-    let y = 0;
-    while (y < WORLD_H && !land[y * WORLD_W + x]) y++;
-    if (y < WORLD_H) skyline[x] = y;
-  }
-  const farLand = (x: number, y: number) => x >= 0 && x < WORLD_W && y >= 0 && y < WORLD_H && land[y * WORLD_W + x] && land[y * WORLD_W + x] !== 2 && depth[y * WORLD_W + x] < -7;
-  const CLUMP = ['#5d8a4a', '#4c7a3f', '#3d6834'];
-  for (let x0 = 2; x0 < WORLD_W - 2; x0 += 2 + Math.floor(hash(x0, 21) * 5)) {
-    if (skyline[x0] < 0) continue;
-    const y0 = skyline[x0] + 2 + Math.floor(hash(x0, 22) ** 2 * 26);
-    if (!farLand(x0, y0) || hash(x0, 23) < 0.25) continue;
-    const r = 1.5 + hash(x0, 24) * 1.8;
-    put(img, x0, y0, '#5a3d26');
-    put(img, x0, y0 + 1, '#5a3d26');
-    for (let dy = -Math.ceil(r * 2); dy <= 0; dy++)
-      for (let dx = -Math.ceil(r); dx <= Math.ceil(r); dx++) {
-        const ex = dx / r;
-        const ey = (dy + r) / r;
-        if (ex * ex + ey * ey > 1 || !farLand(x0 + dx, y0 + dy - 1) && !(y0 + dy - 1 < skyline[x0 + dx])) continue;
-        put(img, x0 + dx, y0 + dy - 1, CLUMP[ex < -0.3 && ey < 0.2 ? 0 : ex > 0.3 ? 2 : 1]);
-        if (y0 + dy - 1 < skyline[x0 + dx]) land[(y0 + dy - 1) * WORLD_W + x0 + dx] = 4;
-      }
-  }
-  for (const fx of [0.3, 0.55, 0.72]) {
-    const x0 = Math.floor(WORLD_W * fx);
-    if (skyline[x0] < 0) continue;
-    const y0 = skyline[x0] + 10;
-    for (let k = 0; k < 3; k++) {
-      const hx = x0 + k * 7 - 7;
-      const hy = y0 + (k % 2) * 3;
-      if (!farLand(hx, hy) || !farLand(hx + 5, hy)) continue;
-      for (let dx = 0; dx < 6; dx++) {
-        put(img, hx + dx, hy - 3, dx === 0 || dx === 5 ? '#8a4a2c' : '#b0603a');
-        put(img, hx + dx, hy - 2, dx === 0 ? '#8a4a2c' : '#c46e42');
-        if (dx > 0 && dx < 5) put(img, hx + dx, hy - 1, dx === 2 ? '#7a6250' : '#eadfc8');
-      }
-    }
-  }
-
-  // Aerial perspective over the far land: the back hills fade toward the horizon haze in dithered
-  // steps, so they sit in the same air as the mountains instead of cutting a hard line across them.
-  const NEAR_HAZE = -6;
-  for (let y = 0; y < WORLD_H; y++)
-    for (let x = 0; x < WORLD_W; x++) {
-      const k = y * WORLD_W + x;
-      if (!land[k] || depth[k] > NEAR_HAZE) continue;
-      const f = smooth((NEAR_HAZE - depth[k]) / (NEAR_HAZE - FAR)) * 0.6;
-      const m = Math.max(0, Math.round((f + (bayer(x, y) - 0.5) * 0.3) * 6) / 6);
-      if (!m) continue;
-      const i = k * 4;
-      for (let c = 0; c < 3; c++) img.data[i + c] = Math.round(img.data[i + c] + (HAZE[c] - img.data[i + c]) * m);
-    }
-  // The hill silhouette frays into the sky and mountains behind it: a few dithered pixels of the
-  // hilltop's own colour above the edge, thinning out, so no clean stair-stepped line is left.
-  for (let x = 0; x < WORLD_W; x++) {
-    let y = 0;
-    while (y < WORLD_H && !land[y * WORLD_W + x]) y++;
-    if (y >= WORLD_H || y === 0) continue;
-    const src = (y * WORLD_W + x) * 4;
-    for (let d = 1; d <= 3 && y - d >= 0; d++) {
-      if (bayer(x, y - d) > 0.62 - d * 0.18) continue;
-      const i = ((y - d) * WORLD_W + x) * 4;
-      for (let c = 0; c < 3; c++) img.data[i + c] = Math.round((img.data[src + c] * 2 + img.data[i + c]) / 3);
-    }
-  }
-  seaIslands(img, land);
+  isoIslands(img, land, depth);
   ctx.putImageData(img, 0, 0);
+  // The far woods are baked into the world: they stand behind every tree near the kampung, so
+  // painting them once here keeps the per-frame tree count low on big maps. They hold still.
+  trees = null;
+  worldTrees();
+  // Whole art pixels and no smoothing, so the baked woods stay as crisp as the sprites drawn per frame.
+  ctx.imageSmoothingEnabled = false;
+  for (const tree of bakedTrees) {
+    const art = smallTree(tree.name, tree.scale, (tree.tx * 7 + tree.ty * 3 + Math.round(tree.x)) & 3);
+    ctx.drawImage(art.canvas, tree.x + art.dx, tree.y + art.dy);
+  }
 
   return c;
 }
 
-/**
- * Height above the horizon of the far islands at column x, 0 where the sea runs to the sky. A
- * fixed scatter of low humps, some long and flat, a few with a small cone, spaced by hash so
- * there are always gaps.
- */
-function farIsland(x: number): number {
-  let top = 0;
-  for (let i = 0; i < Math.ceil(WORLD_W / 110); i++) {
-    const cx = hash(i, 301) * WORLD_W;
-    const hw = 14 + hash(i, 302) ** 2 * 90;
-    const d = Math.abs(x - cx) / hw;
-    if (d >= 1) continue;
-    const hh = 3 + hash(i, 303) * 8;
-    // A soft hump with a lumpy canopy; one in four carries a far cone.
-    let r = hh * Math.sqrt(1 - d * d) * (0.75 + vnoise(x + i * 40, 7, 5) * 0.5);
-    if (hash(i, 304) < 0.25) r = Math.max(r, hh * 2.2 * Math.max(0, 1 - Math.abs(x - cx) / (hw * 0.4)) ** 1.4);
-    top = Math.max(top, r);
-  }
-  return top;
+const rgbOf = (c: string) => {
+  const v = hex(c);
+  return [v >> 16, (v >> 8) & 255, v & 255];
+};
+
+interface Isle {
+  /** Tile-space position of the patch's top corner, and its size in tiles. */
+  a0: number;
+  b0: number;
+  n: number;
+  /** Corner height in art pixels at local corner (i, j); negative is under water. */
+  h: (i: number, j: number) => number;
+  peak: number;
+  /** Plain, a cluster of karst knolls, or a small volcano at the middle. */
+  kind: 'plain' | 'karst' | 'gunung';
+  /** Height of the tallest point, for the volcano's tiers. */
+  top: number;
 }
 
-const ISLAND_SAND = ['#e6c486', '#edd093', '#f3daa2'];
-const ISLAND_GREEN = ['#5f8a3c', '#6f9a44', '#84a748'];
-const ISLAND_FOREST = ['#3c6229', '#466e30', '#517a37'];
+/** Island ground by height and slope: sand at the waterline, grass, forest, and rock on steep faces. */
+function isleMat(I: Isle, hh: number, slope: number, x: number, y: number): Terrain {
+  const n = clumps(x, y);
+  if (hh < 1 + n * 1.4) return 'beach';
+  // A small volcano: forest skirts, bare rock, an ash cap, blended through the dither like the big ones.
+  if (I.kind === 'gunung' && hh > I.peak * 0.9) {
+    const f = hh / I.top + (bayer(x, y) - 0.5) * 0.12;
+    if (f > 0.72) return 'abu';
+    if (f > 0.36) return 'tanah';
+    return 'hutan';
+  }
+  // Karst knolls: bare limestone on the steep sides, forest on their caps.
+  if (I.kind === 'karst' && hh > I.peak * 0.9) return slope > 7 ? 'batu' : 'hutan';
+  if (slope > 8 && n > 0.58) return 'tanah';
+  return hh > I.peak * 0.55 + (n - 0.5) * 4 ? 'hutan' : 'grass';
+}
+
+const ISLE_RANK: Partial<Record<Terrain, number>> = { beach: 3, grass: 7, hutan: 9, tanah: 5, batu: 8, abu: 10 };
 
 /**
- * A few small islands out on the open sea: a lumpy 2:1 oval with a foam ring, a sand rim and green
- * inside, painted with the ground's height-blended pick (sand, grass, forest by height, clumps
- * pushing through). The far side is lit, the near side shaded, and the near edge drops a
- * pixel or two of wet sand. The further away, the smaller and hazier, through the same dithered
- * haze steps as the far land. Islands only go where every pixel round them is open sea.
+ * Islands in true isometric: each is a small patch of tile-corner heights, rasterised as two lit
+ * triangles per tile with the hills' grid line, painted with the ground's own materials and borders,
+ * ringed with foam and a wet-sand bank on the near side, and planted with the map's own trees. No
+ * perspective shrink or haze: the projection has none, so a far island is drawn like a near one.
  */
-function seaIslands(img: ImageData, land: Uint8Array): void {
-  const placed: [number, number, number][] = [];
-  for (let i = 0; i < 120 && placed.length < 7; i++) {
-    const cy = HORIZON + 12 + hash(i, 401) ** 1.3 * (WORLD_H - HORIZON - 40);
-    const cx = 20 + hash(i, 402) * (WORLD_W - 40);
-    // Nearer islands (lower on screen) are bigger.
-    const near = (cy - HORIZON) / (WORLD_H - HORIZON);
-    const rx = Math.round(11 + near * 22 + hash(i, 403) * near * 20);
-    const ry = rx / 2;
-    // Shape: a main oval and a second lobe off to one side, so no two islands share an outline.
-    const stretch = 0.7 + hash(i, 404) * 0.8;
-    const lx = (hash(i, 405) - 0.5) * 1.4;
-    const ly = (hash(i, 406) - 0.5) * 0.8;
-    const lr = 0.35 + hash(i, 407) * 0.35;
-    const span = rx * Math.max(stretch, 1) * 1.8;
-    const free = () => {
-      for (let y = Math.floor(cy - ry * 1.6 - 6); y <= cy + ry * 1.6 + 8; y += 2)
-        for (let x = Math.floor(cx - span - 6); x <= cx + span + 6; x += 2) {
-          if (x < 0 || y <= HORIZON + 2 || x >= WORLD_W || y >= WORLD_H) return false;
-          const k = land[y * WORLD_W + x];
-          if (k && k !== 7) return false;
-        }
-      return placed.every(([px, py, pr]) => Math.abs(px - cx) > pr + span + 12 || Math.abs(py - cy) > (pr + span) / 2 + 8);
-    };
-    if (!free()) continue;
-    placed.push([cx, cy, span]);
-    const haze = (1 - near) * 0.55;
-    const height = (x: number, y: number) => {
-      const dx = (x - cx) / (rx * stretch);
-      const dy = (y - cy) / ry;
-      const lobe = lr - Math.hypot(dx - lx, dy - ly);
-      return Math.max(1 - Math.hypot(dx, dy), lobe / lr) + (vnoise(x + i * 70, y * 2, 6) - 0.5) * 0.35;
-    };
-    const BANK = Math.max(1, Math.round(1 + near * 2));
-    const paint = (x: number, y: number, col: string) => {
-      if (x < 0 || y < 0 || x >= WORLD_W || y >= WORLD_H) return;
-      const v = hex(col);
-      let rgb = [v >> 16, (v >> 8) & 255, v & 255];
-      const m = Math.max(0, Math.round((haze + (bayer(x, y) - 0.5) * 0.3) * 6) / 6);
-      if (m) rgb = rgb.map((ch, k) => Math.round(ch + (HAZE[k] - ch) * m));
-      img.data.set([rgb[0], rgb[1], rgb[2], 255], (y * WORLD_W + x) * 4);
-    };
-    const tops: [number, number][] = [];
-    for (let y = Math.floor(cy - ry * 1.6); y <= Math.ceil(cy + ry * 1.6 + BANK); y++)
-      for (let x = Math.floor(cx - span); x <= Math.ceil(cx + span); x++) {
-        const e = height(x, y);
-        if (e >= 0) {
-          // Above water: sand, grass and forest by height, clumps pushing through, lit on the far side.
-          const n = clumps(x, y);
-          const step = heightBlend([smooth((0.3 - e) / 0.15), smooth((e - 0.15) / 0.15) * smooth((0.75 - e) / 0.2), smooth((e - 0.45) / 0.2)], [0.3 * n, n, 0.4 + 0.6 * n], 0.4);
-          const lit = height(x - 2, y - 1) > height(x + 2, y + 1) + 0.02 ? 2 : height(x - 2, y - 1) < height(x + 2, y + 1) - 0.02 ? 0 : 1;
-          const ramp = step === 0 ? ISLAND_SAND : step === 1 ? ISLAND_GREEN : ISLAND_FOREST;
-          paint(x, y, ramp[lit]);
-          if (step === 2 && hash(x * 3 + i, y * 5) < 0.012) tops.push([x, y]);
+function drawIsle(img: ImageData, land: Uint8Array, depth: Float32Array, I: Isle, rank: Uint8Array): void {
+  const OX = WORLD_OX;
+  const OY = WORLD_OY;
+  const LIGHT = [-0.75, -0.3, 1].map((c) => c / Math.hypot(-0.75, -0.3, 1));
+  // Rank of each island pixel (0 off the island), in a buffer shared by all islands and cleared after.
+  const keys: number[] = [];
+  const mine = { get: (k: number) => rank[k] || undefined, has: (k: number) => rank[k] > 0 };
+  const SIDE = 20;
+  const tri = (v: [number, number, number][], tile: [number, number]) => {
+    const g = v.map(([, , h]) => Math.max(0, h));
+    const P = v.map(([a, b], k) => [OX + ((a - b) * TW) / 2, OY + ((a + b) * TH) / 2 - g[k]]);
+    const area = (P[1][0] - P[0][0]) * (P[2][1] - P[0][1]) - (P[2][0] - P[0][0]) * (P[1][1] - P[0][1]);
+    if (Math.abs(area) < 1e-6) return;
+    const e1 = [(v[1][0] - v[0][0]) * SIDE, (v[1][1] - v[0][1]) * SIDE, g[1] - g[0]];
+    const e2 = [(v[2][0] - v[0][0]) * SIDE, (v[2][1] - v[0][1]) * SIDE, g[2] - g[0]];
+    let nn = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+    if (nn[2] < 0) nn = nn.map((c) => -c);
+    const dot = (nn[0] * LIGHT[0] + nn[1] * LIGHT[1] + nn[2] * LIGHT[2]) / Math.hypot(nn[0], nn[1], nn[2]);
+    const lit = Math.max(0.7, Math.min(1.22, Math.round((1 + (dot - LIGHT[2]) * 1.9) / 0.06) * 0.06));
+    const slope = Math.max(...g) - Math.min(...g);
+    const x0 = Math.max(0, Math.floor(Math.min(P[0][0], P[1][0], P[2][0])));
+    const x1 = Math.min(WORLD_W - 1, Math.ceil(Math.max(P[0][0], P[1][0], P[2][0])));
+    const y0 = Math.max(0, Math.floor(Math.min(P[0][1], P[1][1], P[2][1])));
+    const y1 = Math.min(WORLD_H - 1, Math.ceil(Math.max(P[0][1], P[1][1], P[2][1])));
+    for (let y = y0; y <= y1; y++)
+      for (let x = x0; x <= x1; x++) {
+        const w1 = ((x + 0.5 - P[0][0]) * (P[2][1] - P[0][1]) - (P[2][0] - P[0][0]) * (y + 0.5 - P[0][1])) / area;
+        const w2 = ((P[1][0] - P[0][0]) * (y + 0.5 - P[0][1]) - (x + 0.5 - P[0][0]) * (P[1][1] - P[0][1])) / area;
+        const w0 = 1 - w1 - w2;
+        if (w0 < -1e-7 || w1 < -1e-7 || w2 < -1e-7) continue;
+        const hh = w0 * v[0][2] + w1 * v[1][2] + w2 * v[2][2];
+        if (hh < 0) continue;
+        const a = w0 * v[0][0] + w1 * v[1][0] + w2 * v[2][0];
+        const b = w0 * v[0][1] + w1 * v[1][1] + w2 * v[2][1];
+        const k = y * WORLD_W + x;
+        // Painter's order against the main island: ground in front of this pixel keeps it.
+        if (land[k] && land[k] !== 7 && land[k] !== 13 && depth[k] > a + b) continue;
+        const fx = Math.floor(OX + ((a - b) * TW) / 2);
+        const fy = Math.floor(OY + ((a + b) * TH) / 2);
+        const t = isleMat(I, hh, slope, fx, fy);
+        const edge = t !== 'beach' && (Math.floor(a - 0.04) !== Math.floor(a) || Math.floor(b - 0.04) !== Math.floor(b));
+        const c = hex(groundColour(t, a - tile[0], b - tile[1], fx, fy, tile[0], tile[1]));
+        const f = lit * (edge ? 0.88 : 1);
+        img.data.set([Math.min(255, Math.round(((c >> 16) & 255) * f)), Math.min(255, Math.round(((c >> 8) & 255) * f)), Math.min(255, Math.round((c & 255) * f)), 255], k * 4);
+        land[k] = 13;
+        depth[k] = a + b;
+        if (!rank[k]) keys.push(k);
+        rank[k] = ISLE_RANK[t] ?? 7;
+      }
+  };
+  // Half-tile facets, so the waterline wanders instead of cutting whole tiles; the grid line stays on whole tiles.
+  const N = I.n * 2;
+  for (let d = 0; d < 2 * N - 1; d++)
+    for (let i = 0; i < N; i++) {
+      const j = d - i;
+      if (j < 0 || j >= N) continue;
+      const H = [I.h(i / 2, j / 2), I.h((i + 1) / 2, j / 2), I.h((i + 1) / 2, (j + 1) / 2), I.h(i / 2, (j + 1) / 2)];
+      if (Math.max(...H) <= 0) continue;
+      const a = I.a0 + i / 2;
+      const b = I.b0 + j / 2;
+      const A: [number, number, number] = [a, b, H[0]];
+      const B: [number, number, number] = [a + 0.5, b, H[1]];
+      const C: [number, number, number] = [a + 0.5, b + 0.5, H[2]];
+      const D: [number, number, number] = [a, b + 0.5, H[3]];
+      tri([A, B, C], [Math.floor(a), Math.floor(b)]);
+      tri([A, C, D], [Math.floor(a), Math.floor(b)]);
+    }
+  // Borders inside the island and round it, like the main coast: the higher ground takes a dark edge,
+  // the lower a bright rim; the sea gets foam then shallows, and the near side drops a wet-sand bank.
+  const edits: [number, number, number][] = [];
+  const NEAR: [number, number, number][] = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [2, 0, 2], [-2, 0, 2], [0, 2, 2], [0, -2, 2], [3, 0, 3], [-3, 0, 3]];
+  let minX = WORLD_W, maxX = 0, minY = WORLD_H, maxY = 0;
+  for (const k of keys) {
+    const x = k % WORLD_W;
+    const y = (k - x) / WORLD_W;
+    minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+  }
+  const BANK = 2;
+  for (let y = Math.max(1, minY - 3); y <= Math.min(WORLD_H - 2, maxY + 3 + BANK); y++)
+    for (let x = Math.max(1, minX - 3); x <= Math.min(WORLD_W - 2, maxX + 3); x++) {
+      const k = y * WORLD_W + x;
+      const r = mine.get(k) ?? 2;
+      if (r === 2) {
+        let bank = 0;
+        for (let d = 1; d <= BANK && !bank; d++) if (mine.get(k - d * WORLD_W) === 3) bank = d;
+        if (bank) {
+          edits.push([x, y, -bank]);
           continue;
         }
-        // Below the near edge a short bank of wet sand, like the kampung's cliff in small.
-        let bank = 0;
-        for (let d = 1; d <= BANK && !bank; d++) if (height(x, y - d) >= 0) bank = d;
-        if (bank) paint(x, y, bank === BANK ? '#a8834e' : '#c9a56a');
-        else if (e > -0.12) paint(x, y, e > -0.05 ? '#d8eee6' : '#8fd0c2');
+        if (land[k] && land[k] !== 7) continue;
       }
-    // A few round tree clumps on the forest, like the far clumps on the hills.
-    const CLUMP = ['#5d8a4a', '#4c7a3f', '#3d6834'];
-    const r = 1.5 + near * 1.5;
-    for (const [tx, ty] of tops.slice(0, 2 + Math.round(near * 4))) {
-      paint(tx, ty, '#5a3d26');
-      for (let dy = -Math.ceil(r * 2); dy <= 0; dy++)
-        for (let dx = -Math.ceil(r); dx <= Math.ceil(r); dx++) {
-          const ex = dx / r;
-          const ey = (dy + r) / r;
-          if (ex * ex + ey * ey <= 1) paint(tx + dx, ty + dy - 1, CLUMP[ex < -0.3 && ey < 0.2 ? 0 : ex > 0.3 ? 2 : 1]);
-        }
+      let dark = false;
+      let rim = 0;
+      for (const [dx, dy, d] of NEAR) {
+        const o = mine.get((y + dy) * WORLD_W + x + dx) ?? 2;
+        if (o === r) continue;
+        if (d === 1 && o < r) dark = true;
+        else if (o > r && (rim === 0 || d < rim)) rim = d;
+      }
+      if (dark) edits.push([x, y, 0]);
+      else if (rim) edits.push([x, y, rim]);
     }
+  for (const [x, y, d] of edits) {
+    const k = y * WORLD_W + x;
+    const i = k * 4;
+    let rgb = [img.data[i], img.data[i + 1], img.data[i + 2]];
+    if (d < 0) rgb = rgbOf(d === -BANK ? '#a8834e' : '#c9a56a');
+    else if (!mine.has(k) && d > 0) rgb = d === 1 ? [236, 246, 238] : d === 2 ? [169, 220, 210] : [118, 190, 180];
+    else {
+      const f = d === 0 ? 0.6 : d === 1 ? 1.2 : d === 2 ? 1.11 : 1.05;
+      rgb = rgb.map((c) => Math.min(255, Math.round(c * f)));
+    }
+    if (!mine.has(k)) land[k] = 13;
+    img.data.set(rgb, i);
   }
+  // The map's own trees, as thick as on the main island: shade trees crowd the forest, groves and
+  // bushes cover most of the grass, the odd palm leans over the sand.
+  for (let i = 0; i < I.n; i++)
+    for (let j = 0; j < I.n; j++) {
+      const H = [I.h(i, j), I.h(i + 1, j), I.h(i + 1, j + 1), I.h(i, j + 1)];
+      const slope = Math.max(...H) - Math.min(...H);
+      if (slope > 12) continue;
+      SPOTS.forEach(([fa, fb], k) => {
+        const hh = (H[0] * (1 - fa) + H[1] * fa) * (1 - fb) + (H[3] * (1 - fa) + H[2] * fa) * fb;
+        if (hh < 1) return;
+        const a = I.a0 + i + fa;
+        const b = I.b0 + j + fb;
+        const [fx, fy] = flatPixel(a, b);
+        const t = isleMat(I, hh, slope, fx, fy);
+        const r = hash(Math.floor(a * 7) + k * 13 + 3, Math.floor(b * 5) + k * 7 + 1);
+        const kind = hash(Math.floor(a * 3) + k, Math.floor(b * 9) + k * 3);
+        // The volcano stays open above its forest foot, so its cone reads.
+        if (I.kind === 'gunung' && hh > I.peak * 0.9) return;
+        const name = t === 'beach' ? (r < 0.15 && k === 0 ? 'kelapa' : null) : t === 'hutan' ? (r < 0.85 ? (kind < 0.85 ? 'pohon' : 'kelapa') : null) : t === 'grass' ? (r < 0.55 ? (kind < 0.65 ? 'pohon' : 'bush') : null) : null;
+        if (!name) return;
+        // A tree whose crown would cross nearer ground (the volcano behind which an islet sits) is left out.
+        const tx0 = Math.round(OX + ((a - b) * TW) / 2 - TW / 2);
+        const ty0 = Math.round(OY + ((a + b) * TH) / 2 - TOP - hh);
+        // Test only the crown's box above the roots, so the ground in front of the trunk never counts.
+        const rootY = ty0 + TOP + TH / 2;
+        for (let y = Math.max(0, Math.floor(rootY - 14)); y < rootY - 2; y += 2)
+          for (let x = Math.max(0, Math.floor(tx0 + TW / 2 - 6)); x < Math.min(WORLD_W, tx0 + TW / 2 + 6); x += 2) {
+            const kk = y * WORLD_W + x;
+            if (land[kk] && land[kk] !== 7 && depth[kk] > a + b + (land[kk] === 13 ? 0.6 : 0)) return;
+          }
+        isleTrees.push({ tree: { name, tx: Math.floor(a), ty: Math.floor(b), x: tx0, y: ty0, scale: treeScale(name, Math.floor(a * 97) + Math.floor(b * 31) + k), island: true }, d: a + b });
+      });
+    }
+  for (const k of keys) rank[k] = 0;
+}
+
+/** Scatters islands of many sizes on the open sea: rocks, sandbars, wooded islets and a few big hilly ones. */
+function isoIslands(img: ImageData, land: Uint8Array, depth: Float32Array): void {
+  const placed: [number, number, number, number][] = [];
+  const rank = new Uint8Array(WORLD_W * WORLD_H);
+  const toTile = (sx: number, sy: number) => {
+    const u = (sx - WORLD_OX) / (TW / 2);
+    const v = (sy - WORLD_OY) / (TH / 2);
+    return [(u + v) / 2, (v - u) / 2];
+  };
+  const make = (seed: number, n: number, peak: number, ca: number, cb: number): Isle => {
+    const stretch = 0.8 + hash(seed, 1) * 0.5;
+    const lx = (hash(seed, 2) - 0.5) * 0.9;
+    const ly = (hash(seed, 3) - 0.5) * 0.9;
+    const lr = 0.35 + hash(seed, 4) * 0.3;
+    const half = n / 2;
+    // Big islands carry a small volcano or a cluster of karst knolls; some middling ones a knoll or two.
+    const roll = hash(seed, 8);
+    const kind: Isle['kind'] = n >= 8 ? (roll < 0.45 ? 'gunung' : 'karst') : n >= 5 && roll < 0.5 ? 'karst' : 'plain';
+    const bumps: [number, number, number, number][] = [];
+    if (kind === 'karst') {
+      const count = n >= 8 ? 3 + Math.floor(hash(seed, 9) * 3) : 1 + Math.floor(hash(seed, 9) * 2);
+      for (let k = 0; k < count; k++) {
+        const ang = hash(seed, 10 + k) * Math.PI * 2;
+        const dist = hash(seed, 20 + k) * 0.45;
+        const r = 0.8 + hash(seed, 30 + k) * (n >= 8 ? 0.8 : 0.5);
+        bumps.push([half + Math.cos(ang) * dist * half * stretch, half + Math.sin(ang) * dist * half / stretch, r, 12 + r * 16 + hash(seed, 40 + k) * 8]);
+      }
+    }
+    const coneH = 54 + hash(seed, 11) * 26;
+    const ground = (i: number, j: number) => {
+      const u = (i - half) / (half * stretch);
+      const v = (j - half) / (half / stretch);
+      const d = Math.hypot(u, v);
+      const lobe = (lr - Math.hypot(u - lx, v - ly)) / lr;
+      return { s: Math.max(1 - d, lobe) + (vnoise(i * 2 + seed * 3, j * 2, 2) - 0.5) * 0.5, d };
+    };
+    return {
+      a0: Math.round(ca - half),
+      b0: Math.round(cb - half),
+      n,
+      peak,
+      kind,
+      top: peak + coneH,
+      h: (i, j) => {
+        const { s, d } = ground(i, j);
+        if (s <= 0) return -3;
+        let h = peak * s ** 1.2 - 2;
+        // Bumps only stand well inside the shore.
+        const inland = Math.min(1, s / 0.35);
+        if (kind === 'gunung') h = Math.max(h, peak + coneH * Math.min(1, Math.max(0, 1 - d / 0.62) ** 1.7 / 0.8) * inland - 2);
+        for (const [bi, bj, r, bh] of bumps) {
+          const dd = Math.hypot(i - bi, j - bj) / r;
+          if (dd < 1) h = Math.max(h, peak * 0.9 + bh * (1 - dd ** 2.2) * inland);
+        }
+        return h;
+      },
+    };
+  };
+  const fits = (sx: number, sy: number, rw: number, rh: number, up: number) => {
+    if (sx - rw < 4 || sx + rw > WORLD_W - 4 || sy - rh - up < 2 || sy + rh > WORLD_H - 4) return false;
+    for (let y = Math.floor(sy - rh - 8); y <= sy + rh + 8; y += 3)
+      for (let x = Math.floor(sx - rw - 10); x <= sx + rw + 10; x += 3) {
+        if (x < 0 || y < 0 || x >= WORLD_W || y >= WORLD_H) continue;
+        const k = land[y * WORLD_W + x];
+        if (k && k !== 7) return false;
+      }
+    return placed.every(([px, py, pw, ph]) => Math.abs(px - sx) > pw + rw + 14 || Math.abs(py - sy) > ph + rh + 10);
+  };
+  const tryPlace = (seed: number, n: number, peak: number) => {
+    for (let t = 0; t < 400; t++) {
+      const sx = hash(seed + t, 11) * WORLD_W;
+      const sy = hash(seed + t, 12) * WORLD_H;
+      const rw = n * 0.75 * (TW / 2) + 4;
+      const rh = n * 0.75 * (TH / 2) + 4;
+      if (!fits(sx, sy, rw, rh, peak + (n >= 8 ? 72 : n >= 5 ? 44 : 0))) continue;
+      const [ca, cb] = toTile(sx, sy);
+      drawIsle(img, land, depth, make(seed, n, peak, ca, cb), rank);
+      placed.push([sx, sy, rw, rh]);
+      return true;
+    }
+    return false;
+  };
+  // Sizes from a skewed spread: many rocks and sandbars, some wooded islets, a few big hilly islands.
+  // Capped, so a big Kecamatan map still reads as a few islands round one, not a carpet of them.
+  const want = Math.min(18, Math.round((WORLD_W * WORLD_H) / 42000));
+  const SIZES: [number, number, number, number][] = [
+    [10, 13, 12, 18],
+    [7, 9, 10, 16],
+    [4, 6, 9, 15],
+    [2, 3, 4, 7],
+  ];
+  const quota = [Math.max(1, Math.round(want * 0.12)), Math.round(want * 0.25), Math.round(want * 0.3), Math.round(want * 0.33)];
+  let seed = 100;
+  SIZES.forEach(([n0, n1, p0, p1], c) => {
+    for (let q = 0; q < quota[c]; q++) {
+      seed += 37;
+      const n = n0 + Math.floor(hash(seed, 5) * (n1 - n0 + 1));
+      tryPlace(seed, n, p0 + hash(seed, 6) * (p1 - p0));
+    }
+  });
 }
 
 export interface Tree {
@@ -968,36 +1182,135 @@ export interface Tree {
   /** Art position of the tree art's top-left corner inside the world canvas. */
   x: number;
   y: number;
+  /** Drawn size against the full sprite. Palms keep one size; every other tree varies. */
+  scale: number;
+  /** On a sea island, so part of the baked far woods. */
+  island?: boolean;
 }
+
+/** Far woods, baked into the world canvas instead of drawn per frame. */
+let bakedTrees: Tree[] = [];
+
+/**
+ * A scenery tree's sprite and its offset from the full tree box (TW wide, TOP + TH tall, roots at the
+ * middle of the ground anchor row), so worldTrees positions stay in the same frame as buildable trees.
+ * The sprite is drawn natively at its size (scenery-trees.ts); the view scales it by a whole number.
+ */
+export function smallTree(name: string, scale: number, variant: number): { canvas: HTMLCanvasElement; dx: number; dy: number; anchor: number } {
+  const t = sceneryTree(name as SceneryTreeName, scale * TREE_HEIGHT, variant);
+  return { canvas: t.canvas, dx: TW / 2 - t.rx, dy: TOP + TH / 2 - t.ry, anchor: t.ry };
+}
+
+/** Height in pixels of a scenery tree at scale 1, about that of the buildable tree it stands for. */
+const TREE_HEIGHT = 40;
+
+/** A scenery tree's size: palms stay at 35%, every other tree somewhere from 25% to 45%; oil palms are planted even and full-grown, 52% to 56%. */
+const treeScale = (name: string, seed: number): number =>
+  name === 'kelapa' ? 0.35 : name === 'sawit' ? 0.52 + hash(seed, 811) * 0.04 : 0.25 + hash(seed, 811) * 0.2;
 
 
 /** True on a tile under a district block, where no tree grows. */
 const inRing = (tx: number, ty: number): boolean => ringBlocks().some((b) => tx >= b.x - 1 && ty >= b.y - 1 && tx < b.x + RING_SIDE + 1 && ty < b.y + RING_SIDE + 1);
 
-/** Trees on the land round the kampung, back to front so nearer trees overlap farther ones. Drawn per frame so they can bounce. */
+/**
+ * True when nearer ground rises over a point, as on the far side of a volcano. Trees draw after the
+ * baked world, so one standing there would show through the slope in front of it.
+ */
+function hidden(a: number, b: number): boolean {
+  const h = heightAt(a, b);
+  // Walk toward the viewer down the screen: each half-tile step is TH / 2 pixels lower. Check the
+  // trunk's column against the base, and the crown's two side columns against the crown.
+  for (const [da, lift] of [[0, 2], [0.4, 14], [-0.4, 14]])
+    for (let k = 1; k <= 24; k++) if (heightAt(a + da + k / 2, b - da + k / 2) - (k * TH) / 2 > h + lift) return true;
+  return false;
+}
+
+/**
+ * Spots for scenery trees inside one tile, in tile fractions. Scenery trees are small, so five fit on
+ * a tile and a dense stand reads as one canopy.
+ */
+const SPOTS: [number, number][] = [[0.22, 0.2], [0.62, 0.3], [0.85, 0.7], [0.4, 0.62], [0.2, 0.85]];
+
+/**
+ * Trees on the land round the kampung, back to front so nearer trees overlap farther ones. Drawn per
+ * frame so they can bounce. Most of the green land is wooded: forest and the volcanoes' gentle
+ * forest belt are thick with shade trees, the kebun is a mix of palms, pisang and shade trees, the
+ * open grass beyond the ring road has groves and bushes, and the tea hills keep a scatter so their
+ * rows still read. Sawah, terraces, bare earth and steep faces stay open, and the kampung's own tiles
+ * and the ring road never get a scenery tree.
+ */
 export function worldTrees(): Tree[] {
   if (trees) return trees;
-  trees = [];
-  for (let d = FAR + 3; d < XMAX + YMAX; d++)
+  const list: { tree: Tree; d: number }[] = [];
+  for (let ty = YMIN; ty < YMAX; ty++)
     for (let tx = XMIN; tx < XMAX; tx++) {
-      const ty = d - tx;
-      if (ty < YMIN || ty >= YMAX) continue;
-      // The tree stands on whatever material shows at the tile's centre, so none grows on sea or bare earth.
-      const [fx, fy] = flatPixel(tx + 0.5, ty + 0.5);
-      const t = groundAt(tx + 0.5, ty + 0.5, fx, fy);
-      const n = hash(tx * 5 + 1, ty * 3 + 2);
-      // The hills stay open so their shape reads. Palms and pisang keep to the low kebun by the
-      // ring road; shade trees gather in small groves on the hilltops; steep faces stay bare.
-      const h = heightAt(tx + 0.5, ty + 0.5);
+      if (exact(tx, ty) || inRing(tx, ty)) continue;
       const corners = [cornerHeight(tx, ty), cornerHeight(tx + 1, ty), cornerHeight(tx + 1, ty + 1), cornerHeight(tx, ty + 1)];
-      const steep = Math.max(...corners) - Math.min(...corners) > 9;
-      const grove = h > 26 && vnoise(tx + 11, ty + 5, 3) > 0.55;
-      const kebun = steep ? null : h < 6 ? (n < 0.3 ? 'kelapa' : n < 0.5 ? 'pisang' : n < 0.58 ? 'pohon' : null) : grove && n < 0.6 ? 'pohon' : n < 0.05 ? 'kelapa' : null;
-      // Far back, toward the horizon, more trees stand among the terraces so the edge is not bare.
-      const far = tx + ty < -7 && !steep && t !== 'tanah' && (n < 0.16 ? 'pohon' : n < 0.21 ? 'bush' : n < 0.24 ? 'kelapa' : null);
-      const name = far ? far : t === 'hutan' ? (n < 0.75 ? 'pohon' : 'kelapa') : t === 'teh' && (grove ? n < 0.4 : n < 0.03) && !steep ? 'pohon' : t === 'teras' && n < 0.03 && !steep ? 'kelapa' : t === 'kebun' ? kebun : t === 'beach' && n < 0.25 ? 'kelapa' : null;
-      if (name && !inRing(tx, ty)) trees.push({ name, tx, ty, x: WORLD_OX + ((tx - ty) * TW) / 2 - TW / 2, y: WORLD_OY + ((tx + ty) * TH) / 2 - TOP - Math.round(heightAt(tx + 0.5, ty + 0.5)) });
+      const slope = Math.max(...corners) - Math.min(...corners);
+      // The volcanoes' forest belt is wooded up its slope; elsewhere steep faces stay open so the hills read.
+      const onVolc = volcano(tx + 0.5, ty + 0.5).h > 9;
+      const steep = slope > (onVolc ? 30 : 16);
+      SPOTS.forEach(([fa, fb], k) => {
+        const a = tx + fa;
+        const b = ty + fb;
+        const seed = tx * 977 + ty * 131 + k;
+        const push = (name: string) =>
+          list.push({ tree: { name, tx, ty, x: Math.round(WORLD_OX + ((a - b) * TW) / 2 - TW / 2), y: Math.round(WORLD_OY + ((a + b) * TH) / 2 - TOP - heightAt(a, b)), scale: treeScale(name, seed) }, d: a + b });
+        // Oil palms stand in a straight lattice, one in the middle of each tile, off the dirt tracks,
+        // so their fronds stay inside the block.
+        const plot = sawitAt(tx, ty);
+        if (plot) {
+          if ((tx - plot.x) % 4 !== 3 && k === 0 && !hidden(tx + 0.5, ty + 0.5)) {
+            const pa = tx + 0.5;
+            const pb = ty + 0.5;
+            list.push({ tree: { name: 'sawit', tx, ty, x: Math.round(WORLD_OX + ((pa - pb) * TW) / 2 - TW / 2), y: Math.round(WORLD_OY + ((pa + pb) * TH) / 2 - TOP - heightAt(pa, pb)), scale: treeScale('sawit', seed) }, d: pa + pb });
+          }
+          return;
+        }
+        // The forest edge along the ring road is ragged too: trees start anywhere from right at the
+        // verge to a couple of tiles out, so the tree line wanders instead of following the road.
+        const pr = pastRoad(a, b);
+        if (pr.d > 0 && pr.d < 0.15 + vnoise(pr.along * 0.9, 53, 1) * 1.8 + vnoise(pr.along * 3.1, 19, 1) * 0.5) return;
+        // A one-tile clearing round each plantation, so the block reads against the forest.
+        if ([[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]].some(([dx, dy]) => sawitAt(tx + dx, ty + dy))) return;
+        // A thick ring of trees round each knoll's foot, a few on its green cap, none on the rock. On
+        // the side facing the viewer the ring thins to bushes and a few trees, so the limestone shows.
+        const kn = knoll(a, b);
+        if (kn.d < 2.4) {
+          const r = hash(seed, 821);
+          if (kn.d > 0.85 && !hidden(a, b)) {
+            if (!kn.front && kn.d < 1.8 && r < 0.85) push(r < 0.7 ? 'pohon' : 'bush');
+            else if (kn.front && r < 0.3) push(r < 0.12 ? 'pohon' : 'bush');
+          } else if (kn.d < 0.45 && r < 0.6 && !hidden(a, b)) push('pohon');
+          return;
+        }
+        if (steep) return;
+        const [fx, fy] = flatPixel(a, b);
+        const t = groundAt(a, b, fx, fy);
+        const n = hash(tx * 5 + k * 31 + 1, ty * 3 + k * 17 + 2);
+        const kind = hash(tx * 13 + k * 7, ty * 11 + k * 5);
+        const vf = volcano(a, b);
+        // Up a volcano only the forest belt is wooded; rock and ash stay bare. Same height fraction
+        // as the ground's tiers in buildWorld, with a margin so no tree stands in the dithered band.
+        if (vf.h > 9 && heightAt(a, b) / (vf.h / vf.f) > 0.42) return;
+        const name =
+          t === 'hutan' ? (n < 0.85 ? (kind < 0.85 ? 'pohon' : 'kelapa') : null)
+          : t === 'kebun' ? (n < 0.75 ? (kind < 0.35 ? 'kelapa' : kind < 0.6 ? 'pisang' : 'pohon') : null)
+          : t === 'grass' ? (n < 0.6 ? (kind < 0.7 ? 'pohon' : 'bush') : null)
+          : t === 'teh' ? (n < 0.22 && slope < 10 ? 'pohon' : null)
+          : t === 'beach' ? (n < 0.12 && k === 0 ? 'kelapa' : null)
+          : null;
+        if (!name || hidden(a, b)) return;
+        push(name);
+      });
     }
+  for (const t of isleTrees) list.push(t);
+  const sorted = list.sort((p, q) => p.d - q.d).map((e) => e.tree);
+  // Trees more than two tiles out from the ring road on any side, and every island tree, are far
+  // woods: baked into the world canvas (see buildWorld). Only the trees by the road sway per frame.
+  const far = (t: Tree) => t.island || Math.max(-1 - t.tx, -1 - t.ty, t.tx - GRID_W, t.ty - GRID_H) > 2;
+  bakedTrees = sorted.filter(far);
+  trees = sorted.filter((t) => !far(t));
   return trees;
 }
 
@@ -1056,75 +1369,32 @@ function cloudArt(w: number, seed: number): HTMLCanvasElement {
   return c;
 }
 
-/** Clouds round the sun and the twin volcanoes, two of them hugging the flanks. Drawn per frame so they can drift. */
+/**
+ * Clouds drifting over the sea round the island's back corner, seen from above like everything else.
+ * Two hug the volcanoes' flanks. Drawn per frame so they can drift.
+ */
 export function clouds(): Cloud[] {
   if (cloudList) return cloudList;
-  const at = (dx: number, y: number, w: number, i: number, sway = 18): Cloud => {
+  // Clouds sit in the open sea above the island's top corner, where they hide no tile.
+  const cx = WORLD_OX;
+  const cy = HEAD + 20;
+  const at = (dx: number, dy: number, w: number, i: number, sway = 18): Cloud => {
     const art = cloudArt(w, i * 13 + 5);
-    return { art, x: Math.round(SUN_X + dx - w / 2), y: Math.round(y - art.height), sway, period: 38000 + hash(i, 3) * 30000, phase: hash(i, 9) * Math.PI * 2 };
+    return { art, x: Math.round(cx + dx - w / 2), y: Math.round(cy + dy - art.height), sway, period: 38000 + hash(i, 3) * 30000, phase: hash(i, 9) * Math.PI * 2 };
   };
   cloudList = [
-    at(-150, SUN_Y + 12, 110, 1),
-    at(130, SUN_Y - 48, 130, 2),
-    at(-20, SUN_Y - 96, 90, 3),
-    at(260, SUN_Y - 8, 120, 4),
-    at(-290, SUN_Y - 60, 140, 5),
-    at(380, SUN_Y - 85, 100, 6),
-    at(-440, SUN_Y + 2, 120, 7),
-    // Banks wrapped round the volcanoes' middles, slower and shorter of travel.
-    at(M1 - SUN_X - 80, HORIZON - 34, 150, 8, 8),
-    at(M2 - SUN_X + 85, HORIZON - 30, 140, 9, 8),
+    at(-230, 40, 110, 1),
+    at(170, -40, 130, 2),
+    at(-40, -150, 90, 3),
+    at(300, 30, 120, 4),
+    at(-360, -60, 140, 5),
+    at(420, -110, 100, 6),
+    at(-470, 110, 120, 7),
+    // Wrapped round the volcanoes' middles, slower and shorter of travel.
+    at(-150, 120, 150, 8, 8),
+    at(150, 100, 140, 9, 8),
   ];
   return cloudList;
-}
-
-const suns = new Map<boolean, HTMLCanvasElement>();
-
-/** The sun's face: big shiny eyes (or happy closed arcs mid-blink), rosy cheeks and an open smile. */
-export function sunArt(blink: boolean): HTMLCanvasElement {
-  const hit = suns.get(blink);
-  if (hit) return hit;
-  const c = document.createElement('canvas');
-  c.width = c.height = SUN_SIZE;
-  const ctx = c.getContext('2d')!;
-  const px = (x: number, y: number, col: string) => {
-    ctx.fillStyle = col;
-    ctx.fillRect(SUN_SIZE / 2 + x, SUN_SIZE / 2 + y, 1, 1);
-  };
-  const R = 18;
-  for (let y = -R; y < R; y++)
-    for (let x = -R; x < R; x++) {
-      const d = (x + 0.5) ** 2 + (y + 0.5) ** 2;
-      if (d > R * R) continue;
-      const shine = (x + 10) ** 2 + (y + 10) ** 2 < 16;
-      // Rimmed in a deep amber, matching the coloured outlines everywhere else.
-      px(x, y, d > (R - 2) ** 2 ? '#8a4f12' : shine ? '#fbe08a' : '#f4b935');
-    }
-  for (const [x, y] of [[-12, -12], [-11, -12], [-12, -11]]) px(x, y, '#fffaf0');
-  // Rosy cheeks.
-  for (const cx of [-13, 9])
-    for (let y = 1; y <= 3; y++) for (let x = cx; x < cx + 4; x++) if (!((y === 1 || y === 3) && (x === cx || x === cx + 3))) px(x, y, '#f07f86');
-  for (const ex of [-8, 4]) {
-    if (blink) {
-      // Happy closed eyes: a little upside-down V.
-      for (const [x, y] of [[-1, -2], [0, -3], [1, -4], [2, -4], [3, -3], [4, -2]]) px(ex + x, y, INK);
-    } else {
-      // Tall oval eyes with a sparkle.
-      for (let y = -7; y <= -1; y++) for (let x = 0; x < 4; x++) if (!((y === -7 || y === -1) && (x === 0 || x === 3))) px(ex + x, y, INK);
-      px(ex + 1, -6, '#fffaf0');
-      px(ex + 1, -5, '#fffaf0');
-      px(ex + 2, -2, '#5b4a6b');
-    }
-  }
-  // An open smile with a pink tongue.
-  for (let y = 2; y <= 7; y++)
-    for (let x = -5; x <= 4; x++) {
-      const d = (x + 0.5) ** 2 + (y - 1.5) ** 2;
-      if (d > 30) continue;
-      px(x, y, d > 18 || y === 2 ? INK : y >= 5 ? '#e57a9c' : '#8a2a1e');
-    }
-  suns.set(blink, c);
-  return c;
 }
 
 /** Roofs of the neighbouring RTs beyond the ring road, shown from 2 stars. The sawah thins out where they stand. */
