@@ -20,6 +20,8 @@ const HEAD = 230;
 let trees: Tree[] | null = null;
 let shore: { x: number; y: number }[] | null = null;
 let heights: Int16Array | null = null;
+/** Volcano block heights by cell, filled on demand. */
+const blocks = new Map<number, number>();
 let controls: Uint32Array | null = null;
 let macros: Float32Array | null = null;
 let XMAX = 0;
@@ -113,6 +115,7 @@ export function layoutWorld(): void {
   trees = null;
   shore = null;
   heights = null;
+  blocks.clear();
   controls = null;
   macros = null;
   cloudList = null;
@@ -251,27 +254,34 @@ export function cornerHeight(vx: number, vy: number): number {
   return heights[(vy - YMIN) * w + vx - XMIN];
 }
 
-/** One volcano step, in art pixels: a storey and a half, so the tiers read at 2x. */
-const STEP = 12;
+/** One volcano step, in art pixels, and the side of a volcano cell, in tiles. Small, so the slope reads smooth. */
+const STEP = 6;
+const CELL = 0.5;
 
 /**
- * Height of the volcano block standing on tile (tx, ty), or 0 where none stands. The volcanoes are
- * stacked isometric blocks: each tile is a flat top at a whole number of steps with straight
- * vertical faces, like the buildings, so their silhouette is all 2:1 edges and plumb lines. They run
- * down to the beach and stop short of the ring road.
+ * Height of the volcano block standing on the cell whose top corner is (a, b), or 0 where none
+ * stands. The volcanoes are stacked isometric blocks on half-tile cells: each is a flat top at a
+ * whole number of small steps with straight vertical faces, so the silhouette is all 2:1 edges and
+ * plumb lines, but fine enough to read as a smooth slope. They run down to the beach and stop short
+ * of the ring road.
  */
-function volcanoBlock(tx: number, ty: number): number {
-  const ca = tx + 0.5;
-  const cb = ty + 0.5;
+function volcanoBlock(a: number, b: number): number {
+  const key = Math.round(a / CELL) * 4096 + Math.round(b / CELL);
+  const hit = blocks.get(key);
+  if (hit !== undefined) return hit;
+  const ca = a + CELL / 2;
+  const cb = b + CELL / 2;
   const out = Math.max(-1 - ca, -1 - cb);
   const v = volcano(ca, cb).h * smooth((-coastAt(ca, cb) + 0.5) / 2) * smooth(out / 2);
   const h = Math.round(v / STEP) * STEP;
-  return h > heightAt(ca, cb) + 4 ? h : 0;
+  const top = h > heightAt(ca, cb) + 4 ? h : 0;
+  blocks.set(key, top);
+  return top;
 }
 
 /** The top of whatever stands at a tile-space point: hill ground or a volcano block. */
 function topAt(a: number, b: number): number {
-  return Math.max(heightAt(a, b), volcanoBlock(Math.floor(a), Math.floor(b)));
+  return Math.max(heightAt(a, b), volcanoBlock(Math.floor(a / CELL) * CELL, Math.floor(b / CELL) * CELL));
 }
 
 /** Ground height anywhere in tile space, blended between the four corners. */
@@ -617,47 +627,61 @@ export function buildWorld(): HTMLCanvasElement {
     const n = hex(c);
     return [n >> 16, (n >> 8) & 255, n & 255];
   };
-  // Faces of a volcano step, in strata every three pixels like the cliff: dark earth under the
-  // forest, rock under bare rock, pale ash under the cap. The left face takes the light, the right
-  // face is in shade (FACE_SHADE), the top a touch brighter.
-  const WALL: Record<string, string[]> = { hutan: ['#6f472a', '#5e3a22'], tanah: ['#8a5a32', '#7a4c2a'], abu: ['#a49e95', '#968f86'] };
-  /** One volcano block on tile (a0, b0): a flat top and its two front faces. */
+  // Volcano materials by height: forest, bare rock, then the ash cap. The zone is picked per pixel
+  // with an ordered dither across a band of height, so tiers blend into each other in a few flat
+  // steps instead of meeting along a hard line. Faces are striped every 3px; the left face takes the
+  // light, the right is in shade (FACE_SHADE), the top a touch brighter.
+  const WALL: Record<string, string[]> = { hutan: ['#40592c', '#374f28'], tanah: ['#8a5a32', '#7a4c2a'], abu: ['#a49e95', '#968f86'] };
+  const zone = (frac: number, x: number, y: number): Terrain => {
+    const f = frac + (bayer(x, y) - 0.5) * 0.16;
+    return f > 0.76 ? 'abu' : f > 0.5 ? 'tanah' : 'hutan';
+  };
+  /** One volcano block on the cell at (a0, b0): a flat top and its two front faces. */
   const block = (a0: number, b0: number) => {
     const H = volcanoBlock(a0, b0);
     if (!H) return;
-    const f = volcano(a0 + 0.5, b0 + 0.5).f;
-    const t: Terrain = f > 0.76 ? 'abu' : f > 0.5 ? 'tanah' : 'hutan';
+    const v = volcano(a0 + CELL / 2, b0 + CELL / 2);
+    const peak = v.f > 0 ? v.h / v.f : 1;
     const tx = Math.floor(a0);
     const ty = Math.floor(b0);
-    const wall = WALL[t];
-    // Each block gets a coloured outline, a dark shade of its own face: along the lip, down both
-    // vertical edges and round the top, so stacked steps read as separate blocks.
+    // Light across the whole cone from the top left (the -a, -b side): tops on the lit flank brighten
+    // and the far flank darkens, stepped through the dither, so the stack shades like one round form.
+    const ca = a0 + CELL / 2;
+    const cb = b0 + CELL / 2;
+    const slope = (volcano(ca + 0.5, cb).h - volcano(ca - 0.5, cb).h) * 0.7 + (volcano(ca, cb + 0.5).h - volcano(ca, cb - 0.5).h) * 0.3;
+    const lean = Math.max(-1, Math.min(1, slope / 20));
+    // A soft lip line in a dark shade of the face under each step's edge, so steps read without a hard outline.
     const face = (p: [number, number], q: [number, number], shade: number) => {
       const bp = heightAt(p[0], p[1]);
       const bq = heightAt(q[0], q[1]);
-      const paint = (k: number, x: number, _y: number, a: number, b: number, h: number) => {
+      const paint = (k: number, x: number, y: number, a: number, b: number, h: number) => {
         land[k] = 8;
         depth[k] = a + b;
-        const u = p[0] === q[0] ? b - b0 : a - a0;
-        const line = H - h < 1 || u < 0.035 || u > 0.965;
-        setPx(k, rgbOfHex(wall[Math.floor(h / 3) % 2]), shade * (line ? 0.6 : 1) * (hash(x, Math.floor(h)) < 0.04 ? 0.9 : 1));
+        const t = zone(h / peak, x, y);
+        // The foot of each face darkens through the dither, like the contact shadow under a building.
+        const foot = Math.max(0, 1 - (h - Math.min(bp, bq)) / 5);
+        const ao = bayer(x + 1, y) < foot * 0.8 ? 0.84 : 1;
+        const lip = H - h < 1 ? 0.76 : 1;
+        const side = bayer(x + 2, y) < Math.abs(lean) * 0.6 ? (lean > 0 ? 1.1 : 0.9) : 1;
+        setPx(k, rgbOfHex(WALL[t][Math.floor(h / 3) % 2]), shade * lip * ao * side);
       };
       fill([[p[0], p[1], H], [q[0], q[1], H], [q[0], q[1], bq]], paint);
       fill([[p[0], p[1], H], [q[0], q[1], bq], [p[0], p[1], bp]], paint);
     };
     // The left face looks down the b axis, the right face down the a axis.
-    face([a0, b0 + 1], [a0 + 1, b0 + 1], 0.92);
-    face([a0 + 1, b0], [a0 + 1, b0 + 1], 0.7);
-    const top = (k: number, _x: number, _y: number, a: number, b: number) => {
+    face([a0, b0 + CELL], [a0 + CELL, b0 + CELL], 0.92);
+    face([a0 + CELL, b0], [a0 + CELL, b0 + CELL], 0.72);
+    const top = (k: number, x: number, y: number, a: number, b: number) => {
       const fx = Math.floor(OX + ((a - b) * TW) / 2);
       const fy = Math.floor(OY + ((a + b) * TH) / 2);
-      const rim = a - a0 < 0.035 || b - b0 < 0.035 || a - a0 > 0.965 || b - b0 > 0.965;
+      const t = zone(H / peak, x, y);
       land[k] = kindOf(t);
       depth[k] = a + b;
-      setPx(k, rgbOfHex(groundColour(t, a - tx, b - ty, fx, fy, tx, ty)), 1.08 * (rim ? 0.66 : 1));
+      const lit = bayer(x, y + 2) < Math.abs(lean) ? (lean > 0 ? 1.18 : 0.9) : 1.04;
+      setPx(k, rgbOfHex(groundColour(t, a - tx, b - ty, fx, fy, tx, ty)), lit);
     };
-    fill([[a0, b0, H], [a0 + 1, b0, H], [a0 + 1, b0 + 1, H]], top);
-    fill([[a0, b0, H], [a0 + 1, b0 + 1, H], [a0, b0 + 1, H]], top);
+    fill([[a0, b0, H], [a0 + CELL, b0, H], [a0 + CELL, b0 + CELL, H]], top);
+    fill([[a0, b0, H], [a0 + CELL, b0 + CELL, H], [a0, b0 + CELL, H]], top);
   };
   for (let d = XMIN + YMIN; d < XMAX + YMAX - 1; d++)
     for (let tx = XMIN; tx < XMAX; tx++) {
@@ -670,7 +694,7 @@ export function buildWorld(): HTMLCanvasElement {
       const D: [number, number, number] = [tx, ty + 1, cornerHeight(tx, ty + 1)];
       tri(t, tx, ty, [A, B, C]);
       tri(t, tx, ty, [A, C, D]);
-      block(tx, ty);
+      for (const [i, j] of [[0, 0], [CELL, 0], [0, CELL], [CELL, CELL]]) block(tx + i, ty + j);
     }
   // The kampung stands on raised land: where it meets the beach, or the world's front edge, a dirt
   // cliff drops in strata with a grassy lip, like a diorama block. Kind 8, so the ink pass outlines it.
@@ -1050,7 +1074,7 @@ export function worldTrees(): Tree[] {
       const grove = h > 26 && vnoise(tx + 11, ty + 5, 3) > 0.55;
       const kebun = steep ? null : h < 6 ? (n < 0.3 ? 'kelapa' : n < 0.5 ? 'pisang' : n < 0.58 ? 'pohon' : null) : grove && n < 0.6 ? 'pohon' : n < 0.05 ? 'kelapa' : null;
       // Far back, toward the horizon, more trees stand among the terraces so the edge is not bare.
-      const onVolc = volcanoBlock(tx, ty) > 0;
+      const onVolc = [[0, 0], [CELL, 0], [0, CELL], [CELL, CELL]].some(([i, j]) => volcanoBlock(tx + i, ty + j) > 0);
       const far = tx + ty < -7 && !steep && !onVolc && t !== 'tanah' && (n < 0.16 ? 'pohon' : n < 0.21 ? 'bush' : n < 0.24 ? 'kelapa' : null);
       const name = onVolc ? null : far ? far : t === 'hutan' ? (n < 0.75 ? 'pohon' : 'kelapa') : t === 'teh' && (grove ? n < 0.4 : n < 0.03) && !steep ? 'pohon' : t === 'teras' && n < 0.03 && !steep ? 'kelapa' : t === 'kebun' ? kebun : t === 'beach' && n < 0.25 ? 'kelapa' : null;
       if (name && !inRing(tx, ty) && !hidden(tx + 0.5, ty + 0.5)) trees.push({ name, tx, ty, x: WORLD_OX + ((tx - ty) * TW) / 2 - TW / 2, y: WORLD_OY + ((tx + ty) * TH) / 2 - TOP - Math.round(heightAt(tx + 0.5, ty + 0.5)) });

@@ -422,7 +422,7 @@ The artist's restyle is the reference ([ART.md](ART.md) has the full rules). New
 
 - Warm storybook palette: terracotta, mustard, teal, cream, olive. Keys live in `PALETTE`.
 - 1px dark-brown ink (`#2a1810`) round every silhouette and face edge. Never pure black.
-- Flat two-tone cel shading, light from the top left. No dithering or noise on sprites or ground; only the ends of clouds fade through an ordered dither (ART.md).
+- Flat two-tone cel shading, light from the top left. No dithering or noise on sprites or ground; only the volcanoes' tiers and shading and the ends of clouds blend through an ordered dither (ART.md).
 - The kampung sits on an island in an open sea, all in one isometric view with no horizon or sky. Behind it the land rolls into lit hills with a tile grid and rises into twin volcanoes of stacked isometric blocks on the island's back corner; the coast wanders in bays and headlands; islands of many sizes and drifting clouds sit on the sea round it (ART.md).
 - Straight isometric lines on a 32x16 tile, scaled by whole numbers only.
 - Flat ground art (selokan, jalan) sets `bare` and draws its own edges so neighbours join.
