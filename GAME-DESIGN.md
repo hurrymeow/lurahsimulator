@@ -79,7 +79,7 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 ```
 
 - RW = **2** RTs side by side: yours and Kampung Sebelah, the RT next door (playtest 2026-11-01: 4 RTs at the RW and 16 at the Kelurahan were too much to follow; `decisions/playtest-sk2.md`).
-- Kelurahan = **2 RWs of 2 RTs**, 2x2 RTs in all. At promotion Kampung Sebelah joins your RW as yours to build on, like a free takeover: its buildings and warga become yours and its lots open to Build. So the Kelurahan always brings new land. RW 2 is two new AI RTs you fund with Dana.
+- Kelurahan = **2 RWs of 2 RTs**, 2x2 RTs in all. At promotion Kampung Sebelah joins your RW as yours to build on, like a free takeover: its buildings and warga become yours and its lots open to Build. Its buildings do not make your next ones dearer. So the Kelurahan always brings new land. RW 2 is two new AI RTs you fund with Dana.
 - RW buildings go inside the player's RTs (their own and any taken over) or on lots along the seams between RTs. Kelurahan buildings go inside the player's RTs or on lots along the seams between RWs. RT buildings stay inside an RT. The seams sit between the RTs, so promotion never takes tiles from the player's RT.
 - RW keeps today's 64x32 tiles. A pinch out gives a view-only overview, and a tap there zooms back in.
 - Kelurahan keeps full-size tiles: at 2x2 RTs it is the size the RW used to be (it was half-size at 4x4 RTs). Kelurahan buildings take a 2x2 footprint.
@@ -181,7 +181,7 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 
 #### New RW content
 
-- **Stempel:** refills **3** a month. Every Surat Pengantar from an RT needs one. Each unstamped letter drains **0.5** Sabar a month. The player is now the permit queue. At the Kelurahan only the RTs in the player's own RW send letters to the player; the other RWs stamp their own.
+- **Stempel:** refills **1** a month. Every Surat Pengantar from an RT needs one, and a build sends **2** (Jarang Muncul **4**). Each unstamped letter drains **0.5** Sabar a month. The player is now the permit queue. At the Kelurahan only the RTs in the player's own RW send letters to the player; the other RWs stamp their own.
 - **Dana:** the new verb. You fund each RT, and it builds and levels only when funded. More banked Dana builds faster, and Auto-dana keeps it funded (see AI neighbours).
 - **Balai RW:** **+1** Stempel a month, **2** PNS slots.
 - **Posyandu:** **+1** Sabar a month to neighbouring RTs.
@@ -335,7 +335,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
   - Kampung Sehat (Puskesmas): drainage, Perut, health posts (Apotek, Posyandu, Puskesmas Pembantu), Popularitas.
   - Kampung Digital (Diskominfo): WiFi, Viral, tertib, Popularitas.
 - **Wacana or Realisasi:** each policy has a real version (Wifi Gratis di Balai, Kerja Bakti Rutin, Biopori Massal, Pelatihan UMKM, Bansos Sembako). It costs Rp 1 to 3 juta, lands after 1 to 3 months and moves a meter for a time (Biopori for good). Announcing fills the Laporan as well as doing does; only doing moves Sejahtera.
-- **Popularitas soft cap:** above **80**, gains shrink toward nothing at 100, so a full kampung settles around 90 instead of sitting at the cap. Each employed resident gives **0.04** (was 0.08), each resident expects **0.14** (was 0.1), and a Satpam gives **0.5** (was 1).
+- **Popularitas soft cap:** above **80**, gains shrink toward nothing at 100, so a full kampung settles around 90 instead of sitting at the cap. Each employed resident gives **0.04** (was 0.08), each resident expects **0.14** (was 0.1; **0.7x** at the Kelurahan, where the kampung spans two RTs), and a Satpam gives **0.5** (was 1).
 - **Staff** (`src/data/staff.ts`): the people the player manages, as Kairosoft's staff are; warga still pick their own jobs. Inem is staff number 1 (the first Asisten at the Kantor desk, see the desk queue below) and never leaves. Slots: 1 at the start, 3 at RT 1★, 4 at RT 3★, 6 at RW, 8 at Kelurahan, never more than **10**.
   - **Desk queue** (prototype, 2026-10-31, `decisions/desk-queue.md`): every permit is a pile of folders (berkas), one per permit month, and the Kantor clears them in the order buildings were placed. Each Asisten clears **0.85** folders a month per point of output, so Inem at level 1 clears about **1**; the Kantor never clears fewer than **0.5**. Each building still costs **1** Popularitas for every month it waits. More Asisten clear the queue sooner, and the Asisten role can be posted from RT 1★. The map badge shows the months to go, the Kantor carries a pile of folders while the queue has work, and once the queue is **3** months deep with a free slot, the goal strip says to post a lowongan for an Asisten. Rumah need no permit, so the first house is still instant.
   - **Stats** (`decisions/staff-stats.md`): Rajin, Lobi, Jujur, Gaul (1 to 99), each with its own icon and one meaning everywhere: Rajin is how much gets done, Lobi how smoothly things go through the people above, Jujur how much leaks, Gaul how liked. Output = level x the role's work stat / 50 x trait.
@@ -357,7 +357,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - **Growth gates:** stars gate content. Residents, wins and combos set the star goals. Stars never drop.
 - **Kas:** Kas RT becomes Kas RW, then Kas Kelurahan. AI areas pay iuran into it.
 - **Dana (RW):** you fund each neighbouring RT. An RT only builds and levels when funded. An unfunded RT visibly stalls.
-- **Stempel (RW):** refills 3 a month. Every Surat Pengantar needs one. Each unstamped letter drains 0.5 Sabar a month. At the Kelurahan only the player's own RW sends letters to the player.
+- **Stempel (RW):** refills 1 a month. Every Surat Pengantar needs one, and a build sends 2 (Jarang Muncul 4). Each unstamped letter drains 0.5 Sabar a month. At the Kelurahan only the player's own RW sends letters to the player.
 - **Anggaran (Kelurahan):** a yearly budget arrives each January. Each unspent % cuts next year's budget by the same %. December brings a forced Serapan rush.
 - **Yearly price banner:** from year 2 the year-end notice is a banner: "PERHATIAN: Biaya hidup naik {x}% tahun ini", with one reason a year from a bank that targets how prices behave, never a group of people ("Harga telur naik. Ayamnya belum diberi tahu."). The bank is in `decisions/staff-requests.md`.
 - **Safety net:** no debt or soft-lock in year 1, and year-1 cash never below 0 for the idle and builder bots (targets 8 and 9).

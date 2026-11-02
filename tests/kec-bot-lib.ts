@@ -1,14 +1,15 @@
 import { connectedRoad, hasRoadBeside } from '../src/sim/access';
-import { placeableDefs } from '../src/sim/content';
+import { resolveEvent } from '../src/sim/events';
+import { def, placeableDefs } from '../src/sim/content';
 import { promote } from '../src/sim/grow';
-import { checkPlace, demolish, place } from '../src/sim/rules';
-import { checkRazia, startRazia } from '../src/sim/kec';
+import { checkDemolish, checkPlace, demolish, place } from '../src/sim/rules';
+import { amanAcross, checkRazia, startRazia } from '../src/sim/kec';
 import { pinjolShare } from '../src/sim/pinjol';
-import { occupants, population } from '../src/sim/state';
+import { buildCost, occupants, population } from '../src/sim/state';
 import { nextStarChecklist } from '../src/sim/stages';
 import { tick } from '../src/sim/tick';
 import type { GameState } from '../src/sim/types';
-import { kelSetup, kelWeek } from './kel-bot-lib';
+import { kelSetup, kelWeek, SABAR } from './kel-bot-lib';
 
 /** Kecamatan buildings the bot places on a seam lot, one at a time, as a player with money would. */
 const KEC = ['kantorKec', 'posSatpol', 'koperasiSP', 'balaiLatihanKerja', 'baliho', 'tamanKota'];
@@ -18,6 +19,22 @@ export const KEC_POP_CAP = Number(process.env.POPCAP ?? 270);
 /** The Kelurahan asks for 200 residents; the bot stops adding homes a little past that. */
 export const KEL_POP_CAP = Number(process.env.KELCAP ?? 230);
 
+/** Past the 65 Aman the Kecamatan 3-star goal asks for, so a dip does not lose it. */
+const KEC_AMAN_GOAL = 67;
+
+/** Builds one, replacing the commonest building that gives no jobs or Popularitas when the map is full, as a player with money would. */
+function makeRoomFor(s: GameState, id: string, cells: { x: number; y: number }[]): void {
+  if (s.res.rupiah < buildCost(s, def(id))) return;
+  let spot = cells.find((p) => checkPlace(s, id, p.x, p.y).ok);
+  if (!spot) {
+    const many = (d: string) => s.buildings.filter((b) => b.def === d).length;
+    const spare = s.buildings.filter((b) => b.status === 'active' && b.def !== id && !SABAR.includes(b.def) && !def(b.def).housing && !def(b.def).pathIncome && !def(b.def).jobSlots && checkDemolish(s, b).ok);
+    const victim = spare.sort((a, b) => many(b.def) - many(a.def))[0];
+    if (victim && demolish(s, victim).ok) spot = victim;
+  }
+  if (spot) place(s, id, spot.x, spot.y);
+}
+
 /** Share of residents with no job. */
 const jobless = (s: GameState): number => s.residents.filter((r) => r.job === 'none' && r.staffId === undefined).length / Math.max(1, s.residents.length);
 
@@ -26,6 +43,18 @@ const jobless = (s: GameState): number => s.residents.filter((r) => r.job === 'n
  * give work, one a week, beside a road, until the jobless share is down.
  */
 export function kecWeek(s: GameState, seam: { x: number; y: number }[], all: { x: number; y: number }[], jobShare = 0.1, stage: 'kelurahan' | 'kecamatan' = 'kecamatan'): void {
+  // The Kantor Kecamatan is the first goal, so a player saves for it instead of spending on whatever fits.
+  if (stage === 'kecamatan' && !s.buildings.some((b) => b.def === 'kantorKec')) {
+    const spot = seam.find((p) => checkPlace(s, 'kantorKec', p.x, p.y).ok);
+    if (spot) place(s, 'kantorKec', spot.x, spot.y);
+    else {
+      if (s.pendingEvent) resolveEvent(s, [], 0);
+      return;
+    }
+  }
+  // Each preman costs 4 Aman, and a free Satpam post turns one into the guard. With none left, Lampu Jalan lift Aman toward the goal.
+  if (s.residents.some((r) => r.preman)) makeRoomFor(s, 'posSatpam', [...all, ...seam]);
+  else if (stage === 'kecamatan' && amanAcross(s) < KEC_AMAN_GOAL) makeRoomFor(s, 'lampuTaman', [...all, ...seam]);
   const short = jobless(s) > jobShare;
   // The Kecamatan asks for 250 residents, so a player stops adding homes a little past that: every resident drains Popularitas.
   const full = population(s) >= (stage === 'kecamatan' ? KEC_POP_CAP : KEL_POP_CAP);

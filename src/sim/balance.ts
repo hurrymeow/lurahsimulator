@@ -24,6 +24,8 @@ export const SETORAN_RATE = 0.1;
 export const EXPECT_PER_RESIDENT = 0.14;
 /** In the Kecamatan a resident expects this share as much: 250 residents are a goal there, and 35 Popularitas must stay in reach. */
 export const EXPECT_KEC = { share: 0.6 };
+/** At the Kelurahan the player's kampung spans two RTs of land, so each resident weighs less. */
+export const EXPECT_KEL = { share: 0.7 };
 /** Months without anything new before the pacing director steps in. */
 export const NOVELTY_GAP = 8;
 /** Each Viral point adds this fraction to shop income. */
@@ -93,7 +95,7 @@ export const PARKIR = {
 /** Stempel, the RW's permit stamps. */
 export const STEMPEL = {
   /** Stamps a month with no Balai RW, and what each Balai RW adds. */
-  base: 3,
+  base: 1,
   perBalai: 1,
   /** Stamps in hand never pile up past this. */
   stockMax: 6,
@@ -102,7 +104,7 @@ export const STEMPEL = {
   /** Sabar lost a month for each letter still waiting. */
   sabarPerLetter: 0.5,
   /** Letters a build sends. Jarang Muncul sends double. */
-  perBuild: 1,
+  perBuild: 2,
 };
 
 /** Most extra income decorations can add to one building, however many stand nearby. */

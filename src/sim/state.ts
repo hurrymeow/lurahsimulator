@@ -180,10 +180,11 @@ export function price(s: GameState, base: number): number {
   return Math.round((base * s.inflation) / 1000) * 1000;
 }
 
-/** 1 for a small kampung, then +5% for every building past the eighth. Paths do not count. */
+/** 1 for a small kampung, then SPRAWL_STEP more for every building past SPRAWL_FREE. Paths and an absorbed RT's own buildings do not count. */
 export function sprawl(s: GameState): number {
   const n = s.buildings.filter((b) => !def(b.def).pathIncome).length;
-  return 1 + SPRAWL_STEP * Math.max(0, n - SPRAWL_FREE);
+  const joined = s.neighbours.reduce((sum, nb) => sum + (nb.joined ?? 0), 0);
+  return 1 + SPRAWL_STEP * Math.max(0, n - joined - SPRAWL_FREE);
 }
 
 export function buildCost(s: GameState, d: BuildingDef): number {

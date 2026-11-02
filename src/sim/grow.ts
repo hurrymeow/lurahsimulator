@@ -256,6 +256,7 @@ export function takeover(s: GameState, n: Neighbour): string | null {
 
 /** Joins an RT to the player at promotion: no Orang Dalam cost, and it can never be handed back. */
 export function absorb(s: GameState, n: Neighbour): void {
+  n.joined = n.buildings.filter((b) => !def(b.def).pathIncome).length;
   if (n.run !== 'player') joinPlayer(s, n);
   n.absorbed = true;
 }

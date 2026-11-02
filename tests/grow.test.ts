@@ -9,7 +9,7 @@ import { checkPlace, siteGaps } from '../src/sim/rules';
 import { def } from '../src/sim/content';
 import { areaScore, scoreParts } from '../src/sim/ranking';
 import { deserialize, serialize } from '../src/sim/save';
-import { addBuilding, addResident, emptyTiles, newGame, population } from '../src/sim/state';
+import { addBuilding, addResident, emptyTiles, newGame, population, sprawl } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
 import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, SEAM, mapSpan, setGrid } from '../src/sim/types';
 
@@ -352,8 +352,8 @@ describe('RW goals and Stempel', () => {
     s.stempel.backlog = 9;
     s.res.sabar = 60;
     step(s);
-    // 3 stamps clear 3 letters, 6 wait and drain half a Sabar each.
-    expect(s.stempel.backlog).toBe(6);
+    // 1 stamp clears 1 letter, 8 wait and drain half a Sabar each.
+    expect(s.stempel.backlog).toBe(8);
     expect(s.stempel.clear).toBe(0);
     expect(s.res.sabar).toBeLessThan(60);
   });
@@ -367,7 +367,7 @@ describe('RW goals and Stempel', () => {
     s.stempel.stock = 0;
     s.buildings.push({ uid: 999, def: 'balaiRW', x: 2, y: 2, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
     step(s);
-    expect(s.stempel.backlog).toBe(16);
+    expect(s.stempel.backlog).toBe(18);
     expect(s.stempel.clear).toBe(0);
   });
 
@@ -393,7 +393,8 @@ describe('RW goals and Stempel', () => {
     fundNeighbour(s, s.neighbours[0]);
     s.stempel.stock = 0;
     step(s);
-    expect(s.stempel.backlog).toBe(Math.max(0, 2 - 3));
+    // 2 letters a build, doubled, less the 1 stamp of the month.
+    expect(s.stempel.backlog).toBe(4 - 1);
     expect(s.neighbours[0].buildings.length).toBeGreaterThan(2);
   });
 
@@ -764,6 +765,15 @@ describe('absorbing an RT', () => {
     expect(s.buildings).toHaveLength(mine);
     expect(population(s)).toBe(pop);
     expect(s.res.rupiah).toBe(kas);
+  });
+
+  it('does not make buildings dearer: what it brings does not count toward sprawl', () => {
+    const s = grown();
+    const n = s.neighbours[0];
+    n.buildings = Array.from({ length: 40 }, (_, i) => ({ uid: 5000 + i, def: 'warung', x: 13 + (i % 13), y: i % 17, level: 1, status: 'active' as const, timer: 0, invested: 0, placedAt: 0 }));
+    const before = sprawl(s);
+    absorb(s, n);
+    expect(sprawl(s)).toBe(before);
   });
 
   it('can never be handed back once absorbed', () => {

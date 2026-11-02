@@ -177,6 +177,8 @@ export interface Neighbour {
   run?: 'player';
   /** Joined the player at promotion: it can never be handed back. */
   absorbed?: boolean;
+  /** Buildings that came with it when absorbed. They do not count toward sprawl. */
+  joined?: number;
   discovered: string[];
   ranking: RankingResult[];
 }
