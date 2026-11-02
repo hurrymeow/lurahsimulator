@@ -33,6 +33,9 @@ async function open(page: Page): Promise<void> {
   await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
   await page.evaluate(() => document.fonts.ready);
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  // install() alone keeps time running at real speed, so a slow runner reached the toast's exit sooner than a fast one.
+  // From here only settle() moves time. A minute is well past load, since pauseAt cannot go back.
+  await page.clock.pauseAt(new Date('2026-01-01T09:01:00Z'));
 }
 
 /** Starts a new game from the fixed seed with the first-launch tutorial out of the way. */
@@ -58,9 +61,7 @@ async function play(page: Page): Promise<void> {
 }
 
 /**
- * Runs the clock past the welcome toast, which hides 3.4 s after the game starts. play() runs 300 ms
- * per tap it needs to clear the opener, and how many it needs depends on page-load timing, so the
- * popups otherwise landed on either side of the toast's exit and the baseline flipped between runs.
+ * Runs the clock past the welcome toast, which hides 3.4 s after the game starts, so the popup baselines show no toast.
  */
 const pastWelcome = (page: Page) => settle(page, 3500);
 
