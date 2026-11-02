@@ -28,6 +28,10 @@ export type Goal =
   | { kind: 'rtsAtStars'; n: number; stars: Stars }
   /** RWs holding at least `stars`. AI RWs count. */
   | { kind: 'rwsAtStars'; n: number; stars: Stars }
+  /** The neighbour at cell (1,0), Kampung Sebelah, holding at least `n` stars. */
+  | { kind: 'sebelahAtStars'; n: number }
+  /** The lowest stars among the neighbours in RW 2 (cy 1), at least `n`. */
+  | { kind: 'rw2AtStars'; n: number }
   /** Combos found that belong to the RW stage. */
   | { kind: 'rwCombos'; n: number }
   /** Ranking wins against the rival of this tier: RW Sebelah, or the Piala Kelurahan. */
