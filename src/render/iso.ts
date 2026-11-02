@@ -4,6 +4,7 @@
 import { CONTENT_ART } from './art-content';
 import { HIGHER_ART } from './art-higher';
 import { PALETTE } from './sprites';
+import { GRIT } from './style';
 
 /** Art-pixel size of one ground diamond. The view scales these up by a whole number. */
 export const TW = 32;
@@ -40,6 +41,85 @@ function shade(c: string, f: number): string {
   const n = parseInt(hex(c).slice(1), 16);
   const ch = (s: number) => Math.max(0, Math.min(255, Math.round(((n >> s) & 255) * f)));
   return `#${((ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).padStart(6, '0')}`;
+}
+
+/** Blends colour a toward b by t, 0..1. */
+function mix(a: string, b: string, t: number): string {
+  const x = parseInt(hex(a).slice(1), 16);
+  const y = parseInt(hex(b).slice(1), 16);
+  const ch = (s: number) => Math.round(((x >> s) & 255) * (1 - t) + ((y >> s) & 255) * t);
+  return `#${((ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).padStart(6, '0')}`;
+}
+
+/** A stable 0..1 seed for one roof or wall, from where and how it is drawn. */
+function seedOf(...v: (number | string)[]): number {
+  let h = 2166136261;
+  for (const c of v.join('|')) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  return (h >>> 0) / 4294967296;
+}
+
+const ZINC = '#b2b6b4';
+const ZINC_DULL = '#8e8c86';
+const RUST = ['#a35a30', '#bd6c3a', '#7f4527'];
+const TARP = '#3f74c6';
+
+/**
+ * Grit roof pixel: a kampung roof patched over the years. Some roofs are all seng (corrugated zinc
+ * with rust blooms), most are a patchwork of the old tiles and newer zinc sheets, now and then a blue
+ * terpal. ax, ay are one-tile art pixels, row counts down the slope, f is the plane's light.
+ */
+function gritRoof(base: string, f: number, ax: number, ay: number, row: number, seed: number): string {
+  const course = row % 3 === 2 ? 0.86 : row % 3 === 0 ? 1.06 : 1;
+  const joint = row % 3 !== 2 && (ax + (Math.floor(row / 3) % 2) * 2) % 4 === 0 ? 0.93 : 1;
+  const s7 = Math.floor(seed * 997);
+  // Sheets are big patches, each laid at its own time, so the roof reads as two or three materials, not a grid.
+  const cell = speck(Math.floor((ax + s7) / 9), Math.floor((ay + s7 * 3) / 6) + s7);
+  const allZinc = seed < 0.22;
+  const patch = seed < 0.8;
+  const zinc = allZinc || (patch && cell < 0.34);
+  if (!zinc) {
+    if (patch && !allZinc && cell > 0.93) return shade(TARP, f * (ax % 3 === 0 ? 0.9 : 1));
+    // Old tiles: moss and soot gather in blotches.
+    const blot = vn(ax + s7, ay, 5);
+    const c = blot > 0.72 ? mix(base, '#4f5a34', 0.4) : blot < 0.22 ? mix(base, '#2a2420', 0.25) : base;
+    return shade(c, f * course * joint);
+  }
+  // Seng: faint ribs down the slope, a dark lap where one sheet overlaps the next, rust in blooms.
+  const rib = ax % 2 === 0 ? 1.05 : 0.95;
+  const lap = (ay + s7) % 7 === 6 ? 0.82 : 1;
+  const r = vn(ax + s7 * 5, ay * 2, 6);
+  const c = r > 0.68 ? RUST[r > 0.8 ? 2 : (ax + ay) % 5 === 0 ? 1 : 0] : r > 0.58 ? ZINC_DULL : ZINC;
+  return shade(c, f * rib * lap);
+}
+
+/** Smooth value noise from speck, for rust blooms and moss blotches. */
+function vn(x: number, y: number, cell: number): number {
+  const gx = x / cell;
+  const gy = y / cell;
+  const x0 = Math.floor(gx);
+  const y0 = Math.floor(gy);
+  const sx = (gx - x0) ** 2 * (3 - 2 * (gx - x0));
+  const sy = (gy - y0) ** 2 * (3 - 2 * (gy - y0));
+  const top = speck(x0, y0) + (speck(x0 + 1, y0) - speck(x0, y0)) * sx;
+  const bot = speck(x0, y0 + 1) + (speck(x0 + 1, y0 + 1) - speck(x0, y0 + 1)) * sx;
+  return top + (bot - top) * sy;
+}
+
+/** Kampung walls are painted whatever was cheap that year: cream walls turn teal, pink, mustard or blue. */
+const PAINTS = ['#6cbcae', '#e79bb0', '#e6c35c', '#76a2d4', '#bdb6a8', '#9fcf8a'];
+function repaint(c: string, seed: number): string {
+  if ((hex(c) !== PALETTE.w && hex(c) !== PALETTE.t) || seed < 0.2) return c;
+  return PAINTS[Math.floor(seed * 7919) % PAINTS.length];
+}
+
+/** Grit wall pixel: rising damp at the foot, rain streaks under the eave, plaster flaking to bare render. */
+function gritWall(c: string, i: number, j: number, h: number, seed: number): string {
+  const s7 = Math.floor(seed * 997);
+  const damp = 2 + Math.floor(speck(Math.floor(i / 3) + s7, 7) * 3);
+  if (j < damp) return mix(c, '#5e4e3a', j === damp - 1 ? 0.18 : 0.32);
+  if ((i + s7) % 7 === 0 && j > h - 6 && speck(i, Math.floor(j / 2) + s7) > 0.3) return mix(c, '#3e3a34', 0.22);
+  if (speck(Math.floor(i / 2) + s7, Math.floor(j / 2)) > 0.94) return mix(c, '#b4ada0', 0.6);
+  return c;
 }
 
 /** Two-tone cel shading: lit left face, shaded right face, bright top. */
@@ -161,6 +241,7 @@ export class Painter {
     const H = h * n;
     const cx = (TW / 2) * n + this.ox;
     const cy = (TOP + TH / 2 - z) * n + this.oy;
+    const wallSeed = seedOf(colour, h, inset, z, cx, cy);
     const base = (this.id += 3);
     const FACE_ID: Record<Face, number> = { L: base - 2, R: base - 1, T: base };
     for (let x = Math.floor(cx - hw); x < Math.ceil(cx + hw); x++) {
@@ -182,7 +263,9 @@ export class Painter {
         const ao = face !== 'T' && z === 0 ? (j === 0 ? 0.78 : j === 1 ? 0.9 : 1) : 1;
         // Plain walls get faint plank or course lines, so they read as built, not flat.
         const grain = p === undefined && face !== 'T' && j % 3 === 2 ? 0.93 : 1;
-        this.px(x, y, shade(p === undefined ? colour : p, FACE_SHADE[face] * ao * grain));
+        let c = p === undefined ? colour : p;
+        if (GRIT && face !== 'T' && z === 0 && (p === undefined || p === colour) && h >= 4) c = gritWall(repaint(c, wallSeed), i, j, h, wallSeed);
+        this.px(x, y, shade(c, FACE_SHADE[face] * ao * grain));
       }
     }
   }
@@ -206,6 +289,7 @@ export class Painter {
       [L, F, 1, 1],
       [F, R, 0.75, 1],
     ];
+    const roofSeed = seedOf(colour, h, rise, inset, cx, cy);
     for (const [p, q, f] of tris) {
       this.id++;
       for (let y = Math.floor(apex[1]); y <= Math.ceil(F[1]); y++)
@@ -216,7 +300,12 @@ export class Painter {
             const row = Math.floor((y - apex[1]) / n);
             const course = row % 3 === 2 ? 0.86 : row % 3 === 0 ? 1.06 : 1;
             const joint = row % 3 !== 2 && (ox + (Math.floor(row / 3) % 2) * 2) % 4 === 0 ? 0.93 : 1;
-            this.px(x, y, shade(paint(ox, Math.floor(y / n)) ?? colour, f * course * joint));
+            const own = paint(ox, Math.floor(y / n));
+            if (GRIT && own === undefined) {
+              this.px(x, y, gritRoof(colour, f, ox, Math.floor(y / n), row, roofSeed));
+              continue;
+            }
+            this.px(x, y, shade(own ?? colour, f * course * joint));
           }
     }
   }
@@ -262,6 +351,7 @@ export class Painter {
       // Shed: the back corners rise, the front edge stays at the eave.
       planes = [{ pts: [L, up(B), up(R), F], f: 1 }, { pts: [F, R, up(R)], f: 0.72, wall: true }];
     }
+    const roofSeed = seedOf(colour, h, rise, inset, cx, cy, shape);
     for (const { pts, f, wall: isWall } of planes) {
       this.id++;
       const xs = pts.map((q) => q[0]);
@@ -282,7 +372,12 @@ export class Painter {
           // Tile or zinc courses along the slope, as on the hipped roof.
           const course = row % 3 === 2 ? 0.86 : row % 3 === 0 ? 1.06 : 1;
           const joint = row % 3 !== 2 && (ox + (Math.floor(row / 3) % 2) * 2) % 4 === 0 ? 0.93 : 1;
-          this.px(x, y, shade(paint(ox, Math.floor(y / n)) ?? colour, f * course * joint));
+          const own = paint(ox, Math.floor(y / n));
+          if (GRIT && own === undefined) {
+            this.px(x, y, gritRoof(colour, f, ox, Math.floor(y / n), row, roofSeed));
+            continue;
+          }
+          this.px(x, y, shade(own ?? colour, f * course * joint));
         }
     }
   }
@@ -748,6 +843,26 @@ const ART: Record<string, ArtFn> = {
   // Paving stones. Bare, so neighbouring path tiles join up without an outline between them.
   jalan: (p) => {
     p.bare = true;
+    if (GRIT) {
+      // Grit: cast cement in worn slabs, cracked, with moss in the joints and the odd bit of rubbish.
+      p.ground((a, b, px) => {
+        if (a < px || a > 1 - px || b < px || b > 1 - px) return '#6f6b63';
+        // Three by three cast slabs, each its own shade, a dark joint between them, moss in some.
+        const u = a * 3;
+        const v = b * 3;
+        const fu = u % 1;
+        const fv = v % 1;
+        const su = Math.floor(u);
+        const sv = Math.floor(v);
+        if (fu < px * 3 || fv < px * 3) return speck(su * 5 + sv, Math.floor(a * 40 + b * 40)) > 0.75 ? '#5f7440' : '#7a766d';
+        const r = speck(Math.floor(a * 48), Math.floor(b * 48));
+        if (r > 0.997) return ['#e8e6de', '#3f74c6', '#c94a3a'][Math.floor(r * 10000) % 3];
+        // A hairline crack across some slabs.
+        if (speck(su, sv + 9) > 0.7 && Math.abs(fu - fv * 0.6 - 0.2) < px * 2) return '#77736a';
+        return ['#a6a297', '#aeaa9f', '#b5b0a4'][Math.floor(speck(su + 3, sv) * 3)];
+      });
+      return;
+    }
     p.ground((a, b) => {
       if (a < 0.03 || a > 0.97 || b < 0.03 || b > 0.97) return 'n';
       const row = Math.floor(b * 4);

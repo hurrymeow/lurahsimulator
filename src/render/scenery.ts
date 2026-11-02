@@ -3,6 +3,7 @@
 import { isSeam } from '../sim/area';
 import { GRID_H, GRID_W } from '../sim/types';
 import { INK, Painter, TH, TOP, TW, type Art } from './iso';
+import { GRIT } from './style';
 import { autoBlend, baseOf, blendOf, encodeControl, heightBlend, pickMaterial } from './terrain';
 
 // Painterly ground (clumped grass, dirt with pebbles, fallen leaves) with ink lines where land
@@ -132,7 +133,7 @@ export function layoutWorld(): void {
   cloudList = null;
 }
 
-type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' | 'teh' | 'teras' | 'tanah';
+type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' | 'teh' | 'teras' | 'tanah' | 'kali';
 
 function hash(x: number, y: number): number {
   let h = (x * 374761393 + y * 668265263) ^ 0x5bd1e995;
@@ -141,9 +142,20 @@ function hash(x: number, y: number): number {
 }
 
 /** The kampung and its ring road keep exact tile edges, so plots and the road read. */
-const exact = (tx: number, ty: number) => tx >= -1 && ty >= -1 && tx <= GRID_W && ty <= GRID_H;
+const exact = (tx: number, ty: number) => (tx >= -1 && ty >= -1 && tx <= GRID_W && ty <= GRID_H) || isKali(tx, ty);
+
+/** Grit look: first of the two tile rows the kali runs along, parallel to the ring road in front. */
+const KALI = () => GRID_H + 1;
+/** Grit look: a kali two tiles wide runs across the front sawah and out into the sea. */
+const isKali = (tx: number, ty: number): boolean => GRIT && (ty === KALI() || ty === KALI() + 1) && baseTerrain(tx, ty) !== 'sea';
+/** Grit look: where a concrete footbridge crosses the kali. */
+const BRIDGE = () => Math.floor(GRID_W / 2);
 
 function terrain(tx: number, ty: number): Terrain {
+  return isKali(tx, ty) ? 'kali' : baseTerrain(tx, ty);
+}
+
+function baseTerrain(tx: number, ty: number): Terrain {
   // Seam lots between the RTs are packed dirt, so the bigger buildings have somewhere obvious to stand.
   if (tx >= 0 && ty >= 0 && tx < GRID_W && ty < GRID_H) return isSeam(tx, ty) ? 'road' : 'grass';
   if (tx >= -1 && ty >= -1 && tx <= GRID_W && ty <= GRID_H) return 'road';
@@ -321,6 +333,8 @@ function materialHeight(t: Terrain, x: number, y: number, n: number): number {
       return 0.3 + 0.4 * n;
     case 'tanah':
       return 0.15 + 0.85 * vnoise(x + 31, y * 2, 4);
+    case 'kali':
+      return 0;
   }
 }
 
@@ -364,6 +378,125 @@ const TEH = ['#7aa84a', '#679a3f', '#578a37', '#4a7a30'];
 const TERAS = ['#a8cb5e', '#94bc53', '#86ab45'];
 
 const TANAH_TONES = ['#7a4c2a', '#8a5a32', '#9a6236'];
+const CEMENT = ['#97938a', '#a19d93', '#aaa69b', '#b3aea2'];
+const BOLLARD = ['#e57a9c', '#f4b935', '#5fae5a', '#df4a2c', '#f2efe6', '#4a8fd0', '#e98a3a', '#93d8cb'];
+const RUBBISH = ['#f2f0e8', '#f2f0e8', '#f2f0e8', '#f2f0e8', '#3f74c6', '#c94a3a', '#6fae5a', '#f4b935'];
+
+/**
+ * Grit look: one pixel of the kali. c runs 0..1 across it from the back kerb to the front, along runs
+ * with the flow. A cement kerb, the far wall dropping to murky green water (the near wall is out of
+ * sight), scum and ripples drifting along, and rubbish caught in the current: plastic bags,
+ * styrofoam, bottles. Painted bollards stand on the kerbs (kaliProps).
+ */
+function kaliColour(c: number, x: number, y: number, tx: number, along: number): string {
+  if (tx === BRIDGE() && along > 0.3 && along < 0.7) {
+    // A cast footbridge: a lit deck with a dark rail edge on each side.
+    if (along < 0.34 || along > 0.66) return '#6f6b63';
+    return Math.floor(along * 40) % 5 === 0 ? '#9a968c' : '#b8b3a7';
+  }
+  if (c < 0.07) return c < 0.02 ? '#7d796f' : '#b9b4a8';
+  if (c < 0.3) {
+    // The far wall: stacked blocks, darker toward the water, moss and stains running down.
+    if (c > 0.25) return hash(x, 3) > 0.4 ? '#4f6138' : '#5d6e3c';
+    if (y % 4 === 0 || (x + Math.floor(y / 4) * 3) % 8 === 0) return '#6c695f';
+    if (hash(x, 9) > 0.82) return '#6e6a5c';
+    return c < 0.18 ? '#8f8b80' : '#827e73';
+  }
+  if (c > 0.95) return '#b0ab9f';
+  if (c > 0.93) return '#3b4741';
+  // Rubbish: plastic bags and styrofoam (mostly white), a few bottles and wrappers, thicker in eddies
+  // along the walls and in drifting rafts.
+  const cx = Math.floor(x / 4);
+  const cy = Math.floor(y / 3);
+  const raft = vnoise(x, y * 2, 14);
+  const edgeK = c < 0.42 || c > 0.86 ? 0.05 : 0;
+  const r = hash(cx * 31 + 7, cy * 17 + 3);
+  if (r < 0.03 + edgeK + (raft > 0.7 ? 0.08 : 0)) {
+    const item = RUBBISH[Math.floor(hash(cx, cy) * RUBBISH.length)];
+    const ix = x - cx * 4;
+    const iy = y - cy * 3;
+    const white = item === '#f2f0e8';
+    // A bag is a 3x2 lump with a shaded underside; anything else is a 2x1 fleck.
+    if (white ? ix < 3 && iy < 2 : ix < 2 && iy === 0) return white && iy === 1 ? (ix === 2 ? '#a9aba2' : '#cfcdc4') : item;
+    if (white && iy === 2 && ix > 0 && ix < 3) return '#3e524f';
+  }
+  if (c < 0.38) return '#3e524f';
+  if ((x + 2 * y) % 19 < 3 && y % 3 === 0) return '#6e8580';
+  if (raft > 0.62 && hash(x * 3, y * 5) > 0.75) return '#677258';
+  const n = vnoise(x, y * 2, 6);
+  return n > 0.62 ? '#5c7570' : n < 0.35 ? '#4a605c' : '#526a65';
+}
+
+/** Grit look: painted bollards along both kerbs of the kali, each a small lit block. */
+function kaliProps(img: ImageData): void {
+  const block = (a: number, b: number, col: string) => {
+    const x0 = Math.floor(WORLD_OX + ((a - b) * TW) / 2) - 1;
+    const y0 = Math.floor(WORLD_OY + ((a + b) * TH) / 2);
+    const base = hex(col);
+    const sh = (f: number) => {
+      const r = Math.min(255, Math.round(((base >> 16) & 255) * f));
+      const g = Math.min(255, Math.round(((base >> 8) & 255) * f));
+      const bl = Math.min(255, Math.round((base & 255) * f));
+      return `#${((r << 16) | (g << 8) | bl).toString(16).padStart(6, '0')}`;
+    };
+    for (let dy = -4; dy <= 0; dy++)
+      for (let dx = 0; dx < 3; dx++) {
+        const x = x0 + dx;
+        const y = y0 + dy;
+        if (x < 0 || y < 0 || x >= WORLD_W || y >= WORLD_H) continue;
+        put(img, x, y, dy === -4 ? sh(1.15) : dy === 0 ? sh(0.45) : dx === 2 ? sh(0.72) : col);
+      }
+  };
+  for (let tx = XMIN; tx < XMAX; tx++) {
+    if (!isKali(tx, KALI()) || tx === BRIDGE()) continue;
+    for (const a of [0.25, 0.75]) {
+      const k = Math.floor(hash(tx * 3 + Math.round(a * 10), 77) * BOLLARD.length);
+      block(tx + a, KALI() + 0.1, BOLLARD[k]);
+      if (isKali(tx, KALI() + 1)) block(tx + a, KALI() + 2.02, BOLLARD[(k + 3) % BOLLARD.length]);
+    }
+  }
+}
+
+/**
+ * Grit look: concrete PLN poles along the back ring roads with sagging cables between them, the
+ * tangle of wires over every kampung. Baked into the backdrop, behind every building.
+ */
+function poles(img: ImageData): void {
+  const H = 26;
+  const spots: [number, number][] = [];
+  for (let a = 1; a <= GRID_W; a += 3) spots.push([a, -0.8]);
+  spots.reverse();
+  spots.push([-0.8, -0.8]);
+  for (let b = 1; b <= GRID_H; b += 3) spots.push([-0.8, b]);
+  const top = spots.map(([a, b]) => [Math.floor(WORLD_OX + ((a - b) * TW) / 2), Math.floor(WORLD_OY + ((a + b) * TH) / 2) - H]);
+  // Cables first, so the poles stand over them: two lines that sag between neighbours.
+  for (let i = 0; i + 1 < top.length; i++) {
+    const [x0, y0] = top[i];
+    const [x1, y1] = top[i + 1];
+    for (const [off, sag] of [[2, 5], [4, 7]]) {
+      const steps = Math.abs(x1 - x0) * 2 + 1;
+      for (let k = 0; k <= steps; k++) {
+        const t = k / steps;
+        const x = Math.round(x0 + (x1 - x0) * t);
+        const y = Math.round(y0 + off + (y1 - y0) * t + sag * 4 * t * (1 - t));
+        if (x >= 0 && y >= 0 && x < WORLD_W && y < WORLD_H) put(img, x, y, '#2b2724');
+      }
+    }
+  }
+  top.forEach(([x, y], i) => {
+    for (let dy = 0; dy < H; dy++) {
+      put(img, x, y + dy, '#a8a499');
+      put(img, x + 1, y + dy, '#7a766d');
+    }
+    // Crossarm with insulators, and a trafo drum on every third pole.
+    for (let dx = -3; dx <= 4; dx++) put(img, x + dx, y + 2, '#4a463f');
+    for (const dx of [-3, 4]) put(img, x + dx, y + 1, '#e8e6de');
+    if (i % 3 === 1) {
+      for (let dy = 6; dy < 11; dy++)
+        for (let dx = -2; dx <= 3; dx++) put(img, x + dx, y + dy, dx < 1 ? '#8d9196' : '#666a6f');
+    }
+  });
+}
 
 function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx: number, ty: number): string {
   const n = clumps(x, y) + macro(tx + a, ty + b);
@@ -375,6 +508,13 @@ function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx
       if (speck > 0.975) return '#5a7a30';
       return tone(n * 0.9 + ((tx + ty) % 2 ? 0 : 0.1), GRASS);
     case 'road':
+      if (GRIT) {
+        // Grit: a cement gang, patched and cracked, packed dirt showing where it has worn through.
+        if (speck < 0.003) return ['#e8e6de', '#3f74c6', '#c94a3a', '#5fae5a'][Math.floor(speck * 1000) % 4];
+        if (speck > 0.975) return '#6c685f';
+        if (n > 0.95) return n > 1.05 ? '#9a6a44' : '#a8784e';
+        return Math.floor(x / 9 + y / 4.5) % 4 === 0 && Math.floor(x / 9 - y / 4.5) % 4 === 0 ? '#8d897f' : tone(n * 0.8, CEMENT);
+      }
       // Packed dirt in worn patches, with pebbles that catch the light on top.
       if (speck < 0.02) return '#efb878';
       if (speck > 0.985) return '#9a5e34';
@@ -418,6 +558,8 @@ function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx
       if (band % 4 === 1) return (x + 2 * y) % 17 === 0 ? '#c9e6e2' : n > 0.55 ? '#9fd0cf' : '#8fc7c8';
       return Math.floor(x / 2 + band) % 4 === 0 ? '#7a9e3f' : TERAS[shadeK];
     }
+    case 'kali':
+      return kaliColour((ty - KALI() + b) / 2, x, y, tx, a);
     case 'sea':
       // Shimmering bands and short straight wave dashes.
       if ((x + 2 * y) % 24 < 4 && y % 6 === 0) return '#8fd0c2';
@@ -595,7 +737,7 @@ export function buildWorld(): HTMLCanvasElement {
   const depth = new Float32Array(WORLD_W * WORLD_H);
   // Kind numbers: 1-7 in this order, 8 is the cliff, 9 and 10 the terraced hills, 11 bare earth.
   const KINDS: Terrain[] = ['grass', 'road', 'sawah', 'kebun', 'hutan', 'beach', 'sea'];
-  const kindOf = (t: Terrain) => (t === 'teh' ? 9 : t === 'teras' ? 10 : t === 'tanah' ? 11 : KINDS.indexOf(t) + 1);
+  const kindOf = (t: Terrain) => (t === 'teh' ? 9 : t === 'teras' ? 10 : t === 'tanah' ? 11 : t === 'kali' ? 12 : KINDS.indexOf(t) + 1);
   // Each tile is two flat-lit triangles over its corner heights, drawn back to front so nearer
   // hills cover farther ones. Texture is sampled at the tile's flat position, so it sticks to the
   // ground as it rises. Outside the kampung each pixel's material comes from the corner control
@@ -658,7 +800,7 @@ export function buildWorld(): HTMLCanvasElement {
         depth[y * WORLD_W + x] = a + b;
         const c = hex(groundColour(t, a - tx, b - ty, fx, fy, tx, ty));
         // Water lies level, so the sea never takes the facet light of a sloped tile it reaches into.
-        const f = (t === 'sea' ? 1 : lit) * (edge ? (t === 'grass' ? 0.86 : 0.88) : 1);
+        const f = (t === 'sea' || t === 'kali' ? 1 : lit) * (edge ? (t === 'grass' ? 0.86 : 0.88) : 1);
         img.data.set([Math.min(255, Math.round(((c >> 16) & 255) * f)), Math.min(255, Math.round(((c >> 8) & 255) * f)), Math.min(255, Math.round((c & 255) * f)), 255], (y * WORLD_W + x) * 4);
       }
   };
@@ -696,7 +838,7 @@ export function buildWorld(): HTMLCanvasElement {
   // over road over cliff over beach over sea) takes a dark edge in its own colour. The lower side
   // gets a bright rim that eases back to its base colour over three pixels, so each transition
   // reads clearly without hard black lines. Sea meets sand with a line of foam.
-  const RANK = [2, 7, 5, 6, 8, 9, 3, 2, 4, 8, 6, 5];
+  const RANK = [2, 7, 5, 6, 8, 9, 3, 2, 4, 8, 6, 5, 1];
   const rank = (k: number) => RANK[land[k] || 7];
   const edits: [number, number, number][] = [];
   const NEAR: [number, number, number][] = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [2, 0, 2], [-2, 0, 2], [0, 2, 2], [0, -2, 2], [3, 0, 3], [-3, 0, 3]];
@@ -725,6 +867,8 @@ export function buildWorld(): HTMLCanvasElement {
   for (const [x, y, d] of edits) {
     const i = (y * WORLD_W + x) * 4;
     const kind = land[y * WORLD_W + x];
+    // The kali paints its own kerbs.
+    if (kind === 12) continue;
     if (kind === 7 && d > 0) {
       // Surf: foam on the sand line, then lighter shallows.
       const foam = d === 1 ? [236, 246, 238] : d === 2 ? [169, 220, 210] : [118, 190, 180];
@@ -733,6 +877,11 @@ export function buildWorld(): HTMLCanvasElement {
     }
     const f = d === 0 ? 0.6 : d === 1 ? 1.2 : d === 2 ? 1.11 : 1.05;
     for (let c = 0; c < 3; c++) img.data[i + c] = Math.min(255, Math.round(img.data[i + c] * f));
+  }
+
+  if (GRIT) {
+    kaliProps(img);
+    poles(img);
   }
 
   mountain(img, land, M1, base, 235, 122, 17, -0.06);
