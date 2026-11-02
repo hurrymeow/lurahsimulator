@@ -20,6 +20,8 @@ Plan: `docs/plans/smaller-map.md`, task T8. Numbers come from `npm run scorecard
 - **Scorecard bots pay for the first clean audit**, as the Kelurahan bot does since T5 (`tests/scorecard/driver.ts`). The free choice is clean only with no stale wacana, and these bots always have one.
 - **The Kecamatan bot plays more like a player** (`tests/kec-bot-lib.ts`). It saves for the Kantor Kecamatan. It builds a Pos Satpam for each preman, then Lampu Jalan while Aman across the Kecamatan is under 67, replacing the commonest building that gives no jobs or Popularitas when the map is full. The test's bars did not change.
 
+Density cap for the Warga screen goes from 488 to 494 words (`tests/e2e/ui.spec.ts`). The sprawl fix changes the Kelurahan debug seed, and that seed's resident list is what the test counts. No UI text changed.
+
 Left alone: Anggaran and fund costs. Lowering Anggaran would not change Serapan's verdict, and cash health already improved. A later cash pass can look at it.
 
 ## Results

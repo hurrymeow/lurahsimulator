@@ -13,7 +13,7 @@ const DENSITY_ALLOW: Record<string, Partial<Record<keyof typeof LIMITS, number>>
   'howto': { wordsInView: 149, longestBlock: 29, wordsAll: 303 }, // How-to card
   'settings': { primary: 2, wordsInView: 65 }, // Settings
   'staff': { wordsInView: 71 }, // Staff
-  'warga': { wordsInView: 62, wordsAll: 488 }, // Warga: Kampung Sebelah's residents join at the Kelurahan, so the list is long
+  'warga': { wordsInView: 62, wordsAll: 494 }, // Warga: Kampung Sebelah's residents join at the Kelurahan, so the list is long
   'stats': { wordsInView: 86 }, // Stats
 };
 
