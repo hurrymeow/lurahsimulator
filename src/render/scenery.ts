@@ -153,19 +153,21 @@ function placeSawit(): void {
       for (let tx = x; tx < x + w; tx++) {
         const f = volcano(tx + 0.5, ty + 0.5).f;
         if (f > 0.02) apron++;
-        const steep = Math.abs(cornerHeight(tx + 1, ty + 1) - cornerHeight(tx, ty)) > 20 || Math.abs(cornerHeight(tx + 1, ty) - cornerHeight(tx, ty + 1)) > 20;
-        if (exact(tx, ty) || exact(tx - 1, ty - 1) || coastAt(tx + 0.5, ty + 0.5) > -0.8 || f > 0.36 || steep || knoll(tx + 0.5, ty + 0.5).d < 1.2 || inRing(tx, ty)) return false;
+        // Only on the gentle lower aprons: a plantation never climbs onto the cone itself.
+        const c = [cornerHeight(tx, ty), cornerHeight(tx + 1, ty), cornerHeight(tx + 1, ty + 1), cornerHeight(tx, ty + 1)];
+        const steep = Math.max(...c) - Math.min(...c) > 9;
+        if (exact(tx, ty) || exact(tx - 1, ty - 1) || coastAt(tx + 0.5, ty + 0.5) > -1.2 || f > 0.14 || steep || knoll(tx + 0.5, ty + 0.5).d < 1.5 || inRing(tx, ty)) return false;
       }
     // Mostly on the volcanoes' lower aprons, round their feet.
-    return apron * 2 >= w * h;
+    return apron * 3 >= w * h;
   };
   // Scan the land round the volcanoes in a hashed order and keep the blocks that fit, up to eight.
   const cands: [number, number, number, number, number][] = [];
   for (const v of VOLCS)
     for (let y = Math.floor(v.b - v.r * 2); y <= v.b + v.r * 2; y++)
       for (let x = Math.floor(v.a - v.r * 2); x <= v.a + v.r * 2; x++) {
-        const w = 3 + Math.floor(hash(x, y + 40) * 3);
-        const h = 3 + Math.floor(hash(x + 9, y) * 2);
+        const w = 3 + Math.floor(hash(x, y + 40) * 2);
+        const h = 2 + Math.floor(hash(x + 9, y) * 3);
         cands.push([hash(x * 3, y * 7), x, y, w, h]);
       }
   for (const [, x, y, w, h] of cands.sort((p, q) => p[0] - q[0])) {
@@ -1126,9 +1128,9 @@ export function smallTree(name: string, scale: number, variant: number): { canva
 /** Height in pixels of a scenery tree at scale 1, about that of the buildable tree it stands for. */
 const TREE_HEIGHT = 40;
 
-/** A scenery tree's size: palms stay at 35%, every other tree somewhere from 25% to 45%; oil palms are planted even, 36% to 40%. */
+/** A scenery tree's size: palms stay at 35%, every other tree somewhere from 25% to 45%; oil palms are planted even and full-grown, 52% to 56%. */
 const treeScale = (name: string, seed: number): number =>
-  name === 'kelapa' ? 0.35 : name === 'sawit' ? 0.36 + hash(seed, 811) * 0.04 : 0.25 + hash(seed, 811) * 0.2;
+  name === 'kelapa' ? 0.35 : name === 'sawit' ? 0.52 + hash(seed, 811) * 0.04 : 0.25 + hash(seed, 811) * 0.2;
 
 
 /** True on a tile under a district block, where no tree grows. */
@@ -1178,16 +1180,19 @@ export function worldTrees(): Tree[] {
         const seed = tx * 977 + ty * 131 + k;
         const push = (name: string) =>
           list.push({ tree: { name, tx, ty, x: WORLD_OX + ((a - b) * TW) / 2 - TW / 2, y: WORLD_OY + ((a + b) * TH) / 2 - TOP - Math.round(heightAt(a, b)), scale: treeScale(name, seed) }, d: a + b });
-        // Oil palms stand in a straight lattice, four to a tile, off the dirt tracks.
+        // Oil palms stand in a straight lattice, one in the middle of each tile, off the dirt tracks,
+        // so their fronds stay inside the block.
         const plot = sawitAt(tx, ty);
         if (plot) {
-          if ((tx - plot.x) % 4 !== 3 && k < 4 && !hidden(tx + (k % 2 ? 0.75 : 0.25), ty + (k < 2 ? 0.25 : 0.75))) {
-            const pa = tx + (k % 2 ? 0.75 : 0.25);
-            const pb = ty + (k < 2 ? 0.25 : 0.75);
+          if ((tx - plot.x) % 4 !== 3 && k === 0 && !hidden(tx + 0.5, ty + 0.5)) {
+            const pa = tx + 0.5;
+            const pb = ty + 0.5;
             list.push({ tree: { name: 'sawit', tx, ty, x: WORLD_OX + ((pa - pb) * TW) / 2 - TW / 2, y: WORLD_OY + ((pa + pb) * TH) / 2 - TOP - Math.round(heightAt(pa, pb)), scale: treeScale('sawit', seed) }, d: pa + pb });
           }
           return;
         }
+        // A one-tile clearing round each plantation, so the block reads against the forest.
+        if ([[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]].some(([dx, dy]) => sawitAt(tx + dx, ty + dy))) return;
         // A thick ring of trees round each knoll's foot, a few on its green cap, none on the rock. On
         // the side facing the viewer the ring thins to bushes and a few trees, so the limestone shows.
         const kn = knoll(a, b);

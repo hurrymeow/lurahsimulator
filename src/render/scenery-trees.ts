@@ -71,47 +71,60 @@ class Px {
 }
 
 /**
- * A tropical canopy tree, not a ball of foliage: a short trunk forking into two or three flat, wide
- * tiers of leaves with ragged edges, each tier lit on its top left and closed by a dark underside, so
- * the crown reads as layered shade like a trembesi or mahogany.
+ * A tropical canopy tree in true isometric: two or three stacked tiers of foliage, each a disc seen
+ * from the map's angle, so its top face is a 2:1 ellipse and a band of shade runs under its rim, like
+ * the side of a box. Upper tiers are smaller and sit back on the lower ones, so the crown reads as
+ * layered shade (a trembesi or mahogany) rather than a ball, and stands about as tall as it is wide.
  */
 function pohon(H: number, v: number): SceneryTree {
-  const W = Math.round(H * 1.15) + 4;
+  const W = Math.round(H * 0.95) + 4;
   const p = new Px(W, H + 3);
   const rx = Math.floor(W / 2) + (v % 2 ? 0 : -1);
   const ry = H + 1;
-  const th = Math.max(3, Math.round(H * 0.38));
-  const thick = H >= 15 ? 2 : 1;
-  // Trunk, with a fork into the crown.
-  for (let y = 0; y < th; y++)
+  const thick = H >= 16 ? 2 : 1;
+  const th = Math.max(3, Math.round(H * 0.3));
+  for (let y = 0; y < th + 2; y++)
     for (let t = 0; t < thick; t++) p.set(rx + t, ry - y, t === 0 ? '#7a4a2a' : '#5a3420');
-  const fork = Math.round(th * 0.6);
-  for (let k = 1; k <= 2; k++) {
-    p.set(rx - k, ry - fork - k, '#6a3e24');
-    p.set(rx + thick - 1 + k, ry - fork - k - 1, '#5a3420');
-  }
-  // Tiers from the top down: narrower above, wider below, each a flat ragged slab.
-  const tiers = H >= 13 ? 3 : 2;
-  const top = ry - H + 1;
-  const crownH = ry - th + 1 - top;
-  const LIT = ['#9ccc5c', '#86b84c'];
-  const BASE = '#5f9a3c';
-  const SHADE = '#457a30';
-  const UNDER = '#2f5a24';
+  const tiers = H >= 14 ? 3 : 2;
+  const R0 = W / 2 - 1.5;
+  const TOPF = ['#a6d264', '#8cc051'];
+  const BASE = '#6aa443';
+  const SHADE = '#4f8a36';
+  const SIDE = ['#3f7430', '#2f5c26'];
+  // Bottom tier first; each tier's top face centre climbs and its radius shrinks.
+  const crownTop = ry - H + 1;
+  const crownBot = ry - th;
   for (let i = 0; i < tiers; i++) {
-    const cy = top + Math.round(((i + 0.5) / tiers) * crownH);
-    const half = (W / 2 - 2) * (0.62 + 0.38 * (i / Math.max(1, tiers - 1))) * (0.9 + hash(v, i) * 0.2);
-    const cx = rx + (hash(v + 7, i) - 0.5) * 3;
-    const ry2 = Math.max(1.5, crownH / tiers / 1.4);
-    for (let y = Math.floor(cy - ry2 - 1); y <= Math.ceil(cy + ry2); y++)
-      for (let x = Math.floor(cx - half - 1); x <= Math.ceil(cx + half + 1); x++) {
-        const dx = (x - cx) / half;
-        const dy = (y - cy) / ry2;
-        // Flat slab: square-ish ends, a ragged rim from noise.
-        const edge = 1 - (hash(x * 3 + v, y * 5 + i) - 0.5) * 0.5;
-        if (dx * dx * dx * dx + dy * dy > edge) continue;
-        const col = dy > 0.55 ? UNDER : dy < -0.35 ? (dx < 0.2 ? LIT[hash(x, y + v) < 0.3 ? 0 : 1] : BASE) : dx > 0.45 ? SHADE : BASE;
-        p.set(x, y, col);
+    const r = R0 * (1 - i * (tiers === 3 ? 0.24 : 0.32)) * (0.95 + hash(v, i) * 0.1);
+    const band = Math.max(2, Math.round(r * 0.38));
+    // Tier i's top face: the bottom tier just over the trunk, the top one touching the crown's top.
+    const rTop = R0 * (1 - (tiers - 1) * (tiers === 3 ? 0.24 : 0.32));
+    const low = crownBot - band - R0 * 0.5;
+    const high = crownTop + rTop * 0.5;
+    const cy = low + ((high - low) * i) / (tiers - 1);
+    const cx = rx + 0.5 + (i ? (hash(v + 3, i) - 0.5) * 2 : 0);
+    const inside = (x: number, y: number) => {
+      const dx = (x + 0.5 - cx) / r;
+      const dy = (y + 0.5 - cy) / (r * 0.5);
+      return dx * dx + dy * dy <= 1 - (hash(x * 7 + v, y * 3 + i) - 0.5) * 0.35;
+    };
+    for (let y = Math.floor(cy - r * 0.5 - 1); y <= Math.ceil(cy + r * 0.5 + band + 1); y++)
+      for (let x = Math.floor(cx - r - 1); x <= Math.ceil(cx + r + 1); x++) {
+        if (inside(x, y)) {
+          // Top face: lit toward the top left, shaded toward the bottom right.
+          const dx = (x + 0.5 - cx) / r;
+          const dy = (y + 0.5 - cy) / (r * 0.5);
+          const l = -dx * 0.7 - dy * 0.7;
+          p.set(x, y, l > 0.45 ? TOPF[hash(x + v, y) < 0.35 ? 0 : 1] : l > -0.35 ? BASE : SHADE);
+        } else {
+          // Side band: the rim of the disc pushed straight down, darker on the right.
+          for (let k = 1; k <= band; k++)
+            if (inside(x, y - k)) {
+              const dx = (x + 0.5 - cx) / r;
+              p.set(x, y, dx > 0.15 || k === band ? SIDE[1] : SIDE[0]);
+              break;
+            }
+        }
       }
   }
   return { canvas: p.finish(), rx, ry };
@@ -155,11 +168,11 @@ function kelapa(H: number, v: number): SceneryTree {
  * stiff, arching fronds, darker and denser than a coconut, with an orange fruit bunch at its heart.
  */
 function sawit(H: number, v: number): SceneryTree {
-  const W = Math.round(H * 1.35) + 6;
+  const W = Math.round(H * 1.25) + 4;
   const p = new Px(W, H + 3);
   const rx = Math.floor(W / 2);
   const ry = H + 1;
-  const th = Math.round(H * 0.42);
+  const th = Math.round(H * 0.4);
   for (let y = 0; y < th; y++) {
     p.set(rx, ry - y, y % 2 ? '#5a4a2a' : '#6e5a32');
     p.set(rx + 1, ry - y, y % 2 ? '#4a3c22' : '#5a4a2a');
@@ -167,7 +180,7 @@ function sawit(H: number, v: number): SceneryTree {
   }
   const cx = rx + 0.5;
   const cy = ry - th;
-  const L = H * 0.56;
+  const L = H * 0.52;
   for (let f = 0; f < 11; f++) {
     const ang = Math.PI * (f / 10) + (hash(v, f) - 0.5) * 0.2;
     for (let s = 1; s <= L; s++) {

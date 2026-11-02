@@ -4,7 +4,7 @@ import { sizeOf, tilesOf, type Placed } from '../sim/state';
 import { sizeFor } from '../sim/content';
 import { GRID_H, GRID_W, RT_H, RT_W, type Building, type GameState, type ResourceId } from '../sim/types';
 import { Atmosphere } from './atmosphere';
-import { drawCables } from './cables';
+import { drawCables, drawPathCables, drawSprite, polesByPaths, type PathPole } from './cables';
 import { drawBunting, drawUmbul } from './agustus';
 import { agustusan } from '../sim/lomba';
 import { permitEta, queueBerkas } from '../sim/staff';
@@ -604,7 +604,7 @@ export class MapView {
     const tops = new Map<number, number>();
     this.hits = [];
     // Scenery on empty tiles joins the same back-to-front order, but never the tap list.
-    const deco: { x: number; y: number; name: string }[] = [];
+    const deco: { x: number; y: number; name: string; pole?: PathPole }[] = [];
     for (let d = 0; d < GRID_W + GRID_H - 1; d++)
       for (let x = Math.max(0, d - GRID_H + 1); x <= Math.min(d, GRID_W - 1); x++) {
         const y = d - x;
@@ -614,10 +614,16 @@ export class MapView {
       }
     // From 2 stars the scenery edge thins and the neighbours' roofs show beyond the road.
     if (s.stage.current === 'rt' && s.stage.stars.rt >= 2) for (const r of farRoofs()) if (this.onScreen(r.x, r.y)) deco.push(r);
+    // Poles beside the jalan setapak stand in the same order, so buildings in front hide their feet.
+    for (const p of polesByPaths(s.buildings, s.stage.current)) if (this.onScreen(p.x, p.y)) deco.push({ x: p.x, y: p.y, name: '', pole: p });
     deco.sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
     let di = 0;
     const decoUntil = (depth: number, x: number) => {
-      for (; di < deco.length && (deco[di].x + deco[di].y < depth || (deco[di].x + deco[di].y === depth && deco[di].x < x)); di++) this.art(ctx, iso(deco[di].name), deco[di].x, deco[di].y);
+      for (; di < deco.length && (deco[di].x + deco[di].y < depth || (deco[di].x + deco[di].y === depth && deco[di].x < x)); di++) {
+        const d = deco[di];
+        if (d.pole) drawSprite(ctx, d.pole.sprite, wx, wy, sc, world, false);
+        else this.art(ctx, iso(d.name), d.x, d.y);
+      }
     };
     this.night = this.effects ? darkness(this.clock) : 0;
     this.lights = [];
@@ -716,6 +722,7 @@ export class MapView {
     this.crowd.drawUntil(ctx, Infinity, this.project, sc, world, this.motion && !this.frozen);
     // The front of the ring road's poles and cables stand in front of every building.
     drawCables(ctx, s.stage.current, true, wx, wy, sc, this.viewW, this.viewH, world, this.motion);
+    drawPathCables(ctx, s.buildings, s.stage.current, wx, wy, sc, this.viewW, this.viewH, world, this.motion);
     this.fx.drawPuffs(ctx, this.project, sc, now, (fx, fy) => {
       const k = Math.floor(fy) * GRID_W + Math.floor(fx);
       return this.project(fx, fy).y - (tops.get(k) ?? this.project(fx, fy).y);
