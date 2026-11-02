@@ -1,0 +1,1 @@
+T1 of the smaller-map plan makes `STAGE_SPAN` carry a width and a height per stage, and `mapSpan()` return both, so later tasks can shrink the RW and Kelurahan maps without moving buildings. Every span stays square and equal to the old value for now, so behaviour is unchanged; the only new test pins the span at RT and after the first promotion.

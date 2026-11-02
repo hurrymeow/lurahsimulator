@@ -431,7 +431,7 @@ export function neighboursYearEnd(s: GameState, year: number): void {
   }
 }
 
-export const cellName = (n: Neighbour): string => `RT ${n.cy * mapSpan() + n.cx + 1}`;
+export const cellName = (n: Neighbour): string => `RT ${n.cy * mapSpan().w + n.cx + 1}`;
 
 /** Moves the player up a stage: the map grows and the new cells fill with AI RTs. Everything the player built stays where it is. */
 export function promote(s: GameState, fx: Fx): boolean {

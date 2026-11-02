@@ -28,7 +28,7 @@ export const cellOf = (x: number, y: number) => ({ cx: Math.floor(x / CELL_W), c
 export const cellOrigin = (cx: number, cy: number) => ({ x: cx * CELL_W, y: cy * CELL_H });
 
 export function lotAt(x: number, y: number): Lot {
-  const span = mapSpan();
+  const span = mapSpan().w;
   const sx = seam(x, CELL_W, RT_W);
   const sy = seam(y, CELL_H, RT_H);
   if (sx < 0 && sy < 0) {
@@ -45,8 +45,8 @@ export function lotAt(x: number, y: number): Lot {
 /** Every RT cell on the map except the player's. */
 export function neighbourCells(): { cx: number; cy: number }[] {
   const out: { cx: number; cy: number }[] = [];
-  const span = mapSpan();
-  for (let cy = 0; cy < span; cy++) for (let cx = 0; cx < span; cx++) if (cx || cy) out.push({ cx, cy });
+  const { w, h } = mapSpan();
+  for (let cy = 0; cy < h; cy++) for (let cx = 0; cx < w; cx++) if (cx || cy) out.push({ cx, cy });
   return out;
 }
 

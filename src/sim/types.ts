@@ -560,8 +560,13 @@ export const RT_H = 17;
 export let GRID_W = RT_W;
 export let GRID_H = RT_H;
 
-/** RTs along each side of the map at a stage. The Kecamatan keeps the Kelurahan's tile map. The other Kelurahan are district blocks, not tiles (decisions/kecamatan-slice.md). */
-export const STAGE_SPAN: Record<StageId, number> = { rt: 1, rw: 2, kelurahan: 4, kecamatan: 4 };
+/** RTs across and down the map at a stage. The Kecamatan keeps the Kelurahan's tile map. The other Kelurahan are district blocks, not tiles (decisions/kecamatan-slice.md). */
+export const STAGE_SPAN: Record<StageId, { w: number; h: number }> = {
+  rt: { w: 1, h: 1 },
+  rw: { w: 2, h: 2 },
+  kelurahan: { w: 4, h: 4 },
+  kecamatan: { w: 4, h: 4 },
+};
 
 /** Tiles of dirt road between two RT cells. The bands sit between cells, so every RT keeps its full size. */
 export const SEAM = 2;
@@ -570,12 +575,13 @@ export const CELL_W = RT_W + SEAM;
 export const CELL_H = RT_H + SEAM;
 
 export function setGrid(stage: StageId): void {
-  GRID_W = RT_W * STAGE_SPAN[stage] + SEAM * (STAGE_SPAN[stage] - 1);
-  GRID_H = RT_H * STAGE_SPAN[stage] + SEAM * (STAGE_SPAN[stage] - 1);
+  const span = STAGE_SPAN[stage];
+  GRID_W = RT_W * span.w + SEAM * (span.w - 1);
+  GRID_H = RT_H * span.h + SEAM * (span.h - 1);
 }
 
-/** RT cells along each side of the current map. */
-export const mapSpan = (): number => (GRID_W + SEAM) / CELL_W;
+/** RT cells across and down the current map. */
+export const mapSpan = (): { w: number; h: number } => ({ w: (GRID_W + SEAM) / CELL_W, h: (GRID_H + SEAM) / CELL_H });
 /** Grid size before the map was expanded (save v1). Old saves are centred in the new grid. */
 export const OLD_GRID_W = 9;
 export const OLD_GRID_H = 13;

@@ -11,7 +11,7 @@ import { areaScore, scoreParts } from '../src/sim/ranking';
 import { deserialize, serialize } from '../src/sim/save';
 import { addBuilding, addResident, emptyTiles, newGame, population } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
-import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, SEAM, setGrid } from '../src/sim/types';
+import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, SEAM, mapSpan, setGrid } from '../src/sim/types';
 
 afterEach(() => setGrid('rt'));
 
@@ -43,6 +43,13 @@ describe('growing map', () => {
     expect([GRID_W, GRID_H]).toEqual([RT_W * 4 + 3 * SEAM, RT_H * 4 + 3 * SEAM]);
     expect(s.neighbours).toHaveLength(15);
     expect(s.buildings.map((b) => [b.x, b.y])).toEqual(before);
+  });
+
+  it('reports the map span in RTs across and down', () => {
+    const s = newGame(1);
+    expect(mapSpan()).toEqual({ w: 1, h: 1 });
+    promote(s, []);
+    expect(mapSpan()).toEqual({ w: 2, h: 2 });
   });
 
   it('keeps the same AI RTs when the RW becomes a Kelurahan', () => {
