@@ -54,6 +54,42 @@ function contactShadow(): HTMLCanvasElement {
   return (aoCache = c);
 }
 
+/** Scenery trees round the kampung are drawn smaller than buildable trees, so the land can be thickly wooded. */
+const TREE_SCALE = 0.7;
+const smallTrees = new Map<string, { canvas: HTMLCanvasElement; dx: number; dy: number; anchor: number }>();
+
+/**
+ * A scenery tree's sprite, resampled once to TREE_SCALE on whole art pixels (nearest pixel, so the
+ * palette and crisp edges stay), with its offset from the full sprite's top-left so the roots stay put.
+ * The view still scales it by a whole number.
+ */
+function smallTree(name: string): { canvas: HTMLCanvasElement; dx: number; dy: number; anchor: number } {
+  const hit = smallTrees.get(name);
+  if (hit) return hit;
+  const src = iso(name).canvas;
+  const w = Math.max(1, Math.round(src.width * TREE_SCALE));
+  const h = Math.max(1, Math.round(src.height * TREE_SCALE));
+  const from = src.getContext('2d')!.getImageData(0, 0, src.width, src.height);
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext('2d')!;
+  const to = ctx.createImageData(w, h);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const sx = Math.min(src.width - 1, Math.floor((x + 0.5) / TREE_SCALE));
+      const sy = Math.min(src.height - 1, Math.floor((y + 0.5) / TREE_SCALE));
+      const i = (sy * src.width + sx) * 4;
+      to.data.set(from.data.subarray(i, i + 4), (y * w + x) * 4);
+    }
+  ctx.putImageData(to, 0, 0);
+  // Roots sit at the middle of the ground anchor row; keep that point where it was.
+  const anchor = TOP + TH / 2;
+  const out = { canvas: c, dx: Math.round(src.width / 2 - w / 2), dy: Math.round(anchor - anchor * TREE_SCALE), anchor: Math.round(anchor * TREE_SCALE) };
+  smallTrees.set(name, out);
+  return out;
+}
+
 interface Pop {
   x: number;
   y: number;
@@ -847,19 +883,18 @@ export class MapView {
       ctx.drawImage(c.art, left, top, c.art.width * s, c.art.height * s);
     });
 
-    // Ground anchor row in tree art: the stretch grows upward from the roots.
-    const anchor = TOP + TH / 2;
+    // Scenery trees at TREE_SCALE; the stretch grows upward from the roots.
     for (const tree of worldTrees()) {
-      const art = iso(tree.name);
-      const left = wx + tree.x * s;
-      const top = wy + tree.y * s;
+      const art = smallTree(tree.name);
+      const left = wx + (tree.x + art.dx) * s;
+      const top = wy + (tree.y + art.dy) * s;
       const w = art.canvas.width * s;
       const h = art.canvas.height * s;
       if (left > this.viewW || left + w < 0 || top > this.viewH || top + h < 0) continue;
       // One art pixel of stretch and squash, so pixels stay whole.
       const dh = Math.round(Math.sin(t / 700 + (tree.tx * 0.9 + tree.ty * 0.4)) * 1.4);
-      const f = (anchor + dh) / anchor;
-      ctx.drawImage(art.canvas, left, top + anchor * s * (1 - f), w, h * f);
+      const f = (art.anchor + dh) / art.anchor;
+      ctx.drawImage(art.canvas, left, top + art.anchor * s * (1 - f), w, h * f);
     }
   }
 

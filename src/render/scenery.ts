@@ -30,8 +30,8 @@ export let WORLD_H = 0;
 /** Art position of grid tile (0,0)'s top corner inside the world canvas. */
 export let WORLD_OX = 0;
 export let WORLD_OY = 0;
-/** Trees on the sea islands, merged into worldTrees. */
-let isleTrees: Tree[] = [];
+/** Trees on the sea islands with their depth (a + b), merged into worldTrees. */
+let isleTrees: { tree: Tree; d: number }[] = [];
 
 // ---------------------------------------------------------------- Kecamatan ring
 // The Kecamatan keeps the Kelurahan's tile map. The three other Kelurahan are low-detail district blocks beside it:
@@ -125,15 +125,6 @@ type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' 
  * take the same facet light, tile grid and materials. a, b: the summit tile; r: foot radius in tiles;
  * h: summit height in art pixels.
  */
-/** PROTOTYPE shore-to-summit slope options, picked with ?slope=a|b|c. Removed once one is chosen. */
-const SLOPE: 'cur' | 'a' | 'b' | 'c' = (() => {
-  try {
-    const v = new URLSearchParams(globalThis.location?.search ?? '').get('slope');
-    return v === 'a' || v === 'b' || v === 'c' ? v : 'cur';
-  } catch {
-    return 'cur';
-  }
-})();
 const VOLCS = [
   { a: -6.5, b: -3.5, r: 6.5, h: 156 },
   { a: -3, b: -7.5, r: 5.5, h: 120 },
@@ -142,11 +133,12 @@ const VOLCS = [
 function volcano(a: number, b: number): { h: number; f: number } {
   let best = { h: 0, f: 0 };
   for (const v of VOLCS) {
-    // Option a: long concave aprons that reach out to the shore.
-    const d = Math.hypot(a - v.a, b - v.b) / (v.r * (SLOPE === 'a' ? 1.9 : 1));
+    // Long concave aprons: the cone's foot reaches out to the shore, so the land climbs from the
+    // beach all the way to the crater with no flat ledge in between.
+    const d = Math.hypot(a - v.a, b - v.b) / (v.r * 1.9);
     if (d >= 1) continue;
-    const crater = SLOPE === 'a' ? 0.07 : 0.13;
-    let p = (1 - Math.max(0, d - crater) / (1 - crater)) ** (SLOPE === 'a' ? 2.8 : 1.6);
+    const crater = 0.07;
+    let p = (1 - Math.max(0, d - crater) / (1 - crater)) ** 2.8;
     if (d < crater * 0.8) p -= 0.06;
     // Ravines: shallow creases running down from the rim.
     p *= 1 - 0.07 * (1 - Math.abs(vnoise(Math.atan2(b - v.b, a - v.a) * 6 + 40, 3, 1) * 2 - 1)) * Math.min(1, d * 3);
@@ -251,31 +243,11 @@ export function cornerHeight(vx: number, vy: number): number {
         const out = Math.max(-1 - x, -1 - y);
         const front = Math.max(x - GRID_W - 1, y - GRID_H - 1);
         const rise = smooth(out / 5) * smooth(1 - front / 3);
-        // Hills ease down to the beach wherever the coast runs.
-        const edge = smooth((-coastAt(x, y) - 2) / 4);
         const n = vnoise(x + 40, y + 40, 4) * 0.7 + vnoise(x + 7, y + 90, 2) * 0.3;
+        // Both ease up from the beach over a few tiles, so every shore rises gradually.
         const inland = Math.max(0, -coastAt(x, y));
-        let hill = HILL_MAX * rise * edge * (0.2 + 0.8 * n);
-        let volc = volcano(x, y).h * smooth((-coastAt(x, y) + 0.5) / 2) * smooth(out / 2);
-        if (SLOPE === 'a') {
-          // Option a: the cones' long concave aprons reach right down to the beach.
-          hill = HILL_MAX * rise * smooth(inland / 5) * (0.2 + 0.8 * n);
-          volc = volcano(x, y).h * smooth(inland / 3.5) * smooth(out / 2);
-        } else if (SLOPE === 'b') {
-          // Option b: the land climbs from the shore in four benches of 14px, each a short riser and
-          // a level shelf running parallel to the coast; hills and the volcanoes sit on top.
-          const k = inland / 1.8;
-          const steps = Math.min(4, Math.floor(k) + smooth((k - Math.floor(k) - 0.7) / 0.3));
-          const base = 14 * steps * smooth(out / 12); // behind the ring road only, so the kampung side stays flat
-          hill = base + HILL_MAX * 0.6 * rise * smooth(inland / 5) * n;
-          volc = base + volcano(x, y).h * 0.8 * smooth(inland / 3) * smooth(out / 2);
-        } else if (SLOPE === 'c') {
-          // Option c: the whole back of the island is one massif rising steadily from every shore,
-          // the hills rolling on it and the volcanoes standing on top.
-          const base = 64 * Math.min(1, inland / 11) ** 1.2 * smooth(out / 12);
-          hill = base + HILL_MAX * 0.35 * rise * smooth(inland / 5) * n;
-          volc = base + volcano(x, y).h * 0.75 * smooth(inland / 4) * smooth(out / 2);
-        }
+        const hill = HILL_MAX * rise * smooth(inland / 5) * (0.2 + 0.8 * n);
+        const volc = volcano(x, y).h * smooth(inland / 3.5) * smooth(out / 2);
         const m = Math.max(hill, volc);
         const K = 0.15;
         heights[(y - YMIN) * w + x - XMIN] = Math.round(m + Math.log(Math.exp(K * (hill - m)) + Math.exp(K * (volc - m))) / K - Math.log(2) / K * Math.min(1, Math.min(hill, volc) / 8));
@@ -868,30 +840,34 @@ function drawIsle(img: ImageData, land: Uint8Array, depth: Float32Array, I: Isle
     if (!mine.has(k)) land[k] = 13;
     img.data.set(rgb, i);
   }
-  // The map's own trees: palms on the sand, shade trees on the forest, the odd bush on grass.
+  // The map's own trees, as thick as on the main island: shade trees crowd the forest, groves and
+  // bushes cover most of the grass, the odd palm leans over the sand.
   for (let i = 0; i < I.n; i++)
     for (let j = 0; j < I.n; j++) {
-      const hh = (I.h(i, j) + I.h(i + 1, j) + I.h(i + 1, j + 1) + I.h(i, j + 1)) / 4;
-      const slope = Math.max(I.h(i, j), I.h(i + 1, j), I.h(i + 1, j + 1), I.h(i, j + 1)) - Math.min(I.h(i, j), I.h(i + 1, j), I.h(i + 1, j + 1), I.h(i, j + 1));
-      if (hh < 1 || slope > 12) continue;
-      const a = I.a0 + i + 0.5;
-      const b = I.b0 + j + 0.5;
-      const [fx, fy] = flatPixel(a, b);
-      const t = isleMat(I, hh, slope, fx, fy);
-      const r = hash(Math.floor(a * 7) + 3, Math.floor(b * 5) + 1);
-      const name = t === 'beach' ? (r < 0.3 ? 'kelapa' : null) : t === 'hutan' ? (r < 0.6 ? 'pohon' : r < 0.7 ? 'kelapa' : null) : t === 'grass' ? (r < 0.12 ? 'bush' : r < 0.2 ? 'pohon' : null) : null;
-      if (!name) continue;
-      // A tree whose crown would cross nearer ground (the volcano behind which an islet sits) is left out.
-      const tx0 = OX + ((a - b) * TW) / 2 - TW / 2;
-      const ty0 = OY + ((a + b) * TH) / 2 - TOP - Math.round(hh);
-      let behind = false;
-      for (let y = Math.max(0, Math.floor(ty0 + TOP / 4)); y < ty0 + TOP + TH / 2 && !behind; y += 2)
-        for (let x = Math.max(0, Math.floor(tx0 + 3)); x < Math.min(WORLD_W, tx0 + TW - 3) && !behind; x += 2) {
-          const k = y * WORLD_W + x;
-          if (land[k] && land[k] !== 7 && land[k] !== 13 && depth[k] > a + b) behind = true;
-        }
-      if (behind) continue;
-      isleTrees.push({ name, tx: Math.floor(a), ty: Math.floor(b), x: OX + ((a - b) * TW) / 2 - TW / 2, y: OY + ((a + b) * TH) / 2 - TOP - Math.round(hh) });
+      const H = [I.h(i, j), I.h(i + 1, j), I.h(i + 1, j + 1), I.h(i, j + 1)];
+      const slope = Math.max(...H) - Math.min(...H);
+      if (slope > 12) continue;
+      SPOTS.forEach(([fa, fb], k) => {
+        const hh = (H[0] * (1 - fa) + H[1] * fa) * (1 - fb) + (H[3] * (1 - fa) + H[2] * fa) * fb;
+        if (hh < 1) return;
+        const a = I.a0 + i + fa;
+        const b = I.b0 + j + fb;
+        const [fx, fy] = flatPixel(a, b);
+        const t = isleMat(I, hh, slope, fx, fy);
+        const r = hash(Math.floor(a * 7) + k * 13 + 3, Math.floor(b * 5) + k * 7 + 1);
+        const kind = hash(Math.floor(a * 3) + k, Math.floor(b * 9) + k * 3);
+        const name = t === 'beach' ? (r < 0.15 && k === 0 ? 'kelapa' : null) : t === 'hutan' ? (r < 0.85 ? (kind < 0.85 ? 'pohon' : 'kelapa') : null) : t === 'grass' ? (r < 0.55 ? (kind < 0.65 ? 'pohon' : 'bush') : null) : null;
+        if (!name) return;
+        // A tree whose crown would cross nearer ground (the volcano behind which an islet sits) is left out.
+        const tx0 = OX + ((a - b) * TW) / 2 - TW / 2;
+        const ty0 = OY + ((a + b) * TH) / 2 - TOP - Math.round(hh);
+        for (let y = Math.max(0, Math.floor(ty0 + TOP / 4)); y < ty0 + TOP + TH / 2; y += 2)
+          for (let x = Math.max(0, Math.floor(tx0 + 3)); x < Math.min(WORLD_W, tx0 + TW - 3); x += 2) {
+            const kk = y * WORLD_W + x;
+            if (land[kk] && land[kk] !== 7 && land[kk] !== 13 && depth[kk] > a + b) return;
+          }
+        isleTrees.push({ tree: { name, tx: Math.floor(a), ty: Math.floor(b), x: tx0, y: ty0 }, d: a + b });
+      });
     }
   for (const k of keys) rank[k] = 0;
 }
@@ -997,34 +973,55 @@ function hidden(a: number, b: number): boolean {
   return false;
 }
 
-/** Trees on the land round the kampung, back to front so nearer trees overlap farther ones. Drawn per frame so they can bounce. */
+/**
+ * Spots for scenery trees inside one tile, in tile fractions. Scenery trees are drawn at TREE_SCALE,
+ * so three fit on a tile and a dense stand reads as one canopy.
+ */
+const SPOTS: [number, number][] = [[0.3, 0.28], [0.72, 0.45], [0.38, 0.74]];
+
+/**
+ * Trees on the land round the kampung, back to front so nearer trees overlap farther ones. Drawn per
+ * frame so they can bounce. Most of the green land is wooded: forest and the volcanoes' gentle
+ * forest belt are thick with shade trees, the kebun is a mix of palms, pisang and shade trees, the
+ * open grass beyond the ring road has groves and bushes, and the tea hills keep a scatter so their
+ * rows still read. Sawah, terraces, bare earth and steep faces stay open, and the kampung's own tiles
+ * and the ring road never get a scenery tree.
+ */
 export function worldTrees(): Tree[] {
   if (trees) return trees;
-  trees = [];
-  for (let d = XMIN + YMIN; d < XMAX + YMAX; d++)
+  const list: { tree: Tree; d: number }[] = [];
+  for (let ty = YMIN; ty < YMAX; ty++)
     for (let tx = XMIN; tx < XMAX; tx++) {
-      const ty = d - tx;
-      if (ty < YMIN || ty >= YMAX) continue;
-      // The tree stands on whatever material shows at the tile's centre, so none grows on sea or bare earth.
-      const [fx, fy] = flatPixel(tx + 0.5, ty + 0.5);
-      const t = groundAt(tx + 0.5, ty + 0.5, fx, fy);
-      const n = hash(tx * 5 + 1, ty * 3 + 2);
-      // The hills stay open so their shape reads. Palms and pisang keep to the low kebun by the
-      // ring road; shade trees gather in small groves on the hilltops; steep faces stay bare.
-      const h = heightAt(tx + 0.5, ty + 0.5);
+      if (exact(tx, ty) || inRing(tx, ty)) continue;
       const corners = [cornerHeight(tx, ty), cornerHeight(tx + 1, ty), cornerHeight(tx + 1, ty + 1), cornerHeight(tx, ty + 1)];
-      const steep = Math.max(...corners) - Math.min(...corners) > 9;
-      const grove = h > 26 && vnoise(tx + 11, ty + 5, 3) > 0.55;
-      const kebun = steep ? null : h < 6 ? (n < 0.3 ? 'kelapa' : n < 0.5 ? 'pisang' : n < 0.58 ? 'pohon' : null) : grove && n < 0.6 ? 'pohon' : n < 0.05 ? 'kelapa' : null;
-      // Far back, toward the horizon, more trees stand among the terraces so the edge is not bare.
-      // On a volcano only the forest belt keeps a few trees, and never on a steep face.
-      const vf = volcano(tx + 0.5, ty + 0.5);
-      const onVolc = vf.h > 9;
-      const far = tx + ty < -7 && !steep && !onVolc && t !== 'tanah' && (n < 0.16 ? 'pohon' : n < 0.21 ? 'bush' : n < 0.24 ? 'kelapa' : null);
-      const name = onVolc ? (!steep && vf.f < 0.42 && n < 0.3 ? 'pohon' : null) : far ? far : t === 'hutan' ? (n < 0.75 ? 'pohon' : 'kelapa') : t === 'teh' && (grove ? n < 0.4 : n < 0.03) && !steep ? 'pohon' : t === 'teras' && n < 0.03 && !steep ? 'kelapa' : t === 'kebun' ? kebun : t === 'beach' && n < 0.25 ? 'kelapa' : null;
-      if (name && !inRing(tx, ty) && !hidden(tx + 0.5, ty + 0.5)) trees.push({ name, tx, ty, x: WORLD_OX + ((tx - ty) * TW) / 2 - TW / 2, y: WORLD_OY + ((tx + ty) * TH) / 2 - TOP - Math.round(heightAt(tx + 0.5, ty + 0.5)) });
+      const slope = Math.max(...corners) - Math.min(...corners);
+      // The volcanoes' forest belt is wooded up its slope; elsewhere steep faces stay open so the hills read.
+      const onVolc = volcano(tx + 0.5, ty + 0.5).h > 9;
+      if (slope > (onVolc ? 30 : 16)) continue;
+      SPOTS.forEach(([fa, fb], k) => {
+        const a = tx + fa;
+        const b = ty + fb;
+        const [fx, fy] = flatPixel(a, b);
+        const t = groundAt(a, b, fx, fy);
+        const n = hash(tx * 5 + k * 31 + 1, ty * 3 + k * 17 + 2);
+        const kind = hash(tx * 13 + k * 7, ty * 11 + k * 5);
+        const vf = volcano(a, b);
+        // Up a volcano only the forest belt is wooded; rock and ash stay bare. Same height fraction
+        // as the ground's tiers in buildWorld, with a margin so no tree stands in the dithered band.
+        if (vf.h > 9 && heightAt(a, b) / (vf.h / vf.f) > 0.42) return;
+        const name =
+          t === 'hutan' ? (n < 0.85 ? (kind < 0.85 ? 'pohon' : 'kelapa') : null)
+          : t === 'kebun' ? (n < 0.75 ? (kind < 0.35 ? 'kelapa' : kind < 0.6 ? 'pisang' : 'pohon') : null)
+          : t === 'grass' ? (n < 0.6 ? (kind < 0.7 ? 'pohon' : 'bush') : null)
+          : t === 'teh' ? (n < 0.22 && slope < 10 ? 'pohon' : null)
+          : t === 'beach' ? (n < 0.12 && k === 0 ? 'kelapa' : null)
+          : null;
+        if (!name || hidden(a, b)) return;
+        list.push({ tree: { name, tx, ty, x: WORLD_OX + ((a - b) * TW) / 2 - TW / 2, y: WORLD_OY + ((a + b) * TH) / 2 - TOP - Math.round(heightAt(a, b)) }, d: a + b });
+      });
     }
-  if (isleTrees.length) trees = [...trees, ...isleTrees].sort((p, q) => p.tx + p.ty - (q.tx + q.ty));
+  for (const t of isleTrees) list.push(t);
+  trees = list.sort((p, q) => p.d - q.d).map((e) => e.tree);
   return trees;
 }
 

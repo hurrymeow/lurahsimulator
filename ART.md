@@ -41,6 +41,10 @@ No third-party art or names. Everything is drawn in code.
   cannot say it.
 - Trees are sturdy: trunks at least 4 art pixels wide, crowns made of 2 or 3 overlapping clumps
   or at least 3-pixel-thick fronds (`Painter.leaf`). No 1-pixel stems.
+- Scenery trees (the woods round the kampung and on the islands, not a tree the player builds) are
+  the one sprite drawn smaller: the same art resampled once to 70% on whole art pixels, nearest
+  pixel, so the land can be thickly wooded (`TREE_SCALE` in `map.ts`, playtest 2026-11-02). The view
+  still scales them by a whole number. Their trunks come out about 3 pixels wide.
 - Big buildings read wide, not tall. A 2x2 building is no taller than a 1x1 of its tier: its size
   shows as width, a long low roof and a deep front, never as a house scaled up (playtest
   2026-11-01: Gudang Material and Koperasi looked like a Rumah blown up). The same goes for 1x2 and
@@ -144,10 +148,10 @@ Scenery colours:
 | Kebun, hutan | `#5f8a3c`, `#4a7334` |
 | Beach, sea | Sand `#e6c486` to `#f3daa2` with ripples, sea `#367f80` to `#4a9b96` with `#8fd0c2` wave dashes |
 | Clouds | Long thin streaks that taper at both ends: `#fbf8f2` top to `#c9c2d8` underside, no ink. They float over the open sea above the island's back corner, never over tiles. Drawn per frame (`clouds()`): they slide slowly to and fro and twitch a pixel now and then |
-| Volcanoes | Twin volcanoes on the island's back corner (`VOLCS` in `scenery.ts`), part of the same corner-height mesh as the hills: lit triangle facets with the soft tile grid line, joined to the hills by a soft maximum so the skirts flow into the slopes round them. Concave cones with shallow ravines. Materials follow each pixel's height: the hill's own ground at the foot, then forest (hutan), bare rock (tanah), and an ash cap `#b4aea6` to `#cac4bb` with dark cinders. Tiers blend through the 4x4 dither across a band of height. Texture on the cone is sampled on screen, not on the flat world, so the steep slope is not streaked. They run down to the beach and stop short of the ring road. A few trees on the gentle forest belt, none on steep faces or behind a slope |
+| Volcanoes | Twin volcanoes on the island's back corner (`VOLCS` in `scenery.ts`), part of the same corner-height mesh as the hills: lit triangle facets with the soft tile grid line, joined to the hills by a soft maximum so the skirts flow into the slopes round them. Concave cones with shallow ravines. Materials follow each pixel's height: the hill's own ground at the foot, then forest (hutan), bare rock (tanah), and an ash cap `#b4aea6` to `#cac4bb` with dark cinders. Tiers blend through the 4x4 dither across a band of height. Texture on the cone is sampled on screen, not on the flat world, so the steep slope is not streaked. They run down to the beach and stop short of the ring road. The forest belt is wooded like the hills; rock, ash and anything behind a slope stay bare. The cones' long concave aprons reach the beach, so the land climbs from the sand to the crater with no flat ledge |
 | Sea | Open sea on every side and past the world's edges, the same sea texture everywhere |
 | Coast | The main island is no diamond: each side's coastline wanders in bays and headlands of a few tiles (`coastAt` in `scenery.ts`) and the four corners are rounded. A beach with foam runs all the way round. The front sides only wander outward, so the sawah, the ring road and the neighbours' roofs stay on land |
-| Sea islands | 15 to 18 islands of mixed sizes, never touching land or each other: rocks, sandbars, wooded islets and a few big hilly islands. Each is a small corner-height mesh on half-tile facets, lit and gridded like the hills, painted in the beach, grass, hutan and tanah materials with coloured borders, a foam ring and a wet-sand bank on the near side, and planted with the map's own palms, shade trees and bushes. No perspective shrink and no haze |
+| Sea islands | 15 to 18 islands of mixed sizes, never touching land or each other: rocks, sandbars, wooded islets and a few big hilly islands. Each is a small corner-height mesh on half-tile facets, lit and gridded like the hills, painted in the beach, grass, hutan and tanah materials with coloured borders, a foam ring and a wet-sand bank on the near side, and wooded as thickly as the main island with the map's own shade trees, bushes and palms. No perspective shrink and no haze |
 | Hills | Lit triangle facets over corner heights (`cornerHeight`), a soft grid line on each tile edge (0.86 to 0.88 shade) |
 | Bare earth | The cliff strata `#7a4c2a`, `#8a5a32`, `#9a6236`, with rare stones `#bdb4a3` and `#6d635a`. Only on steep hill faces |
 
@@ -311,9 +315,12 @@ control map and index-map shader (`src/render/terrain.ts`, `controlAt` and `grou
 - Toward the volcanoes the hills carry terraces: kebun teh on the left, sawah terasering on the
   right. Each terrace is a band of the real hill height. Its riser is a lit rim over a dark line,
   steps alternate light and dark, and slopes facing the top left are lit.
-- Trees stand on the hill surface. Palms and pisang keep to the low kebun by the ring road, shade
-  trees gather in groves on hilltops, and steep faces stay bare so the hills read. The steepest
-  faces show bare earth (see Ground materials).
+- Trees stand on the hill surface, up to three per tile, so most of the green land reads as woods:
+  forest and the volcanoes' forest belt are thick with shade trees, the kebun mixes palms, pisang and
+  shade trees, open grass past the ring road has groves and bushes, and the tea hills keep a scatter
+  so their rows still read. Sawah, terraces, bare earth and steep faces stay open, and so do the
+  kampung's tiles and the ring road. Every shore rises gradually: hills and volcanoes ease up from the
+  beach over a few tiles.
 - Menu icons sit on a cream bevelled plate, like the tool panel of an old isometric city builder.
   Panels about the kampung show a tiny scene drawn with the map's own sprites. Abstract ones show
   their glyph in dark ink with a brick-red accent.
