@@ -12,9 +12,9 @@ Each reference is used for one thing:
 
 | Reference | What we take | What we leave |
 | --- | --- | --- |
-| Bishi Bashi Special | Bold outlines, flat cel shading, cheeky faces (the sun), bouncy timing | Wonky, hand-wobbled shapes. They clutter a busy map. |
+| Bishi Bashi Special | Bold outlines, flat cel shading, cheeky faces, bouncy timing | Wonky, hand-wobbled shapes. They clutter a busy map. |
 | Warm isometric illustration (kitchen diorama) | Terracotta, mustard, teal, cream and olive. Dark brown ink, not black. Cosy clutter on the edges. | Paper grain and noisy texture |
-| Octopath Traveler (HD-2D) | Golden key light, god rays, deep vignette, tilt-shift blur, dust motes, contact shadows, blue sky with soft clouds, terraced land | Photoreal bloom, heavy blur over playable tiles |
+| Octopath Traveler (HD-2D) | Golden key light, god rays, deep vignette, tilt-shift blur, dust motes, contact shadows, soft clouds, terraced land | Photoreal bloom, heavy blur over playable tiles |
 | Stylised autumn arena (3D top-down) | Painted ground clumps, scattered fallen leaves, soft value steps on the floor | 3D shapes and perspective |
 | Pokemon HGSS / DPPt overworld | Coloured outlines (a dark shade of each fill, never black), small character detail, light rims and foam on terrain edges, rain | Its top-down camera and tile grid |
 
@@ -31,8 +31,12 @@ No third-party art or names. Everything is drawn in code.
 ## Geometry
 
 - Straight lines and true isometric angles (2:1) everywhere: boxes, hipped roofs, ground
-  decals, terrain borders, mountain ridges, rays.
-- Round shapes are allowed only where nature is round: leaf clumps, the sun, flowers.
+  decals, terrain borders, volcano slopes, rays.
+- One projection for the whole world. Nothing is a flat painted backdrop: the volcanoes, the islands
+  and the sea are drawn in the same isometric view as the kampung. There is no horizon and no sky,
+  since an isometric view has no vanishing point (playtest 2026-11-02: painted mountains and a sun
+  between them broke the isometric feel).
+- Round shapes are allowed only where nature is round: leaf clumps, clouds, flowers.
 - Build buildings from `Painter.box` and `Painter.roof`. Reach for a custom shape only when a box
   cannot say it.
 - Trees are sturdy: trunks at least 4 art pixels wide, crowns made of 2 or 3 overlapping clumps
@@ -54,9 +58,9 @@ No third-party art or names. Everything is drawn in code.
 - A line also runs wherever two faces, roof planes or clumps meet, in a 0.55x shade of the pixel's
   own colour, so each form reads as one clean shape. Details painted inside a face (windows,
   stripes, doors) share the face's id and get no line.
-- `INK` (`#2a1810`, a dark warm brown) is left for small dark features only: eyes, the sun's
-  face, contact shadows.
-- The sun's rim is a deep amber, `#8a4f12`. Selokan banks are a dark warm grey, `#4a4a44`.
+- `INK` (`#2a1810`, a dark warm brown) is left for small dark features only: eyes, contact
+  shadows.
+- Selokan banks are a dark warm grey, `#4a4a44`.
 - Set `p.bare = true` to skip the ink pass for flat or lattice art: selokan (it draws its own
   banks so neighbours join up), grass tufts, bamboo scaffolding, the staked plot of a building
   waiting for its permit.
@@ -120,7 +124,7 @@ Sprite keys live in `PALETTE` in `src/render/sprites.ts`. Use a key, not a new h
 | `t` | `#eac58f` | Plaster, skin-tone wood |
 | `r` / `R` | `#df4a2c` / `#a8321f` | Terracotta roofs, awnings, flag |
 | `o` | `#e57d2e` | Orange roofs, tukang parkir vest |
-| `y` / `a` | `#f4b935` / `#f2b43a` | Mustard accents, bamboo, sun |
+| `y` / `a` | `#f4b935` / `#f2b43a` | Mustard accents, bamboo |
 | `n` / `N` | `#a8652f` / `#603620` | Wood, trunks |
 | `g` / `G` | `#86b84c` / `#527f34` | Leaves (light, dark) |
 | `b` / `B` | `#3d72b4` / `#27427c` | Shop bands |
@@ -139,23 +143,20 @@ Scenery colours:
 | Sawah | `#9cc155` / `#86ab45` rows, ripe `#e8b440` / `#d39a32`, bunds `#8a5a32` |
 | Kebun, hutan | `#5f8a3c`, `#4a7334` |
 | Beach, sea | Sand `#e6c486` to `#f3daa2` with ripples, sea `#367f80` to `#4a9b96` with `#8fd0c2` wave dashes |
-| Sky | Golden hour: deep blue `#3f6fae` overhead, `#76a0cc`, a warm `#e2c8aa` band, gold `#f6ce94` at the horizon. Eight steps per stop, stepped through the 4x4 dither. No sunburst |
-| Cloud banks | Heaps of round puffs resting on the horizon behind the mountains, in separate banks with sky between: warm cream `#fff4dc` lit top left, `#f6dcc0`, `#e8c4b4`, dusty rose `#d2b0b4` in the shade. Flat undersides melt into the gold haze through the dither. Baked, no ink |
-| Clouds | Long thin streaks that taper at both ends: `#fbf8f2` top to `#c9c2d8` underside, no ink. Drawn per frame (`clouds()`): they slide slowly to and fro and twitch a pixel now and then |
-| Mountains | Twin low, broad volcanoes: concave slopes, blunt crater top, faint ravines, feet melting into haze `#d6dee2`. No ink. Three altitude zones meet through the ground's height-blended pick: the ash cap `#f1f0ec` to `#7689ad`, rock `#d8d4cc` to `#6d7387`, hazy forest `#a3bfa6` to `#517463`. Forest climbs the ravines and its feet run into the tree line |
-| Tree line | Soft rounded canopy in the horizon haze, `#88a894` / `#71927f`, only in front of the mountains. Past them it breaks into far islands, a few with a small cone, with open sea between, each with a pale sand line at the waterline |
-| Sea islands | Up to seven small islands on the open sea, never touching land: a lumpy two-lobed oval, foam ring, sand, grass and forest by height (the beach and grass colours), a short wet-sand bank on the near edge, round tree clumps. Smaller and hazier toward the horizon |
+| Clouds | Long thin streaks that taper at both ends: `#fbf8f2` top to `#c9c2d8` underside, no ink. They float over the open sea above the island's back corner, never over tiles. Drawn per frame (`clouds()`): they slide slowly to and fro and twitch a pixel now and then |
+| Volcanoes | Twin volcanoes on the island's back corner, part of the hills' corner-height mesh (`VOLCS` in `scenery.ts`), so they take the same facet light, tile grid line and coloured borders. Concave slopes, a blunt crater, shallow ravines. Materials by height: hutan on the skirts, tanah rock above, an ash cap `#cfccc6` to `#ecebe6` with dark cinders. They run down to the back beach and stop short of the ring road. Few trees, none on steep faces or behind a slope |
+| Sea | Open sea on every side and past the world's edges, the same sea texture everywhere. The back two edges of the island have a ragged beach with foam, like the front |
+| Sea islands | 15 to 18 islands of mixed sizes, never touching land or each other: rocks, sandbars, wooded islets and a few big hilly islands. Each is a small corner-height mesh on half-tile facets, lit and gridded like the hills, painted in the beach, grass, hutan and tanah materials with coloured borders, a foam ring and a wet-sand bank on the near side, and planted with the map's own palms, shade trees and bushes. No perspective shrink and no haze |
 | Hills | Lit triangle facets over corner heights (`cornerHeight`), a soft grid line on each tile edge (0.86 to 0.88 shade) |
 | Bare earth | The cliff strata `#7a4c2a`, `#8a5a32`, `#9a6236`, with rare stones `#bdb4a3` and `#6d635a`. Only on steep hill faces |
-| Haze | `#ced6c4`. Far land, the hill silhouette and the mountains' feet fade into it through a 4x4 ordered dither |
 
 Rules:
 
 - Warm first. Cool colours (teal, blue) are accents, never the main field.
 - Saturated, but not neon. If a colour glows on the dark UI, pull it toward cream or brown.
-- Far things fade toward the sky colour (aerial perspective), ink included.
-- Distance is the one place for dithering: the sky, haze, the hill silhouette, mountains, far islands and clouds blend
-  through a 4x4 ordered (Bayer) dither in a few flat steps. Sprites and near ground never dither.
+- No aerial perspective: an isometric view has no near and far, so a far island is drawn like a near one.
+- Clouds are the one place for dithering: their thin ends fade through a 4x4 ordered (Bayer) dither.
+  Sprites and ground never dither.
 - Ground texture uses clumps squashed 2:1, so they lie flat on the isometric plane.
 - The kampung is a raised block: where land meets the beach or the world's edge, a 7-pixel
   dirt cliff drops away. That gives the diorama its depth.
@@ -196,34 +197,32 @@ Layers, from the ground up (`src/render/map.ts`, `src/render/atmosphere.ts`):
    - On the map: a soft brown contact shadow pools under every standing building (not selokan,
      parkir or jalan).
    - Sprites also cast a flat ink shadow at 35% to the right.
-2. **Sun halo.** A warm radial glow behind the sun, like light blooming through haze.
-3. **Warm grade.** A gradient that is golden from the top left and warm dark toward the bottom
+2. **Warm grade.** A gradient that is golden from the top left and warm dark toward the bottom
    right.
-4. **God rays.** Five soft diagonal shafts from the top left. They dim at dusk and vanish at night.
-5. **Vignette.** A deep warm-brown radial vignette, so the kampung reads as a diorama under a
+3. **God rays.** Five soft diagonal shafts from the top left. They dim at dusk and vanish at night.
+4. **Vignette.** A deep warm-brown radial vignette, so the kampung reads as a diorama under a
    lamp. It deepens at night.
 
-   Layers 3 to 5 are baked into one cached canvas with plain alpha, and a night version holds just
+   Layers 2 to 4 are baked into one cached canvas with plain alpha, and a night version holds just
    the deeper vignette. A frame draws one full-screen blit. Never use per-frame blend modes such
    as `soft-light` or `screen` over the whole view: they cost about 8 ms a frame and fail the
    frame-rate test on slow machines.
-6. **Dust motes and leaves.** 28 soft warm motes drift up and to the right by day. At night they
+5. **Dust motes and leaves.** 28 soft warm motes drift up and to the right by day. At night they
    become blinking green-yellow fireflies. Ten outlined leaves tumble down on the breeze.
-7. **Night tint, then lit windows.** Lit windows draw above the tint.
-8. **Weather.** Rain streaks, ground ripples and the shower's cool dim draw above the night tint,
+6. **Night tint, then lit windows.** Lit windows draw above the tint.
+7. **Weather.** Rain streaks, ground ripples and the shower's cool dim draw above the night tint,
    so rain still shows after dark. Shore splashes draw here too (`src/render/weather.ts`).
-9. **Tilt-shift.** The top 20% of the map gets a 1.5px backdrop blur that fades out downward
+8. **Tilt-shift.** The top 20% of the map gets a 1.5px backdrop blur that fades out downward
    (`#dof` in `style.css`). Never blur the tiles players tap.
 
 Badges, pops and the ghost outline draw above every lighting layer so text stays readable.
 
-Effects off (or reduce motion) turns off layers 3 to 9. Ambient occlusion and the halo stay, so
-the map still has depth.
+Effects off (or reduce motion) turns off layers 2 to 8. Ambient occlusion stays, and so do the
+volcanoes and hills, so the map still has depth.
 
 ## Motion
 
-- Ambient loops follow **reduce motion**: the sun bobs 2 art pixels and blinks every 3.2 s, with a
-  quick double blink every third time. Trees bounce in a slow wave across the map, stretching at
+- Ambient loops follow **reduce motion**: clouds drift over the sea. Trees bounce in a slow wave across the map, stretching at
   most 1 art pixel from the roots. Walkers stroll.
 - Particles, coins, lighting layers, motes, weather and night follow **effects**.
 - Weather: a rain shower comes every 60 to 150 s (the first after 25 to 60 s), lasts 15 to 30 s
@@ -238,7 +237,7 @@ the map still has depth.
 
 Faces are where the Bishi Bashi cheek lives. Keep them simple: oval ink eyes with a one-pixel
 sparkle, rosy cheeks (`#f07f86`), an open smile with a pink tongue. Blinks are happy closed
-arcs (^ ^). Only give a face to things that earn the joke (the sun today). Buildings stay
+arcs (^ ^). Only give a face to things that earn the joke. Buildings stay
 faceless, so the map stays readable.
 
 ## Building levels
@@ -307,13 +306,12 @@ control map and index-map shader (`src/render/terrain.ts`, `controlAt` and `grou
   corner heights, drawn back to front, with a soft grid line along every tile edge, like an old
   train-and-city builder's map. The kampung, the ring road, the front sawah and the coast stay flat,
   so plots, taps and the beach cliff never change.
-- Toward the mountains the hills carry terraces: kebun teh on the left, sawah terasering on the
+- Toward the volcanoes the hills carry terraces: kebun teh on the left, sawah terasering on the
   right. Each terrace is a band of the real hill height. Its riser is a lit rim over a dark line,
   steps alternate light and dark, and slopes facing the top left are lit.
 - Trees stand on the hill surface. Palms and pisang keep to the low kebun by the ring road, shade
   trees gather in groves on hilltops, and steep faces stay bare so the hills read. The steepest
-  faces show bare earth (see Ground materials). Far tree clumps
-  and three tiny hamlets sit in the haze along the hilltops.
+  faces show bare earth (see Ground materials).
 - Menu icons sit on a cream bevelled plate, like the tool panel of an old isometric city builder.
   Panels about the kampung show a tiny scene drawn with the map's own sprites. Abstract ones show
   their glyph in dark ink with a brick-red accent.
