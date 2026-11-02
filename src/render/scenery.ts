@@ -12,8 +12,8 @@ import { autoBlend, baseOf, blendOf, encodeControl, pickMaterial } from './terra
 export const SEA = '#3f8f8c';
 
 /** World extent in tiles, beyond the buildable grid. */
-const XMIN = -12;
-const YMIN = -12;
+const XMIN = -16;
+const YMIN = -16;
 /** Sea above the world's top corner, for the volcano peaks and the islands behind the kampung. */
 const HEAD = 230;
 
@@ -143,10 +143,10 @@ function volcano(a: number, b: number): { h: number; f: number } {
   let best = { h: 0, f: 0 };
   for (const v of VOLCS) {
     // Option a: long concave aprons that reach out to the shore.
-    const d = Math.hypot(a - v.a, b - v.b) / (v.r * (SLOPE === 'a' ? 1.5 : 1));
+    const d = Math.hypot(a - v.a, b - v.b) / (v.r * (SLOPE === 'a' ? 1.9 : 1));
     if (d >= 1) continue;
-    const crater = SLOPE === 'a' ? 0.09 : 0.13;
-    let p = (1 - Math.max(0, d - crater) / (1 - crater)) ** (SLOPE === 'a' ? 2.5 : 1.6);
+    const crater = SLOPE === 'a' ? 0.07 : 0.13;
+    let p = (1 - Math.max(0, d - crater) / (1 - crater)) ** (SLOPE === 'a' ? 2.8 : 1.6);
     if (d < crater * 0.8) p -= 0.06;
     // Ravines: shallow creases running down from the rim.
     p *= 1 - 0.07 * (1 - Math.abs(vnoise(Math.atan2(b - v.b, a - v.a) * 6 + 40, 3, 1) * 2 - 1)) * Math.min(1, d * 3);
@@ -255,23 +255,26 @@ export function cornerHeight(vx: number, vy: number): number {
         const edge = smooth((-coastAt(x, y) - 2) / 4);
         const n = vnoise(x + 40, y + 40, 4) * 0.7 + vnoise(x + 7, y + 90, 2) * 0.3;
         const inland = Math.max(0, -coastAt(x, y));
-        // Option b: the land climbs from the shore in four gentle benches, each a smoothed step.
-        const k = inland / 1.6;
-        const bench = Math.min(1, (Math.floor(k) + smooth((k - Math.floor(k) - 0.5) / 0.5)) / 4);
         let hill = HILL_MAX * rise * edge * (0.2 + 0.8 * n);
         let volc = volcano(x, y).h * smooth((-coastAt(x, y) + 0.5) / 2) * smooth(out / 2);
         if (SLOPE === 'a') {
-          hill = HILL_MAX * rise * smooth(inland / 6) * (0.2 + 0.8 * n);
-          volc = volcano(x, y).h * smooth(inland / 6) * smooth(out / 2);
+          // Option a: the cones' long concave aprons reach right down to the beach.
+          hill = HILL_MAX * rise * smooth(inland / 5) * (0.2 + 0.8 * n);
+          volc = volcano(x, y).h * smooth(inland / 3.5) * smooth(out / 2);
         } else if (SLOPE === 'b') {
-          hill = HILL_MAX * rise * bench * (0.2 + 0.8 * n);
-          volc = volcano(x, y).h * bench * smooth(out / 2);
+          // Option b: the land climbs from the shore in four benches of 14px, each a short riser and
+          // a level shelf running parallel to the coast; hills and the volcanoes sit on top.
+          const k = inland / 1.8;
+          const steps = Math.min(4, Math.floor(k) + smooth((k - Math.floor(k) - 0.7) / 0.3));
+          const base = 14 * steps * smooth(out / 12); // behind the ring road only, so the kampung side stays flat
+          hill = base + HILL_MAX * 0.6 * rise * smooth(inland / 5) * n;
+          volc = base + volcano(x, y).h * 0.8 * smooth(inland / 3) * smooth(out / 2);
         } else if (SLOPE === 'c') {
           // Option c: the whole back of the island is one massif rising steadily from every shore,
           // the hills rolling on it and the volcanoes standing on top.
-          const base = 34 * smooth(inland / 7) * smooth(out / 3);
-          hill = base + HILL_MAX * 0.55 * rise * smooth(inland / 5) * n;
-          volc = base + volcano(x, y).h * 0.85 * smooth(inland / 5) * smooth(out / 2);
+          const base = 64 * Math.min(1, inland / 11) ** 1.2 * smooth(out / 12);
+          hill = base + HILL_MAX * 0.35 * rise * smooth(inland / 5) * n;
+          volc = base + volcano(x, y).h * 0.75 * smooth(inland / 4) * smooth(out / 2);
         }
         const m = Math.max(hill, volc);
         const K = 0.15;
