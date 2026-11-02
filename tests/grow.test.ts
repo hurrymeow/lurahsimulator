@@ -352,8 +352,8 @@ describe('RW goals and Stempel', () => {
     s.stempel.backlog = 9;
     s.res.sabar = 60;
     step(s);
-    // 3 stamps clear 3 letters, 6 wait and drain half a Sabar each.
-    expect(s.stempel.backlog).toBe(6);
+    // 1 stamp clears 1 letter, 8 wait and drain half a Sabar each.
+    expect(s.stempel.backlog).toBe(8);
     expect(s.stempel.clear).toBe(0);
     expect(s.res.sabar).toBeLessThan(60);
   });
@@ -367,7 +367,7 @@ describe('RW goals and Stempel', () => {
     s.stempel.stock = 0;
     s.buildings.push({ uid: 999, def: 'balaiRW', x: 2, y: 2, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
     step(s);
-    expect(s.stempel.backlog).toBe(16);
+    expect(s.stempel.backlog).toBe(18);
     expect(s.stempel.clear).toBe(0);
   });
 
@@ -393,7 +393,8 @@ describe('RW goals and Stempel', () => {
     fundNeighbour(s, s.neighbours[0]);
     s.stempel.stock = 0;
     step(s);
-    expect(s.stempel.backlog).toBe(Math.max(0, 2 - 3));
+    // 2 letters a build, doubled, less the 1 stamp of the month.
+    expect(s.stempel.backlog).toBe(4 - 1);
     expect(s.neighbours[0].buildings.length).toBeGreaterThan(2);
   });
 

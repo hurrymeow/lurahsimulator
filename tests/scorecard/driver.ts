@@ -196,6 +196,8 @@ function answerEvent(c: Ctx, mode: EventMode): void {
   const e = eventDef(s.pendingEvent);
   let pick = 0;
   if (mode === 'paid' && e) for (let i = e.choices.length - 1; i > 0; i--) if (resolvable(s, e.choices[i])) { pick = i; break; }
+  // Tim Audit: anyone chasing the clean-audit goal pays for it. Showing everything is clean only with no stale wacana.
+  if (e && s.pendingEvent === 'timAudit' && s.kel.cleanAudits < 1 && resolvable(s, e.choices[1])) pick = 1;
   resolveEvent(s, c.fx, pick);
   c.acts++;
 }
