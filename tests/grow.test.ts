@@ -313,6 +313,20 @@ describe('save', () => {
     expect(back.neighbours).toEqual([]);
     expect([GRID_W, GRID_H]).toEqual([RT_W, RT_H]);
   });
+
+  it('loads a version 3 RT save as version 4', () => {
+    const raw = JSON.parse(serialize(newGame(1)));
+    raw.version = 3;
+    const back = deserialize(JSON.stringify(raw))!;
+    expect(back.version).toBe(4);
+    expect(back.stage.current).toBe('rt');
+  });
+
+  it('refuses a version 3 save past the RT', () => {
+    const raw = JSON.parse(serialize(grown()));
+    raw.version = 3;
+    expect(deserialize(JSON.stringify(raw))).toBeNull();
+  });
 });
 
 describe('RW goals and Stempel', () => {

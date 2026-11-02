@@ -15,7 +15,10 @@ export function deserialize(raw: string | null): GameState | null {
   if (!raw) return null;
   try {
     const s = JSON.parse(raw) as GameState;
-    if (!s || (s.version !== SAVE_VERSION)) return null;
+    if (!s || (s.version !== 3 && s.version !== SAVE_VERSION)) return null;
+    // The map shrank (docs/plans/smaller-map.md). A v3 save past the RT cannot carry its AI RTs over, so the player is asked to start anew.
+    if (s.version === 3 && s.stage?.current !== 'rt') return null;
+    if (s.version === 3) s.version = SAVE_VERSION;
     // The Desa path was cut. Its saves cannot load, so the player is asked to start anew.
     if ((s.stage?.path as string | undefined) === 'desa') return null;
     if (!Array.isArray(s.buildings) || !Array.isArray(s.residents) || typeof s.res?.rupiah !== 'number') return null;
