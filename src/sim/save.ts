@@ -75,11 +75,11 @@ function mendPaths(s: GameState): void {
 
 /** The seams used to take each RT's last row and column. They now sit between cells, so a grown map moves its tiles apart. */
 function ungap(s: GameState): void {
-  const span = STAGE_SPAN[s.stage.current];
-  if (span > 1) {
+  const { w, h } = STAGE_SPAN[s.stage.current];
+  if (w > 1) {
     for (const b of [...s.buildings, ...s.neighbours.flatMap((n) => n.buildings)]) {
-      b.x = ungapTile(b.x, RT_W, span);
-      b.y = ungapTile(b.y, RT_H, span);
+      b.x = ungapTile(b.x, RT_W, w);
+      b.y = ungapTile(b.y, RT_H, h);
     }
   }
   s.gapped = true;
