@@ -221,13 +221,10 @@ export function checkTakeover(s: GameState, n: Neighbour): string | null {
 }
 
 /**
- * The player takes an RT over: its buildings join the player's, its warga become the player's residents, and any
- * banked Dana comes back to the kas. Its stars, ranking and combos stay with the RT.
+ * Moves an RT's buildings and warga into the player's, and pays back any banked Dana. Its stars, ranking and combos
+ * stay with the RT.
  */
-export function takeover(s: GameState, n: Neighbour): string | null {
-  const why = checkTakeover(s, n);
-  if (why) return why;
-  s.res.orangDalam -= NEIGHBOUR.takeoverOd;
+function joinPlayer(s: GameState, n: Neighbour): void {
   s.res.rupiah += fundCost(s) * n.funded;
   s.buildings.push(...n.buildings);
   for (let i = 0; i < n.pop; i++) addResident(s);
@@ -243,7 +240,24 @@ export function takeover(s: GameState, n: Neighbour): string | null {
   // Its buildings were laid out by the AI, so link any that a path does not reach.
   s.roadsLaid = false;
   layRoads(s);
+}
+
+/**
+ * The player takes an RT over: its buildings join the player's, its warga become the player's residents, and any
+ * banked Dana comes back to the kas. Its stars, ranking and combos stay with the RT.
+ */
+export function takeover(s: GameState, n: Neighbour): string | null {
+  const why = checkTakeover(s, n);
+  if (why) return why;
+  s.res.orangDalam -= NEIGHBOUR.takeoverOd;
+  joinPlayer(s, n);
   return null;
+}
+
+/** Joins an RT to the player at promotion: no Orang Dalam cost, and it can never be handed back. */
+export function absorb(s: GameState, n: Neighbour): void {
+  if (n.run !== 'player') joinPlayer(s, n);
+  n.absorbed = true;
 }
 
 /**
@@ -251,7 +265,7 @@ export function takeover(s: GameState, n: Neighbour): string | null {
  * warga as its houses hold leave the player's list with it. Staff stay with the player.
  */
 export function handBack(s: GameState, n: Neighbour): void {
-  if (n.run !== 'player') return;
+  if (n.absorbed || n.run !== 'player') return;
   const mine = s.buildings.filter((b) => inCell(n, b));
   s.buildings = s.buildings.filter((b) => !inCell(n, b));
   for (const b of mine) {

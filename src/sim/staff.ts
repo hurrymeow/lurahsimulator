@@ -368,14 +368,14 @@ export function answerRaise(s: GameState, x: Staff, accept: boolean): void {
   else x.refused = true;
 }
 
-/** AI RTs that can take a Ketua RT. */
-export const mutasiTargets = (s: GameState) => s.neighbours.map((n, i) => ({ n, i }));
+/** AI RTs that can take a Ketua RT. Absorbed RTs stay out, each with its index in `s.neighbours`. */
+export const mutasiTargets = (s: GameState) => s.neighbours.map((n, i) => ({ n, i })).filter(({ n }) => !n.absorbed);
 
 export function checkMutasi(s: GameState, x: Staff): CheckResult {
   const missing: string[] = [];
   if (x.inem) missing.push(t('staff.inemStays'));
   if (x.stars < MUTASI.stars || x.level < MUTASI.level) missing.push(t('staff.mutasiNeeds', { stars: MUTASI.stars, level: MUTASI.level }));
-  if (!s.neighbours.length) missing.push(t('staff.mutasiNoRt'));
+  if (!mutasiTargets(s).length) missing.push(t('staff.mutasiNoRt'));
   return missing.length ? { ok: false, missing } : { ok: true };
 }
 

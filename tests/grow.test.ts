@@ -3,7 +3,7 @@ import { cellOf, cellOrigin, lotAt, rwOf, ungapTile } from '../src/sim/area';
 import { goalProgress, nextStarChecklist } from '../src/sim/stages';
 import { viewOf } from '../src/sim/neighbourView';
 import { FLAT, connectedRoad, hasRoadBeside } from '../src/sim/access';
-import { nextWant, rivalTarget, lotFull, builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, neighboursSystem, promote, setAutoFund, takeover } from '../src/sim/grow';
+import { absorb, nextWant, rivalTarget, lotFull, builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, neighboursSystem, promote, setAutoFund, takeover } from '../src/sim/grow';
 import { NEIGHBOUR } from '../src/sim/balance';
 import { checkPlace, siteGaps } from '../src/sim/rules';
 import { def } from '../src/sim/content';
@@ -674,6 +674,73 @@ describe('handing an RT back', () => {
       for (let x = o.x; x < o.x + RT_W; x++)
         if (!n.buildings.some((b) => b.x === x && b.y === y)) n.buildings.push({ uid: s.nextUid++, def: 'rumah', x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
     expect(lotFull(n)).toBe(true);
+  });
+});
+
+describe('absorbing an RT', () => {
+  const ready = () => {
+    const s = grown();
+    s.stage.current = 'rw';
+    s.res.rupiah = 1e9;
+    return s;
+  };
+
+  it('costs no Orang Dalam and refunds banked Dana', () => {
+    const s = ready();
+    const n = s.neighbours[0];
+    s.res.orangDalam = 0;
+    fundNeighbour(s, n, 6);
+    const kas = s.res.rupiah;
+    absorb(s, n);
+    expect(s.res.orangDalam).toBe(0);
+    expect(s.res.rupiah).toBe(kas + fundCost(s) * 6);
+    expect(n.funded).toBe(0);
+    expect(n.run).toBe('player');
+    expect(n.absorbed).toBe(true);
+  });
+
+  it('moves its buildings and warga to the player, and keeps its stars', () => {
+    const s = ready();
+    const n = s.neighbours[0];
+    n.stars = 2;
+    const theirs = n.buildings.map((b) => b.uid);
+    const pop = population(s);
+    const warga = n.pop;
+    absorb(s, n);
+    expect(n.buildings).toHaveLength(0);
+    for (const uid of theirs) expect(s.buildings.some((b) => b.uid === uid)).toBe(true);
+    expect(n.pop).toBe(0);
+    expect(population(s)).toBe(pop + warga);
+    expect(n.stars).toBe(2);
+  });
+
+  it('works on an RT the player already took over', () => {
+    const s = ready();
+    s.res.orangDalam = 10;
+    const n = s.neighbours[0];
+    takeover(s, n);
+    const mine = s.buildings.length;
+    const pop = population(s);
+    const kas = s.res.rupiah;
+    absorb(s, n);
+    expect(n.absorbed).toBe(true);
+    expect(s.buildings).toHaveLength(mine);
+    expect(population(s)).toBe(pop);
+    expect(s.res.rupiah).toBe(kas);
+  });
+
+  it('can never be handed back once absorbed', () => {
+    const s = ready();
+    const n = s.neighbours[0];
+    absorb(s, n);
+    const mine = s.buildings.length;
+    const pop = population(s);
+    handBack(s, n);
+    expect(n.run).toBe('player');
+    expect(n.absorbed).toBe(true);
+    expect(n.buildings).toHaveLength(0);
+    expect(s.buildings).toHaveLength(mine);
+    expect(population(s)).toBe(pop);
   });
 });
 
