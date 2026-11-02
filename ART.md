@@ -41,12 +41,15 @@ No third-party art or names. Everything is drawn in code.
   cannot say it.
 - Trees are sturdy: trunks at least 4 art pixels wide, crowns made of 2 or 3 overlapping clumps
   or at least 3-pixel-thick fronds (`Painter.leaf`). No 1-pixel stems.
-- Scenery trees (the woods round the kampung and on the islands, not a tree the player builds) are
-  the one sprite drawn smaller: the same art resampled once on whole art pixels, nearest pixel, so the
-  land can be thickly wooded (`smallTree` in `map.ts`, playtest 2026-11-02). Palms (kelapa) are all
-  70%; every other scenery tree has its own size from 50% to 90% in 5% steps, so a stand of woods
-  reads as old and young trees together. The view still scales them by a whole number. Their trunks
-  come out 2 to 4 pixels wide.
+- Scenery trees (the woods, plantations and islands round the kampung, not a tree the player builds)
+  are their own small sprites, drawn natively at their size in `scenery-trees.ts` with the same
+  outline and cel rules, never a shrunk copy of the buildable tree. Palms (kelapa) are 35% of a
+  buildable tree's height, oil palms (sawit) 36% to 40%, every other kind 25% to 45%, so the woods
+  read as old and young trees together. The shade tree (pohon) is a canopy tree, not a ball: a short
+  forked trunk under two or three flat, ragged tiers of leaves, each lit on its top left with a dark
+  underside. Up to five stand on a tile. Trees more than two tiles from the ring road are baked into
+  the world canvas and hold still; only those by the road sway. Their trunks are 1 to 2 pixels wide,
+  the one exception to the sturdy-trunk rule above (playtest 2026-11-02).
 - Big buildings read wide, not tall. A 2x2 building is no taller than a 1x1 of its tier: its size
   shows as width, a long low roof and a deep front, never as a house scaled up (playtest
   2026-11-01: Gudang Material and Koperasi looked like a Rumah blown up). The same goes for 1x2 and
@@ -151,6 +154,8 @@ Scenery colours:
 | Beach, sea | Sand `#e6c486` to `#f3daa2` with ripples, sea `#367f80` to `#4a9b96` with `#8fd0c2` wave dashes |
 | Clouds | Long thin streaks that taper at both ends: `#fbf8f2` top to `#c9c2d8` underside, no ink. They float over the open sea above the island's back corner, never over tiles. Drawn per frame (`clouds()`): they slide slowly to and fro and twitch a pixel now and then |
 | Volcanoes | Twin volcanoes on the island's back corner (`VOLCS` in `scenery.ts`), part of the same corner-height mesh as the hills: lit triangle facets with the soft tile grid line, joined to the hills by a soft maximum so the skirts flow into the slopes round them. Concave cones with shallow ravines. Materials follow each pixel's height: the hill's own ground at the foot, then forest (hutan), bare rock (tanah), and an ash cap `#b4aea6` to `#cac4bb` with dark cinders. Tiers blend through the 4x4 dither across a band of height. Texture on the cone is sampled on screen, not on the flat world, so the steep slope is not streaked. They run down to the beach and stop short of the ring road. The forest belt is wooded like the hills; rock, ash and anything behind a slope stay bare. The cones' long concave aprons reach the beach, so the land climbs from the sand to the crater with no flat ledge |
+| Hutan sawit | Oil-palm plantation blocks of 3x3 to 5x4 tiles on the volcanoes' lower aprons, up to eight: kebun ground with a packed-dirt track every fourth row, four oil palms per tile in a straight lattice. Oil palms are dark, with a stout shaggy trunk, a round rosette of stiff arching fronds and an orange fruit bunch |
+| Poles and cables | PLN poles every three tiles on the outer edge of the ring road, 26px tall with a crossarm and four cream insulators. Leaning wooden poles at RT, grey concrete poles with a blue number plate and step bolts from RW, and a black fibre bundle on top from Kelurahan. Each span carries four dark wires (`#2f2a26` to `#453c34`) sagging by their own amounts, often a loose low loop, and now and then a layangan caught by its tail, a single sandal or a row of birds. Poles carry the odd junction box or cable coil. Back spans draw behind the buildings, front spans in front. Spans sway a pixel with reduce motion off |
 | Sea | Open sea on every side and past the world's edges, the same sea texture everywhere |
 | Coast | The main island is no diamond: each side's coastline wanders in bays and headlands of a few tiles (`coastAt` in `scenery.ts`) and the four corners are rounded. A beach with foam runs all the way round. The front sides only wander outward, so the sawah, the ring road and the neighbours' roofs stay on land |
 | Sea islands | 15 to 18 islands of mixed sizes, never touching land or each other: rocks, sandbars, wooded islets and a few big hilly islands. Each is a small corner-height mesh on half-tile facets, lit and gridded like the hills, painted in the beach, grass, hutan and tanah materials with coloured borders, a foam ring and a wet-sand bank on the near side, and wooded as thickly as the main island with the map's own shade trees, bushes and palms. No perspective shrink and no haze |

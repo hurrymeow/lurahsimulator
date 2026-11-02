@@ -4,6 +4,7 @@ import { sizeOf, tilesOf, type Placed } from '../sim/state';
 import { sizeFor } from '../sim/content';
 import { GRID_H, GRID_W, RT_H, RT_W, type Building, type GameState, type ResourceId } from '../sim/types';
 import { Atmosphere } from './atmosphere';
+import { drawCables } from './cables';
 import { drawBunting, drawUmbul } from './agustus';
 import { agustusan } from '../sim/lomba';
 import { permitEta, queueBerkas } from '../sim/staff';
@@ -13,7 +14,7 @@ import { t } from '../i18n';
 import { Crowd } from './people';
 import { Weather } from './weather';
 import { placeBadge, type BadgeBox } from './badge';
-import { buildWorld, clouds, decoAt, farRoofs, layoutWorld, ringArt, ringBlocks, ringShown, RING_EXT, RING_SIDE, setRing, type DistrictId, shorePoints, SEA, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
+import { buildWorld, clouds, smallTree, decoAt, farRoofs, layoutWorld, ringArt, ringBlocks, ringShown, RING_EXT, RING_SIDE, setRing, type DistrictId, shorePoints, SEA, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
 import { ICONS, ROOF_COLOURS, ROOF_SHAPES, WALL_COLOURS, sprite } from './sprites';
 
 /** Resource colours for page elements: CSS variables, so they follow the Light or Dark theme. */
@@ -52,45 +53,6 @@ function contactShadow(): HTMLCanvasElement {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 128, 128);
   return (aoCache = c);
-}
-
-/**
- * Scenery trees round the kampung are drawn smaller than buildable trees, so the land can be thickly
- * wooded: palms at 70%, every other tree at its own size from 50% to 90% (Tree.scale).
- */
-const smallTrees = new Map<string, { canvas: HTMLCanvasElement; dx: number; dy: number; anchor: number }>();
-
-/**
- * A scenery tree's sprite, resampled once to a size on whole art pixels (nearest pixel, so the
- * palette and crisp edges stay), with its offset from the full sprite's top-left so the roots stay put.
- * The view still scales it by a whole number.
- */
-function smallTree(name: string, scale: number): { canvas: HTMLCanvasElement; dx: number; dy: number; anchor: number } {
-  const key = `${name}@${scale}`;
-  const hit = smallTrees.get(key);
-  if (hit) return hit;
-  const src = iso(name).canvas;
-  const w = Math.max(1, Math.round(src.width * scale));
-  const h = Math.max(1, Math.round(src.height * scale));
-  const from = src.getContext('2d')!.getImageData(0, 0, src.width, src.height);
-  const c = document.createElement('canvas');
-  c.width = w;
-  c.height = h;
-  const ctx = c.getContext('2d')!;
-  const to = ctx.createImageData(w, h);
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
-      const sx = Math.min(src.width - 1, Math.floor((x + 0.5) / scale));
-      const sy = Math.min(src.height - 1, Math.floor((y + 0.5) / scale));
-      const i = (sy * src.width + sx) * 4;
-      to.data.set(from.data.subarray(i, i + 4), (y * w + x) * 4);
-    }
-  ctx.putImageData(to, 0, 0);
-  // Roots sit at the middle of the ground anchor row; keep that point where it was.
-  const anchor = TOP + TH / 2;
-  const out = { canvas: c, dx: Math.round(src.width / 2 - w / 2), dy: Math.round(anchor - anchor * scale), anchor: Math.round(anchor * scale) };
-  smallTrees.set(key, out);
-  return out;
 }
 
 interface Pop {
@@ -566,6 +528,8 @@ export class MapView {
     const sh = Math.min(WORLD_H - sy, Math.ceil(this.viewH / sc) + 2);
     if (sw > 0 && sh > 0) ctx.drawImage(this.drawWorld(), sx, sy, sw, sh, wx + sx * sc, wy + sy * sc, sw * sc, sh * sc);
     this.drawBackdrop(ctx, wx, wy, world);
+    // Poles and cables on the back of the ring road stand behind every building.
+    drawCables(ctx, s.stage.current, false, wx, wy, sc, this.viewW, this.viewH, world, this.motion);
     // The other Kelurahan of the Kecamatan: one low-detail block each, past the ring road.
     for (const r of ringBlocks()) {
       const art = ringArt(r.id);
@@ -750,6 +714,8 @@ export class MapView {
 
     decoUntil(Infinity, 0);
     this.crowd.drawUntil(ctx, Infinity, this.project, sc, world, this.motion && !this.frozen);
+    // The front of the ring road's poles and cables stand in front of every building.
+    drawCables(ctx, s.stage.current, true, wx, wy, sc, this.viewW, this.viewH, world, this.motion);
     this.fx.drawPuffs(ctx, this.project, sc, now, (fx, fy) => {
       const k = Math.floor(fy) * GRID_W + Math.floor(fx);
       return this.project(fx, fy).y - (tops.get(k) ?? this.project(fx, fy).y);
@@ -888,7 +854,7 @@ export class MapView {
 
     // Scenery trees at their own sizes; the stretch grows upward from the roots.
     for (const tree of worldTrees()) {
-      const art = smallTree(tree.name, tree.scale);
+      const art = smallTree(tree.name, tree.scale, (tree.tx * 7 + tree.ty * 3 + Math.round(tree.x)) & 3);
       const left = wx + (tree.x + art.dx) * s;
       const top = wy + (tree.y + art.dy) * s;
       const w = art.canvas.width * s;

@@ -3,6 +3,7 @@
 import { isSeam } from '../sim/area';
 import { GRID_H, GRID_W } from '../sim/types';
 import { Painter, TH, TOP, TW, type Art } from './iso';
+import { sceneryTree, type SceneryTreeName } from './scenery-trees';
 import { autoBlend, baseOf, blendOf, encodeControl, pickMaterial } from './terrain';
 
 // Painterly ground (clumped grass, dirt with pebbles, fallen leaves) with coloured edges where land
@@ -117,6 +118,7 @@ export function layoutWorld(): void {
   macros = null;
   cloudList = null;
   placeKnolls();
+  placeSawit();
 }
 
 type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' | 'teh' | 'teras' | 'tanah' | 'abu' | 'batu';
@@ -137,6 +139,43 @@ const VOLCS = [
  * a, b: centre tile; r: foot radius in tiles; h: height in art pixels; s: squash and turn.
  */
 let knolls: { a: number; b: number; r: number; h: number; sx: number; rot: number }[] = [];
+/**
+ * Hutan sawit: oil-palm plantation blocks on the lower aprons round the volcanoes' feet, tile-aligned
+ * rectangles planted in straight rows with a dirt track every few rows (see terrain and worldTrees).
+ */
+let sawit: { x: number; y: number; w: number; h: number }[] = [];
+function placeSawit(): void {
+  sawit = [];
+  const fits = (x: number, y: number, w: number, h: number) => {
+    if (sawit.some((o) => x < o.x + o.w + 1 && o.x < x + w + 1 && y < o.y + o.h + 1 && o.y < y + h + 1)) return false;
+    let apron = 0;
+    for (let ty = y; ty < y + h; ty++)
+      for (let tx = x; tx < x + w; tx++) {
+        const f = volcano(tx + 0.5, ty + 0.5).f;
+        if (f > 0.02) apron++;
+        const steep = Math.abs(cornerHeight(tx + 1, ty + 1) - cornerHeight(tx, ty)) > 20 || Math.abs(cornerHeight(tx + 1, ty) - cornerHeight(tx, ty + 1)) > 20;
+        if (exact(tx, ty) || exact(tx - 1, ty - 1) || coastAt(tx + 0.5, ty + 0.5) > -0.8 || f > 0.36 || steep || knoll(tx + 0.5, ty + 0.5).d < 1.2 || inRing(tx, ty)) return false;
+      }
+    // Mostly on the volcanoes' lower aprons, round their feet.
+    return apron * 2 >= w * h;
+  };
+  // Scan the land round the volcanoes in a hashed order and keep the blocks that fit, up to eight.
+  const cands: [number, number, number, number, number][] = [];
+  for (const v of VOLCS)
+    for (let y = Math.floor(v.b - v.r * 2); y <= v.b + v.r * 2; y++)
+      for (let x = Math.floor(v.a - v.r * 2); x <= v.a + v.r * 2; x++) {
+        const w = 3 + Math.floor(hash(x, y + 40) * 3);
+        const h = 3 + Math.floor(hash(x + 9, y) * 2);
+        cands.push([hash(x * 3, y * 7), x, y, w, h]);
+      }
+  for (const [, x, y, w, h] of cands.sort((p, q) => p[0] - q[0])) {
+    if (sawit.length >= 8) break;
+    if (fits(x, y, w, h)) sawit.push({ x, y, w, h });
+  }
+}
+/** The plantation block a tile is in, or null. */
+const sawitAt = (tx: number, ty: number) => sawit.find((o) => tx >= o.x && ty >= o.y && tx < o.x + o.w && ty < o.y + o.h) ?? null;
+
 /** Knolls that reach each tile, keyed by tile, so a pixel only tests the few near it. */
 const knollsAt = new Map<number, number[]>();
 const tileKey = (tx: number, ty: number) => (tx + 512) * 1024 + ty + 512;
@@ -239,6 +278,9 @@ function terrain(tx: number, ty: number): Terrain {
   const coast = coastAt(tx, ty) + (hash(tx, ty) - 0.5) * 0.6;
   if (coast > 0.7) return 'sea';
   if (coast > -0.3) return 'beach';
+  // Oil-palm plantation: kebun ground under the rows, a dirt track every fourth row.
+  const plot = sawitAt(tx, ty);
+  if (plot) return (tx - plot.x) % 4 === 3 ? 'road' : 'kebun';
   // Forest on the volcanoes; rock and ash take over up the cone per pixel (see buildWorld).
   if (volcano(tx + 0.5, ty + 0.5).h > 9) return 'hutan';
   if (tx > GRID_W || ty > GRID_H) return 'sawah';
@@ -790,6 +832,14 @@ export function buildWorld(): HTMLCanvasElement {
 
   isoIslands(img, land, depth);
   ctx.putImageData(img, 0, 0);
+  // The far woods are baked into the world: they stand behind every tree near the kampung, so
+  // painting them once here keeps the per-frame tree count low on big maps. They hold still.
+  trees = null;
+  worldTrees();
+  for (const tree of bakedTrees) {
+    const art = smallTree(tree.name, tree.scale, (tree.tx * 7 + tree.ty * 3 + Math.round(tree.x)) & 3);
+    ctx.drawImage(art.canvas, tree.x + art.dx, tree.y + art.dy);
+  }
 
   return c;
 }
@@ -966,7 +1016,7 @@ function drawIsle(img: ImageData, land: Uint8Array, depth: Float32Array, I: Isle
             const kk = y * WORLD_W + x;
             if (land[kk] && land[kk] !== 7 && land[kk] !== 13 && depth[kk] > a + b) return;
           }
-        isleTrees.push({ tree: { name, tx: Math.floor(a), ty: Math.floor(b), x: tx0, y: ty0, scale: treeScale(name, Math.floor(a * 97) + Math.floor(b * 31) + k) }, d: a + b });
+        isleTrees.push({ tree: { name, tx: Math.floor(a), ty: Math.floor(b), x: tx0, y: ty0, scale: treeScale(name, Math.floor(a * 97) + Math.floor(b * 31) + k), island: true }, d: a + b });
       });
     }
   for (const k of keys) rank[k] = 0;
@@ -1056,10 +1106,29 @@ export interface Tree {
   y: number;
   /** Drawn size against the full sprite. Palms keep one size; every other tree varies. */
   scale: number;
+  /** On a sea island, so part of the baked far woods. */
+  island?: boolean;
 }
 
-/** A scenery tree's size: palms stay at 70%, every other tree somewhere from 50% to 90%, in 5% steps. */
-const treeScale = (name: string, seed: number): number => (name === 'kelapa' ? 0.7 : Math.round((0.5 + hash(seed, 811) * 0.4) * 20) / 20);
+/** Far woods, baked into the world canvas instead of drawn per frame. */
+let bakedTrees: Tree[] = [];
+
+/**
+ * A scenery tree's sprite and its offset from the full tree box (TW wide, TOP + TH tall, roots at the
+ * middle of the ground anchor row), so worldTrees positions stay in the same frame as buildable trees.
+ * The sprite is drawn natively at its size (scenery-trees.ts); the view scales it by a whole number.
+ */
+export function smallTree(name: string, scale: number, variant: number): { canvas: HTMLCanvasElement; dx: number; dy: number; anchor: number } {
+  const t = sceneryTree(name as SceneryTreeName, scale * TREE_HEIGHT, variant);
+  return { canvas: t.canvas, dx: TW / 2 - t.rx, dy: TOP + TH / 2 - t.ry, anchor: t.ry };
+}
+
+/** Height in pixels of a scenery tree at scale 1, about that of the buildable tree it stands for. */
+const TREE_HEIGHT = 40;
+
+/** A scenery tree's size: palms stay at 35%, every other tree somewhere from 25% to 45%; oil palms are planted even, 36% to 40%. */
+const treeScale = (name: string, seed: number): number =>
+  name === 'kelapa' ? 0.35 : name === 'sawit' ? 0.36 + hash(seed, 811) * 0.04 : 0.25 + hash(seed, 811) * 0.2;
 
 
 /** True on a tile under a district block, where no tree grows. */
@@ -1079,10 +1148,10 @@ function hidden(a: number, b: number): boolean {
 }
 
 /**
- * Spots for scenery trees inside one tile, in tile fractions. Scenery trees are drawn at TREE_SCALE,
- * so three fit on a tile and a dense stand reads as one canopy.
+ * Spots for scenery trees inside one tile, in tile fractions. Scenery trees are small, so five fit on
+ * a tile and a dense stand reads as one canopy.
  */
-const SPOTS: [number, number][] = [[0.3, 0.28], [0.72, 0.45], [0.38, 0.74]];
+const SPOTS: [number, number][] = [[0.22, 0.2], [0.62, 0.3], [0.85, 0.7], [0.4, 0.62], [0.2, 0.85]];
 
 /**
  * Trees on the land round the kampung, back to front so nearer trees overlap farther ones. Drawn per
@@ -1109,6 +1178,16 @@ export function worldTrees(): Tree[] {
         const seed = tx * 977 + ty * 131 + k;
         const push = (name: string) =>
           list.push({ tree: { name, tx, ty, x: WORLD_OX + ((a - b) * TW) / 2 - TW / 2, y: WORLD_OY + ((a + b) * TH) / 2 - TOP - Math.round(heightAt(a, b)), scale: treeScale(name, seed) }, d: a + b });
+        // Oil palms stand in a straight lattice, four to a tile, off the dirt tracks.
+        const plot = sawitAt(tx, ty);
+        if (plot) {
+          if ((tx - plot.x) % 4 !== 3 && k < 4 && !hidden(tx + (k % 2 ? 0.75 : 0.25), ty + (k < 2 ? 0.25 : 0.75))) {
+            const pa = tx + (k % 2 ? 0.75 : 0.25);
+            const pb = ty + (k < 2 ? 0.25 : 0.75);
+            list.push({ tree: { name: 'sawit', tx, ty, x: WORLD_OX + ((pa - pb) * TW) / 2 - TW / 2, y: WORLD_OY + ((pa + pb) * TH) / 2 - TOP - Math.round(heightAt(pa, pb)), scale: treeScale('sawit', seed) }, d: pa + pb });
+          }
+          return;
+        }
         // A thick ring of trees round each knoll's foot, a few on its green cap, none on the rock. On
         // the side facing the viewer the ring thins to bushes and a few trees, so the limestone shows.
         const kn = knoll(a, b);
@@ -1141,7 +1220,12 @@ export function worldTrees(): Tree[] {
       });
     }
   for (const t of isleTrees) list.push(t);
-  trees = list.sort((p, q) => p.d - q.d).map((e) => e.tree);
+  const sorted = list.sort((p, q) => p.d - q.d).map((e) => e.tree);
+  // Trees more than two tiles out from the ring road on any side, and every island tree, are far
+  // woods: baked into the world canvas (see buildWorld). Only the trees by the road sway per frame.
+  const far = (t: Tree) => t.island || Math.max(-1 - t.tx, -1 - t.ty, t.tx - GRID_W, t.ty - GRID_H) > 2;
+  bakedTrees = sorted.filter(far);
+  trees = sorted.filter((t) => !far(t));
   return trees;
 }
 
