@@ -1591,6 +1591,28 @@ test.describe('growing map', () => {
     await expect(page.locator('[data-nb-row]')).toHaveCount(1);
   });
 
+  test('every stage opens at full size with the player\'s Kantor RT in view', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    for (const stage of ['rw', 'kelurahan', 'kecamatan']) {
+      const got = await page.evaluate(() => {
+        const app = (window as unknown as { pakrt: any }).pakrt;
+        app.speed = 0;
+        app.promote();
+        const k = app.s.buildings.find((b: any) => b.def === 'kantorRT') ?? { x: 6, y: 8 };
+        const p = app.view.project(k.x, k.y);
+        return { stage: app.s.stage.current, scale: app.view.scale, x: p.x, y: p.y, w: app.view.viewW, h: app.view.viewH };
+      });
+      expect(got.stage).toBe(stage);
+      expect(got.scale, stage).toBe(2);
+      expect(got.x, stage).toBeGreaterThan(0);
+      expect(got.x, stage).toBeLessThan(got.w);
+      expect(got.y, stage).toBeGreaterThan(0);
+      expect(got.y, stage).toBeLessThan(got.h);
+      await dismissModals(page);
+    }
+  });
+
   test('at the Kelurahan Kampung Sebelah leaves the Neighbours panel, and the notice says so', async ({ page }) => {
     await start(page);
     await dismissModals(page);
