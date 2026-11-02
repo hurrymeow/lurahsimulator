@@ -103,8 +103,8 @@ export function ringArt(id: DistrictId): Art {
 
 /** Sizes the world for the current grid. Call after setGrid, then rebuild the cached canvas and trees. */
 export function layoutWorld(): void {
-  XMAX = GRID_W + 8 + ringExt();
-  YMAX = GRID_H + 8 + ringExt();
+  XMAX = GRID_W + 11 + ringExt();
+  YMAX = GRID_H + 11 + ringExt();
   WORLD_W = (XMAX - XMIN + (YMAX - YMIN)) * (TW / 2);
   WORLD_H = HEAD + (XMAX - XMIN + (YMAX - YMIN)) * (TH / 2);
   WORLD_OX = (YMAX - XMIN) * (TW / 2);
@@ -126,8 +126,8 @@ type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' 
  * h: summit height in art pixels.
  */
 const VOLCS = [
-  { a: -8, b: -4.6, r: 6, h: 150 },
-  { a: -3.8, b: -8.6, r: 5.2, h: 122 },
+  { a: -6.5, b: -3.5, r: 6.5, h: 156 },
+  { a: -3, b: -7.5, r: 5.5, h: 120 },
 ];
 /** Volcano height at a tile-space point, in art pixels, and how far up the cone it is, 0..1. */
 function volcano(a: number, b: number): { h: number; f: number } {
@@ -159,17 +159,12 @@ function terrain(tx: number, ty: number): Terrain {
   // Seam lots between the RTs are packed dirt, so the bigger buildings have somewhere obvious to stand.
   if (tx >= 0 && ty >= 0 && tx < GRID_W && ty < GRID_H) return isSeam(tx, ty) ? 'road' : 'grass';
   if (tx >= -1 && ty >= -1 && tx <= GRID_W && ty <= GRID_H) return 'road';
-  // The back two edges run down to a beach and the sea too, so the island never ends in a straight cut.
-  const back = Math.max(XMIN + 1.4 - tx, YMIN + 1.4 - ty) + hash(tx + 911, ty + 37) * 0.9 + (vnoise(tx * 3 + ty * 3, 5, 4) - 0.5) * 0.8;
-  if (back > 0.7) return 'sea';
-  if (back > 0) return 'beach';
-  // The volcanoes: forest on the skirts, bare rock above, a pale ash cap.
-  const v = volcano(tx + 0.5, ty + 0.5);
-  if (v.h > 9) return v.f > 0.66 ? 'abu' : v.f > 0.36 ? 'tanah' : 'hutan';
-  // The front two sides run down to a beach and the sea, with a ragged coastline.
-  const coast = Math.max(tx - GRID_W - 3 - ringExt(), ty - GRID_H - 5 - ringExt()) + hash(tx, ty) * 1.2;
+  // Every side runs down to a beach and the sea along a wandering, round-cornered coast.
+  const coast = coastAt(tx, ty) + (hash(tx, ty) - 0.5) * 0.6;
   if (coast > 0.7) return 'sea';
   if (coast > -0.3) return 'beach';
+  // Forest round the volcanoes' feet; their stepped blocks stand on it (volcanoBlock).
+  if (volcano(tx + 0.5, ty + 0.5).h > 9) return 'hutan';
   if (tx > GRID_W || ty > GRID_H) return 'sawah';
   // Toward the volcanoes the land rises into terraced hills: kebun teh on the left, sawah terasering
   // on the right. Shade trees stand on them (see worldTrees), so no square patch of forest breaks the flow.
@@ -203,6 +198,26 @@ function vnoise(x: number, y: number, cell: number): number {
   return top + (bot - top) * sy;
 }
 
+/**
+ * How far a tile-space point lies past the island's coast, in tiles: above 0.7 is sea, above -0.3
+ * beach. Each side's line wanders by a low noise, in bays and headlands of a few tiles, and a soft
+ * maximum rounds the four corners, so the island is no diamond. The front sides only wander outward,
+ * so the sawah, the ring road and the neighbours' roofs always stay on land.
+ */
+function coastAt(a: number, b: number): number {
+  const ext = ringExt();
+  const wander = (s: number, k: number) => vnoise(s + k * 7, k, 5) * 0.6 + vnoise(s * 1.7 + k, k + 9, 2.2) * 0.3 + vnoise(s * 3 + k, k + 3, 1) * 0.1;
+  const e = [
+    a - (GRID_W + 4 + ext) - 4.5 * wander(b, 11),
+    b - (GRID_H + 5 + ext) - 4.5 * wander(a, 23),
+    XMIN + 1.6 - a + 1.4 * wander(b, 37),
+    YMIN + 1.6 - b + 1.4 * wander(a, 51),
+  ];
+  const K = 0.55;
+  const m = Math.max(...e);
+  return m + Math.log(e.reduce((sum, v) => sum + Math.exp(K * (v - m)), 0)) / K;
+}
+
 /** Tallest hill, in art pixels above the kampung. */
 const HILL_MAX = 44;
 const smooth = (k: number) => {
@@ -226,15 +241,37 @@ export function cornerHeight(vx: number, vy: number): number {
         const out = Math.max(-1 - x, -1 - y);
         const front = Math.max(x - GRID_W - 1, y - GRID_H - 1);
         const rise = smooth(out / 5) * smooth(1 - front / 3);
-        const edge = smooth((Math.min(x - XMIN, y - YMIN) - 2.5) / 4);
+        // Hills ease down to the beach wherever the coast runs.
+        const edge = smooth((-coastAt(x, y) - 2) / 4);
         const n = vnoise(x + 40, y + 40, 4) * 0.7 + vnoise(x + 7, y + 90, 2) * 0.3;
-        // The volcanoes run down to the back beach and stop short of the ring road.
-        const volc = volcano(x, y).h * smooth((Math.min(x - XMIN, y - YMIN) - 1.5) / 2.5) * smooth(out / 2.5);
-        heights[(y - YMIN) * w + x - XMIN] = Math.round(Math.max(HILL_MAX * rise * edge * (0.2 + 0.8 * n), volc));
+        heights[(y - YMIN) * w + x - XMIN] = Math.round(HILL_MAX * rise * edge * (0.2 + 0.8 * n));
       }
   }
   if (vx < XMIN || vy < YMIN || vx > XMAX || vy > YMAX) return 0;
   return heights[(vy - YMIN) * w + vx - XMIN];
+}
+
+/** One volcano step, in art pixels: a storey and a half, so the tiers read at 2x. */
+const STEP = 12;
+
+/**
+ * Height of the volcano block standing on tile (tx, ty), or 0 where none stands. The volcanoes are
+ * stacked isometric blocks: each tile is a flat top at a whole number of steps with straight
+ * vertical faces, like the buildings, so their silhouette is all 2:1 edges and plumb lines. They run
+ * down to the beach and stop short of the ring road.
+ */
+function volcanoBlock(tx: number, ty: number): number {
+  const ca = tx + 0.5;
+  const cb = ty + 0.5;
+  const out = Math.max(-1 - ca, -1 - cb);
+  const v = volcano(ca, cb).h * smooth((-coastAt(ca, cb) + 0.5) / 2) * smooth(out / 2);
+  const h = Math.round(v / STEP) * STEP;
+  return h > heightAt(ca, cb) + 4 ? h : 0;
+}
+
+/** The top of whatever stands at a tile-space point: hill ground or a volcano block. */
+function topAt(a: number, b: number): number {
+  return Math.max(heightAt(a, b), volcanoBlock(Math.floor(a), Math.floor(b)));
 }
 
 /** Ground height anywhere in tile space, blended between the four corners. */
@@ -415,7 +452,7 @@ function groundColour(t: Terrain, a: number, b: number, x: number, y: number, tx
     case 'abu':
       // Volcanic ash on the cap, pale and cool, with dark cinders.
       if (speck > 0.985) return '#8f8a86';
-      return tone(n, ['#cfccc6', '#dedcd6', '#ecebe6']);
+      return tone(n, ['#b4aea6', '#bfb9b0', '#cac4bb']);
     case 'kebun':
       return speck < 0.03 ? '#7aa04a' : tone(n, KEBUN);
     case 'hutan':
@@ -556,6 +593,72 @@ export function buildWorld(): HTMLCanvasElement {
         img.data.set([Math.min(255, Math.round(((c >> 16) & 255) * f)), Math.min(255, Math.round(((c >> 8) & 255) * f)), Math.min(255, Math.round((c & 255) * f)), 255], (y * WORLD_W + x) * 4);
       }
   };
+  /** Fills a screen triangle of tile-space corners [a, b, height], handing each pixel its interpolated a, b and height. */
+  const fill = (v: [number, number, number][], px: (k: number, x: number, y: number, a: number, b: number, h: number) => void) => {
+    const P = v.map(([a, b, h]) => [OX + ((a - b) * TW) / 2, OY + ((a + b) * TH) / 2 - h]);
+    const area = (P[1][0] - P[0][0]) * (P[2][1] - P[0][1]) - (P[2][0] - P[0][0]) * (P[1][1] - P[0][1]);
+    if (Math.abs(area) < 1e-6) return;
+    const x0 = Math.max(0, Math.floor(Math.min(P[0][0], P[1][0], P[2][0])));
+    const x1 = Math.min(WORLD_W - 1, Math.ceil(Math.max(P[0][0], P[1][0], P[2][0])));
+    const y0 = Math.max(0, Math.floor(Math.min(P[0][1], P[1][1], P[2][1])));
+    const y1 = Math.min(WORLD_H - 1, Math.ceil(Math.max(P[0][1], P[1][1], P[2][1])));
+    for (let y = y0; y <= y1; y++)
+      for (let x = x0; x <= x1; x++) {
+        const w1 = ((x + 0.5 - P[0][0]) * (P[2][1] - P[0][1]) - (P[2][0] - P[0][0]) * (y + 0.5 - P[0][1])) / area;
+        const w2 = ((P[1][0] - P[0][0]) * (y + 0.5 - P[0][1]) - (x + 0.5 - P[0][0]) * (P[1][1] - P[0][1])) / area;
+        const w0 = 1 - w1 - w2;
+        if (w0 < -1e-7 || w1 < -1e-7 || w2 < -1e-7) continue;
+        px(y * WORLD_W + x, x, y, w0 * v[0][0] + w1 * v[1][0] + w2 * v[2][0], w0 * v[0][1] + w1 * v[1][1] + w2 * v[2][1], w0 * v[0][2] + w1 * v[1][2] + w2 * v[2][2]);
+      }
+  };
+  const setPx = (k: number, rgb: number[], f: number) =>
+    img.data.set([Math.min(255, Math.round(rgb[0] * f)), Math.min(255, Math.round(rgb[1] * f)), Math.min(255, Math.round(rgb[2] * f)), 255], k * 4);
+  const rgbOfHex = (c: string) => {
+    const n = hex(c);
+    return [n >> 16, (n >> 8) & 255, n & 255];
+  };
+  // Faces of a volcano step, in strata every three pixels like the cliff: dark earth under the
+  // forest, rock under bare rock, pale ash under the cap. The left face takes the light, the right
+  // face is in shade (FACE_SHADE), the top a touch brighter.
+  const WALL: Record<string, string[]> = { hutan: ['#6f472a', '#5e3a22'], tanah: ['#8a5a32', '#7a4c2a'], abu: ['#a49e95', '#968f86'] };
+  /** One volcano block on tile (a0, b0): a flat top and its two front faces. */
+  const block = (a0: number, b0: number) => {
+    const H = volcanoBlock(a0, b0);
+    if (!H) return;
+    const f = volcano(a0 + 0.5, b0 + 0.5).f;
+    const t: Terrain = f > 0.76 ? 'abu' : f > 0.5 ? 'tanah' : 'hutan';
+    const tx = Math.floor(a0);
+    const ty = Math.floor(b0);
+    const wall = WALL[t];
+    // Each block gets a coloured outline, a dark shade of its own face: along the lip, down both
+    // vertical edges and round the top, so stacked steps read as separate blocks.
+    const face = (p: [number, number], q: [number, number], shade: number) => {
+      const bp = heightAt(p[0], p[1]);
+      const bq = heightAt(q[0], q[1]);
+      const paint = (k: number, x: number, _y: number, a: number, b: number, h: number) => {
+        land[k] = 8;
+        depth[k] = a + b;
+        const u = p[0] === q[0] ? b - b0 : a - a0;
+        const line = H - h < 1 || u < 0.035 || u > 0.965;
+        setPx(k, rgbOfHex(wall[Math.floor(h / 3) % 2]), shade * (line ? 0.6 : 1) * (hash(x, Math.floor(h)) < 0.04 ? 0.9 : 1));
+      };
+      fill([[p[0], p[1], H], [q[0], q[1], H], [q[0], q[1], bq]], paint);
+      fill([[p[0], p[1], H], [q[0], q[1], bq], [p[0], p[1], bp]], paint);
+    };
+    // The left face looks down the b axis, the right face down the a axis.
+    face([a0, b0 + 1], [a0 + 1, b0 + 1], 0.92);
+    face([a0 + 1, b0], [a0 + 1, b0 + 1], 0.7);
+    const top = (k: number, _x: number, _y: number, a: number, b: number) => {
+      const fx = Math.floor(OX + ((a - b) * TW) / 2);
+      const fy = Math.floor(OY + ((a + b) * TH) / 2);
+      const rim = a - a0 < 0.035 || b - b0 < 0.035 || a - a0 > 0.965 || b - b0 > 0.965;
+      land[k] = kindOf(t);
+      depth[k] = a + b;
+      setPx(k, rgbOfHex(groundColour(t, a - tx, b - ty, fx, fy, tx, ty)), 1.08 * (rim ? 0.66 : 1));
+    };
+    fill([[a0, b0, H], [a0 + 1, b0, H], [a0 + 1, b0 + 1, H]], top);
+    fill([[a0, b0, H], [a0 + 1, b0 + 1, H], [a0, b0 + 1, H]], top);
+  };
   for (let d = XMIN + YMIN; d < XMAX + YMAX - 1; d++)
     for (let tx = XMIN; tx < XMAX; tx++) {
       const ty = d - tx;
@@ -567,6 +670,7 @@ export function buildWorld(): HTMLCanvasElement {
       const D: [number, number, number] = [tx, ty + 1, cornerHeight(tx, ty + 1)];
       tri(t, tx, ty, [A, B, C]);
       tri(t, tx, ty, [A, C, D]);
+      block(tx, ty);
     }
   // The kampung stands on raised land: where it meets the beach, or the world's front edge, a dirt
   // cliff drops in strata with a grassy lip, like a diorama block. Kind 8, so the ink pass outlines it.
@@ -810,6 +914,16 @@ function drawIsle(img: ImageData, land: Uint8Array, depth: Float32Array, I: Isle
       const r = hash(Math.floor(a * 7) + 3, Math.floor(b * 5) + 1);
       const name = t === 'beach' ? (r < 0.3 ? 'kelapa' : null) : t === 'hutan' ? (r < 0.6 ? 'pohon' : r < 0.7 ? 'kelapa' : null) : t === 'grass' ? (r < 0.12 ? 'bush' : r < 0.2 ? 'pohon' : null) : null;
       if (!name) continue;
+      // A tree whose crown would cross nearer ground (the volcano behind which an islet sits) is left out.
+      const tx0 = OX + ((a - b) * TW) / 2 - TW / 2;
+      const ty0 = OY + ((a + b) * TH) / 2 - TOP - Math.round(hh);
+      let behind = false;
+      for (let y = Math.max(0, Math.floor(ty0 + TOP / 3)); y < ty0 + TOP + TH / 2 && !behind; y += 3)
+        for (let x = Math.max(0, Math.floor(tx0 + 6)); x < Math.min(WORLD_W, tx0 + TW - 6) && !behind; x += 3) {
+          const k = y * WORLD_W + x;
+          if (land[k] && land[k] !== 7 && land[k] !== 13 && depth[k] > a + b) behind = true;
+        }
+      if (behind) continue;
       isleTrees.push({ name, tx: Math.floor(a), ty: Math.floor(b), x: OX + ((a - b) * TW) / 2 - TW / 2, y: OY + ((a + b) * TH) / 2 - TOP - Math.round(hh) });
     }
   for (const k of keys) rank[k] = 0;
@@ -908,9 +1022,11 @@ const inRing = (tx: number, ty: number): boolean => ringBlocks().some((b) => tx 
  * baked world, so one standing there would show through the slope in front of it.
  */
 function hidden(a: number, b: number): boolean {
-  const h = heightAt(a, b);
-  // Walk toward the viewer down the screen: each half-tile step is TH / 2 pixels lower.
-  for (let k = 1; k <= 20; k++) if (heightAt(a + k / 2, b + k / 2) - (k * TH) / 2 > h + 2) return true;
+  const h = topAt(a, b);
+  // Walk toward the viewer down the screen: each half-tile step is TH / 2 pixels lower. Check the
+  // trunk's column against the base, and the crown's two side columns against the crown.
+  for (const [da, lift] of [[0, 2], [0.4, 14], [-0.4, 14]])
+    for (let k = 1; k <= 24; k++) if (topAt(a + da + k / 2, b - da + k / 2) - (k * TH) / 2 > h + lift) return true;
   return false;
 }
 
@@ -934,9 +1050,9 @@ export function worldTrees(): Tree[] {
       const grove = h > 26 && vnoise(tx + 11, ty + 5, 3) > 0.55;
       const kebun = steep ? null : h < 6 ? (n < 0.3 ? 'kelapa' : n < 0.5 ? 'pisang' : n < 0.58 ? 'pohon' : null) : grove && n < 0.6 ? 'pohon' : n < 0.05 ? 'kelapa' : null;
       // Far back, toward the horizon, more trees stand among the terraces so the edge is not bare.
-      const onVolc = volcano(tx + 0.5, ty + 0.5).h > 9;
+      const onVolc = volcanoBlock(tx, ty) > 0;
       const far = tx + ty < -7 && !steep && !onVolc && t !== 'tanah' && (n < 0.16 ? 'pohon' : n < 0.21 ? 'bush' : n < 0.24 ? 'kelapa' : null);
-      const name = onVolc ? (t === 'hutan' && !steep && n < 0.25 ? 'pohon' : null) : far ? far : t === 'hutan' ? (n < 0.75 ? 'pohon' : 'kelapa') : t === 'teh' && (grove ? n < 0.4 : n < 0.03) && !steep ? 'pohon' : t === 'teras' && n < 0.03 && !steep ? 'kelapa' : t === 'kebun' ? kebun : t === 'beach' && n < 0.25 ? 'kelapa' : null;
+      const name = onVolc ? null : far ? far : t === 'hutan' ? (n < 0.75 ? 'pohon' : 'kelapa') : t === 'teh' && (grove ? n < 0.4 : n < 0.03) && !steep ? 'pohon' : t === 'teras' && n < 0.03 && !steep ? 'kelapa' : t === 'kebun' ? kebun : t === 'beach' && n < 0.25 ? 'kelapa' : null;
       if (name && !inRing(tx, ty) && !hidden(tx + 0.5, ty + 0.5)) trees.push({ name, tx, ty, x: WORLD_OX + ((tx - ty) * TW) / 2 - TW / 2, y: WORLD_OY + ((tx + ty) * TH) / 2 - TOP - Math.round(heightAt(tx + 0.5, ty + 0.5)) });
     }
   if (isleTrees.length) trees = [...trees, ...isleTrees].sort((p, q) => p.tx + p.ty - (q.tx + q.ty));
