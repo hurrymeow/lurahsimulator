@@ -272,6 +272,24 @@ function hash(x: number, y: number): number {
 /** The kampung and its ring road keep exact tile edges, so plots and the road read. */
 const exact = (tx: number, ty: number) => tx >= -1 && ty >= -1 && tx <= GRID_W && ty <= GRID_H;
 
+/**
+ * How far a tile-space point lies outside the ring road's outer edge, in tiles (negative on the road
+ * or inside), and a coordinate along that edge for noise.
+ */
+function pastRoad(a: number, b: number): { d: number; along: number } {
+  const e = [-1 - a, -1 - b, a - (GRID_W + 1), b - (GRID_H + 1)];
+  let k = 0;
+  for (let i = 1; i < 4; i++) if (e[i] > e[k]) k = i;
+  return { d: e[k], along: (k % 2 ? a : b) + k * 97 };
+}
+
+/**
+ * The ring road's outer edge is ragged: the verge bites into the road in bays and tufts up to half a
+ * tile deep, from a low noise along the edge plus a finer one, so the road never ends in a ruled line.
+ * The inner edge, against the kampung's plots, stays exact.
+ */
+const verge = (along: number, x: number, y: number) => 0.04 + vnoise(along * 1.3, 31, 1) ** 1.5 * 0.55 + vnoise(along * 5, 77, 1) * 0.14 + hash(x * 3 + 5, y * 7 + 1) * 0.04;
+
 function terrain(tx: number, ty: number): Terrain {
   // Seam lots between the RTs are packed dirt, so the bigger buildings have somewhere obvious to stand.
   if (tx >= 0 && ty >= 0 && tx < GRID_W && ty < GRID_H) return isSeam(tx, ty) ? 'road' : 'grass';
@@ -702,6 +720,17 @@ export function buildWorld(): HTMLCanvasElement {
         const fy = Math.floor(OY + ((a + b) * TH) / 2);
         // Clamped into this tile, so a pixel on the shared edge never reads a kampung tile next door.
         let t = blended ? groundAt(Math.min(Math.max(a, tx), tx + 0.9999), Math.min(Math.max(b, ty), ty + 0.9999), fx, fy) : tile;
+        // The ring road's outer edge gives way to the verge along a ragged line.
+        if (!blended && t === 'road' && !(tx >= 0 && ty >= 0 && tx < GRID_W && ty < GRID_H)) {
+          const pr = pastRoad(a, b);
+          if (pr.d > -verge(pr.along, fx, fy)) {
+            // The material just outside the road at this point.
+            const oa = a + (pr.d === -1 - a ? -0.6 : pr.d === a - (GRID_W + 1) ? 0.6 : 0);
+            const ob = b + (pr.d === -1 - b ? -0.6 : pr.d === b - (GRID_H + 1) ? 0.6 : 0);
+            const out = terrain(Math.floor(oa), Math.floor(ob));
+            if (out !== 'road') t = out === 'sawah' ? 'grass' : out;
+          }
+        }
         // Up a volcano the material follows the pixel's height, and its texture is sampled on screen,
         // so the steep cone is not streaked by flat-world texture stretched up the slope.
         let sx = fx;
@@ -838,6 +867,8 @@ export function buildWorld(): HTMLCanvasElement {
   // painting them once here keeps the per-frame tree count low on big maps. They hold still.
   trees = null;
   worldTrees();
+  // Whole art pixels and no smoothing, so the baked woods stay as crisp as the sprites drawn per frame.
+  ctx.imageSmoothingEnabled = false;
   for (const tree of bakedTrees) {
     const art = smallTree(tree.name, tree.scale, (tree.tx * 7 + tree.ty * 3 + Math.round(tree.x)) & 3);
     ctx.drawImage(art.canvas, tree.x + art.dx, tree.y + art.dy);
@@ -859,17 +890,30 @@ interface Isle {
   /** Corner height in art pixels at local corner (i, j); negative is under water. */
   h: (i: number, j: number) => number;
   peak: number;
+  /** Plain, a cluster of karst knolls, or a small volcano at the middle. */
+  kind: 'plain' | 'karst' | 'gunung';
+  /** Height of the tallest point, for the volcano's tiers. */
+  top: number;
 }
 
 /** Island ground by height and slope: sand at the waterline, grass, forest, and rock on steep faces. */
 function isleMat(I: Isle, hh: number, slope: number, x: number, y: number): Terrain {
   const n = clumps(x, y);
   if (hh < 1 + n * 1.4) return 'beach';
+  // A small volcano: forest skirts, bare rock, an ash cap, blended through the dither like the big ones.
+  if (I.kind === 'gunung' && hh > I.peak * 0.9) {
+    const f = hh / I.top + (bayer(x, y) - 0.5) * 0.12;
+    if (f > 0.72) return 'abu';
+    if (f > 0.36) return 'tanah';
+    return 'hutan';
+  }
+  // Karst knolls: bare limestone on the steep sides, forest on their caps.
+  if (I.kind === 'karst' && hh > I.peak * 0.9) return slope > 7 ? 'batu' : 'hutan';
   if (slope > 8 && n > 0.58) return 'tanah';
   return hh > I.peak * 0.55 + (n - 0.5) * 4 ? 'hutan' : 'grass';
 }
 
-const ISLE_RANK: Partial<Record<Terrain, number>> = { beach: 3, grass: 7, hutan: 9, tanah: 5 };
+const ISLE_RANK: Partial<Record<Terrain, number>> = { beach: 3, grass: 7, hutan: 9, tanah: 5, batu: 8, abu: 10 };
 
 /**
  * Islands in true isometric: each is a small patch of tile-corner heights, rasterised as two lit
@@ -1008,15 +1052,19 @@ function drawIsle(img: ImageData, land: Uint8Array, depth: Float32Array, I: Isle
         const t = isleMat(I, hh, slope, fx, fy);
         const r = hash(Math.floor(a * 7) + k * 13 + 3, Math.floor(b * 5) + k * 7 + 1);
         const kind = hash(Math.floor(a * 3) + k, Math.floor(b * 9) + k * 3);
+        // The volcano stays open above its forest foot, so its cone reads.
+        if (I.kind === 'gunung' && hh > I.peak * 0.9) return;
         const name = t === 'beach' ? (r < 0.15 && k === 0 ? 'kelapa' : null) : t === 'hutan' ? (r < 0.85 ? (kind < 0.85 ? 'pohon' : 'kelapa') : null) : t === 'grass' ? (r < 0.55 ? (kind < 0.65 ? 'pohon' : 'bush') : null) : null;
         if (!name) return;
         // A tree whose crown would cross nearer ground (the volcano behind which an islet sits) is left out.
-        const tx0 = OX + ((a - b) * TW) / 2 - TW / 2;
-        const ty0 = OY + ((a + b) * TH) / 2 - TOP - Math.round(hh);
-        for (let y = Math.max(0, Math.floor(ty0 + TOP / 4)); y < ty0 + TOP + TH / 2; y += 2)
-          for (let x = Math.max(0, Math.floor(tx0 + 3)); x < Math.min(WORLD_W, tx0 + TW - 3); x += 2) {
+        const tx0 = Math.round(OX + ((a - b) * TW) / 2 - TW / 2);
+        const ty0 = Math.round(OY + ((a + b) * TH) / 2 - TOP - hh);
+        // Test only the crown's box above the roots, so the ground in front of the trunk never counts.
+        const rootY = ty0 + TOP + TH / 2;
+        for (let y = Math.max(0, Math.floor(rootY - 14)); y < rootY - 2; y += 2)
+          for (let x = Math.max(0, Math.floor(tx0 + TW / 2 - 6)); x < Math.min(WORLD_W, tx0 + TW / 2 + 6); x += 2) {
             const kk = y * WORLD_W + x;
-            if (land[kk] && land[kk] !== 7 && land[kk] !== 13 && depth[kk] > a + b) return;
+            if (land[kk] && land[kk] !== 7 && depth[kk] > a + b + (land[kk] === 13 ? 0.6 : 0)) return;
           }
         isleTrees.push({ tree: { name, tx: Math.floor(a), ty: Math.floor(b), x: tx0, y: ty0, scale: treeScale(name, Math.floor(a * 97) + Math.floor(b * 31) + k), island: true }, d: a + b });
       });
@@ -1039,18 +1087,46 @@ function isoIslands(img: ImageData, land: Uint8Array, depth: Float32Array): void
     const ly = (hash(seed, 3) - 0.5) * 0.9;
     const lr = 0.35 + hash(seed, 4) * 0.3;
     const half = n / 2;
+    // Big islands carry a small volcano or a cluster of karst knolls; some middling ones a knoll or two.
+    const roll = hash(seed, 8);
+    const kind: Isle['kind'] = n >= 8 ? (roll < 0.45 ? 'gunung' : 'karst') : n >= 5 && roll < 0.5 ? 'karst' : 'plain';
+    const bumps: [number, number, number, number][] = [];
+    if (kind === 'karst') {
+      const count = n >= 8 ? 3 + Math.floor(hash(seed, 9) * 3) : 1 + Math.floor(hash(seed, 9) * 2);
+      for (let k = 0; k < count; k++) {
+        const ang = hash(seed, 10 + k) * Math.PI * 2;
+        const dist = hash(seed, 20 + k) * 0.45;
+        const r = 0.8 + hash(seed, 30 + k) * (n >= 8 ? 0.8 : 0.5);
+        bumps.push([half + Math.cos(ang) * dist * half * stretch, half + Math.sin(ang) * dist * half / stretch, r, 12 + r * 16 + hash(seed, 40 + k) * 8]);
+      }
+    }
+    const coneH = 54 + hash(seed, 11) * 26;
+    const ground = (i: number, j: number) => {
+      const u = (i - half) / (half * stretch);
+      const v = (j - half) / (half / stretch);
+      const d = Math.hypot(u, v);
+      const lobe = (lr - Math.hypot(u - lx, v - ly)) / lr;
+      return { s: Math.max(1 - d, lobe) + (vnoise(i * 2 + seed * 3, j * 2, 2) - 0.5) * 0.5, d };
+    };
     return {
       a0: Math.round(ca - half),
       b0: Math.round(cb - half),
       n,
       peak,
+      kind,
+      top: peak + coneH,
       h: (i, j) => {
-        const u = (i - half) / (half * stretch);
-        const v = (j - half) / (half / stretch);
-        const d = Math.hypot(u, v);
-        const lobe = (lr - Math.hypot(u - lx, v - ly)) / lr;
-        const s = Math.max(1 - d, lobe) + (vnoise(i * 2 + seed * 3, j * 2, 2) - 0.5) * 0.5;
-        return s <= 0 ? -3 : peak * s ** 1.2 - 2;
+        const { s, d } = ground(i, j);
+        if (s <= 0) return -3;
+        let h = peak * s ** 1.2 - 2;
+        // Bumps only stand well inside the shore.
+        const inland = Math.min(1, s / 0.35);
+        if (kind === 'gunung') h = Math.max(h, peak + coneH * Math.min(1, Math.max(0, 1 - d / 0.62) ** 1.7 / 0.8) * inland - 2);
+        for (const [bi, bj, r, bh] of bumps) {
+          const dd = Math.hypot(i - bi, j - bj) / r;
+          if (dd < 1) h = Math.max(h, peak * 0.9 + bh * (1 - dd ** 2.2) * inland);
+        }
+        return h;
       },
     };
   };
@@ -1070,7 +1146,7 @@ function isoIslands(img: ImageData, land: Uint8Array, depth: Float32Array): void
       const sy = hash(seed + t, 12) * WORLD_H;
       const rw = n * 0.75 * (TW / 2) + 4;
       const rh = n * 0.75 * (TH / 2) + 4;
-      if (!fits(sx, sy, rw, rh, peak)) continue;
+      if (!fits(sx, sy, rw, rh, peak + (n >= 8 ? 72 : n >= 5 ? 44 : 0))) continue;
       const [ca, cb] = toTile(sx, sy);
       drawIsle(img, land, depth, make(seed, n, peak, ca, cb), rank);
       placed.push([sx, sy, rw, rh]);
@@ -1082,8 +1158,8 @@ function isoIslands(img: ImageData, land: Uint8Array, depth: Float32Array): void
   // Capped, so a big Kecamatan map still reads as a few islands round one, not a carpet of them.
   const want = Math.min(18, Math.round((WORLD_W * WORLD_H) / 42000));
   const SIZES: [number, number, number, number][] = [
-    [10, 13, 26, 38],
-    [7, 9, 16, 26],
+    [10, 13, 12, 18],
+    [7, 9, 10, 16],
     [4, 6, 9, 15],
     [2, 3, 4, 7],
   ];
@@ -1179,7 +1255,7 @@ export function worldTrees(): Tree[] {
         const b = ty + fb;
         const seed = tx * 977 + ty * 131 + k;
         const push = (name: string) =>
-          list.push({ tree: { name, tx, ty, x: WORLD_OX + ((a - b) * TW) / 2 - TW / 2, y: WORLD_OY + ((a + b) * TH) / 2 - TOP - Math.round(heightAt(a, b)), scale: treeScale(name, seed) }, d: a + b });
+          list.push({ tree: { name, tx, ty, x: Math.round(WORLD_OX + ((a - b) * TW) / 2 - TW / 2), y: Math.round(WORLD_OY + ((a + b) * TH) / 2 - TOP - heightAt(a, b)), scale: treeScale(name, seed) }, d: a + b });
         // Oil palms stand in a straight lattice, one in the middle of each tile, off the dirt tracks,
         // so their fronds stay inside the block.
         const plot = sawitAt(tx, ty);
@@ -1187,10 +1263,14 @@ export function worldTrees(): Tree[] {
           if ((tx - plot.x) % 4 !== 3 && k === 0 && !hidden(tx + 0.5, ty + 0.5)) {
             const pa = tx + 0.5;
             const pb = ty + 0.5;
-            list.push({ tree: { name: 'sawit', tx, ty, x: WORLD_OX + ((pa - pb) * TW) / 2 - TW / 2, y: WORLD_OY + ((pa + pb) * TH) / 2 - TOP - Math.round(heightAt(pa, pb)), scale: treeScale('sawit', seed) }, d: pa + pb });
+            list.push({ tree: { name: 'sawit', tx, ty, x: Math.round(WORLD_OX + ((pa - pb) * TW) / 2 - TW / 2), y: Math.round(WORLD_OY + ((pa + pb) * TH) / 2 - TOP - heightAt(pa, pb)), scale: treeScale('sawit', seed) }, d: pa + pb });
           }
           return;
         }
+        // The forest edge along the ring road is ragged too: trees start anywhere from right at the
+        // verge to a couple of tiles out, so the tree line wanders instead of following the road.
+        const pr = pastRoad(a, b);
+        if (pr.d > 0 && pr.d < 0.15 + vnoise(pr.along * 0.9, 53, 1) * 1.8 + vnoise(pr.along * 3.1, 19, 1) * 0.5) return;
         // A one-tile clearing round each plantation, so the block reads against the forest.
         if ([[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]].some(([dx, dy]) => sawitAt(tx + dx, ty + dy))) return;
         // A thick ring of trees round each knoll's foot, a few on its green cap, none on the rock. On

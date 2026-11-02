@@ -8,7 +8,7 @@ import { TH, TW } from './iso';
 import { WORLD_OX, WORLD_OY } from './scenery';
 
 /** Poles stand every POLE_STEP tiles along the outer edge of the ring road; most poles are inside, by the paths. */
-const POLE_STEP = 5;
+const POLE_STEP = 10;
 /** Pole height in art pixels, ground to the top of the crossarm. */
 const POLE_H = 26;
 /** Where the wires leave a pole, against its foot: four insulators on the crossarm, low ones for drops. */
@@ -223,7 +223,7 @@ export function drawCables(ctx: CanvasRenderingContext2D, stage: StageId, front:
 }
 
 // ---------------------------------------------------------------- Poles by the jalan setapak
-// Inside the kampung a pole goes up beside the jalan setapak every two to five path tiles, counted in
+// Inside the kampung a pole goes up beside the jalan setapak every four to ten path tiles, counted in
 // the order the paths were built, so every few new paths raise a new pole. Each one is wired to the
 // nearest pole before it, or to the ring road, so the wires spread through the kampung as it grows.
 
@@ -250,12 +250,12 @@ function buildPath(buildings: readonly Building[], stage: StageId): void {
   const placed: Pole[] = [];
   pathPoles = [];
   pathSpans = [];
-  let next = 2 + Math.floor(hash(7, 1) * 4);
+  let next = 4 + Math.floor(hash(7, 1) * 7);
   let count = 0;
   for (const b of paths) {
     if (++count < next) continue;
     count = 0;
-    next = 2 + Math.floor(hash(b.uid, 2) * 4);
+    next = 4 + Math.floor(hash(b.uid, 2) * 7);
     // Beside the path: on the edge of its tile away from the way it runs.
     const alongX = on.has(b.y * GRID_W + b.x - 1) || on.has(b.y * GRID_W + b.x + 1);
     const side = hash(b.uid, 3) < 0.5 ? 0.14 : 0.86;
@@ -265,7 +265,7 @@ function buildPath(buildings: readonly Building[], stage: StageId): void {
     const pole: Pole = { a, b: bb, x: Math.round(WORLD_OX + ((a - bb) * TW) / 2), y: Math.round(WORLD_OY + ((a + bb) * TH) / 2), front: true, lean: hash(i, 3) < 0.2 ? (hash(i, 4) < 0.5 ? -1 : 1) : 0 };
     // Wire it to the nearest pole already up, inside or on the ring road, if one is in reach.
     let best: Pole | null = null;
-    let bd = 7;
+    let bd = 9;
     for (const q of [...placed, ...ringPoles]) {
       const d = Math.hypot(q.a - a, q.b - bb);
       if (d < bd) [best, bd] = [q, d];
