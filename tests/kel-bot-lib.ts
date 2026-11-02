@@ -11,7 +11,7 @@ import { ROLE_FX } from '../src/data/staff';
 import { GRID_H, GRID_W, type GameState } from '../src/sim/types';
 
 /** Popularitas buildings, strongest first, and homes, biggest first. */
-const SABAR = ['kolamPancing', 'panggungSenam', 'bidan', 'posRonda', 'bankSampah'];
+export const SABAR = ['kolamPancing', 'panggungSenam', 'bidan', 'posRonda', 'bankSampah'];
 const HOMES = ['kontrakan', 'kosan', 'rumah'];
 /** The bot only grows while Popularitas is at least this, as a player waiting for the kampung to settle. */
 const GROW_FROM = 55;

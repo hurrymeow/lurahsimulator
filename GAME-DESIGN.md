@@ -79,7 +79,7 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 ```
 
 - RW = **2** RTs side by side: yours and Kampung Sebelah, the RT next door (playtest 2026-11-01: 4 RTs at the RW and 16 at the Kelurahan were too much to follow; `decisions/playtest-sk2.md`).
-- Kelurahan = **2 RWs of 2 RTs**, 2x2 RTs in all. At promotion Kampung Sebelah joins your RW as yours to build on, like a free takeover: its buildings and warga become yours and its lots open to Build. So the Kelurahan always brings new land. RW 2 is two new AI RTs you fund with Dana.
+- Kelurahan = **2 RWs of 2 RTs**, 2x2 RTs in all. At promotion Kampung Sebelah joins your RW as yours to build on, like a free takeover: its buildings and warga become yours and its lots open to Build. Its buildings do not make your next ones dearer. So the Kelurahan always brings new land. RW 2 is two new AI RTs you fund with Dana.
 - RW buildings go inside the player's RTs (their own and any taken over) or on lots along the seams between RTs. Kelurahan buildings go inside the player's RTs or on lots along the seams between RWs. RT buildings stay inside an RT. The seams sit between the RTs, so promotion never takes tiles from the player's RT.
 - RW keeps today's 64x32 tiles. A pinch out gives a view-only overview, and a tap there zooms back in.
 - Kelurahan keeps full-size tiles: at 2x2 RTs it is the size the RW used to be (it was half-size at 4x4 RTs). Kelurahan buildings take a 2x2 footprint.

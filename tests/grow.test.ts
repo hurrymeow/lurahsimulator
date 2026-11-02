@@ -9,7 +9,7 @@ import { checkPlace, siteGaps } from '../src/sim/rules';
 import { def } from '../src/sim/content';
 import { areaScore, scoreParts } from '../src/sim/ranking';
 import { deserialize, serialize } from '../src/sim/save';
-import { addBuilding, addResident, emptyTiles, newGame, population } from '../src/sim/state';
+import { addBuilding, addResident, emptyTiles, newGame, population, sprawl } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
 import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, SEAM, mapSpan, setGrid } from '../src/sim/types';
 
@@ -765,6 +765,15 @@ describe('absorbing an RT', () => {
     expect(s.buildings).toHaveLength(mine);
     expect(population(s)).toBe(pop);
     expect(s.res.rupiah).toBe(kas);
+  });
+
+  it('does not make buildings dearer: what it brings does not count toward sprawl', () => {
+    const s = grown();
+    const n = s.neighbours[0];
+    n.buildings = Array.from({ length: 40 }, (_, i) => ({ uid: 5000 + i, def: 'warung', x: 13 + (i % 13), y: i % 17, level: 1, status: 'active' as const, timer: 0, invested: 0, placedAt: 0 }));
+    const before = sprawl(s);
+    absorb(s, n);
+    expect(sprawl(s)).toBe(before);
   });
 
   it('can never be handed back once absorbed', () => {
