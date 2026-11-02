@@ -125,6 +125,15 @@ type Terrain = 'grass' | 'road' | 'sawah' | 'kebun' | 'hutan' | 'beach' | 'sea' 
  * take the same facet light, tile grid and materials. a, b: the summit tile; r: foot radius in tiles;
  * h: summit height in art pixels.
  */
+/** PROTOTYPE shore-to-summit slope options, picked with ?slope=a|b|c. Removed once one is chosen. */
+const SLOPE: 'cur' | 'a' | 'b' | 'c' = (() => {
+  try {
+    const v = new URLSearchParams(globalThis.location?.search ?? '').get('slope');
+    return v === 'a' || v === 'b' || v === 'c' ? v : 'cur';
+  } catch {
+    return 'cur';
+  }
+})();
 const VOLCS = [
   { a: -6.5, b: -3.5, r: 6.5, h: 156 },
   { a: -3, b: -7.5, r: 5.5, h: 120 },
@@ -133,10 +142,11 @@ const VOLCS = [
 function volcano(a: number, b: number): { h: number; f: number } {
   let best = { h: 0, f: 0 };
   for (const v of VOLCS) {
-    const d = Math.hypot(a - v.a, b - v.b) / v.r;
+    // Option a: long concave aprons that reach out to the shore.
+    const d = Math.hypot(a - v.a, b - v.b) / (v.r * (SLOPE === 'a' ? 1.5 : 1));
     if (d >= 1) continue;
-    const crater = 0.13;
-    let p = (1 - Math.max(0, d - crater) / (1 - crater)) ** 1.6;
+    const crater = SLOPE === 'a' ? 0.09 : 0.13;
+    let p = (1 - Math.max(0, d - crater) / (1 - crater)) ** (SLOPE === 'a' ? 2.5 : 1.6);
     if (d < crater * 0.8) p -= 0.06;
     // Ravines: shallow creases running down from the rim.
     p *= 1 - 0.07 * (1 - Math.abs(vnoise(Math.atan2(b - v.b, a - v.a) * 6 + 40, 3, 1) * 2 - 1)) * Math.min(1, d * 3);
@@ -244,10 +254,25 @@ export function cornerHeight(vx: number, vy: number): number {
         // Hills ease down to the beach wherever the coast runs.
         const edge = smooth((-coastAt(x, y) - 2) / 4);
         const n = vnoise(x + 40, y + 40, 4) * 0.7 + vnoise(x + 7, y + 90, 2) * 0.3;
-        const hill = HILL_MAX * rise * edge * (0.2 + 0.8 * n);
-        // The volcanoes are part of the same mesh, joined to the hills by a soft maximum so their
-        // skirts flow into the slopes round them instead of meeting in a crease.
-        const volc = volcano(x, y).h * smooth((-coastAt(x, y) + 0.5) / 2) * smooth(out / 2);
+        const inland = Math.max(0, -coastAt(x, y));
+        // Option b: the land climbs from the shore in four gentle benches, each a smoothed step.
+        const k = inland / 1.6;
+        const bench = Math.min(1, (Math.floor(k) + smooth((k - Math.floor(k) - 0.5) / 0.5)) / 4);
+        let hill = HILL_MAX * rise * edge * (0.2 + 0.8 * n);
+        let volc = volcano(x, y).h * smooth((-coastAt(x, y) + 0.5) / 2) * smooth(out / 2);
+        if (SLOPE === 'a') {
+          hill = HILL_MAX * rise * smooth(inland / 6) * (0.2 + 0.8 * n);
+          volc = volcano(x, y).h * smooth(inland / 6) * smooth(out / 2);
+        } else if (SLOPE === 'b') {
+          hill = HILL_MAX * rise * bench * (0.2 + 0.8 * n);
+          volc = volcano(x, y).h * bench * smooth(out / 2);
+        } else if (SLOPE === 'c') {
+          // Option c: the whole back of the island is one massif rising steadily from every shore,
+          // the hills rolling on it and the volcanoes standing on top.
+          const base = 34 * smooth(inland / 7) * smooth(out / 3);
+          hill = base + HILL_MAX * 0.55 * rise * smooth(inland / 5) * n;
+          volc = base + volcano(x, y).h * 0.85 * smooth(inland / 5) * smooth(out / 2);
+        }
         const m = Math.max(hill, volc);
         const K = 0.15;
         heights[(y - YMIN) * w + x - XMIN] = Math.round(m + Math.log(Math.exp(K * (hill - m)) + Math.exp(K * (volc - m))) / K - Math.log(2) / K * Math.min(1, Math.min(hill, volc) / 8));
