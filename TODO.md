@@ -4,6 +4,8 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Tasks
 
+**Approval (Hari, 2026-11-02):** TODO items do not wait on Hari. The agent that claims an item judges the work against GAME-DESIGN.md §8, the UI.md review checklist and TESTING.md, and approves it itself. A bot run, a nightly scorecard and CI count as the playtest. Record the verdict in `decisions/`. Ask Hari only for what needs his hands: credentials and secrets, GitHub or repo settings, spending money, and irreversible actions such as deleting data or rewriting main.
+
 Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by player pain, then unblock value, then cost.
 
 ### Now
@@ -69,7 +71,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
     - Each row's detail gets "Go to RT", which closes the sheet and pans the map to that cell.
   - Suggested solution: one PR (Sonnet), after the sheet revamp above. Files: `src/sim/rules.ts`, `src/sim/neighbourView.ts`, `src/sim/grow.ts`, `src/sim/balance.ts` (Kunjungan numbers), `src/ui/neighbours.ts`, i18n, `tests/grow.test.ts`. Log in `decisions/build-on-ai-rts.md`.
   - Plan it against the smaller map (`decisions/smaller-map-go.md`): 1 AI RT at the RW, 2 at the Kelurahan. Needs a plan file first.
-  - Fallback if Hari's playtest finds panning across 16 RTs a chore: a per-RT build focus (Rumah or the missing combo) instead, and building only in the player's own RW.
+  - Fallback if the agent's own playtest finds panning across 16 RTs a chore: a per-RT build focus (Rumah or the missing combo) instead, and building only in the player's own RW.
   - Source: Hari, 2026-11-01 ("shall we just allow user to build on rt that is controlled by ai as a way to speed up"), planning thread "Plan neighbour RT boosts and sheet".
   - `open · — · — · done when:` a building the player places in an AI RT cell counts for that RT's stars and the AI never builds over it, Kunjungan shows its cost and effect in EN and ID, takeover is gone, and the RW and Kelurahan bots still reach their stars.
 - [ ] **Show which RW and RT is yours and which the AI runs on the map, and let the player take over an RT in another RW.**
@@ -128,7 +130,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 ### Later
 
 - [ ] **Fix the remaining scorecard Fails that have a clear cause.**
-  - Problem: after the first balance wave the scorecard reads 3 Pass, 12 Fail, 12 Unknown (Nightly of 2026-11-01). Still failing with a cause: RT 1★ ratio 6.5x among the four main bots (a 18 second gap against 100 seconds, so the 1.3x bar may be too strict at that scale; Hari's call), Kel 2★ never reached by shopkeeper and Pencitraan, Hint reader finds only 50% of combos (bar 65 to 85%), Viral pinned near 100 in every band, cash piles up for up to 44 min with no late sink (item 14), goal gaps over the band (7, 10), novelty gaps (11), one reward kind per star (12), Aman pinned at 98% in B4.
+  - Problem: after the first balance wave the scorecard reads 3 Pass, 12 Fail, 12 Unknown (Nightly of 2026-11-01). Still failing with a cause: RT 1★ ratio 6.5x among the four main bots (a 18 second gap against 100 seconds, so the 1.3x bar may be too strict at that scale; the claiming agent decides and logs it in `decisions/`), Kel 2★ never reached by shopkeeper and Pencitraan, Hint reader finds only 50% of combos (bar 65 to 85%), Viral pinned near 100 in every band, cash piles up for up to 44 min with no late sink (item 14), goal gaps over the band (7, 10), novelty gaps (11), one reward kind per star (12), Aman pinned at 98% in B4.
   - Why: each Fail is a place the game is too easy, too flat or can strand a player.
   - Suggested solution: one small PR per row, each proved by a Nightly rerun. Cash sink and late Popularitas sources are content, so check them against the Act 2 plan first.
   - Source: `scorecard/scorecard.md`; `decisions/rt-3star-pace.md`; `decisions/combo-stack-cap.md`; `decisions/cheapskate-bar.md`
@@ -163,9 +165,9 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 - [ ] **Make staffing integral: the permit desk queue (prototype).**
   - Problem: staff are optional bonuses. Inem made permits up to 40% faster, a Hansip adds a little Aman, and nothing breaks or asks for a hire when the player has nobody.
   - Why: in Kairosoft's games staff are the hands that turn money into output, and running short of people is the pressure the player feels. Staffing should tighten the core loop: build, queue, hire or train, build faster.
-  - Suggested solution: permits become folders the Kantor clears in order; each Asisten clears some a month; the Asisten role can be posted from RT 1★; the map, panel and goal strip show the queue and say when to hire. Prototype in a draft PR for Hari to play. Later steps: petugas on big public buildings, output numbers on staff cards, the same queue for Stempel and Serapan.
+  - Suggested solution: permits become folders the Kantor clears in order; each Asisten clears some a month; the Asisten role can be posted from RT 1★; the map, panel and goal strip show the queue and say when to hire. Prototype in a PR and judge it against the checklists. Later steps: petugas on big public buildings, output numbers on staff cards, the same queue for Stempel and Serapan.
   - Source: voidinside99, 2026-10-31
-  - `claimed · voidinside99 · 2026-10-31 · done when:` Hari has played the prototype and it merges (or is dropped), with the bite tuned in `decisions/desk-queue.md`.
+  - `claimed · voidinside99 · 2026-10-31 · done when:` the prototype passes the checklists and merges (or is dropped), with the bite tuned in `decisions/desk-queue.md`.
 
 - [ ] **A portrait for every staff member.**
   - Problem: only Inem and the specials have faces; every other hire is a star badge.
