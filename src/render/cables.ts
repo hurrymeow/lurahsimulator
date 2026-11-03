@@ -174,8 +174,9 @@ function build(stage: StageId): void {
 // and each span is cut into one slice per path tile, so it sorts with the buildings: a house in front
 // of the path hides the wire, and no wire crosses a house or an empty lot (UI.md rule 17).
 
+/** A pole, or the slice of a wire over one path tile. */
 export interface PathPole {
-  /** The path tile it stands on, for the draw order. */
+  /** The path tile it stands on or hangs over, for the draw order. */
   x: number;
   y: number;
   sprite: Sprite;
