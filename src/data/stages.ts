@@ -10,8 +10,8 @@ export const STAGES: StageDef[] = [
     titles: ['Pak RT', 'RT Rintisan', 'RT Berkembang', 'RT Teladan'],
     next: 'rw',
     stars: [
-      { goals: [{ kind: 'residents', n: 10 }, { kind: 'combos', n: 1 }], unlocks: ['indomaret', 'alfamart', 'kosan', 'barbershop', 'pohonRindang', 'sawah'], reward: { orangDalam: 1 } },
-      { goals: [{ kind: 'residents', n: 25 }, { kind: 'rankWins', n: 1 }, { kind: 'combos', n: 2 }, { kind: 'sabar', n: 50 }], unlocks: ['lapangan', 'bankSampah', 'bengkel', 'paud', 'bangku', 'kandangAyam'] },
+      { goals: [{ kind: 'residents', n: 10 }, { kind: 'combos', n: 1 }], unlocks: ['kosan', 'barbershop', 'pohonRindang', 'sawah'], reward: { orangDalam: 1 } },
+      { goals: [{ kind: 'residents', n: 25 }, { kind: 'rankWins', n: 1 }, { kind: 'combos', n: 2 }, { kind: 'sabar', n: 50 }], unlocks: ['indomaret', 'alfamart', 'lapangan', 'bankSampah', 'bengkel', 'paud', 'bangku', 'kandangAyam'] },
       { goals: [{ kind: 'residents', n: 55 }, { kind: 'winStreak', n: 2 }, { kind: 'combos', n: 3 }, { kind: 'sabar', n: 65 }], unlocks: ['apotek', 'koperasi', 'balaiWarga', 'lampuTaman', 'mural'] },
     ],
   },

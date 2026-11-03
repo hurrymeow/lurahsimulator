@@ -38,8 +38,8 @@ export interface RealisasiDef {
 export const REALISASI: RealisasiDef[] = [
   { id: 'wifiGratis', wacana: 'digital', name: 'Wifi Gratis di Balai', line: 'A router in the balai, and a password on the wall.', cost: 2_000_000, delay: 3, lasts: 24, kerja: 5, viral: 2, effect: 'Kerja +5 and +2 Virality a week for 24 weeks.' },
   { id: 'kerjaBakti', wacana: 'gotong', name: 'Kerja Bakti Rutin', line: 'Every Sunday, 7 sharp. Coffee and gorengan on the kas.', cost: 1_000_000, delay: 3, lasts: 24, aman: 5, repairs: 1, effect: 'Aman +5, and one damaged building fixed a week, for 24 weeks.' },
-  { id: 'bioporiMassal', wacana: 'genangan', name: 'Biopori Massal', line: 'A hole in every yard. Nobody argues with a hole.', cost: 2_500_000, delay: 3, lasts: 0, banjirProtect: 0.2, effect: 'Banjir damage 20% lower, for good.' },
-  { id: 'pelatihanUmkm', wacana: 'warung', name: 'Pelatihan UMKM', line: 'Bookkeeping, packaging and how to post a menu.', cost: 3_000_000, delay: 3, lasts: 24, kerja: 8, warungMult: 1.1, effect: 'Kerja +8 and warung income +10% for 24 weeks.' },
+  { id: 'bioporiMassal', wacana: 'genangan', name: 'Biopori Massal', line: 'A hole in every yard. Nobody argues with a hole.', cost: 1_500_000, delay: 3, lasts: 0, banjirProtect: 0.2, effect: 'Banjir damage 20% lower, for good.' },
+  { id: 'pelatihanUmkm', wacana: 'warung', name: 'Pelatihan UMKM', line: 'Bookkeeping, packaging and how to post a menu.', cost: 2_000_000, delay: 3, lasts: 24, kerja: 8, warungMult: 1.1, effect: 'Kerja +8 and warung income +10% for 24 weeks.' },
   { id: 'bansos', wacana: 'hijau', name: 'Bansos Sembako', line: 'Rice, oil and sugar, to the right houses this time.', cost: 1_500_000, delay: 1, lasts: 6, perutCover: 0.3, effect: 'Feeds 30% more households for 6 weeks.' },
   { id: 'literasiKeuangan', wacana: 'judol', name: 'Literasi Keuangan', line: 'Classes at the balai on loans, interest and the word "bunga".', cost: 3_000_000, delay: 8, lasts: 48, pinjolCut: 0.5, stage: 'kecamatan', effect: 'New pinjol and judol cases fall 50% for 48 weeks, once it lands in 8.' },
 ];

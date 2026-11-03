@@ -125,14 +125,15 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 
 #### 1★ RT Rintisan
 
-- Unlocks IndoApril, BetaMart, Kos-kosan, Barbershop, Pohon Rindang, Sawah and Pos Satpam. Kantor RT can reach level 2. Harga cabai starts.
+- Unlocks Kos-kosan, Barbershop, Pohon Rindang, Sawah and Pos Satpam. Kantor RT can reach level 2. Harga cabai starts.
 - Their gate moves from a population count to this star.
 - Reward: **+1** Orang Dalam.
 - **Goal for 2★:** **25** residents, **1** ranking win and **2** combos.
 
 #### 2★ RT Berkembang
 
-- Unlocks Lapangan, Bank Sampah, Bengkel, PAUD, Balai-balai Bambu and Kandang Ayam. Kantor RT can reach level 3.
+- Unlocks IndoApril, BetaMart, Lapangan, Bank Sampah, Bengkel, PAUD, Balai-balai Bambu and Kandang Ayam. Kantor RT can reach level 3.
+- The minimarkets wait for this star: at 1★ the kas sits near Rp 2 juta for months, so a Rp 7 juta store would only be a greyed-out card (`decisions/year1-affordable.md`).
 - The scenery edge thins, so the neighbours' roofs show.
 - **Goal for 3★:** **55** residents, **2** wins in a row, **3** combos and Sabar of at least **65**.
 
@@ -294,7 +295,7 @@ Measure with the test bot in `tests/balance.test.ts` (10 seeds, idle and builder
 | 7 | Tutorial tips at least 60s apart | One lesson at a time. | Pass (`GAP_MS`) |
 | 8 | No debt or soft-lock in year 1 | Bad choices slow you down. They never end the game. | Pass (balance test) |
 | 9 | Year-1 cash never below 0 for idle or builder bots | Same rule, measured as a number. | Pass (balance test) |
-| 10 | Each star unlocks something the player can use within 30s | Stars must feel like rewards, not counters. | Pass by design (the unlocks per star in section 2). Affordability at that moment not measured. |
+| 10 | Each star unlocks something the player can use within 30s | Stars must feel like rewards, not counters. | Pass by design (the unlocks per star in section 2). Something cheap (Pohon Rindang) is affordable at once. Every 1★ unlock is affordable to the builder bot within 16 weeks, asserted in `tests/balance.test.ts` (was up to 81 weeks before `decisions/year1-affordable.md`). |
 
 ### Sources
 
