@@ -5,6 +5,7 @@
 // Each span and pole is a small cached sprite, so a frame only blits what is on screen.
 import { GRID_H, GRID_W, type Building, type StageId } from '../sim/types';
 import { TH, TW } from './iso';
+import { layoutPoles, poleHash } from './poles';
 import { WORLD_OX, WORLD_OY } from './scenery';
 
 /** Pole height in art pixels, ground to the top of the crossarm. */
@@ -12,11 +13,7 @@ const POLE_H = 26;
 /** Where the wires leave a pole, against its foot: four insulators on the crossarm, low ones for drops. */
 const ATTACH: [number, number][] = [[-3, -POLE_H + 2], [-1, -POLE_H + 1], [1, -POLE_H + 1], [3, -POLE_H + 2]];
 
-function hash(x: number, y: number): number {
-  let h = (x * 374761393 + y * 668265263) ^ 0x51ed270b;
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-}
+const hash = poleHash;
 
 interface Pole {
   /** Tile-space position of the foot. */
@@ -173,11 +170,13 @@ function build(stage: StageId): void {
 
 // ---------------------------------------------------------------- Poles by the jalan setapak
 // Inside the kampung a pole goes up beside the jalan setapak every four to ten path tiles, counted in
-// the order the paths were built, so every few new paths raise a new pole. Each one is wired to the
-// nearest pole before it, so the wires spread through the kampung as it grows.
+// the order the paths were built. Wires run only along a straight path between two poles (`poles.ts`),
+// and each span is cut into one slice per path tile, so it sorts with the buildings: a house in front
+// of the path hides the wire, and no wire crosses a house or an empty lot (UI.md rule 17).
 
+/** A pole, or the slice of a wire over one path tile. */
 export interface PathPole {
-  /** The path tile it stands on, for the draw order. */
+  /** The path tile it stands on or hangs over, for the draw order. */
   x: number;
   y: number;
   sprite: Sprite;
@@ -185,47 +184,53 @@ export interface PathPole {
 
 let pathKey = '';
 let pathPoles: PathPole[] = [];
-let pathSpans: Sprite[] = [];
 
-/** Poles beside the paths and the spans between them, rebuilt when the paths or the stage change. */
+/** Poles beside the paths and the wire slices between them, rebuilt when the paths or the stage change. */
 function buildPath(buildings: readonly Building[], stage: StageId): void {
   build(stage);
-  const paths = buildings.filter((b) => b.def === 'jalan').sort((p, q) => p.uid - q.uid);
+  const paths = buildings.filter((b) => b.def === 'jalan');
   const key = `${cachedKey}|${paths.map((b) => `${b.uid}:${b.x},${b.y}`).join(';')}`;
   if (key === pathKey) return;
   pathKey = key;
   const kit = kitOf(stage);
-  const on = new Set(paths.map((b) => b.y * GRID_W + b.x));
-  const placed: Pole[] = [];
-  pathPoles = [];
-  pathSpans = [];
-  let next = 4 + Math.floor(hash(7, 1) * 7);
-  let count = 0;
-  for (const b of paths) {
-    if (++count < next) continue;
-    count = 0;
-    next = 4 + Math.floor(hash(b.uid, 2) * 7);
-    // Beside the path: on the edge of its tile away from the way it runs.
-    const alongX = on.has(b.y * GRID_W + b.x - 1) || on.has(b.y * GRID_W + b.x + 1);
-    const side = hash(b.uid, 3) < 0.5 ? 0.14 : 0.86;
-    const a = alongX ? b.x + 0.5 : b.x + side;
-    const bb = alongX ? b.y + side : b.y + 0.5;
-    const i = 1000 + b.uid;
-    const pole: Pole = { a, b: bb, x: Math.round(WORLD_OX + ((a - bb) * TW) / 2), y: Math.round(WORLD_OY + ((a + bb) * TH) / 2), front: true, lean: hash(i, 3) < 0.2 ? (hash(i, 4) < 0.5 ? -1 : 1) : 0 };
-    // Wire it to the nearest pole already up, if one is in reach.
-    let best: Pole | null = null;
-    let bd = 9;
-    for (const q of placed) {
-      const d = Math.hypot(q.a - a, q.b - bb);
-      if (d < bd) [best, bd] = [q, d];
+  const layout = layoutPoles(paths);
+  const poles: Pole[] = layout.poles.map((p) => ({
+    a: p.a,
+    b: p.b,
+    x: Math.round(WORLD_OX + ((p.a - p.b) * TW) / 2),
+    y: Math.round(WORLD_OY + ((p.a + p.b) * TH) / 2),
+    front: true,
+    lean: hash(p.seed, 3) < 0.2 ? (hash(p.seed, 4) < 0.5 ? -1 : 1) : 0,
+  }));
+  pathPoles = layout.poles.map((p, i) => ({ x: p.x, y: p.y, sprite: poleSprite(poles[i], kit, p.seed) }));
+  for (const sp of layout.spans) {
+    const p = poles[sp.from];
+    const q = poles[sp.to];
+    const whole = spanSprite(p, q, kit, layout.poles[sp.to].seed);
+    // Each path tile under the wire owns the columns of the span above it on screen.
+    const across = sp.axis === 'x' ? (p.b + q.b) / 2 : (p.a + q.a) / 2;
+    const edge = (t: number) => WORLD_OX + ((sp.axis === 'x' ? t - across : across - t) * TW) / 2;
+    const cols = sp.tiles.map((t) => {
+      const along = sp.axis === 'x' ? t.x : t.y;
+      const [l, r] = [edge(along), edge(along + 1)].sort((m, n) => m - n);
+      return { t, lo: Math.round(l), hi: Math.round(r) };
+    });
+    // The slices at the screen's left and right ends also take the pad round each pole.
+    cols.sort((m, n) => m.lo - n.lo);
+    cols[0].lo = whole.x;
+    cols[cols.length - 1].hi = whole.x + whole.canvas.width;
+    for (const { t, lo, hi } of cols) {
+      if (hi <= lo) continue;
+      const cv = document.createElement('canvas');
+      cv.width = hi - lo;
+      cv.height = whole.canvas.height;
+      cv.getContext('2d')!.drawImage(whole.canvas, lo - whole.x, 0, hi - lo, cv.height, 0, 0, hi - lo, cv.height);
+      pathPoles.push({ x: t.x, y: t.y, sprite: { ...whole, canvas: cv, x: lo } });
     }
-    if (best) pathSpans.push(spanSprite(best, pole, kit, i));
-    placed.push(pole);
-    pathPoles.push({ x: b.x, y: b.y, sprite: poleSprite(pole, kit, i) });
   }
 }
 
-/** The poles standing beside the paths, for the map's back-to-front pass. */
+/** The poles beside the paths and the slices of wire over each path tile, for the map's back-to-front pass. */
 export function polesByPaths(buildings: readonly Building[], stage: StageId): PathPole[] {
   buildPath(buildings, stage);
   return pathPoles;
@@ -235,15 +240,4 @@ export function polesByPaths(buildings: readonly Building[], stage: StageId): Pa
 export function drawSprite(ctx: CanvasRenderingContext2D, sp: Sprite, wx: number, wy: number, s: number, now: number, motion: boolean): void {
   const dy = sp.sway && motion ? Math.round((Math.sin(now / 1300 + sp.phase) + 1) / 2) : 0;
   ctx.drawImage(sp.canvas, wx + sp.x * s, wy + sp.y * s + dy * s, sp.canvas.width * s, sp.canvas.height * s);
-}
-
-/** The wires between the poles by the paths. They hang high, so they draw over the buildings. */
-export function drawPathCables(ctx: CanvasRenderingContext2D, buildings: readonly Building[], stage: StageId, wx: number, wy: number, s: number, viewW: number, viewH: number, now: number, motion: boolean): void {
-  buildPath(buildings, stage);
-  for (const sp of pathSpans) {
-    const left = wx + sp.x * s;
-    const top = wy + sp.y * s;
-    if (left > viewW || top > viewH || left + sp.canvas.width * s < 0 || top + sp.canvas.height * s < 0) continue;
-    drawSprite(ctx, sp, wx, wy, s, now, motion);
-  }
 }
