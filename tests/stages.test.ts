@@ -70,7 +70,9 @@ describe('star engine', () => {
     const od = s.res.orangDalam;
     const fx = run(s);
     expect(s.stage.stars.rt).toBe(1);
-    expect(s.unlocked).toEqual(expect.arrayContaining(['indomaret', 'alfamart', 'kosan']));
+    expect(s.unlocked).toEqual(expect.arrayContaining(['kosan', 'barbershop']));
+    // Minimarkets wait for 2★: at 1★ the kas cannot pay for one for months (decisions/year1-affordable.md).
+    expect(s.unlocked).not.toContain('indomaret');
     expect(s.res.orangDalam).toBeGreaterThanOrEqual(od + 1);
     expect(fx.some((f) => f.kind === 'notice' && f.fanfare && f.title.startsWith('1★'))).toBe(true);
   });
@@ -79,17 +81,17 @@ describe('star engine', () => {
     const s = newGame(1);
     s.res.rupiah = 100_000_000;
     add(s, 'warung', 0, 0);
-    expect(checkPlace(s, 'indomaret', 1, 0)).toMatchObject({ ok: false, missing: expect.arrayContaining([expect.stringContaining('RT Rintisan')]) });
-    expect(checkPlace(s, 'kosan', 1, 0).ok).toBe(false);
+    expect(checkPlace(s, 'kosan', 1, 0)).toMatchObject({ ok: false, missing: expect.arrayContaining([expect.stringContaining('RT Rintisan')]) });
     const kantor = s.buildings.find((b) => b.def === 'kantorRT')!;
     expect(checkUpgrade(s, kantor).ok).toBe(false);
     s.stage.stars.rt = 1;
-    expect(checkPlace(s, 'indomaret', 1, 0).ok).toBe(true);
+    expect(checkPlace(s, 'indomaret', 1, 0)).toMatchObject({ ok: false, missing: expect.arrayContaining([expect.stringContaining('RT Berkembang')]) });
     expect(checkPlace(s, 'kosan', 2, 0).ok).toBe(true);
     expect(checkPlace(s, 'lapangan', 2, 0).ok).toBe(false);
     expect(checkUpgrade(s, kantor).ok).toBe(true);
     s.stage.stars.rt = 2;
     expect(checkPlace(s, 'lapangan', 2, 0).ok).toBe(true);
+    expect(checkPlace(s, 'indomaret', 1, 0).ok).toBe(true);
   });
 
   it('never drops a star, even when the goals are no longer met', () => {

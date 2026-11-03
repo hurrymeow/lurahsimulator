@@ -4,7 +4,9 @@ import { placeableDefs } from '../src/sim/content';
 import { checkRepair, repair, resolveEvent } from '../src/sim/events';
 import { checkRestart, checkRestartODn, restart } from '../src/sim/projects';
 import { checkPlace, place, skipPermit, upgrade } from '../src/sim/rules';
-import { attractTarget, emptyTiles, housing, newGame, population } from '../src/sim/state';
+import { attractTarget, buildCost, emptyTiles, housing, newGame, population } from '../src/sim/state';
+import { def } from '../src/sim/content';
+import { STAGES } from '../src/data/stages';
 import { tick } from '../src/sim/tick';
 import { announce } from '../src/sim/wacana';
 import { INFLATION_PER_YEAR } from '../src/sim/balance';
@@ -15,7 +17,7 @@ import type { GameState } from '../src/sim/types';
  * It: builds the two early combos, keeps a bed ahead of demand,
  * and buys what it can afford. It never plans combos beyond the two it is told to.
  */
-function play(seed: number, years: number, smart: boolean, starMonths: number[] = [], eventMonths: number[] = []): { s: GameState; minRupiahY1: number } {
+function play(seed: number, years: number, smart: boolean, starMonths: number[] = [], eventMonths: number[] = [], onWeek?: (s: GameState) => void): { s: GameState; minRupiahY1: number } {
   const s = newGame(seed);
   let minRupiahY1 = Infinity;
   for (let m = 0; m < years * 12; m++) {
@@ -75,6 +77,7 @@ function play(seed: number, years: number, smart: boolean, starMonths: number[] 
       }
     }
     tick(s);
+    onWeek?.(s);
     while (starMonths.length < s.stage.stars.rt) starMonths.push(s.month);
     if (s.month <= 12) minRupiahY1 = Math.min(minRupiahY1, s.res.rupiah);
   }
@@ -141,6 +144,26 @@ describe('pacing targets', () => {
       // 12 min is the intended pace (Hari, 2026-10-31). This simple bot lands near 8; the scorecard builder bot holds the 9 to 12 min band.
       expect(stars[2], `3 stars, seed ${seed} (${stars})`).toBeLessThanOrEqual(90);
       events.forEach((m, i) => { if (i) expect(m - events[i - 1], `events at ${events[i - 1]} and ${m}, seed ${seed}`).toBeGreaterThanOrEqual(3); });
+    }
+  }, 30_000);
+});
+
+// GAME-DESIGN.md target 10: a star's unlocks are a reward only if the kas can pay for them soon. A card the
+// player sees greyed out for months is dead content (decisions/year1-affordable.md). 1★ is the star of year 1.
+// Later stars are left out: this bot spends down on filler and upgrades, so its cash says more about the bot.
+describe('star unlocks are affordable', () => {
+  it('the builder can pay for every 1★ unlock within 16 weeks of the star', () => {
+    const MAX_WAIT = 16;
+    for (let seed = 1; seed <= 10; seed++) {
+      const waiting = new Map<string, number>();
+      let stars = 0;
+      play(seed, 7, true, [], [], (s) => {
+        for (; stars < Math.min(1, s.stage.stars.rt); stars++) for (const id of STAGES[0].stars[stars].unlocks) waiting.set(id, s.month);
+        for (const [id, since] of waiting) {
+          if (s.res.rupiah >= buildCost(s, def(id))) waiting.delete(id);
+          else expect(s.month - since, `${id} out of reach since week ${since}, seed ${seed}`).toBeLessThanOrEqual(MAX_WAIT);
+        }
+      });
     }
   }, 30_000);
 });
