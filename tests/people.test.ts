@@ -10,14 +10,21 @@ function crowdWith(fx: number, fy: number, id = 7) {
 }
 
 describe('walker tap', () => {
-  it('hits a sprite, ignores VIP walkers, and finds a walker by ground tile', () => {
+  it('hits a sprite and ignores VIP walkers', () => {
     const c = crowdWith(5, 5);
     expect(c.hit(50, 50, project, 2)?.id).toBe(7);
+    expect(c.hit(50, 40, project, 2)?.id).toBe(7);
     expect(c.hit(0, 0, project, 2)).toBeNull();
-    expect(c.onTile(5, 5)?.id).toBe(7);
-    expect(c.onTile(4, 5)).toBeNull();
     const vip = crowdWith(5, 5, -1);
     expect(vip.hit(50, 50, project, 2)).toBeNull();
-    expect(vip.onTile(5, 5)).toBeNull();
+  });
+
+  it('only the sprite counts, so the ground beside and below the walker stays free', () => {
+    // A walker sprite at scale 2 is 18px wide and 24px tall, feet 4px below the ground point (50, 50).
+    const c = crowdWith(5, 5);
+    expect(c.hit(50, 54, project, 2)?.id).toBe(7);
+    expect(c.hit(50, 60, project, 2)).toBeNull();
+    expect(c.hit(62, 50, project, 2)).toBeNull();
+    expect(c.hit(38, 50, project, 2)).toBeNull();
   });
 });

@@ -804,11 +804,9 @@ export class App {
         this.tapPlacing(tile);
         return;
       }
-      // A walker wins over the tile under them, so tapping a resident on a
-      // path opens their sheet, not the path's. Sprite first, then ground
-      // tile, so a tap on either the walker or where they stand works.
-      const walker = this.view.crowd.hit(e.clientX - rect.left, e.clientY - rect.top, this.view.project, this.view.scale)
-        ?? this.view.crowd.onTile(tile.x, tile.y);
+      // A tap on a walker's sprite opens their sheet. Only the sprite counts:
+      // the rest of the ground diamond still opens the path or building there.
+      const walker = this.view.crowd.hit(e.clientX - rect.left, e.clientY - rect.top, this.view.project, this.view.scale);
       if (walker) {
         this.openResident(walker.id);
         return;

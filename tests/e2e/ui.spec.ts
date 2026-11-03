@@ -917,6 +917,44 @@ test.describe('slim HUD and one menu', () => {
     await expect(page.locator('#sheet h2')).toHaveText(info.name);
   });
 
+  test('a walker on a Jalan Setapak blocks only their sprite, the rest of the tile still opens the path', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#pause-btn').click();
+    const info = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      // The tile behind the Kantor RT is empty and on screen when the map opens.
+      const x = k.x;
+      const y = k.y - 1;
+      app.s.buildings.push({ uid: app.s.nextUid++, def: 'jalan', x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
+      const w = app.view.crowd.people.find((p: any) => !p.away && p.id >= 0);
+      w.fx = x + 0.5;
+      w.fy = y + 0.5;
+      w.path = [];
+      const c = app.view.tileCentre(x, y);
+      const r = document.getElementById('map')!.getBoundingClientRect();
+      const t = app.view.tile;
+      const resident = app.s.residents.find((p: any) => p.id === w.id);
+      return {
+        name: resident.name,
+        sprite: { x: r.left + c.x, y: r.top + c.y - t * 0.4 },
+        // The left corner and the bottom of the diamond, both clear of the sprite.
+        side: { x: r.left + c.x - t * 0.6, y: r.top + c.y },
+        below: { x: r.left + c.x, y: r.top + c.y + t * 0.35 },
+      };
+    });
+    for (const at of [info.side, info.below]) {
+      await page.mouse.click(at.x, at.y);
+      await expect(page.locator('#sheet h2')).not.toHaveText(info.name);
+      await expect(page.locator('.sheet-head')).toContainText('Jalan Setapak');
+      await page.locator('.sheet-head .btn-icon').click();
+      await expect(page.locator('#sheet')).toBeHidden();
+    }
+    await page.mouse.click(info.sprite.x, info.sprite.y);
+    await expect(page.locator('#sheet h2')).toHaveText(info.name);
+  });
+
   test('pause toggles and speed cycles 1x, 2x (no 4x)', async ({ page }) => {
     await start(page);
     await dismissModals(page);
