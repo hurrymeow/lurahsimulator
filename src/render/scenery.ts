@@ -391,8 +391,12 @@ export function cornerHeight(vx: number, vy: number): number {
           heights[(y - YMIN) * w + x - XMIN] = Math.round(kh + Math.min(hill, 6));
           continue;
         }
+        // A soft maximum rounds the joins between hills and volcanoes. On flat land both are 0 and it would
+        // still add ln 2 / K (5px), lifting the kampung's painted ground off the tile grid the paths and
+        // buildings stand on, so its excess fades out over the first 8px of height.
         const K = 0.15;
-        heights[(y - YMIN) * w + x - XMIN] = Math.round(m + Math.log(Math.exp(K * (hill - m)) + Math.exp(K * (volc - m))) / K - Math.log(2) / K * Math.min(1, Math.min(hill, volc) / 8));
+        const excess = Math.log(Math.exp(K * (hill - m)) + Math.exp(K * (volc - m))) / K - (Math.log(2) / K) * Math.min(1, Math.min(hill, volc) / 8);
+        heights[(y - YMIN) * w + x - XMIN] = Math.round(m + excess * Math.min(1, m / 8));
       }
   }
   if (vx < XMIN || vy < YMIN || vx > XMAX || vy > YMAX) return 0;
