@@ -497,10 +497,12 @@ export class Crowd {
   }
 
   /**
-   * Walker whose sprite is under a canvas point, or null. The hit box is at
-   * least 48px, centred on the sprite, so a small walker is tappable. On a
-   * tie the frontmost walker wins, matching draw order. VIP walkers are not
-   * residents, so they never win.
+   * Walker whose drawn sprite is under a canvas point, or null. The hit box is
+   * the sprite's own rectangle, from its head down to its feet, and nothing
+   * more: the ground diamond around the walker still belongs to the path or
+   * building there, so a walker never blocks tapping the base under them.
+   * On a tie the frontmost walker wins, matching draw order. VIP walkers are
+   * not residents, so they never win.
    */
   hit(px: number, py: number, project: Project, scale: number): Walker | null {
     let best: Walker | null = null;
@@ -511,12 +513,10 @@ export class Crowd {
       const w = (rows[0].length + 2) * scale;
       const h = (rows.length + 2) * scale;
       const g = project(p.fx, p.fy);
-      const cx = g.x;
-      const cy = g.y - h / 2 + 2 * scale;
-      const dx = px - cx;
-      const dy = py - cy;
-      if (Math.abs(dx) > Math.max(w / 2, 24) || Math.abs(dy) > Math.max(h / 2, 24)) continue;
-      const score = Math.hypot(dx, dy) - (p.fx + p.fy) * 0.001;
+      // Same rectangle draw() paints: centred on x, feet 2 sprite pixels below the ground point.
+      const bottom = g.y + 2 * scale;
+      if (Math.abs(px - g.x) > w / 2 || py < bottom - h || py > bottom) continue;
+      const score = Math.hypot(px - g.x, py - (bottom - h / 2)) - (p.fx + p.fy) * 0.001;
       if (score < bestScore) {
         bestScore = score;
         best = p;
@@ -525,8 +525,4 @@ export class Crowd {
     return best;
   }
 
-  /** Walker standing on a tile, or null. Used when a tap lands on their ground tile, not their sprite. */
-  onTile(x: number, y: number): Walker | null {
-    return this.people.find((p) => !p.away && p.id >= 0 && Math.floor(p.fx) === x && Math.floor(p.fy) === y) ?? null;
-  }
 }
