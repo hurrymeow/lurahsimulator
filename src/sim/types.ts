@@ -163,6 +163,8 @@ export interface Neighbour {
   /** Funded at least once, for the RW's first star. */
   everFunded: boolean;
   lastBuild: number;
+  /** The week of the player's last Kunjungan here. Missing until the first. */
+  visitedAt?: number;
   /** Builds attempted, for Hobi Wacana's skipped turns. */
   turns: number;
   /** Progress toward the next build, 0 to 1. Grows faster with more Dana banked. Missing in old saves. */
