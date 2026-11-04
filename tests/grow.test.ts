@@ -574,6 +574,7 @@ describe('the 2nd RT', () => {
       place(s, id, at.x, at.y);
       s.buildings.find((b) => b.x === at.x && b.y === at.y)!.status = 'active';
     }
+    s.discovered = ['tongkrongan'];
     while (population(s) < housing(s)) addResident(s);
     step(s);
     expect(n.stars).toBeGreaterThan(0);

@@ -1635,7 +1635,7 @@ test.describe('stars', () => {
 });
 
 test.describe('growing map', () => {
-  test('after promotion the map is bigger, neighbours show in the Menu, and funding one works', async ({ page }) => {
+  test('at the Kelurahan neighbours show in the Menu, and funding one works', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     await seed(page);
@@ -1643,29 +1643,30 @@ test.describe('growing map', () => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.speed = 0;
       app.promote();
+      app.promote();
       app.s.res.rupiah = 50_000_000;
       app.refresh();
     });
     await dismissModals(page);
     await page.locator('#menu-btn').click();
     await page.locator('#act-neighbours').click();
-    await expect(page.locator('[data-nb-row]')).toHaveCount(1);
+    await expect(page.locator('[data-nb-row]')).toHaveCount(2);
     await expectLegible(page, 'neighbours panel');
     const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.funded));
     // Each row opens its own detail, where the funding buttons live.
     await page.locator('[data-nb-row]').first().click();
     await page.locator('.sheet [data-fund="1"]').click();
     const after = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.funded));
-    expect(after[0]).toBe(before[0] + 1);
+    expect(after[1]).toBe(before[1] + 1);
     await expectLegible(page, 'neighbours panel after funding');
     // A big Dana banks six builds.
     await page.locator('.sheet [data-fund="6"]').click();
-    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].funded)).toBe(before[0] + 7);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[1].funded)).toBe(before[1] + 7);
     // Auto-dana: one chip cycles Off, 3, 6, 12 and the level is saved on the RT.
     await page.locator('.sheet .nb-auto .btn').click();
     await page.locator('.sheet .nb-auto .btn').click();
     await expect(page.locator('.sheet .nb-auto .btn')).toHaveAttribute('aria-pressed', 'true');
-    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].autoKeep)).toBe(6);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[1].autoKeep)).toBe(6);
     await expectLegible(page, 'neighbour detail with auto-dana');
   });
 
@@ -1676,23 +1677,24 @@ test.describe('growing map', () => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.speed = 0;
       app.promote();
+      app.promote();
     });
     await dismissModals(page);
-    // Bring the second RT into view, then tap its first tile.
+    // Bring an RT of RW 2 into view, then tap it.
     const at = await page.evaluate(async () => {
       const v = (window as unknown as { pakrt: any }).pakrt.view;
       const { w, h } = (window as unknown as { pakrt: any }).pakrt.rt;
-      const c = v.project(w + w / 2, h / 2);
+      const c = v.project(w / 2, h + h / 2);
       v.panBy(v.viewW / 2 - c.x, v.viewH / 2 - c.y);
       // Tap picking reads the last drawn frame, so let one draw after the pan.
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-      const p = v.project(w + w / 2, h / 2);
+      const p = v.project(w / 2, h + h / 2);
       return { x: p.x, y: p.y };
     });
     const box = (await page.locator('#map').boundingBox())!;
     await page.mouse.click(box.x + at.x, box.y + at.y);
     await expect(page.locator('.sheet')).toBeVisible();
-    await expect(page.locator('[data-nb-row]')).toHaveCount(1);
+    await expect(page.locator('[data-nb-row]')).toHaveCount(2);
   });
 
   test('every stage opens at full size with the player\'s Kantor RT in view', async ({ page }) => {
@@ -1717,7 +1719,53 @@ test.describe('growing map', () => {
     }
   });
 
-  test('at the Kelurahan Kampung Sebelah leaves the Neighbours panel, and the notice says so', async ({ page }) => {
+  test('at the RW Kampung Sebelah is the player\'s: no Dana, a way to its lots, and builds there send letters', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.promote();
+      app.s.res.rupiah = 50_000_000;
+      app.refresh();
+    });
+    await expect(page.locator('#modal')).toContainText('Kampung Sebelah');
+    await dismissModals(page);
+    await openPanel(page, 'neighbours');
+    await expect(page.locator('[data-nb-row]')).toHaveCount(1);
+    await expect(page.locator('#nb-auto-all')).toHaveCount(0);
+    await expectLegible(page, 'neighbours panel at the RW');
+    await page.locator('[data-nb-row]').first().click();
+    await expect(page.locator('.sheet [data-fund], #nb-visit')).toHaveCount(0);
+    await expectLegible(page, 'Kampung Sebelah detail at the RW');
+    await page.locator('#nb-goto').click();
+    await expect(page.locator('#sheet')).toBeHidden();
+    // A Warung on its free lots is placed like at home, and sends letters.
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('warung'));
+    const spot = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const n = app.s.neighbours[0];
+      const busy = (x: number, y: number) => app.s.buildings.some((b: any) => Math.abs(b.x - x) < 2 && Math.abs(b.y - y) < 2);
+      const cx = n.cx * app.rt.w + Math.floor(app.rt.w / 2);
+      const cy = Math.floor(app.rt.h / 2);
+      for (let r = 2; r < 6; r++)
+        for (let dy = -r; dy <= r; dy++)
+          for (let dx = -r; dx <= r; dx++)
+            if (!busy(cx + dx, cy + dy)) {
+              const c = app.view.tileCentre(cx + dx, cy + dy);
+              const m = document.getElementById('map')!.getBoundingClientRect();
+              if (c.x > 20 && c.y > 80 && c.x < m.width - 20 && c.y < m.height - 80) return { sx: m.left + c.x, sy: m.top + c.y };
+            }
+      return null;
+    });
+    expect(spot).not.toBeNull();
+    await page.mouse.click(spot!.sx, spot!.sy);
+    await expect(page.locator('#place-ok')).toBeEnabled();
+    await page.locator('#place-ok').click();
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.stempel.backlog)).toBeGreaterThan(0);
+  });
+
+  test('at the Kelurahan Kampung Sebelah leaves the Neighbours panel, and RW 2 brings the AI RTs', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     const kampung = 'Kampung Sebelah';
@@ -1727,9 +1775,9 @@ test.describe('growing map', () => {
       app.promote();
     });
     await promote();
+    await expect(page.locator('#modal')).toContainText(kampung);
     await dismissModals(page);
     await promote();
-    await expect(page.locator('#modal')).toContainText(kampung);
     await expect(page.locator('#modal')).toContainText('RW 2');
     await dismissModals(page);
     await page.locator('#menu-btn').click();
@@ -1745,13 +1793,14 @@ test.describe('growing map', () => {
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.promote();
-      for (const n of app.s.neighbours) n.autoKeep = 6;
+      app.promote();
+      for (const n of app.s.neighbours) if (n.run !== 'player') n.autoKeep = 6;
       app.s.res.rupiah = 1e9;
       for (let i = 0; i < 18; i++) { app.s.pendingEvent = null; app.runTick(); }
       app.refresh();
     });
     await dismissModals(page);
-    const paths = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.buildings.filter((b: any) => b.def === 'jalan').length));
+    const paths = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.filter((n: any) => n.run !== 'player').map((n: any) => n.buildings.filter((b: any) => b.def === 'jalan').length));
     for (const n of paths) expect(n).toBeGreaterThan(0);
     // Let a few frames run so the walkers appear and take a step.
     await page.waitForTimeout(1500);
@@ -1772,6 +1821,7 @@ test.describe('growing map', () => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.speed = 0;
       app.promote();
+      app.promote();
       app.s.res.orangDalam = 5;
       app.s.res.rupiah = 50_000_000;
       app.refresh();
@@ -1782,7 +1832,7 @@ test.describe('growing map', () => {
     // Takeover is retired: no Ambil alih, no Serahkan.
     await expect(page.locator('.sheet [data-takeover], .sheet [data-handback]')).toHaveCount(0);
     await expectLegible(page, 'neighbour detail with Kunjungan');
-    const built = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].buildings.length);
+    const built = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[1].buildings.length);
     const before = await built();
     await page.locator('#nb-visit').click();
     expect(await built()).toBeGreaterThan(before);
@@ -1795,7 +1845,7 @@ test.describe('growing map', () => {
     await expect(page.locator('#sheet')).toBeHidden();
     const centred = await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
-      const n = app.s.neighbours[0];
+      const n = app.s.neighbours[1];
       const p = app.view.project(n.cx * app.rt.w + app.rt.w / 2, n.cy * app.rt.h + app.rt.h / 2);
       return { dx: Math.abs(p.x - app.view.viewW / 2), dy: Math.abs(p.y - app.view.viewH / 2), w: app.view.viewW, h: app.view.viewH };
     });
@@ -1805,7 +1855,7 @@ test.describe('growing map', () => {
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('warung'));
     const spot = await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
-      const n = app.s.neighbours[0];
+      const n = app.s.neighbours[1];
       const busy = (x: number, y: number) => [...app.s.buildings, ...n.buildings].some((b: any) => b.x === x && b.y === y);
       const cx = n.cx * app.rt.w + Math.floor(app.rt.w / 2);
       const cy = n.cy * app.rt.h + Math.floor(app.rt.h / 2);

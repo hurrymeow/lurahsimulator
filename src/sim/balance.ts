@@ -115,7 +115,7 @@ export const STEMPEL = {
   /** Sabar lost a month for each letter still waiting. */
   sabarPerLetter: 0.5,
   /** Letters a build in Kampung Sebelah sends at the RW. */
-  perBuild: 2,
+  perBuild: 1,
 };
 
 /** Most extra income decorations can add to one building, however many stand nearby. */
