@@ -31,7 +31,7 @@ describe('short goal', () => {
     const s = newGame(1);
     addBuilding(s, 'rumah', 5, 5, 'active');
     addBuilding(s, 'warung', 6, 5, 'permit').timer = 1;
-    expect(shortGoal(s)).toBe('wait for Warung Sembako to open');
+    expect(shortGoal(s)).toBe('Warung Sembako opens soon');
   });
 
   it('leads with the combo before beds once the combo is all the star still needs', () => {
@@ -48,7 +48,7 @@ describe('short goal', () => {
     for (let i = 0; i < 4; i++) addBuilding(s, 'rumah', 3 + i, 12, 'active');
     while (population(s) < attractTarget(s)) addResident(s);
     expect(population(s)).toBeLessThan(housing(s));
-    expect(shortGoal(s)).toMatch(/^nobody new is coming, build a .+ to draw residents$/);
+    expect(shortGoal(s)).toMatch(/^build .+: draws residents$/);
   });
 
   it('does not draw a Warung Sembako that is already built', () => {
@@ -81,7 +81,7 @@ describe('stempel next step', () => {
   it('points at Stempel once letters pile up and the RW star waits only on it', () => {
     const s = rw(true);
     s.stempel.backlog = 4;
-    expect(nextStep(s)).toEqual({ kind: 'stempel', text: 'letters are piling up: run a Calo job or build a Balai RW' });
+    expect(nextStep(s)).toEqual({ kind: 'stempel', text: 'clear letters: run a Calo' });
   });
 
   it('keeps the old hint when the RW star still needs funded RTs', () => {

@@ -51,3 +51,23 @@ export async function countScreen(page: Page, screen: string, sel: string): Prom
 
 /** The limits of UI.md rules 13 and 14. */
 export const LIMITS = { wordsInView: 50, longestBlock: 20, wordsAll: 300, primary: 1 } as const;
+
+/** Labels UI.md rule 16 caps at 6 words: buttons, tabs, chips and pills. Rows that open a whole entry are lists, not labels. */
+const LABELS = '.btn, .tab, .ls-chip, .chip, .toggle, .goal-now, .stats-how summary';
+const ROWS = '.card-btn, .ls-tile, .staff-open, [data-nb-row], .how-row, button.goal-row';
+
+/** Every visible label over 6 words (UI.md rule 16). Words as in rule 13: runs with a letter; numbers and icons are free. */
+export async function scanLabelWords(page: Page, max = 6): Promise<{ text: string; words: number }[]> {
+  return page.evaluate(([sel, rows, cap]) => {
+    const out: { text: string; words: number }[] = [];
+    for (const el of document.querySelectorAll<HTMLElement>(sel)) {
+      if (el.matches(rows) || el.closest('[hidden]')) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      const text = (el.innerText ?? '').replace(/\s+/g, ' ').trim();
+      const words = text.split(' ').filter((w) => /\p{L}/u.test(w)).length;
+      if (words > cap) out.push({ text: text.slice(0, 60), words });
+    }
+    return out;
+  }, [LABELS, ROWS, max] as const);
+}

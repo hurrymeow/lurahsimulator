@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { scanLegibility } from './legibility';
-import { countScreen, LIMITS, type ScreenCount } from './density';
+import { countScreen, LIMITS, scanLabelWords, type ScreenCount } from './density';
 import { scanCentring } from './vcenter';
 
 /** Screens still over a limit: the cap is today's count, so they can only improve. */
@@ -291,6 +291,22 @@ test.describe('opener', () => {
     // Housing step: a different tab does nothing.
     await page.locator('#sheet .tab:not([data-tab="housing"])').first().click({ force: true });
     await expect(page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first()).toBeVisible();
+    // Rumah step: another card, the info button and the sheet's close button do nothing (UI.md rule 10).
+    const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
+    await expect(rumah).toHaveClass(/coach-pulse/);
+    const other = page.locator('#sheet .card-btn:not(.coach-pulse)');
+    if (await other.count()) await other.first().click({ force: true });
+    await page.locator('#sheet .build-info').first().click({ force: true });
+    await page.locator('#sheet .sheet-head .btn-icon').last().click({ force: true });
+    await expect(rumah).toBeVisible();
+    await expect(page.locator('#place-ok')).toBeHidden();
+    await rumah.click();
+    // Tile step: the top-row speed control does nothing until the house is placed.
+    const speed = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.speed);
+    const before = await speed();
+    await page.locator('#speed-btn').click({ force: true });
+    expect(await speed()).toBe(before);
+    await expect(page.locator('#coach')).toBeVisible();
   });
 });
 
@@ -3119,8 +3135,6 @@ test.describe('console frame and theme', () => {
   });
 });
 
-// UI.md rules 13 and 14, counted on every sheet, pop-up and the home screens. Screens that still fail are in
-// DENSITY_ALLOW with a cap at today's counts, so a screen can only get better. When one is fixed, delete its entry.
 // UI.md rule 18: a label sits in the vertical middle of its button, pill or bar.
 test.describe('vertical centring', () => {
   test('labels sit in the middle of buttons, pills and bars on every main screen', async ({ page }) => {
@@ -3179,14 +3193,55 @@ test.describe('vertical centring', () => {
   });
 });
 
+// UI.md rule 15: a tab set holds one kind of thing. Collections open from a header button, never as a tab.
+test.describe('tab sets', () => {
+  test('each tab set holds one kind of thing', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    await dismissModals(page);
+    const kinds = async (list: string) => page.locator(list).evaluate((el) => [...new Set([...el.children].filter((c) => !(c as HTMLElement).hidden && !c.classList.contains('ls-empty')).map((c) => c.className.split(' ')[0]))]);
+    // Build: every tab lists buildings to place, and only buildings.
+    await openPanel(page, 'build');
+    const tabs = page.locator('#sheet .build-tabs .tab');
+    for (let i = 0; i < (await tabs.count()); i++) {
+      await tabs.nth(i).click();
+      expect(await kinds('#sheet .build-list'), `Build tab ${i + 1}`).toEqual(['build-row']);
+    }
+    // The Combo book is a collection: a header button, not a tab. Its filters show combo tiles only.
+    await expect(page.locator('#sheet .build-tabs #combo-open')).toHaveCount(0);
+    await page.locator('#sheet #combo-open').click();
+    const filters = page.locator('#sheet .ls-tabs .tab');
+    for (let i = 0; i < (await filters.count()); i++) {
+      await filters.nth(i).click();
+      const k = await kinds('#sheet .ls-grid');
+      expect(k.filter((c) => c !== 'ls-detail'), `Combo filter ${i + 1}`).toEqual(k.length ? ['ls-tile'] : []);
+    }
+    await page.locator('#sheet .sheet-head .btn-icon').last().click();
+    // Warga: both filters list groups of people.
+    await openPanel(page, 'warga');
+    const wf = page.locator('#sheet .ls-tabs .tab');
+    for (let i = 0; i < (await wf.count()); i++) {
+      await wf.nth(i).click();
+      const k = await kinds('#sheet .ls-groups');
+      expect(k, `Warga filter ${i + 1}`).toEqual(k.length ? ['ls-group'] : []);
+    }
+  });
+});
+
+// UI.md rules 13 and 14, counted on every sheet, pop-up and the home screens. Screens that still fail are in
+// DENSITY_ALLOW with a cap at today's counts, so a screen can only get better. When one is fixed, delete its entry.
 test.describe('density and hierarchy', () => {
   test('every screen stays inside the word and primary-button limits', async ({ page }) => {
     test.setTimeout(240_000);
     page.setDefaultTimeout(8000);
     const rows: ScreenCount[] = [];
+    // UI.md rule 16: buttons, tabs, chips and pills hold 6 words or fewer, checked on the same screens.
+    const long: string[] = [];
     const take = async (screen: string, sel: string) => {
       const r = await countScreen(page, screen, sel);
       if (r) rows.push(r);
+      for (const l of await scanLabelWords(page)) if (!long.some((x) => x.endsWith(`"${l.text}"`))) long.push(`${screen}: ${l.words} words "${l.text}"`);
     };
     const dismiss = async () => {
       for (let i = 0; i < 20; i++) {
@@ -3274,5 +3329,6 @@ test.describe('density and hierarchy', () => {
       }
     }
     expect(over, 'screens over the UI.md rule 13 and 14 limits (or their allowlist cap)').toEqual([]);
+    expect(long, 'labels over the UI.md rule 16 limit of 6 words').toEqual([]);
   });
 });
