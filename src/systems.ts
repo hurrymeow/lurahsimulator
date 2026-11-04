@@ -9,7 +9,7 @@ import { damagedExtras, mangkrakExtras, openResidents, openWacana, parkirExtras 
 /** Wires satire systems into the app: extra action buttons and inspector rows. */
 export function registerSystems(app: App): void {
   app.actions.push(
-    { id: 'warga', label: () => t('menu.warga'), open: openResidents },
+    { id: 'warga', label: () => t('dock.warga'), open: openResidents },
     { id: 'wacana', label: () => t('menu.wacana'), open: openWacana },
     { id: 'staff', label: () => t('menu.staff'), open: openStaff, badge: (app) => app.s.lowongan?.applicants.length ?? 0 },
     // The panitia's panel shows from May to the day.

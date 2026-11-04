@@ -1,12 +1,13 @@
 // Console frame: the main screen after a 90s train-and-city builder. Two slim rows on top: time
 // (play, speed, date, the 2045 meter) and money (the five resources). The goal floats as a pill on
 // the map's top-left, opposite a small satellite view. At the bottom, the month as a thin line and
-// a dock of three equal buttons: Build, Warga and Menu. Settings picks a light or dark frame.
+// a dock: Build at a third of the bar, then Warga, Staf and Menu sharing the rest. Settings picks a light or dark frame.
 import { t } from '../i18n';
 import type { App } from '../app';
 import { dateLabel, rupiahHud } from '../format';
 import { damagedList, repairAll, repairCost } from '../sim/events';
 import { TH, TW } from '../render/iso';
+import { iconURL } from '../render/sprites';
 import { WORLD_OX, WORLD_OY } from '../render/scenery';
 import { GRID_H, GRID_W } from '../sim/types';
 import { h } from './dom';
@@ -17,7 +18,7 @@ import { saveSettings } from '../settings';
 import './console.css';
 
 /** Panels with their own dock button. The Menu stops listing them, so nothing appears twice. */
-const DOCK = ['build', 'warga'];
+const DOCK = ['build', 'warga', 'staff'];
 
 export function setupConsole(app: App): void {
   const stage = document.getElementById('stage')!;
@@ -45,7 +46,7 @@ export function setupConsole(app: App): void {
   const dock = DOCK.map((id) => {
     const action = app.actions.find((a) => a.id === id)!;
     action.dock = true;
-    const icon = menuIconURL(id);
+    const icon = menuIconURL(action.icon ?? id) ?? iconURL(action.icon ?? 'people');
     const b = h('button', { class: 'btn cs-dock', id: `dock-${id}`, type: 'button', onclick: () => action.open(app) },
       icon ? h('img', { src: icon, alt: '', width: 24, height: 24, class: 'pixel' }) : null,
       h('span', { class: 'cs-dock-label' }, ''),
@@ -64,15 +65,18 @@ export function setupConsole(app: App): void {
       buildBtn.classList.toggle('has-new', fresh);
     });
   }
-  // Menu carries a count while something waits in one of its panels, such as applicants in Staff.
-  app.refreshers.push(() => {
-    const n = app.actions.reduce((sum, a) => sum + (a.dock ? 0 : (a.badge?.(app) ?? 0)), 0);
-    const tag = menuBtn.querySelector<HTMLElement>('.count-tag');
+  const setCount = (btn: HTMLElement, n: number) => {
+    const tag = btn.querySelector<HTMLElement>('.count-tag');
     if (n && tag?.dataset.count === String(n)) return;
     tag?.remove();
-    if (n) menuBtn.append(countTag(n));
+    if (n) btn.append(countTag(n));
+  };
+  // A docked panel carries its own count, such as applicants in Staff. Menu counts what waits in its panels.
+  app.refreshers.push(() => {
+    for (const { action, b } of dock) setCount(b, action.badge?.(app) ?? 0);
+    setCount(menuBtn, app.actions.reduce((sum, a) => sum + (a.dock ? 0 : (a.badge?.(app) ?? 0)), 0));
   });
-  // Menu gets an icon too, so the three bottom buttons read as one set.
+  // Menu gets an icon too, so the bottom buttons read as one set.
   menuBtn.replaceChildren(h('span', { class: 'cs-menu-icon', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), h('span', { 'data-i18n': 'page.menu' }, t('page.menu')));
   menuBtn.removeAttribute('data-i18n');
 
