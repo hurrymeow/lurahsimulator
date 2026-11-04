@@ -11,6 +11,8 @@ import { inemURL } from '../render/inem';
 const KEY = 'pakrt.coach';
 /** The 2nd RT's steps: unset until the player has seen the arrival, 'build' until they build there, then 'done'. */
 const KEY_RT2 = 'pakrt.coach.rt2';
+/** The first AI RTs' steps: unset until the player has met RW 2, then 'fund' until they fund one. */
+const KEY_AI = 'pakrt.coach.ai';
 const DONE_MS = 20_000;
 // ?debug keeps the e2e suite free of the opener. ?debug&coach turns it back on for its own test.
 const q = new URLSearchParams(location.search);
@@ -22,6 +24,7 @@ let running = false;
 export function resetCoach(): void {
   storage.set(KEY, 'pending');
   storage.remove(KEY_RT2);
+  storage.remove(KEY_AI);
 }
 
 /** True when a new game should start with the guide, not the How to play card. */
@@ -194,8 +197,61 @@ export function setupCoach(app: App): void {
     return true;
   };
 
+  let aiOn = false;
+  let aiPanned = false;
+  const hideAi = () => {
+    if (!aiOn) return;
+    aiOn = false;
+    running = false;
+    app.held = false;
+    bar.hidden = true;
+    marked?.classList.remove('coach-pulse');
+    marked = null;
+  };
+
+  /**
+   * The first AI RTs, right after the Kelurahan promotion: the map moves to RW 2, then the note walks Menu, Neighbours,
+   * an RT and Dana, and stays until the player has funded one. Nothing is locked. True while it owns the note.
+   */
+  const aiStep = (): boolean => {
+    const s = app.s;
+    const ai = s.neighbours.filter((n) => n.run !== 'player');
+    if (s.stage.current !== 'kelurahan' || !ai.length || storage.get(KEY) === 'pending' || doneAt || ai.some((n) => n.everFunded)) {
+      hideAi();
+      return false;
+    }
+    const fund = document.querySelector('#sheet [data-fund="1"]');
+    const row = document.querySelector('#sheet [data-nb-row]');
+    const tile = document.querySelector('#act-neighbours');
+    const inSheet = [fund, row, tile].find(visible) ?? null;
+    const state = storage.get(KEY_AI);
+    // It waits behind notices, events and other sheets, and leaves a player who is placing a building alone.
+    if ((!app.idle && !(state && inSheet)) || app.placing || !document.getElementById('modal')!.hidden) {
+      hideAi();
+      return true;
+    }
+    aiOn = true;
+    running = true;
+    allowed = null;
+    if (!state) {
+      if (!aiPanned) {
+        aiPanned = true;
+        const o = cellOrigin(ai[0].cx, ai[0].cy);
+        app.view.centreOn(o.x + RT_W / 2, o.y + RT_H / 2);
+      }
+      app.held = true;
+      onNext = () => {
+        storage.set(KEY_AI, 'fund');
+        hideAi();
+      };
+      show('coach.ai.arrive', null, 'coach.gotIt');
+    } else if (inSheet) show(inSheet === fund ? 'coach.ai.fund' : inSheet === row ? 'coach.ai.row' : 'coach.ai.tile', inSheet);
+    else show('coach.ai.menu', document.getElementById('menu-btn'));
+    return true;
+  };
+
   const step = () => {
-    if (rt2()) return;
+    if (rt2() || aiStep()) return;
     onNext = finish;
     if (storage.get(KEY) !== 'pending' && !doneAt) return;
     const idle = !document.getElementById('home') && document.getElementById('howto')!.hidden;
