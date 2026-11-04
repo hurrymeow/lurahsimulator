@@ -125,17 +125,17 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 
 #### 1★ RT Rintisan
 
-- Unlocks Kos-kosan, Barbershop, Pohon Rindang, Sawah and Pos Satpam. Kantor RT can reach level 2. Harga cabai starts.
+- Unlocks Kos-kosan, Barbershop, Pohon Rindang and Sawah. Kantor RT can reach level 2. Harga cabai starts.
 - Their gate moves from a population count to this star.
 - Reward: **+1** Orang Dalam.
-- **Goal for 2★:** **25** residents, **1** ranking win and **2** combos.
+- **Goal for 2★:** **25** residents, **1** ranking win, **2** combos and Popularitas of at least **50**.
 
 #### 2★ RT Berkembang
 
 - Unlocks IndoApril, BetaMart, Lapangan, Bank Sampah, Bengkel, PAUD, Balai-balai Bambu and Kandang Ayam. Kantor RT can reach level 3.
 - The minimarkets wait for this star: at 1★ the kas sits near Rp 2 juta for months, so a Rp 7 juta store would only be a greyed-out card (`decisions/year1-affordable.md`).
 - The scenery edge thins, so the neighbours' roofs show.
-- **Goal for 3★:** **55** residents, **2** wins in a row, **3** combos and Sabar of at least **65**.
+- **Goal for 3★:** **55** residents, **2** wins in a row, **3** combos and Popularitas of at least **65**.
 
 #### 3★ RT Teladan
 
@@ -337,7 +337,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
   - Kampung Digital (Diskominfo): WiFi, Viral, tertib, Popularitas.
 - **Wacana or Realisasi:** each policy has a real version (Wifi Gratis di Balai, Kerja Bakti Rutin, Biopori Massal, Pelatihan UMKM, Bansos Sembako). It costs Rp 1 to 3 juta, lands after 1 to 3 months and moves a meter for a time (Biopori for good). Announcing fills the Laporan as well as doing does; only doing moves Sejahtera.
 - **Popularitas soft cap:** above **80**, gains shrink toward nothing at 100, so a full kampung settles around 90 instead of sitting at the cap. Each employed resident gives **0.04** (was 0.08), each resident expects **0.14** (was 0.1; **0.7x** at the Kelurahan, where the kampung spans two RTs, and half that again past **200** residents), and a Satpam gives **0.5** (was 1).
-- **Staff** (`src/data/staff.ts`): the people the player manages, as Kairosoft's staff are; warga still pick their own jobs. Inem is staff number 1 (the first Asisten at the Kantor desk, see the desk queue below) and never leaves. Slots: 1 at the start, 3 at RT 1★, 4 at RT 3★, 6 at RW, 8 at Kelurahan, never more than **10**.
+- **Staff** (`src/data/staff.ts`): the people the player manages, as Kairosoft's staff are; warga still pick their own jobs. Inem is staff number 1 (the first Asisten at the Kantor desk, see the desk queue below) and never leaves. Slots: 1 at the start, 3 at RT 1★, 4 at RT 3★, 6 at RW, 8 at Kelurahan, 9 at Kecamatan, never more than **10**.
   - **Desk queue** (prototype, 2026-10-31, `decisions/desk-queue.md`): every permit is a pile of folders (berkas), one per permit month, and the Kantor clears them in the order buildings were placed. Each Asisten clears **0.85** folders a month per point of output, so Inem at level 1 clears about **1**; the Kantor never clears fewer than **0.5**. Each building still costs **1** Popularitas for every month it waits. More Asisten clear the queue sooner, and the Asisten role can be posted from RT 1★. The map badge shows the months to go, the Kantor carries a pile of folders while the queue has work, and once the queue is **3** months deep with a free slot, the goal strip says to post a lowongan for an Asisten. Rumah need no permit, so the first house is still instant.
   - **Stats** (`decisions/staff-stats.md`): Rajin, Lobi, Jujur, Gaul (1 to 99), each with its own icon and one meaning everywhere: Rajin is how much gets done, Lobi how smoothly things go through the people above, Jujur how much leaks, Gaul how liked. Output = level x the role's work stat / 50 x trait.
   - **Roles**, each with a work stat and a risk stat; every stat is the work stat of two roles and the risk stat of two (playtest 2026-11-01: Rajin was doing almost everything): Asisten (Lobi: the desk queue; Rajin: a folder is misfiled, −2 Popularitas), Sekretaris (Lobi: Orang Inside; Jujur: a small scandal, −3), Tukang Tagih Iuran (Gaul: talks warga into paying, up to +50% iuran; Jujur: skims Rp 150rb), Admin Grup WA (Gaul: Viral; Lobi: the group gets reported, −3), Hansip (Rajin: Aman +2 per level, finds a preman work; Gaul: a scuffle, −2), Petugas PU (Rajin: repairs; Lobi: no materials from the supplier, Rp 250rb), Bendahara (Jujur: upkeep down; Rajin: the receipts go missing, Rp 300rb), Supir (Jujur: no detours to his cousin's warung, crews arrive sooner; Gaul: clips a gerobak, −1).
