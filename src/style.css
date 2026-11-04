@@ -574,7 +574,6 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 .staff-detail { display: flex; gap: 10px; align-items: flex-start; }
 .staff-channel { margin-top: 8px; }
 .staff-face { flex: none; width: 44px; height: 60px; image-rendering: pixelated; }
-.staff-badge { flex: none; min-width: 44px; padding: 4px; font-family: var(--font-pixel); font-size: 16px; font-weight: 700; text-align: center; color: #2a1810; background: #f4b935; border: 1px solid #8a4f12; }
 .staff-stats { display: grid; gap: 2px; margin: 6px 0; }
 /* Icon, name, bar, value; under them, what the stat buys in this job. The two stats a job uses stand out. */
 .staff-stat { display: grid; grid-template-columns: 20px 56px 1fr 32px; column-gap: 6px; align-items: center; font-size: 16px; }

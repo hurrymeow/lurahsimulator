@@ -1,4 +1,5 @@
-// Staff portraits for the special hires, at Inem's size (44x60), drawn in code from parts: skin, hair, outfit and
+// Staff portraits for every hire, at Inem's size (44x60): the specials' hand-picked looks, and generic hires dressed
+// for their job with a face seeded by their staff id. All drawn in code from parts: skin, hair, outfit and
 // a prop. Each special is a recognisable TYPE (a TV news anchor, a radio traffic reporter), never one real person
 // or anyone else's character (GAME-DESIGN.md section 5). ART.md rules: flat two-tone fills lit from the top left,
 // and a 1px coloured outline, a dark shade of whatever it borders, never black.
@@ -8,8 +9,9 @@ import { PALETTE as P } from './sprites';
 export const PORTRAIT = { w: 44, h: 60 };
 
 type Hair = 'short' | 'side' | 'long' | 'bun' | 'curly' | 'bald' | 'ponytail' | 'mullet' | 'pompadour' | 'grey';
-type Outfit = 'suit' | 'dress' | 'hoodie' | 'kebaya' | 'tshirt' | 'safari' | 'vest' | 'blouse' | 'sequin' | 'tracksuit' | 'tank';
-type Prop = 'mic' | 'phone' | 'glasses' | 'sunglasses' | 'headset' | 'headphones' | 'cap' | 'headband' | 'tie' | 'bowtie' | 'pencil' | 'screwdriver' | 'mustache' | 'chain';
+type Outfit = 'suit' | 'dress' | 'hoodie' | 'kebaya' | 'tshirt' | 'safari' | 'vest' | 'blouse' | 'sequin' | 'tracksuit' | 'tank' | 'batik';
+type Prop = 'mic' | 'phone' | 'glasses' | 'sunglasses' | 'headset' | 'headphones' | 'cap' | 'headband' | 'tie' | 'bowtie' | 'pencil' | 'screwdriver' | 'mustache' | 'chain'
+  | 'beret' | 'helmet' | 'peci' | 'lanyard' | 'waistbag' | 'notebook';
 
 export interface Look {
   skin: string;
@@ -142,6 +144,17 @@ function paint(look: Look): Grid {
       rect(4, 48, 6, 59, second);
       rect(37, 48, 39, 59, second);
       break;
+    case 'batik':
+      // A collar, then a repeating diamond motif in the second colour.
+      rect(19, 44, 24, 45, second);
+      for (let y = 47; y < 60; y += 4)
+        for (let x = 6 + ((y - 47) % 8 ? 2 : 0); x < 38; x += 4) {
+          set(x, y, second);
+          set(x - 1, y + 1, second);
+          set(x + 1, y + 1, second);
+          set(x, y + 2, second);
+        }
+      break;
     case 'tank':
       // Bare shoulders, a vest top in the outfit colour.
       oval(22, 58, 19, 15, look.skin, (x, y) => y >= 44 && (x < 12 || x > 31));
@@ -256,6 +269,47 @@ function paint(look: Look): Grid {
     rect(22, 17, 37, 19, shade(second === P.w ? main : second, 0.75));
   }
   if (has('headband')) rect(11, 18, 33, 19, second);
+  if (has('beret')) {
+    // A green beret tipped to one side, with a small badge.
+    oval(20, 15, 12, 5, P.G, (_x, y) => y <= 18);
+    rect(10, 17, 32, 18, shade(P.G, 0.8));
+    rect(14, 14, 15, 15, P.y);
+  }
+  if (has('helmet')) {
+    // A site helmet: a dome and a brim.
+    oval(22, 18, 12, 9, P.y, (_x, y) => y <= 18);
+    rect(9, 18, 35, 19, P.h);
+    rect(21, 10, 23, 18, shade(P.y, 0.85));
+  }
+  if (has('peci')) {
+    // A black peci, flat-topped, straight across the brow.
+    rect(12, 12, 32, 18, P.k);
+    rect(12, 12, 32, 12, P.S);
+  }
+  if (has('lanyard')) {
+    // A strap round the neck to an ID card.
+    for (let y = 44; y <= 50; y++) {
+      set(19 + Math.floor((y - 44) / 3), y, P.b);
+      set(25 - Math.floor((y - 44) / 3), y, P.b);
+    }
+    rect(19, 51, 25, 57, P.w);
+    rect(20, 52, 24, 53, P.b);
+    rect(20, 55, 24, 55, P.S);
+  }
+  if (has('waistbag')) {
+    // A bag slung across the chest for the iuran.
+    for (let x = 8; x <= 34; x++) set(x, 46 + Math.round((x - 8) / 2.2), P.N);
+    rect(26, 52, 35, 57, P.n);
+    rect(26, 52, 35, 52, P.N);
+    set(33, 54, P.y);
+  }
+  if (has('notebook')) {
+    oval(9, 52, 3, 3, look.skin);
+    rect(4, 43, 12, 50, P.y);
+    rect(5, 44, 11, 44, P.w);
+    rect(5, 46, 11, 46, P.w);
+    rect(5, 48, 11, 48, P.w);
+  }
   if (has('headset')) {
     // A band over the head to one ear, and a thin boom to the mouth.
     oval(22, 20, 12, 11, P.S, (x, y) => y <= 16 && (((x - 22) / 12) ** 2 + ((y - 20) / 11) ** 2 > 0.75));
@@ -315,14 +369,64 @@ function outline(g: Grid): Grid {
   return out;
 }
 
+/** The outfit each role wears (decisions/staff-requests.md section 1): the job reads from the clothes. */
+const ROLE_LOOK: Record<string, Pick<Look, 'outfit' | 'colours' | 'props'>> = {
+  hansip: { outfit: 'safari', colours: [P.G, P.g], props: ['beret'] },
+  pu: { outfit: 'vest', colours: [P.o, P.l], props: ['helmet'] },
+  supir: { outfit: 'suit', colours: [P.S, P.w], props: ['peci'] },
+  bendahara: { outfit: 'batik', colours: [P.n, P.a], props: [] },
+  adminWa: { outfit: 'hoodie', colours: [P.c, P.w], props: ['phone'] },
+  asisten: { outfit: 'tshirt', colours: [P.w, P.l], props: ['lanyard'] },
+  sekretaris: { outfit: 'suit', colours: [P.B, P.w], props: [] },
+  penagih: { outfit: 'tshirt', colours: [P.r, P.w], props: ['waistbag', 'notebook'] },
+  satpol: { outfit: 'safari', colours: [P.t, P.N], props: ['cap'] },
+};
+const SKINS = Object.values(SKIN);
+const HAIRS: Hair[] = ['short', 'side', 'long', 'bun', 'curly', 'ponytail', 'grey', 'bald'];
+const HAIR_COLOURS = [HAIR.black, HAIR.black, HAIR.brown, HAIR.red];
+const FACES: Look['face'][] = ['calm', 'grin', 'calm', 'wink'];
+
+/** A small integer hash, so the same staff id always gives the same face. */
+const hash = (n: number, salt: number) => {
+  let x = (n * 2654435761 + salt * 40503) >>> 0;
+  x ^= x >>> 15;
+  x = Math.imul(x, 2246822519) >>> 0;
+  return (x ^ (x >>> 13)) >>> 0;
+};
+
+/** A generic hire's look: the outfit of their job, the face seeded by their staff id, so it lasts for good. */
+export function staffLook(role: string, id: number): Look {
+  const job = ROLE_LOOK[role] ?? ROLE_LOOK.asisten;
+  const hair = HAIRS[hash(id, 2) % HAIRS.length];
+  const capped = job.props.some((p) => p === 'beret' || p === 'helmet' || p === 'peci' || p === 'cap');
+  return {
+    skin: SKINS[hash(id, 1) % SKINS.length],
+    // Long hair would hang out from under a beret or helmet oddly, so headwear gets a short cut.
+    hair: capped && (hair === 'long' || hair === 'bun' || hair === 'ponytail') ? 'short' : hair,
+    hairColour: hair === 'grey' ? HAIR.grey : HAIR_COLOURS[hash(id, 3) % HAIR_COLOURS.length],
+    ...job,
+    props: [...job.props, ...(hash(id, 4) % 4 === 0 ? (['glasses'] as Prop[]) : [])],
+    face: FACES[hash(id, 5) % FACES.length],
+  };
+}
+
+export const ROLES_WITH_LOOK = Object.keys(ROLE_LOOK);
+
 const cache = new Map<string, string>();
 
 /** A special's portrait as a data URL, or null for someone without one. Drawn at 2 canvas pixels per art pixel. */
 export function portraitURL(id: string | undefined): string | null {
   if (!id || !LOOKS[id]) return null;
-  const hit = cache.get(id);
+  return draw(id, LOOKS[id]);
+}
+
+/** A generic hire's portrait: their job's outfit, their own face. */
+export const staffPortraitURL = (role: string, id: number): string => draw(`staff:${role}:${id}`, staffLook(role, id));
+
+function draw(key: string, look: Look): string {
+  const hit = cache.get(key);
   if (hit) return hit;
-  const g = outline(paint(LOOKS[id]));
+  const g = outline(paint(look));
   const k = 2;
   const c = document.createElement('canvas');
   c.width = PORTRAIT.w * k;
@@ -336,9 +440,10 @@ export function portraitURL(id: string | undefined): string | null {
     }),
   );
   const url = c.toDataURL();
-  cache.set(id, url);
+  cache.set(key, url);
   return url;
 }
 
 /** For tests: the painted grid of a look, outline included. */
 export const portraitGrid = (id: string): Grid => outline(paint(LOOKS[id]));
+export const staffGrid = (role: string, id: number): Grid => outline(paint(staffLook(role, id)));
