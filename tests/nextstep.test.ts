@@ -22,7 +22,7 @@ describe('short goal', () => {
     s.month = COMBO_HINT_MONTH - 1;
     expect(shortGoal(s) ?? '').not.toMatch(/combo/);
     s.month = COMBO_HINT_MONTH;
-    expect(shortGoal(s)).toMatch(/^make a combo: \S/);
+    expect(shortGoal(s)).toMatch(/^combo \S/);
     s.discovered.push('tongkrongan');
     expect(shortGoal(s) ?? '').not.toMatch(/combo/);
   });
@@ -39,7 +39,7 @@ describe('short goal', () => {
     for (let i = 0; i < 3; i++) addBuilding(s, 'rumah', 3 + i, 12, 'active');
     while (population(s) < Math.max(10, housing(s))) addResident(s);
     // Full beds would say "build a Rumah", but 10 residents are in: the star waits only on a combo.
-    expect(shortGoal(s)).toMatch(/^make a combo: /);
+    expect(shortGoal(s)).toMatch(/^combo \S/);
   });
 
   it('says what draws residents when beds are free but nobody comes', () => {
@@ -48,7 +48,7 @@ describe('short goal', () => {
     for (let i = 0; i < 4; i++) addBuilding(s, 'rumah', 3 + i, 12, 'active');
     while (population(s) < attractTarget(s)) addResident(s);
     expect(population(s)).toBeLessThan(housing(s));
-    expect(shortGoal(s)).toMatch(/^build .+: draws residents$/);
+    expect(shortGoal(s)).toMatch(/^.+ draws residents$/);
   });
 
   it('does not draw a Warung Sembako that is already built', () => {

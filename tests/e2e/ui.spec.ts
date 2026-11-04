@@ -534,6 +534,31 @@ test.describe('how to play', () => {
 });
 
 test.describe('events, ranking, settings', () => {
+  test('the year end shows the price banner card with a reason, legible', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await skipTips(page);
+    await seed(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.s.month = 47;
+      app.runTick();
+    });
+    // The year end can also bring the quarter report and other cards: tap through until the banner shows.
+    const banner = page.locator('#modal .card.price-banner');
+    // Cards wait for a quiet moment, so give each one time to land.
+    for (let i = 0; i < 20 && !(await banner.isVisible()); i++) {
+      await page.waitForTimeout(500);
+      if (await banner.isVisible()) break;
+      if (await page.locator('#modal .card.event').isVisible()) await page.locator('#modal .card.event .btn').first().click();
+      else if (await page.locator('#modal').isVisible()) await page.locator('#modal').click({ position: { x: 8, y: 8 } });
+    }
+    await expect(banner).toBeVisible();
+    await expect(banner.locator('h2')).toContainText(lang() === 'en' ? 'NOTICE: Cost of living up' : 'PERHATIAN: Biaya hidup naik');
+    await expectLegible(page, 'price banner');
+  });
+
   test('yearly report card is legible, pauses the game and dismisses on tap', async ({ page }) => {
     await start(page);
     await dismissModals(page);

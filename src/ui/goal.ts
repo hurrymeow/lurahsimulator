@@ -49,6 +49,7 @@ export function setupGoal(app: App): void {
         return i === howAt ? [row, h('p', { class: 'goal-row goal-how' }, t(GOAL_HOW[l.goal.kind]))] : [row];
       }),
       ...(step && !stepLeads ? [h('p', { class: 'goal-row goal-step' }, t('goal.step', { step: step.text }))] : []),
+      ...(step?.detail ? [h('p', { class: 'goal-row goal-step' }, step.detail)] : []),
       ...(left.some((l) => l.goal.kind === 'stempelClear')
         ? [h('p', { class: 'goal-row goal-step' }, t('goal.stempelHelp', { base: STEMPEL.base, perBalai: STEMPEL.perBalai }))]
         : []),

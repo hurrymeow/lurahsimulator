@@ -4,6 +4,8 @@ export const START = { rupiah: 5_000_000, sabar: 60, orangDalam: 1, viral: 0 };
 export const START_RESIDENTS = 4;
 export const IURAN = 25_000;
 export const INFLATION_PER_YEAR = Math.round(((1.03 ** YEAR_SCALE) - 1) * 10000) / 10000;
+/** Reasons in the yearly price banner (`price.reason.N`), from decisions/staff-requests.md section 4. */
+export const PRICE_REASONS = 12;
 export const LEVEL_BONUS = 0.6;
 export const REFUND = 0.5;
 export const BASE_ATTRACT = 4;
