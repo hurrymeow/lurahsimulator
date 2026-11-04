@@ -2284,6 +2284,29 @@ test.describe('build mode', () => {
     await page.locator('#dock-build').click();
     await expect(page.locator('#sheet .new-tag').first()).toBeVisible();
     await expectLegible(page, 'build sheet with NEW tags');
+    // Opening the sheet alone does not count as seeing the new cards (UI.md checklist item 4).
+    await page.locator('.sheet-head .btn-icon').click();
+    await expect(page.locator('#dock-build .new-tag')).toBeVisible();
+    // A NEW card tapped is seen at once: its tag goes, and the others stay until they are looked at.
+    await page.locator('#dock-build').click();
+    const tagged = page.locator('#sheet .build-row:has(.card-btn .new-tag)');
+    const before = await tagged.count();
+    const first = tagged.first();
+    const id = await first.getAttribute('data-def');
+    await first.locator('.build-info').click();
+    await page.locator('#build-back').click();
+    await expect(page.locator(`#sheet .build-row[data-def="${id}"] .new-tag`)).toHaveCount(0);
+    // Each tab in turn, held on screen for 2s: everything is seen and the dock's NEW goes.
+    for (const tab of await page.locator('#sheet .build-tabs .tab').all()) {
+      await tab.click();
+      const ids = await page.locator('#sheet .build-row:has(.card-btn .new-tag)').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.def!));
+      for (const def of ids) {
+        const row = page.locator(`#sheet .build-row[data-def="${def}"]`);
+        await row.scrollIntoViewIfNeeded();
+        await expect(row.locator('.new-tag')).toHaveCount(0, { timeout: 5000 });
+      }
+    }
+    expect(before).toBeGreaterThan(0);
     await page.locator('.sheet-head .btn-icon').click();
     await expect(page.locator('#dock-build .new-tag')).toHaveCount(0);
   });
