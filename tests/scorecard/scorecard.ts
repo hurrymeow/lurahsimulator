@@ -2,6 +2,7 @@
 // A row is Unknown when the harness cannot judge it yet. It never reads Pass on a check that was not run.
 import { readFileSync, readdirSync } from 'node:fs';
 import { COMBOS } from '../../src/data/combos';
+import { TRAITS } from '../../src/data/staff';
 import { EVENTS } from '../../src/data/events';
 import { STAGES } from '../../src/data/stages';
 import { placeableDefs } from '../../src/sim/content';
@@ -105,10 +106,9 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
   {
     const noEffect = placeableDefs().filter((d) => !(d.income > 0 || d.attract > 0 || d.housing || d.perMonth || d.category === 'decoration' || srcText.includes(`'${d.id}'`) || srcText.includes(`"${d.id}"`)));
     const deadEvents = EVENTS.filter((e) => e.choices.every((c) => !c.cost && !c.res && !c.incomePct && !c.outcomes && !c.modifier && !c.special && !c.inspectPrep));
-    const dead = [...noEffect.map((d) => d.id), ...deadEvents.map((e) => e.id)];
-    add(2, 'Data lint: nothing dead', 'T1', verdict(dead.length === 0), dead.length ? `Orphans: ${dead.join(', ')}.` : 'No orphan buildings or events. Traits and combos are not linted yet.');
-    if (dead.length === 0) rows[rows.length - 1].verdict = 'Unknown';
-    if (dead.length === 0) rows[rows.length - 1].evidence += ' Verdict held at Unknown because traits and combos are unchecked.';
+    const { traits, combos } = lintTraitsCombos(simText());
+    const dead = [...noEffect.map((d) => d.id), ...deadEvents.map((e) => e.id), ...traits.map((t) => `trait ${t}`), ...combos.map((c) => `combo ${c}`)];
+    add(2, 'Data lint: nothing dead', 'T1', verdict(dead.length === 0), dead.length ? `Orphans: ${dead.join(', ')}.` : `No orphan buildings, events, traits (${TRAITS.length}) or combos (${COMBOS.length}).`);
   }
 
   // 3. Growth shows on the map.
@@ -254,30 +254,34 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
     add(12, 'Star rewards', 'T1', verdict(bad.length === 0 && kinds.length === 0), `Cheapest new non-decor building affordable within 30s: ${checked - bad.length} of ${checked} star events${bad.length ? ` (misses: ${bad.slice(0, 4).join(', ')})` : ''}. Stars with one kind of reward: ${kinds.length ? kinds.join(', ') : 'none'}.`);
   }
 
-  // 13. Sources and sinks.
+  // 13. Sources and sinks. Dana, Stempel and Anggaran only exist from the stage that brings them, so a band where
+  // one never leaves 0 is skipped for it.
   {
     const bad: string[] = [];
-    const res = { Rupiah: (r: Timeline['rows'][number]) => r.rupiah, Popularitas: (r: Timeline['rows'][number]) => r.sabar, Viral: (r: Timeline['rows'][number]) => r.viral, 'Orang Dalam': (r: Timeline['rows'][number]) => r.odn };
+    type R = Timeline['rows'][number];
+    const res: Record<string, (r: R) => number> = { Rupiah: (r) => r.rupiah, Popularitas: (r) => r.sabar, Viral: (r) => r.viral, 'Orang Dalam': (r) => r.odn, Dana: (r) => r.dana, Stempel: (r) => r.stempel, Anggaran: (r) => r.anggaran };
+    const late = new Set(['Dana', 'Stempel', 'Anggaran']);
     for (const [name, get] of Object.entries(res)) {
       for (let b = 0; b < BANDS.length; b++) {
         let up = false;
         let down = false;
         let n = 0;
+        let seen = false;
         for (const tl of builder) {
           const rs = tl.rows.filter((r) => bandOf(r.t) === b);
           n += rs.length;
+          if (rs.some((r) => get(r) > 0)) seen = true;
           for (let i = 1; i < rs.length; i++) {
             const d = get(rs[i]) - get(rs[i - 1]);
             if (d > 0) up = true;
             if (d < 0) down = true;
           }
         }
-        if (n < 20) continue;
+        if (n < 20 || (late.has(name) && !seen)) continue;
         if (!up || !down) bad.push(`${name} ${BANDS[b]} ${!up ? 'never earned' : 'never spent'}`);
       }
     }
-    add(13, 'Sources and sinks', 'T1', verdict(bad.length === 0), bad.length ? `${bad.join(', ')}. Dana, Stempel and Anggaran are not tracked in the timeline yet.` : 'Every tracked resource moves up and down in every band reached. Dana, Stempel and Anggaran are not tracked yet.');
-    if (!bad.length) rows[rows.length - 1].verdict = 'Unknown';
+    add(13, 'Sources and sinks', 'T1', verdict(bad.length === 0), bad.length ? `${bad.join(', ')}.` : 'Every resource, Dana, Stempel and Anggaran included, moves up and down in every band it exists in.');
   }
 
   // 14. Cash health.
@@ -452,6 +456,28 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
   none(26, 'Replay drivers (optional New Game+)', 'T3', 'A design check, not a sim measurement. Not required for the core 8h.');
   none(27, 'Coming back', 'T2', 'Needs a Playwright save, reload and screenshot at 5s, in both languages.');
   return rows;
+}
+
+/** Only src/sim, where a trait or combo id shows up if the sim reads it by name. */
+export function simText(): string {
+  const read = (dir: string): string => readdirSync(dir, { withFileTypes: true }).map((f) => (f.isDirectory() ? read(`${dir}/${f.name}`) : f.name.endsWith('.ts') ? readFileSync(`${dir}/${f.name}`, 'utf8') : '')).join('\n');
+  return read('src/sim');
+}
+
+/**
+ * Item 2 for traits and combos. A trait is dead when it has no effect field and the sim never names it. A combo is
+ * dead when it has no effect, or needs a building that does not exist (a `@3` suffix is a level), and it is not retired.
+ */
+export function lintTraitsCombos(sim: string): { traits: string[]; combos: string[] } {
+  const named = (id: string) => sim.includes(`'${id}'`) || sim.includes(`"${id}"`);
+  const traits = TRAITS.filter((tr) => {
+    const { id: _id, name: _name, effect: _effect, ...fx } = tr;
+    const real = Object.entries(fx).some(([k, v]) => v !== undefined && !(k === 'output' && v === 1));
+    return !real && !named(tr.id);
+  }).map((tr) => tr.id);
+  const exists = (id: string) => { try { return !!def(id); } catch { return false; } };
+  const combos = COMBOS.filter((c) => !c.retired && (!(c.incomeMult || c.perMonth || c.banjirProtect || c.agustusMult || named(c.id)) || c.needs.some((n) => !exists(n.split('@')[0])))).map((c) => c.id);
+  return { traits, combos };
 }
 
 /** All of src/sim and src/data as one string, so a lint can ask whether an id is used anywhere. */
