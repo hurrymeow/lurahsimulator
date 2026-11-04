@@ -7,6 +7,7 @@ import { rupiah } from '../format';
 import { inemURL } from '../render/inem';
 import { portraitURL, staffPortraitURL } from '../render/portraits';
 import { answerNo, answerYes, checkYes, requestLine, yesLabel } from '../sim/requests';
+import { chainKey, chainOf } from '../sim/chains';
 import { BIMTEK, CHANNELS, GIGS, RAISE, SPECIALS, STATS, STAT_ICON, STAT_MAX, roleDef, traitDef, type RoleId, type StatId } from '../data/staff';
 import { RIVAL_NAMES } from '../data/ranking';
 import { cellName } from '../sim/grow';
@@ -128,6 +129,16 @@ function personView(app: App, x: Staff, done: () => void): Node[] {
     ...flags(x, RIVAL_NAMES[s.stage.current]),
     x.akrab ? h('p', { class: 'meta staff-akrab' }, `${'♥'.repeat(x.akrab)} ${t('req.akrab', { n: x.akrab })}`) : null,
   ].filter((p): p is HTMLElement => !!p);
+  // A named special's dream: three steps, done ones ticked, and what it pays.
+  const chain = chainOf(x);
+  if (chain) {
+    const done = x.chainDone ? chain.steps.length : x.chainStep ?? 0;
+    parts.push(h('div', { class: 'staff-chain' },
+      h('h3', {}, `${t('chain.title')}: ${t(chainKey(x, 'name'))}`),
+      h('ul', { class: 'checklist' }, ...chain.steps.map((_c, i) => h('li', { class: i < done ? 'done' : '' }, h('span', { 'aria-hidden': 'true' }, i < done ? '✓' : '○'), ' ', t(chainKey(x, `step${i}`))))),
+      h('p', { class: 'meta' }, t(chainKey(x, 'reward'))),
+    ));
+  }
   // Urusan Pribadi: the ask in their own words, then yes or not now. Yes is the primary unless a raise also waits.
   if (x.request) {
     const ok = checkYes(s, x);

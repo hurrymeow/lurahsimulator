@@ -262,6 +262,9 @@ export interface Staff extends Applicant {
   request?: StaffRequest;
   /** The week the last request came, so the next waits about 24 weeks. */
   lastRequest?: number;
+  /** A named special's quest chain (decisions/staff-requests.md section 3): steps done so far, and whether it paid out. */
+  chainStep?: number;
+  chainDone?: boolean;
   /** A business loan out: it comes back, or doesn't, at `due`. */
   loan?: { amt: number; due: number; line: number };
 }
