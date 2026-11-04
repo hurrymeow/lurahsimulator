@@ -1,6 +1,6 @@
 # UI rules
 
-Seventeen measurable UI and UX rules for Pak Pejabat. A PR that touches a screen, text or layout is checked against them. Approved by Hari, 2026-10-27. The [Review checklist](#review-checklist) below adds bars for six rules and 23 more items (2026-10-31). Rules 14 to 17 and the changes to 5, 10 and 13 were approved by Hari on 2026-11-01 (decisions/ui-rules-2026-11-01.md).
+Eighteen measurable UI and UX rules for Pak Pejabat. A PR that touches a screen, text or layout is checked against them. Approved by Hari, 2026-10-27. The [Review checklist](#review-checklist) below adds bars for six rules and 23 more items (2026-10-31). Rules 14 to 17 and the changes to 5, 10 and 13 were approved by Hari on 2026-11-01 (decisions/ui-rules-2026-11-01.md). Rule 18 was asked for by Hari on 2026-11-01 and added on 2026-11-04 (decisions/vcenter.md).
 
 Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) section 6. Pacing targets live in section 3. This file holds only the numbers and limits.
 
@@ -40,6 +40,7 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 15. **One tab set holds one kind of thing.** Tabs show siblings of the same type, such as things to place. Collections and records (Combo book, Log, Stats) open from a header button, never as a tab. Why: the Combo tab in Build mixed "what can I place" with "what have I found".
 16. **Pills, chips and buttons say it plainly in 6 words or fewer.** Lead with a verb or a plain label such as "Goal:", never a symbol or jargon such as "★ berikutnya, 2 target lagi". Numbers and icons are not words. Detail opens on tap. Why: the goal pill was cut and unclear.
 17. **Map art stays in its footprint.** A building, crane, effect or shadow draws only over its own tiles and the space above them, never over neighbouring tiles or roads. Why: the crane drew a dark box over the road (#221).
+18. **Labels sit in the vertical middle of their box.** The text and icon inside a button, tab, chip, pill or bar have the same space above and below, within 2px. Cards and list rows that hold a layout start at the top. Why: the promotion buttons and the goal pill had their labels against the top edge, which reads as broken (Hari, 2026-11-01).
 
 ## How each rule is checked
 
@@ -53,6 +54,7 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 | 15 | e2e: a list of each tab set and its item type; a tab with a different type fails. |
 | 16 | e2e: word cap on pills, chips and buttons, and a tap opens detail. |
 | 17 | Canvas test: place each building type and diff the neighbouring tiles before and after. |
+| 18 | e2e `vertical centring` in `ui.spec.ts` (`tests/e2e/vcenter.ts`): a Range over each label's text, plus its icons, measured inside the border, on the home, setup and main screens, the open goal list, Build, Warga, Staff, Wacana, Stats, Settings, Menu, the promotion card and an event card. |
 | 12 | Timed run. Not automated. |
 | 13 | e2e `density and hierarchy` in `ui.spec.ts` counts words in view, per block and per sheet on the home screens, every Menu panel, Build tabs, Wacana and event cards, at every CI width. A screen over a limit needs an entry in `DENSITY_ALLOW` capped at today's count (TODO.md); a fixed screen has its entry deleted. English runs locally. |
 | Layout drift | Screenshot baselines (`tests/e2e/visual.spec.ts`): home, HUD, Build sheet, event popup, tip card. 412px, Indonesian. |
@@ -145,6 +147,10 @@ Kairosoft's wiki pages cover mechanics, not UI, and most Kairosoft games are lan
 > "Error messages should be expressed in plain language (no error codes), precisely indicate the problem," and suggest a fix. (NN/g-H, Recover from errors)
 - **Sub-checks:** tap every disabled button on the RT, RW and Kelurahan dev seeds.
 - **Pass:** a reason appears that names the missing amount or prerequisite ("Need Rp 200k more", "Needs 1★"). "Not available" fails.
+
+#### Rule 18. Labels in the vertical middle [PR]
+- **Sub-checks:** every `.btn`, tab, chip, pill and the goal bar on the screens the e2e test visits, at all four widths, in both languages.
+- **Pass:** the space above and below each label differs by 2px or less. A new button style that lays its label out as flex keeps `align-items: center`.
 
 #### Rule 11. Feedback ladder [Audit]
 > "The most effective feedback tends to match the significance of the information to the way it's delivered." (HIG-Feedback)
