@@ -1,11 +1,16 @@
 import { bName, t, type Key } from '../i18n';
 import type { App } from '../app';
+import { cellOrigin } from '../sim/area';
 import { def } from '../sim/content';
+import { inCell } from '../sim/neighbourView';
+import { RT_H, RT_W } from '../sim/types';
 import { storage } from '../storage';
 import { h } from './dom';
 import { inemURL } from '../render/inem';
 
 const KEY = 'pakrt.coach';
+/** The 2nd RT's steps: unset until the player has seen the arrival, 'build' until they build there, then 'done'. */
+const KEY_RT2 = 'pakrt.coach.rt2';
 const DONE_MS = 20_000;
 // ?debug keeps the e2e suite free of the opener. ?debug&coach turns it back on for its own test.
 const q = new URLSearchParams(location.search);
@@ -16,6 +21,7 @@ let running = false;
 /** New game: the guided first build runs again. */
 export function resetCoach(): void {
   storage.set(KEY, 'pending');
+  storage.remove(KEY_RT2);
 }
 
 /** True when a new game should start with the guide, not the How to play card. */
@@ -35,7 +41,7 @@ export function setupCoach(app: App): void {
   if (!enabled) return;
   const text = h('p', { class: 'coach-text', role: 'status', 'aria-live': 'polite' });
   // No Skip: the button only appears on the last note, as "Got it".
-  const next = h('button', { class: 'btn', id: 'coach-skip', hidden: true, onclick: () => finish() }, t('coach.gotIt'));
+  const next = h('button', { class: 'btn', id: 'coach-skip', hidden: true, onclick: () => onNext() }, t('coach.gotIt'));
   // Inem guides the first build, so her face sits beside the words.
   const face = h('img', { src: inemURL(), alt: '', width: 44, height: 60, class: 'pixel coach-face' });
   const bar = h('div', { id: 'coach', class: 'coach', hidden: true }, face, text, next);
@@ -133,7 +139,64 @@ export function setupCoach(app: App): void {
     dock(target as HTMLElement | null);
   };
 
+  let onNext = finish;
+  let rt2On = false;
+  let panned = false;
+  const hideRt2 = () => {
+    if (!rt2On) return;
+    rt2On = false;
+    running = false;
+    app.held = false;
+    bar.hidden = true;
+    marked?.classList.remove('coach-pulse');
+    marked = null;
+  };
+
+  /**
+   * The 2nd RT, right after the RW promotion: the map moves to Kampung Sebelah, then the note stays until the player
+   * has built there. Nothing is locked, since by now the player knows how to build. True while it owns the note.
+   */
+  const rt2 = (): boolean => {
+    const s = app.s;
+    const state = storage.get(KEY_RT2);
+    const n = s.neighbours.find((x) => x.cx === 1 && x.cy === 0);
+    if (state === 'done' || s.stage.current !== 'rw' || !n || storage.get(KEY) === 'pending' || doneAt) {
+      hideRt2();
+      return false;
+    }
+    if (s.buildings.filter((b) => inCell(n, b) && !def(b.def).pathIncome).length > (n.joined ?? 0)) {
+      storage.set(KEY_RT2, 'done');
+      hideRt2();
+      return false;
+    }
+    // It waits behind the promotion notice, events and sheets.
+    if (!app.idle) {
+      hideRt2();
+      return true;
+    }
+    rt2On = true;
+    running = true;
+    allowed = null;
+    if (!state) {
+      if (!panned) {
+        panned = true;
+        const o = cellOrigin(n.cx, n.cy);
+        app.view.centreOn(o.x + RT_W / 2, o.y + RT_H / 2);
+      }
+      app.held = true;
+      onNext = () => {
+        storage.set(KEY_RT2, 'build');
+        hideRt2();
+      };
+      show('coach.rt2.arrive', null, 'coach.gotIt');
+    } else if (app.placing) show('coach.rt2.tile', null);
+    else show('coach.rt2.build', document.getElementById('dock-build'));
+    return true;
+  };
+
   const step = () => {
+    if (rt2()) return;
+    onNext = finish;
     if (storage.get(KEY) !== 'pending' && !doneAt) return;
     const idle = !document.getElementById('home') && document.getElementById('howto')!.hidden;
     if (!idle) return;
