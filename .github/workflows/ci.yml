@@ -20,6 +20,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       code: ${{ steps.diff.outputs.code }}
+      i18n: ${{ steps.diff.outputs.i18n }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,11 +28,15 @@ jobs:
       - id: diff
         run: |
           code=true
+          i18n=false
           if [ "${{ github.event_name }}" = pull_request ]; then
             # On pull_request the checkout is a merge commit, so HEAD^1 is the base branch tip.
             if ! git diff --name-only HEAD^1 HEAD | grep -qv '\.md$'; then code=false; fi
+            # A change to the strings also runs English at 412px, the width English clips first (AGENTS.md).
+            if git diff --name-only HEAD^1 HEAD | grep -q '^src/i18n/'; then i18n=true; fi
           fi
           echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "i18n=$i18n" >> "$GITHUB_OUTPUT"
 
   build:
     runs-on: ubuntu-latest
@@ -75,6 +80,16 @@ jobs:
       - run: npx playwright test --shard=${{ matrix.shard }}/6
         env:
           CI: 'true'
+      # Every run lists its failed and flaky tests in the job summary, green or red.
+      - if: always()
+        run: node scripts/flaky-summary.mjs reports/results.json "Shard ${{ matrix.shard }}" >> "$GITHUB_STEP_SUMMARY"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-json-${{ matrix.shard }}
+          path: reports/results.json
+          retention-days: 14
+          if-no-files-found: ignore
       - if: failure() || cancelled()
         uses: actions/upload-artifact@v4
         with:
@@ -82,15 +97,50 @@ jobs:
           path: playwright-report
           retention-days: 7
 
+  # English at 412px, only when a PR changes src/i18n/. Every spec, in two shards.
+  e2e-en:
+    needs: changes
+    if: needs.changes.outputs.i18n == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright test --project=phone-412-en --shard=${{ matrix.shard }}/2
+        env:
+          CI: 'true'
+          E2E_LANG: en
+      - if: always()
+        run: node scripts/flaky-summary.mjs reports/results.json "English 412, shard ${{ matrix.shard }}" >> "$GITHUB_STEP_SUMMARY"
+      - if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-en412-${{ matrix.shard }}
+          path: playwright-report
+          retention-days: 7
+
   # Single stable check name for branch protection and auto-merge.
   ci:
     if: always()
-    needs: [changes, build, e2e]
+    needs: [changes, build, e2e, e2e-en]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - run: |
           [ "${{ needs.build.result }}" = success ] || exit 1
+          # English runs only when the strings changed; when it runs, it must pass.
+          [ "${{ needs.e2e-en.result }}" = success ] || [ "${{ needs.e2e-en.result }}" = skipped ] || exit 1
           [ "${{ needs.e2e.result }}" = success ] && exit 0
           # e2e may only be skipped for docs-only PRs.
           [ "${{ needs.changes.result }}" = success ] && [ "${{ needs.changes.outputs.code }}" = false ] && [ "${{ needs.e2e.result }}" = skipped ]

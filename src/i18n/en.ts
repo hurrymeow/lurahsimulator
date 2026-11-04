@@ -7,7 +7,7 @@ export const EN = {
   'build.attracts': 'Attracts new residents',
   'build.cat.decoration': 'Decor',
   'build.cat.empty': 'Nothing here yet.',
-  'build.cat.facilities': 'Facilities',
+  'build.cat.facilities': 'Public',
   'build.cat.farm': 'Farm',
   'build.cat.housing': 'Housing',
   'build.cat.paths': 'Paths',
