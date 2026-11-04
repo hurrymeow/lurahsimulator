@@ -174,6 +174,17 @@ test.describe('opener', () => {
     await expect(goal.locator('.goal-now')).toHaveAttribute('aria-expanded', 'true');
     // Opened, it lists each unmet goal for the next star with have and need.
     await expect(goal.locator('.goal-row').first()).toContainText({ id: 'punya', en: 'have' }[lang()]);
+    // The first unmet goal says how to reach it; tapping another goal moves the how-to line there.
+    await expect(goal.locator('.goal-how')).toHaveCount(1);
+    await expect(goal.locator('.goal-how')).toContainText({ id: 'Caranya:', en: 'How:' }[lang()]);
+    const goals = goal.locator('button.goal-row');
+    if ((await goals.count()) > 1) {
+      const first = (await goal.locator('.goal-how').textContent())!;
+      await goals.nth(1).dispatchEvent('click');
+      await expect(goals.nth(1)).toHaveAttribute('aria-expanded', 'true');
+      await expect(goal.locator('.goal-how')).not.toHaveText(first);
+    }
+    expect(await scanLegibility(page)).toEqual([]);
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.s.month = 30;
