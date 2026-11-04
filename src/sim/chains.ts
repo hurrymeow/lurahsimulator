@@ -1,10 +1,11 @@
 // Quest chains for the named specials (decisions/staff-requests.md section 3): three steps each, like Inem's dream,
 // and some need another special, so the staff become an ensemble. Steps are checked weekly, one at a time; each gives
-// a toast, and the last one pays out. Chains never gate stars. This first slice has the linked pair the TODO named.
+// a toast, and the last one pays out. Chains never gate stars. Every special has one.
 import { t, type Key } from '../i18n';
 import { STAT_MAX } from '../data/staff';
 import { gain, type Fx } from './gain';
-import { isWorking } from './state';
+import { isWorking, price } from './state';
+import { rand } from './rng';
 import { monthOfYear } from './calendar';
 import type { GameState, Staff } from './types';
 
@@ -16,6 +17,7 @@ export interface ChainDef {
   payoff: (s: GameState, x: Staff, fx: Fx) => void;
 }
 
+const working = (s: GameState, def: string) => s.buildings.some((b) => b.def === def && isWorking(b));
 const hired = (s: GameState, special: string) => (s.staff ?? []).some((o) => o.special === special && !o.away);
 
 export const CHAINS: ChainDef[] = [
@@ -92,6 +94,111 @@ export const CHAINS: ChainDef[] = [
       gain(s, fx, 'orangDalam', 1);
     },
   },
+  {
+    // "Breaking Kampung": a studio in the Balai Warga with a Wifi link, and Virality to go on air.
+    special: 'pakBreaking',
+    steps: [
+      (_s, x) => x.level >= 2,
+      (s) => working(s, 'balaiWarga') && working(s, 'wifi'),
+      (s) => s.res.viral >= 30,
+    ],
+    payoff: (s, _x, fx) => {
+      gain(s, fx, 'viral', 8);
+      gain(s, fx, 'sabar', 3);
+    },
+  },
+  {
+    // The campus-radio trio back together: two more hires on the staff, then a show at the Balai Warga.
+    special: 'bangLawak',
+    steps: [
+      (_s, x) => x.level >= 2,
+      (s) => (s.staff ?? []).filter((o) => !o.inem && !o.special).length >= 2,
+      (s) => working(s, 'balaiWarga'),
+    ],
+    payoff: (s, _x, fx) => {
+      gain(s, fx, 'sabar', 6);
+      gain(s, fx, 'viral', 3);
+    },
+  },
+  {
+    // "KampungCoin": a kas worth gambling, then the coin goes to the moon or the dev rugs it, on his Jujur.
+    special: 'broKripto',
+    steps: [
+      (_s, x) => x.level >= 2,
+      (s) => working(s, 'wifi'),
+      (s) => s.res.rupiah >= price(s, 5_000_000),
+    ],
+    payoff: (s, x, fx) => {
+      if (rand(s) < 0.25 + x.stats.jujur / 200) {
+        x.chainWon = true;
+        gain(s, fx, 'rupiah', price(s, 3_000_000));
+      } else {
+        x.chainWon = false;
+        gain(s, fx, 'rupiah', -Math.min(Math.max(0, s.res.rupiah), price(s, 2_000_000)));
+        gain(s, fx, 'sabar', -5);
+      }
+    },
+  },
+  {
+    // His own rental PS: a Wifi for online play, and the kas to buy the consoles.
+    special: 'bangRentalPS',
+    steps: [
+      (_s, x) => x.level >= 2,
+      (s) => working(s, 'wifi'),
+      (s) => s.res.rupiah >= price(s, 2_000_000),
+    ],
+    payoff: (s, _x, fx) => {
+      gain(s, fx, 'rupiah', -price(s, 1_000_000));
+      gain(s, fx, 'viral', 5);
+      gain(s, fx, 'sabar', 4);
+    },
+  },
+  {
+    // A traffic light in the gang: he reports the macet, the Portal proves the point, Orang Inside signs it off.
+    special: 'omLaluLintas',
+    steps: [
+      (_s, x) => x.level >= 2,
+      (s) => working(s, 'portal'),
+      (s) => s.res.orangDalam >= 2,
+    ],
+    payoff: (s, _x, fx) => {
+      gain(s, fx, 'orangDalam', 2);
+      gain(s, fx, 'sabar', 3);
+    },
+  },
+  {
+    // A sinetron shoots in the gang: the road closed at the Portal, and a kampung famous enough to film.
+    special: 'buSinetron',
+    steps: [
+      (_s, x) => x.level >= 2,
+      (s) => working(s, 'portal'),
+      (s) => s.res.viral >= 40,
+    ],
+    payoff: (s, _x, fx) => {
+      gain(s, fx, 'viral', 10);
+      gain(s, fx, 'sabar', -2);
+    },
+  },
+  {
+    // "Kaya dari Iuran": a seminar in the Balai Warga, paid with a loan; on his Jujur it pays or it backfires.
+    special: 'omMotivasi',
+    steps: [
+      (_s, x) => x.level >= 2,
+      (s) => working(s, 'balaiWarga'),
+      (s) => s.res.rupiah >= price(s, 1_500_000),
+    ],
+    payoff: (s, x, fx) => {
+      if (rand(s) < 0.25 + x.stats.jujur / 200) {
+        x.chainWon = true;
+        gain(s, fx, 'rupiah', price(s, 2_000_000));
+        gain(s, fx, 'sabar', 3);
+      } else {
+        x.chainWon = false;
+        gain(s, fx, 'rupiah', -Math.min(Math.max(0, s.res.rupiah), price(s, 1_500_000)));
+        gain(s, fx, 'sabar', -6);
+      }
+    },
+  },
 ];
 
 export const chainOf = (x: Staff): ChainDef | undefined => CHAINS.find((c) => c.special === x.special);
@@ -112,6 +219,8 @@ export function chainSystem(s: GameState, fx: Fx): void {
     }
     x.chainDone = true;
     c.payoff(s, x, fx);
-    fx.push({ kind: 'notice', title: t(chainKey(x, 'doneTitle')), body: t(chainKey(x, 'reward')), tone: 'good', card: true, open: 'staff' });
+    // A gamble (Bro Kripto, Om Motivasi) has a second ending when it goes wrong.
+    const lost = x.chainWon === false;
+    fx.push({ kind: 'notice', title: t(chainKey(x, lost ? 'lostTitle' : 'doneTitle')), body: t(chainKey(x, lost ? 'lost' : 'reward')), tone: lost ? 'bad' : 'good', card: true, open: 'staff' });
   }
 }

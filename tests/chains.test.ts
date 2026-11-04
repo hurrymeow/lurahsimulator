@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CHAINS, chainSystem } from '../src/sim/chains';
 import { deskCapacity, output } from '../src/sim/staff';
+import { SPECIALS } from '../src/data/staff';
 import { addBuilding, newGame } from '../src/sim/state';
 import { EN } from '../src/i18n/en';
 import { ID } from '../src/i18n/id';
@@ -72,9 +73,58 @@ describe('quest chains for the named specials', () => {
     }
   });
 
+  it('the last seven specials each finish once their conditions hold', () => {
+    const at = (s: GameState, def: string, d: number) => addBuilding(s, def, s.buildings[0].x + d, s.buildings[0].y + 2, 'active');
+    const cases: [string, Staff['role'], (s: GameState) => void][] = [
+      ['pakBreaking', 'adminWa', (s) => { s.res.viral = 35; at(s, 'balaiWarga', 2); at(s, 'wifi', 5); }],
+      ['bangLawak', 'adminWa', (s) => { at(s, 'balaiWarga', 2); s.staff!.push(special(41, '', 'hansip', 1), special(42, '', 'pu', 1)); }],
+      ['bangRentalPS', 'pu', (s) => { s.res.rupiah = 50_000_000; at(s, 'wifi', 2); }],
+      ['omLaluLintas', 'supir', (s) => { s.res.orangDalam = 3; at(s, 'portal', 2); }],
+      ['buSinetron', 'adminWa', (s) => { s.res.viral = 45; at(s, 'portal', 2); }],
+      ['broKripto', 'bendahara', (s) => { s.res.rupiah = 50_000_000; at(s, 'wifi', 2); }],
+      ['omMotivasi', 'penagih', (s) => { s.res.rupiah = 50_000_000; at(s, 'balaiWarga', 2); }],
+    ];
+    for (const [id, role, setup] of cases) {
+      const s = newGame(4);
+      s.staff = [];
+      const x = special(30, id, role, 2);
+      s.staff.push(x);
+      setup(s);
+      const fx = run(s, 3);
+      expect(x.chainDone, id).toBe(true);
+      expect(fx.some((f) => f.kind === 'notice' && f.card), id).toBe(true);
+    }
+  });
+
+  it('KampungCoin and the seminar pay on a high Jujur and backfire on a low one', () => {
+    for (const id of ['broKripto', 'omMotivasi']) {
+      for (const [jujur, won] of [[150, true], [-60, false]] as const) {
+        const s = newGame(4);
+        s.staff = [];
+        const x = special(30, id, 'bendahara', 2);
+        x.stats.jujur = jujur;
+        s.staff.push(x);
+        s.res.rupiah = 50_000_000;
+        addBuilding(s, 'wifi', s.buildings[0].x + 2, s.buildings[0].y + 2, 'active');
+        addBuilding(s, 'balaiWarga', s.buildings[0].x + 5, s.buildings[0].y + 2, 'active');
+        const before = s.res.rupiah;
+        const fx = run(s, 3);
+        expect(x.chainWon, `${id} ${jujur}`).toBe(won);
+        expect(s.res.rupiah > before, `${id} ${jujur}`).toBe(won);
+        const card = fx.find((f) => f.kind === 'notice' && f.card);
+        expect(card && card.kind === 'notice' && card.tone, `${id} ${jujur}`).toBe(won ? 'good' : 'bad');
+      }
+    }
+  });
+
+  it('every special has a chain', () => {
+    expect(CHAINS.map((c) => c.special).sort()).toEqual(SPECIALS.map((sp) => sp.id).sort());
+  });
+
   it('every chain step, title and reward is written in both languages', () => {
     for (const c of CHAINS) {
-      const keys = ['name', 'doneTitle', 'reward', ...c.steps.map((_s, i) => `step${i}`)].map((p) => `chain.${c.special}.${p}`);
+      const lost = ['broKripto', 'omMotivasi'].includes(c.special) ? ['lost', 'lostTitle'] : [];
+      const keys = ['name', 'doneTitle', 'reward', ...lost, ...c.steps.map((_s, i) => `step${i}`)].map((p) => `chain.${c.special}.${p}`);
       for (const k of keys) {
         expect((EN as Record<string, string>)[k], k).toBeTruthy();
         expect((ID as Record<string, string>)[k], k).toBeTruthy();

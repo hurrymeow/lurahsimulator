@@ -267,6 +267,8 @@ export interface Staff extends Applicant {
   /** A named special's quest chain (decisions/staff-requests.md section 3): steps done so far, and whether it paid out. */
   chainStep?: number;
   chainDone?: boolean;
+  /** A gamble chain (Bro Kripto, Om Motivasi): true if it paid, false if it went wrong. */
+  chainWon?: boolean;
   /** A business loan out: it comes back, or doesn't, at `due`. */
   loan?: { amt: number; due: number; line: number };
 }
