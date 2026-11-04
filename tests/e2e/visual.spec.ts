@@ -75,6 +75,17 @@ test.describe('visual baselines', () => {
     await expect(page).toHaveScreenshot(`home-${lang()}.png`, SHOT);
   });
 
+  // Canary (TESTING.md item 15): the start button moved down 8px must fail the home baseline. Skipped while
+  // baselines are being redrawn, or it would write the shifted frame over the real one.
+  test('canary: a layout shift fails the screenshot diff', async ({ page }) => {
+    test.skip(test.info().config.updateSnapshots !== 'none' && test.info().config.updateSnapshots !== 'missing', 'Never runs while baselines are redrawn.');
+    test.fail();
+    await open(page);
+    await settle(page);
+    await page.addStyleTag({ content: '#map { visibility: hidden; } #home-start { position: relative; top: 8px; }' });
+    await expect(page).toHaveScreenshot(`home-${lang()}.png`, SHOT);
+  });
+
   test('HUD at start', async ({ page }) => {
     await open(page);
     await play(page);
