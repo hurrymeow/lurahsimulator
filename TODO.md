@@ -12,6 +12,12 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ### Next
 
+- [ ] **Keep every building sprite inside its footprint.**
+  - Problem: 31 sprites draw past their footprint's front edges (`SPILL_ALLOW` in `tests/footprint-art.test.ts`). The 2x2 Kelurahan and Kecamatan buildings spill 10px, most likely their shadow. Shop props spill more: the Bengkel car pad 51px, the Pos Satpam barrier 22px, the Warung crate 16px, Baliho 15px, Indomaret and Alfamart 14px, the Bidan sign 11px, Kantor RT and Bank Sampah 8px.
+  - Why: UI.md rule 17. A prop over the next tile hides a road or a neighbour's badge.
+  - Suggested solution: pull each prop back inside the diamond, or move it behind the building, then lower or delete its `SPILL_ALLOW` entry. Never overwrite the artist's sprites; these are all code-drawn.
+  - Source: `decisions/ui-rule-checks.md`
+  - `open · — · — · done when:` `SPILL_ALLOW` is empty, or each entry left has a reason in `decisions/`.
 - [ ] **Let the player control and build on the 2nd RT after the RT reaches 3★, and add the AI-run RT later, each with a tutorial.**
   - Problem: At 3★ the RT expands and the player has no clear next step in a second town. Hari, 2026-11-02: "after expanding from RT 3 star, let players control and build on the 2nd town, and introduce the RT AI later". The tutorial teaches only the first RT, so a new player gets no guidance when the second RT becomes theirs.
   - Why: Building is the action the player already knows. Handing over the 2nd RT first gives the player a full loop before the AI-run RTs arrive, and it keeps the AI-run RT step small. Each step needs its own tutorial, so the player learns the new controls before they reach a larger map.
@@ -25,20 +31,8 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: play it, then log what changes in a new `decisions/` file. The notes are under "For Hari" in `decisions/smaller-map-balance.md`.
   - Source: `docs/plans/smaller-map.md`, task T9.
   - `open · Hari · — · done when:` a decisions file records the playtest and what it changes.
-- [ ] **HIGH PRIORITY: Let the player build on AI-run RTs, and add Kunjungan (visit) as a one-tap boost.**
-  - Problem: Neighbour RTs feel passive. Dana is pay-and-wait, and the score parts are only a readout. Hari: "felt very passive now, don't know what to do". To build in a neighbour RT you must take it over (Ambil alih, 3 Orang Dalam, own RW only), and then the AI stops building there.
-  - Why: Building is the action the player already knows, and it lets the player choose exactly what clears the blocker (houses for warga, the missing combo partner). Orang Dalam piles up unused late on (114 in Hari's screenshot), so it needs a sink.
-  - Decided (Hari, 2026-11-01, options 2E and 2B in `/mnt/project-files/plans/neighbour-options.md`):
-    - Build on AI RTs (Hari's idea): place buildings on free lots in any AI-run RT cell at normal price. They count for that RT's score, combos and stars, and the AI keeps building on the lots left. Today `checkPlace` blocks AI cells via `neighbourAt` (`src/sim/rules.ts`), and `viewOf` (`src/sim/neighbourView.ts`) reads only the AI's own buildings. Both change, and the AI lot planner must skip the player's lots. The player's buildings there earn and cost upkeep in the player's kas, as takeover does today.
-    - Retire Ambil alih and Serahkan (takeover and hand-back). Decide in the PR what happens to saves with a player-run RT (no save migrations, so an incompatible save shows the start-new prompt).
-    - Kunjungan: 1 Orang Dalam, the RT builds its next build now and gains a few warga at once. One use per RT per quarter, so keys cannot buy stars too fast.
-    - Each row's detail gets "Go to RT", which closes the sheet and pans the map to that cell.
-  - Suggested solution: one PR (Sonnet), after the sheet revamp above. Files: `src/sim/rules.ts`, `src/sim/neighbourView.ts`, `src/sim/grow.ts`, `src/sim/balance.ts` (Kunjungan numbers), `src/ui/neighbours.ts`, i18n, `tests/grow.test.ts`. Log in `decisions/build-on-ai-rts.md`.
-  - Plan it against the smaller map (`decisions/smaller-map-go.md`): 1 AI RT at the RW, 2 at the Kelurahan. Needs a plan file first.
-  - Fallback if the agent's own playtest finds panning across 16 RTs a chore: a per-RT build focus (Rumah or the missing combo) instead, and building only in the player's own RW.
-  - Source: Hari, 2026-11-01 ("shall we just allow user to build on rt that is controlled by ai as a way to speed up"), planning thread "Plan neighbour RT boosts and sheet".
-  - `open · — · — · done when:` a building the player places in an AI RT cell counts for that RT's stars and the AI never builds over it, Kunjungan shows its cost and effect in EN and ID, takeover is gone, and the RW and Kelurahan bots still reach their stars.
 - [ ] **Show which RW and RT is yours and which the AI runs on the map, and let the player take over an RT in another RW.**
+  - The own-RW limit is gone: #297 lets the player build on any AI-run RT, in any RW. The map nameplates are in the next PR.
   - Problem: the map does not say which RW is the player's, which RT is the player's, which are AI-run and which the player controls. Hari, 2026-11-01: "super unclear in map". Hari also sees no reason the player cannot take over an RT under another RW. Ambil alih works in the own RW only.
   - Why: the player cannot read who owns what, so Dana, takeover and the star goals have no visible target. The own-RW limit is a rule with no reason the player can see.
   - Suggested solution: mark owner on the map and in the Neighbours list (own RT, AI RT, RW border, plain and non-colour-only per UI.md). Decide whether takeover or build-on-AI-RTs lifts the own-RW limit. Plan it together with the two HIGH PRIORITY items above ("Revamp the Neighbours sheet" and "Build on AI RTs"), which share files `src/sim/rules.ts`, `src/render/map.ts` and `src/ui/neighbours.ts`. Needs a planning thread first.
@@ -50,32 +44,13 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: first play RW 1★ to 2★ by hand with the screen only, and write down each point where the next action is not visible. Then add one item to UI.md's review checklist and one to GAME-DESIGN.md §8: each star goal part names its action and where to do it, tested by an agent that sees only screenshots. Fix the RW goals after the Neighbours revamp lands, since the revamp changes what the goal means. Check "Show which RW and RT is yours" above first.
   - Source: Hari, 2026-11-01.
   - `open · — · — · done when:` a screenshot-only agent run names the next RW 2★ action at every step, the two checklist items exist, and the RW bot still reaches 2★.
-- [ ] **Show a how-to hint for every goal when it is tapped open.**
-  - Problem: The tapped goal line says what to reach, but not how to reach it. Hari could not tell how to win "menang peringkat tahunan wilayah 1 kali" (win a yearly wilayah ranking once). The "Langkah berikut" hint under it talked about Warung Sembako and residents, which is unrelated.
-  - Why: A player who cannot see the next action stops playing or quits the goal. Hari asked for the hint in the tapped state, so it does not add clutter to the strip.
-  - Suggested solution: In the expanded goal state, add one plain line per goal type that names the action (what to build, what to keep, which ranking to win). The hint must match the goal's own condition, not the next stage's. Generalise the Stempel work in `docs/plans/stempel-goal-actionable.md` (T2 matching hint, T4 tap explainer) from that one goal to every goal type. Write the line in EN and ID, and keep it within UI.md rule 13 word limits.
-  - Source: Hari's playtest screenshot, 2026-11-01 (project thread "Add goal how-to hints to TODO")
-  - `open · — · — · done when:` every goal type shows a matching how-to line in the tapped state, in EN and ID, with no clipping at 320px, and the goal tests cover each type.
-- [ ] **Stop a big kampung getting stuck under the Kelurahan 3★ Popularitas bar.**
-  - Problem: residents never leave while Popularitas is above 15, and each resident lowers it. A kampung that grows well past 200 settles in the low 30s and cannot get back over the 3★ bar (35). One Kelurahan bot seed of three stays at 2★ for good (#204).
-  - Why: a player who grew too fast is soft-locked out of 3★, with no way to see why or fix it.
-  - Suggested solution: let the bar scale down with residents over 200, or give the player a way out (a Popularitas building that ignores the roadside limit, or warga who move to the neighbours when the kampung is crowded). Check with `tests/kel-bot.test.ts` that all three seeds reach 3★.
-  - Source: `decisions/kelurahan-own-kampung.md`, `decisions/desk-queue-weeks.md`
-  - `open · — · — · done when:` a kampung of any size can reach Kelurahan 3★, and the bot test asks for all three seeds.
 
-- [ ] **CI checks for UI rules 10, 15, 16 and 17, then a full re-audit.**
-  - Problem: rules 10 (tutorial tap lock) and 17 (map art footprint) have no test; 15 and 16 are checked by eye; the audit skipped 360px, the dark theme and Kecamatan.
-  - Why: a rule nothing enforces drifts, as rule 13 did with Wacana.
-  - Suggested solution: `docs/plans/ui-audit-fixes.md` T10 (checks, remove the `data-clamp` skip) and T11 (re-audit at 4 widths, both themes, RT, Kelurahan and Kecamatan seeds).
+- [ ] **Full UI re-audit (T11).**
+  - Problem: the 2026-11-01 audit skipped 360px, the dark theme and the Kecamatan. Since then most screens were rewritten.
+  - Why: the CI checks for rules 10, 15, 16, 17 and 18 now run (#292, #295), but some rules are still checked by eye (2, 3, 6, 9, 11).
+  - Suggested solution: `docs/plans/ui-audit-fixes.md` T11. Rerun the crawl in the project files (`audit/ui-rules-2026-11-01/audit.spec.ts`) at 320, 360, 412 and 430px, in EN and ID, in light and dark, on the RT, Kelurahan and Kecamatan seeds.
   - Source: UI.md "How each rule is checked"
-  - `open · — · — · done when:` the checks run in CI, and the re-audit report shows every screen passing or lists the rest as TODO items.
-
-- [ ] **Centre button and bar text vertically.**
-  - Problem: Hari, 2026-11-01 (screenshot, 412 px, ID): the labels "Terima SK" and "Tetap di sini" on the Kelurahan promotion card sit against the top edge of their buttons, with the empty space below. The goal line "Target: menang peringkat wilayah 1 kali" also sits slightly high in its bar. Other buttons, pills and bars may do the same.
-  - Why: Off-centre labels look broken and make buttons read as unfinished. UI.md has no rule for it, so nothing catches it, and the audit crawl only measures words and clipping.
-  - Suggested solution: One PR (Sonnet). 1) Find the cause for the promotion buttons and the goal pill (likely a tall `min-height` or fixed height without flex centring or with unequal padding or line-height), and fix it in the shared button, pill and bar CSS, not per screen. 2) Add a UI.md rule: text inside buttons, pills and bars is vertically centred, with a bar of at most 2 px between the space above and below the text. Add a matching line to the UI.md review checklist. Log it in `decisions/vcenter.md`. 3) Run an all-pages check: reuse `/mnt/project-files/audit/ui-rules-2026-11-01/audit.spec.ts` at 320 and 412 px in EN and ID, and measure each button, pill and bar label's top and bottom gap inside its box (use a `Range` over the text node). Save screenshots under `/mnt/project-files/audit/vcenter-2026-11-01/` and list every failing screen and element here before fixing. 4) Turn the measure into a CI check beside the rule 13 scan so it stays fixed.
-  - Source: Hari, 2026-11-01, screenshot.
-  - `[ ] open · — · — · done when:` the measure finds 0 labels off-centre by more than 2 px on every audited screen at 320 and 412 px in EN and ID, and UI.md has the rule and checklist line.
+  - `open · — · — · done when:` a new report shows every screen passing, or lists the remaining fails as TODO items.
 
 ### Later
 
@@ -92,13 +67,13 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: add goal ETAs to the recorder, a forced event chain, per-action ablation runs and the extra resources to the timeline. Add T2 specs for items 3, 6 and 27. Check the first nightly run time (bar 20 min) and trim seeds if needed.
   - Source: `scorecard/scorecard.md`; `decisions/scorecard-harness.md`
   - `open · — · — · done when:` no row reads Unknown for a reason the harness could fix, and a nightly run finishes under 20 minutes.
-- [ ] **UI from the SK 2 playtest: NEW tags, the dock, the Wifi road, the pixel "2".**
-  - The Wifi road part shipped in #243.
-  - Problem: NEW tags clear when the Build sheet opens; Staf hides in the Menu; the Menara Wifi asks for a road; the pixel font's "2" reads like a Z.
-  - Why: unlocks come several at a time and are easy to miss; staff now matter every minute.
-  - Suggested solution: a card's NEW clears after it has been at least half on screen for 2s or been tapped, and tab and dock badges stay while any card under them is unseen (UI.md audit 4). The dock is Build at its own width, then Warga, Staf and Menu. Add Menara Wifi to the road-exempt list (`FLAT` in `src/sim/access.ts`). Redraw the "2" with `scripts/patch-pixel-font.py`. The visual baselines will change.
+- [ ] **NEW tags that clear only when the card has really been seen.**
+  - The other three parts of the SK 2 playtest note shipped: the Wifi road (#243), Staf in the dock (#291) and the pixel 2 (#296).
+  - Problem: NEW tags clear when the Build sheet opens, so a star that unlocks several things shows them only for a moment.
+  - Why: unlocks come several at a time and are easy to miss (UI.md checklist item 4).
+  - Suggested solution: a card's NEW clears after it has been at least half on screen for 2s, or when it is tapped. Tab and dock badges stay while any card under them is unseen.
   - Source: `decisions/playtest-sk2.md`
-  - `open · — · — · done when:` all four ship in ID and EN, nothing clips at 320px, and the UI and visual tests pass.
+  - `open · — · — · done when:` NEW survives opening the sheet without looking, clears on a real view, in ID and EN, and the UI tests cover both.
 - [ ] **Low and wide 2x2 art, and native-size cranes on big sites.**
   - Problem: Gudang Material and Koperasi look like a Rumah scaled up, too tall for 2x2. The crane over a 2x2 site is a 1x1 crane scaled 2x, with big pixels out of scale.
   - Why: size should read as width, and every sprite should keep the 1px grid.
@@ -119,12 +94,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: voidinside99, 2026-10-31
   - `claimed · voidinside99 · 2026-10-31 · done when:` the prototype passes the checklists and merges (or is dropped), with the bite tuned in `decisions/desk-queue.md`.
 
-- [ ] **A portrait for every staff member.**
-  - Problem: only Inem and the specials have faces; every other hire is a star badge.
-  - Why: a face makes a hire feel like a person, which the personal requests rely on.
-  - Suggested solution: paint generic hires with `src/render/portraits.ts`, seeded by their staff id, with the outfit of their job (`decisions/staff-requests.md`, section 1). Show it on the card, the detail view, the applicant card and the request card.
-  - Source: voidinside99, 2026-11-01
-  - `open · — · — · done when:` every staff member and applicant has a lasting portrait whose outfit reads as their job.
 - [ ] **Urusan Pribadi: personal requests and Akrab.**
   - Problem: staff never want anything, so they feel like modifiers, not people.
   - Why: Kairosoft staff feel alive because they ask; a yes or no with a cost makes managing them a choice.
@@ -137,15 +106,18 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: build the table in section 3 of `decisions/staff-requests.md`, on Inem's gig system. Start with the linked pair: Pak Purna's memoir (needs Bu Juru Ketik) and Bu Juru Ketik's typewriter (needs Bang Rental PS).
   - Source: voidinside99, 2026-11-01
   - `open · — · — · done when:` every special has a chain with its payoff, and the linked chains check for the other special.
-- [ ] **The yearly price banner.**
-  - Problem: the year's price rise is one quiet notice line.
-  - Why: inflation is a real cost the player should feel, and a reason a year is a running joke.
-  - Suggested solution: from year 2 the year-end notice is a banner card, "PERHATIAN: Biaya hidup naik {x}% tahun ini", with one reason a year from the bank in section 4 of `decisions/staff-requests.md`, never the same twice in a row, in ID and EN.
-  - Source: voidinside99, 2026-11-01
-  - `open · — · — · done when:` the banner shows every year from year 2 with a fresh reason, within UI.md rule 13.
 
 ## Done
 
+- [x] **HIGH PRIORITY: Let the player build on AI-run RTs, and add Kunjungan (visit) as a one-tap boost.** RT buildings on an AI RT's free lots count for it; Kunjungan (1 Orang Dalam, once a quarter) builds now and adds 3 warga; Go to RT; takeover retired. #297, `decisions/build-on-ai-rts.md`.
+- [x] **A portrait for every staff member.** Each role's outfit, a face seeded by the staff id, on the card, the detail view and the applicant card. #297, `decisions/staff-portraits-all.md`.
+- [x] **The yearly price banner.** From year 2, a card with the rise and one of 12 reasons, never the same twice in a row. #296, `decisions/price-banner.md`.
+- [x] **Pixel "2" (and "5").** Redrawn so "T2" and "2045" read right. #296, `decisions/pixel-two-five.md`.
+- [x] **The combo goal fits the pill.** The pill names the combo; its buildings move to the opened goal list. #296, `decisions/combo-goal-pill.md`.
+- [x] **CI checks for UI rules 10, 15, 16 and 17.** Tutorial lock steps, `tab sets`, label words, `footprint-art.test.ts`. The re-audit stays open above. #295, `decisions/ui-rule-checks.md`.
+- [x] **Centre button and bar text vertically.** UI.md rule 18, the `vertical centring` e2e check; promotion buttons, goal pill and the dice button fixed. #292, `decisions/vcenter.md`.
+- [x] **Show a how-to hint for every goal when it is tapped open.** `GOAL_HOW` for all 22 goal kinds; one line at a time in the opened list. #292, `decisions/goal-how-hints.md`.
+- [x] **Stop a big kampung getting stuck under the Kelurahan 3★ Popularitas bar.** Expectations taper past 200 residents; a warga with no bed moves next door. All three bot seeds reach 3★. #292, `decisions/big-kampung-taper.md`.
 - [x] **Cut text on the Build cards (UI rule 13), and bring the English Warga list back under its cap.** One line per card with an info button; shorter English hint. Density test checked at 320, 412 and 430px in EN and 320 and 430px in ID. #289, `decisions/build-cards-one-line.md`.
 - [x] **Cut text on Staff, Stats, the opener and How to Play (UI rule 13).** Staff is one line per person with a chip; Stats shows numbers first and the last 3 rankings, explainers behind a tap; the opener is four short lines; the Menu guide is headings that open on tap. `staff`, `stats` and `howto` left `DENSITY_ALLOW`. The Neighbours part shipped in #265. Build cards stay open above. #287, `decisions/ui-text-cuts-batch.md`.
 - [x] **Events with no primary choice, Combo cards with no clamp, short toasts.** Event choices #252; Combo tiles no longer clamp and the legibility scan has no clamp exception; toasts show the body only when the whole fits in 8 words, and all 49 notice titles are 8 words or fewer. #287.
