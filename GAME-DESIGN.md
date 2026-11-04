@@ -208,7 +208,7 @@ Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 - RW 2 (two AI RTs) appears, and Stempel letters stop: RW 2 stamps its own.
 - Unlocks Kantor Kelurahan, Anggaran and Dana allocation.
 - **Dana:** You fund each AI RT, and it builds and levels only when funded. More banked Dana builds faster, and Auto-dana keeps it funded (see AI neighbours).
-- **Goal for 1★:** RW 2 at 1★ or above (an RW is as good as its weaker RT), serapan of at least **80%** for **48** weeks, and the player's own kampung at **50** residents and Popularitas **50**.
+- **Goal for 1★:** RW 2 at 1★ or above (an RW is as good as its weaker RT), serapan of at least **80%** for **24** weeks and then for **48** weeks, and the player's own kampung at **50** residents and Popularitas **50**.
 
 #### 1★
 
