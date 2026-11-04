@@ -85,7 +85,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge whether the UI is
 
 - **UI.md's 13 rules stay the floor.** A screen that fails them is a bug.
 - **Part 1** gives six of those rules a bar a bot can check, with the source behind each.
-- **Part 2** adds 23 items the floor misses.
+- **Part 2** adds 24 items the floor misses.
 - Items already in GAME-DESIGN.md section 8 are cross-referenced, not repeated: causes are legible (6), star rewards and NEW tags (12), coming back (27).
 - **[PR]** = check on every PR that touches UI. **[Audit]** = run in the periodic full crawl.
 
@@ -338,6 +338,14 @@ Kairosoft's wiki pages cover mechanics, not UI, and most Kairosoft games are lan
 - **Bad here:** a wall of tips at the start. A system with no tip.
 - **Sub-checks:** T1 list of systems → tip → How to Play page. T2 timeline: "usable" means first unlocked and affordable; the tip fires within 60s of it. Each tip's anchor is on screen and not covered (rule 10).
 - **Pass:** every system has both. 0 tips before usable. Rule 7 and section 3 target 7 hold.
+
+#### 24. Every goal says how [PR]
+- **Ask:** can a new player name the next action for each star goal from the screen alone?
+- **Why:** the RW 2★ goals passed the bots and the word counts, but Hari could not tell how to reach them (2026-11-01). Bots reach stars without reading the screen, so they never catch this.
+- **Good here:** tap the goal pill: every unmet goal is a row, and the tapped one says what to do and where, such as "How: in Menu, Neighbours, give Kampung Sebelah Dana or a Kunjungan, or build on its lots."
+- **Bad here:** a goal that names a target with no action, or a hint that belongs to another goal.
+- **Sub-checks:** T1: every goal kind has a how-to line in both languages, 20 words or fewer (`tests/goal-how.test.ts`, typed by `GOAL_HOW`). T2: the goal e2e test opens the list and moves the line. T3: a screenshot-only read of the goal list at each stage's 1★.
+- **Pass:** every goal kind has its line. A new goal kind does not compile without one.
 
 #### F. Safety
 
