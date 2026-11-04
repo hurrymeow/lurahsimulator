@@ -12,13 +12,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ### Next
 
-- [ ] **Keep the last 9 shop props inside their footprint.**
-  - #304 fixed the two painter bugs behind most spills (half-pixel rows, long-footprint ground), so 31 sprites became 9.
-  - Problem: these props are drawn past the front edges on purpose: the Pos Satpam barrier (21px), the Warung crate (16px), the Indomaret and Alfamart fronts (14px), the Bidan sign (11px), the Kantor RT sign and the Bank Sampah sacks (8px), the Baliho legs (5px) and the Portal post (3px).
-  - Why: UI.md rule 17.
-  - Suggested solution: pull each prop inside the diamond, or move it behind the building, then delete its `SPILL_ALLOW` entry in `tests/footprint-art.test.ts`. All are code-drawn.
-  - Source: `decisions/sprite-footprints.md`
-  - `open · — · — · done when:` `SPILL_ALLOW` is empty, or each entry left has a reason in `decisions/`.
 - [ ] **Let the player control and build on the 2nd RT after the RT reaches 3★, and add the AI-run RT later, each with a tutorial.**
   - Problem: At 3★ the RT expands and the player has no clear next step in a second town. Hari, 2026-11-02: "after expanding from RT 3 star, let players control and build on the 2nd town, and introduce the RT AI later". The tutorial teaches only the first RT, so a new player gets no guidance when the second RT becomes theirs.
   - Why: Building is the action the player already knows. Handing over the 2nd RT first gives the player a full loop before the AI-run RTs arrive, and it keeps the AI-run RT step small. Each step needs its own tutorial, so the player learns the new controls before they reach a larger map.
@@ -63,37 +56,38 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: `decisions/playtest-sk2.md`
   - `open · — · — · done when:` no 2x2 building stands taller than a 1x1 of its tier, site sprites have no scaled pixels, and `tests/art.test.ts` checks both.
 
-- [ ] **CI: a layout-shift canary, and act on the first WebKit nightly.**
-  - Flaky reports and English on string changes shipped in #299. The console guard, the canaries, WebKit nightly and the nightly property tests ship in the CI PR after #305.
-  - Problem: no canary proves the screenshot diff catches a layout shift, and WebKit has never run in CI before.
-  - Why: TESTING.md items 13 and 15.
-  - Suggested solution: read the first `e2e-webkit.yml` run and log each failure here. Add a canary to `visual.spec.ts` that shifts one element and expects the diff to fail (CI's image only).
-  - Source: `decisions/ci-guard-canaries-webkit.md`
-  - `open · — · — · done when:` WebKit nightly is green or its failures are TODO items, and the shift canary fails as expected.
 - [ ] **Make staffing integral: the permit desk queue (prototype).**
   - Problem: staff are optional bonuses. Inem made permits up to 40% faster, a Hansip adds a little Aman, and nothing breaks or asks for a hire when the player has nobody.
   - Why: in Kairosoft's games staff are the hands that turn money into output, and running short of people is the pressure the player feels. Staffing should tighten the core loop: build, queue, hire or train, build faster.
   - Suggested solution: permits become folders the Kantor clears in order; each Asisten clears some a month; the Asisten role can be posted from RT 1★; the map, panel and goal strip show the queue and say when to hire. Prototype in a PR and judge it against the checklists. Later steps: petugas on big public buildings, output numbers on staff cards, the same queue for Stempel and Serapan.
   - Source: voidinside99, 2026-10-31
   - `claimed · voidinside99 · 2026-10-31 · done when:` the prototype passes the checklists and merges (or is dropped), with the bite tuned in `decisions/desk-queue.md`.
-
-- [ ] **Urusan Pribadi: the rest of the spec.**
-  - The first slice shipped in #305: requests, Akrab hearts and loans.
-  - Problem: the "experience" asks (be sent on 3 send-events, or be ketua panitia), the 3-heart perk or quirk upgrade, and a loan's side business becoming a shop on the map are still missing.
-  - Why: they make the bond pay off beyond +3 work.
-  - Suggested solution: `decisions/staff-requests.md` section 2; see `decisions/urusan-pribadi.md` for what shipped.
-  - Source: voidinside99, 2026-11-01
-  - `open · — · — · done when:` all three ship in ID and EN, with unit tests.
-- [ ] **Quest chains for the other eleven specials.**
-  - The framework and the linked pair (Pak Purna, Bu Juru Ketik) shipped in #305.
-  - Problem: the other eleven specials in `decisions/staff-requests.md` section 3 still have no chain.
-  - Why: a chain gives a special a story, and linked chains make an ensemble.
-  - Suggested solution: add each as a `ChainDef` in `src/sim/chains.ts`, with its strings and a test in `tests/chains.test.ts`.
-  - Source: voidinside99, 2026-11-01
-  - `open · — · — · done when:` every special has a chain with its payoff.
+- [ ] **WebKit: the yearly report card never shows.**
+  - Problem: in the first WebKit nightly, `yearly report card is legible, pauses the game and dismisses on tap` waits for `#modal .card.report-card` and it never appears (also on retry).
+  - Why: iPhone players use WebKit; if the card really never shows, they miss the year's grade.
+  - Suggested solution: run the test in WebKit (`E2E_BROWSER=webkit`, in CI's image) with a trace, find whether the card is not built or the test's path differs, and fix it.
+  - Source: `decisions/webkit-first-run.md`
+  - `open · — · — · done when:` the test passes in the WebKit nightly.
+- [ ] **WebKit: Balap Karung's tap button detaches on every tap.**
+  - Problem: in the first WebKit nightly, the Lomba test times out tapping `#lomba-mash` 40 times: the button is re-created on each tap, and WebKit's click waits for a stable element.
+  - Why: a button that is rebuilt on every tap may drop fast taps on a real iPhone too.
+  - Suggested solution: update the mash count in place instead of re-rendering the button, then rerun the WebKit nightly.
+  - Source: `decisions/webkit-first-run.md`
+  - `open · — · — · done when:` the Lomba test passes in the WebKit nightly.
+- [ ] **WebKit: frame-rate bars.**
+  - Problem: `walkers, particles and night keep the frame rate` reads 46 fps with effects off and 26 busy in CI's WebKit, under the Chromium-set bars.
+  - Why: CI's WebKit renders in software, so it may not say anything about an iPhone; but it may also be a real WebKit cost.
+  - Suggested solution: compare against a Chromium run on the same runner; set a WebKit bar, or skip the test outside Chromium with the reason in `decisions/`.
+  - Source: `decisions/webkit-first-run.md`
+  - `open · — · — · done when:` the test passes in WebKit or is skipped there with a recorded reason.
 
 ## Done
 
+- [x] **Every sprite inside its footprint.** The last nine props moved in; `SPILL_ALLOW` is empty. #309, `decisions/sprite-props.md`.
+- [x] **Quest chains for every special.** The other eleven, with Bro Kripto's and Om Motivasi's gambles on Jujur. #309, `decisions/special-chains-four.md`, `decisions/special-chains-last-seven.md`.
+- [x] **Urusan Pribadi: the rest.** Experience asks as promises, the 3-heart perk, loans that open a warung. #309, `decisions/urusan-pribadi-rest.md`.
+- [x] **CI: a layout-shift canary, and the first WebKit nightly.** The canary in `visual.spec.ts`; two CDP tests skipped outside Chromium; three WebKit failures logged above. #309, `decisions/layout-shift-canary.md`, `decisions/webkit-first-run.md`.
+- [x] **CI: console guard, canaries, WebKit and property tests nightly.** #308, `decisions/ci-guard-canaries-webkit.md`.
 - [x] **Urusan Pribadi (first slice).** From level 2, staff ask for cuti, a loan, a course or a resource about every 24 weeks; Akrab hearts (+3 work each); loans come back on Jujur. #305, `decisions/urusan-pribadi.md`.
 - [x] **Quest chains (framework and the linked pair).** Pak Purna's memoir needs Bu Juru Ketik; her typewriter needs Bang Rental PS and doubles her desk. #305, `decisions/special-chains.md`.
 - [x] **Painter bugs behind most footprint spills.** Half-pixel rows and long-footprint ground; spilling sprites 31 to 9. #304, `decisions/sprite-footprints.md`.
