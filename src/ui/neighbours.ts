@@ -8,7 +8,8 @@ import { viewOf } from '../sim/neighbourView';
 import { starChecklist, type ChecklistLine } from '../sim/stages';
 import { DISTRICT_PACE, DISTRICT_STAR_WEEKS } from '../sim/kec';
 import type { DistrictId } from '../render/scenery';
-import type { District, Neighbour } from '../sim/types';
+import { mapSpan, type District, type Neighbour } from '../sim/types';
+import { rwNumber } from '../sim/owners';
 import { h } from './dom';
 import { closeSheet, openSheet } from './sheet';
 import { starRow } from './stage';
@@ -159,7 +160,7 @@ export function openNeighbours(app: App, view: View = { kind: 'list' }): void {
       'data-nb-row': cellName(n),
       onclick: () => openNeighbours(app, { kind: 'detail', i }),
     },
-    h('span', { class: 'nb-name' }, cellName(n), ' ', h('span', { class: 'stage-stars', 'aria-hidden': 'true' }, starRow(n.stars))),
+    h('span', { class: 'nb-name' }, mapSpan().h > 1 ? t('grow.rowRw', { name: cellName(n), rw: rwNumber(n.cx, n.cy) }) : cellName(n), ' ', h('span', { class: 'stage-stars', 'aria-hidden': 'true' }, starRow(n.stars))),
     h('span', { class: `nb-chip ${chip.cls}` }, t(chip.key)),
     h('span', { class: 'nb-need' }, blocking(app, n)),
     );

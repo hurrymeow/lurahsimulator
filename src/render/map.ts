@@ -11,6 +11,7 @@ import { permitEta, queueBerkas } from '../sim/staff';
 import { drawTint, darkness, dusk, Fx } from './fx';
 import { iso, TH, TOP, TW, type Art } from './iso';
 import { t } from '../i18n';
+import { cellPlates } from '../sim/owners';
 import { Crowd } from './people';
 import { Weather } from './weather';
 import { placeBadge, type BadgeBox } from './badge';
@@ -734,6 +735,11 @@ export class MapView {
       const label = b.status === 'permit' ? `${permitEta(s, b)}` : b.status === 'building' ? `${b.timer}` : b.status === 'mangkrak' ? '80%' : b.status === 'damaged' ? '!' : b.noRoad ? t('map.noRoad') : null;
       if (label) this.badge(ctx, this.tileCentre(b.x, b.y).x, tops.get(b.y * GRID_W + b.x)! - 12, label, badges, b.status === 'damaged');
     }
+    // Who runs each RT: a nameplate on its far corner, the player's in gold, the AI's in grey, with the RW once there are two.
+    for (const plate of cellPlates(s)) {
+      const c = this.tileCentre(plate.x, plate.y);
+      this.plate(ctx, c.x, c.y - (TH * this.scale) / 2 + 4, plate.text, plate.mine, badges);
+    }
     // The permit queue as a pile of folders on the Kantor RT: one for every two waiting, up to six.
     const berkas = queueBerkas(s);
     if (berkas > 0) {
@@ -953,6 +959,22 @@ export class MapView {
     path(0);
     ctx.strokeStyle = 'rgba(24, 24, 27, 0.9)';
     ctx.stroke();
+  }
+
+  /** An RT's nameplate: gold with dark text for the player's, dark grey with light text for an AI's. Words say it too. */
+  private plate(ctx: CanvasRenderingContext2D, cx: number, cy0: number, text: string, mine: boolean, placed: BadgeBox[]): void {
+    ctx.font = '700 16px "Atkinson Hyperlegible", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const w = ctx.measureText(text).width + 14;
+    const cy = placeBadge(placed, cx, cy0, w);
+    ctx.fillStyle = mine ? '#f4b935' : '#3f3f46';
+    ctx.fillRect(cx - w / 2, cy - 11, w, 22);
+    ctx.strokeStyle = mine ? '#8a4f12' : '#f4f4f5';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cx - w / 2 + 0.5, cy - 10.5, w - 1, 21);
+    ctx.fillStyle = mine ? '#2a1810' : '#f4f4f5';
+    ctx.fillText(text, cx, cy + 1);
   }
 
   /** warn: a repair is needed, so the badge is warning orange instead of black. */
