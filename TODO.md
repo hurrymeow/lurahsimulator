@@ -85,9 +85,10 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - #313 fixed two combo loops in the bots (a leveled combo piece and an uncapped copy fallback); the builder now misses RT 3★ in 1 seed of 10, not 8. The 2nd RT was not the cause.
   - Problem: item 1 still waits 208s with nothing affordable (bar 60s), RT 2★ is late in 10 of 10 seeds, and the Pencitraan bot never reaches RT 2★ (item 17).
   - Why: the scorecard cannot judge pace or strategy balance while bots stall.
-  - Suggested solution: probe the Pencitraan bot and the 208s wait the way #313 did (state and building counts at the stall) and tell a bot bug from a balance gap.
+  - The Pencitraan stall is a strategy collapse on slow-growth seeds, not a bot bug (`decisions/scorecard-pencitraan-probe.md`); fixing it is a balance call that belongs with the scorecard Fails item.
+  - Suggested solution: probe the 208s wait and the late RT 2★ the same way (state and building counts at the stall) and tell a bot bug from a balance gap.
   - Source: `decisions/scorecard-bot-combo-loop.md`
-  - `open · — · — · done when:` the builder reaches RT 3★ in 10 of 10 seeds, Pencitraan reaches RT 2★, and item 1 is under 60s or has a recorded balance reason.
+  - `open · — · — · done when:` the builder reaches RT 3★ in 10 of 10 seeds, and item 1 is under 60s or has a recorded balance reason.
 ## Done
 
 - [x] **Scorecard bots: two combo loops fixed.** The builder bought a Rumah Makan or Wifi every week chasing a combo; RT 3★ missed by 1 seed of 10, was 8. #313, `decisions/scorecard-bot-combo-loop.md`.
