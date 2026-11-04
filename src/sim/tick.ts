@@ -1,6 +1,6 @@
 import { bBlurb, bName, t, type Key } from '../i18n';
 import {
-  ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
+  ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, PRICE_REASONS, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
   EXPECT_KEC, EXPECT_KEL, EXPECT_PER_RESIDENT, EXPECT_TAPER, NOVELTY_GAP, QUEUE_SABAR_DRAIN, SETORAN_RATE, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, TUKANG_MAX, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
 } from './balance';
 import { accessSystem, connectedRoad, hasRoadBeside } from './access';
@@ -244,7 +244,16 @@ export function yearEnd(s: GameState, fx: Fx): void {
   s.inflation *= 1 + INFLATION_PER_YEAR;
   addEmas(s, EMAS.perYear);
   rwYearEnd(s, fx);
-  fx.push({ kind: 'notice', title: t('sim.yearTitle', { n: s.month / WEEKS_PER_YEAR + 1 }), body: t('sim.yearBody', { pct: Math.round(INFLATION_PER_YEAR * 100) }), tone: 'info' });
+  // From year 2 the year-end notice is a banner card: the price rise, and one reason a year, never the same twice in a row.
+  const last = s.priceReason;
+  let reason = randInt(s, 0, last === undefined ? PRICE_REASONS - 1 : PRICE_REASONS - 2);
+  if (last !== undefined && reason >= last) reason++;
+  s.priceReason = reason;
+  fx.push({
+    kind: 'notice', card: true, cls: 'price-banner', tone: 'info',
+    title: t('sim.priceTitle', { pct: Math.round(INFLATION_PER_YEAR * 100), n: s.month / WEEKS_PER_YEAR + 1 }),
+    body: t(`price.reason.${reason}` as Key),
+  });
 }
 
 /** Ordered list of monthly systems. Later milestones insert their systems here. */

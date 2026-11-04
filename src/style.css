@@ -279,6 +279,9 @@ html.no-effects #dof { display: none; }
 .modal .card p { line-height: 1.4; }
 .modal .card.fanfare { border-color: #facc15; animation: pop-in 0.35s ease-out; }
 .fanfare-tag { color: #facc15; font-weight: 700; letter-spacing: 2px; }
+/* The yearly price banner: an official notice with a hazard stripe along the top. */
+.modal .card.price-banner { border-color: var(--danger); padding-top: 28px; background-image: repeating-linear-gradient(-45deg, #facc15 0 10px, #2a1810 10px 20px); background-size: 100% 10px; background-repeat: no-repeat; background-color: var(--surface); }
+.modal .card.price-banner h2 { font-family: var(--font-pixel); color: var(--danger); }
 .outcome-list { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
 .outcome-chip { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--c); border-radius: 10px; text-align: left; }
 .outcome-chip img { image-rendering: pixelated; flex: none; }

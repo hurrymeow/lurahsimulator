@@ -525,6 +525,8 @@ export interface GameState {
   lastMeters?: Meters;
   /** One-time warnings already shown in this game, such as 'sabar'. */
   warned?: string[];
+  /** The reason the last yearly price banner gave, so the next one differs. Missing until year 2. */
+  priceReason?: number;
   /** Cleared tukang parkir due back at their shop: shop uid and month. Missing in older saves. */
   parkirBack?: { shop: number; at: number }[];
   /** Saved after the Oct 30 building sizes: grown buildings were fitted or kept small on load. */
@@ -551,7 +553,7 @@ export type FirstKind = 'house' | 'resident' | 'star';
 
 export type SimEffect =
   | { kind: 'pop'; x: number; y: number; res: ResourceId; amount: number }
-  | { kind: 'notice'; title: string; body: string; tone: 'good' | 'bad' | 'info'; fanfare?: boolean; x?: number; y?: number; inem?: boolean; card?: boolean; open?: string; pics?: { def: string; level: number }[] }
+  | { kind: 'notice'; title: string; body: string; tone: 'good' | 'bad' | 'info'; fanfare?: boolean; x?: number; y?: number; inem?: boolean; card?: boolean; cls?: string; open?: string; pics?: { def: string; level: number }[] }
   | { kind: 'job'; x: number; y: number; name: string; job: Exclude<JobId, 'none'> }
   | { kind: 'level'; x: number; y: number; name: string; level: number }
   | { kind: 'event'; eventId: string }
