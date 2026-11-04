@@ -39,3 +39,6 @@ Tests of AI RT behaviour used the AI RT next door on the small map. They still d
 
 ## Verdict
 Self-approved under the TODO rule against GAME-DESIGN.md section 8, the UI.md review checklist and TESTING.md, for T1 to T3 only. The TODO item stays open until the tutorials ship.
+
+## English event text
+The regenerated seeds changed which event the density test meets first. It met an English event body of 21 words against the 20-word limit (UI.md rule 14), so the two event bodies at 21 words lost a word or two. Longer bodies remain on the inspection events and the hibah; the test only reads the first event it meets, so they are not caught and were not changed here.

@@ -278,7 +278,7 @@ export const MORE_EVENTS: EventDef[] = [
   {
     id: 'lubangViral',
     name: 'Viral Pothole',
-    body: 'A video of the pothole by the kantor goes viral. The caption is a cry for help. The pothole has fans.',
+    body: 'A video of the pothole by the kantor goes viral. The caption is a cry for help. It has fans.',
     when: { minMonth: 10, minStars: 1, chance: 0.1, cooldown: 14 },
     choices: [
       { label: 'Ignore it', res: { viral: 6, sabar: -2 }, result: 'The pothole gets its own hashtag.' },
