@@ -32,10 +32,14 @@ export default defineConfig({
   },
   // CI runs every phone in Indonesian, the default language and the one whose longer strings clip first.
   // The scheduled English workflow sets E2E_LANG=en. Local runs add English. The spec reads the language from the project name suffix.
+  // E2E_BROWSER=webkit (the nightly WebKit workflow) runs the same phones in WebKit, named webkit-phone-<width>-<lang>.
   projects: PHONES.flatMap((p) =>
     (process.env.CI ? (process.env.E2E_LANG === 'en' ? (['en'] as const) : (['id'] as const)) : (['id', 'en'] as const)).map((lang) => ({
-      name: `${p.name}-${lang}`,
-      use: { viewport: p.viewport, deviceScaleFactor: 2, hasTouch: true, isMobile: true, locale: lang === 'id' ? 'id-ID' : 'en-US' },
+      name: `${process.env.E2E_BROWSER === 'webkit' ? 'webkit-' : ''}${p.name}-${lang}`,
+      use: {
+        ...(process.env.E2E_BROWSER === 'webkit' ? { browserName: 'webkit' as const } : {}),
+        viewport: p.viewport, deviceScaleFactor: 2, hasTouch: true, isMobile: true, locale: lang === 'id' ? 'id-ID' : 'en-US',
+      },
     })),
   ),
 });

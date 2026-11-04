@@ -1,5 +1,5 @@
 # Nightly checks that are too heavy for every PR. Today: the design scorecard (GAME-DESIGN.md section 8).
-# The CI and test config task adds the WebKit suite, the property-test run and the other nightly jobs here.
+# Also the property tests at 1000 games per rule. The WebKit e2e suite has its own workflow, e2e-webkit.yml.
 name: Nightly
 
 on:
@@ -11,6 +11,21 @@ permissions:
   contents: read
 
 jobs:
+  # TESTING.md item 6: the property tests at 1000 games per rule (200 in npm test).
+  properties:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run tests/properties.test.ts
+        env:
+          PROP_RUNS: '1000'
+
   scorecard-runs:
     runs-on: ubuntu-latest
     # One bot on two seeds per job: a bot that stalls late (Kelurahan, 450 ticks) takes several minutes a seed.
