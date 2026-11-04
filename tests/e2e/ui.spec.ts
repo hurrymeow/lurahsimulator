@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { scanLegibility } from './legibility';
 import { countScreen, LIMITS, scanLabelWords, type ScreenCount } from './density';
 import { scanCentring } from './vcenter';
