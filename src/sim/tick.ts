@@ -175,7 +175,7 @@ export function residentsMove(s: GameState, fx: Fx): void {
   if (s.res.sabar < LEAVE_BELOW_SABAR && population(s) > MIN_RESIDENTS) {
     const r = s.residents.splice(randInt(s, 0, s.residents.length - 1), 1)[0];
     s.stats.left++;
-    fx.push({ kind: 'notice', title: t('sim.movedOut', { name: r.name }), body: t('sim.movedOutBody', { n: LEAVE_BELOW_SABAR }), tone: 'bad' });
+    fx.push({ kind: 'notice', title: t('sim.movedOut', { name: r.name, n: LEAVE_BELOW_SABAR }), body: t('sim.movedOutBody', { n: LEAVE_BELOW_SABAR }), tone: 'bad' });
     return;
   }
   let arrived = 0;

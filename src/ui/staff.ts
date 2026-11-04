@@ -98,27 +98,17 @@ function flags(x: Staff, rival: string): Node[] {
   return out;
 }
 
-function staffCard(app: App, x: Staff, done: () => void): HTMLElement {
-  const s = app.s;
-  // The one main action: answer a raise when asked, else train them. Inem has none; her card opens her view.
-  let main: Node | null = null;
-  if (x.raiseAsked) {
-    main = h('div', { class: 'action' }, h('button', { class: 'btn btn-primary', onclick: () => { answerRaise(s, x, true); app.tap(10); done(); } }, t('staff.accept')));
-  } else if (!x.inem) {
-    main = actionButton(t('staff.bimtek', { cost: rupiah(bimtekCost(s)) }), checkBimtek(s, x), () => { bimtek(s, x); app.tap(15); done(); }, true);
-  }
+/** One line per person; every action waits in their detail view. A chip flags what needs the player. */
+function staffCard(app: App, x: Staff): HTMLElement {
+  const chip = x.raiseAsked ? t('staff.raiseChip') : x.away ? t('staff.awayNow', { n: x.away }) : x.refused ? t('staff.refusedChip') : '';
   return h('div', { class: `card-btn static staff-card${x.inem ? ' inem' : ''}`, 'data-staff': String(x.id) },
     face(x),
     h('div', { class: 'card-text' },
       h('button', { class: 'staff-open', type: 'button', 'aria-label': t('staff.details', { name: x.name }), onclick: () => openStaff(app, { kind: 'person', id: x.id }) },
         h('span', { class: 'card-title' }, h('strong', {}, x.name), h('span', { class: 'meta' }, t('staff.level', { n: x.level }))),
         h('span', { class: 'meta' }, t('staff.roleLine', { role: roleName(roleDef(x.role)), stars: x.stars })),
-        h('span', { class: 'meta staff-work' }, statIcon(roleDef(x.role).stat), ` ${statName(roleDef(x.role).stat)} ${x.stats[roleDef(x.role).stat]} → ${workFx(x)}`),
-        h('span', { class: 'meta' }, t('staff.salary', { amt: rupiah(price(s, x.salary)) })),
       ),
-      ...flags(x, RIVAL_NAMES[s.stage.current]),
-      x.raiseAsked ? h('p', { class: 'meta' }, t('staff.raiseAsk', { amt: rupiah(price(s, Math.round(x.salary * (1 + RAISE)))) })) : null,
-      main,
+      chip ? h('p', { class: 'meta warn staff-chip' }, chip) : null,
     ),
   );
 }
@@ -219,7 +209,6 @@ function lowongan(app: App, done: () => void): HTMLElement {
   const roles = openRoles(s).map((r) => h('div', { class: 'card-btn static staff-role', 'data-role': r.id },
     h('div', { class: 'card-text' },
       h('strong', {}, roleName(r)),
-      h('p', {}, roleBlurb(r)),
       h('div', { class: 'action' }, h('button', { class: 'btn', type: 'button', onclick: () => openStaff(app, { kind: 'post', role: r.id }) }, t('staff.postRole'))),
     ),
   ));
@@ -243,9 +232,8 @@ export function openStaff(app: App, view: View = { kind: 'list' }): void {
   }
   const wages = s.staff!.reduce((n, x) => n + price(s, x.salary), 0);
   openSheet(t('menu.staff'), [
-    h('p', { class: 'meta' }, t('staff.intro')),
     h('p', { class: 'meta', id: 'staff-slots' }, t('staff.slots', { n: s.staff!.length, max: staffSlots(s), wages: rupiah(wages) })),
-    ...s.staff!.map((x) => staffCard(app, x, done)),
+    ...s.staff!.map((x) => staffCard(app, x)),
     lowongan(app, done),
     dream(app),
   ]);

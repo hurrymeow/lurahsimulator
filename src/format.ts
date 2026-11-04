@@ -41,3 +41,12 @@ export function dateLabel(month: number): string {
 export function signed(n: number): string {
   return (n >= 0 ? '+' : '') + Math.round(n);
 }
+
+/** Words as the density scan counts them: whitespace runs that hold a letter. Numbers and icons are not words. */
+const wordCount = (s: string) => s.split(/\s+/).filter((w) => /\p{L}/u.test(w)).length;
+
+/** The toast leads with the fact: the title, plus the body only when both fit in 8 words. The Log keeps both. */
+export function toastParts(title: string, body: string): [string, string] {
+  if (!title) return ['', body];
+  return wordCount(title) + wordCount(body) <= 8 ? [title, body] : [title, ''];
+}
