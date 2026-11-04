@@ -77,6 +77,7 @@ export const ID: Record<Key, string> = {
   'cs.satShow': 'Tampilkan peta satelit',
   'date.label': '{month} M{week} · T{year}',
   'date.months': 'Jan,Feb,Mar,Apr,Mei,Jun,Jul,Agu,Sep,Okt,Nov,Des',
+  'dock.warga': 'Warga',
   'event.mod': '{label}: pemasukan x{mult} selama {n} minggu',
   'event.result': 'Hasil kejadian',
   'event.send': 'Kirim {name}',

@@ -140,8 +140,8 @@ html:not(.theme-dark) :is(#hud, #bottombar, #goal, #ticker) :is(.missing, .warn)
 .date-wrap { display: none; }
 #mainbar { gap: 6px; }
 
-/* ---------- dock: three equal buttons, icon over label ---------- */
-#mainbar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+/* ---------- dock: Build keeps a third of the bar, then Warga, Staf and Menu share the rest, icon over label ---------- */
+#mainbar { display: grid; grid-template-columns: calc((100% - 12px) / 3) repeat(3, minmax(0, 1fr)); gap: 6px; }
 #mainbar > .cs-dock, #mainbar > #menu-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; min-height: 52px; padding: 2px 4px; font-weight: 700; line-height: 1.1; }
 .cs-dock img { flex: none; width: 24px; height: 24px; }
 .cs-menu-icon { display: inline-flex; flex-direction: column; justify-content: center; gap: 4px; width: 24px; height: 24px; padding: 0 3px; }

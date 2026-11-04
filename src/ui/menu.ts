@@ -24,7 +24,7 @@ export const countTag = (n: number): HTMLElement => h('span', { class: 'new-tag 
 /** One menu button opens every panel, sorted into categories. */
 export function openMenu(app: App, extra: Node[] = []): void {
   const body = GROUPS.map((g) => {
-    // Docked panels (Build, Warga) have their own bottom button and are not listed twice.
+    // Docked panels (Build, Warga, Staf) have their own bottom button and are not listed twice.
     const items = app.actions.filter((a) => !a.dock && (a.group ?? 'kampung') === g.id && (a.show?.(app) ?? true));
     const tiles: Node[] = items.map((a) => {
       const n = a.badge?.(app) ?? 0;

@@ -34,9 +34,9 @@ async function passHome(page: Page): Promise<void> {
   await expect(page.locator('#home')).toHaveCount(0);
 }
 
-/** Opens a panel the way a player does: Build and Warga from the bottom dock, the rest from Menu. */
+/** Opens a panel the way a player does: Build, Warga and Staf from the bottom dock, the rest from Menu. */
 async function openPanel(page: Page, id: string): Promise<void> {
-  if (id === 'build' || id === 'warga') {
+  if (id === 'build' || id === 'warga' || id === 'staff') {
     await page.locator(`#dock-${id}`).click();
     return;
   }
@@ -825,7 +825,7 @@ test.describe('slim HUD and one menu', () => {
     // Top: play, speed and the resources. The goal line only expands the next star. On phones tall enough for the
     // satellite view, its fold button belongs to it. Bottom: the dock.
     const sat = (page.viewportSize()?.height ?? 0) > 640 ? ['cs-sat-toggle'] : [];
-    expect(ids).toEqual(['pause-btn', 'speed-btn', 'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'goal-now', ...sat, 'dock-build', 'dock-warga', 'menu-btn']);
+    expect(ids).toEqual(['pause-btn', 'speed-btn', 'chip-rupiah', 'chip-sabar', 'chip-orangDalam', 'chip-viral', 'chip-pop', 'goal-now', ...sat, 'dock-build', 'dock-warga', 'dock-staff', 'menu-btn']);
     const hud = (await page.locator('#hud').boundingBox())!;
     expect(hud.height).toBeLessThanOrEqual(80);
   });
@@ -2379,11 +2379,10 @@ test.describe('build mode', () => {
       await dismissModals(page);
     }
     expect(await waiting()).toBe(n);
-    await expect(page.locator('#menu-btn .count-tag')).toHaveText(String(n));
-    await page.locator('#menu-btn').click();
-    await expect(page.locator('#act-staff .count-tag')).toHaveText(String(n));
-    await expectLegible(page, 'menu with applicants');
-    await page.locator('#act-staff').click();
+    await expect(page.locator('#dock-staff .count-tag')).toHaveText(String(n));
+    await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
+    await expectLegible(page, 'dock with applicants');
+    await page.locator('#dock-staff').click();
     await page.locator('#sheet .staff-applicant .btn-primary').first().click();
     await expect(page.locator('#sheet .staff-card')).toHaveCount(2);
     await page.locator('.sheet-head .btn-icon').click();
@@ -3030,16 +3029,21 @@ test.describe('console frame and theme', () => {
     const map = (await page.locator('#map').boundingBox())!;
     expect(goal.y).toBeGreaterThanOrEqual(map.y);
     await (tall ? expect(page.locator('#cs-sat')).toBeVisible() : expect(page.locator('#cs-sat')).toBeHidden());
-    // The dock: three equal buttons, Build, Warga and Menu.
-    const dock = await Promise.all(['#dock-build', '#dock-warga', '#menu-btn'].map(async (id) => (await page.locator(id).boundingBox())!));
+    // The dock: Build keeps a third of the bar, then three equal buttons, Warga, Staf and Menu.
+    const dock = await Promise.all(['#dock-warga', '#dock-staff', '#menu-btn'].map(async (id) => (await page.locator(id).boundingBox())!));
+    const build = (await page.locator('#dock-build').boundingBox())!;
+    const bar = (await page.locator('#mainbar').boundingBox())!;
+    expect(Math.abs(build.width - (bar.width - 12) / 3)).toBeLessThanOrEqual(1);
+    expect(Math.abs(build.height - dock[0].height)).toBeLessThanOrEqual(1);
     for (const d of dock) {
       expect(Math.abs(d.width - dock[0].width)).toBeLessThanOrEqual(1);
       expect(Math.abs(d.height - dock[0].height)).toBeLessThanOrEqual(1);
     }
-    // Build and Warga live in the dock only, so the Menu does not list them twice.
+    // Build, Warga and Staf live in the dock only, so the Menu does not list them twice.
     await page.locator('#menu-btn').click();
     await expect(page.locator('#act-build')).toHaveCount(0);
     await expect(page.locator('#act-warga')).toHaveCount(0);
+    await expect(page.locator('#act-staff')).toHaveCount(0);
     await page.locator('.sheet-head .btn-icon').click();
     // No rail, quick tabs or SYSTEM button from earlier frames.
     for (const id of ['#cs-rail', '#cs-tabs', '#cs-system', '#cs-title']) await expect(page.locator(id)).toHaveCount(0);
@@ -3074,7 +3078,7 @@ test.describe('console frame and theme', () => {
     await start(page);
     await dismissModals(page);
     const boxes = () => page.evaluate(() =>
-      ['cs-row1', 'cs-row2', 'hud', 'goal', 'emas', 'stage', 'map', 'cs-sat', 'bottombar', 'pause-btn', 'speed-btn', 'dock-build', 'dock-warga', 'menu-btn'].map((id) => {
+      ['cs-row1', 'cs-row2', 'hud', 'goal', 'emas', 'stage', 'map', 'cs-sat', 'bottombar', 'pause-btn', 'speed-btn', 'dock-build', 'dock-warga', 'dock-staff', 'menu-btn'].map((id) => {
         const r = document.getElementById(id)!.getBoundingClientRect();
         return `${id} ${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)}`;
       }),
@@ -3108,10 +3112,10 @@ test.describe('console frame and theme', () => {
     await expect(page.locator('#sheet')).toContainText('Toast test');
   });
 
-  test('every panel opens: Build and Warga from the dock, the rest from Menu', async ({ page }) => {
+  test('every panel opens: Build, Warga and Staf from the dock, the rest from Menu', async ({ page }) => {
     await start(page);
     await dismissModals(page);
-    for (const id of ['build', 'wacana', 'log', 'stats', 'warga', 'settings']) {
+    for (const id of ['build', 'wacana', 'log', 'stats', 'warga', 'staff', 'settings']) {
       await openPanel(page, id);
       await expect(page.locator('#sheet')).toBeVisible();
       await page.locator('.sheet-head .btn-icon').click();
@@ -3281,9 +3285,9 @@ test.describe('density and hierarchy', () => {
     await take('menu', '#sheet');
     const ids = await page.$$eval('#sheet [id^="act-"]', (els) => els.map((e) => e.id.slice(4)));
     await closeSheet();
-    for (const id of [...ids, 'build', 'warga']) {
+    for (const id of [...ids, 'build', 'warga', 'staff']) {
       await dismiss();
-      if (id === 'build' || id === 'warga') await page.locator(`#dock-${id}`).click();
+      if (id === 'build' || id === 'warga' || id === 'staff') await page.locator(`#dock-${id}`).click();
       else {
         await page.locator('#menu-btn').click();
         await page.waitForTimeout(200);
