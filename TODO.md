@@ -55,7 +55,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Why: A player who cannot see the next action stops playing or quits the goal. Hari asked for the hint in the tapped state, so it does not add clutter to the strip.
   - Suggested solution: In the expanded goal state, add one plain line per goal type that names the action (what to build, what to keep, which ranking to win). The hint must match the goal's own condition, not the next stage's. Generalise the Stempel work in `docs/plans/stempel-goal-actionable.md` (T2 matching hint, T4 tap explainer) from that one goal to every goal type. Write the line in EN and ID, and keep it within UI.md rule 13 word limits.
   - Source: Hari's playtest screenshot, 2026-11-01 (project thread "Add goal how-to hints to TODO")
-  - `open · — · — · done when:` every goal type shows a matching how-to line in the tapped state, in EN and ID, with no clipping at 320px, and the goal tests cover each type.
+  - `claimed · voidinside99 · 2026-11-04 · done when:` every goal type shows a matching how-to line in the tapped state, in EN and ID, with no clipping at 320px, and the goal tests cover each type.
 - [ ] **Stop a big kampung getting stuck under the Kelurahan 3★ Popularitas bar.**
   - Problem: residents never leave while Popularitas is above 15, and each resident lowers it. A kampung that grows well past 200 settles in the low 30s and cannot get back over the 3★ bar (35). One Kelurahan bot seed of three stays at 2★ for good (#204).
   - Why: a player who grew too fast is soft-locked out of 3★, with no way to see why or fix it.
@@ -75,7 +75,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Why: Off-centre labels look broken and make buttons read as unfinished. UI.md has no rule for it, so nothing catches it, and the audit crawl only measures words and clipping.
   - Suggested solution: One PR (Sonnet). 1) Find the cause for the promotion buttons and the goal pill (likely a tall `min-height` or fixed height without flex centring or with unequal padding or line-height), and fix it in the shared button, pill and bar CSS, not per screen. 2) Add a UI.md rule: text inside buttons, pills and bars is vertically centred, with a bar of at most 2 px between the space above and below the text. Add a matching line to the UI.md review checklist. Log it in `decisions/vcenter.md`. 3) Run an all-pages check: reuse `/mnt/project-files/audit/ui-rules-2026-11-01/audit.spec.ts` at 320 and 412 px in EN and ID, and measure each button, pill and bar label's top and bottom gap inside its box (use a `Range` over the text node). Save screenshots under `/mnt/project-files/audit/vcenter-2026-11-01/` and list every failing screen and element here before fixing. 4) Turn the measure into a CI check beside the rule 13 scan so it stays fixed.
   - Source: Hari, 2026-11-01, screenshot.
-  - `[ ] open · — · — · done when:` the measure finds 0 labels off-centre by more than 2 px on every audited screen at 320 and 412 px in EN and ID, and UI.md has the rule and checklist line.
+  - `[ ] claimed · voidinside99 · 2026-11-04 · done when:` the measure finds 0 labels off-centre by more than 2 px on every audited screen at 320 and 412 px in EN and ID, and UI.md has the rule and checklist line.
 
 ### Later
 
