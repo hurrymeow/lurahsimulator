@@ -53,6 +53,25 @@ describe('quest chains for the named specials', () => {
     expect(deskCapacity(s)).toBeGreaterThan(0);
   });
 
+  it('Mas Konten, Mbak Gosip, Mbak Senam Pagi and Pak Kuis each finish once their conditions hold', () => {
+    const cases: [string, Staff['role'], (s: GameState) => void][] = [
+      ['masKonten', 'adminWa', (s) => (s.res.viral = 70)],
+      ['mbakGosip', 'adminWa', (s) => { s.res.viral = 40; addBuilding(s, 'wifi', s.buildings[0].x + 2, s.buildings[0].y + 2, 'active'); }],
+      ['mbakSenam', 'hansip', (s) => { s.res.sabar = 70; addBuilding(s, 'lapangan', s.buildings[0].x + 2, s.buildings[0].y + 2, 'active'); }],
+      ['pakKuis', 'sekretaris', (s) => { s.res.sabar = 60; s.month = 7 * 4; addBuilding(s, 'lapangan', s.buildings[0].x + 2, s.buildings[0].y + 2, 'active'); }],
+    ];
+    for (const [id, role, setup] of cases) {
+      const s = newGame(4);
+      s.staff = [];
+      const x = special(30, id, role, 2);
+      s.staff.push(x);
+      setup(s);
+      const fx = run(s, 3);
+      expect(x.chainDone, id).toBe(true);
+      expect(fx.some((f) => f.kind === 'notice' && f.card), id).toBe(true);
+    }
+  });
+
   it('every chain step, title and reward is written in both languages', () => {
     for (const c of CHAINS) {
       const keys = ['name', 'doneTitle', 'reward', ...c.steps.map((_s, i) => `step${i}`)].map((p) => `chain.${c.special}.${p}`);

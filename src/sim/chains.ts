@@ -5,6 +5,7 @@ import { t, type Key } from '../i18n';
 import { STAT_MAX } from '../data/staff';
 import { gain, type Fx } from './gain';
 import { isWorking } from './state';
+import { monthOfYear } from './calendar';
 import type { GameState, Staff } from './types';
 
 export interface ChainDef {
@@ -41,6 +42,55 @@ export const CHAINS: ChainDef[] = [
     ],
     // The payoff lives in output(): her desk folders count twice once chainDone is set.
     payoff: () => undefined,
+  },
+  {
+    // 100k followers through a prank series. Each prank step costs a little Popularitas.
+    special: 'masKonten',
+    steps: [
+      (s) => s.res.viral >= 20,
+      (s) => s.res.viral >= 40,
+      (s) => s.res.viral >= 60,
+    ],
+    payoff: (s, _x, fx) => {
+      gain(s, fx, 'viral', 10);
+      gain(s, fx, 'sabar', -3);
+    },
+  },
+  {
+    // Unmask the anonymous gossip account: she finds it, traces it to a Wifi, and exposes it.
+    special: 'mbakGosip',
+    steps: [
+      (_s, x) => x.level >= 2,
+      (s) => s.buildings.some((b) => b.def === 'wifi' && isWorking(b)),
+      (s) => s.res.viral >= 30,
+    ],
+    payoff: (s, _x, fx) => gain(s, fx, 'sabar', 6),
+  },
+  {
+    // A rekor kampung for the biggest senam: a Lapangan, and a kampung in the mood.
+    special: 'mbakSenam',
+    steps: [
+      (_s, x) => x.level >= 2,
+      (s) => s.buildings.some((b) => b.def === 'lapangan' && isWorking(b)),
+      (s) => s.res.sabar >= 60,
+    ],
+    payoff: (s, _x, fx) => {
+      gain(s, fx, 'sabar', 6);
+      gain(s, fx, 'viral', 4);
+    },
+  },
+  {
+    // "Kuis Kampung" on the 17 Agustus stage: a Lapangan and an August with a full house.
+    special: 'pakKuis',
+    steps: [
+      (_s, x) => x.level >= 2,
+      (s) => s.buildings.some((b) => b.def === 'lapangan' && isWorking(b)),
+      (s) => monthOfYear(s.month) === 7 && s.res.sabar >= 50,
+    ],
+    payoff: (s, _x, fx) => {
+      gain(s, fx, 'viral', 6);
+      gain(s, fx, 'orangDalam', 1);
+    },
   },
 ];
 
