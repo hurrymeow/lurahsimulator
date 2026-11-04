@@ -75,12 +75,12 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: update the mash count in place instead of re-rendering the button, then rerun the WebKit nightly.
   - Source: `decisions/webkit-first-run.md`
   - `open · — · — · done when:` the Lomba test passes in the WebKit nightly.
-- [ ] **WebKit: frame-rate bars.**
+- [x] **WebKit: frame-rate bars.**
   - Problem: `walkers, particles and night keep the frame rate` reads 46 fps with effects off and 26 busy in CI's WebKit, under the Chromium-set bars.
   - Why: CI's WebKit renders in software, so it may not say anything about an iPhone; but it may also be a real WebKit cost.
   - Suggested solution: compare against a Chromium run on the same runner; set a WebKit bar, or skip the test outside Chromium with the reason in `decisions/`.
   - Source: `decisions/webkit-first-run.md`
-  - `open · — · — · done when:` the test passes in WebKit or is skipped there with a recorded reason.
+  - `done · ChatGPT · 2026-11-04 · done when:` skipped in WebKit with the software-rendering reason recorded; Chromium keeps the FPS regression check.
 - [ ] **Scorecard bots: the last RT stalls.**
   - #313 fixed two combo loops in the bots (a leveled combo piece and an uncapped copy fallback); the builder now misses RT 3★ in 1 seed of 10, not 8. The 2nd RT was not the cause.
   - Problem: item 1 still waits 208s with nothing affordable (bar 60s), RT 2★ is late in 10 of 10 seeds, and the Pencitraan bot never reaches RT 2★ (item 17).
