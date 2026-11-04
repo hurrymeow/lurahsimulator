@@ -56,7 +56,7 @@ const canPostDesk = (s: GameState): boolean =>
  * (or as soon as it is all the star still needs, ahead of beds), waiting on a build, beds, or what draws people
  * when residents stop coming. "Reach N residents" is not a step: the star list already says it with have and need.
  */
-export function nextStep(s: GameState): { kind: StepKind; text: string } | null {
+export function nextStep(s: GameState): { kind: StepKind; text: string; detail?: string } | null {
   if (!s.buildings.some((b) => b.def === 'rumah')) return { kind: 'house', text: t('goal.short.house') };
   // Past the RT, a star that waits only on Stempel gets the Stempel step: say nothing else while it does.
   if (s.stage.current !== 'rt') {
@@ -67,7 +67,8 @@ export function nextStep(s: GameState): { kind: StepKind; text: string } | null 
   }
   if ((s.month >= COMBO_HINT_MONTH && (s.discovered.length === 0 || comboGoalOpen(s))) || starWaitsOnCombo(s)) {
     const c = easiestCombo(s);
-    if (c) return { kind: 'combo', text: t('goal.short.combo', { name: c.name, pieces: c.pieces }) };
+    // The pill names the combo; its buildings wait in the opened list, so the pill stays within two lines.
+    if (c) return { kind: 'combo', text: t('goal.short.combo', { name: c.name }), detail: t('goal.comboPieces', { pieces: c.pieces }) };
   }
   // The permit queue is a staffing problem: say so once it is deep, while there is room to hire.
   const months = queueMonths(s);
