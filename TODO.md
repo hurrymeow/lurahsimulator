@@ -81,15 +81,16 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: compare against a Chromium run on the same runner; set a WebKit bar, or skip the test outside Chromium with the reason in `decisions/`.
   - Source: `decisions/webkit-first-run.md`
   - `open · — · — · done when:` the test passes in WebKit or is skipped there with a recorded reason.
-- [ ] **Scorecard bots: reach RT 3★ again after the 2nd-RT change.**
-  - Problem: the scorecard refreshed in #311 shows the builder bot late to RT 2★ in 10 of 10 seeds and missing RT 3★ in 8, and a 192s wait with nothing affordable (item 1, was 0s). The run committed on 2026-11-01 had neither.
-  - Why: the scorecard cannot judge pace past RT while its main bot stalls there.
-  - Suggested solution: check whether RT 3★ now needs the second RT (#306) and teach `tests/scorecard/driver.ts` bots to build there; if not, find what changed. Coordinate with the 2nd-RT item's owner.
-  - Source: `decisions/scorecard-lint-sinks.md`
-  - `open · — · — · done when:` the builder bot reaches RT 3★ in 10 of 10 seeds and item 1 is back under 60s.
-
+- [ ] **Scorecard bots: the last RT stalls.**
+  - #313 fixed two combo loops in the bots (a leveled combo piece and an uncapped copy fallback); the builder now misses RT 3★ in 1 seed of 10, not 8. The 2nd RT was not the cause.
+  - Problem: item 1 still waits 208s with nothing affordable (bar 60s), RT 2★ is late in 10 of 10 seeds, and the Pencitraan bot never reaches RT 2★ (item 17).
+  - Why: the scorecard cannot judge pace or strategy balance while bots stall.
+  - Suggested solution: probe the Pencitraan bot and the 208s wait the way #313 did (state and building counts at the stall) and tell a bot bug from a balance gap.
+  - Source: `decisions/scorecard-bot-combo-loop.md`
+  - `open · — · — · done when:` the builder reaches RT 3★ in 10 of 10 seeds, Pencitraan reaches RT 2★, and item 1 is under 60s or has a recorded balance reason.
 ## Done
 
+- [x] **Scorecard bots: two combo loops fixed.** The builder bought a Rumah Makan or Wifi every week chasing a combo; RT 3★ missed by 1 seed of 10, was 8. #313, `decisions/scorecard-bot-combo-loop.md`.
 - [x] **Scorecard: traits and combos linted, Dana, Stempel and Anggaran tracked.** Items 2 and 13; scorecard refreshed. #311, `decisions/scorecard-lint-sinks.md`.
 - [x] **Every sprite inside its footprint.** The last nine props moved in; `SPILL_ALLOW` is empty. #309, `decisions/sprite-props.md`.
 - [x] **Quest chains for every special.** The other eleven, with Bro Kripto's and Om Motivasi's gambles on Jujur. #309, `decisions/special-chains-four.md`, `decisions/special-chains-last-seven.md`.
