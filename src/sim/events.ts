@@ -1,3 +1,4 @@
+import { keepPromise } from './requests';
 import { noteProblem } from './problems';
 import { realisasiBanjir } from './realisasi';
 import { afterEventStaff, ensureStaff, permitQueue } from './staff';
@@ -226,6 +227,8 @@ export function resolveEvent(s: GameState, fx: Fx, choiceIdx: number, staffId?: 
     rolled = c.outcomes[win ? 0 : 1];
     if (win && sent) sent.stats[c.send.stat] = Math.min(STAT_MAX, sent.stats[c.send.stat] + 1);
   }
+  // Urusan Pribadi: being sent counts toward a promise to send them, win or lose.
+  if (sent) keepPromise(s, sent, 'utus', fx);
   if (rolled) applyOutcome(s, rolled);
   for (const [k, v] of Object.entries(c.res ?? {})) s.res[k as 'sabar'] += v as number;
   if (c.inspectPrep && s.inspection) s.inspection.prep += c.inspectPrep;

@@ -128,6 +128,7 @@ function personView(app: App, x: Staff, done: () => void): Node[] {
     h('p', { class: 'meta' }, t('staff.salary', { amt: rupiah(price(s, x.salary)) })),
     ...flags(x, RIVAL_NAMES[s.stage.current]),
     x.akrab ? h('p', { class: 'meta staff-akrab' }, `${'♥'.repeat(x.akrab)} ${t('req.akrab', { n: x.akrab })}`) : null,
+    x.promise ? h('p', { class: 'meta staff-promise' }, t(`req.promise.${x.promise.kind}`, { n: x.promise.left })) : null,
   ].filter((p): p is HTMLElement => !!p);
   // A named special's dream: three steps, done ones ticked, and what it pays.
   const chain = chainOf(x);
@@ -156,7 +157,7 @@ function personView(app: App, x: Staff, done: () => void): Node[] {
           } else done();
         } }, t('req.noButton')),
       ),
-      h('p', { class: 'meta' }, ok.ok ? t('req.yesHelp') : ok.missing.join(' ')),
+      h('p', { class: 'meta' }, ok.ok ? t(x.request.kind === 'experience' ? 'req.yesHelpPromise' : 'req.yesHelp') : ok.missing.join(' ')),
     );
   }
   if (x.raiseAsked) {

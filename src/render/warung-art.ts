@@ -89,7 +89,7 @@ function tenda(p: Painter): void {
   p.box(7, 2, 'y', (face, _u, _j, i) => (face === 'T' ? (i % 2 ? 'p' : 'c') : undefined), 5);
   p.roofShape('gable', 3, 13, 5, 'r', 't', (x) => (Math.floor(x / 2) % 2 ? 'w' : undefined));
   sachets(p, -11, -12, 6, [2, 1]);
-  stool(p, 8, 6);
+  stool(p, 5, 3);
 }
 
 /**
@@ -104,7 +104,7 @@ function gerobak(p: Painter): void {
   sachets(p, -12, -14, 7, [2, 1]);
   galon(p, 6, 2);
   lpg(p, 10, 0);
-  bench(p, -12, 6, 5);
+  bench(p, -8, 1, 5);
 }
 
 /**
@@ -128,8 +128,8 @@ function kelontong(p: Painter): void {
   sign(p, -13, -18, 12, 0.5);
   sachets(p, -13, -5, 7, [2, 1], 3);
   p.box(9, 3, 'n', (face, _u, j) => (face !== 'T' && j === 1 ? 'N' : undefined));
-  lpg(p, 10, 2);
-  bench(p, 3, 9, 5);
+  lpg(p, 9, 1);
+  bench(p, 1, 4, 5);
 }
 
 /** The Warung Sembako at a level, 1 to 3. */

@@ -9,19 +9,9 @@ import { allDefs, sizeFor } from '../src/sim/content';
  */
 const SLACK = 1.5;
 
-// Sprites that spill today, capped at today's worst level in pixels so they can only get better. TODO.md:
-// "Keep shop props inside their footprint". A fixed sprite has its entry deleted.
-const SPILL_ALLOW: Record<string, number> = {
-  alfamart: 14,
-  baliho: 5,
-  bankSampah: 8,
-  bidan: 11,
-  indomaret: 14,
-  kantorRT: 8,
-  portal: 3,
-  posSatpam: 21,
-  warung: 16,
-};
+// Sprites allowed to spill, capped in pixels. Empty since every prop was pulled inside its tile (decisions/sprite-props.md);
+// a new entry needs a reason in decisions/.
+const SPILL_ALLOW: Record<string, number> = {};
 
 function spill(name: string, fa: number, fb: number, level: number): string[] {
   const n = fa === fb ? fa : 1;

@@ -1408,7 +1408,9 @@ test.describe('walkers and effects', () => {
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.fx.count)).toBe(0);
   });
 
-  test('a dense Kelurahan map keeps the frame rate', async ({ page }) => {
+  test('a dense Kelurahan map keeps the frame rate', async ({ page, browserName }) => {
+    // CDP (CPU throttle, touch points) and the mouse wheel exist only in Chromium; WebKit nightly runs the rest.
+    test.skip(browserName !== 'chromium', 'Needs CDP, which only Chromium has.');
     await start(page);
     await dismissModals(page);
     // 6x CPU throttle stands in for a mid-range phone.
@@ -3049,7 +3051,9 @@ test.describe('zoom, big lots and the Warga list', () => {
     await expect(now).toHaveAttribute('aria-expanded', 'false');
   });
 
-  test('wheel and pinch zoom in and out in whole steps, and a pinch is not a tap', async ({ page }) => {
+  test('wheel and pinch zoom in and out in whole steps, and a pinch is not a tap', async ({ page, browserName }) => {
+    // CDP (CPU throttle, touch points) and the mouse wheel exist only in Chromium; WebKit nightly runs the rest.
+    test.skip(browserName !== 'chromium', 'Needs CDP, which only Chromium has.');
     await start(page);
     await dismissModals(page);
     const scale = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.view.scale as number);

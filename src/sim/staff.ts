@@ -61,6 +61,11 @@ export const openRoles = (s: GameState): RoleDef[] => ROLES.filter((r) => !r.ine
 
 // ---------- what staff do ----------
 
+/** Urusan Pribadi's 3-heart perk (decisions/staff-requests.md section 2): a special's quirk upgrades, a generic hire
+ * works a little harder, and neither can be poached while the bond holds. */
+export const AKRAB_PERK = { hearts: 3, special: 1.25, generic: 1.1 };
+export const perkMult = (x: Staff): number => ((x.akrab ?? 0) >= AKRAB_PERK.hearts ? (x.special ? AKRAB_PERK.special : AKRAB_PERK.generic) : 1);
+
 /** One staff member's weight in their role: level, their main stat around 50, trait and special. */
 export function output(x: Staff): number {
   if (x.away) return 0;
@@ -72,6 +77,7 @@ export function output(x: Staff): number {
   if (sp && sp.role === x.role) m *= sp.output ?? 1;
   // Bu Juru Ketik's typewriter, repaired at the end of her chain: her desk folders count twice.
   if (x.special === 'buJuruKetik' && x.chainDone && x.role === 'asisten') m *= 2;
+  m *= perkMult(x);
   return x.level * stat * m;
 }
 
@@ -445,7 +451,7 @@ export function staffSystem(s: GameState, fx: Fx): void {
       x.raiseAsked = true;
       fx.push({ kind: 'notice', title: t('staff.raiseTitle', { name: x.name, n: x.level }), body: t('staff.raiseBody'), tone: 'info' });
     }
-    if (x.refused && roll(s, s.month, x.id, 9) < POACH_CHANCE && !tr?.noFire) {
+    if (x.refused && (x.akrab ?? 0) < AKRAB_PERK.hearts && roll(s, s.month, x.id, 9) < POACH_CHANCE && !tr?.noFire) {
       release(s, x);
       fx.push({ kind: 'notice', title: t('staff.poachedTitle', { name: x.name, rival: RIVAL_NAMES[s.stage.current] }), body: t('staff.poachedBody'), tone: 'bad' });
       continue;
