@@ -244,6 +244,7 @@ html.no-effects #dof { display: none; }
 .log-row { border-left: 4px solid var(--muted); padding: 4px 10px; margin-bottom: 8px; }
 .log-row p { margin: 2px 0 0; color: var(--muted); }
 .log-row.tone-good { border-left-color: var(--rupiah); }
+.stats-how summary { min-height: var(--touch); display: flex; align-items: center; cursor: pointer; font-weight: 700; }
 .log-row.tone-bad { border-left-color: var(--danger); }
 
 .modal {
@@ -382,6 +383,9 @@ html.reduce-motion * { animation: none !important; transition: none !important; 
 .steps li { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
 .steps p { margin: 0; line-height: 1.4; color: var(--muted); }
 .steps p b { color: var(--text); }
+.how-row { display: block; width: 100%; min-height: var(--touch); text-align: left; font: inherit; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; }
+.how-body { display: flex; flex-direction: column; gap: 8px; }
+.how-body[hidden] { display: none; }
 .pics { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; }
 .pic-text { font-size: 24px; font-weight: 700; color: var(--muted); padding: 0 4px; }
 #howtoGo { width: 100%; }
@@ -553,6 +557,7 @@ html.reduce-motion .chip, html.reduce-motion #map { animation: none !important; 
 /* The card's name block opens the person's detail view: a full-width, 48px tap target that reads as text. */
 .staff-open { display: flex; flex-direction: column; gap: 2px; width: 100%; min-height: var(--touch); padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .staff-open::after { content: '›'; align-self: flex-end; margin-top: -1.3em; font-weight: 700; color: var(--muted); }
+.staff-chip { margin: 4px 0 0; }
 .staff-detail { display: flex; gap: 10px; align-items: flex-start; }
 .staff-channel { margin-top: 8px; }
 .staff-face { flex: none; width: 44px; height: 60px; image-rendering: pixelated; }

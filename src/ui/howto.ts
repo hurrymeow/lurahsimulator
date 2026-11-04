@@ -82,6 +82,17 @@ export function picRow(s: Step): Node {
   return h('div', { class: 'pics', 'aria-hidden': 'true' }, ...s.pics.map(pic));
 }
 
+/** The Menu guide is an index: a heading per step, and a tap opens its picture and text. */
+function guideRow(s: Step): HTMLElement {
+  const body = h('div', { class: 'how-body', hidden: true }, picRow(s), h('p', {}, stepBody(s)));
+  const row = h('button', { class: 'how-row', type: 'button', 'aria-expanded': 'false' }, h('b', {}, stepHead(s)));
+  row.addEventListener('click', () => {
+    body.hidden = !body.hidden;
+    row.setAttribute('aria-expanded', String(!body.hidden));
+  });
+  return h('li', {}, row, body);
+}
+
 let resume: (() => void) | null = null;
 
 export function resetHowto(): void {
@@ -106,11 +117,11 @@ export function showHowto(app: App, basicsOnly = false): void {
   el.replaceChildren(
     h('div', { class: 'howto' },
       h('h1', { id: 'howtoTitle' }, t('how.title')),
-      h('p', { class: 'meta' }, t('how.intro')),
+      basicsOnly ? h('p', { class: 'meta' }, t('how.intro')) : null,
       h('ol', { class: 'steps' },
-        ...(basicsOnly ? STEPS.filter((s) => s.basic) : STEPS.filter((s) => !s.tipOnly)).map((s) =>
-          h('li', {}, picRow(s), h('p', {}, h('b', {}, `${stepHead(s)} `), stepBody(s))),
-        ),
+        ...(basicsOnly
+          ? STEPS.filter((s) => s.basic).map((s) => h('li', {}, picRow(s), h('p', {}, h('b', {}, `${stepHead(s)} `), stepBody(s))))
+          : STEPS.filter((s) => !s.tipOnly).map(guideRow)),
       ),
       basicsOnly ? h('p', { class: 'meta' }, t('how.later')) : null,
       h('button', { class: 'btn btn-primary', id: 'howtoGo', onclick: () => hideHowto() }, t('how.go')),

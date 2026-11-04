@@ -10,11 +10,8 @@ const DENSITY_ALLOW: Record<string, Partial<Record<keyof typeof LIMITS, number>>
   'build tab 3': { longestBlock: 21, wordsAll: 571, wordsInView: 82 }, // Build tab 3
   'build tab 4': { wordsInView: 99, longestBlock: 24 }, // Build tab 4
   'event': { primary: 2 }, // Event card: two filled choices
-  'howto': { wordsInView: 149, longestBlock: 29, wordsAll: 303 }, // How-to card
   'settings': { primary: 2, wordsInView: 65 }, // Settings
-  'staff': { wordsInView: 71 }, // Staff
   'warga': { wordsInView: 62, wordsAll: 494 }, // Warga: Kampung Sebelah's residents join at the Kelurahan, so the list is long
-  'stats': { wordsInView: 86 }, // Stats
 };
 
 /** The project name ends in -id or -en. See playwright.config.ts. */
@@ -197,6 +194,11 @@ test.describe('opener', () => {
     const lines = await text.evaluate((el) => Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)));
     expect(lines).toBeLessThanOrEqual(2);
     expect(await scanLegibility(page)).toEqual([]);
+    // Opening any sheet closes the list, so it never floats over the sheet.
+    await expect(goal.locator('.goal-now')).toHaveAttribute('aria-expanded', 'true');
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.openStats());
+    await expect(goal.locator('.goal-star')).toBeHidden();
+    await expect(goal.locator('.goal-now')).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('a new game walks the first Rumah, shows the goal, and Got it ends it', async ({ page }) => {
@@ -489,6 +491,13 @@ test.describe('how to play', () => {
     await page.locator('#act-howto').click();
     await expect(page.locator('#howto')).toBeVisible();
     expect(await page.locator('#howto .steps li').count()).toBeGreaterThan(5);
+    // The Menu guide is an index: every body waits behind its heading.
+    for (const body of await page.locator('#howto .how-body').all()) await expect(body).toBeHidden();
+    const firstRow = page.locator('#howto .how-row').first();
+    await firstRow.click();
+    await expect(page.locator('#howto .how-body').first()).toBeVisible();
+    await expect(firstRow).toHaveAttribute('aria-expanded', 'true');
+    await expectLegible(page, 'how to play guide, one step open');
     const speed = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.speed);
     expect(speed).toBe(0);
     await page.locator('#howtoGo').click();
@@ -642,6 +651,11 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#sheet')).toContainText('Kampung Sebelah');
     await expect(page.locator('#sheet')).toContainText('Indonesia Emas 2045');
     await expectLegible(page, 'stats with ranking');
+    // The explainers wait behind one tap.
+    await expect(page.locator('#sheet .stats-how p').first()).toBeHidden();
+    await page.locator('#sheet .stats-how summary').click();
+    await expect(page.locator('#sheet .stats-how p').first()).toBeVisible();
+    await expectLegible(page, 'stats explainers open');
     // The 2045 meter shows Sejahtera, a whole percent.
     await expect(page.locator('#emas-value')).toHaveText(/^\d{1,3}%$/);
   });
@@ -2333,7 +2347,7 @@ test.describe('build mode', () => {
     await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
   });
 
-  test('each staff card has one main button; raise and let go work from the card and its detail view', async ({ page }) => {
+  test('each staff row opens its detail; raise and let go work there', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     await page.evaluate(() => {
@@ -2359,7 +2373,7 @@ test.describe('build mode', () => {
     await expect(hired).toHaveCount(1);
     // One main button per card, besides the name block that opens the detail view.
     for (const card of await page.locator('#sheet .staff-card').all()) expect(await card.locator('.btn').count()).toBeLessThanOrEqual(1);
-    // Raise: asked for one, the card's main button gives it.
+    // Raise: asked for one, the row shows a chip and the detail view gives it.
     const salary = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.staff.find((x: any) => !x.inem).salary as number);
     const before = await salary();
     await page.evaluate(() => {
@@ -2369,10 +2383,11 @@ test.describe('build mode', () => {
     });
     await page.locator('.sheet-head .btn-icon').click();
     await openPanel(page, 'staff');
-    await hired.locator('.btn-primary').click();
-    expect(await salary()).toBeGreaterThan(before);
-    // Let go: the rare action sits in the detail view.
+    await expect(hired.locator('.staff-chip')).toBeVisible();
     await hired.locator('.staff-open').click();
+    await page.locator('#sheet .staff-actions .btn-primary').click();
+    expect(await salary()).toBeGreaterThan(before);
+    // Let go: the rare action sits in the detail view, which stays open after the raise.
     await expect(page.locator('#sheet .staff-detail')).toBeVisible();
     await expectLegible(page, 'staff detail');
     await page.locator('#sheet .staff-fire .btn').click();

@@ -5,7 +5,7 @@ import { inemURL } from './render/inem';
 import { ensureStaff } from './sim/staff';
 import type { PlayerInfo } from './sim/types';
 import { jobDef } from './data/jobs';
-import { dateLabel, rupiah, rupiahHud } from './format';
+import { dateLabel, rupiah, rupiahHud, toastParts } from './format';
 import { MapView, RES_VAR, shapeOf } from './render/map';
 import { iconURL } from './render/sprites';
 import { def } from './sim/content';
@@ -454,7 +454,8 @@ export class App {
     this.log.unshift(n);
     this.log.length = Math.min(this.log.length, 40);
     const ticker = document.getElementById('ticker')!;
-    ticker.replaceChildren(h('strong', {}, n.title), h('span', {}, n.body));
+    const [title, body] = toastParts(n.title, n.body);
+    ticker.replaceChildren(h('strong', {}, title), body ? h('span', {}, body) : '');
     ticker.dataset.tone = n.tone;
     delete ticker.dataset.i18n;
     this.toast();
@@ -651,20 +652,24 @@ export class App {
   openStats(): void {
     const s = this.s;
     const RIVAL_NAME = RIVAL_NAMES[s.stage.current];
-    const ranks = [...s.ranking].reverse().map((r) =>
+    const ranks = [...s.ranking].reverse().slice(0, 3).map((r) =>
       h('div', { class: `log-row tone-${r.won ? 'good' : 'bad'}` },
         h('strong', {}, r.won ? t('stats.won', { year: r.year }) : t('stats.lost', { year: r.year, rival: RIVAL_NAME })),
         h('p', {}, t('stats.usThem', { us: r.us, them: r.them })),
       ),
     );
     openSheet(t('stats.title'), [
-      h('p', {}, t('stats.intro')),
       h('p', { class: 'meta' }, t('stats.totals', { earned: rupiah(s.stats.earned), spent: rupiah(s.stats.spent), arrived: s.stats.arrived, left: s.stats.left })),
       h('h3', {}, t('stats.emasTitle')),
       h('p', { class: 'meta' }, t('stats.emas', { n: s.emas.toFixed(2) })),
       h('h3', {}, t('stats.rankTitle', { rival: RIVAL_NAME })),
       h('p', { class: 'meta' }, t('stats.score', { n: areaScore(s) })),
       ...(ranks.length ? ranks : [h('p', { class: 'meta' }, t('stats.firstRank'))]),
+      h('details', { class: 'stats-how' },
+        h('summary', {}, t('stats.how')),
+        h('p', { class: 'meta' }, t('stats.emasHow')),
+        h('p', { class: 'meta' }, t('stats.scoreHow')),
+      ),
     ]);
   }
 

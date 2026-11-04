@@ -4,6 +4,7 @@ import { STEMPEL } from '../sim/balance';
 import { nextStep } from '../sim/nextstep';
 import { nextStarChecklist } from '../sim/stages';
 import { h } from './dom';
+import { SHEET_OPENED } from './sheet';
 
 /**
  * The goal, as a pill on the map: what is left for the next star, one goal at a time, up to two lines. Tap it to see every
@@ -22,6 +23,12 @@ export function setupGoal(app: App): void {
     app.refresh();
   });
   el.append(now, star);
+  // A sheet covers the map, so the opened list closes rather than float over it.
+  document.addEventListener(SHEET_OPENED, () => {
+    if (!open) return;
+    open = false;
+    app.refresh();
+  });
   app.refreshers.push((a) => {
     const left = nextStarChecklist(a.s)?.filter((l) => !l.done) ?? [];
     const step = nextStep(a.s);

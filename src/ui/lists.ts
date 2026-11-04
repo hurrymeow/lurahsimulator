@@ -135,7 +135,7 @@ const members = (c: ComboDef, st: ComboStatus, size = 32) => {
 type ComboFilter = 'all' | ComboStatus['state'];
 
 /** A list of combo cards under filter buttons, one per row. A card shows the name, the buildings, a state
- * mark and the effect in two lines; tapping it opens the whole entry below it. It is the Build sheet's Combo tab. */
+ * mark and the effect; tapping it opens the whole entry below it. It is the Build sheet's Combo tab. */
 export function comboBook(app: App): Node[] {
   const s = app.s;
   const combos = bookCombos(s).map((c) => ({ c, st: comboStatus(s, c) }));
@@ -149,7 +149,7 @@ export function comboBook(app: App): Node[] {
   const tile = ({ c, st }: (typeof combos)[number]) => {
     const b = h('button', { class: `ls-tile ${st.state}`, type: 'button', 'data-combo': c.id, 'aria-expanded': 'false', 'aria-label': `${cName(c)}. ${cEffect(c)}` },
       h('span', { class: 'ls-tile-top' }, h('strong', { class: 'ls-tile-name' }, cName(c)), members(c, st, 24), h('span', { class: `ls-corner ${st.state}`, title: stateName(st.state) }, STATE_ICON[st.state])),
-      h('span', { class: 'ls-desc ls-chips', 'data-clamp': '2' }, ...comboEffect(c)),
+      h('span', { class: 'ls-desc ls-chips' }, ...comboEffect(c)),
     );
     b.addEventListener('click', () => show(b, c, st));
     return b;

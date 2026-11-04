@@ -5,6 +5,9 @@ const sheet = () => document.getElementById('sheet') as HTMLElement;
 let onClose: (() => void) | null = null;
 let openedAt = 0;
 
+/** Fired on document when a sheet opens, so floating map overlays (the goal list) can close under it. */
+export const SHEET_OPENED = 'sheet-opened';
+
 /** Bottom sheet. Close button sits at the top right, 48px. An optional action sits just left of it. */
 export function openSheet(title: string | Node, body: Node[], closed?: () => void, action?: Node): void {
   const el = sheet();
@@ -16,6 +19,7 @@ export function openSheet(title: string | Node, body: Node[], closed?: () => voi
   openedAt = Date.now();
   onClose = closed ?? null;
   document.getElementById('scrim')!.hidden = false;
+  document.dispatchEvent(new Event(SHEET_OPENED));
 }
 
 export function closeSheet(): void {

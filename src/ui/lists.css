@@ -32,8 +32,8 @@
 .ls-tile .ls-plus { padding: 0; }
 .ls-tile .ls-sprite { width: 24px; height: 24px; }
 .ls-tile-name { flex: 1; min-width: 0; font-size: 16px; line-height: 1.2; }
-/* The effect keeps to two lines; the tile opens the whole entry. UI.md rule 5 exception. */
-.ls-desc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; color: var(--muted); font-size: 16px; line-height: 1.25; }
+/* The effect wraps in full; effects are written short enough to fit in two lines. UI.md rule 5 has no clamp. */
+.ls-desc { color: var(--muted); font-size: 16px; line-height: 1.25; }
 .ls-corner { flex: none; display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; font-family: var(--font-pixel); font-weight: 700; font-size: 16px; color: var(--on-accent); background: var(--muted); }
 .ls-corner.active { background: var(--rupiah); }
 .ls-corner.found { background: var(--orang); }
