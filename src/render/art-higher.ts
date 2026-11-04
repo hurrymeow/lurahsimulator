@@ -37,11 +37,12 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
   portal: (p) => {
     p.shadow(6);
     // Two posts and a red-and-white boom between them.
+    // The front post stands inside the tile (UI.md rule 17).
     p.stroke(-8, -3, -8, -13, 3, 'S');
-    p.stroke(8, 3, 8, -7, 3, 'S');
-    p.stroke(-8, -10, 8, -2, 2, 'r');
-    for (const k of [-5, -1, 3]) p.stroke(k, -10 + (k + 8) / 2, k + 2, -10 + (k + 10) / 2, 2, 'w', false);
-    p.stroke(8, -8, 8, -9, 3, 'y', false);
+    p.stroke(8, 1, 8, -9, 3, 'S');
+    p.stroke(-8, -10, 8, -4, 2, 'r');
+    for (const k of [-5, -1, 3]) p.stroke(k, -10 + ((k + 8) * 3) / 8, k + 2, -10 + ((k + 10) * 3) / 8, 2, 'w', false);
+    p.stroke(8, -10, 8, -11, 3, 'y', false);
   },
   pasarKaget: (p) => {
     p.shadow(2);
@@ -184,7 +185,7 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
     p.shadow(6);
     // Two posts under a wide board with a bright stripe, like the ones over every junction.
     p.stroke(-8, -2, -8, -12, 3, 'S');
-    p.stroke(8, 3, 8, -7, 3, 'S');
+    p.stroke(8, 1, 8, -7, 3, 'S');
     p.stroke(-10, -14, 10, -4, 10, 'w');
     p.stroke(-9, -12, 9, -3, 3, 'y', false);
     p.stroke(-9, -16, 9, -6, 2, 'r', false);

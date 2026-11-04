@@ -203,9 +203,9 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     p.shadow(5);
     p.box(5, 8, 'b', (face, u, j) => (face === 'L' && within(u, 0.2, 0.8) && within(j, 3, 6) ? 'l' : undefined));
     p.roof(5, 8, 3, 'B');
-    // A red and white barrier arm across the front.
-    p.stroke(-4, 2, 12, 6, 2, 'w');
-    for (const k of [0, 4, 8, 12]) p.stroke(-4 + k, 2 + k / 4, -3 + k, 2 + k / 4, 2, 'r', false);
+    // A red and white barrier arm across the front, short enough to stay on its own tile (UI.md rule 17).
+    p.stroke(-5, 0, 6, 1, 2, 'w');
+    for (const k of [0, 4, 8]) p.stroke(-5 + k, k / 11, -4 + k, k / 11, 2, 'r', false);
   },
   paud: (p) => {
     shopfront('p', 'y', 'c', { height: 8, rise: 5 })(p);
@@ -226,9 +226,10 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
   // Praktik Bidan: a cream house with a pink pelana, a teal door, and the practice board on a post by the corner.
   bidan: (p) => {
     shopfront('w', 'p', 'c', { shape: 'gable', door: 'c' })(p);
-    p.stroke(11, 6, 11, -3, 1, 'N');
-    p.stroke(9, -7, 14, -4, 3, 'w');
-    p.stroke(10, -6, 13, -5, 1, 'p', false);
+    // The post stands on its own tile (UI.md rule 17), so the board rides a little higher.
+    p.stroke(11, 2, 11, -7, 1, 'N');
+    p.stroke(9, -11, 14, -8, 3, 'w');
+    p.stroke(10, -10, 13, -9, 1, 'p', false);
   },
   // Panggung Senam: a low plank stage, a merah putih banner on two posts at the back, and a grey toa on a pole.
   // Drawn in one-tile coordinates, so on its 2x2 lot every edge stays a 1px line.

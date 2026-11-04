@@ -513,12 +513,13 @@ function minimarket(bands: string[]): (p: Painter, v?: string, level?: number) =
     if (level >= 2) {
       // A tiang reklame by the road in the shop's colours, lower than the roof, and an ATM column at the
       // other corner. The shop reads as the busy branch without growing taller.
-      p.stroke(-12, 3, -12, -10, 1, 'S');
-      p.stroke(-13, -16, -11, -11, 3, bands[0]);
-      p.stroke(-13, -13, -11, -12, 3, bands[2] ?? bands[1], false);
-      p.stroke(10, 4, 10, -4, 3, 'S');
-      p.set(TW / 2 + 10, TOP + TH / 2 - 3, 'c');
-      p.set(TW / 2 + 11, TOP + TH / 2 - 3, 'c');
+      // Both stand on the shop's own tile (UI.md rule 17).
+      p.stroke(-12, 1, -12, -12, 1, 'S');
+      p.stroke(-13, -18, -11, -13, 3, bands[0]);
+      p.stroke(-13, -15, -11, -14, 3, bands[2] ?? bands[1], false);
+      p.stroke(9, 1, 9, -7, 3, 'S');
+      p.set(TW / 2 + 9, TOP + TH / 2 - 6, 'c');
+      p.set(TW / 2 + 10, TOP + TH / 2 - 6, 'c');
     }
   };
 }
@@ -614,9 +615,9 @@ const ART: Record<string, ArtFn> = {
         return j === 0 ? 'n' : undefined;
       });
       p.roof(3, 10, 7, 's', (x) => (x % 3 === 0 ? 'S' : undefined));
-      p.stroke(-10, 6, -10, -2, 1, 'N');
-      p.stroke(-13, -5, -7, -2, 3, 'w');
-      p.stroke(-12, -4, -9, -3, 1, 'k', false);
+      p.stroke(-10, 2, -10, -6, 1, 'N');
+      p.stroke(-13, -9, -7, -6, 3, 'w');
+      p.stroke(-12, -8, -9, -7, 1, 'k', false);
       return;
     }
     if (level >= 3) {
@@ -818,13 +819,14 @@ const ART: Record<string, ArtFn> = {
     p.set(TW / 2 - 11, TOP + TH / 2 - 10, 'w');
     if (level < 2) return;
     // Sorting bins along the front, and a gerobak sampah on the right.
+    // Kept inside the tile's front edges (UI.md rule 17).
     for (const [dx, c] of [[-5, 'g'], [-2, 'y'], [1, 'r']] as [number, string][]) {
-      p.stroke(dx, 7 + dx / 4, dx, 4 + dx / 4, 2, c);
-      p.set(TW / 2 + dx, TOP + TH / 2 + 3 + Math.round(dx / 4), 'S');
+      p.stroke(dx, 4 + dx / 4, dx, 1 + dx / 4, 2, c);
+      p.set(TW / 2 + dx, TOP + TH / 2 + Math.round(dx / 4), 'S');
     }
-    p.stroke(8, 2, 13, 0, 3, 'o');
-    p.stroke(8, 4, 8, 4, 2, 'k');
-    p.stroke(13, 2, 13, 2, 2, 'k');
+    p.stroke(6, -1, 10, -3, 3, 'o');
+    p.stroke(6, 1, 6, 1, 2, 'k');
+    p.stroke(10, -1, 10, -1, 2, 'k');
   },
   indomaret: minimarket(['B', 'b', 'r', 'y']),
   alfamart: minimarket(['r', 'y', 'B', 'B']),
