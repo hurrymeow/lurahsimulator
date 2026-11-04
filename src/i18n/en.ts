@@ -626,6 +626,8 @@ export const EN = {
   'sim.maxLevel': 'Already max level {n}',
   'sim.moneyGap': 'Need {amt} more (costs {cost})',
   'sim.movedIn': '{name} moved in',
+  'sim.movedNoBed': '{name} moved next door: no bed',
+  'sim.movedNoBedBody': 'The kampung has more warga than beds. Build homes, or let it settle.',
   'sim.movedOut': '{name} left: Popularitas under {n}',
   'sim.movedOutBody': 'Popularitas is below {n}. Raise it to stop people leaving.',
   'sim.mustWork': 'Must be working first (now: {status})',

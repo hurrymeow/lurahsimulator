@@ -627,6 +627,8 @@ export const ID: Record<Key, string> = {
   'sim.maxLevel': 'Sudah level maks {n}',
   'sim.moneyGap': 'Kurang {amt} (biaya {cost})',
   'sim.movedIn': '{name} pindah masuk',
+  'sim.movedNoBed': '{name} pindah ke tetangga: tak ada kasur',
+  'sim.movedNoBedBody': 'Warga lebih banyak dari tempat tidur. Bangun rumah, atau biarkan berkurang.',
   'sim.movedOut': '{name} pergi: Popularitas di bawah {n}',
   'sim.movedOutBody': 'Popularitas di bawah {n}. Naikkan Popularitas agar orang tak pergi.',
   'sim.mustWork': 'Harus berjalan dulu (sekarang: {status})',
