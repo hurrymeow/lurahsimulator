@@ -23,8 +23,8 @@ Decision 8 said to refit it from bot runs. The first RW ranking is won by 1.2x t
 | Pencitraan | not reached by the median | 22.9 | 4 of 10 | 6 of 10 |
 
 - The RW target is about 20 min (B3, 7 min a star). The RW moved closer with no new content, as decision 8 hoped. It is still short for the hint bot, so Hari's playtest should judge it.
-- RT numbers are the same. The hint bot still reaches Kelurahan 3★ (38.4 min on both), and shopkeeper reaches it in 5 of 10 seeds inside the 60 min run against 7 of 10 on main, because its RW takes longer. No Kelurahan goal changed here. T4 measures that stage's load.
-- Totals are 2 Pass, 14 Fail, 11 Unknown against 3, 13, 11 on main. The one verdict that moved is item 1, "Always a useful next move". It is not an RW stall: the builder bot now reaches the Kecamatan in more runs, and in seeds 8 and 9 waits on a Kecamatan building of Rp 171jt to Rp 250jt. Worth a look in the Kecamatan balance work, and not changed here.
+- RT numbers are the same. The hint bot still reaches Kelurahan 3★ (38.4 min on both), and shopkeeper reaches it in 5 of 10 seeds inside the 60 min run against 7 of 10 on main. I did not check why those 2 seeds stop short; its RW takes longer, which may be the cause. No Kelurahan goal changed here. T4 measures that stage's load.
+- Totals are 2 Pass, 14 Fail, 11 Unknown against 3, 13, 11 on main. The one verdict that moved is item 1, "Always a useful next move". It is not an RW stall: in seeds 8 and 9 the builder bot waits at the Kecamatan for a building of Rp 171jt to Rp 250jt. Why this differs from main was not traced. Worth a look in the Kecamatan balance work, and not changed here.
 
 ## Bots
 The bots placed RT buildings nearest the home Kantor and never read goals, so with no Dana to spend they ignored Kampung Sebelah. They now do what the goal lines say:
