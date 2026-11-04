@@ -7,6 +7,7 @@ import { h } from './dom';
 import type { GameState } from '../sim/types';
 import { def } from '../sim/content';
 import { easiestCombo } from '../sim/nextstep';
+import { goalProgress } from '../sim/stages';
 import { count } from '../sim/state';
 
 const SEEN = 'pakrt.howto';
@@ -69,6 +70,9 @@ export const STEPS: Step[] = [
   { id: 'road', n: 12, when: (s) => s.buildings.some((b) => b.noRoad && b.status === 'active'), pics: [{ word: 'how.pic.road' }, { text: '›' }, { sprite: 'warung' }] },
   // The first yearly ranking is in: explain what it scored and what a win pays.
   { id: 'ranking', n: 10, when: (s) => s.ranking.length >= 1, pics: [{ word: 'how.pic.us' }, { text: 'vs' }, { word: 'how.pic.them' }] },
+  // The 2nd RT: the first letter from a build there, then the first building to open there.
+  { id: 'letters', n: 14, tipOnly: true, when: (s) => s.stage.current === 'rw' && s.stempel.sent, pics: [{ word: 'how.pic.letter' }, { text: '›' }, { word: 'how.pic.stempel' }] },
+  { id: 'sebelahStars', n: 15, tipOnly: true, when: (s) => s.stage.current === 'rw' && goalProgress(s, { kind: 'sebelahBuilds', n: 1 }).have >= 1, pics: [{ sprite: 'kantorRT' }, { text: '★' }] },
 ];
 
 function pic(p: Pic): Node {

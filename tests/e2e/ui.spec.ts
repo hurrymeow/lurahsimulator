@@ -1765,6 +1765,90 @@ test.describe('growing map', () => {
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.stempel.backlog)).toBeGreaterThan(0);
   });
 
+  test('the 2nd RT tutorial walks arrival, first build, letters and stars', async ({ page }) => {
+    // A game past the first build, reopened with the coach on.
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      localStorage.setItem('pakrt.coach', 'done');
+      // A player at the RW has met the RT stage's tips.
+      localStorage.setItem('pakrt.tips', JSON.stringify({ seen: ['orang', 'house', 'combo', 'comboFound', 'jobs', 'wacana', 'trouble', 'banjir', 'road', 'ranking'] }));
+      (window as unknown as { pakrt: any }).pakrt.save();
+    });
+    await page.goto(`/?debug&coach&lang=${lang()}`);
+    await passHome(page);
+    await page.evaluate(() => document.fonts.ready);
+    await dismissModals(page);
+    await expect(page.locator('#coach')).toBeHidden();
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.promote();
+      app.s.res.rupiah = 50_000_000;
+      app.refresh();
+    });
+    // It waits behind the promotion notice.
+    await expect(page.locator('#modal')).toBeVisible();
+    await expect(page.locator('#coach')).toBeHidden();
+    await dismissModals(page);
+    // Arrive: the map moves to Kampung Sebelah, and time holds until Got it.
+    await expect(page.locator('#coach')).toContainText('Kampung Sebelah');
+    const seen = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const n = app.s.neighbours[0];
+      const p = app.view.project(n.cx * app.rt.w + app.rt.w / 2, app.rt.h / 2);
+      return { dx: Math.abs(p.x - app.view.viewW / 2), w: app.view.viewW, held: app.held };
+    });
+    expect(seen.dx).toBeLessThan(seen.w / 3);
+    expect(seen.held).toBe(true);
+    await expectLegible(page, '2nd RT arrival note');
+    await page.locator('#coach-skip').click();
+    // First build: the note points at Build, and clears only by building in Kampung Sebelah.
+    await expect(page.locator('#dock-build')).toHaveClass(/coach-pulse/);
+    await expect(page.locator('#coach-skip')).toBeHidden();
+    await expectCoachClear(page, ['#dock-build'], '2nd RT build step');
+    await expectLegible(page, '2nd RT build note');
+    await page.locator('#dock-build').click();
+    await expect(page.locator('#coach')).toBeHidden();
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('warung'));
+    await expect(page.locator('#coach')).toContainText('Kampung Sebelah');
+    const spot = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const n = app.s.neighbours[0];
+      const left = n.cx * app.rt.w;
+      const busy = (x: number, y: number) => app.s.buildings.some((b: any) => Math.abs(b.x - x) < 2 && Math.abs(b.y - y) < 2);
+      for (let y = 2; y < app.rt.h - 2; y++)
+        for (let x = left + 2; x < left + app.rt.w - 2; x++)
+          if (!busy(x, y)) {
+            const c = app.view.tileCentre(x, y);
+            const m = document.getElementById('map')!.getBoundingClientRect();
+            if (c.x > 20 && c.y > 100 && c.x < m.width - 20 && c.y < m.height - 160) return { sx: m.left + c.x, sy: m.top + c.y };
+          }
+      return null;
+    });
+    expect(spot).not.toBeNull();
+    await page.mouse.click(spot!.sx, spot!.sy);
+    await expect(page.locator('#place-ok')).toBeEnabled();
+    await page.locator('#place-ok').click();
+    await expect(page.locator('#coach')).toBeHidden();
+    // Letters: the first letter brings its card at the next refresh, as a running clock would.
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+    await expect(page.locator('#modal')).toContainText(lang() === 'en' ? 'Builds here need a stamp' : 'Bangun di sini perlu stempel');
+    await expectLegible(page, '2nd RT letters card');
+    await dismissModals(page);
+    // Stars: the first building to open there brings its card.
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      for (const b of app.s.buildings) if (b.def === 'warung') b.status = 'active';
+      app.refresh();
+    });
+    await expect(page.locator('#modal')).toContainText(lang() === 'en' ? 'earns its own stars' : 'punya bintang sendiri');
+    await expectLegible(page, '2nd RT stars card');
+    await dismissModals(page);
+    // It stays finished after the player has built.
+    await expect(page.locator('#coach')).toBeHidden();
+  });
+
   test('at the Kelurahan Kampung Sebelah leaves the Neighbours panel, and RW 2 brings the AI RTs', async ({ page }) => {
     await start(page);
     await dismissModals(page);
