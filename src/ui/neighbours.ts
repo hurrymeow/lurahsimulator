@@ -92,7 +92,6 @@ function detail(app: App, view: { kind: 'detail'; i: number }): void {
     app.tap(10);
   } }, t('grow.goTo'));
   if (n.run === 'player') {
-    // Older saves can hold an RT the player took over before takeover was retired. It stays the player's.
     body.push(h('p', { class: 'meta' }, t('grow.playerRun')), h('div', { class: 'action' }, goTo));
   } else {
     const one = checkFund(s, n, 1);
@@ -133,11 +132,12 @@ function detail(app: App, view: { kind: 'detail'; i: number }): void {
 
 /** The rules, kept off the list and behind the "?" in the sheet head. */
 function openHelp(app: App): void {
+  // Dana and its rules wait until there is an AI RT to spend it on.
+  const ai = app.s.neighbours.some((n) => n.run !== 'player');
   openSheet(t('grow.title'), [
-    h('p', { class: 'meta' }, t('grow.intro')),
-    h('p', { class: 'meta' }, t('grow.modes')),
-    h('p', { class: 'meta' }, t('grow.boostHelp')),
-    h('p', { class: 'meta' }, t('grow.autoHelp')),
+    ...(ai
+      ? [t('grow.intro'), t('grow.modes'), t('grow.boostHelp'), t('grow.autoHelp')].map((x) => h('p', { class: 'meta' }, x))
+      : [h('p', { class: 'meta' }, t('grow.playerRun'))]),
     h('p', { class: 'meta' }, t('grow.combosShared')),
     h('p', { class: 'meta' }, t('grow.rankHelp')),
   ], undefined, backButton(app));
@@ -150,8 +150,8 @@ export function openNeighbours(app: App, view: View = { kind: 'list' }): void {
   if (view.kind === 'detail') return detail(app, view);
   const help = h('button', { class: 'btn head-action', type: 'button', 'aria-label': t('grow.help'), onclick: () => openNeighbours(app, { kind: 'help' }) }, '?');
   const isStalled = (n: Neighbour) => chipOf(n).cls === 'nb-stalled';
-  // An absorbed RT is the player's land now, not a neighbour to run.
-  const ordered = s.neighbours.map((n, i) => ({ n, i })).filter(({ n }) => !n.absorbed).sort((a, b) => Number(isStalled(b.n)) - Number(isStalled(a.n)));
+  // At the RW, Kampung Sebelah stays listed so its stars and next goal can be read. Past that it is plain land.
+  const ordered = s.neighbours.map((n, i) => ({ n, i })).filter(({ n }) => !n.absorbed || s.stage.current === 'rw').sort((a, b) => Number(isStalled(b.n)) - Number(isStalled(a.n)));
   const rows = ordered.map(({ n, i }) => {
     const chip = chipOf(n);
     return h('button', {

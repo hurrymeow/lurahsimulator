@@ -82,7 +82,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'banjir',
     name: 'Banjir',
-    body: 'Heavy rain for three days. Selokan level decides how much of the kampung floats. Each selokan level cuts the damage by 20%.',
+    body: 'Heavy rain for three days. Selokan level decides how much of the kampung floats. Each level cuts the damage by 20%.',
     when: { months: [10, 11, 0, 1], minMonth: 10, chance: 0.3, cooldown: 9 },
     choices: [{ label: 'Check the damage', special: 'banjir', result: '' }],
   },
@@ -110,7 +110,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatan',
     name: 'Kecamatan Inspection',
-    body: 'The Kampung Bersih team from the Kecamatan comes in 2 weeks to score drainage, Popularitas, abandoned projects and parkir liar. Good scores earn Orang Inside. Bad ones cost Popularitas.',
+    body: 'Kampung Bersih comes in 2 weeks to score drainage, Popularitas, abandoned projects and parkir liar. Good scores earn Orang Inside. Bad ones cost Popularitas.',
     // Raised by the inspection system on its own schedule, never at random.
     when: { chance: 0 },
     choices: [
@@ -133,7 +133,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatanTertib',
     name: 'Ketertiban Inspection',
-    body: 'A Satpol PP team comes in 2 weeks to score parkir liar, abandoned projects, Aman and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
+    body: 'Satpol PP comes in 2 weeks to score parkir liar, abandoned projects, Aman and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
     when: { chance: 0 },
     choices: [
       { label: 'Carry on as usual', result: 'The team will see the kampung as it is.' },
@@ -144,7 +144,7 @@ export const EVENTS: EventDef[] = [
         result: 'A banner now says the kampung is orderly. It is very large.',
       },
       {
-        label: 'Ask the jukir to take the day off · 1 Orang Inside',
+        label: 'Give the jukir a day off · 1 Orang Inside',
         cost: { orangDalam: 1 },
         inspectPrep: 14,
         result: 'The tukang parkir agreed to a day off. Paid, of course.',
@@ -154,7 +154,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatanSehat',
     name: 'Kampung Sehat Inspection',
-    body: 'A Puskesmas team comes in 2 weeks to score drainage, Perut, health posts and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
+    body: 'Puskesmas comes in 2 weeks to score drainage, Perut, health posts and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
     when: { chance: 0 },
     choices: [
       { label: 'Carry on as usual', result: 'The team will see the kampung as it is.' },
@@ -175,7 +175,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'kecamatanDigital',
     name: 'Kampung Digital Inspection',
-    body: 'A Diskominfo team comes in 2 weeks to score WiFi, Virality, abandoned projects and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
+    body: 'Diskominfo comes in 2 weeks to score WiFi, Virality, abandoned projects and Popularitas. Good scores earn Orang Inside. Bad ones cost Popularitas.',
     when: { chance: 0 },
     choices: [
       { label: 'Carry on as usual', result: 'The team will see the kampung as it is.' },

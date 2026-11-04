@@ -21,7 +21,6 @@ export type Goal =
   | { kind: 'sabar'; n: number }
   // RW and Kelurahan kinds. Their checks wait for the stage engine (see GOAL_CHECKS).
   /** Neighbouring RTs funded at least once. */
-  | { kind: 'fundedRts'; n: number }
   /** Months in a row with the Stempel backlog under `under`. */
   | { kind: 'stempelClear'; n: number; under: number }
   /** RTs holding at least `stars`. AI RTs count. */
@@ -30,6 +29,7 @@ export type Goal =
   | { kind: 'rwsAtStars'; n: number; stars: Stars }
   /** The neighbour at cell (1,0), Kampung Sebelah, holding at least `n` stars. */
   | { kind: 'sebelahAtStars'; n: number }
+  | { kind: 'sebelahBuilds'; n: number }
   /** The lowest stars among the neighbours in RW 2 (cy 1), at least `n`. */
   | { kind: 'rw2AtStars'; n: number }
   /** Combos found that belong to the RW stage. */
@@ -89,6 +89,8 @@ export interface Stempel {
   stock: number;
   /** Surat Pengantar waiting for a stamp. */
   backlog: number;
+  /** A letter has come, so the RW 1★ goal can start counting. */
+  sent: boolean;
   /** Months in a row with the backlog under the star goal's limit. */
   clear: number;
 }

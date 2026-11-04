@@ -4,7 +4,7 @@ import { REFUND } from './balance';
 import { lotAt, type Lot } from './area';
 import { def, gateOf, hasDef, sizeFor } from './content';
 import { gateOpen } from './gate';
-import { aiLotAt, neighbourAt } from './grow';
+import { aiLotAt, neighbourAt, sendBuildLetters } from './grow';
 import { stageTitle } from './stages';
 import { hasProblem } from './problems';
 import { FLAT, refreshAccess } from './access';
@@ -90,6 +90,7 @@ export function place(s: GameState, id: string, x: number, y: number, rot: 0 | 1
   const b = addBuilding(s, id, x, y, instant ? 'active' : d.permitMonths > 0 ? 'permit' : 'building', cost);
   if (rot) b.rot = rot;
   b.timer = instant ? 0 : d.permitMonths > 0 ? d.permitMonths : Math.max(1, d.buildMonths);
+  sendBuildLetters(s, id, x, y);
   refreshAccess(s);
   return { ok: true, uid: b.uid };
 }

@@ -15,14 +15,14 @@ describe('who runs which RT, on the map', () => {
     expect(cellPlates(newGame(3))).toEqual([]);
   });
 
-  it('at the RW the player\'s RT reads Yours and the neighbour AI', () => {
+  it('at the RW both RTs read Yours', () => {
     const s = newGame(3);
     s.stage.stars.rt = 3;
     promote(s, []);
     const plates = cellPlates(s);
     expect(plates.map((p) => [p.text, p.mine])).toEqual([
       ['RT 1 · Yours', true],
-      ['Kampung Sebelah · AI', false],
+      ['Kampung Sebelah · Yours', true],
     ]);
   });
 

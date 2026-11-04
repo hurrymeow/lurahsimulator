@@ -1,5 +1,5 @@
 import { RW_COMBOS } from '../data/higher/rw';
-import { rwOf } from './area';
+import { cellOf, isSeam, rwOf } from './area';
 import { promote } from './grow';
 import { STAGES } from '../data/stages';
 import { bName, t, tr, type Key } from '../i18n';
@@ -50,11 +50,16 @@ const GOAL_CHECKS: { [K in Goal['kind']]: (s: GameState, g: Extract<Goal, { kind
   },
   sabar: (s) => Math.floor(s.res.sabar),
   rwCombos: (s) => s.discovered.filter((id) => RW_COMBOS.some((c) => c.id === id)).length,
-  fundedRts: (s) => s.neighbours.filter((n) => n.everFunded).length,
   stempelClear: (s) => s.stempel.clear,
   rtsAtStars: (s, g) => [s.stage.stars.rt, ...s.neighbours.map((n) => n.stars)].filter((x) => x >= g.stars).length,
   rwsAtStars: (s, g) => rwStars(s).filter((x) => x >= g.stars).length,
   sebelahAtStars: (s) => s.neighbours.find((n) => n.cx === 1 && n.cy === 0)?.stars ?? 0,
+  // What the player has built there since it joined, not the Kantor RT and Rumah it came with.
+  sebelahBuilds: (s) => {
+    const n = s.neighbours.find((x) => x.cx === 1 && x.cy === 0);
+    const here = s.buildings.filter((b) => b.status === 'active' && !def(b.def).pathIncome && !isSeam(b.x, b.y) && cellOf(b.x, b.y).cx === 1 && cellOf(b.x, b.y).cy === 0);
+    return Math.max(0, here.length - (n?.joined ?? 0));
+  },
   rw2AtStars: (s) => {
     const row = s.neighbours.filter((n) => n.cy === 1);
     return row.length ? Math.min(...row.map((n) => n.stars)) : 0;
@@ -83,11 +88,11 @@ export const GOAL_HOW: Record<Goal['kind'], Key> = {
   winStreak: 'goal.how.winStreak',
   sabar: 'goal.how.sabar',
   rwCombos: 'goal.how.rwCombos',
-  fundedRts: 'goal.how.fundedRts',
   stempelClear: 'goal.how.stempelClear',
   rtsAtStars: 'goal.how.rtsAtStars',
   rwsAtStars: 'goal.how.rwsAtStars',
   sebelahAtStars: 'goal.how.sebelahAtStars',
+  sebelahBuilds: 'goal.how.sebelahBuilds',
   rw2AtStars: 'goal.how.rw2AtStars',
   tierWins: 'goal.how.tierWins',
   noDebtMonths: 'goal.how.noDebtMonths',
@@ -108,11 +113,11 @@ const GOAL_KEYS: Record<Goal['kind'], Key> = {
   winStreak: 'stage.goal.winStreak',
   sabar: 'stage.goal.sabar',
   rwCombos: 'stage.goal.rwCombos',
-  fundedRts: 'stage.goal.fundedRts',
   stempelClear: 'stage.goal.stempelClear',
   rtsAtStars: 'stage.goal.rtsAtStars',
   rwsAtStars: 'stage.goal.rwsAtStars',
   sebelahAtStars: 'stage.goal.sebelahAtStars',
+  sebelahBuilds: 'stage.goal.sebelahBuilds',
   rw2AtStars: 'stage.goal.rw2AtStars',
   tierWins: 'stage.goal.tierWins',
   noDebtMonths: 'stage.goal.noDebtMonths',

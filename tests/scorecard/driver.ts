@@ -1,7 +1,8 @@
 // The scorecard bots and the timeline they leave behind. See GAME-DESIGN.md section 8.
 // A bot is a plain routine that plays one sim tick at a time. The recorder logs every tick and every event.
 import { eventDef } from '../../src/data/events';
-import { lotAt } from '../../src/sim/area';
+import { cellOf, cellOrigin, lotAt } from '../../src/sim/area';
+import { STEMPEL } from '../../src/sim/balance';
 import { connectedRoad, FLAT, hasRoadBeside } from '../../src/sim/access';
 import { liveCombos, parseNeed } from '../../src/sim/combos';
 import { def, placeableDefs } from '../../src/sim/content';
@@ -9,7 +10,7 @@ import { checkRepair, monthlyNet, repair, resolveEvent } from '../../src/sim/eve
 import { fundNeighbour, setAutoFund } from '../../src/sim/grow';
 import { meters, sejahtera, laporan } from '../../src/sim/needs';
 import { checkRestart, restart } from '../../src/sim/projects';
-import { checkPlace, checkUpgrade, place, requirementGaps, siteGaps, skipPermit, upgrade } from '../../src/sim/rules';
+import { demolish, checkPlace, checkUpgrade, place, requirementGaps, siteGaps, skipPermit, upgrade } from '../../src/sim/rules';
 import { COMBO_HINT_MONTH, easiestCombo, nextStep } from '../../src/sim/nextstep';
 import { acceptSK, canPromote, nextStarChecklist } from '../../src/sim/stages';
 import { buildCost, housing, newGame, population, tilesOf } from '../../src/sim/state';
@@ -111,11 +112,12 @@ const STREETS = [2, 6, 10, 14];
 const SPINE_X = 6;
 const near = (p: { x: number; y: number }) => Math.abs(p.x - SPINE_X) + Math.abs(p.y - 8);
 
-function laySetapak(c: Ctx): void {
+function laySetapak(c: Ctx, cx = 0): void {
   const { s } = c;
+  const left = cellOrigin(cx, 0).x;
   const tiles: [number, number][] = [];
-  for (const y of STREETS) for (let x = 0; x < RT_W; x++) tiles.push([x, y]);
-  for (let y = 0; y < RT_H; y++) if (!STREETS.includes(y)) tiles.push([SPINE_X, y]);
+  for (const y of STREETS) for (let x = 0; x < RT_W; x++) tiles.push([left + x, y]);
+  for (let y = 0; y < RT_H; y++) if (!STREETS.includes(y)) tiles.push([left + SPINE_X, y]);
   for (const [x, y] of tiles) if (checkPlace(s, 'jalan', x, y).ok ) place(s, 'jalan', x, y);
 }
 
@@ -124,6 +126,13 @@ const allCells = (): { x: number; y: number }[] => {
   for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) cells.push({ x, y });
   return cells;
 };
+
+/** The pieces of the RW combos a player can build alone. Grup Chat Warga needs two AI RTs, so it waits for the Kelurahan. */
+const RW_PIECES = ['posyandu', 'portal', 'pasarKaget', 'gapura', 'lapangan'];
+
+/** True while the RW's next star lists a Kampung Sebelah goal that is not met. */
+const wantsSebelah = (s: GameState): boolean =>
+  s.stage.current === 'rw' && (nextStarChecklist(s) ?? []).some((l) => !l.done && (l.goal.kind === 'sebelahBuilds' || l.goal.kind === 'sebelahAtStars'));
 
 /** Where a player would put this building: beside a street for road-fed ones, in the gaps for flat and decor pieces. */
 function spotFor(s: GameState, id: string, around?: { x: number; y: number }): { x: number; y: number } | undefined {
@@ -135,8 +144,22 @@ function spotFor(s: GameState, id: string, around?: { x: number; y: number }): {
   if (around) {
     return [...cells].sort((p, q) => dist(p, around) - dist(q, around)).find((p) => free(s, id, p));
   }
-  if (scope !== 'rt') return cells.find((p) => lotAt(p.x, p.y) === scope && free(s, id, p));
-  const rtCells = cells.filter((p) => lotAt(p.x, p.y) === 'rt');
+  if (scope !== 'rt') {
+    const lots = cells.filter((p) => lotAt(p.x, p.y) === scope);
+    if (scope === 'rw') {
+      // A player keeps combo pieces together and puts the big Balai RW out of their way, at the far end of the seam.
+      if (id === 'balaiRW') return [...lots].reverse().find((p) => free(s, id, p));
+      const piece = RW_PIECES.includes(id) ? s.buildings.find((b) => RW_PIECES.includes(b.def) && lotAt(b.x, b.y) === 'rw') : undefined;
+      if (piece) return lots.sort((p, q) => dist(p, piece) - dist(q, piece)).find((p) => free(s, id, p));
+    }
+    return lots.find((p) => free(s, id, p));
+  }
+  // Letters drain Popularitas, so a player stops building in Kampung Sebelah while too many wait.
+  const heldUp = s.stage.current === 'rw' && s.stempel.backlog >= STEMPEL.clearUnder;
+  const everyLot = cells.filter((p) => lotAt(p.x, p.y) === 'rt' && !(heldUp && cellOf(p.x, p.y).cx === 1));
+  // A player reads the goal: while the RW asks for Kampung Sebelah, RT buildings go there until it is full.
+  const there = wantsSebelah(s) ? everyLot.filter((p) => cellOf(p.x, p.y).cx === 1 && cellOf(p.x, p.y).cy === 0 && free(s, id, p)) : [];
+  const rtCells = there.length ? there : everyLot;
   const conn = connectedRoad(s);
   const fedAt = (p: { x: number; y: number }) => hasRoadBeside(conn, { def: id, x: p.x, y: p.y });
   const needsRoad = d.category !== 'decoration' && !FLAT.has(id) && !id.startsWith('kantor');
@@ -210,6 +233,7 @@ function promoteWhenOffered(c: Ctx): void {
     if (acceptSK(s, c.fx)) {
       c.acts++;
       if (was === 'rw') for (const n of s.neighbours) setAutoFund(n, 6);
+      if (was === 'rt') laySetapak(c, 1);
     }
   }
 }
@@ -268,6 +292,10 @@ function buildCombo(c: Ctx, buffer: number, only?: string[]): void {
     if (ids.length > 1 && ids.every((id) => s.buildings.some((b) => b.def === id))) {
       const anchor = s.buildings.find((b) => b.def === ids[0])!;
       if (buy(c, ids[ids.length - 1], buffer, { x: anchor.x, y: anchor.y })) return;
+      // At its limit, so a player moves one: pull the farthest down and build it beside the first piece.
+      const last = ids[ids.length - 1];
+      const far = s.buildings.filter((b) => b.def === last).sort((p, q) => dist(q, anchor) - dist(p, anchor))[0];
+      if (only && far && count(s, last) >= (def(last).maxCount ?? 99) && demolish(s, far).ok && buy(c, last, buffer, { x: anchor.x, y: anchor.y })) return;
     }
   }
 }
@@ -347,6 +375,8 @@ function playPlan(c: Ctx, p: Plan): void {
     const pick = easiestCombo(s);
     if (pick) buildCombo(c, p.buffer, pick.ids);
   }
+  // The RW combo line points to Build, Combo, so a player who reads it puts the pieces side by side.
+  if ((nextStarChecklist(s) ?? []).some((l) => !l.done && l.goal.kind === 'rwCombos')) buildCombo(c, p.buffer, RW_PIECES);
   buildFrom(c, p.order(s), p.buffer, p.perTick, p.caps);
   announceWhen(c, p.announce);
 }

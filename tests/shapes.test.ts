@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { checkPlace, checkRotate, moveBuilding, place, rotateBuilding } from '../src/sim/rules';
 import { addBuilding, buildingAt, newGame, sizeOf, tilesOf, withinEdges } from '../src/sim/state';
 import { deserialize, serialize } from '../src/sim/save';
-import { neighboursSystem, promote, setAutoFund } from '../src/sim/grow';
+import { handBack, neighboursSystem, promote, setAutoFund } from '../src/sim/grow';
 import { setGrid, type GameState } from '../src/sim/types';
 
 afterEach(() => setGrid('rt'));
@@ -100,6 +100,8 @@ describe('1x2 and other shapes', () => {
     promote(s, []);
     s.stage.current = 'rw';
     s.neighbours.forEach((n) => {
+      n.absorbed = false;
+      handBack(s, n);
       n.trait = 'rajin';
       n.stars = 3;
       setAutoFund(n, 12);

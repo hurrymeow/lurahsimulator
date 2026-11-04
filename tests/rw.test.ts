@@ -141,8 +141,8 @@ describe('RW combos', () => {
 
 describe('RW building effects', () => {
   it('Posyandu lifts every AI RT and the player\'s own Sabar', () => {
-    const s = rw(1);
-    const n = s.neighbours[0];
+    const s = kel();
+    const n = s.neighbours.find((x) => x.run !== 'player')!;
     const before = viewOf(s, n).res.sabar;
     put(s, 'posyandu', 13, 3);
     expect(viewOf(s, n).res.sabar).toBe(Math.min(80, before + 3));

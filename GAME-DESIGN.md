@@ -69,17 +69,17 @@ The map never gets swapped out. At each promotion the scenery edge pulls back an
 Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 
  scenery              +------+------+          +------+------+
- +------+             | YOU  | Kpg  |          | YOU  | YOU  |   your RW: your RT and
- | YOU  |   ------->  |  RT  | Seb. |  ----->  |  RT  | (was |   Kampung Sebelah, both
- |  RT  |             +--[RW lots]--+          |      | Seb.)|   yours to build on
+ +------+             | YOU  | YOU  |          | YOU  | YOU  |   your RW: your RT and
+ | YOU  |   ------->  |  RT  | Seb. |  ----->  |  RT  | Seb. |   Kampung Sebelah, both
+ |  RT  |             +--[RW lots]--+          |      |      |   yours to build on
  +------+                                      +--[Kelurahan lots]--+
- scenery              AI builds Kampung        |  RT  |  RT  |   RW 2: two AI RTs
-                      Sebelah. You steer       |  AI  |  AI  |   you fund
-                      it with Dana.            +------+------+
+ scenery              You build in Kampung     |  RT  |  RT  |   RW 2: your first AI RTs,
+                      Sebelah as you did at    |  AI  |  AI  |   which you fund
+                      home.                    +------+------+
 ```
 
-- RW = **2** RTs side by side: yours and Kampung Sebelah, the RT next door (playtest 2026-11-01: 4 RTs at the RW and 16 at the Kelurahan were too much to follow; `decisions/playtest-sk2.md`).
-- Kelurahan = **2 RWs of 2 RTs**, 2x2 RTs in all. At promotion Kampung Sebelah joins your RW as yours to build on: its buildings and warga become yours and its lots open to Build. Its buildings do not make your next ones dearer. So the Kelurahan always brings new land. RW 2 is two new AI RTs you fund with Dana.
+- RW = **2** RTs side by side: yours and Kampung Sebelah, the RT next door (playtest 2026-11-01: 4 RTs at the RW and 16 at the Kelurahan were too much to follow; `decisions/playtest-sk2.md`). At promotion Kampung Sebelah becomes yours to build on: its Kantor RT, Rumah and warga join you and its lots open to Build. They do not make your next buildings dearer. It earns its own stars on the RT ladder. (Hari, 2026-11-02: "let players control and build on the 2nd town, and introduce the RT AI later"; `decisions/second-rt.md`.)
+- Kelurahan = **2 RWs of 2 RTs**, 2x2 RTs in all. RW 2 is two new AI RTs you fund with Dana: the first AI RTs you meet.
 - RW buildings go inside the player's RTs (their own and any taken over) or on lots along the seams between RTs. Kelurahan buildings go inside the player's RTs or on lots along the seams between RWs. RT buildings stay inside an RT. The seams sit between the RTs, so promotion never takes tiles from the player's RT.
 - RW keeps today's 64x32 tiles. A pinch out gives a view-only overview, and a tap there zooms back in.
 - Kelurahan keeps full-size tiles: at 2x2 RTs it is the size the RW used to be (it was half-size at 4x4 RTs). Kelurahan buildings take a 2x2 footprint.
@@ -159,8 +159,8 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 #### 0★ Pak RW (promotion)
 
 - The map expands to 2 RTs: yours and Kampung Sebelah.
-- Unlocks Balai RW, the Stempel resource and Dana allocation.
-- **Goal for 1★:** fund Kampung Sebelah once, and keep the Stempel backlog under **5** for **6** weeks.
+- Unlocks Balai RW and the Stempel resource.
+- **Goal for 1★:** build **3** in Kampung Sebelah, beyond what it came with, and keep the Stempel backlog under **5** for **6** weeks. The weeks count from the first letter.
 
 #### 1★ RW Rintisan
 
@@ -182,8 +182,7 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 
 #### New RW content
 
-- **Stempel:** refills **1** a month. Every Surat Pengantar from an RT needs one, and a build sends **2** (Jarang Muncul **4**). Each unstamped letter drains **0.5** Sabar a month. The player is now the permit queue. At the Kelurahan only the RTs in the player's own RW send letters to the player; the other RWs stamp their own.
-- **Dana:** the new verb. You fund each RT, and it builds and levels only when funded. More banked Dana builds faster, and Auto-dana keeps it funded (see AI neighbours).
+- **Stempel:** refills **1** a month. Each build you make in Kampung Sebelah sends **1** Surat Pengantar, which needs one Stempel. The home RT and seam lots send none. Each unstamped letter drains **0.5** Sabar a month. The player is now the permit queue. Letters stop at the Kelurahan: Kampung Sebelah is plain land by then, and RW 2 stamps its own.
 - **Balai RW:** **+1** Stempel a month, **2** PNS slots.
 - **Posyandu:** **+1** Sabar a month to neighbouring RTs.
 - **Pasar Kaget:** **x3** income one month in four. Spawns **2** tukang parkir.
@@ -206,8 +205,9 @@ Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 
 #### 0★ Pak Lurah
 
-- Kampung Sebelah joins your RW as yours, and RW 2 (two AI RTs) appears. Stempel letters stop reaching you: your RW has no AI RT left, and RW 2 stamps its own.
-- Unlocks Kantor Kelurahan and Anggaran.
+- RW 2 (two AI RTs) appears, and Stempel letters stop: RW 2 stamps its own.
+- Unlocks Kantor Kelurahan, Anggaran and Dana allocation.
+- **Dana:** You fund each AI RT, and it builds and levels only when funded. More banked Dana builds faster, and Auto-dana keeps it funded (see AI neighbours).
 - **Goal for 1★:** RW 2 at 1★ or above (an RW is as good as its weaker RT), serapan of at least **80%** for **48** weeks, and the player's own kampung at **50** residents and Popularitas **50**.
 
 #### 1★
@@ -357,8 +357,8 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - **Resources:** every resource has an icon and a colour. Names are translated, see `decisions/resource-names.md`. Orang Dalam is "Orang Inside" in EN on purpose.
 - **Growth gates:** stars gate content. Residents, wins and combos set the star goals. Stars never drop.
 - **Kas:** Kas RT becomes Kas RW, then Kas Kelurahan. AI areas pay iuran into it.
-- **Dana (RW):** you fund each neighbouring RT. An RT only builds and levels when funded. An unfunded RT visibly stalls.
-- **Stempel (RW):** refills 1 a month. Every Surat Pengantar needs one, and a build sends 2 (Jarang Muncul 4). Each unstamped letter drains 0.5 Sabar a month. At the Kelurahan only the player's own RW sends letters to the player.
+- **Dana (Kelurahan):** you fund each AI RT. An RT only builds and levels when funded. An unfunded RT visibly stalls.
+- **Stempel (RW):** refills 1 a month. Each build the player makes in Kampung Sebelah sends 1 letter, which needs a Stempel. Each unstamped letter drains 0.5 Sabar a month. Letters stop at the Kelurahan.
 - **Anggaran (Kelurahan):** a yearly budget arrives each January. Each unspent % cuts next year's budget by the same %. December brings a forced Serapan rush.
 - **Yearly price banner:** from year 2 the year-end notice is a banner: "PERHATIAN: Biaya hidup naik {x}% tahun ini", with one reason a year from a bank that targets how prices behave, never a group of people ("Harga telur naik. Ayamnya belum diberi tahu."). The bank is in `decisions/staff-requests.md`.
 - **Safety net:** no debt or soft-lock in year 1, and year-1 cash never below 0 for the idle and builder bots (targets 8 and 9).
@@ -475,7 +475,7 @@ Settings > Theme picks the colours of the frame and of every sheet and pop-up. B
 
 1. RT stars and late-game content (Kos-kosan, Lapangan, Bank Sampah, 3 combos). Fixes the dead zone after 14 residents.
 2. Frame-rate spike for the Kelurahan map (done).
-3. RW: map growth, AI RTs, Stempel, Dana, RW content.
+3. RW: map growth, the 2nd RT, Stempel, RW content.
 4. Kelurahan.
 5. Playtest, then decide on Kecamatan and above.
 
@@ -752,7 +752,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing
 - **Ask:** does a promotion bring a new system and keep the old map useful?
 - **Why:** a promotion that is just a bigger copy is a grind.
 - **Kairosoft:** office moves add seats, training, ads and hiring [GDS]. Other stations keep progress and pay 40% of income [SM].
-- **Good:** each stage adds a new verb (Dana, Stempel, Anggaran). The old area keeps paying in.
+- **Good:** each stage adds a new verb (Stempel, Anggaran, Dana). The old area keeps paying in.
 - **Bad:** the same loop on a bigger map.
 - **Evidence:** T1 unlock list; T2 screenshots.
 - **Pass:** ≥1 new system per stage. First star of the new stage within its target.

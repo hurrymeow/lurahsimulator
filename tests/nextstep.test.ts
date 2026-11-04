@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { cellOrigin } from '../src/sim/area';
 import { promote } from '../src/sim/grow';
 import { COMBO_HINT_MONTH, nextStep, shortGoal } from '../src/sim/nextstep';
 import { addBuilding, addResident, attractTarget, housing, newGame, population } from '../src/sim/state';
@@ -64,11 +65,11 @@ describe('short goal', () => {
 });
 
 describe('stempel next step', () => {
-  /** A player RW at 0 stars. With `funded`, all three AI RTs have been funded once, meeting fundedRts. */
-  function rw(funded: boolean) {
+  /** A player RW at 0 stars. With `built`, the player has 3 working buildings in Kampung Sebelah, meeting sebelahBuilds. */
+  function rw(built: boolean) {
     const s = newGame(1);
     promote(s, []);
-    for (const n of s.neighbours) n.everFunded = funded;
+    if (built) for (const i of [2, 3, 4]) addBuilding(s, 'warung', cellOrigin(1, 0).x + i, cellOrigin(1, 0).y + 1, 'active', 0);
     return s;
   }
 
