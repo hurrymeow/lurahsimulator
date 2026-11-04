@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { answerNo, answerYes, openRequests, REQUEST, REQUEST_LINES, requestSystem } from '../src/sim/requests';
+import { answerNo, answerYes, keepPromise, openRequests, REQUEST, REQUEST_LINES, requestSystem } from '../src/sim/requests';
 import { roleDef } from '../src/data/staff';
-import { newGame } from '../src/sim/state';
+import { addBuilding, newGame } from '../src/sim/state';
+import { AKRAB_PERK, output, staffSystem } from '../src/sim/staff';
+import { monthOfYear } from '../src/sim/calendar';
 import { EN } from '../src/i18n/en';
 import { ID } from '../src/i18n/id';
 import { setLang, t, type Key } from '../src/i18n';
@@ -98,6 +100,91 @@ describe('Urusan Pribadi', () => {
     // Jujur 90 brings most loans back (70%), but not all.
     expect(outcomes.back).toBeGreaterThan(outcomes.gone);
     expect(outcomes.gone).toBeGreaterThan(0);
+  });
+
+  it('an experience ask is a promise: the heart comes when they are sent three times, or chair the 17an', () => {
+    const s = staffed();
+    for (const o of s.staff!) o.lastRequest = s.month + 1000;
+    const x = s.staff![0];
+    x.request = { kind: 'experience', line: 0, due: s.month + 4 };
+    expect(answerYes(s, x)).toBe(true);
+    expect(x.akrab ?? 0).toBe(0);
+    expect(x.promise).toMatchObject({ kind: 'utus', left: REQUEST.utus });
+    const fx: Fx = [];
+    for (let i = 0; i < REQUEST.utus; i++) keepPromise(s, x, 'utus', fx);
+    expect(x.promise).toBeUndefined();
+    expect(x.akrab).toBe(1);
+    expect(fx.some((f) => f.kind === 'notice' && f.tone === 'good')).toBe(true);
+    // Ketua panitia: kept in August with a working Lapangan.
+    const y = s.staff![1];
+    y.request = { kind: 'experience', line: 1, due: s.month + 4 };
+    answerYes(s, y);
+    const k = s.buildings.find((b) => b.def === 'kantorRT')!;
+    addBuilding(s, 'lapangan', k.x + 3, k.y + 3, 'active');
+    while (monthOfYear(s.month) !== 7) week(s);
+    week(s);
+    expect(y.promise).toBeUndefined();
+    expect(y.akrab).toBe(1);
+  });
+
+  it('a promise not kept within a year takes a heart away', () => {
+    const s = staffed();
+    for (const o of s.staff!) o.lastRequest = s.month + 1000;
+    const x = s.staff![0];
+    x.akrab = 2;
+    x.request = { kind: 'experience', line: 0, due: s.month + 4 };
+    answerYes(s, x);
+    const fx: Fx = [];
+    for (let i = 0; i <= REQUEST.promiseWeeks; i++) week(s, fx);
+    expect(x.promise).toBeUndefined();
+    expect(x.akrab).toBe(1);
+    expect(fx.some((f) => f.kind === 'notice' && f.tone === 'bad')).toBe(true);
+  });
+
+  it('three hearts: a perk card, more output, and no poaching', () => {
+    const s = staffed();
+    for (const o of s.staff!) o.lastRequest = s.month + 1000;
+    const x = s.staff![0];
+    const sp = { ...s.staff![1], id: 30, special: 'mbakSenam' };
+    s.staff!.push(sp);
+    const before = output(x);
+    const spBefore = output(sp);
+    x.akrab = 3;
+    sp.akrab = 3;
+    const fx = week(s);
+    expect(fx.filter((f) => f.kind === 'notice' && f.card && f.open === 'staff')).toHaveLength(2);
+    expect(output(x)).toBeCloseTo(before * AKRAB_PERK.generic);
+    expect(output(sp)).toBeCloseTo(spBefore * AKRAB_PERK.special);
+    // Shown once.
+    expect(week(s).some((f) => f.kind === 'notice' && f.card)).toBe(false);
+    // A refused raise cannot get them poached while the bond is full.
+    x.refused = true;
+    for (let i = 0; i < 200; i++) {
+      staffSystem(s, []);
+      s.month++;
+    }
+    expect(s.staff!.includes(x)).toBe(true);
+  });
+
+  it('a repaid loan sometimes opens a warung beside a road', () => {
+    let shops = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      const s = staffed(seed);
+      for (const o of s.staff!) o.lastRequest = s.month + 1000;
+      const x = s.staff![0];
+      x.stats.jujur = 150;
+      x.request = { kind: 'loan', line: 0, due: s.month + 4, amt: 1_000_000 };
+      answerYes(s, x);
+      const warungs = s.buildings.filter((b) => b.def === 'warung').length;
+      s.month = x.loan!.due;
+      const fx = week(s);
+      if (s.buildings.filter((b) => b.def === 'warung').length > warungs) {
+        shops++;
+        expect(fx.some((f) => f.kind === 'built')).toBe(true);
+      }
+    }
+    expect(shops).toBeGreaterThan(5);
+    expect(shops).toBeLessThan(30);
   });
 
   it('every line exists in both languages and fits one paragraph (UI.md rule 13: 20 words)', () => {

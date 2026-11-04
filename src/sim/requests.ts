@@ -8,6 +8,9 @@ import { roleDef, STAT_MAX, traitDef } from '../data/staff';
 import { gain, type Fx } from './gain';
 import { price } from './state';
 import { release } from './staff';
+import { monthOfYear } from './calendar';
+import { addBuilding, emptyTiles, isWorking } from './state';
+import { connectedRoad, hasRoadBeside } from './access';
 import { rand } from './rng';
 import type { CheckResult, GameState, RequestKind, Staff } from './types';
 
@@ -36,11 +39,16 @@ export const REQUEST = {
   orangDalam: 1,
   viral: 5,
   sabar: 3,
+  /** An experience ask: events to be sent on, and the weeks a promise may take before it counts as broken. */
+  utus: 3,
+  promiseWeeks: 52,
+  /** A repaid loan's chance that the side business opens as a warung on the map. */
+  shopChance: 0.35,
 };
 
 /** Lines in the bank for each kind (`req.<kind>.<n>`). */
-export const REQUEST_LINES: Record<RequestKind, number> = { cuti: 7, loan: 7, bimtek: 2, orangDalam: 1, viral: 1, sabar: 1 };
-const KINDS: RequestKind[] = ['cuti', 'loan', 'bimtek', 'orangDalam', 'viral', 'sabar'];
+export const REQUEST_LINES: Record<RequestKind, number> = { cuti: 7, loan: 7, bimtek: 2, experience: 2, orangDalam: 1, viral: 1, sabar: 1 };
+const KINDS: RequestKind[] = ['cuti', 'loan', 'bimtek', 'experience', 'orangDalam', 'viral', 'sabar'];
 
 /** Traits tilt the asks: Healing Mulu wants cuti, Si Paling Grup WA Viral, Titipan Orang Dalam "for Pak Camat". */
 function kindFor(s: GameState, x: Staff): RequestKind {
@@ -48,7 +56,7 @@ function kindFor(s: GameState, x: Staff): RequestKind {
   if (x.trait === 'siPalingWa' && rand(s) < 0.6) return 'viral';
   if (x.trait === 'titipan' && rand(s) < 0.6) return 'orangDalam';
   // Cuti and loans are the common asks; a resource is rarer.
-  const weights = [3, 3, 1, 1, 1, 1];
+  const weights = [3, 3, 1, 1, 1, 1, 1];
   let r = rand(s) * weights.reduce((a, b) => a + b, 0);
   for (let i = 0; i < KINDS.length; i++) if ((r -= weights[i]) < 0) return KINDS[i];
   return 'cuti';
@@ -68,8 +76,9 @@ export const requestLine = (x: Staff): string => {
 /** What a yes costs, said in a few words on the button. */
 export function yesLabel(x: Staff): string {
   const r = x.request!;
-  const n = r.kind === 'cuti' ? r.weeks ?? 0 : r.kind === 'orangDalam' ? REQUEST.orangDalam : r.kind === 'viral' ? REQUEST.viral : REQUEST.sabar;
-  return t(`req.yes.${r.kind}` as Key, { n, amt: rupiah(r.amt ?? 0) });
+  const n = r.kind === 'cuti' ? r.weeks ?? 0 : r.kind === 'experience' ? REQUEST.utus : r.kind === 'orangDalam' ? REQUEST.orangDalam : r.kind === 'viral' ? REQUEST.viral : REQUEST.sabar;
+  const kind = r.kind === 'experience' ? `experience.${r.line}` : r.kind;
+  return t(`req.yes.${kind}` as Key, { n, amt: rupiah(r.amt ?? 0) });
 }
 
 export function checkYes(s: GameState, x: Staff): CheckResult {
@@ -113,8 +122,33 @@ export function answerYes(s: GameState, x: Staff): boolean {
   if (r.kind === 'viral') s.res.viral -= REQUEST.viral;
   if (r.kind === 'sabar') s.res.sabar -= REQUEST.sabar;
   delete x.request;
+  // An experience ask is a promise: the heart comes when it is kept (keepPromise), not now.
+  if (r.kind === 'experience') {
+    x.promise = { kind: r.line === 0 ? 'utus' : 'panitia', left: r.line === 0 ? REQUEST.utus : 1, due: s.month + REQUEST.promiseWeeks };
+    return true;
+  }
   heart(x, 1);
   return true;
+}
+
+/** A sent staff member, or the 17an, counts toward a promise. Keeping it adds the heart. */
+export function keepPromise(_s: GameState, x: Staff, kind: 'utus' | 'panitia', fx: Fx): void {
+  if (x.promise?.kind !== kind) return;
+  if (--x.promise.left > 0) return;
+  delete x.promise;
+  heart(x, 1);
+  fx.push({ kind: 'notice', title: t('req.keptTitle', { name: x.name }), body: t(`req.kept.${kind}`), tone: 'good' });
+}
+
+/** A side business that worked opens as a warung beside a road, when there is a free tile. */
+function openShop(s: GameState, x: Staff, fx: Fx): void {
+  const conn = connectedRoad(s);
+  const spots = emptyTiles(s).filter((e) => hasRoadBeside(conn, { def: 'warung', ...e }));
+  if (!spots.length) return;
+  const spot = spots[Math.floor(rand(s) * spots.length)];
+  const b = addBuilding(s, 'warung', spot.x, spot.y, 'active');
+  fx.push({ kind: 'built', uid: b.uid });
+  fx.push({ kind: 'notice', title: t('req.shopTitle', { name: x.name }), body: t('req.shop'), tone: 'good' });
 }
 
 /** Says no (or lets it lapse): a heart goes, a poach gets likelier, and a Baperan leaves at once. True if they left. */
@@ -140,9 +174,21 @@ export function requestSystem(s: GameState, fx: Fx): void {
         const total = Math.round((amt * REQUEST.loanReturn) / 1000) * 1000;
         gain(s, fx, 'rupiah', total);
         fx.push({ kind: 'notice', title: t('req.loanBackTitle', { name: x.name }), body: t(`req.loanBack.${rand(s) < 0.5 ? 0 : 1}` as Key, { amt: rupiah(total - amt) }), tone: 'good' });
+        if (rand(s) < REQUEST.shopChance) openShop(s, x, fx);
       } else {
         fx.push({ kind: 'notice', title: t('req.loanGoneTitle', { name: x.name }), body: t(`req.loanGone.${rand(s) < 0.5 ? 0 : 1}` as Key), tone: 'bad' });
       }
+    }
+    // Ketua panitia: the 17an comes round (August) with them at work and a Lapangan for the stage.
+    if (x.promise?.kind === 'panitia' && monthOfYear(s.month) === 7 && !x.away && s.buildings.some((b) => b.def === 'lapangan' && isWorking(b))) keepPromise(s, x, 'panitia', fx);
+    if (x.promise && s.month >= x.promise.due) {
+      delete x.promise;
+      heart(x, -1);
+      fx.push({ kind: 'notice', title: t('req.brokenTitle', { name: x.name }), body: t('req.broken'), tone: 'bad' });
+    }
+    if ((x.akrab ?? 0) >= REQUEST.maxHearts && !x.perkSeen) {
+      x.perkSeen = true;
+      fx.push({ kind: 'notice', title: t('req.perkTitle', { name: x.name }), body: t(x.special ? 'req.perk.special' : 'req.perk.generic'), tone: 'good', card: true, open: 'staff' });
     }
     if (x.request && s.month >= x.request.due) {
       const left = answerNo(s, x);
@@ -151,7 +197,7 @@ export function requestSystem(s: GameState, fx: Fx): void {
   }
   if (openRequests(s).length >= REQUEST.maxOpen) return;
   for (const x of s.staff ?? []) {
-    if (x.inem || x.request || x.away || x.level < REQUEST.fromLevel) continue;
+    if (x.inem || x.request || x.promise || x.away || x.level < REQUEST.fromLevel) continue;
     if (s.month - (x.lastRequest ?? x.hiredAt) < REQUEST.every) continue;
     if (openRequests(s).length >= REQUEST.maxOpen) return;
     const kind = kindFor(s, x);

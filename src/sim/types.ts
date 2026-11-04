@@ -269,11 +269,15 @@ export interface Staff extends Applicant {
   chainDone?: boolean;
   /** A gamble chain (Bro Kripto, Om Motivasi): true if it paid, false if it went wrong. */
   chainWon?: boolean;
+  /** An "experience" ask the player said yes to: be sent on events (`left` to go), or chair the 17an panitia. */
+  promise?: { kind: 'utus' | 'panitia'; left: number; due: number };
+  /** The 3-heart perk was announced. */
+  perkSeen?: boolean;
   /** A business loan out: it comes back, or doesn't, at `due`. */
   loan?: { amt: number; due: number; line: number };
 }
 
-export type RequestKind = 'cuti' | 'loan' | 'bimtek' | 'orangDalam' | 'viral' | 'sabar';
+export type RequestKind = 'cuti' | 'loan' | 'bimtek' | 'experience' | 'orangDalam' | 'viral' | 'sabar';
 
 export interface StaffRequest {
   kind: RequestKind;
