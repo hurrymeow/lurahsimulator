@@ -282,20 +282,33 @@ function buildCombo(c: Ctx, buffer: number, only?: string[]): void {
   const { s } = c;
   const todo = liveCombos(s).filter((cb) => !s.discovered.includes(cb.id) && !(cb as { brands?: string }).brands && !(cb as { needsJob?: string }).needsJob);
   const scored = todo
-    .map((cb) => ({ cb, ids: cb.needs.map((n) => parseNeed(n).id) }))
+    .map((cb) => ({ cb, needs: cb.needs.map(parseNeed), ids: cb.needs.map((n) => parseNeed(n).id) }))
     .filter(({ ids }) => ids.every((id) => def(id).placeable && openDefs(s).some((d) => d.id === id)) && (!only || ids.every((id) => only.includes(id))))
     .map((x) => ({ ...x, cost: x.ids.reduce((sum, id) => sum + (count(s, id) ? 0 : def(id).cost), 0) }))
     .sort((a, b) => a.cost - b.cost);
-  for (const { ids } of scored) {
+  for (const { ids, needs } of scored) {
     const member = s.buildings.find((b) => ids.includes(b.def));
     for (const id of ids) {
       if (s.buildings.some((b) => b.def === id)) continue;
       if (buy(c, id, buffer, member ? { x: member.x, y: member.y } : undefined)) return;
     }
+    // A piece that needs a level (Pecel Lele wants a Rumah Makan at 3): upgrade the copy nearest the anchor, as a
+    // player would, and never buy more copies for it. Before this, the bot bought a new copy every tick.
+    const leveled = needs.filter((n) => n.level > 1);
+    if (leveled.length && ids.every((id) => s.buildings.some((b) => b.def === id))) {
+      const anchor = s.buildings.find((b) => b.def === ids[0])!;
+      for (const n of leveled) {
+        const near = s.buildings.filter((b) => b.def === n.id && b.level < n.level && b.status === 'active').sort((p, q) => dist(p, anchor) - dist(q, anchor))[0];
+        if (near && s.res.rupiah > buffer && checkUpgrade(s, near).ok) { upgrade(s, near); c.acts++; return; }
+      }
+      continue;
+    }
     // Every piece is on the map but none touch: buy one more copy of the last piece beside the first, as the hint says.
     if (ids.length > 1 && ids.every((id) => s.buildings.some((b) => b.def === id))) {
       const anchor = s.buildings.find((b) => b.def === ids[0])!;
-      if (buy(c, ids[ids.length - 1], buffer, { x: anchor.x, y: anchor.y })) return;
+      // At most a few copies, as for any other building: when the anchor has no free tile beside it, the copy lands
+      // far away, and an uncapped bot bought one every tick (142 Wifi towers by week 400).
+      if (count(s, ids[ids.length - 1]) < capOf(ids[ids.length - 1]) + 1 && buy(c, ids[ids.length - 1], buffer, { x: anchor.x, y: anchor.y })) return;
       // At its limit, so a player moves one: pull the farthest down and build it beside the first piece.
       const last = ids[ids.length - 1];
       const far = s.buildings.filter((b) => b.def === last).sort((p, q) => dist(q, anchor) - dist(p, anchor))[0];
