@@ -12,11 +12,12 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ### Next
 
-- [ ] **Keep every building sprite inside its footprint.**
-  - Problem: 31 sprites draw past their footprint's front edges (`SPILL_ALLOW` in `tests/footprint-art.test.ts`). The 2x2 Kelurahan and Kecamatan buildings spill 10px, most likely their shadow. Shop props spill more: the Bengkel car pad 51px, the Pos Satpam barrier 22px, the Warung crate 16px, Baliho 15px, Indomaret and Alfamart 14px, the Bidan sign 11px, Kantor RT and Bank Sampah 8px.
-  - Why: UI.md rule 17. A prop over the next tile hides a road or a neighbour's badge.
-  - Suggested solution: pull each prop back inside the diamond, or move it behind the building, then lower or delete its `SPILL_ALLOW` entry. Never overwrite the artist's sprites; these are all code-drawn.
-  - Source: `decisions/ui-rule-checks.md`
+- [ ] **Keep the last 9 shop props inside their footprint.**
+  - #304 fixed the two painter bugs behind most spills (half-pixel rows, long-footprint ground), so 31 sprites became 9.
+  - Problem: these props are drawn past the front edges on purpose: the Pos Satpam barrier (21px), the Warung crate (16px), the Indomaret and Alfamart fronts (14px), the Bidan sign (11px), the Kantor RT sign and the Bank Sampah sacks (8px), the Baliho legs (5px) and the Portal post (3px).
+  - Why: UI.md rule 17.
+  - Suggested solution: pull each prop inside the diamond, or move it behind the building, then delete its `SPILL_ALLOW` entry in `tests/footprint-art.test.ts`. All are code-drawn.
+  - Source: `decisions/sprite-footprints.md`
   - `open · — · — · done when:` `SPILL_ALLOW` is empty, or each entry left has a reason in `decisions/`.
 - [ ] **Let the player control and build on the 2nd RT after the RT reaches 3★, and add the AI-run RT later, each with a tutorial.**
   - Problem: At 3★ the RT expands and the player has no clear next step in a second town. Hari, 2026-11-02: "after expanding from RT 3 star, let players control and build on the 2nd town, and introduce the RT AI later". The tutorial teaches only the first RT, so a new player gets no guidance when the second RT becomes theirs.
@@ -31,25 +32,13 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: play it, then log what changes in a new `decisions/` file. The notes are under "For Hari" in `decisions/smaller-map-balance.md`.
   - Source: `docs/plans/smaller-map.md`, task T9.
   - `open · Hari · — · done when:` a decisions file records the playtest and what it changes.
-- [ ] **Show which RW and RT is yours and which the AI runs on the map, and let the player take over an RT in another RW.**
-  - The own-RW limit is gone: #297 lets the player build on any AI-run RT, in any RW. The map nameplates are in the next PR.
-  - Problem: the map does not say which RW is the player's, which RT is the player's, which are AI-run and which the player controls. Hari, 2026-11-01: "super unclear in map". Hari also sees no reason the player cannot take over an RT under another RW. Ambil alih works in the own RW only.
-  - Why: the player cannot read who owns what, so Dana, takeover and the star goals have no visible target. The own-RW limit is a rule with no reason the player can see.
-  - Suggested solution: mark owner on the map and in the Neighbours list (own RT, AI RT, RW border, plain and non-colour-only per UI.md). Decide whether takeover or build-on-AI-RTs lifts the own-RW limit. Plan it together with the two HIGH PRIORITY items above ("Revamp the Neighbours sheet" and "Build on AI RTs"), which share files `src/sim/rules.ts`, `src/render/map.ts` and `src/ui/neighbours.ts`. Needs a planning thread first.
-  - Source: Hari, 2026-11-01.
-  - `open · — · — · done when:` a first-time player can tell at a glance, at 320 px in EN and ID, which RT is theirs, which are AI-run and which RW each belongs to, and the own-RW takeover limit is lifted or explained in the UI.
-- [ ] **Make the path to RW 2★ clear, and find why the pacing and UI checklists let it pass.**
-  - Problem: Hari, 2026-11-01: the way to bring the RW to 2★ is "absolutely unclear", and asks how it passed the pacing and UI tests. The 2★ goal (GAME-DESIGN.md, RW 1★) is Kampung Sebelah at 1★ or above, 1 win against RW Sebelah and 2 RW combos. Two of the three depend on the AI RT in the Neighbours sheet, which Hari calls unusable, and the ranking win is the goal already marked for removal on AI RTs.
-  - Why: the checklists are not blind to this, they were not run on it. GAME-DESIGN.md §8 judges the sim by bots, which reach the stars without reading the screen, and the audit covered screens and word counts, not whether a goal can be acted on. The "Neighbours" screens are in UI.md rule 13 failures only for text volume. No checklist item asks "can a new player name the next action for this star from the screen alone". The bot passes are a lower bound for sim balance, not for clarity.
-  - Suggested solution: first play RW 1★ to 2★ by hand with the screen only, and write down each point where the next action is not visible. Then add one item to UI.md's review checklist and one to GAME-DESIGN.md §8: each star goal part names its action and where to do it, tested by an agent that sees only screenshots. Fix the RW goals after the Neighbours revamp lands, since the revamp changes what the goal means. Check "Show which RW and RT is yours" above first.
-  - Source: Hari, 2026-11-01.
-  - `open · — · — · done when:` a screenshot-only agent run names the next RW 2★ action at every step, the two checklist items exist, and the RW bot still reaches 2★.
 
 - [ ] **Full UI re-audit (T11).**
   - Problem: the 2026-11-01 audit skipped 360px, the dark theme and the Kecamatan. Since then most screens were rewritten.
   - Why: the CI checks for rules 10, 15, 16, 17 and 18 now run (#292, #295), but some rules are still checked by eye (2, 3, 6, 9, 11).
   - Suggested solution: `docs/plans/ui-audit-fixes.md` T11. Rerun the crawl in the project files (`audit/ui-rules-2026-11-01/audit.spec.ts`) at 320, 360, 412 and 430px, in EN and ID, in light and dark, on the RT, Kelurahan and Kecamatan seeds.
   - Source: UI.md "How each rule is checked"
+  - Needs the crawl in the project files (`audit/`), which a cloud session cannot reach. Run it from a session that has them.
   - `open · — · — · done when:` a new report shows every screen passing, or lists the remaining fails as TODO items.
 
 ### Later
@@ -67,13 +56,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: add goal ETAs to the recorder, a forced event chain, per-action ablation runs and the extra resources to the timeline. Add T2 specs for items 3, 6 and 27. Check the first nightly run time (bar 20 min) and trim seeds if needed.
   - Source: `scorecard/scorecard.md`; `decisions/scorecard-harness.md`
   - `open · — · — · done when:` no row reads Unknown for a reason the harness could fix, and a nightly run finishes under 20 minutes.
-- [ ] **NEW tags that clear only when the card has really been seen.**
-  - The other three parts of the SK 2 playtest note shipped: the Wifi road (#243), Staf in the dock (#291) and the pixel 2 (#296).
-  - Problem: NEW tags clear when the Build sheet opens, so a star that unlocks several things shows them only for a moment.
-  - Why: unlocks come several at a time and are easy to miss (UI.md checklist item 4).
-  - Suggested solution: a card's NEW clears after it has been at least half on screen for 2s, or when it is tapped. Tab and dock badges stay while any card under them is unseen.
-  - Source: `decisions/playtest-sk2.md`
-  - `open · — · — · done when:` NEW survives opening the sheet without looking, clears on a real view, in ID and EN, and the UI tests cover both.
 - [ ] **Low and wide 2x2 art, and native-size cranes on big sites.**
   - Problem: Gudang Material and Koperasi look like a Rumah scaled up, too tall for 2x2. The crane over a 2x2 site is a 1x1 crane scaled 2x, with big pixels out of scale.
   - Why: size should read as width, and every sprite should keep the 1px grid.
@@ -81,12 +63,13 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: `decisions/playtest-sk2.md`
   - `open · — · — · done when:` no 2x2 building stands taller than a 1x1 of its tier, site sprites have no scaled pixels, and `tests/art.test.ts` checks both.
 
-- [ ] **CI and test config: flaky reports, English, WebKit, nightly, console-error fixture and canaries.**
-  - Problem: a test that passes on retry leaves no record; English is only checked weekly; tests run in Chromium only; there is no nightly workflow.
-  - Why: TESTING.md items 2, 9 and 13 fail today, and items 6, 11, 12 and 17 need a nightly run. Items 5 and 15 (merged in from the console-error task): e2e does not fail on `pageerror` or `console.error`, and nothing proves the legibility scan or visual diff can fail.
-  - Suggested solution: add a `json` reporter, always upload it, and list flaky tests in the run summary. When `src/i18n/` changes, add an English project at 412px. Add a WebKit project at 412px with 5 smoke specs on PRs and the full suite nightly. Add `nightly.yml`. Add a shared Playwright fixture that fails on `pageerror` and `console.error`, with a reasoned allowlist, and canary tests that inject a clipped label, small text, a small button and a layout shift. Update AGENTS.md's CI lines in the same PR. Land the fixture before the gesture task adds specs, or expect a rebase.
-  - Source: TESTING.md items 2, 5, 9, 13, 15; `decisions/testing-checklist.md`
-  - `open · — · — · done when:` all of it runs, the fixture covers all specs, every canary fails as expected, and AGENTS.md matches CI.
+- [ ] **CI: a layout-shift canary, and act on the first WebKit nightly.**
+  - Flaky reports and English on string changes shipped in #299. The console guard, the canaries, WebKit nightly and the nightly property tests ship in the CI PR after #305.
+  - Problem: no canary proves the screenshot diff catches a layout shift, and WebKit has never run in CI before.
+  - Why: TESTING.md items 13 and 15.
+  - Suggested solution: read the first `e2e-webkit.yml` run and log each failure here. Add a canary to `visual.spec.ts` that shifts one element and expects the diff to fail (CI's image only).
+  - Source: `decisions/ci-guard-canaries-webkit.md`
+  - `open · — · — · done when:` WebKit nightly is green or its failures are TODO items, and the shift canary fails as expected.
 - [ ] **Make staffing integral: the permit desk queue (prototype).**
   - Problem: staff are optional bonuses. Inem made permits up to 40% faster, a Hansip adds a little Aman, and nothing breaks or asks for a hire when the player has nobody.
   - Why: in Kairosoft's games staff are the hands that turn money into output, and running short of people is the pressure the player feels. Staffing should tighten the core loop: build, queue, hire or train, build faster.
@@ -94,21 +77,30 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: voidinside99, 2026-10-31
   - `claimed · voidinside99 · 2026-10-31 · done when:` the prototype passes the checklists and merges (or is dropped), with the bite tuned in `decisions/desk-queue.md`.
 
-- [ ] **Urusan Pribadi: personal requests and Akrab.**
-  - Problem: staff never want anything, so they feel like modifiers, not people.
-  - Why: Kairosoft staff feel alive because they ask; a yes or no with a cost makes managing them a choice.
-  - Suggested solution: build section 2 of `decisions/staff-requests.md`: requests every 24 weeks from level 2, at most 2 open, deadlines, Akrab hearts, loans rolled on Jujur (repaid, flop, or a small shop), costs scaled to income, and the line bank in ID and EN, each line 20 words or fewer. Never gate stars. Add the card's word count to the rule 13 scan.
+- [ ] **Urusan Pribadi: the rest of the spec.**
+  - The first slice shipped in #305: requests, Akrab hearts and loans.
+  - Problem: the "experience" asks (be sent on 3 send-events, or be ketua panitia), the 3-heart perk or quirk upgrade, and a loan's side business becoming a shop on the map are still missing.
+  - Why: they make the bond pay off beyond +3 work.
+  - Suggested solution: `decisions/staff-requests.md` section 2; see `decisions/urusan-pribadi.md` for what shipped.
   - Source: voidinside99, 2026-11-01
-  - `open · — · — · done when:` requests arrive, answer and pay out as written, in ID and EN, within UI.md rule 13, with unit tests for timing, Akrab and loans.
-- [ ] **Quest chains for the named specials.**
-  - Problem: only Inem has a dream; the 13 specials have a quirk and nothing to chase.
-  - Why: a three-step chain gives a special a story, and chains that need another special give the staff an ensemble.
-  - Suggested solution: build the table in section 3 of `decisions/staff-requests.md`, on Inem's gig system. Start with the linked pair: Pak Purna's memoir (needs Bu Juru Ketik) and Bu Juru Ketik's typewriter (needs Bang Rental PS).
+  - `open · — · — · done when:` all three ship in ID and EN, with unit tests.
+- [ ] **Quest chains for the other eleven specials.**
+  - The framework and the linked pair (Pak Purna, Bu Juru Ketik) shipped in #305.
+  - Problem: the other eleven specials in `decisions/staff-requests.md` section 3 still have no chain.
+  - Why: a chain gives a special a story, and linked chains make an ensemble.
+  - Suggested solution: add each as a `ChainDef` in `src/sim/chains.ts`, with its strings and a test in `tests/chains.test.ts`.
   - Source: voidinside99, 2026-11-01
-  - `open · — · — · done when:` every special has a chain with its payoff, and the linked chains check for the other special.
+  - `open · — · — · done when:` every special has a chain with its payoff.
 
 ## Done
 
+- [x] **Urusan Pribadi (first slice).** From level 2, staff ask for cuti, a loan, a course or a resource about every 24 weeks; Akrab hearts (+3 work each); loans come back on Jujur. #305, `decisions/urusan-pribadi.md`.
+- [x] **Quest chains (framework and the linked pair).** Pak Purna's memoir needs Bu Juru Ketik; her typewriter needs Bang Rental PS and doubles her desk. #305, `decisions/special-chains.md`.
+- [x] **Painter bugs behind most footprint spills.** Half-pixel rows and long-footprint ground; spilling sprites 31 to 9. #304, `decisions/sprite-footprints.md`.
+- [x] **NEW tags that clear only when the card has really been seen.** 2s at least half on screen, or a tap; tab and dock badges stay while anything is unseen. #300, `decisions/new-tags-seen.md`.
+- [x] **Show which RW and RT is yours and which the AI runs on the map.** Nameplates ("RT 1 · Yours", "RT 4 · RW 2 · AI"); the own-RW limit went with #297. #299, `decisions/map-owners.md`.
+- [x] **Make the path to RW 2★ clear.** The neighbour goals name Dana, Kunjungan and building on the RT; UI.md checklist item 24 "Every goal says how". #299, `decisions/rw2-clear.md`.
+- [x] **CI: flaky tests in the run summary, English on string changes.** #299, `decisions/ci-flaky-english.md`.
 - [x] **HIGH PRIORITY: Let the player build on AI-run RTs, and add Kunjungan (visit) as a one-tap boost.** RT buildings on an AI RT's free lots count for it; Kunjungan (1 Orang Dalam, once a quarter) builds now and adds 3 warga; Go to RT; takeover retired. #297, `decisions/build-on-ai-rts.md`.
 - [x] **A portrait for every staff member.** Each role's outfit, a face seeded by the staff id, on the card, the detail view and the applicant card. #297, `decisions/staff-portraits-all.md`.
 - [x] **The yearly price banner.** From year 2, a card with the rise and one of 12 reasons, never the same twice in a row. #296, `decisions/price-banner.md`.
