@@ -310,7 +310,7 @@ export const cancelLowongan = (s: GameState): void => {
 
 // ---------- managing ----------
 
-const release = (s: GameState, x: Staff) => {
+export const release = (s: GameState, x: Staff) => {
   s.staff = s.staff!.filter((o) => o !== x);
   for (const r of s.residents) if (r.staffId === x.id) delete r.staffId;
 };

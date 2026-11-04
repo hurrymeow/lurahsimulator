@@ -31,6 +31,7 @@ import { parkirSystem } from './parkir';
 import { needsSystem, premanTake } from './needs';
 import { judolIncomeCut, pinjolSystem } from './pinjol';
 import { buildBoost, clearPermits, permitQueue, queueMonths, staffSystem, upkeepCut } from './staff';
+import { requestSystem } from './requests';
 import { ROLE_FX } from '../data/staff';
 import { realisasiSystem, realisasiWarungMult } from './realisasi';
 import { addBuilding, addResident, attractTarget, decorMult, emptyTiles, housing, isWorking, levelMult, neighbours, pathMult, population } from './state';
@@ -271,6 +272,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   jobsSystem,
   realisasiSystem,
   staffSystem,
+  requestSystem,
   needsSystem,
   pinjolSystem,
   wacanaSystem,
