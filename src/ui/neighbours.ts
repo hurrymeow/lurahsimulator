@@ -1,14 +1,16 @@
 import { t, type Key } from '../i18n';
 import type { App } from '../app';
 import { NEIGHBOUR } from '../sim/balance';
-import { aiGoals, cellName, checkFund, checkTakeover, fundNeighbour, handBack, setAutoFund, takeover } from '../sim/grow';
+import { aiGoals, cellName, checkFund, checkVisit, fundNeighbour, setAutoFund, visit } from '../sim/grow';
+import { cellOrigin } from '../sim/area';
+import { RT_H, RT_W } from '../sim/types';
 import { viewOf } from '../sim/neighbourView';
 import { starChecklist, type ChecklistLine } from '../sim/stages';
 import { DISTRICT_PACE, DISTRICT_STAR_WEEKS } from '../sim/kec';
 import type { DistrictId } from '../render/scenery';
 import type { District, Neighbour } from '../sim/types';
 import { h } from './dom';
-import { openSheet } from './sheet';
+import { closeSheet, openSheet } from './sheet';
 import { starRow } from './stage';
 
 /** The star goals an AI RT chases: the ranking wins are the player's own. */
@@ -66,7 +68,7 @@ type View = { kind: 'list' } | { kind: 'detail'; i: number } | { kind: 'help' };
 
 const backButton = (app: App): Node => h('button', { class: 'btn head-action', type: 'button', onclick: () => openNeighbours(app) }, '‹ ', t('page.back'));
 
-/** One RT: its unmet goals, Dana by hand or on auto, and the way to take it over or hand it back. */
+/** One RT: its unmet goals, Dana by hand or on auto, a Kunjungan, and the way to its lots on the map. */
 function detail(app: App, view: { kind: 'detail'; i: number }): void {
   const s = app.s;
   const n = s.neighbours[view.i];
@@ -81,20 +83,16 @@ function detail(app: App, view: { kind: 'detail'; i: number }): void {
   const unmet = aiLines(app, n).filter((l) => !l.done);
   if (n.stars === 3) body.push(h('p', { class: 'meta' }, t('grow.maxStars')));
   else if (unmet.length) body.push(h('ul', { class: 'checklist' }, ...unmet.map((l) => h('li', {}, l.text))));
+  // Go to RT: close the sheet and show the RT on the map, so the player can build on its free lots.
+  const goTo = h('button', { class: 'btn', type: 'button', id: 'nb-goto', onclick: () => {
+    closeSheet();
+    const o = cellOrigin(n.cx, n.cy);
+    app.view.centreOn(o.x + RT_W / 2, o.y + RT_H / 2);
+    app.tap(10);
+  } }, t('grow.goTo'));
   if (n.run === 'player') {
-    // An absorbed RT joined at promotion for good; there is nothing to hand back.
-    if (!n.absorbed) body.push(h('div', { class: 'nb-take' },
-      h('button', { class: 'btn', type: 'button', 'data-handback': '1', onclick: () => {
-        handBack(s, n);
-        // Say what happens next: building resumes only with Dana banked.
-        app.notice({ title: t('grow.handedBack', { cell: cellName(n) }), body: n.autoKeep ? t('grow.handedBackAuto', { n: n.autoKeep }) : t('grow.handedBackFund'), tone: 'info' });
-        app.tap(15);
-        app.save();
-        app.refresh();
-        openNeighbours(app);
-      } }, t('grow.handBack')),
-      h('p', { class: 'meta' }, t('grow.handBackHelp', { n: NEIGHBOUR.takeoverOd })),
-    ));
+    // Older saves can hold an RT the player took over before takeover was retired. It stays the player's.
+    body.push(h('p', { class: 'meta' }, t('grow.playerRun')), h('div', { class: 'action' }, goTo));
   } else {
     const one = checkFund(s, n, 1);
     const bulk = checkFund(s, n, NEIGHBOUR.fundBulk);
@@ -102,15 +100,15 @@ function detail(app: App, view: { kind: 'detail'; i: number }): void {
       fundNeighbour(s, n, k);
       reopen();
     };
-    const take = checkTakeover(s, n);
+    const why = checkVisit(s, n);
     body.push(
       h('div', { class: 'row nb-fund' },
         h('button', { class: 'btn btn-primary', type: 'button', 'data-fund': String(NEIGHBOUR.fundBulk), disabled: !!bulk, onclick: () => fund(NEIGHBOUR.fundBulk) }, t('grow.fund', { n: NEIGHBOUR.fundBulk })),
         h('button', { class: 'btn', type: 'button', 'data-fund': '1', disabled: !!one, onclick: () => fund(1) }, t('grow.fund', { n: 1 })),
       ),
     );
-    const why = one ?? bulk;
-    if (why) body.push(h('p', { class: 'meta' }, why));
+    const fundWhy = one ?? bulk;
+    if (fundWhy) body.push(h('p', { class: 'meta' }, fundWhy));
     body.push(
       autoChip(n.autoKeep ?? 0, () => {
         setAutoFund(n, nextAuto(n.autoKeep ?? 0));
@@ -118,17 +116,15 @@ function detail(app: App, view: { kind: 'detail'; i: number }): void {
         app.save();
         openNeighbours(app, view);
       }),
-      h('div', { class: 'nb-take' },
-        h('button', { class: 'btn', type: 'button', 'data-takeover': '1', disabled: !!take, onclick: () => {
-          takeover(s, n);
-          app.notice({ title: t('grow.tookOver', { cell: cellName(n) }), body: t('grow.playerRun'), tone: 'good' });
-          app.tap(15);
-          app.save();
-          app.refresh();
-          openNeighbours(app);
-        } }, t('grow.takeover', { n: NEIGHBOUR.takeoverOd })),
-        h('p', { class: 'meta' }, take ?? t('grow.takeoverHelp')),
+      h('div', { class: 'row nb-visit' },
+        h('button', { class: 'btn', type: 'button', id: 'nb-visit', disabled: !!why, onclick: () => {
+          visit(s, n);
+          app.notice({ title: t('grow.visited', { cell: cellName(n) }), body: t('grow.visitedBody', { n: NEIGHBOUR.visitWarga }), tone: 'good' });
+          reopen();
+        } }, t('grow.visit', { n: NEIGHBOUR.visitOd })),
+        goTo,
       ),
+      h('p', { class: 'meta' }, why ?? t('grow.visitHelp', { n: NEIGHBOUR.visitWarga })),
     );
   }
   openSheet(cellName(n), body, undefined, backButton(app));

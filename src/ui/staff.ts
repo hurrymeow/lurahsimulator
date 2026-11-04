@@ -5,7 +5,7 @@ import { chBlurb, chName, getLang, gName, gNeeds, gReward, roleBlurb, roleName, 
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { inemURL } from '../render/inem';
-import { portraitURL } from '../render/portraits';
+import { portraitURL, staffPortraitURL } from '../render/portraits';
 import { BIMTEK, CHANNELS, GIGS, RAISE, SPECIALS, STATS, STAT_ICON, STAT_MAX, roleDef, traitDef, type RoleId, type StatId } from '../data/staff';
 import { RIVAL_NAMES } from '../data/ranking';
 import { cellName } from '../sim/grow';
@@ -84,10 +84,10 @@ function aboutLines(a: Applicant): Node[] {
   return out;
 }
 
-/** Inem's face, a special's portrait, or a star badge for everyone else. */
-const face = (x: Applicant & { inem?: boolean }) => {
-  const url = x.inem ? inemURL() : portraitURL(x.special);
-  return url ? h('img', { src: url, alt: '', width: 44, height: 60, class: 'pixel staff-face' }) : h('span', { class: 'staff-badge', 'aria-hidden': 'true' }, stars(x.stars));
+/** Inem's face, a special's portrait, or a generic hire dressed for the job, with a face kept by their id. */
+const face = (x: Applicant & { inem?: boolean }, role: string) => {
+  const url = x.inem ? inemURL() : (portraitURL(x.special) ?? staffPortraitURL(role, x.id));
+  return h('img', { src: url, alt: '', width: 44, height: 60, class: 'pixel staff-face' });
 };
 
 /** Lines that need the player's eye, shown on the card and in the detail view. */
@@ -102,7 +102,7 @@ function flags(x: Staff, rival: string): Node[] {
 function staffCard(app: App, x: Staff): HTMLElement {
   const chip = x.raiseAsked ? t('staff.raiseChip') : x.away ? t('staff.awayNow', { n: x.away }) : x.refused ? t('staff.refusedChip') : '';
   return h('div', { class: `card-btn static staff-card${x.inem ? ' inem' : ''}`, 'data-staff': String(x.id) },
-    face(x),
+    face(x, x.role),
     h('div', { class: 'card-text' },
       h('button', { class: 'staff-open', type: 'button', 'aria-label': t('staff.details', { name: x.name }), onclick: () => openStaff(app, { kind: 'person', id: x.id }) },
         h('span', { class: 'card-title' }, h('strong', {}, x.name), h('span', { class: 'meta' }, t('staff.level', { n: x.level }))),
@@ -152,7 +152,7 @@ function personView(app: App, x: Staff, done: () => void): Node[] {
     } else parts.push(actionButton(t('staff.mutasi', { name: 'RT' }), mut, () => undefined));
     parts.push(h('div', { class: 'staff-fire' }, actionButton(t('staff.fire', { cost: rupiah(pesangon(s, x)) }), checkFire(s, x), () => { fire(s, x); app.tap(15); openStaff(app); })));
   }
-  return [h('div', { class: `staff-detail${x.inem ? ' inem' : ''}`, 'data-staff': String(x.id) }, face(x), h('div', { class: 'card-text' }, ...parts))];
+  return [h('div', { class: `staff-detail${x.inem ? ' inem' : ''}`, 'data-staff': String(x.id) }, face(x, x.role), h('div', { class: 'card-text' }, ...parts))];
 }
 
 /** Picking where to post a lowongan for one role: each channel, its price and its catch. */
@@ -193,7 +193,7 @@ function lowongan(app: App, done: () => void): HTMLElement {
     const head = h('p', { class: 'meta' }, t('staff.waiting', { role: roleName(roleDef(lw.role)), channel: chName(ch), n: Math.max(0, lw.arriveAt - s.month) }));
     const req = h('p', { class: 'meta staff-req' }, t('staff.reqHead', { line: t(`staff.req.${lw.req}` as Key) }));
     const apps = lw.applicants.map((a) => h('div', { class: 'card-btn static staff-applicant', 'data-applicant': String(a.id) },
-      face(a),
+      face(a, lw.role),
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, a.name), h('span', { class: 'meta' }, stars(a.stars))),
         ...aboutLines(a),

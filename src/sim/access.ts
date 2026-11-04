@@ -19,6 +19,8 @@ export function roadTiles(s: GameState): Uint8Array {
   const out = new Uint8Array(GRID_W * GRID_H);
   for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (isSeam(x, y)) out[y * GRID_W + x] = 1;
   for (const b of s.buildings) if (isRoadPiece(b)) out[b.y * GRID_W + b.x] = 1;
+  // An AI RT's paths carry the player's walkers and deliveries too, so a building the player puts in its cell can use them.
+  for (const n of s.neighbours ?? []) for (const b of n.buildings) if (isRoadPiece(b)) out[b.y * GRID_W + b.x] = 1;
   return out;
 }
 
@@ -35,6 +37,8 @@ export function connectedRoad(s: GameState, road = roadTiles(s)): Uint8Array {
     }
   };
   for (const b of s.buildings) if (isHub(b) && b.status === 'active') for (const [tx, ty] of ring(b)) visit(tx, ty);
+  // An AI RT's Kantor serves the player's buildings in its cell, over its paths.
+  for (const n of s.neighbours ?? []) for (const b of n.buildings) if (isHub(b)) for (const [tx, ty] of ring(b)) visit(tx, ty);
   while (queue.length) {
     const k = queue.pop()!;
     const x = k % GRID_W;

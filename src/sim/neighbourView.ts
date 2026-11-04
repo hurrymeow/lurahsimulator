@@ -26,11 +26,12 @@ function playerCellView(s: GameState, n: Neighbour): GameState {
 /** The AI RT as a state of its own, so the player's scoring, combo and star code can read it unchanged. */
 export function viewOf(s: GameState, n: Neighbour): GameState {
   if (n.run === 'player') return playerCellView(s, n);
-  const social = n.buildings.filter((b) => SOCIAL.has(b.def)).length;
+  const social = [...n.buildings, ...s.buildings.filter((b) => inCell(n, b))].filter((b) => SOCIAL.has(b.def)).length;
   const posyandu = s.buildings.reduce((sum, b) => sum + (b.def === 'posyandu' && b.status === 'active' ? b.level : 0), 0);
   return {
     ...s,
-    buildings: n.buildings,
+    // What the player built in this RT's cell counts for it, as the AI's own buildings do.
+    buildings: [...n.buildings, ...s.buildings.filter((b) => inCell(n, b))],
     // A head count, not people: each stands in as a resident with no job, so code that reads residents never meets a hole.
     residents: Array.from({ length: n.pop }, (_, i) => ({ id: -1 - i, name: '', job: 'none', pensiun: 0, fake: 0, arrived: 0 })) as Resident[],
     discovered: n.discovered,

@@ -83,6 +83,10 @@ export const NEIGHBOUR = {
   sabarPerSocial: 5,
   sabarMax: 80,
   startPop: 2,
+  /** Kunjungan (a visit): Orang Dalam it costs, warga it brings at once, and weeks before the same RT can be visited again. */
+  visitOd: 1,
+  visitWarga: 3,
+  visitEvery: 12,
 };
 
 /** The tukang parkir liar. */

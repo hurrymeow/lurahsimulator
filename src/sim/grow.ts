@@ -68,6 +68,13 @@ export const neighbourAt = (s: GameState, x: number, y: number): Building | unde
   return s.neighbours.find((n) => n.cx === cx && n.cy === cy)?.buildings.find((b) => covers(b, x, y));
 };
 
+/** True on a tile of an AI-run RT's own lot (not its seams), where the player may build an RT building. */
+export const aiLotAt = (s: GameState, x: number, y: number): boolean => {
+  if (isSeam(x, y)) return false;
+  const { cx, cy } = cellOf(x, y);
+  return s.neighbours.some((n) => n.cx === cx && n.cy === cy && n.run !== 'player');
+};
+
 function addTo(s: GameState, n: Neighbour, id: string, x: number, y: number, rot: 0 | 1 = 0): Building {
   const b: Building = { uid: s.nextUid++, def: id, x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: s.month };
   if (rot) b.rot = rot;
@@ -76,7 +83,10 @@ function addTo(s: GameState, n: Neighbour, id: string, x: number, y: number, rot
 }
 
 /** Every tile the RT's buildings cover, so a big building never lands on part of another. */
-const takenTiles = (n: Neighbour): Set<string> => new Set(n.buildings.flatMap((b) => tilesOf(b).map((p) => `${p.x},${p.y}`)));
+/** The player's own buildings inside an AI-run RT's cell: built there by hand, they count for the RT and the AI builds round them. */
+export const playerIn = (s: GameState, n: Neighbour): Building[] => (n.run === 'player' ? [] : s.buildings.filter((b) => inCell(n, b)));
+
+const takenTiles = (s: GameState, n: Neighbour): Set<string> => new Set([...n.buildings, ...playerIn(s, n)].flatMap((b) => tilesOf(b).map((p) => `${p.x},${p.y}`)));
 
 /** How a building fits at a free tile of the RT's lot: unturned, turned, or not at all. */
 function fitAt(n: Neighbour, taken: Set<string>, id: string, x: number, y: number): 0 | 1 | null {
@@ -86,10 +96,10 @@ function fitAt(n: Neighbour, taken: Set<string>, id: string, x: number, y: numbe
 }
 
 /** True when the RT's lot has no free tile left: Dana then waits, so the screen says why. */
-export const lotFull = (n: Neighbour): boolean => freeTiles(n).length === 0;
+export const lotFull = (s: GameState, n: Neighbour): boolean => freeTiles(s, n).length === 0;
 
-function freeTiles(n: Neighbour): { x: number; y: number }[] {
-  const taken = takenTiles(n);
+function freeTiles(s: GameState, n: Neighbour): { x: number; y: number }[] {
+  const taken = takenTiles(s, n);
   const out: { x: number; y: number }[] = [];
   const o = cellOrigin(n.cx, n.cy);
   for (let y = o.y; y < o.y + RT_H; y++)
@@ -115,7 +125,8 @@ export function layAiPath(s: GameState, n: Neighbour, b: Building): boolean {
   const inside = (x: number, y: number) => cellOf(x, y).cx === n.cx && cellOf(x, y).cy === n.cy && !isSeam(x, y);
   const taken = new Set<number>();
   const roads = new Set<number>();
-  for (const o of n.buildings) {
+  // The player's own paths in the cell serve the AI too; the player's buildings are in the way like its own.
+  for (const o of [...n.buildings, ...playerIn(s, n)]) {
     if (o.def === PATH) roads.add(key(o.x, o.y));
     else for (const p of tilesOf(o)) taken.add(key(p.x, p.y));
   }
@@ -254,6 +265,36 @@ export function takeover(s: GameState, n: Neighbour): string | null {
   return null;
 }
 
+/** Weeks until this RT can have another Kunjungan; 0 when it can now. */
+export const visitWait = (s: GameState, n: Neighbour): number =>
+  n.visitedAt === undefined ? 0 : Math.max(0, n.visitedAt + NEIGHBOUR.visitEvery - s.month);
+
+/** Why the player cannot visit this RT now, or null. */
+export function checkVisit(s: GameState, n: Neighbour): string | null {
+  if (n.run === 'player') return t('grow.visitOwn');
+  const wait = visitWait(s, n);
+  if (wait) return t('grow.visitWait', { n: wait });
+  if (lotFull(s, n)) return t('grow.lotFull');
+  if (s.res.orangDalam < NEIGHBOUR.visitOd) return t('grow.visitOd', { n: NEIGHBOUR.visitOd });
+  return null;
+}
+
+/**
+ * Kunjungan: Pak RT drops by with 1 Orang Dalam. The RT builds its next build now, free, and a few warga move in at
+ * once. One visit per RT per quarter, so keys cannot buy stars too fast.
+ */
+export function visit(s: GameState, n: Neighbour): string | null {
+  const why = checkVisit(s, n);
+  if (why) return why;
+  s.res.orangDalam -= NEIGHBOUR.visitOd;
+  n.visitedAt = s.month;
+  build(s, n);
+  n.lastBuild = s.month;
+  if (ownRw(n)) s.stempel.backlog += STEMPEL.perBuild * (n.trait === 'jarang' ? 2 : 1) * letterMult(s);
+  n.pop = Math.min(housing(viewOf(s, n)), n.pop + NEIGHBOUR.visitWarga);
+  return null;
+}
+
 /** Joins an RT to the player at promotion: no Orang Dalam cost, and it can never be handed back. */
 export function absorb(s: GameState, n: Neighbour): void {
   n.joined = n.buildings.filter((b) => !def(b.def).pathIncome).length;
@@ -302,7 +343,7 @@ function autoFund(s: GameState): void {
 
 function build(s: GameState, n: Neighbour): void {
   const v = viewOf(s, n);
-  const free = freeTiles(n);
+  const free = freeTiles(s, n);
   if (!free.length) return;
   let id: string;
   const built = builtBy(n);
@@ -312,7 +353,7 @@ function build(s: GameState, n: Neighbour): void {
     id = nextWant(n);
   }
   // A big building needs every tile of its footprint free: keep only the spots it fits, turned if need be.
-  const taken = takenTiles(n);
+  const taken = takenTiles(s, n);
   const rotAt = new Map<string, 0 | 1>();
   for (const f of free) {
     const r = fitAt(n, taken, id, f.x, f.y);

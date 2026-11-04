@@ -1765,7 +1765,7 @@ test.describe('growing map', () => {
     for (const w of walkers) expect(w.cx + w.cy).toBeGreaterThan(0);
   });
 
-  test('taking an RT over makes its lots the player own, and it can be handed back', async ({ page }) => {
+  test('an AI RT takes a Kunjungan, Go to RT shows its lots, and the player can build there', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     await page.evaluate(() => {
@@ -1773,45 +1773,57 @@ test.describe('growing map', () => {
       app.speed = 0;
       app.promote();
       app.s.res.orangDalam = 5;
+      app.s.res.rupiah = 50_000_000;
       app.refresh();
     });
     await dismissModals(page);
     await openPanel(page, 'neighbours');
     await page.locator('[data-nb-row]').first().click();
-    await page.locator('.sheet [data-takeover]').click();
-    await expect(page.locator('.sheet .nb-mine')).toHaveCount(1);
-    await page.locator('.sheet .nb-mine').click();
-    await expect(page.locator('.sheet .checklist li').first()).toBeVisible();
-    await expectLegible(page, 'neighbours with a player-run RT');
-    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].run)).toBe('player');
-    await page.locator('.sheet-head .btn-icon').click();
-    await dismissModals(page);
-    // A tap on its Kantor RT now opens the building, not the Neighbours panel.
-    const at = await page.evaluate(async () => {
+    // Takeover is retired: no Ambil alih, no Serahkan.
+    await expect(page.locator('.sheet [data-takeover], .sheet [data-handback]')).toHaveCount(0);
+    await expectLegible(page, 'neighbour detail with Kunjungan');
+    const built = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].buildings.length);
+    const before = await built();
+    await page.locator('#nb-visit').click();
+    expect(await built()).toBeGreaterThan(before);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.res.orangDalam)).toBe(4);
+    // A second visit waits a quarter, and says so.
+    await expect(page.locator('#nb-visit')).toBeDisabled();
+    await expect(page.locator('.sheet')).toContainText(lang() === 'en' ? 'Again in 12 weeks' : 'Lagi dalam 12 minggu');
+    // Go to RT closes the sheet and centres the map on the RT.
+    await page.locator('#nb-goto').click();
+    await expect(page.locator('#sheet')).toBeHidden();
+    const centred = await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
-      const v = app.view;
-      // After the takeover its buildings are the player's, so look in both lists.
       const n = app.s.neighbours[0];
-      const k = [...app.s.buildings, ...n.buildings].find((b: any) => b.def === 'kantorRT' && Math.floor(b.x / app.rt.w) === n.cx && Math.floor(b.y / app.rt.h) === n.cy);
-      const c = v.project(k.x + 0.5, k.y + 0.5);
-      v.panBy(v.viewW / 2 - c.x, v.viewH / 2 - c.y);
-      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-      const p = v.project(k.x + 0.5, k.y + 0.5);
-      return { x: p.x, y: p.y };
+      const p = app.view.project(n.cx * app.rt.w + app.rt.w / 2, n.cy * app.rt.h + app.rt.h / 2);
+      return { dx: Math.abs(p.x - app.view.viewW / 2), dy: Math.abs(p.y - app.view.viewH / 2), w: app.view.viewW, h: app.view.viewH };
     });
-    const box = (await page.locator('#map').boundingBox())!;
-    await page.mouse.click(box.x + at.x, box.y + at.y);
-    await expect(page.locator('.sheet')).toBeVisible();
-    await expect(page.locator('[data-nb-row]')).toHaveCount(0);
-    await page.locator('.sheet-head .btn-icon').first().click();
-    // Hand it back: the AI runs it again.
-    await openPanel(page, 'neighbours');
-    await page.locator('.sheet .nb-mine').click();
-    await page.locator('.sheet [data-handback]').click();
-    await expect(page.locator('.sheet .nb-mine')).toHaveCount(0);
-    // The toast says what happens next: it builds only with Dana banked.
-    await expect(page.locator('#ticker')).toContainText(lang() === 'en' ? 'back with the AI' : 'kembali dijalankan AI');
-    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours[0].run)).toBeUndefined();
+    expect(centred.dx).toBeLessThan(centred.w / 3);
+    expect(centred.dy).toBeLessThan(centred.h / 3);
+    // A Warung on a free tile of the AI RT is placed like any other, and is the player's.
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('warung'));
+    const spot = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const n = app.s.neighbours[0];
+      const busy = (x: number, y: number) => [...app.s.buildings, ...n.buildings].some((b: any) => b.x === x && b.y === y);
+      const cx = n.cx * app.rt.w + Math.floor(app.rt.w / 2);
+      const cy = n.cy * app.rt.h + Math.floor(app.rt.h / 2);
+      for (let r = 2; r < 6; r++)
+        for (let dy = -r; dy <= r; dy++)
+          for (let dx = -r; dx <= r; dx++)
+            if (!busy(cx + dx, cy + dy) && !busy(cx + dx + 1, cy + dy) && !busy(cx + dx, cy + dy + 1)) {
+              const c = app.view.tileCentre(cx + dx, cy + dy);
+              const m = document.getElementById('map')!.getBoundingClientRect();
+              if (c.x > 20 && c.y > 80 && c.x < m.width - 20 && c.y < m.height - 80) return { x: cx + dx, y: cy + dy, sx: m.left + c.x, sy: m.top + c.y };
+            }
+      return null;
+    });
+    expect(spot).not.toBeNull();
+    await page.mouse.click(spot!.sx, spot!.sy);
+    await expect(page.locator('#place-ok')).toBeEnabled();
+    await page.locator('#place-ok').click();
+    expect(await page.evaluate(({ x, y }) => (window as unknown as { pakrt: any }).pakrt.s.buildings.some((b: any) => b.def === 'warung' && b.x === x && b.y === y), spot!)).toBe(true);
   });
 });
 

@@ -4,7 +4,7 @@ import { REFUND } from './balance';
 import { lotAt, type Lot } from './area';
 import { def, gateOf, hasDef, sizeFor } from './content';
 import { gateOpen } from './gate';
-import { neighbourAt } from './grow';
+import { aiLotAt, neighbourAt } from './grow';
 import { stageTitle } from './stages';
 import { hasProblem } from './problems';
 import { FLAT, refreshAccess } from './access';
@@ -60,8 +60,9 @@ export function siteGaps(s: GameState, d: BuildingDef, x: number, y: number, ign
   const lots = off ? [] : tiles.map((p) => lotAt(p.x, p.y));
   if (off) missing.push(t('sim.offMap'));
   else if (hit) missing.push(t('sim.tileHas', { name: bName(def(hit.def)) }));
-  else if (lots.includes('other')) missing.push(t('sim.notYours'));
-  else if (lots.some((l) => !LOTS[d.scope ?? 'rt'].includes(l))) missing.push(t(d.scope === 'kel' ? 'sim.needKelLot' : d.scope === 'rw' ? 'sim.needLot' : 'sim.needRtLot'));
+  // An AI-run RT's free lots take the player's RT buildings too: they count for that RT, the kas pays as usual.
+  else if (lots.includes('other') && !((d.scope ?? 'rt') === 'rt' && tiles.every((p) => aiLotAt(s, p.x, p.y)))) missing.push(t('sim.notYours'));
+  else if (lots.some((l) => l !== 'other' && !LOTS[d.scope ?? 'rt'].includes(l))) missing.push(t(d.scope === 'kel' ? 'sim.needKelLot' : d.scope === 'rw' ? 'sim.needLot' : 'sim.needRtLot'));
   return missing;
 }
 

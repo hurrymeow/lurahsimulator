@@ -3,13 +3,13 @@ import { cellOf, cellOrigin, lotAt, ungapTile } from '../src/sim/area';
 import { goalProgress, nextStarChecklist } from '../src/sim/stages';
 import { viewOf } from '../src/sim/neighbourView';
 import { FLAT, connectedRoad, hasRoadBeside } from '../src/sim/access';
-import { absorb, nextWant, rivalTarget, lotFull, builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, neighboursSystem, promote, setAutoFund, takeover } from '../src/sim/grow';
+import { absorb, checkVisit, visit, nextWant, rivalTarget, lotFull, builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, neighboursSystem, promote, setAutoFund, takeover } from '../src/sim/grow';
 import { NEIGHBOUR } from '../src/sim/balance';
-import { checkPlace, siteGaps } from '../src/sim/rules';
+import { checkPlace, place, siteGaps } from '../src/sim/rules';
 import { def } from '../src/sim/content';
 import { areaScore, scoreParts } from '../src/sim/ranking';
 import { deserialize, serialize } from '../src/sim/save';
-import { addBuilding, addResident, emptyTiles, newGame, population, sprawl } from '../src/sim/state';
+import { addBuilding, addResident, emptyTiles, newGame, population, sprawl, tilesOf } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
 import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, SEAM, mapSpan, setGrid } from '../src/sim/types';
 
@@ -99,13 +99,61 @@ describe('lots', () => {
     expect(lotAt(CELL_W + 2, CELL_H + 2)).toBe('other');
   });
 
-  it('refuses to build in an AI RT or on a seam with an RT building', () => {
+  it('lets the player build RT buildings on an AI RT\'s free lots, never on its buildings, its seams or with an RW building', () => {
     const s = grown();
     s.res.rupiah = 50_000_000;
-    expect(checkPlace(s, 'warung', CELL_W + 3, 3)).toEqual({ ok: false, missing: ['That is another RT. Fund it and it builds there itself.'] });
+    const n = s.neighbours[0];
+    const o = cellOrigin(n.cx, n.cy);
+    const taken = (x: number, y: number) => n.buildings.some((b) => b.x === x && b.y === y);
+    let spot = { x: -1, y: -1 };
+    for (let y = o.y + 1; y < o.y + RT_H - 1 && spot.x < 0; y++) for (let x = o.x + 1; x < o.x + RT_W - 1; x++) if (!taken(x, y) && checkPlace(s, 'warung', x, y).ok) { spot = { x, y }; break; }
+    expect(spot.x).toBeGreaterThanOrEqual(0);
+    const k = n.buildings.find((b) => b.def === 'kantorRT')!;
+    expect(checkPlace(s, 'warung', k.x, k.y).ok).toBe(false);
+    expect(siteGaps(s, def('balaiRW'), spot.x, spot.y)).toEqual(['Another RT: only RT buildings go on its lots.']);
     const seam = checkPlace(s, 'warung', RT_W, 3);
     expect(seam.ok).toBe(false);
     expect(checkPlace(s, 'warung', 2, 2)).toEqual({ ok: true });
+  });
+
+  it('Kunjungan: 1 Orang Dalam, the RT builds now and gains warga, once a quarter per RT', () => {
+    const s = grown();
+    const n = s.neighbours[0];
+    s.res.orangDalam = 3;
+    const built = builtBy(n).length;
+    const pop = n.pop;
+    expect(checkVisit(s, n)).toBeNull();
+    expect(visit(s, n)).toBeNull();
+    expect(s.res.orangDalam).toBe(2);
+    expect(builtBy(n).length).toBe(built + 1);
+    expect(n.pop).toBeGreaterThan(pop);
+    // The same RT waits a quarter; the key is not spent on a refusal.
+    expect(visit(s, n)).toBe('Visited lately. Again in 12 weeks.');
+    expect(s.res.orangDalam).toBe(2);
+    s.month += 12;
+    expect(checkVisit(s, n)).toBeNull();
+    s.res.orangDalam = 0;
+    expect(checkVisit(s, n)).toBe('Needs 1 Orang Inside.');
+  });
+
+  it('a building the player puts in an AI RT counts for that RT, and the AI never builds over it', () => {
+    const s = grown();
+    s.res.rupiah = 500_000_000;
+    const n = s.neighbours[0];
+    const o = cellOrigin(n.cx, n.cy);
+    const mine: { x: number; y: number }[] = [];
+    for (let y = o.y + 1; y < o.y + RT_H - 1 && mine.length < 3; y++)
+      for (let x = o.x + 1; x < o.x + RT_W - 1 && mine.length < 3; x++)
+        if (checkPlace(s, 'rumah', x, y).ok) {
+          place(s, 'rumah', x, y);
+          mine.push({ x, y });
+        }
+    expect(mine).toHaveLength(3);
+    for (const b of s.buildings) if (b.def === 'rumah') b.status = 'active';
+    expect(viewOf(s, n).buildings.filter((b) => b.def === 'rumah').length).toBe(n.buildings.filter((b) => b.def === 'rumah').length + 3);
+    setAutoFund(n, 12);
+    for (let m = 0; m < 120; m++) neighboursSystem(s, []);
+    for (const p of mine) expect(n.buildings.some((b) => tilesOf(b).some((t) => t.x === p.x && t.y === p.y)), `${p.x},${p.y}`).toBe(false);
   });
 
   it('lets RW and Kelurahan buildings stand inside the RT as well as on their own seams', () => {
@@ -706,12 +754,12 @@ describe('handing an RT back', () => {
   it('says when the lot is full, the other reason an RT stops building', () => {
     const s = taken();
     const n = s.neighbours[0];
-    expect(lotFull(n)).toBe(false);
+    expect(lotFull(s, n)).toBe(false);
     const o = cellOrigin(n.cx, n.cy);
     for (let y = o.y; y < o.y + RT_H; y++)
       for (let x = o.x; x < o.x + RT_W; x++)
         if (!n.buildings.some((b) => b.x === x && b.y === y)) n.buildings.push({ uid: s.nextUid++, def: 'rumah', x, y, level: 1, status: 'active', timer: 0, invested: 0, placedAt: 0 });
-    expect(lotFull(n)).toBe(true);
+    expect(lotFull(s, n)).toBe(true);
   });
 });
 
