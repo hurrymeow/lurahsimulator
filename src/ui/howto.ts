@@ -72,6 +72,8 @@ export const STEPS: Step[] = [
   { id: 'ranking', n: 10, when: (s) => s.ranking.length >= 1, pics: [{ word: 'how.pic.us' }, { text: 'vs' }, { word: 'how.pic.them' }] },
   // The 2nd RT: the first letter from a build there, then the first building to open there.
   { id: 'letters', n: 14, tipOnly: true, when: (s) => s.stage.current === 'rw' && s.stempel.sent, pics: [{ word: 'how.pic.letter' }, { text: '›' }, { word: 'how.pic.stempel' }] },
+  // The first AI RTs: once one has Dana, the two other ways to help it.
+  { id: 'aiHelp', n: 16, tipOnly: true, when: (s) => s.neighbours.some((n) => n.run !== 'player' && n.everFunded), pics: [{ word: 'how.pic.visit' }, { text: '+' }, { sprite: 'warung' }] },
   { id: 'sebelahStars', n: 15, tipOnly: true, when: (s) => s.stage.current === 'rw' && goalProgress(s, { kind: 'sebelahBuilds', n: 1 }).have >= 1, pics: [{ sprite: 'kantorRT' }, { text: '★' }] },
 ];
 

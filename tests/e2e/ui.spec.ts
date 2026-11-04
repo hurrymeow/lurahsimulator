@@ -1769,6 +1769,75 @@ test.describe('growing map', () => {
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.stempel.backlog)).toBeGreaterThan(0);
   });
 
+  test('the AI RT tutorial walks RW 2, Menu, Neighbours, Dana and the next ways to help', async ({ page }) => {
+    // A game past the first build and the 2nd RT, reopened with the coach on.
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      localStorage.setItem('pakrt.coach', 'done');
+      localStorage.setItem('pakrt.coach.rt2', 'done');
+      localStorage.setItem('pakrt.tips', JSON.stringify({ seen: ['orang', 'house', 'combo', 'comboFound', 'jobs', 'wacana', 'trouble', 'banjir', 'road', 'ranking', 'letters', 'sebelahStars'] }));
+      (window as unknown as { pakrt: any }).pakrt.save();
+    });
+    await page.goto(`/?debug&coach&lang=${lang()}`);
+    await passHome(page);
+    await page.evaluate(() => document.fonts.ready);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.promote();
+      app.promote();
+      app.s.res.rupiah = 50_000_000;
+      app.refresh();
+    });
+    // It waits behind the promotion notices.
+    await expect(page.locator('#modal')).toBeVisible();
+    await expect(page.locator('#coach')).toBeHidden();
+    await dismissModals(page);
+    // Meet RW 2: the map moves there, and time holds until Got it.
+    await expect(page.locator('#coach')).toContainText('RW 2');
+    const seen = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const n = app.s.neighbours.find((x: any) => x.run !== 'player');
+      const p = app.view.project(n.cx * app.rt.w + app.rt.w / 2, n.cy * app.rt.h + app.rt.h / 2);
+      return { dx: Math.abs(p.x - app.view.viewW / 2), dy: Math.abs(p.y - app.view.viewH / 2), w: app.view.viewW, h: app.view.viewH, held: app.held };
+    });
+    expect(seen.dx).toBeLessThan(seen.w / 3);
+    expect(seen.dy).toBeLessThan(seen.h / 3);
+    expect(seen.held).toBe(true);
+    await expectLegible(page, 'AI RT arrival note');
+    await page.locator('#coach-skip').click();
+    // The note walks Menu, Neighbours and a row, pointing at each.
+    await expect(page.locator('#menu-btn')).toHaveClass(/coach-pulse/);
+    await expectCoachClear(page, ['#menu-btn'], 'AI RT menu step');
+    await expectLegible(page, 'AI RT menu note');
+    await page.locator('#menu-btn').click();
+    await expect(page.locator('#act-neighbours')).toHaveClass(/coach-pulse/);
+    await expectCoachClear(page, ['#act-neighbours'], 'AI RT neighbours step');
+    await expectLegible(page, 'AI RT neighbours note');
+    await page.locator('#act-neighbours').click();
+    await expect(page.locator('[data-nb-row]').first()).toHaveClass(/coach-pulse/);
+    await expectCoachClear(page, ['[data-nb-row]'], 'AI RT row step');
+    await expectLegible(page, 'AI RT row note');
+    await page.locator('[data-nb-row]').first().click();
+    // Dana: the note stays until an RT is funded.
+    await expect(page.locator('#sheet [data-fund="1"]')).toHaveClass(/coach-pulse/);
+    await expect(page.locator('#coach')).toContainText('Dana');
+    await expectCoachClear(page, ['#sheet [data-fund]'], 'AI RT Dana step');
+    await expectLegible(page, 'AI RT Dana note');
+    await page.locator('#sheet [data-fund="1"]').click();
+    await expect(page.locator('#coach')).toBeHidden();
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.some((n: any) => n.everFunded))).toBe(true);
+    // The other ways to help: a card once the sheet is closed.
+    await page.locator('#sheet .sheet-head .btn-icon').last().click();
+    await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+    await expect(page.locator('#modal')).toContainText(lang() === 'en' ? 'Two more ways to help' : 'Dua cara lain membantu');
+    await expectLegible(page, 'AI RT help card');
+    await dismissModals(page);
+    await expect(page.locator('#coach')).toBeHidden();
+  });
+
   test('the 2nd RT tutorial walks arrival, first build, letters and stars', async ({ page }) => {
     // A game past the first build, reopened with the coach on.
     await start(page);
