@@ -26,6 +26,11 @@ export const EXPECT_PER_RESIDENT = 0.14;
 export const EXPECT_KEC = { share: 0.6 };
 /** At the Kelurahan the player's kampung spans two RTs of land, so each resident weighs less. */
 export const EXPECT_KEL = { share: 0.7 };
+/**
+ * At the Kelurahan, residents past `from` expect only `share` as much. Without it a kampung that grew past the
+ * 3-star 200 settled under the Popularitas bar for good (TODO: "Stop a big kampung getting stuck"). decisions/big-kampung-taper.md.
+ */
+export const EXPECT_TAPER = { from: 200, share: 0.5 };
 /** Months without anything new before the pacing director steps in. */
 export const NOVELTY_GAP = 8;
 /** Each Viral point adds this fraction to shop income. */

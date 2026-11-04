@@ -2,7 +2,7 @@ import { t } from '../i18n';
 import type { App } from '../app';
 import { STEMPEL } from '../sim/balance';
 import { nextStep } from '../sim/nextstep';
-import { nextStarChecklist } from '../sim/stages';
+import { GOAL_HOW, nextStarChecklist } from '../sim/stages';
 import { h } from './dom';
 import { SHEET_OPENED } from './sheet';
 
@@ -14,6 +14,8 @@ import { SHEET_OPENED } from './sheet';
 export function setupGoal(app: App): void {
   const el = document.getElementById('goal')!;
   let open = false;
+  // Which unmet goal shows its how-to line. One at a time, so the list stays short; tap another goal to move it.
+  let howAt = 0;
   const text = h('span', { class: 'goal-text' });
   const now = h('button', { class: 'goal-now', id: 'goal-now', type: 'button', 'aria-expanded': 'false' }, text);
   const star = h('div', { class: 'goal-star', hidden: true });
@@ -36,8 +38,16 @@ export function setupGoal(app: App): void {
     el.hidden = !left.length && !step;
     text.textContent = t('goal.label', { goal: stepLeads ? step!.text : left[0]?.short ?? '' });
     // Opened: every unmet goal, then the step when the line does not already say it.
+    if (howAt >= left.length) howAt = 0;
     const rows = [
-      ...left.map((l) => h('p', { class: 'goal-row' }, l.holding ? `★ ${l.text} · ${t('goal.onTrack')}` : `★ ${l.text}`)),
+      ...left.flatMap((l, i) => {
+        const row = h('button', { class: 'goal-row', type: 'button', 'aria-expanded': String(i === howAt) }, l.holding ? `★ ${l.text} · ${t('goal.onTrack')}` : `★ ${l.text}`);
+        row.addEventListener('click', () => {
+          howAt = i;
+          app.refresh();
+        });
+        return i === howAt ? [row, h('p', { class: 'goal-row goal-how' }, t(GOAL_HOW[l.goal.kind]))] : [row];
+      }),
       ...(step && !stepLeads ? [h('p', { class: 'goal-row goal-step' }, t('goal.step', { step: step.text }))] : []),
       ...(left.some((l) => l.goal.kind === 'stempelClear')
         ? [h('p', { class: 'goal-row goal-step' }, t('goal.stempelHelp', { base: STEMPEL.base, perBalai: STEMPEL.perBalai }))]

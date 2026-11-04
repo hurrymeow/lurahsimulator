@@ -64,6 +64,9 @@ html:not(.theme-dark) #chip-pop img { filter: brightness(0.18); }
 .goal-now[aria-expanded='true']::after { content: ' ▴'; }
 .goal-star { padding: 0 10px 8px; font-size: 16px; line-height: 1.3; color: var(--cs-ink); }
 .goal-row { margin: 2px 0 0; }
+/* Each unmet goal is a row the player can tap to see how to reach it. */
+button.goal-row { display: block; width: 100%; min-height: 28px; padding: 2px 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.goal-how { margin: 0 0 4px; padding-left: 14px; color: var(--cs-ink-2); }
 .goal-step { margin-top: 6px; font-weight: 700; }
 #emas { flex: none; min-height: var(--touch); padding: 0 10px; gap: 6px; border: 0; border-left: 1px solid var(--cs-line); background: none; }
 #emas .emas-track { flex: none; width: 44px; }
@@ -163,8 +166,8 @@ html:not(.theme-dark) :is(#hud, #bottombar, #goal, #ticker) :is(.missing, .warn)
 #goal.cs-goal-float { position: absolute; top: 6px; left: 6px; right: 104px; z-index: 6; background: var(--cs-cream); border: 1px solid var(--cs-line); box-shadow: 2px 2px 0 var(--cs-shadow); }
 .cs-goal-float .goal-now { min-height: 30px; padding: 2px 8px; line-height: 1.2; }
 .cs-goal-float .goal-star { padding: 0 8px 6px; }
-/* One line, cut with an ellipsis; tapping the pill opens the whole line. UI.md rule 5 exception. */
-.cs-goal-float .goal-now { display: flex; align-items: flex-start; gap: 4px; width: 100%; }
+/* Up to two lines, never cut; the label and its arrow sit in the vertical middle of the bar. */
+.cs-goal-float .goal-now { display: flex; align-items: center; gap: 4px; width: 100%; }
 .cs-goal-float .goal-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .cs-goal-float .goal-now::after { flex: none; }
 @media (max-height: 640px) { .cs-goal-float { right: 6px; } }

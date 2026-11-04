@@ -75,6 +75,32 @@ const GOAL_CHECKS: { [K in Goal['kind']]: (s: GameState, g: Extract<Goal, { kind
 /** Goals met from below: the line is done while `have` stays under `need`. */
 const UNDER = new Set<Goal['kind']>(['pinjolUnder']);
 
+/** One plain line per goal kind that names the action, shown under the goal the player taps open. */
+export const GOAL_HOW: Record<Goal['kind'], Key> = {
+  residents: 'goal.how.residents',
+  combos: 'goal.how.combos',
+  rankWins: 'goal.how.rankWins',
+  winStreak: 'goal.how.winStreak',
+  sabar: 'goal.how.sabar',
+  rwCombos: 'goal.how.rwCombos',
+  fundedRts: 'goal.how.fundedRts',
+  stempelClear: 'goal.how.stempelClear',
+  rtsAtStars: 'goal.how.rtsAtStars',
+  rwsAtStars: 'goal.how.rwsAtStars',
+  sebelahAtStars: 'goal.how.sebelahAtStars',
+  rw2AtStars: 'goal.how.rw2AtStars',
+  tierWins: 'goal.how.tierWins',
+  noDebtMonths: 'goal.how.noDebtMonths',
+  serapanMonths: 'goal.how.serapanMonths',
+  cleanAudits: 'goal.how.cleanAudits',
+  kelsAtStars: 'goal.how.kelsAtStars',
+  built: 'goal.how.built',
+  pinjolUnder: 'goal.how.pinjolUnder',
+  amanWeeks: 'goal.how.amanWeeks',
+  amanNow: 'goal.how.amanNow',
+  noRaziaWeeks: 'goal.how.noRaziaWeeks',
+};
+
 const GOAL_KEYS: Record<Goal['kind'], Key> = {
   residents: 'stage.goal.residents',
   combos: 'stage.goal.combos',
