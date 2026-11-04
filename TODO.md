@@ -10,15 +10,18 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ### Now
 
-- [ ] **Cut text on the 6 screens that fail UI rule 13: Build cards, Staff, Neighbours, Stats, the opener and How to Play.**
-  - Problem: audit 2026-11-01, words in view at 320 ID → 412 EN: Build tabs 38–51 → 80–101 (block 24, 573 per tab), Neighbours 97 → 146 (block 32, 1,202 per sheet), Stats 54 → 83, Staff 43 → 71, opener 95 → 113 (block 28), How-to 94. Rule 13 allows 50 in view, 20 per block, 300 per sheet; rule 7 allows 20 per tip.
-  - Why: players skim about 20% of the words; a wall of text hides the one line that matters.
-  - In flight: the executor runs `docs/plans/ui-audit-fixes.md` T6 to T14. The Neighbours part moved to `docs/plans/neighbour-sheet.md`.
-  - Neighbours (Tetangga), Hari 2026-11-01 (screenshot): the sheet opens with five rule paragraphs before any RT data, so it is too texty and too long, with no hierarchy. Each RT row is plain text, so the scores do not stand out.
-  - Neighbours fix: show the RT rows first, with the score and star as the one emphasised number per row. Move the rules out of the sheet or cut them to one short line. Turn each row into a tappable list item with a clear secondary action, following the Wacana list (#230) and UI.md rule 14 button roles. Keep it within the rule 13 caps.
-  - Suggested solution: `docs/plans/ui-audit-fixes.md` T6 (Build cards), T7 (Neighbours, Stats, Staff) and T8 (opener, How-to, toasts). Wacana is in the hierarchy plan.
-  - Source: UI.md rules 7 and 13; audit `audit/ui-rules-2026-11-01/report.md`
-  - `claimed · Claude (session ccr-6d1d7130) · 2026-11-04 · done when:` all six pass rules 7 and 13 at 320 to 430px in EN and ID. This claim covers Staff (T7), the opener (T8), Stats (T12) and How to Play (T13); Build cards (T6) stay with executor PR #255.
+- [ ] **Cut text on the Build cards (UI rule 13), the last screen of the six.**
+  - Problem: the Build tabs show 82 to 102 words in view (cap 50) and blocks up to 24 words (cap 20), so all four tabs sit in `DENSITY_ALLOW` in `tests/e2e/ui.spec.ts`. In English at 412px, Build tab 2 counts 102, one over its cap of 101, on main (EN is not in CI).
+  - Why: players skim about 20% of the words; the card's one useful line is lost in the blurb and meta lines.
+  - Suggested solution: `docs/plans/ui-audit-fixes.md` T6: one line per card, an info button opens the detail. Executor PR #255 has been a draft since 2026-11-01; finish it or take it over.
+  - Source: audit `audit/ui-rules-2026-11-01/report.md`; `decisions/ui-text-cuts-batch.md`
+  - `open · — · — · done when:` the four `build` entries are deleted from `DENSITY_ALLOW` and the density test passes at 320 to 430px in EN and ID.
+- [ ] **Warga list over its word cap in English.**
+  - Problem: in English at 412px the Warga sheet counts 496 words when scrolled, over its `DENSITY_ALLOW` cap of 494, on main. EN is not in CI, so nothing failed.
+  - Why: the allowlist caps say a screen can only get better; this one drifted.
+  - Suggested solution: shorten the per-job group lines in `src/ui/lists.ts` or collapse groups behind a tap; then delete or lower the `warga` cap.
+  - Source: local run of the density test, `decisions/ui-text-cuts-batch.md`
+  - `open · — · — · done when:` the density test passes at 412px EN with the `warga` cap at or under today's ID count.
 
 ### Next
 
@@ -79,20 +82,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: `docs/plans/ui-audit-fixes.md` T10 (checks, remove the `data-clamp` skip) and T11 (re-audit at 4 widths, both themes, RT, Kelurahan and Kecamatan seeds).
   - Source: UI.md "How each rule is checked"
   - `open · — · — · done when:` the checks run in CI, and the re-audit report shows every screen passing or lists the rest as TODO items.
-- [ ] **Events with no primary choice, Combo cards with no clamp, short toasts.**
-  - Event choices done in #252; Combo clamp and toasts remain.
-  - Problem: 2 of 3 event choices use the primary fill; Combo card effects cut with "…"; toasts run past 12 words.
-  - Why: UI.md rules 5, 14 and 16 (2026-11-01).
-  - Suggested solution: `docs/plans/ui-audit-fixes.md` T9 (events, Combo) and the toast part of T8.
-  - Source: audit `audit/ui-rules-2026-11-01/report.md`
-  - `claimed · Claude (session ccr-6d1d7130) · 2026-11-04 · done when:` 0 primaries on event choices, no Combo clamp at 320px ID, toasts 8 words or fewer.
-- [ ] **Goal pill: one plain goal, and close the expanded list when a sheet opens.**
-  - One plain goal shipped in #223; only the "close the list when a sheet opens" bug remains.
-  - Problem: the pill reads "★ berikutnya, 3 target lagi: …" and clamps. In the audit, the expanded goal list stayed open over every sheet after one tap.
-  - Why: UI.md rules 5 and 16.
-  - Suggested solution: `docs/plans/goal-line-one-goal.md`, plus collapse the list on sheet open (verify the bug first).
-  - Source: audit `audit/ui-rules-2026-11-01/report.md`
-  - `claimed · Claude (session ccr-6d1d7130) · 2026-11-04 · done when:` the pill shows "Goal: …" with no "…" at 320px ID, and opening any sheet closes the list.
 
 - [ ] **Centre button and bar text vertically.**
   - Problem: Hari, 2026-11-01 (screenshot, 412 px, ID): the labels "Terima SK" and "Tetap di sini" on the Kelurahan promotion card sit against the top edge of their buttons, with the empty space below. The goal line "Target: menang peringkat wilayah 1 kali" also sits slightly high in its bar. Other buttons, pills and bars may do the same.
@@ -170,6 +159,9 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **Cut text on Staff, Stats, the opener and How to Play (UI rule 13).** Staff is one line per person with a chip; Stats shows numbers first and the last 3 rankings, explainers behind a tap; the opener is four short lines; the Menu guide is headings that open on tap. `staff`, `stats` and `howto` left `DENSITY_ALLOW`. The Neighbours part shipped in #265. Build cards stay open above. #287, `decisions/ui-text-cuts-batch.md`.
+- [x] **Events with no primary choice, Combo cards with no clamp, short toasts.** Event choices #252; Combo tiles no longer clamp and the legibility scan has no clamp exception; toasts show the body only when the whole fits in 8 words, and all 49 notice titles are 8 words or fewer. #287.
+- [x] **Goal pill: one plain goal, and close the expanded list when a sheet opens.** One plain goal #223; the list now closes when any sheet opens. #287.
 - [x] **HIGH PRIORITY: Revamp the Neighbours sheet as a list, then a detail per RT, and remove the ranking star for AI RTs.** AI RTs skip `rankWins` and `winStreak` (`aiGoals`); the sheet is a list with one row per RT, a detail per RT and a "?" help view. DeepSeek executor, #259, #265, `docs/plans/neighbour-sheet.md`.
 - [x] **HIGH PRIORITY: Replace the construction crane with a building that rises behind scaffolding.** DeepSeek executor, #256, `decisions/rising-build.md`.
 - [x] **Remove the Desa path from the code.** Old Desa saves ask to start anew. DeepSeek executor, #257, `progress/cut-desa-code.md`.
