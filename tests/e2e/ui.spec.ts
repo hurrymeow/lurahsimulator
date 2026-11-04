@@ -1551,7 +1551,8 @@ test.describe('walkers and effects', () => {
     for (const sel of ['#hud', '#bottombar', '#menu-btn']) expect(await onTop(sel), sel).toBe('ok');
   });
 
-  test('walkers, particles and night keep the frame rate', async ({ page }) => {
+  test('walkers, particles and night keep the frame rate', async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', 'WebKit in the Linux CI container uses software rendering; this FPS threshold is meaningful only in Chromium on the same CI setup.');
     await start(page);
     await dismissModals(page);
     await seed(page);
