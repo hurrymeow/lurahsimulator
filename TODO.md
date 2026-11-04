@@ -10,38 +10,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ### Now
 
-- [ ] **HIGH PRIORITY: Revamp the Neighbours sheet as a list, then a detail per RT, and remove the ranking star for AI RTs.**
-  - Problem: At Kelurahan (16 RTs) the sheet is one long scroll. Each RT repeats a red ranking line, the score parts, Dana ×1 and ×6, four Dana otomatis toggles and a help line, Ambil alih and a help line, the trait line, the status line and the full star checklist. Five rule paragraphs come before any RT. Hari, 2026-11-01 (screenshot at RT 16): "absolutely not usable, need total revamp". Neighbour RTs also carry the RT star goals "win the ranking once" (2★) and "twice in a row" (3★), which Hari could not act on.
-  - Why: The sheet is the only place the player acts on neighbours, and it fails UI.md rule 13 (50 words in view, 20 per block, 300 per sheet) and the #242 CI scan by far. Bot run on main (RW, seed 2, 40 quarters): funded RTs beat the ranking target every quarter by 2x to 5x, and unfunded RTs stall and never win again, so the ranking goal adds no decision beyond Dana. Its target also counts quarters since game start (`rivalTarget` in `src/sim/grow.ts`), so a late RT such as RT 16 faces 341 on day one.
-  - Decided (Hari, 2026-11-01, options 1A and 3A in `/mnt/project-files/plans/neighbour-options.md`):
-    - Remove `rankWins` and `winStreak` from the AI RT star check (`neighboursSystem` in `src/sim/grow.ts`). The player's own RT keeps them. AI RTs still count in the player's area ranking (`areaScore`).
-    - Drop the per-RT ranking line and score parts (`grow.rank`, `grow.rankParts`) from the sheet.
-    - The sheet opens on a list: one row per RT with name, stars, the one blocking need (for example "needs 8 warga") and one status chip (Stalled, Building, Max). Stalled RTs sort first. One "Auto-fund all" control sits at the top.
-    - Tap a row for that RT's detail: unmet goals only, Dana ×6 as the filled button, Dana ×1, one Auto chip that cycles Off, 3, 6 and 12, then the actions from the next item. The rule paragraphs move to a "?" help sheet.
-    - Folds in the Neighbours part of "Cut text on the 6 screens that fail UI rule 13".
-  - Suggested solution: `docs/plans/neighbour-sheet.md` T1 (sim) then T2 (sheet). Was: one PR (Sonnet). Files: `src/ui/neighbours.ts`, `src/sim/grow.ts`, `src/i18n/en.ts`, `src/i18n/id.ts`, the Neighbours e2e specs. Log the choice in `decisions/neighbour-sheet.md`.
-  - Source: Hari, 2026-11-01, planning thread "Plan neighbour RT boosts and sheet".
-  - `claimed · DeepSeek executor · 2026-11-01 · done when:` the sheet passes the rule 13 scan at 320 px in EN and ID with 16 RTs, every per-RT action is one tap from its row, AI RTs have no ranking goal, and the RW and Kelurahan bots still reach their stars.
-- [ ] **HIGH PRIORITY: Replace the construction crane with a building that rises behind scaffolding.**
-  - Problem: The crane (`crane` in `src/render/iso.ts`, drawn by `site('crane', false)` in `src/render/map.ts`) is 44 px tall on a 1x1 tile. It overflows the footprint, floats over neighbouring trees, covers the "1" badges, and gives no sense of how far along the build is. Hari, 2026-11-01: it "looks bad and doesn't work".
-  - Why: UI.md rule 17 says map art stays in its footprint. A build site should show progress.
-  - Decided (Hari, 2026-11-01, option 4B in `/mnt/project-files/plans/neighbour-options.md`): drop the crane. While building, draw the full building art clipped from the ground up to its build progress, with the scaffold on top and the existing dust fx. Permit keeps the staked plot. Mangkrak keeps grey plus scaffold and does not rise, so a stalled site still looks different. Badges sit on the top of what is drawn.
-  - Suggested solution: `docs/plans/rising-build.md` T1. Was: one PR (Sonnet), independent of the neighbour items. Files: `src/render/map.ts`, `src/render/iso.ts`, `tests/e2e` build-phase specs. Update `decisions/crane-phases.md` via a new `decisions/rising-build.md`. If it reads too quiet, add a small hook and cable inside the footprint. This also removes the "native-size cranes" half of "Low and wide 2x2 art".
-  - Source: Hari, 2026-11-01, screenshot and planning thread "Plan neighbour RT boosts and sheet".
-  - `claimed · DeepSeek executor · 2026-11-01 · done when:` nothing on a build site draws outside its footprint, the site shows its progress, badges read clearly, and build-phase screenshots at 320 and 412 px pass in both languages.
-- [ ] **Remove the Desa path from the code.**
-  - Problem: Hari cut Desa on 2026-10-31, but `src/ui/stage.ts` still offers an "accept Desa" button, and `src/sim/kel.ts` and `src/sim/access.ts` still carry Desa rules (BUMDes, Embung, Pendamping Desa, Panen Raya, Wisata Edukasi).
-  - Why: the spec and the game now disagree (`decisions/cut-desa.md`). Players can pick a path the design no longer has.
-  - Suggested solution: `docs/plans/cut-desa-code.md` T1. Drop the Desa button, `path: 'desa'` and the Desa-only buildings, jobs and combos. Treat old saves with `path: 'desa'` as incompatible (no save migrations). Update tests and strings in en and id.
-  - Source: `decisions/cut-desa.md`
-  - `claimed · DeepSeek executor · 2026-11-01 · done when:` no Desa string or branch remains in `src/`, and the Kelurahan tests pass.
-
-- [ ] **Cap Pos Ronda so players use the other Popularitas buildings.**
-  - Problem: Pos Ronda has no `maxCount`. The Kelurahan bot built 20 to 90 of them to hold Popularitas in a big kampung.
-  - Why: A wall of Pos Ronda is the cheapest Popularitas, so Praktik Bidan, Panggung Senam and Kolam Pancing (#180) are skipped and the map looks the same.
-  - Suggested solution: `docs/plans/pos-ronda-cap.md` T1. Was: give Pos Ronda a `maxCount` per stage (for example 4 at RT, 8 at RW, 12 at Kelurahan), or make each one past the fourth give less. Rerun `tests/kel-bot.test.ts` and the balance tests after the weekly calendar lands, and again after the scorecard exists.
-  - Source: `decisions/kelurahan-own-kampung.md`, open question 3
-  - `claimed · DeepSeek executor · 2026-11-01 · done when:` Pos Ronda cannot be spammed, and the RT, RW and Kelurahan bots still reach their stars.
 - [ ] **Cut text on the 6 screens that fail UI rule 13: Build cards, Staff, Neighbours, Stats, the opener and How to Play.**
   - Problem: audit 2026-11-01, words in view at 320 ID → 412 EN: Build tabs 38–51 → 80–101 (block 24, 573 per tab), Neighbours 97 → 146 (block 32, 1,202 per sheet), Stats 54 → 83, Staff 43 → 71, opener 95 → 113 (block 28), How-to 94. Rule 13 allows 50 in view, 20 per block, 300 per sheet; rule 7 allows 20 per tip.
   - Why: players skim about 20% of the words; a wall of text hides the one line that matters.
@@ -50,7 +18,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Neighbours fix: show the RT rows first, with the score and star as the one emphasised number per row. Move the rules out of the sheet or cut them to one short line. Turn each row into a tappable list item with a clear secondary action, following the Wacana list (#230) and UI.md rule 14 button roles. Keep it within the rule 13 caps.
   - Suggested solution: `docs/plans/ui-audit-fixes.md` T6 (Build cards), T7 (Neighbours, Stats, Staff) and T8 (opener, How-to, toasts). Wacana is in the hierarchy plan.
   - Source: UI.md rules 7 and 13; audit `audit/ui-rules-2026-11-01/report.md`
-  - `open · — · — · done when:` all six pass rules 7 and 13 at 320 to 430px in EN and ID.
+  - `claimed · Claude (session ccr-6d1d7130) · 2026-11-04 · done when:` all six pass rules 7 and 13 at 320 to 430px in EN and ID. This claim covers Staff (T7), the opener (T8), Stats (T12) and How to Play (T13); Build cards (T6) stay with executor PR #255.
 
 ### Next
 
@@ -117,14 +85,14 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Why: UI.md rules 5, 14 and 16 (2026-11-01).
   - Suggested solution: `docs/plans/ui-audit-fixes.md` T9 (events, Combo) and the toast part of T8.
   - Source: audit `audit/ui-rules-2026-11-01/report.md`
-  - `open · — · — · done when:` 0 primaries on event choices, no Combo clamp at 320px ID, toasts 8 words or fewer.
+  - `claimed · Claude (session ccr-6d1d7130) · 2026-11-04 · done when:` 0 primaries on event choices, no Combo clamp at 320px ID, toasts 8 words or fewer.
 - [ ] **Goal pill: one plain goal, and close the expanded list when a sheet opens.**
   - One plain goal shipped in #223; only the "close the list when a sheet opens" bug remains.
   - Problem: the pill reads "★ berikutnya, 3 target lagi: …" and clamps. In the audit, the expanded goal list stayed open over every sheet after one tap.
   - Why: UI.md rules 5 and 16.
   - Suggested solution: `docs/plans/goal-line-one-goal.md`, plus collapse the list on sheet open (verify the bug first).
   - Source: audit `audit/ui-rules-2026-11-01/report.md`
-  - `open · — · — · done when:` the pill shows "Goal: …" with no "…" at 320px ID, and opening any sheet closes the list.
+  - `claimed · Claude (session ccr-6d1d7130) · 2026-11-04 · done when:` the pill shows "Goal: …" with no "…" at 320px ID, and opening any sheet closes the list.
 
 - [ ] **Centre button and bar text vertically.**
   - Problem: Hari, 2026-11-01 (screenshot, 412 px, ID): the labels "Terima SK" and "Tetap di sini" on the Kelurahan promotion card sit against the top edge of their buttons, with the empty space below. The goal line "Target: menang peringkat wilayah 1 kali" also sits slightly high in its bar. Other buttons, pills and bars may do the same.
@@ -202,6 +170,10 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **HIGH PRIORITY: Revamp the Neighbours sheet as a list, then a detail per RT, and remove the ranking star for AI RTs.** AI RTs skip `rankWins` and `winStreak` (`aiGoals`); the sheet is a list with one row per RT, a detail per RT and a "?" help view. DeepSeek executor, #259, #265, `docs/plans/neighbour-sheet.md`.
+- [x] **HIGH PRIORITY: Replace the construction crane with a building that rises behind scaffolding.** DeepSeek executor, #256, `decisions/rising-build.md`.
+- [x] **Remove the Desa path from the code.** Old Desa saves ask to start anew. DeepSeek executor, #257, `progress/cut-desa-code.md`.
+- [x] **Cap Pos Ronda so players use the other Popularitas buildings.** `maxCount: 8`; the Kelurahan bot falls through to the other Popularitas buildings. `decisions/pos-ronda-cap-T1.md`.
 - [x] **Smaller map: RW of 2 RTs, Kelurahan of 2 RWs with Kampung Sebelah absorbed.** New ladder, stage goals, camera and balance. #275, #276, #277, #278, `docs/plans/smaller-map.md`, `decisions/smaller-map-balance.md`.
 - [x] **Spread the staff stats: each stat works two roles and risks two.** Tukang Tagih works on Gaul, Supir on Jujur; Asisten risks Rajin, Petugas PU and Admin Grup WA risk Lobi; new mishap texts; Om Motivasi and Om Lalu Lintas re-leaned. DeepSeek executor, #260, `docs/plans/staff-stat-spread.md` T1.
 - [x] **Stop the "build Warung Sembako" hint after Warung Sembako is built.** `bestDraw` skips buildings already built. #250, `docs/plans/warung-draw-hint.md`.
