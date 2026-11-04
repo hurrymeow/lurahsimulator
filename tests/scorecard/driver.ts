@@ -36,6 +36,10 @@ export interface Row {
   sabar: number;
   viral: number;
   odn: number;
+  /** Builds funded and waiting across the AI-run RTs (Dana), stamps in hand (Stempel), and the year's Anggaran left. */
+  dana: number;
+  stempel: number;
+  anggaran: number;
   pop: number;
   beds: number;
   buildings: number;
@@ -469,7 +473,8 @@ export function runBot(bot: BotId, seed: number, ticks: number, opts: RunOpts = 
       const m = meters(s);
       rows.push({
         t, stage: s.stage.current, stars: s.stage.stars[s.stage.current], rupiah: s.res.rupiah, sabar: s.res.sabar, viral: s.res.viral,
-        odn: s.res.orangDalam, pop: p, beds: housing(s), buildings: s.buildings.length, aman: m.aman, sejahtera: sejahtera(m), laporan: laporan(s),
+        odn: s.res.orangDalam, dana: s.neighbours.reduce((n, nb) => n + nb.funded, 0), stempel: s.stempel?.stock ?? 0,
+        anggaran: Math.max(0, s.kel.budget - Math.max(0, s.stats.spent - s.kel.spentBase)), pop: p, beds: housing(s), buildings: s.buildings.length, aman: m.aman, sejahtera: sejahtera(m), laporan: laporan(s),
         net: monthlyNet(s), nextKey: nextKeyCost(s), goalsDone: g.done, goalsTotal: g.total, acts: c.acts,
       });
       if (opts.stopStars && now >= opts.stopStars) { t++; break; }
