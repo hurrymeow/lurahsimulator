@@ -39,7 +39,7 @@ export const KELURAHAN_STAGE: StageDef = {
   next: 'kecamatan',
   stars: [
     {
-      goals: [{ kind: 'rw2AtStars', n: 1 }, { kind: 'serapanMonths', n: 48, pct: 80 }, { kind: 'residents', n: 50 }, { kind: 'sabar', n: 50 }],
+      goals: [{ kind: 'rw2AtStars', n: 1 }, { kind: 'serapanMonths', n: 24, pct: 80 }, { kind: 'serapanMonths', n: 48, pct: 80 }, { kind: 'residents', n: 50 }, { kind: 'sabar', n: 50 }],
       unlocks: ['puskesmasPembantu', 'studiBanding'],
     },
     {
