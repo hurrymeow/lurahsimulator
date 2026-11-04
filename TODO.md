@@ -23,7 +23,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Why: Building is the action the player already knows. Handing over the 2nd RT first gives the player a full loop before the AI-run RTs arrive, and it keeps the AI-run RT step small. Each step needs its own tutorial, so the player learns the new controls before they reach a larger map.
   - Suggested solution: plan it after the RT 3★ expansion is settled. Step 1: the 2nd RT is player-controlled from the 3★ expansion, with its own tutorial steps (the lots, the first build, the stars). Step 2, later: the AI runs RTs, with a tutorial for that. Link it to the build-on-AI-RTs item above (the AI-run RT step), and to the smaller map in `decisions/smaller-map-go.md`, which sets the 2-RT RW and the 4-RT Kelurahan. Needs a planning thread first.
   - Source: Hari, 2026-11-02, thread "Log player-built second RT to TODO".
-  - `open · — · — · done when:` after the 3★ expansion, a new player builds in the 2nd RT with a tutorial for each step, EN and ID at 320 px, and the AI-run RT step follows with its own tutorial.
+  - `claimed · voidinside99 · 2026-11-04 · done when:` after the 3★ expansion, a new player builds in the 2nd RT with a tutorial for each step, EN and ID at 320 px, and the AI-run RT step follows with its own tutorial.
 
 - [ ] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).**
   - Problem: T1 to T8 are merged and tuned from bot numbers only. No person has played the new ladder.
