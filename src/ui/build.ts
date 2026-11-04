@@ -19,18 +19,16 @@ function spriteImg(name: string, size = 40, level = 1): HTMLImageElement {
   return h('img', { src: isoURL(name, 3, level), alt: '', width: size, height: size, class: 'pixel' });
 }
 
-/** "Houses 3 · Attracts 1", so the population effect is visible before buying. */
 /** "2 owned", or "1/1 owned" for a building with a cap. Paths count tiles. */
 function ownedLabel(s: GameState, d: { id: string; maxCount?: number }): string {
   const n = s.buildings.filter((b) => b.def === d.id).length;
   return d.maxCount ? t('build.ownedOf', { n, max: d.maxCount }) : t('build.owned', { n });
 }
 
-function populationBits(d: { housing?: number; attract?: number }): string[] {
-  const bits: string[] = [];
-  if (d.housing) bits.push(t('build.houses', { n: d.housing }));
-  if (d.attract) bits.push(t('build.attracts', { n: d.attract }));
-  return bits;
+/** The card's short count, "×2" or "×1/1"; the words wait in the detail and the label. */
+function ownedShort(s: GameState, d: { id: string; maxCount?: number }): string {
+  const n = s.buildings.filter((b) => b.def === d.id).length;
+  return d.maxCount ? `×${n}/${d.maxCount}` : `×${n}`;
 }
 
 const SEEN_KEY = 'pakrt.buildSeen';
@@ -92,17 +90,19 @@ export function openBuild(app: App): void {
     const missing = requirementGaps(s, d);
     if (s.res.rupiah < cost) missing.push(t('build.needMore', { amt: rupiah(cost - s.res.rupiah) }));
     const ok = missing.length === 0;
-    const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
-    const meta = [t('build.size', { w: sizeFor(d.id)[0], h: sizeFor(d.id)[1] }), instant ? t('build.noPermit') : t('build.permit', { permit: d.permitMonths, build: d.buildMonths }), ...populationBits(d)];
-    return h('button', { class: `card-btn ${ok ? '' : 'locked'}`, 'aria-disabled': String(!ok), onclick: () => (ok ? app.startPlacing(d.id) : undefined) },
+    // One line per card: what it is, what it costs, how many you have. The rest waits behind the info button.
+    const house = d.housing ? h('span', { class: 'card-house' }, h('img', { src: menuIconURL('build') ?? '', alt: '', width: 16, height: 16, class: 'pixel' }), String(d.housing)) : null;
+    const cardBtn = h('button', { class: `card-btn ${ok ? '' : 'locked'}`, 'aria-disabled': String(!ok), onclick: () => (ok ? app.startPlacing(d.id) : undefined) },
       spriteImg(d.sprite),
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, bName(d), fresh.has(d.id) ? newTag() : null), h('span', { class: 'cost' }, rupiah(cost))),
-        h('p', { class: 'owned' }, ownedLabel(s, d)),
-        h('p', {}, bBlurb(d)),
-        ok ? h('p', { class: 'meta' }, meta.join(' · ')) : missingList(missing),
+        h('p', { class: 'card-sub' }, h('span', { class: 'owned', 'aria-label': ownedLabel(s, d) }, ownedShort(s, d)), house),
+        // One reason on the card; the detail lists them all. A full cap says so in two words.
+        ok ? null : missingList([missing[0] === t('sim.limit', { n: d.maxCount ?? 0 }) ? t('build.atLimit') : missing[0]]),
       ),
     );
+    const infoBtn = h('button', { class: 'btn btn-icon build-info', type: 'button', 'aria-label': t('build.info', { name: bName(d) }), onclick: () => showDetail(d) }, 'i');
+    return h('div', { class: 'build-row' }, cardBtn, infoBtn);
   };
   const tabs = CATEGORIES.filter((c) => visible.some((d) => categoryOf(d) === c));
   let tab = lastTab && tabs.includes(lastTab) ? lastTab : tabs[0];
@@ -144,6 +144,25 @@ export function openBuild(app: App): void {
     } catch { /* storage may be unavailable */ }
     const back = h('button', { class: 'btn head-action', id: 'combo-back', onclick: showBuild }, '‹ ', t('build.title'));
     openSheet(t('menu.combo'), comboBook(app), onClosed, back);
+  };
+  // The detail behind a card's info button: the blurb, size, permit and effects, then Place or what is missing.
+  const showDetail = (d: (typeof visible)[number]) => {
+    buildTop = sheetEl.scrollTop;
+    const cost = buildCost(s, d);
+    const missing = requirementGaps(s, d);
+    if (s.res.rupiah < cost) missing.push(t('build.needMore', { amt: rupiah(cost - s.res.rupiah) }));
+    const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
+    const effects = [d.housing ? t('build.houses', { n: d.housing }) : '', d.attract ? t('build.attracts', { n: d.attract }) : ''].filter(Boolean);
+    const body: (Node | null)[] = [
+      h('div', { class: 'build-detail-pic' }, spriteImg(d.sprite, 64)),
+      h('p', {}, rupiah(cost), ' · ', ownedLabel(s, d)),
+      h('p', {}, bBlurb(d)),
+      h('p', { class: 'meta' }, t('build.size', { w: sizeFor(d.id)[0], h: sizeFor(d.id)[1] }), ' · ', instant ? t('build.noPermit') : t('build.permit', { permit: d.permitMonths, build: d.buildMonths })),
+      effects.length ? h('p', { class: 'meta' }, effects.join(' · ')) : null,
+      missing.length ? missingList(missing) : h('div', { class: 'action' }, h('button', { class: 'btn btn-primary', id: 'build-place', type: 'button', onclick: () => app.startPlacing(d.id) }, t('page.place'))),
+    ];
+    const back = h('button', { class: 'btn head-action', id: 'build-back', onclick: showBuild }, '‹ ', t('build.title'));
+    openSheet(bName(d), body.filter((x): x is Node => !!x), onClosed, back);
   };
   function comboButton(): HTMLElement {
     const total = bookCombos(s).length;

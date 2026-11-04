@@ -4,6 +4,7 @@ import type { Key } from './en';
 // Viral, Wacana, Warga, Mangkrak, Pensiun, Kampung Sebelah, Pak RT, Kantor RT.
 // Keys are sorted A to Z. Insert new keys in place, not at the end, so parallel PRs do not conflict.
 export const ID: Record<Key, string> = {
+  'build.atLimit': 'Batas tercapai',
   'build.attracts': 'Menarik warga baru',
   'build.cat.decoration': 'Hiasan',
   'build.cat.empty': 'Belum ada.',
@@ -16,6 +17,7 @@ export const ID: Record<Key, string> = {
   'build.emptyTile': 'Petak kosong',
   'build.emptyTileBody': 'Ketuk Bangun di bawah untuk menaruh sesuatu di sini.',
   'build.houses': 'Menampung {n}',
+  'build.info': 'Tentang {name}',
   'build.instant': 'Gratis · langsung jadi · ketuk petak lain untuk lanjut',
   'build.lineBlocked': '{n} petak terhalang dilewati.',
   'build.lineEnd': 'Ketuk petak terakhir jalan.',

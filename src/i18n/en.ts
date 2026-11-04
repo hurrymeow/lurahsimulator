@@ -3,6 +3,7 @@
 // are translated by key in id-data.ts.
 // Keys are sorted A to Z. Insert new keys in place, not at the end, so parallel PRs do not conflict.
 export const EN = {
+  'build.atLimit': 'Limit reached',
   'build.attracts': 'Attracts new residents',
   'build.cat.decoration': 'Decor',
   'build.cat.empty': 'Nothing here yet.',
@@ -15,6 +16,7 @@ export const EN = {
   'build.emptyTile': 'Empty tile',
   'build.emptyTileBody': 'Tap Build below to put something here.',
   'build.houses': 'Houses {n}',
+  'build.info': 'About {name}',
   'build.instant': 'Free · built at once · tap more tiles to keep going',
   'build.lineBlocked': '{n} blocked tiles are skipped.',
   'build.lineEnd': 'Tap the last tile of the path.',
@@ -457,7 +459,7 @@ export const EN = {
   'res.aman': 'Aman',
   'res.current': '{label} (current)',
   'res.fake': 'Fake Virality pumped: {n}',
-  'res.hint': 'Tap a resident to change their job.',
+  'res.hint': 'Tap someone to switch jobs.',
   'res.level': 'Lv {n}',
   'res.noJob': 'No job',
   'res.orangDalam': 'Orang Inside',
