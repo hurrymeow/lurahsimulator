@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { scanLegibility } from './legibility';
 import { countScreen, LIMITS, type ScreenCount } from './density';
+import { scanCentring } from './vcenter';
 
 /** Screens still over a limit: the cap is today's count, so they can only improve. */
 // Each entry is a TODO.md item ("Bring <screen> inside UI.md rules 13 and 14"). Caps are the highest count over the 8 CI viewports in both languages on 2026-11-01.
@@ -173,6 +174,17 @@ test.describe('opener', () => {
     await expect(goal.locator('.goal-now')).toHaveAttribute('aria-expanded', 'true');
     // Opened, it lists each unmet goal for the next star with have and need.
     await expect(goal.locator('.goal-row').first()).toContainText({ id: 'punya', en: 'have' }[lang()]);
+    // The first unmet goal says how to reach it; tapping another goal moves the how-to line there.
+    await expect(goal.locator('.goal-how')).toHaveCount(1);
+    await expect(goal.locator('.goal-how')).toContainText({ id: 'Caranya:', en: 'How:' }[lang()]);
+    const goals = goal.locator('button.goal-row');
+    if ((await goals.count()) > 1) {
+      const first = (await goal.locator('.goal-how').textContent())!;
+      await goals.nth(1).dispatchEvent('click');
+      await expect(goals.nth(1)).toHaveAttribute('aria-expanded', 'true');
+      await expect(goal.locator('.goal-how')).not.toHaveText(first);
+    }
+    expect(await scanLegibility(page)).toEqual([]);
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.s.month = 30;
@@ -3113,6 +3125,64 @@ test.describe('console frame and theme', () => {
 
 // UI.md rules 13 and 14, counted on every sheet, pop-up and the home screens. Screens that still fail are in
 // DENSITY_ALLOW with a cap at today's counts, so a screen can only get better. When one is fixed, delete its entry.
+// UI.md rule 18: a label sits in the vertical middle of its button, pill or bar.
+test.describe('vertical centring', () => {
+  test('labels sit in the middle of buttons, pills and bars on every main screen', async ({ page }) => {
+    test.setTimeout(180_000);
+    const off: string[] = [];
+    const check = async (where: string) => {
+      for (const o of await scanCentring(page)) off.push(`${where}: "${o.text}" ${o.above}px above, ${o.below}px below`);
+    };
+    const close = async () => {
+      if (await page.locator('#sheet').isVisible()) await page.locator('#sheet .sheet-head .btn-icon').last().click();
+    };
+    await page.goto(`/?debug&lang=${lang()}`);
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.evaluate(() => document.fonts.ready);
+    await check('home');
+    await page.locator('#home-start').click();
+    await page.locator('#home-new').click();
+    await check('setup');
+    await page.locator('#home-begin').click();
+    await dismissModals(page);
+    await check('main screen');
+    await seed(page);
+    await dismissModals(page);
+    await page.locator('#goal-now').click();
+    await check('goal list open');
+    await page.locator('#goal-now').click();
+    for (const id of ['build', 'warga', 'staff', 'wacana', 'stats', 'settings']) {
+      await openPanel(page, id);
+      await check(id);
+      await close();
+      await dismissModals(page);
+    }
+    // The promotion card, where Hari saw the labels hug the top (2026-11-01).
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.s.stage.stars[app.s.stage.current] = 3;
+      app.s.stage.sk = 'offered';
+      app.refresh();
+    });
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await check('menu');
+    await page.locator('#stage-btn').click();
+    await page.locator('#sk-decline').scrollIntoViewIfNeeded();
+    await check('promotion');
+    await close();
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.pendingEvent = 'hajatan';
+      app.showEvent();
+    });
+    await expect(page.locator('#modal .card.event')).toBeVisible();
+    await check('event card');
+    expect(off, off.join('\n')).toEqual([]);
+  });
+});
+
 test.describe('density and hierarchy', () => {
   test('every screen stays inside the word and primary-button limits', async ({ page }) => {
     test.setTimeout(240_000);

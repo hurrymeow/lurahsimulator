@@ -1,7 +1,7 @@
 import { bBlurb, bName, t, type Key } from '../i18n';
 import {
   ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
-  EXPECT_KEC, EXPECT_KEL, EXPECT_PER_RESIDENT, NOVELTY_GAP, QUEUE_SABAR_DRAIN, SETORAN_RATE, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, TUKANG_MAX, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
+  EXPECT_KEC, EXPECT_KEL, EXPECT_PER_RESIDENT, EXPECT_TAPER, NOVELTY_GAP, QUEUE_SABAR_DRAIN, SETORAN_RATE, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, TUKANG_MAX, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
 } from './balance';
 import { accessSystem, connectedRoad, hasRoadBeside } from './access';
 import { comboIncomeMult, comboSystem } from './combos';
@@ -127,7 +127,9 @@ export function collectIncome(s: GameState, fx: Fx): void {
 
 /** A bigger kampung expects more. Without this, jobs and policies pin Popularitas at the top. */
 export function expectations(s: GameState, fx: Fx): void {
-  gain(s, fx, 'sabar', -population(s) * EXPECT_PER_RESIDENT * (s.stage.current === 'kecamatan' ? EXPECT_KEC.share : s.stage.current === 'kelurahan' ? EXPECT_KEL.share : 1));
+  const pop = population(s);
+  const weighed = s.stage.current === 'kelurahan' && pop > EXPECT_TAPER.from ? EXPECT_TAPER.from + (pop - EXPECT_TAPER.from) * EXPECT_TAPER.share : pop;
+  gain(s, fx, 'sabar', -weighed * EXPECT_PER_RESIDENT * (s.stage.current === 'kecamatan' ? EXPECT_KEC.share : s.stage.current === 'kelurahan' ? EXPECT_KEL.share : 1));
 }
 
 /** Year 1 safety net: upkeep can never push the kas below zero. */
@@ -176,6 +178,14 @@ export function residentsMove(s: GameState, fx: Fx): void {
     const r = s.residents.splice(randInt(s, 0, s.residents.length - 1), 1)[0];
     s.stats.left++;
     fx.push({ kind: 'notice', title: t('sim.movedOut', { name: r.name, n: LEAVE_BELOW_SABAR }), body: t('sim.movedOutBody', { n: LEAVE_BELOW_SABAR }), tone: 'bad' });
+    return;
+  }
+  // At the Kelurahan a warga with no bed moves to the neighbours, one a week, so an overgrown kampung can settle
+  // back under its beds and climb over the Popularitas bar again (decisions/big-kampung-taper.md).
+  if (s.stage.current === 'kelurahan' && population(s) > housing(s)) {
+    const r = s.residents.splice(randInt(s, 0, s.residents.length - 1), 1)[0];
+    s.stats.left++;
+    fx.push({ kind: 'notice', title: t('sim.movedNoBed', { name: r.name }), body: t('sim.movedNoBedBody'), tone: 'info' });
     return;
   }
   let arrived = 0;
