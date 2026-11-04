@@ -10,19 +10,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ### Now
 
-- [ ] **Cut text on the Build cards (UI rule 13), the last screen of the six.**
-  - Problem: the Build tabs show 82 to 102 words in view (cap 50) and blocks up to 24 words (cap 20), so all four tabs sit in `DENSITY_ALLOW` in `tests/e2e/ui.spec.ts`. In English at 412px, Build tab 2 counts 102, one over its cap of 101, on main (EN is not in CI).
-  - Why: players skim about 20% of the words; the card's one useful line is lost in the blurb and meta lines.
-  - Suggested solution: `docs/plans/ui-audit-fixes.md` T6: one line per card, an info button opens the detail. Executor PR #255 has been a draft since 2026-11-01; finish it or take it over.
-  - Source: audit `audit/ui-rules-2026-11-01/report.md`; `decisions/ui-text-cuts-batch.md`
-  - `open · — · — · done when:` the four `build` entries are deleted from `DENSITY_ALLOW` and the density test passes at 320 to 430px in EN and ID.
-- [ ] **Warga list over its word cap in English.**
-  - Problem: in English at 412px the Warga sheet counts 496 words when scrolled, over its `DENSITY_ALLOW` cap of 494, on main. EN is not in CI, so nothing failed.
-  - Why: the allowlist caps say a screen can only get better; this one drifted.
-  - Suggested solution: shorten the per-job group lines in `src/ui/lists.ts` or collapse groups behind a tap; then delete or lower the `warga` cap.
-  - Source: local run of the density test, `decisions/ui-text-cuts-batch.md`
-  - `open · — · — · done when:` the density test passes at 412px EN with the `warga` cap at or under today's ID count.
-
 ### Next
 
 - [ ] **Let the player control and build on the 2nd RT after the RT reaches 3★, and add the AI-run RT later, each with a tutorial.**
@@ -159,6 +146,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **Cut text on the Build cards (UI rule 13), and bring the English Warga list back under its cap.** One line per card with an info button; shorter English hint. Density test checked at 320, 412 and 430px in EN and 320 and 430px in ID. #289, `decisions/build-cards-one-line.md`.
 - [x] **Cut text on Staff, Stats, the opener and How to Play (UI rule 13).** Staff is one line per person with a chip; Stats shows numbers first and the last 3 rankings, explainers behind a tap; the opener is four short lines; the Menu guide is headings that open on tap. `staff`, `stats` and `howto` left `DENSITY_ALLOW`. The Neighbours part shipped in #265. Build cards stay open above. #287, `decisions/ui-text-cuts-batch.md`.
 - [x] **Events with no primary choice, Combo cards with no clamp, short toasts.** Event choices #252; Combo tiles no longer clamp and the legibility scan has no clamp exception; toasts show the body only when the whole fits in 8 words, and all 49 notice titles are 8 words or fewer. #287.
 - [x] **Goal pill: one plain goal, and close the expanded list when a sheet opens.** One plain goal #223; the list now closes when any sheet opens. #287.
