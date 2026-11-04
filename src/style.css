@@ -208,6 +208,13 @@ html.no-effects #dof { display: none; }
   border-radius: var(--radius);
   cursor: pointer;
 }
+/* A Build card is one tappable line, with an info button beside it for the detail. */
+.build-row { display: flex; gap: 8px; margin-bottom: var(--gap); }
+.build-row .card-btn { flex: 1; min-width: 0; margin-bottom: 0; }
+.build-info { flex: none; width: var(--touch); min-height: var(--touch); }
+.card-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0; }
+.card-house { display: inline-flex; align-items: center; gap: 4px; font-size: 16px; font-weight: 700; color: var(--muted); }
+.build-detail-pic { display: flex; justify-content: center; }
 /* The Build sheet always fills to its max height, so the tab row stays put when switching. */
 .build-list { min-height: 100dvh; }
 .tabs { margin: var(--gap) 0; }

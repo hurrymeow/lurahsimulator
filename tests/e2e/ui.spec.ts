@@ -5,10 +5,6 @@ import { countScreen, LIMITS, type ScreenCount } from './density';
 /** Screens still over a limit: the cap is today's count, so they can only improve. */
 // Each entry is a TODO.md item ("Bring <screen> inside UI.md rules 13 and 14"). Caps are the highest count over the 8 CI viewports in both languages on 2026-11-01.
 const DENSITY_ALLOW: Record<string, Partial<Record<keyof typeof LIMITS, number>>> = {
-  'build': { wordsInView: 84 }, // Build, first tab
-  'build tab 2': { longestBlock: 21, wordsInView: 101 }, // Build tab 2
-  'build tab 3': { longestBlock: 21, wordsAll: 571, wordsInView: 82 }, // Build tab 3
-  'build tab 4': { wordsInView: 99, longestBlock: 24 }, // Build tab 4
   'event': { primary: 2 }, // Event card: two filled choices
   'settings': { primary: 2, wordsInView: 65 }, // Settings
   'warga': { wordsInView: 62, wordsAll: 494 }, // Warga: Kampung Sebelah's residents join at the Kelurahan, so the list is long
@@ -390,11 +386,14 @@ test.describe('population and houses', () => {
     await dismissModals(page);
     await page.locator('#dock-build').click();
     await expect(page.locator('#sheet')).toContainText(POP_LINE);
-    const rumah = page.locator('#sheet .card-btn', { hasText: HOUSES }).first();
-    await expect(rumah).toBeVisible();
-    await expect(rumah).toContainText(ATTRACTS);
+    // The card shows the beds as a house icon and a number; the detail spells out both levers.
+    const row = page.locator('#sheet .build-row', { hasText: /Rumah/ }).first();
+    await expect(row.locator('.card-house')).toHaveText('3');
+    await row.locator('.build-info').click();
+    await expect(page.locator('#sheet')).toContainText(HOUSES);
+    await expect(page.locator('#sheet')).toContainText(ATTRACTS);
     await expectLegible(page, 'Build with population numbers');
-    await rumah.click();
+    await page.locator('#build-place').click();
 
     const box = (await page.locator('#map').boundingBox())!;
     const at = await page.evaluate(() => {
@@ -2104,9 +2103,10 @@ test.describe('build mode', () => {
     }
     // Jalan Setapak lives in Decor, not on the first tab.
     await expect(page.locator('#sheet .card-btn', { hasText: /Jalan Setapak/ })).toHaveCount(0);
-    // A card says "no permit" once: the blurb and the meta line must not both carry it.
-    const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
-    expect(((await rumah.innerText()).match(/no permit|tanpa izin/gi) ?? []).length).toBe(1);
+    // The detail says "no permit" once: the blurb and the meta line must not both carry it.
+    await page.locator('#sheet .build-row', { hasText: /Rumah/ }).first().locator('.build-info').click();
+    expect(((await page.locator('#sheet').innerText()).match(/no permit|tanpa izin/gi) ?? []).length).toBe(1);
+    await page.locator('#build-back').click();
     await page.locator('#sheet .tabs .tab[data-tab="decoration"]').click();
     // Jalan Setapak leads the Decor tab, since nothing works without a path.
     await expect(page.locator('#sheet .card-btn').first()).toContainText(/Jalan Setapak/);
@@ -2183,6 +2183,20 @@ test.describe('build mode', () => {
     await expectLegible(page, 'ghost after a tap');
   });
 
+  test('the build info button opens the detail and places from it', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#dock-build').click();
+    await page.locator('#sheet .tab[data-tab="housing"]').click();
+    const rumah = page.locator('#sheet .build-row', { hasText: /Rumah/ }).first();
+    await rumah.locator('.build-info').click();
+    await expect(page.locator('#sheet')).toContainText(lang() === 'en' ? 'Houses residents and attracts new ones.' : 'Menampung warga dan menarik warga baru.');
+    await expect(page.locator('#build-place')).toBeVisible();
+    await expectLegible(page, 'build detail');
+    await page.locator('#build-place').click();
+    await expect(page.locator('#sheet')).toBeHidden();
+  });
+
   test('build cards show how many are owned, and new buildings carry a NEW tag', async ({ page }) => {
     await start(page);
     await dismissModals(page);
@@ -2190,7 +2204,8 @@ test.describe('build mode', () => {
     await page.locator('#sheet .tab[data-tab="housing"]').click();
     const rumah = page.locator('#sheet .card-btn', { hasText: /Rumah/ }).first();
     const have = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'rumah').length);
-    await expect(rumah.locator('.owned')).toHaveText(lang() === 'en' ? `${have} owned` : `${have} dimiliki`);
+    await expect(rumah.locator('.owned')).toHaveText(`×${have}`);
+    await expect(rumah.locator('.owned')).toHaveAttribute('aria-label', lang() === 'en' ? `${have} owned` : `${have} dimiliki`);
     await page.locator('.sheet-head .btn-icon').click();
     // Something opens: the dock's Build button and its card both say NEW.
     await page.evaluate(() => {
