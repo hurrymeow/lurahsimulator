@@ -1,6 +1,6 @@
 # The 2nd RT, then the AI RT
 
-Status: waiting for approval from voidinside99. Nothing here is built. Decisions 1, 3 and 4 change GAME-DESIGN.md section 2, so Hari should see them.
+Status: approved by voidinside99 on 2026-11-04 ("Approve, start T1"), with every decision as recommended. Decisions 1, 3 and 4 change GAME-DESIGN.md section 2, so Hari may still object in the PRs.
 
 ## Goal
 TODO item "Let the player control and build on the 2nd RT after the RT reaches 3★, and add the AI-run RT later, each with a tutorial." Hari, 2026-11-02: "after expanding from RT 3 star, let players control and build on the 2nd town, and introduce the RT AI later".
