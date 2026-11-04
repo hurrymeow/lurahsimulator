@@ -17,7 +17,8 @@ export default defineConfig({
   // Per-test sharding. Without it Playwright shards whole spec files, so whole spec files would split unevenly across shards.
   fullyParallel: true,
   workers: process.env.CI ? 2 : undefined,
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  // The JSON report feeds the job summary's list of failed and flaky tests (scripts/flaky-summary.mjs).
+  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }], ['json', { outputFile: 'reports/results.json' }]] : 'list',
   use: {
     baseURL: 'http://localhost:4173',
     serviceWorkers: 'block',
