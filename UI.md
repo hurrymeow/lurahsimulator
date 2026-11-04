@@ -49,11 +49,11 @@ Layout, art, feedback and tech rules live in [GAME-DESIGN.md](GAME-DESIGN.md) se
 | 1, 4, 5 | `npm run e2e` legibility scan, 4 widths. CI runs Indonesian; local runs add English. |
 | 7, 8 | Word count over `src/i18n/en.ts` and the event data. Not automated. |
 | 2, 3, 6, 9, 11 | Review against the audit crawl screenshots |
-| 10 | e2e: at each tutorial step, tap outside the target and assert nothing changes. |
+| 10 | e2e `the opener has no Skip and taps outside the step do nothing`: at the Build, Housing, Rumah and tile steps, taps on another dock button, tab, card, info button, close button or the speed control change nothing. |
 | 14 | Review against the CSS classes. e2e: the same scan counts visible `.btn-primary` buttons, max 1 per screen. Event cards and Settings are allowlisted at 2. |
-| 15 | e2e: a list of each tab set and its item type; a tab with a different type fails. |
-| 16 | e2e: word cap on pills, chips and buttons, and a tap opens detail. |
-| 17 | Canvas test: place each building type and diff the neighbouring tiles before and after. |
+| 15 | e2e `tab sets`: every Build tab lists only building rows, every Combo filter only combo tiles, every Warga filter only groups of people, and the Combo book opens from a header button, not a tab. |
+| 16 | e2e: the `density and hierarchy` test also counts the words on every button, tab, chip and pill it passes (`scanLabelWords` in `tests/e2e/density.ts`, 6 max; rows that open a whole entry are lists, not labels). `tests/label-words.test.ts` checks every goal-pill phrase with its label in both languages. |
+| 17 | Unit test `tests/footprint-art.test.ts`: every building sprite, at every level, draws nothing below its footprint's two front edges. Sprites that spill today are capped in `SPILL_ALLOW` (TODO.md), so they can only get better. |
 | 18 | e2e `vertical centring` in `ui.spec.ts` (`tests/e2e/vcenter.ts`): a Range over each label's text, plus its icons, measured inside the border, on the home, setup and main screens, the open goal list, Build, Warga, Staff, Wacana, Stats, Settings, Menu, the promotion card and an event card. |
 | 12 | Timed run. Not automated. |
 | 13 | e2e `density and hierarchy` in `ui.spec.ts` counts words in view, per block and per sheet on the home screens, every Menu panel, Build tabs, Wacana and event cards, at every CI width. A screen over a limit needs an entry in `DENSITY_ALLOW` capped at today's count (TODO.md); a fixed screen has its entry deleted. English runs locally. |

@@ -929,7 +929,7 @@ const ART: Record<string, ArtFn> = {
  * Pieces draw back to front (lower u + v first). A turned building is this art mirrored, so one
  * drawing covers both ways round.
  */
-const LONG_ART: Record<string, ArtFn> = {
+export const LONG_ART: Record<string, ArtFn> = {
   // A row of stalls under striped awnings, each its own colour.
   pasarKaget: (p) => {
     for (const [u, awning] of [[0, 'r'], [1, 'b']] as [number, string][]) {
