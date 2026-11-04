@@ -107,7 +107,7 @@ describe('RW and Kelurahan content', () => {
     const s = newGame(1);
     s.stage.current = 'rw';
     const lines = nextStarChecklist(s)!.map((l) => l.text);
-    expect(lines).toEqual(['Fund Kampung Sebelah once (have 0)', 'Keep Stempel letters waiting under 5 for 6 weeks (held 0, 0 waiting now)']);
+    expect(lines).toEqual(['Build 3 in Kampung Sebelah (have 0)', 'Keep Stempel letters waiting under 5 for 6 weeks (held 0, 0 waiting now)']);
     s.stage.stars.rw = 2;
     expect(nextStarChecklist(s)!.map((l) => l.text)[0]).toBe('Kampung Sebelah at 3★ or above (now 0★)');
   });
@@ -115,7 +115,7 @@ describe('RW and Kelurahan content', () => {
   it('marks the Stempel goal as on track while its backlog is under the limit', () => {
     const s = newGame(1);
     promote(s, []);
-    for (const n of s.neighbours) n.everFunded = true;
+    s.stempel.sent = true;
     const line = () => nextStarChecklist(s)!.find((l) => l.goal.kind === 'stempelClear')!;
     expect(line().done).toBe(false);
     expect(line().holding).toBe(true);

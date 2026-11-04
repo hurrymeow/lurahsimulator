@@ -3,7 +3,7 @@ import { lotAt, setPlayerCells, ungapTile } from './area';
 import { allDefs, def, hasDef } from './content';
 import { ensureStaff } from './staff';
 import { SAVE_VERSION, covers, inBounds, newStageState, tilesOf } from './state';
-import { neighbourAt } from './grow';
+import { absorb, neighbourAt } from './grow';
 import { RT_H, RT_W, STAGE_SPAN, setGrid, type Building, type GameState, type ProblemId } from './types';
 
 export function serialize(s: GameState): string {
@@ -28,7 +28,7 @@ export function deserialize(raw: string | null): GameState | null {
     // Saves from before stages: start at 0 stars. The first tick catches the stars up.
     s.stage ??= newStageState();
     s.neighbours ??= [];
-    s.stempel ??= { stock: 0, backlog: 0, clear: 0 };
+    s.stempel ??= { stock: 0, backlog: 0, clear: 0, sent: false };
     s.debtFree ??= 0;
     // Saves from before the first-win celebrations: whatever they already reached stays quiet.
     s.firsts ??= [
@@ -46,6 +46,10 @@ export function deserialize(raw: string | null): GameState | null {
     s.kel ??= { budget: 0, spentBase: 0, serapanRun: 0, cleanAudits: 0 };
     if (!s.gapped) ungap(s);
     setGrid(s.stage.current);
+    // Saves from before the player ran Kampung Sebelah from the RW (docs/plans/second-rt.md).
+    s.stempel.sent ??= s.stempel.clear > 0 || s.stempel.backlog > 0;
+    const sebelah = s.stage.current === 'rw' ? s.neighbours.find((n) => n.cx === 1 && n.cy === 0 && n.run !== 'player') : undefined;
+    if (sebelah) absorb(s, sebelah);
     setPlayerCells(s.neighbours.filter((n) => n.run === 'player'));
     if (!s.sized) growBuildings(s, GREW_FROM);
     if (!s.laddered) growBuildings(s, GREW_LADDER);

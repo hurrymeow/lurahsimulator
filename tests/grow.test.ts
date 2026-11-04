@@ -4,12 +4,14 @@ import { goalProgress, nextStarChecklist } from '../src/sim/stages';
 import { viewOf } from '../src/sim/neighbourView';
 import { FLAT, connectedRoad, hasRoadBeside } from '../src/sim/access';
 import { absorb, checkVisit, visit, nextWant, rivalTarget, lotFull, builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, neighboursSystem, promote, setAutoFund, takeover } from '../src/sim/grow';
-import { NEIGHBOUR } from '../src/sim/balance';
+import { NEIGHBOUR, STEMPEL } from '../src/sim/balance';
+
+const NEIGHBOUR_LETTERS = STEMPEL.perBuild;
 import { checkPlace, place, siteGaps } from '../src/sim/rules';
 import { def } from '../src/sim/content';
 import { areaScore, scoreParts } from '../src/sim/ranking';
 import { deserialize, serialize } from '../src/sim/save';
-import { addBuilding, addResident, emptyTiles, newGame, population, sprawl, tilesOf } from '../src/sim/state';
+import { addBuilding, addResident, emptyTiles, housing, newGame, population, sprawl, tilesOf } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
 import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, SEAM, mapSpan, setGrid } from '../src/sim/types';
 
@@ -30,6 +32,18 @@ const grown = (stage: 'rw' | 'kelurahan' = 'rw') => {
   promote(s, []);
   return s;
 };
+
+/**
+ * The next cell run by the AI. Since docs/plans/second-rt.md no RW has an AI RT in play: the first are RW 2's, at the
+ * Kelurahan. The AI's rules do not depend on the cell, so these tests keep one AI RT next door on the smallest map.
+ */
+const aiNextDoor = (s: ReturnType<typeof newGame>) => {
+  const n = s.neighbours[0];
+  n.absorbed = false;
+  handBack(s, n);
+  return s;
+};
+const withAi = () => aiNextDoor(grown());
 
 describe('growing map', () => {
   it('grows the grid at RW and again at Kelurahan, never moving what the player built', () => {
@@ -52,15 +66,13 @@ describe('growing map', () => {
     expect(mapSpan()).toEqual({ w: 2, h: 1 });
   });
 
-  it('keeps the same AI RTs when the RW becomes a Kelurahan', () => {
+  it('keeps Kampung Sebelah the player\'s at the Kelurahan, and RW 2 brings the first AI RTs', () => {
     const s = grown();
-    const first = s.neighbours.map((n) => n.buildings[0].uid);
-    s.stage.current = 'rw';
-    promote(s, []);
-    // Kampung Sebelah joins the player at the Kelurahan, so its buildings move into the player's list.
     const kept = s.buildings.map((b) => b.uid);
-    for (const uid of first) expect(kept).toContain(uid);
+    promote(s, []);
+    for (const uid of kept) expect(s.buildings.map((b) => b.uid)).toContain(uid);
     expect(s.neighbours).toHaveLength(3);
+    expect(s.neighbours.filter((n) => n.run !== 'player').map((n) => n.cy)).toEqual([1, 1]);
   });
 
   it('stops at the top of the ladder', () => {
@@ -76,7 +88,7 @@ describe('lots', () => {
   });
 
   it('gives the RW seams to RW buildings and the other RTs to the AI', () => {
-    grown();
+    withAi();
     expect(lotAt(2, 2)).toBe('rt');
     // The RT keeps its edge rows: the seam starts just past them, and runs the full height.
     expect(lotAt(RT_W - 1, 2)).toBe('rt');
@@ -100,7 +112,7 @@ describe('lots', () => {
   });
 
   it('lets the player build RT buildings on an AI RT\'s free lots, never on its buildings, its seams or with an RW building', () => {
-    const s = grown();
+    const s = withAi();
     s.res.rupiah = 50_000_000;
     const n = s.neighbours[0];
     const o = cellOrigin(n.cx, n.cy);
@@ -117,9 +129,10 @@ describe('lots', () => {
   });
 
   it('Kunjungan: 1 Orang Dalam, the RT builds now and gains warga, once a quarter per RT', () => {
-    const s = grown();
+    const s = withAi();
     const n = s.neighbours[0];
     s.res.orangDalam = 3;
+    n.pop = 1;
     const built = builtBy(n).length;
     const pop = n.pop;
     expect(checkVisit(s, n)).toBeNull();
@@ -137,7 +150,7 @@ describe('lots', () => {
   });
 
   it('a building the player puts in an AI RT counts for that RT, and the AI never builds over it', () => {
-    const s = grown();
+    const s = withAi();
     s.res.rupiah = 500_000_000;
     const n = s.neighbours[0];
     const o = cellOrigin(n.cx, n.cy);
@@ -174,7 +187,7 @@ describe('lots', () => {
   });
 
   it('refuses a tile an AI building holds', () => {
-    const s = grown();
+    const s = withAi();
     s.res.rupiah = 50_000_000;
     const b = s.neighbours[0].buildings[0];
     const r = checkPlace(s, 'warung', b.x, b.y);
@@ -182,14 +195,14 @@ describe('lots', () => {
   });
 
   it('settles new residents only inside the player RT', () => {
-    const s = grown();
+    const s = withAi();
     expect(emptyTiles(s).every((p) => lotAt(p.x, p.y) === 'rt')).toBe(true);
   });
 });
 
 describe('AI neighbours', () => {
   it('stall until funded, then build', () => {
-    const s = grown();
+    const s = withAi();
     const n = s.neighbours[0];
     const start = n.buildings.length;
     s.res.rupiah = 50_000_000;
@@ -207,7 +220,7 @@ describe('AI neighbours', () => {
   });
 
   it('build only inside their own cell, off the seams', () => {
-    const s = grown();
+    const s = withAi();
     s.res.rupiah = 1e12;
     s.res.sabar = 100;
     for (let i = 0; i < 80; i++) {
@@ -225,7 +238,7 @@ describe('AI neighbours', () => {
   });
 
   it('earn stars by the same checklist as the player', () => {
-    const s = grown();
+    const s = withAi();
     const n = s.neighbours[0];
     n.pop = 12;
     n.discovered = ['tongkrongan'];
@@ -234,7 +247,7 @@ describe('AI neighbours', () => {
   });
 
   it('earns its 2nd star on the RT checklist without a ranking win', () => {
-    const s = grown();
+    const s = withAi();
     const n = s.neighbours[0];
     n.stars = 1;
     n.pop = 25;
@@ -248,7 +261,7 @@ describe('AI neighbours', () => {
   });
 
   it('pay iuran into the kas, Rajin more', () => {
-    const s = grown();
+    const s = withAi();
     const a = s.neighbours[0];
     a.trait = 'jarang';
     s.neighbours.forEach((n) => (n.pop = 0));
@@ -256,11 +269,11 @@ describe('AI neighbours', () => {
     const base = tick(s) && s.res.rupiah;
     const t2 = newGame(7);
     expect(base).toBeGreaterThan(t2.res.rupiah - 1e9);
-    const r1 = grown();
+    const r1 = withAi();
     r1.neighbours.forEach((n) => (n.pop = 0));
     r1.neighbours[0].trait = 'jarang';
     r1.neighbours[0].pop = 10;
-    const r2 = grown();
+    const r2 = withAi();
     r2.neighbours.forEach((n) => (n.pop = 0));
     r2.neighbours[0].trait = 'rajin';
     r2.neighbours[0].pop = 10;
@@ -270,13 +283,13 @@ describe('AI neighbours', () => {
   });
 
   it('count in the area score used for ranking', () => {
-    const s = grown();
+    const s = withAi();
     const solo = areaScore({ ...s, neighbours: [] });
     expect(areaScore(s)).toBeGreaterThan(solo);
   });
 
   it('cannot be funded without the rupiah, or past the cap', () => {
-    const s = grown();
+    const s = withAi();
     s.res.rupiah = 0;
     expect(checkFund(s, s.neighbours[0])).toContain('Need');
     s.res.rupiah = 1e9;
@@ -289,14 +302,14 @@ describe('AI neighbours', () => {
   });
 
   it('builds faster with more Dana banked, with diminishing returns', () => {
-    const n = grown().neighbours[0];
+    const n = withAi().neighbours[0];
     const at = (k: number) => ((n.funded = k), boostOf(n));
     expect(at(1)).toBe(0);
     expect(at(3)).toBeGreaterThan(0.3);
     expect(at(6) - at(3)).toBeGreaterThan(at(12) - at(9));
     expect(at(NEIGHBOUR.fundMax)).toBeLessThanOrEqual(NEIGHBOUR.boostMax);
     // Six banked: a Jarang Muncul RT builds about every 1.8 months instead of 3.
-    const s = grown();
+    const s = withAi();
     const j = s.neighbours[0];
     j.trait = 'jarang';
     s.res.rupiah = 1e9;
@@ -307,7 +320,7 @@ describe('AI neighbours', () => {
   });
 
   it('auto-dana tops an RT back up each month and keeps the kas above the floor', () => {
-    const s = grown();
+    const s = withAi();
     const n = s.neighbours[0];
     s.res.rupiah = 1e9;
     setAutoFund(n, 6);
@@ -326,7 +339,7 @@ describe('AI neighbours', () => {
 
 describe('save', () => {
   it('round-trips a grown map and restores the grid', () => {
-    const s = grown();
+    const s = withAi();
     const raw = serialize(s);
     setGrid('rt');
     const back = deserialize(raw)!;
@@ -336,7 +349,7 @@ describe('save', () => {
   });
 
   it('moves an old grown map apart so the seams sit between the RTs', () => {
-    const s = grown();
+    const s = withAi();
     const raw = JSON.parse(serialize(s));
     delete raw.gapped;
     // Old layout: the seam was the RT's own last column (12) and the next cell's first (13).
@@ -376,7 +389,7 @@ describe('save', () => {
   });
 
   it('refuses a version 3 save past the RT', () => {
-    const raw = JSON.parse(serialize(grown()));
+    const raw = JSON.parse(serialize(withAi()));
     raw.version = 3;
     expect(deserialize(JSON.stringify(raw))).toBeNull();
   });
@@ -384,15 +397,6 @@ describe('save', () => {
 
 describe('RW goals and Stempel', () => {
   const line = (s: ReturnType<typeof newGame>, kind: string) => nextStarChecklist(s, s.stage.current)!.find((l) => l.goal.kind === kind)!;
-
-  it('counts RTs funded at least once', () => {
-    const s = grown();
-    s.stage.current = 'rw';
-    s.res.rupiah = 1e9;
-    expect(line(s, 'fundedRts').done).toBe(false);
-    s.neighbours.forEach((n) => fundNeighbour(s, n));
-    expect(line(s, 'fundedRts').done).toBe(true);
-  });
 
   it('piles letters up when builds outrun the stamps, and costs Sabar', () => {
     const s = grown('kelurahan');
@@ -408,7 +412,7 @@ describe('RW goals and Stempel', () => {
 
   it('counts clear months in a row, and a Balai RW adds a stamp', () => {
     const s = grown();
-    s.stage.current = 'rw';
+    s.stempel.sent = true;
     for (let i = 0; i < 3; i++) step(s);
     expect(s.stempel.clear).toBe(3);
     s.stempel.backlog = 20;
@@ -433,21 +437,8 @@ describe('RW goals and Stempel', () => {
     expect(s.stempel.backlog).toBe(0);
   });
 
-  it('sends twice the letters for Jarang Muncul', () => {
-    const s = grown();
-    s.res.rupiah = 1e9;
-    s.neighbours.forEach((n, i) => { n.trait = i ? 'rajin' : 'jarang'; n.pop = 0; });
-    s.neighbours[0].progress = 1;
-    fundNeighbour(s, s.neighbours[0]);
-    s.stempel.stock = 0;
-    step(s);
-    // 2 letters a build, doubled, less the 1 stamp of the month.
-    expect(s.stempel.backlog).toBe(4 - 1);
-    expect(s.neighbours[0].buildings.length).toBeGreaterThan(2);
-  });
-
   it('counts Kampung Sebelah at a star, and ranking wins by tier', () => {
-    const s = grown();
+    const s = withAi();
     s.stage.current = 'rw';
     s.stage.stars.rt = 3;
     s.stage.stars.rw = 1;
@@ -482,7 +473,7 @@ describe('RW goals and Stempel', () => {
   });
 
   it('counts months out of debt', () => {
-    const s = grown();
+    const s = withAi();
     s.stage.current = 'rw';
     s.month = 30;
     s.res.rupiah = 5e7;
@@ -491,6 +482,110 @@ describe('RW goals and Stempel', () => {
     s.res.rupiah = -9e9;
     step(s);
     expect(s.debtFree).toBe(0);
+  });
+});
+
+describe('the 2nd RT', () => {
+  /** A free tile for `id` in the RT at (cx, 0). */
+  const spot = (s: ReturnType<typeof newGame>, id: string, cx: number) => {
+    const o = cellOrigin(cx, 0);
+    for (let y = o.y; y < o.y + RT_H; y++) for (let x = o.x; x < o.x + RT_W; x++) if (checkPlace(s, id, x, y).ok) return { x, y };
+    throw new Error(`no spot for ${id}`);
+  };
+  const rich = () => {
+    const s = grown();
+    s.res.rupiah = 1e9;
+    return s;
+  };
+
+  it('joins the player at the RW, with its Kantor RT, its Rumah and their warga', () => {
+    const before = newGame(7);
+    const s = rich();
+    const n = s.neighbours[0];
+    expect(n.run).toBe('player');
+    expect(n.absorbed).toBe(true);
+    expect(n.buildings).toEqual([]);
+    expect(s.buildings.some((b) => b.def === 'kantorRT' && cellOf(b.x, b.y).cx === 1)).toBe(true);
+    expect(s.residents.length).toBe(before.residents.length + NEIGHBOUR.startPop);
+  });
+
+  it('serves a building there with no road across the seam', () => {
+    const s = rich();
+    const o = cellOrigin(1, 0);
+    const conn = connectedRoad(s);
+    const kantor = s.buildings.find((b) => b.def === 'kantorRT' && b.x >= o.x)!;
+    expect(hasRoadBeside(conn, { def: 'warung', x: kantor.x + 1, y: kantor.y })).toBeTypeOf('boolean');
+    expect(s.buildings.filter((b) => b.x >= o.x && b.def === 'rumah').every((b) => hasRoadBeside(conn, b))).toBe(true);
+  });
+
+  it('sends letters for a build there, never for the home RT, a seam lot or at the Kelurahan', () => {
+    const s = rich();
+    const home = spot(s, 'warung', 0);
+    place(s, 'warung', home.x, home.y);
+    expect(s.stempel.backlog).toBe(0);
+    const seam = (() => {
+      for (let y = 0; y < RT_H; y++) for (let x = 0; x < GRID_W; x++) if (lotAt(x, y) === 'rw' && checkPlace(s, 'balaiRW', x, y).ok) return { x, y };
+      throw new Error('no seam spot');
+    })();
+    place(s, 'balaiRW', seam.x, seam.y);
+    expect(s.stempel.backlog).toBe(0);
+    const there = spot(s, 'warung', 1);
+    place(s, 'warung', there.x, there.y);
+    expect(s.stempel.backlog).toBe(NEIGHBOUR_LETTERS);
+    promote(s, []);
+    expect(s.stempel.backlog).toBe(0);
+    const later = spot(s, 'warung', 1);
+    place(s, 'warung', later.x, later.y);
+    expect(s.stempel.backlog).toBe(0);
+  });
+
+  it('counts the RW 1★ Stempel goal only after the first letter', () => {
+    const s = rich();
+    step(s);
+    step(s);
+    expect(s.stempel.clear).toBe(0);
+    const there = spot(s, 'warung', 1);
+    place(s, 'warung', there.x, there.y);
+    step(s);
+    step(s);
+    step(s);
+    expect(s.stempel.sent).toBe(true);
+    expect(s.stempel.clear).toBeGreaterThan(0);
+  });
+
+  it('counts what the player builds there, not what it came with', () => {
+    const s = rich();
+    const goal = { kind: 'sebelahBuilds', n: 3 } as const;
+    expect(goalProgress(s, goal).have).toBe(0);
+    const there = spot(s, 'warung', 1);
+    place(s, 'warung', there.x, there.y);
+    expect(goalProgress(s, goal).have).toBe(0);
+    s.buildings.find((b) => b.x === there.x && b.y === there.y)!.status = 'active';
+    expect(goalProgress(s, goal).have).toBe(1);
+  });
+
+  it('earns its stars from what the player builds', () => {
+    const s = rich();
+    const n = s.neighbours[0];
+    expect(n.stars).toBe(0);
+    s.res.sabar = 80;
+    for (const id of ['rumah', 'rumah', 'rumah', 'rumah', 'warung', 'posRonda']) {
+      const at = spot(s, id, 1);
+      place(s, id, at.x, at.y);
+      s.buildings.find((b) => b.x === at.x && b.y === at.y)!.status = 'active';
+    }
+    while (population(s) < housing(s)) addResident(s);
+    step(s);
+    expect(n.stars).toBeGreaterThan(0);
+  });
+
+  it('turns an old RW save\'s AI-run Sebelah over to the player on load', () => {
+    const s = withAi();
+    expect(s.neighbours[0].run).not.toBe('player');
+    const loaded = deserialize(serialize(s))!;
+    expect(loaded.neighbours[0].run).toBe('player');
+    expect(loaded.neighbours[0].absorbed).toBe(true);
+    expect(loaded.neighbours[0].buildings).toEqual([]);
   });
 });
 
@@ -516,6 +611,7 @@ describe('combos count across RTs', () => {
       s.discovered = ['tongkrongan', 'rapatMalam', 'perangKuota'];
       promote(s, []);
       s.stage.current = 'rw';
+      aiNextDoor(s);
       s.neighbours.forEach((n) => { n.trait = 'rajin'; setAutoFund(n, 6); });
       for (let m = 0; m < 6 * 12; m++) {
         s.res.rupiah = 1e9;
@@ -538,7 +634,7 @@ describe('player-run RTs', () => {
   };
 
   it('a takeover costs Orang Dalam, moves the RT into the player list, and opens its lots to build on', () => {
-    const s = grown();
+    const s = withAi();
     s.stage.current = 'rw';
     const n = s.neighbours[0];
     s.res.orangDalam = 0;
@@ -565,7 +661,7 @@ describe('player-run RTs', () => {
   });
 
   it('a player-run RT earns its stars from its own lots', () => {
-    const s = grown();
+    const s = withAi();
     s.stage.current = 'rw';
     s.discovered = ['tongkrongan'];
     s.res.orangDalam = 10;
@@ -581,7 +677,7 @@ describe('player-run RTs', () => {
   });
 
   it('hands back to the AI with its buildings and warga, keeps staff, and the save keeps who runs what', () => {
-    const s = grown();
+    const s = withAi();
     s.stage.current = 'rw';
     s.res.orangDalam = 10;
     const n = s.neighbours[0];
@@ -604,7 +700,7 @@ describe('player-run RTs', () => {
   });
 
   it('only RTs in the player own RW can be taken over', () => {
-    const rwMap = grown();
+    const rwMap = withAi();
     rwMap.res.orangDalam = 99;
     expect(checkTakeover(rwMap, rwMap.neighbours[0])).toBeNull();
     const s = grown('kelurahan');
@@ -614,7 +710,7 @@ describe('player-run RTs', () => {
   });
 
   it('counts a player-run RT once in the area score', () => {
-    const s = grown();
+    const s = withAi();
     s.stage.current = 'rw';
     s.res.orangDalam = 10;
     const before = areaScore(s);
@@ -632,6 +728,7 @@ describe('AI paths', () => {
       s.discovered = ['tongkrongan', 'rapatMalam', 'perangKuota'];
       promote(s, []);
       s.stage.current = 'rw';
+      aiNextDoor(s);
       s.neighbours.forEach((n) => setAutoFund(n, 6));
       for (let m = 0; m < 5 * 12; m++) {
         s.res.rupiah = 1e9;
@@ -651,7 +748,7 @@ describe('AI paths', () => {
   });
 
   it('links an old save whose AI RT has no paths, once', () => {
-    const s = grown();
+    const s = withAi();
     const n = s.neighbours[0];
     n.buildings = n.buildings.filter((b) => b.def !== 'jalan');
     delete n.pathsLaid;
@@ -665,7 +762,7 @@ describe('AI paths', () => {
 
 describe('AI RT views', () => {
   it('stand in a resident with no job for every warga, so job combos never read a hole', () => {
-    const s = grown();
+    const s = withAi();
     const v = viewOf(s, s.neighbours[0]);
     expect(v.residents.length).toBe(s.neighbours[0].pop);
     for (const r of v.residents) expect(r.job).toBe('none');
@@ -681,6 +778,7 @@ describe('AI RT variety', () => {
         s.discovered = ['tongkrongan', 'rapatMalam', 'perangKuota'];
         promote(s, []);
         s.stage.current = 'rw';
+        aiNextDoor(s);
         s.neighbours.forEach((n) => { n.trait = trait; setAutoFund(n, 6); });
         for (let m = 0; m < 10 * 12; m++) {
           s.res.rupiah = 1e9;
@@ -696,7 +794,7 @@ describe('AI RT variety', () => {
   }, 60_000);
 
   it('builds the missing partner of a combo it has half built', () => {
-    const s = grown();
+    const s = withAi();
     const n = s.neighbours[0];
     n.trait = 'hobi';
     n.stars = 2;
@@ -707,7 +805,7 @@ describe('AI RT variety', () => {
   });
 
   it('explains a score by its parts', () => {
-    const s = grown();
+    const s = withAi();
     const p = scoreParts(viewOf(s, s.neighbours[0]));
     expect(Math.abs(p.residents + p.buildings + p.combos + p.sabar - p.total)).toBeLessThanOrEqual(2);
     expect(rivalTarget(2)).toBeGreaterThan(rivalTarget(1));
@@ -716,7 +814,7 @@ describe('AI RT variety', () => {
 
 describe('handing an RT back', () => {
   const taken = () => {
-    const s = grown();
+    const s = withAi();
     s.stage.current = 'rw';
     s.res.orangDalam = 10;
     s.res.rupiah = 1e9;
@@ -765,7 +863,7 @@ describe('handing an RT back', () => {
 
 describe('absorbing an RT', () => {
   const ready = () => {
-    const s = grown();
+    const s = withAi();
     s.stage.current = 'rw';
     s.res.rupiah = 1e9;
     return s;
@@ -816,7 +914,7 @@ describe('absorbing an RT', () => {
   });
 
   it('does not make buildings dearer: what it brings does not count toward sprawl', () => {
-    const s = grown();
+    const s = withAi();
     const n = s.neighbours[0];
     n.buildings = Array.from({ length: 40 }, (_, i) => ({ uid: 5000 + i, def: 'warung', x: 13 + (i % 13), y: i % 17, level: 1, status: 'active' as const, timer: 0, invested: 0, placedAt: 0 }));
     const before = sprawl(s);

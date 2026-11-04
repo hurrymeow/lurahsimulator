@@ -290,7 +290,6 @@ export function visit(s: GameState, n: Neighbour): string | null {
   n.visitedAt = s.month;
   build(s, n);
   n.lastBuild = s.month;
-  if (ownRw(n)) s.stempel.backlog += STEMPEL.perBuild * (n.trait === 'jarang' ? 2 : 1) * letterMult(s);
   n.pop = Math.min(housing(viewOf(s, n)), n.pop + NEIGHBOUR.visitWarga);
   return null;
 }
@@ -398,11 +397,14 @@ function build(s: GameState, n: Neighbour): void {
   addTo(s, n, id, first.x, first.y, rotOf(first));
 }
 
-/** True for an RT inside the player's own RW, the first RW of every map. */
-const ownRw = (n: { cx: number; cy: number }): boolean => {
-  const { rx, ry } = rwOf(n.cx, n.cy);
-  return rx === 0 && ry === 0;
-};
+/** At the RW, a build in Kampung Sebelah needs Surat Pengantar stamped. Seam lots and paths send none, and the home RT never does. */
+export function sendBuildLetters(s: GameState, id: string, x: number, y: number): void {
+  if (s.stage.current !== 'rw' || isSeam(x, y) || def(id).pathIncome) return;
+  const { cx, cy } = cellOf(x, y);
+  if (!cx && !cy) return;
+  s.stempel.backlog += STEMPEL.perBuild * letterMult(s);
+  s.stempel.sent = true;
+}
 
 /** The RT star goals an AI RT must meet: all of them but the ranking wins, which only the player's own RT chases. */
 export const aiGoals = (goals: Goal[]): Goal[] => goals.filter((g) => g.kind !== 'rankWins' && g.kind !== 'winStreak');
@@ -423,9 +425,6 @@ export function neighboursSystem(s: GameState, fx: Fx): void {
         if (!(n.trait === 'hobi' && n.turns % 3 === 0)) {
           build(s, n);
           n.funded--;
-          // Every build needs a Surat Pengantar stamped by the RW. Jarang Muncul sends twice as many.
-          // On a Kelurahan map the other RWs stamp their own; only the player's RW queues at the player.
-          if (ownRw(n)) s.stempel.backlog += STEMPEL.perBuild * (n.trait === 'jarang' ? 2 : 1) * letterMult(s);
         }
       }
       const v = viewOf(s, n);
@@ -453,7 +452,8 @@ export function stempelSystem(s: GameState, fx: Fx): void {
   st.stock -= used;
   st.backlog -= used;
   if (st.backlog) gain(s, fx, 'sabar', -st.backlog * STEMPEL.sabarPerLetter, s.buildings.find((b) => b.def === 'kantorRT'));
-  st.clear = st.backlog < STEMPEL.clearUnder ? st.clear + 1 : 0;
+  // The RW 1★ goal counts only once a letter has come, so it cannot finish before the player has met the rule.
+  st.clear = st.sent && st.backlog < STEMPEL.clearUnder ? st.clear + 1 : 0;
 }
 
 /** Counts months in a row with no RT in debt. AI RTs run on the player's Dana, so only the kas can go negative. */
@@ -498,12 +498,13 @@ export function promote(s: GameState, fx: Fx): boolean {
   setGrid(next);
   syncArea(s);
   for (const c of neighbourCells()) if (!s.neighbours.some((n) => n.cx === c.cx && n.cy === c.cy)) s.neighbours.push(newNeighbour(s, c.cx, c.cy));
-  // Kampung Sebelah joins the player for free at the Kelurahan, and RW 2 stamps its own letters.
-  if (next === 'kelurahan') {
+  // Kampung Sebelah is the player's from the RW (docs/plans/second-rt.md). The first AI RTs come with RW 2.
+  if (next === 'rw') {
     const sebelah = s.neighbours.find((n) => n.cx === 1 && n.cy === 0);
     if (sebelah) absorb(s, sebelah);
-    s.stempel.backlog = 0;
   }
+  // Letters stop at the Kelurahan: Kampung Sebelah is plain land by then, and RW 2 stamps its own.
+  if (next === 'kelurahan') s.stempel.backlog = 0;
   // Grup Chat Warga needs two AI RTs that think alike, so the draw never leaves every AI trait different.
   const ai = s.neighbours.filter((n) => n.run !== 'player');
   if (ai.length > 1 && new Set(ai.map((n) => n.trait)).size === ai.length) ai[ai.length - 1].trait = ai[0].trait;

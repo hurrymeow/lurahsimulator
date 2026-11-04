@@ -34,7 +34,7 @@ export function newGame(seed: number): GameState {
     pendingEvent: null,
     stage: newStageState(),
     neighbours: [],
-    stempel: { stock: 0, backlog: 0, clear: 0 },
+    stempel: { stock: 0, backlog: 0, clear: 0, sent: false },
     debtFree: 0,
     rw: { kaderDecay: 0 },
     kel: { budget: 0, spentBase: 0, serapanRun: 0, cleanAudits: 0 },

@@ -114,7 +114,7 @@ export const STEMPEL = {
   clearUnder: 5,
   /** Sabar lost a month for each letter still waiting. */
   sabarPerLetter: 0.5,
-  /** Letters a build sends. Jarang Muncul sends double. */
+  /** Letters a build in Kampung Sebelah sends at the RW. */
   perBuild: 2,
 };
 

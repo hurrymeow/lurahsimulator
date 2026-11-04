@@ -13,7 +13,7 @@ export const RW_STAGE: StageDef = {
   next: 'kelurahan',
   stars: [
     {
-      goals: [{ kind: 'fundedRts', n: 1 }, { kind: 'stempelClear', n: 6, under: 5 }],
+      goals: [{ kind: 'sebelahBuilds', n: 3 }, { kind: 'stempelClear', n: 6, under: 5 }],
       unlocks: ['posyandu', 'portal'],
     },
     {
