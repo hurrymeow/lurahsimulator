@@ -6,6 +6,8 @@ import type { App } from '../app';
 import { rupiah } from '../format';
 import { inemURL } from '../render/inem';
 import { portraitURL, staffPortraitURL } from '../render/portraits';
+import { answerNo, answerYes, checkYes, requestLine, yesLabel } from '../sim/requests';
+import { chainKey, chainOf } from '../sim/chains';
 import { BIMTEK, CHANNELS, GIGS, RAISE, SPECIALS, STATS, STAT_ICON, STAT_MAX, roleDef, traitDef, type RoleId, type StatId } from '../data/staff';
 import { RIVAL_NAMES } from '../data/ranking';
 import { cellName } from '../sim/grow';
@@ -100,7 +102,7 @@ function flags(x: Staff, rival: string): Node[] {
 
 /** One line per person; every action waits in their detail view. A chip flags what needs the player. */
 function staffCard(app: App, x: Staff): HTMLElement {
-  const chip = x.raiseAsked ? t('staff.raiseChip') : x.away ? t('staff.awayNow', { n: x.away }) : x.refused ? t('staff.refusedChip') : '';
+  const chip = x.request ? t('req.chip') : x.raiseAsked ? t('staff.raiseChip') : x.away ? t('staff.awayNow', { n: x.away }) : x.refused ? t('staff.refusedChip') : '';
   return h('div', { class: `card-btn static staff-card${x.inem ? ' inem' : ''}`, 'data-staff': String(x.id) },
     face(x, x.role),
     h('div', { class: 'card-text' },
@@ -125,7 +127,38 @@ function personView(app: App, x: Staff, done: () => void): Node[] {
     statBars(x.stats, x),
     h('p', { class: 'meta' }, t('staff.salary', { amt: rupiah(price(s, x.salary)) })),
     ...flags(x, RIVAL_NAMES[s.stage.current]),
-  ];
+    x.akrab ? h('p', { class: 'meta staff-akrab' }, `${'♥'.repeat(x.akrab)} ${t('req.akrab', { n: x.akrab })}`) : null,
+  ].filter((p): p is HTMLElement => !!p);
+  // A named special's dream: three steps, done ones ticked, and what it pays.
+  const chain = chainOf(x);
+  if (chain) {
+    const done = x.chainDone ? chain.steps.length : x.chainStep ?? 0;
+    parts.push(h('div', { class: 'staff-chain' },
+      h('h3', {}, `${t('chain.title')}: ${t(chainKey(x, 'name'))}`),
+      h('ul', { class: 'checklist' }, ...chain.steps.map((_c, i) => h('li', { class: i < done ? 'done' : '' }, h('span', { 'aria-hidden': 'true' }, i < done ? '✓' : '○'), ' ', t(chainKey(x, `step${i}`))))),
+      h('p', { class: 'meta' }, t(chainKey(x, 'reward'))),
+    ));
+  }
+  // Urusan Pribadi: the ask in their own words, then yes or not now. Yes is the primary unless a raise also waits.
+  if (x.request) {
+    const ok = checkYes(s, x);
+    parts.push(
+      h('p', { class: 'staff-request' }, requestLine(x)),
+      h('div', { class: 'row staff-actions staff-request-actions' },
+        h('button', { class: `btn${x.raiseAsked ? '' : ' btn-primary'}`, type: 'button', id: 'req-yes', disabled: !ok.ok, onclick: () => { answerYes(s, x); app.tap(10); done(); } }, yesLabel(x)),
+        h('button', { class: 'btn', type: 'button', id: 'req-no', onclick: () => {
+          const left = answerNo(s, x);
+          app.tap(10);
+          if (left) {
+            app.save();
+            app.refresh();
+            openStaff(app);
+          } else done();
+        } }, t('req.noButton')),
+      ),
+      h('p', { class: 'meta' }, ok.ok ? t('req.yesHelp') : ok.missing.join(' ')),
+    );
+  }
   if (x.raiseAsked) {
     parts.push(h('p', { class: 'meta' }, t('staff.raiseAsk', { amt: rupiah(price(s, Math.round(x.salary * (1 + RAISE)))) })));
     parts.push(h('div', { class: 'row staff-actions' },

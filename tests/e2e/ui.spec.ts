@@ -2499,6 +2499,32 @@ test.describe('build mode', () => {
     await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
   });
 
+  test('a personal request shows on the row, reads as a speech bubble, and yes adds a heart', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.res.rupiah = 50_000_000;
+      app.s.staff.push({ id: 77, name: 'Mbak Rina', stars: 2, stats: { rajin: 40, lobi: 40, jujur: 50, gaul: 40 }, salary: 1_000_000, role: 'hansip', xp: 30, level: 3, hiredAt: 0,
+        request: { kind: 'loan', line: 0, due: app.s.month + 4, amt: 1_500_000 } });
+      app.refresh();
+    });
+    await openPanel(page, 'staff');
+    const row = page.locator('#sheet .staff-card[data-staff="77"]');
+    await expect(row.locator('.staff-chip')).toHaveText(lang() === 'en' ? 'Has a personal matter' : 'Ada urusan pribadi');
+    await row.locator('.staff-open').click();
+    await expect(page.locator('#sheet .staff-request')).toContainText('Martabak Matcha');
+    await expectLegible(page, 'personal request');
+    const kas = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.res.rupiah);
+    await page.locator('#req-yes').click();
+    const after = await page.evaluate(() => {
+      const x = (window as unknown as { pakrt: any }).pakrt.s.staff.find((o: any) => o.id === 77);
+      return { akrab: x.akrab, loan: !!x.loan, request: !!x.request, kas: (window as unknown as { pakrt: any }).pakrt.s.res.rupiah };
+    });
+    expect(after).toEqual({ akrab: 1, loan: true, request: false, kas: kas - 1_500_000 });
+    await expect(page.locator('#sheet .staff-akrab')).toBeVisible();
+  });
+
   test('each staff row opens its detail; raise and let go work there', async ({ page }) => {
     await start(page);
     await dismissModals(page);

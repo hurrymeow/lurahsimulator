@@ -258,6 +258,30 @@ export interface Staff extends Applicant {
   refused?: boolean;
   /** Month of the last raise, for Rajin Lembur. */
   lastRaise?: number;
+  /** Akrab, the bond with Pak RT: 0 to 3 hearts, each +3 to the work stat. Urusan Pribadi (decisions/staff-requests.md section 2). */
+  akrab?: number;
+  /** An open personal request, waiting for a yes or no until `due`. */
+  request?: StaffRequest;
+  /** The week the last request came, so the next waits about 24 weeks. */
+  lastRequest?: number;
+  /** A named special's quest chain (decisions/staff-requests.md section 3): steps done so far, and whether it paid out. */
+  chainStep?: number;
+  chainDone?: boolean;
+  /** A business loan out: it comes back, or doesn't, at `due`. */
+  loan?: { amt: number; due: number; line: number };
+}
+
+export type RequestKind = 'cuti' | 'loan' | 'bimtek' | 'orangDalam' | 'viral' | 'sabar';
+
+export interface StaffRequest {
+  kind: RequestKind;
+  /** Which line of the bank for this kind. */
+  line: number;
+  due: number;
+  /** Weeks away, for cuti. */
+  weeks?: number;
+  /** Rupiah, for a loan or a Bimtek. */
+  amt?: number;
 }
 
 export interface Lowongan {

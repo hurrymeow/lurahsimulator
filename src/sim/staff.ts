@@ -70,6 +70,8 @@ export function output(x: Staff): number {
   if (x.trait === 'mantanPreman' && x.role === 'hansip') m = 2;
   const sp = x.special ? SPECIALS.find((p) => p.id === x.special) : undefined;
   if (sp && sp.role === x.role) m *= sp.output ?? 1;
+  // Bu Juru Ketik's typewriter, repaired at the end of her chain: her desk folders count twice.
+  if (x.special === 'buJuruKetik' && x.chainDone && x.role === 'asisten') m *= 2;
   return x.level * stat * m;
 }
 
@@ -310,7 +312,7 @@ export const cancelLowongan = (s: GameState): void => {
 
 // ---------- managing ----------
 
-const release = (s: GameState, x: Staff) => {
+export const release = (s: GameState, x: Staff) => {
   s.staff = s.staff!.filter((o) => o !== x);
   for (const r of s.residents) if (r.staffId === x.id) delete r.staffId;
 };
