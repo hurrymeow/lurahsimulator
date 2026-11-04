@@ -44,9 +44,10 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - `open · — · — · done when:` each balance row passes or has a stated reason in decisions/.
 
 - [ ] **Finish the scorecard: the 10 Unknown rows and the bot gaps.**
-  - Problem: the first scorecard (`scorecard/scorecard.md`) has 10 Unknown rows. Missing: goal ETAs (item 8), the screen checks (3, 27, T2), ablation runs (16), warning lead of fixed beats (22), a worst-event chain (23), Dana, Stempel and Anggaran in the timeline (13), the cause shown on screen (6), plus traits and combos in the data lint (2). The hint bot stalls at 1★ because the combo pointer fires late.
+  - #311 linted traits and combos (item 2, now Pass) and added Dana, Stempel and Anggaran to the timeline (item 13).
+  - Problem: the scorecard (`scorecard/scorecard.md`) still has 10 Unknown rows. Missing: goal ETAs (item 8), the screen checks (3, 27, T2), ablation runs (16), warning lead of fixed beats (22: decide first which beats count as warned, such as the Lomba announcement card), a worst-event chain (23), the cause shown on screen (6). The hint bot stalls at 1★ because the combo pointer fires late.
   - Why: section 8 stays partly blind until each row can be judged. The nightly run is also untested on GitHub.
-  - Suggested solution: add goal ETAs to the recorder, a forced event chain, per-action ablation runs and the extra resources to the timeline. Add T2 specs for items 3, 6 and 27. Check the first nightly run time (bar 20 min) and trim seeds if needed.
+  - Suggested solution: add goal ETAs to the recorder, a forced event chain and per-action ablation runs. Add T2 specs for items 3, 6 and 27. Check the first nightly run time (bar 20 min) and trim seeds if needed.
   - Source: `scorecard/scorecard.md`; `decisions/scorecard-harness.md`
   - `open · — · — · done when:` no row reads Unknown for a reason the harness could fix, and a nightly run finishes under 20 minutes.
 - [ ] **Low and wide 2x2 art, and native-size cranes on big sites.**
@@ -80,9 +81,16 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: compare against a Chromium run on the same runner; set a WebKit bar, or skip the test outside Chromium with the reason in `decisions/`.
   - Source: `decisions/webkit-first-run.md`
   - `open · — · — · done when:` the test passes in WebKit or is skipped there with a recorded reason.
+- [ ] **Scorecard bots: reach RT 3★ again after the 2nd-RT change.**
+  - Problem: the scorecard refreshed in #311 shows the builder bot late to RT 2★ in 10 of 10 seeds and missing RT 3★ in 8, and a 192s wait with nothing affordable (item 1, was 0s). The run committed on 2026-11-01 had neither.
+  - Why: the scorecard cannot judge pace past RT while its main bot stalls there.
+  - Suggested solution: check whether RT 3★ now needs the second RT (#306) and teach `tests/scorecard/driver.ts` bots to build there; if not, find what changed. Coordinate with the 2nd-RT item's owner.
+  - Source: `decisions/scorecard-lint-sinks.md`
+  - `open · — · — · done when:` the builder bot reaches RT 3★ in 10 of 10 seeds and item 1 is back under 60s.
 
 ## Done
 
+- [x] **Scorecard: traits and combos linted, Dana, Stempel and Anggaran tracked.** Items 2 and 13; scorecard refreshed. #311, `decisions/scorecard-lint-sinks.md`.
 - [x] **Every sprite inside its footprint.** The last nine props moved in; `SPILL_ALLOW` is empty. #309, `decisions/sprite-props.md`.
 - [x] **Quest chains for every special.** The other eleven, with Bro Kripto's and Om Motivasi's gambles on Jujur. #309, `decisions/special-chains-four.md`, `decisions/special-chains-last-seven.md`.
 - [x] **Urusan Pribadi: the rest.** Experience asks as promises, the 3-heart perk, loans that open a warung. #309, `decisions/urusan-pribadi-rest.md`.
