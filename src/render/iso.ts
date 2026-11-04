@@ -97,6 +97,8 @@ export class Painter {
 
   /** One canvas pixel, in native (n-scaled) coordinates. */
   px(x: number, y: number, c: string | null, alpha = 255): void {
+    x = Math.floor(x);
+    y = Math.floor(y);
     if (c === null || x < 0 || y < 0 || x >= this.w || y >= this.h) return;
     const n = parseInt(hex(c).slice(1), 16);
     const k = (y * this.w + x) * 4;
@@ -131,7 +133,8 @@ export class Painter {
     const px = 1 / (TH * n);
     for (let y = TOP * n + this.oy; y < (TOP + TH) * n + this.oy; y++)
       for (let x = this.ox; x < TW * n + this.ox; x++) {
-        const rx = (x + 0.5 - cx) / cx;
+        // Divide by the half width, not by cx: on a long footprint's second tile cx includes the offset, and the diamond grew wide.
+        const rx = (x + 0.5 - cx) / ((TW / 2) * n);
         const ry = (y + 0.5 - cy) / ((TH / 2) * n);
         if (Math.abs(rx) + Math.abs(ry) > 1) continue;
         this.px(x, y, paint((rx + ry) / 2 + 0.5, (ry - rx) / 2 + 0.5, px));
@@ -489,7 +492,8 @@ function upgradeKit(p: Painter, level: number): void {
   const fy = gy + half - 2;
   for (const dx of [-gate - 2, gate + 1]) {
     for (const [ox, oy, c] of [[0, 0, 'o'], [1, 0, 'o'], [0, -1, 'o'], [1, -1, 'o'], [0, -2, 'G'], [1, -2, 'g'], [-1, -2, 'G'], [2, -2, 'G'], [0, -3, 'g'], [1, -3, 'G']] as [number, number, string][])
-      p.px(gx + dx + ox, fy - Math.abs(dx) / 2 + oy, c);
+      // Whole pixels only: a half row would index the pixel array mid-row and land the pot 32 pixels over.
+      p.px(gx + dx + ox, Math.round(fy - Math.abs(dx) / 2) + oy, c);
   }
   for (let k = 0; k < 6; k++) p.px(gx + gate + 4, fy - 2 - k, 'S');
   p.px(gx + gate + 4, fy - 8, 'y');
