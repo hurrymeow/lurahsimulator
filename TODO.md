@@ -12,12 +12,13 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ### Next
 
-- [ ] **Let the player control and build on the 2nd RT after the RT reaches 3★, and add the AI-run RT later, each with a tutorial.**
-  - Problem: At 3★ the RT expands and the player has no clear next step in a second town. Hari, 2026-11-02: "after expanding from RT 3 star, let players control and build on the 2nd town, and introduce the RT AI later". The tutorial teaches only the first RT, so a new player gets no guidance when the second RT becomes theirs.
-  - Why: Building is the action the player already knows. Handing over the 2nd RT first gives the player a full loop before the AI-run RTs arrive, and it keeps the AI-run RT step small. Each step needs its own tutorial, so the player learns the new controls before they reach a larger map.
-  - Suggested solution: plan it after the RT 3★ expansion is settled. Step 1: the 2nd RT is player-controlled from the 3★ expansion, with its own tutorial steps (the lots, the first build, the stars). Step 2, later: the AI runs RTs, with a tutorial for that. Link it to the build-on-AI-RTs item above (the AI-run RT step), and to the smaller map in `decisions/smaller-map-go.md`, which sets the 2-RT RW and the 4-RT Kelurahan. Needs a planning thread first.
-  - Source: Hari, 2026-11-02, thread "Log player-built second RT to TODO".
-  - `claimed · voidinside99 · 2026-11-04 · done when:` after the 3★ expansion, a new player builds in the 2nd RT with a tutorial for each step, EN and ID at 320 px, and the AI-run RT step follows with its own tutorial.
+- [ ] **The 2nd RT: judge it and hand it to Hari (T7).**
+  - T1 to T6 shipped: Kampung Sebelah is the player's from the RW (#303), its tutorial (#306), the AI RT tutorial at the Kelurahan (#316) and the Kelurahan 1★ load check (#317).
+  - Problem: no one has judged the whole flow from RT 3★ to Kelurahan 1★ on screen, and Hari has not played it.
+  - Why: each PR was self-approved for its own slice. The flow as one piece, and how it feels, still needs a check.
+  - Suggested solution: `docs/plans/second-rt.md` T7. Run the screenshot-only check from `decisions/rw2-clear.md` on RW 1★ to 3★ and Kelurahan 0★ to 1★, judge against GAME-DESIGN.md §8, the UI.md checklist and TESTING.md with the verdict in `decisions/second-rt.md`, then ask Hari to play RT 3★ to Kelurahan 1★ (this also covers the RW part of T9 below). A docs-only note.
+  - Source: Hari, 2026-11-02; `docs/plans/second-rt.md`
+  - `claimed · voidinside99 · 2026-11-04 · done when:` the T7 verdict is in `decisions/second-rt.md` and Hari has been asked to play it.
 
 - [ ] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).**
   - Problem: T1 to T8 are merged and tuned from bot numbers only. No person has played the new ladder.
@@ -37,7 +38,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 ### Later
 
 - [ ] **Fix the remaining scorecard Fails that have a clear cause.**
-  - Problem: after the first balance wave the scorecard reads 3 Pass, 12 Fail, 12 Unknown (Nightly of 2026-11-01). Still failing with a cause: RT 1★ ratio 6.5x among the four main bots (a 18 second gap against 100 seconds, so the 1.3x bar may be too strict at that scale; the claiming agent decides and logs it in `decisions/`), Kel 2★ never reached by shopkeeper and Pencitraan, Hint reader finds only 50% of combos (bar 65 to 85%), Viral pinned near 100 in every band, cash piles up for up to 44 min with no late sink (item 14), goal gaps over the band (7, 10), novelty gaps (11), one reward kind per star (12), Aman pinned at 98% in B4.
+  - Problem: the scorecard of 2026-11-04 reads 3 Pass, 14 Fail, 10 Unknown. Still failing with a cause: Viral pinned near 100 in every band (5), goal gaps over the band (7, 10), novelty gaps (11), one reward kind per star (12), cash piles up for up to 52 min with no late sink (14), income outruns costs (15), Pencitraan never reaching Kel 1★ (17), Hint reader finds only 41% of combos (21, bar 65 to 85%). Kelurahan 2★ and 3★ still miss the goal-gap limit by 40 to 136 s (`decisions/second-rt-load.md`, cause not traced).
   - Why: each Fail is a place the game is too easy, too flat or can strand a player.
   - Suggested solution: one small PR per row, each proved by a Nightly rerun. Cash sink and late Popularitas sources are content, so check them against the Act 2 plan first.
   - Source: `scorecard/scorecard.md`; `decisions/rt-3star-pace.md`; `decisions/combo-stack-cap.md`; `decisions/cheapskate-bar.md`
@@ -50,6 +51,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: add goal ETAs to the recorder, a forced event chain and per-action ablation runs. Add T2 specs for items 3, 6 and 27. Check the first nightly run time (bar 20 min) and trim seeds if needed.
   - Source: `scorecard/scorecard.md`; `decisions/scorecard-harness.md`
   - `open · — · — · done when:` no row reads Unknown for a reason the harness could fix, and a nightly run finishes under 20 minutes.
+
 - [ ] **Low and wide 2x2 art, and native-size cranes on big sites.**
   - Problem: Gudang Material and Koperasi look like a Rumah scaled up, too tall for 2x2. The crane over a 2x2 site is a 1x1 crane scaled 2x, with big pixels out of scale.
   - Why: size should read as width, and every sprite should keep the 1px grid.
@@ -63,33 +65,48 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: permits become folders the Kantor clears in order; each Asisten clears some a month; the Asisten role can be posted from RT 1★; the map, panel and goal strip show the queue and say when to hire. Prototype in a PR and judge it against the checklists. Later steps: petugas on big public buildings, output numbers on staff cards, the same queue for Stempel and Serapan.
   - Source: voidinside99, 2026-10-31
   - `claimed · voidinside99 · 2026-10-31 · done when:` the prototype passes the checklists and merges (or is dropped), with the bite tuned in `decisions/desk-queue.md`.
+
 - [ ] **WebKit: the yearly report card never shows.**
   - Problem: in the first WebKit nightly, `yearly report card is legible, pauses the game and dismisses on tap` waits for `#modal .card.report-card` and it never appears (also on retry).
   - Why: iPhone players use WebKit; if the card really never shows, they miss the year's grade.
   - Suggested solution: run the test in WebKit (`E2E_BROWSER=webkit`, in CI's image) with a trace, find whether the card is not built or the test's path differs, and fix it.
   - Source: `decisions/webkit-first-run.md`
   - `open · — · — · done when:` the test passes in the WebKit nightly.
+
 - [ ] **WebKit: Balap Karung's tap button detaches on every tap.**
   - Problem: in the first WebKit nightly, the Lomba test times out tapping `#lomba-mash` 40 times: the button is re-created on each tap, and WebKit's click waits for a stable element.
   - Why: a button that is rebuilt on every tap may drop fast taps on a real iPhone too.
   - Suggested solution: update the mash count in place instead of re-rendering the button, then rerun the WebKit nightly.
   - Source: `decisions/webkit-first-run.md`
   - `open · — · — · done when:` the Lomba test passes in the WebKit nightly.
-- [x] **WebKit: frame-rate bars.**
-  - Problem: `walkers, particles and night keep the frame rate` reads 46 fps with effects off and 26 busy in CI's WebKit, under the Chromium-set bars.
-  - Why: CI's WebKit renders in software, so it may not say anything about an iPhone; but it may also be a real WebKit cost.
-  - Suggested solution: compare against a Chromium run on the same runner; set a WebKit bar, or skip the test outside Chromium with the reason in `decisions/`.
-  - Source: `decisions/webkit-first-run.md`
-  - `done · ChatGPT · 2026-11-04 · done when:` skipped in WebKit with the software-rendering reason recorded; Chromium keeps the FPS regression check.
+
 - [ ] **Scorecard bots: the last RT stalls.**
   - #313 fixed two combo loops in the bots (a leveled combo piece and an uncapped copy fallback); the builder now misses RT 3★ in 1 seed of 10, not 8. The 2nd RT was not the cause.
-  - Problem: item 1 still waits 208s with nothing affordable (bar 60s), RT 2★ is late in 10 of 10 seeds, and the Pencitraan bot never reaches RT 2★ (item 17).
+  - Problem: item 1 still waits 192s with nothing affordable (bar 60s; in #303 the longest waits were at the Kecamatan, for a building of Rp 171jt to Rp 250jt), RT 2★ is late in 10 of 10 seeds, and the Pencitraan bot never reaches RT 2★ (item 17).
   - Why: the scorecard cannot judge pace or strategy balance while bots stall.
   - The Pencitraan stall is a strategy collapse on slow-growth seeds, not a bot bug (`decisions/scorecard-pencitraan-probe.md`); fixing it is a balance call that belongs with the scorecard Fails item.
   - Suggested solution: probe the 208s wait and the late RT 2★ the same way (state and building counts at the stall) and tell a bot bug from a balance gap.
   - Source: `decisions/scorecard-bot-combo-loop.md`
   - `open · — · — · done when:` the builder reaches RT 3★ in 10 of 10 seeds, and item 1 is under 60s or has a recorded balance reason.
+
+- [ ] **Kelurahan residents goals barely bite.**
+  - Problem: bots reach the Kelurahan with 150 to 200 residents against star goals of 50, 120 and 200, so the first two are met on arrival. The goals are meant to count the player's own kampung, so the count may include too many people.
+  - Why: a goal that is met on arrival gives the player nothing to aim at.
+  - Suggested solution: check which residents the goal counts against GAME-DESIGN.md; fix the count or raise the numbers, proved by a bot run.
+  - Source: `decisions/second-rt-load.md`, "Not fixed"
+  - `open · — · — · done when:` each Kelurahan residents goal is still open when the stage starts, or a decisions file says why not.
+
+- [ ] **English event bodies over 20 words.**
+  - Problem: the density test reads only the first event it meets, so long English bodies slip through. The hibah body is 23 words (UI.md rule 14 allows 20).
+  - Why: long bodies get skimmed, and the check gives a false pass.
+  - Suggested solution: make the test (or a unit test over `src/i18n/en.ts` and `id.ts`) check every event body and choice label, then cut the ones over.
+  - Source: `decisions/second-rt.md`, "English event text"
+  - `open · — · — · done when:` a test checks every event body and choice, and all pass in EN and ID.
+
 ## Done
+
+- [x] **The 2nd RT, T1 to T6.** Kampung Sebelah is the player's from the RW (#303); its tutorial (#306); the AI RT tutorial at RW 2 (#316); a 24-week Serapan line for Kelurahan 1★ (#317). T7 stays open above. `decisions/second-rt.md`, `decisions/second-rt-T6.md`, `decisions/second-rt-load.md`.
+- [x] **WebKit: frame-rate bars.** Skipped in WebKit, where CI renders in software; Chromium keeps the check. #315, `decisions/webkit-first-run.md`.
 
 - [x] **Scorecard bots: two combo loops fixed.** The builder bought a Rumah Makan or Wifi every week chasing a combo; RT 3★ missed by 1 seed of 10, was 8. #313, `decisions/scorecard-bot-combo-loop.md`.
 - [x] **Scorecard: traits and combos linted, Dana, Stempel and Anggaran tracked.** Items 2 and 13; scorecard refreshed. #311, `decisions/scorecard-lint-sinks.md`.
@@ -181,10 +198,10 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 - [x] **Lowongan applicants vanish (staffing).** Applicants wait until hired or cancelled, arrive as a card with a Buka Staf button, and the Menu shows how many wait. #144, `progress/staff-applicants-wait.md`.
 - [x] **Levers to speed up neighbour RT stars**, **Auto-fund the neighbouring RTs** and **Combos count globally for RT star goals.** Dana banks up to 12 (x1 or x6) with a "+N% boost", auto-dana per RT with a Rp 5jt floor, each RT's next-star checklist, and shared combos for AI RTs (a Rajin RT now reaches 3★). #145, `decisions/neighbour-levers.md`.
 - [x] **Let the player run an adjacent RT.** Take over an RT in your RW for 3 Orang Dalam and build on its lots, or hand it back any time. #146, `decisions/neighbour-takeover.md`.
-
-- Menu labels shortened: "Kas & peringkat" to "Peringkat" and "Buku Combo" to "Combo" (ID), with EN "Ranking" and "Combo". See `progress/short-menu-labels.md`.
-- **Reword the goal strip's beds line.** Done in the house-goal reword PR: `goal.short.beds` now says a Rumah houses more residents, in EN and ID. See `progress/house-goal-reword.md`.
-- [x] **Play a sound on every menu click.** Shipped in `progress/menu-click-sound.md`.
+- [x] **Shorter Menu labels.** "Peringkat" and "Combo" (ID), "Ranking" and "Combo" (EN). `progress/short-menu-labels.md`.
+- [x] **Reword the goal strip's beds line.** `goal.short.beds` says a Rumah houses more residents, in EN and ID. `progress/house-goal-reword.md`.
+- [x] **Play a sound on every menu click.** `progress/menu-click-sound.md`.
+- [x] **Rename only buildings, behind a pencil, and skip screenshot baselines outside CI.** #142, `progress/rename-gate-and-pencil.md`.
 
 ## Ideas
 
@@ -194,6 +211,3 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: Playtest, then adjust `GRADE_BONUS` if it feels thin.
   - Source: `decisions/41-half-year-report-night-tint.md`
   - `open · — · — · done when:` the economy is playtested and `GRADE_BONUS` is kept or tuned, with a note in `decisions/`.
-- [x] **Rename only shops and facilities that are buildings.** Shipped in PR #142, see `progress/rename-gate-and-pencil.md`.
-- [x] **Make renaming a building hard to trigger by mistake.** Shipped in PR #142: a pencil beside the name opens the rename field. See `progress/rename-gate-and-pencil.md`.
-- [x] **Skip screenshot baselines outside CI's image.** Shipped in PR #142: visual baselines run only when `CI` is set. See `progress/rename-gate-and-pencil.md`.
