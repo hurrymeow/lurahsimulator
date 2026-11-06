@@ -18,6 +18,15 @@ const vars = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort(
 afterEach(() => setLang('en'));
 
 describe('string tables', () => {
+  it('uses the English singular for a count of 1, and the plain line otherwise', () => {
+    setLang('en');
+    expect(t('stage.goalShort.combos', { n: 1 })).toBe('find 1 combo');
+    expect(t('stage.goalShort.combos', { n: 2 })).toBe('find 2 combos');
+    expect(t('stage.goalShort.tierWins', { n: 1 })).toBe('win 1 area ranking');
+    setLang('id');
+    expect(t('stage.goalShort.combos', { n: 1 })).toBe('temukan 1 combo');
+  });
+
   it('Indonesian has exactly the English keys and the same placeholders', () => {
     expect(Object.keys(ID).sort()).toEqual(Object.keys(EN).sort());
     for (const k of Object.keys(EN) as (keyof typeof EN)[]) expect(vars(ID[k]), k).toEqual(vars(EN[k]));
