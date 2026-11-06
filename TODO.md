@@ -72,6 +72,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - #326 removed the slowdown #323 caused: the bot was reading the RW combo step as an RT combo hint.
   - Problem: the hint reader bot, which builds only what the game names, is still the slowest player type: 1.21x the builder at RW 2★ and 1.11x at Kelurahan 1★ (`decisions/sebelah-step-hint-bot.md`).
   - Why: a player who does what the game says should not be the one who falls behind.
+  - Probe (2026-11-06, seed 1): the hint bot plays the builder's plan except combos (it builds only the combo the game names; the builder reads the whole book). Both buy the same buildings, so the lag is not the build order. The gap opens between RW 1★ and RW 2★: 66 ticks against 45, with the hint bot buying 5 Wifi Towers and extra barbershops while it waits. Next: print the open RW 2★ goals at those ticks for both bots; likely a goal the game never names.
   - Suggested solution: compare the hint reader's build order with the builder's from RT 3★ on, and change what `nextStep` names where it costs time. Prove it with the scorecard bots.
   - Source: `decisions/playtest-rt3-kel1.md`, "The nine player types"
   - `open · — · — · done when:` the hint reader is within 1.1x of the builder at each star from RW 1★ to Kelurahan 1★, or a decisions file says why not.
