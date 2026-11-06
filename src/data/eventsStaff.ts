@@ -26,7 +26,7 @@ export const STAFF_EVENTS: EventDef[] = [
   {
     id: 'protesWarga',
     name: 'Warga at the Gate',
-    body: 'A dozen warga gather at the Kantor about the noise, the drains and the queue for everything. Someone has to go out to them.',
+    body: 'A dozen warga gather at the Kantor about the noise, the drains and the queues. Someone has to face them.',
     when: { minMonth: 12, minStars: 1, chance: 0.1, cooldown: 30 },
     choices: [
       { label: 'Close the window', res: { sabar: -3 }, result: 'They go home. They also go on the group chat.' },
@@ -44,7 +44,7 @@ export const STAFF_EVENTS: EventDef[] = [
   {
     id: 'hibahTunai',
     name: 'A Hibah in Cash',
-    body: 'A donor hands over a hibah in cash, in an envelope, at night. Someone has to count it and book it.',
+    body: 'A donor hands over a hibah in cash, at night. Someone has to count it and book it.',
     when: { minMonth: 16, minStars: 1, chance: 0.08, cooldown: 36 },
     choices: [
       { label: 'Give it back', res: { sabar: 2 }, result: 'The donor is offended. The warga are impressed.' },

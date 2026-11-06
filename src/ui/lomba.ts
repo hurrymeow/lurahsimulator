@@ -42,9 +42,10 @@ export function openLomba(app: App): void {
     return h('div', { class: `card-btn static lomba-contest${on ? ' on' : ''}`, 'data-contest': c.id },
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, cTitle(c)), h('span', { class: 'meta' }, game)),
-        h('p', {}, cBlurb(c)),
+        // The flavour line waits for the day, where each contest shows it (or its how-to) when it is played.
         h('p', { class: 'meta' }, t('lomba.prize', { viral: c.prize.viral, sabar: c.prize.sabar, amt: rupiah(price(s, c.prize.rupiah)) })),
-        h('button', { class: `btn ${on ? '' : 'btn-primary'}`, 'aria-pressed': String(on), disabled: !!why, onclick: () => { toggleContest(s, c.id); redo(); } },
+        // Picking toggles a contest on and off: a Choice (UI.md rule 14), never the one primary.
+        h('button', { class: 'btn btn-choice', 'aria-pressed': String(on), disabled: !!why, onclick: () => { toggleContest(s, c.id); redo(); } },
           on ? t('lomba.drop', { amt: rupiah(price(s, c.cost)) }) : t('lomba.pick', { amt: rupiah(price(s, c.cost)) })),
         why ? h('p', { class: 'meta warn' }, why) : null,
       ),
@@ -178,7 +179,7 @@ export function openLombaDay(app: App): void {
         outcome(c, grips >= LOMBA.climbGrips);
       }
     };
-    page(title(cTitle(c)), h('p', {}, t('lomba.climbHow')), h('div', { class: 'lomba-arena' }, pole, h('div', { class: 'lomba-side' }, count, btn)));
+    page(title(cTitle(c)), h('p', { class: 'meta' }, cBlurb(c)), h('p', {}, t('lomba.climbHow')), h('div', { class: 'lomba-arena' }, pole, h('div', { class: 'lomba-side' }, count, btn)));
     raf = requestAnimationFrame(loop);
   };
 
@@ -204,7 +205,7 @@ export function openLombaDay(app: App): void {
       (bar.firstChild as HTMLElement).style.width = pct(Math.min(1, taps / need));
       info.textContent = t('lomba.mashCount', { n: taps, need });
     };
-    page(title(cTitle(c)), h('p', {}, t('lomba.mashHow', { sec: LOMBA.mashSeconds })), bar, info, btn);
+    page(title(cTitle(c)), h('p', { class: 'meta' }, cBlurb(c)), h('p', {}, t('lomba.mashHow', { sec: LOMBA.mashSeconds })), bar, info, btn);
   };
 
   /** Makan Kerupuk and Tarik Tambang: the odds decide, shown with the chance beforehand. */

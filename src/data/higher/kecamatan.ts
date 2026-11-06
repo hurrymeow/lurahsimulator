@@ -276,7 +276,7 @@ export const KEC_EVENTS: StageEventDef[] = [
     when: { ...EV },
     choices: [
       { label: 'Stay out of it', res: { viral: 2, sabar: -2 }, result: 'The post gets 9,000 shares. The app that sent the SMS gets none.' },
-      { label: 'Ask the Grup WA to be kind · Rp 200.000', cost: { rupiah: 200_000 }, res: { sabar: 2, viral: -1 }, result: 'Three people delete their comments. One adds a heart.' },
+      { label: 'Ask Grup WA to be kind · Rp 200.000', cost: { rupiah: 200_000 }, res: { sabar: 2, viral: -1 }, result: 'Three people delete their comments. One adds a heart.' },
       { label: 'Chip in for the first instalment · Rp 1.000.000', cost: { rupiah: 1_000_000 }, res: { sabar: 3 }, result: 'The first instalment is paid. The second is a different story.' },
     ],
   },

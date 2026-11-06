@@ -23,6 +23,11 @@ html.theme-dark {
   --cs-shadow: rgba(0, 0, 0, 0.5);
 }
 html.theme-dark.high-contrast { --cs-ink-2: #d4d4d8; --cs-line: #71717a; }
+/* The staff stat icons and the meter icons are drawn in dark ink (src/render/stat-art.ts). On the dark theme a thin
+   light outline keeps their shape readable (UI.md rules 4 and 6); the art itself is unchanged. */
+html.theme-dark .inline-icon, html.theme-dark .staff-stat-icon, html.theme-dark .stat-icon img {
+  filter: drop-shadow(1px 0 0 var(--cs-ink-2)) drop-shadow(-1px 0 0 var(--cs-ink-2)) drop-shadow(0 1px 0 var(--cs-ink-2)) drop-shadow(0 -1px 0 var(--cs-ink-2));
+}
 html.high-contrast:not(.theme-dark) { --cs-ink-2: #3d3226; }
 
 body { background: var(--cs-cream); }
