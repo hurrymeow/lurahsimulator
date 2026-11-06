@@ -898,12 +898,28 @@ interface Isle {
   kind: 'plain' | 'karst' | 'gunung';
   /** Height of the tallest point, for the volcano's tiers. */
   top: number;
+  /** Height of the crater lake's surface, -Infinity on islands without one. */
+  lake: number;
+  /** Distance from the crater's middle at a tile-space point, 1 on its rim; Infinity without a crater. */
+  crater: (a: number, b: number) => number;
 }
 
+/** Island materials: the ground's own, plus the volcano's crater lake and sulphur crust. */
+type IsleMat = Terrain | 'kawah' | 'belerang';
+
 /** Island ground by height and slope: sand at the waterline, grass, forest, and rock on steep faces. */
-function isleMat(I: Isle, hh: number, slope: number, x: number, y: number): Terrain {
+function isleMat(I: Isle, hh: number, slope: number, x: number, y: number, rc = Infinity): IsleMat {
   const n = clumps(x, y);
   if (hh < 1 + n * 1.4) return 'beach';
+  // Inside the crater, after Kawah Ijen: a milky turquoise acid lake, a crust of yellow sulphur round
+  // its shore and in streaks up the walls, then the pale ash walls up to the rim.
+  if (rc < 1) {
+    if (hh <= I.lake + 0.35) return 'kawah';
+    const up = hh - I.lake;
+    const patch = vnoise(x * 0.3 + 17, y * 0.3, 2);
+    if ((up < 1.5 + n * 1.5 && patch > 0.42) || (up < 7 && patch > 0.7 && vnoise(x * 0.6, y * 0.2 + 5, 1) > 0.5)) return 'belerang';
+    return 'abu';
+  }
   // A small volcano: forest skirts, bare rock, an ash cap, blended through the dither like the big ones.
   if (I.kind === 'gunung' && hh > I.peak * 0.9) {
     const f = hh / I.top + (bayer(x, y) - 0.5) * 0.12;
@@ -917,7 +933,20 @@ function isleMat(I: Isle, hh: number, slope: number, x: number, y: number): Terr
   return hh > I.peak * 0.55 + (n - 0.5) * 4 ? 'hutan' : 'grass';
 }
 
-const ISLE_RANK: Partial<Record<Terrain, number>> = { beach: 3, grass: 7, hutan: 9, tanah: 5, batu: 8, abu: 10 };
+const ISLE_RANK: Partial<Record<IsleMat, number>> = { beach: 3, grass: 7, hutan: 9, tanah: 5, batu: 8, abu: 10, belerang: 6, kawah: 4 };
+
+/** Kawah Ijen's crater: an acid lake in milky turquoise with drifting pale streaks, and sulphur crust. */
+function craterColour(t: 'kawah' | 'belerang', x: number, y: number): string {
+  const n = clumps(x, y);
+  const speck = hash(x * 7 + 3, y * 13 + 1);
+  if (t === 'belerang') {
+    if (speck > 0.97) return '#f6ec9a';
+    if (speck < 0.04) return '#b9a7a0';
+    return tone(n, ['#c9a62c', '#dbb935', '#e8cf4a']);
+  }
+  if ((x + 3 * y + Math.floor(n * 5)) % 19 === 0) return '#c4eee4';
+  return n > 0.62 ? '#8edbd0' : n < 0.3 ? '#5fbfb8' : '#76cfc5';
+}
 
 /**
  * Islands in true isometric: each is a small patch of tile-corner heights, rasterised as two lit
@@ -964,10 +993,11 @@ function drawIsle(img: ImageData, land: Uint8Array, depth: Float32Array, I: Isle
         if (land[k] && land[k] !== 7 && land[k] !== 13 && depth[k] > a + b) continue;
         const fx = Math.floor(OX + ((a - b) * TW) / 2);
         const fy = Math.floor(OY + ((a + b) * TH) / 2);
-        const t = isleMat(I, hh, slope, fx, fy);
-        const edge = t !== 'beach' && (Math.floor(a - 0.04) !== Math.floor(a) || Math.floor(b - 0.04) !== Math.floor(b));
-        const c = hex(groundColour(t, a - tile[0], b - tile[1], fx, fy, tile[0], tile[1]));
-        const f = lit * (edge ? 0.88 : 1);
+        const t = isleMat(I, hh, slope, fx, fy, I.crater(a, b));
+        const edge = t !== 'beach' && t !== 'kawah' && (Math.floor(a - 0.04) !== Math.floor(a) || Math.floor(b - 0.04) !== Math.floor(b));
+        const c = hex(t === 'kawah' || t === 'belerang' ? craterColour(t, fx, fy) : groundColour(t, a - tile[0], b - tile[1], fx, fy, tile[0], tile[1]));
+        // The lake lies flat and still, so it takes no facet light.
+        const f = t === 'kawah' ? 1 : lit * (edge ? 0.88 : 1);
         img.data.set([Math.min(255, Math.round(((c >> 16) & 255) * f)), Math.min(255, Math.round(((c >> 8) & 255) * f)), Math.min(255, Math.round((c & 255) * f)), 255], k * 4);
         land[k] = 13;
         depth[k] = a + b;
@@ -976,19 +1006,22 @@ function drawIsle(img: ImageData, land: Uint8Array, depth: Float32Array, I: Isle
       }
   };
   // Half-tile facets, so the waterline wanders instead of cutting whole tiles; the grid line stays on whole tiles.
-  const N = I.n * 2;
+  // A volcano island takes quarter-tile facets, fine enough for its crater's rim and bowl.
+  const SUB = I.kind === 'gunung' ? 4 : 2;
+  const N = I.n * SUB;
+  const q = 1 / SUB;
   for (let d = 0; d < 2 * N - 1; d++)
     for (let i = 0; i < N; i++) {
       const j = d - i;
       if (j < 0 || j >= N) continue;
-      const H = [I.h(i / 2, j / 2), I.h((i + 1) / 2, j / 2), I.h((i + 1) / 2, (j + 1) / 2), I.h(i / 2, (j + 1) / 2)];
+      const H = [I.h(i * q, j * q), I.h((i + 1) * q, j * q), I.h((i + 1) * q, (j + 1) * q), I.h(i * q, (j + 1) * q)];
       if (Math.max(...H) <= 0) continue;
-      const a = I.a0 + i / 2;
-      const b = I.b0 + j / 2;
+      const a = I.a0 + i * q;
+      const b = I.b0 + j * q;
       const A: [number, number, number] = [a, b, H[0]];
-      const B: [number, number, number] = [a + 0.5, b, H[1]];
-      const C: [number, number, number] = [a + 0.5, b + 0.5, H[2]];
-      const D: [number, number, number] = [a, b + 0.5, H[3]];
+      const B: [number, number, number] = [a + q, b, H[1]];
+      const C: [number, number, number] = [a + q, b + q, H[2]];
+      const D: [number, number, number] = [a, b + q, H[3]];
       tri([A, B, C], [Math.floor(a), Math.floor(b)]);
       tri([A, C, D], [Math.floor(a), Math.floor(b)]);
     }
@@ -1105,6 +1138,11 @@ function isoIslands(img: ImageData, land: Uint8Array, depth: Float32Array): void
       }
     }
     const coneH = 54 + hash(seed, 11) * 26;
+    // The volcano's crater, after Kawah Ijen: a wide bowl under a sharp rim, its floor drowned in a lake.
+    const RC = 0.22;
+    const CONE = 0.62;
+    const rimH = peak + coneH - 2;
+    const lake = kind === 'gunung' ? rimH - 12 : -Infinity;
     const ground = (i: number, j: number) => {
       const u = (i - half) / (half * stretch);
       const v = (j - half) / (half / stretch);
@@ -1119,13 +1157,20 @@ function isoIslands(img: ImageData, land: Uint8Array, depth: Float32Array): void
       peak,
       kind,
       top: peak + coneH,
+      lake,
+      crater: (a, b) => (kind === 'gunung' ? ground(a - Math.round(ca - half), b - Math.round(cb - half)).d / RC : Infinity),
       h: (i, j) => {
         const { s, d } = ground(i, j);
         if (s <= 0) return -3;
         let h = peak * s ** 1.2 - 2;
         // Bumps only stand well inside the shore.
         const inland = Math.min(1, s / 0.35);
-        if (kind === 'gunung') h = Math.max(h, peak + coneH * Math.min(1, Math.max(0, 1 - d / 0.62) ** 1.7 / 0.8) * inland - 2);
+        if (kind === 'gunung') {
+          // A truncated cone: concave flanks up to the rim, then the bowl falls steeply to the lake.
+          const out = Math.max(0, (d - RC) / (CONE - RC));
+          if (d >= RC) h = Math.max(h, peak + coneH * Math.max(0, 1 - out) ** 2.6 * inland - 2);
+          else h = Math.max(lake, rimH - 17 * (1 - (d / RC) ** 3));
+        }
         for (const [bi, bj, r, bh] of bumps) {
           const dd = Math.hypot(i - bi, j - bj) / r;
           if (dd < 1) h = Math.max(h, peak * 0.9 + bh * (1 - dd ** 2.2) * inland);
