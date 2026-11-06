@@ -12,6 +12,7 @@ import { meters, sejahtera, laporan } from '../../src/sim/needs';
 import { checkRestart, restart } from '../../src/sim/projects';
 import { demolish, checkPlace, checkUpgrade, place, requirementGaps, siteGaps, skipPermit, upgrade } from '../../src/sim/rules';
 import { COMBO_HINT_MONTH, easiestCombo, nextStep } from '../../src/sim/nextstep';
+import { hasProblem } from '../../src/sim/problems';
 import { acceptSK, canPromote, nextStarChecklist } from '../../src/sim/stages';
 import { buildCost, housing, newGame, population, tilesOf } from '../../src/sim/state';
 import { tick } from '../../src/sim/tick';
@@ -253,6 +254,14 @@ function keepBeds(c: Ctx, buffer: number): void {
   if (population(s) >= housing(s) - 1) buy(c, 'rumah', buffer);
 }
 
+/**
+ * After the first banjir the Selokan opens, with a notice that says each level cuts the damage. A player who reads it
+ * lays a couple; the plain buying order never would, since a Selokan neither earns nor draws residents.
+ */
+function keepDrains(c: Ctx, buffer: number): void {
+  if (hasProblem(c.s, 'banjir') && count(c.s, 'biopori') < 2) buy(c, 'biopori', buffer);
+}
+
 /** The order a plain builder buys in: combo pieces, then what draws residents for the price, decor last. */
 function builderOrder(s: GameState): string[] {
   const core = ['posRonda', 'warung', 'wifi'];
@@ -387,6 +396,7 @@ function playPlan(c: Ctx, p: Plan): void {
   maintain(c, p.upgradeAt);
   if (p.fund && s.stage.current !== 'rt') fundAll(c);
   keepBeds(c, p.buffer);
+  keepDrains(c, p.buffer);
   if (p.combo === 'book' && c.t >= p.comboFrom) buildCombo(c, p.buffer);
   if (p.combo === 'hint' && nextStep(s)?.kind === 'combo') {
     const pick = easiestCombo(s);
