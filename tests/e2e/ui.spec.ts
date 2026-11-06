@@ -2096,9 +2096,17 @@ test.describe('Lomba Agustusan', () => {
     }));
     await expect(day.locator('.lomba-outcome.win')).toBeVisible();
     await day.locator('.lomba-go').click();
-    // Balap Karung: tap fast.
-    await expect(page.locator('#lomba-mash')).toBeVisible();
-    for (let i = 0; i < 40; i++) await page.locator('#lomba-mash').click({ delay: 0 });
+    // Balap Karung: tap fast until the race ends. It ends on a timer, so a slow browser (WebKit in CI) may fit fewer
+    // than 40 taps; a tap that loses the race to the result page is fine, any other click failure is not.
+    const mashBtn = page.locator('#lomba-mash');
+    await expect(mashBtn).toBeVisible();
+    for (let i = 0; i < 40 && !(await day.locator('.lomba-outcome').count()); i++) {
+      try {
+        await mashBtn.click({ delay: 0, timeout: 2000 });
+      } catch (e) {
+        if (!(await day.locator('.lomba-outcome').count())) throw e;
+      }
+    }
     await expect(day.locator('.lomba-outcome')).toBeVisible({ timeout: 8000 });
     await day.locator('.lomba-go').click();
     // Makan Kerupuk: the odds decide.
