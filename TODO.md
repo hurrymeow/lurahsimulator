@@ -21,12 +21,12 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - `claimed · Claude (took over from voidinside99, no PR in 2 days) · 2026-11-06 · done when:` the T7 verdict is in `decisions/second-rt.md` and Hari has been asked to play it.
 
 - [ ] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).**
-  - An agent playtest of RT 3★ to Kelurahan 1★, with the nine player types and a screen playthrough, fixed seven bugs (#323, `decisions/playtest-rt3-kel1.md`). Kelurahan 1★ to 3★ is not played yet.
+  - Agent playtests of the whole range are done: RT 3★ to Kelurahan 1★ (#323, `decisions/playtest-rt3-kel1.md`) and the Kelurahan to 3★ and into the Kecamatan (#327, `decisions/playtest-kel.md`). Nine fixes in all. Only a person's play is left.
   - Problem: T1 to T8 are merged and tuned from bot numbers only. No person has played the new ladder.
   - Why: T8 left questions bots cannot answer: stage lengths are short of target (RW about 7 min against 20, Kelurahan about 16 against 30), and preman can sink Aman at the Kecamatan.
   - Suggested solution: play it, then log what changes in a new `decisions/` file. The notes are under "For Hari" in `decisions/smaller-map-balance.md`.
   - Source: `docs/plans/smaller-map.md`, task T9.
-  - `open · Hari · — · done when:` a decisions file records the playtest and what it changes.
+  - `open · Hari · — · done when:` a decisions file records Hari's own playtest and what it changes.
 
 - [ ] **Full UI re-audit (T11).**
   - Problem: the 2026-11-01 audit skipped 360px, the dark theme and the Kecamatan. Since then most screens were rewritten.
@@ -97,15 +97,9 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: `decisions/second-rt.md`, "English event text"
   - `open · — · — · done when:` a test checks every event body and choice, and all pass in EN and ID.
 
-- [ ] **The Kampung Sebelah stars goal names no next step.**
-  - Problem: "bring Kampung Sebelah to 3★" has no next step. Its how-to line sends the player to Menu, Neighbours, where the row reads "25 warga (punya 18)". In the playtest, a player who built shops there sat on this goal for 76 weeks.
-  - Why: every goal should say how (UI.md item 24). An RW combo goal now names its next build (#323), and this one should too.
-  - Suggested solution: in `nextStep`, while a `sebelahAtStars` goal is open, name Kampung Sebelah's first unmet RT goal as a build there (for example "build Rumah in Kampung Sebelah" when it is short of warga).
-  - Source: `decisions/playtest-rt3-kel1.md`, "Seen, not changed"
-  - `open · — · — · done when:` the goal list names a next build for Kampung Sebelah's star, with a unit test.
-
 - [ ] **Following the game's hints is the slowest way through the RW.**
-  - Problem: the hint reader bot, which builds only what the game names, was already the slowest player type, and #323 made it 0.4 to 0.8 min slower from RW 2★ to Kelurahan 1★ (31.9 min against 31.1).
+  - #326 removed the slowdown #323 caused: the bot was reading the RW combo step as an RT combo hint.
+  - Problem: the hint reader bot, which builds only what the game names, is still the slowest player type: 1.21x the builder at RW 2★ and 1.11x at Kelurahan 1★ (`decisions/sebelah-step-hint-bot.md`).
   - Why: a player who does what the game says should not be the one who falls behind.
   - Suggested solution: compare the hint reader's build order with the builder's from RT 3★ on, and change what `nextStep` names where it costs time. Prove it with the scorecard bots.
   - Source: `decisions/playtest-rt3-kel1.md`, "The nine player types"
@@ -113,6 +107,8 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **The Kampung Sebelah stars goal names a next build.** "build Rumah in Kampung Sebelah" when it is short of warga, else its first unmet goal. #326, `decisions/sebelah-step-hint-bot.md`.
+- [x] **Agent playtest of the Kelurahan.** The report's income no longer reads as a loss; the tier-win goal says "yearly" and each ranking card says if it counts. #327, `decisions/playtest-kel.md`.
 - [x] **Make staffing integral: the permit desk queue.** Shipped as #200, fixed for the weekly calendar after; the claim was never closed. `decisions/desk-queue.md`, `decisions/desk-queue-weeks.md`.
 - [x] **The 2nd RT, T1 to T6.** Kampung Sebelah is the player's from the RW (#303); its tutorial (#306); the AI RT tutorial at RW 2 (#316); a 24-week Serapan line for Kelurahan 1★ (#317). T7 stays open above. `decisions/second-rt.md`, `decisions/second-rt-T6.md`, `decisions/second-rt-load.md`.
 - [x] **WebKit: frame-rate bars.** Skipped in WebKit, where CI renders in software; Chromium keeps the check. #315, `decisions/webkit-first-run.md`.
