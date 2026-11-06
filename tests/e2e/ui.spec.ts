@@ -565,16 +565,20 @@ test.describe('events, ranking, settings', () => {
       // Last quarter earned far more, so income is down: the chip shows the amount with a falling arrow, never a minus.
       app.s.quarter = { count: 0, earned: app.s.stats.earned, residents: app.s.residents.length, res: { ...app.s.res }, prevIncome: 1e15, net: {} };
     });
-    // Two months to the year end. A random event can pause one of them, so play through it
-    // rather than hoping the draw is kind: the report still has to land on time.
-    for (let i = 0; i < 3; i++) {
-      if ((await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month)) >= 12) break;
-      await runMonth(page);
-      // A tip can land first. Tap it away; the report waits behind it.
-      for (let k = 0; k < 4 && (await page.locator('#modal').isVisible()) && !(await page.locator('#modal .card.report-card').isVisible()); k++) {
-        await page.locator('#modal .tap-hint').click();
-        await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
+    // Two months to the quarter end. A tip or event can open between ticks, and WebKit shows it a frame later than
+    // Chromium, so tick, then clear whatever modal is up (an event takes its free first choice), until the report lands.
+    for (let i = 0; i < 12 && !(await page.locator('#modal .card.report-card').isVisible()); i++) {
+      if (!(await page.locator('#modal').isVisible())) {
+        await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
+        await page.waitForTimeout(150);
       }
+      if (await page.locator('#modal .card.report-card').isVisible()) break;
+      if (!(await page.locator('#modal').isVisible())) continue;
+      const choice = page.locator('#modal .card.event .btn').first();
+      if (await choice.isVisible()) await choice.click();
+      const tap = page.locator('#modal .tap-hint');
+      if (await tap.isVisible()) await tap.click();
+      await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
     }
     await expect(page.locator('#modal .card.report-card')).toBeVisible();
     await expect(page.locator('#modal .card h2')).toHaveText(title(1));
