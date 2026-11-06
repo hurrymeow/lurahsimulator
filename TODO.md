@@ -12,14 +12,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ### Next
 
-- [ ] **The 2nd RT: judge it and hand it to Hari (T7).**
-  - T1 to T6 shipped: Kampung Sebelah is the player's from the RW (#303), its tutorial (#306), the AI RT tutorial at the Kelurahan (#316) and the Kelurahan 1★ load check (#317).
-  - Problem: no one has judged the whole flow from RT 3★ to Kelurahan 1★ on screen, and Hari has not played it.
-  - Why: each PR was self-approved for its own slice. The flow as one piece, and how it feels, still needs a check.
-  - Suggested solution: `docs/plans/second-rt.md` T7. Run the screenshot-only check from `decisions/rw2-clear.md` on RW 1★ to 3★ and Kelurahan 0★ to 1★, judge against GAME-DESIGN.md §8, the UI.md checklist and TESTING.md with the verdict in `decisions/second-rt.md`, then ask Hari to play RT 3★ to Kelurahan 1★ (this also covers the RW part of T9 below). A docs-only note.
-  - Source: Hari, 2026-11-02; `docs/plans/second-rt.md`
-  - `claimed · Claude (took over from voidinside99, no PR in 2 days) · 2026-11-06 · done when:` the T7 verdict is in `decisions/second-rt.md` and Hari has been asked to play it.
-
 - [ ] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).**
   - Agent playtests of the whole range are done: RT 3★ to Kelurahan 1★ (#323, `decisions/playtest-rt3-kel1.md`) and the Kelurahan to 3★ and into the Kecamatan (#327, `decisions/playtest-kel.md`). Nine fixes in all. Only a person's play is left.
   - Problem: T1 to T8 are merged and tuned from bot numbers only. No person has played the new ladder.
@@ -27,14 +19,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: play it, then log what changes in a new `decisions/` file. The notes are under "For Hari" in `decisions/smaller-map-balance.md`.
   - Source: `docs/plans/smaller-map.md`, task T9.
   - `open · Hari · — · done when:` a decisions file records Hari's own playtest and what it changes.
-
-- [ ] **Full UI re-audit (T11).**
-  - Problem: the 2026-11-01 audit skipped 360px, the dark theme and the Kecamatan. Since then most screens were rewritten.
-  - Why: the CI checks for rules 10, 15, 16, 17 and 18 now run (#292, #295), but some rules are still checked by eye (2, 3, 6, 9, 11).
-  - Suggested solution: `docs/plans/ui-audit-fixes.md` T11. Rerun the crawl in the project files (`audit/ui-rules-2026-11-01/audit.spec.ts`) at 320, 360, 412 and 430px, in EN and ID, in light and dark, on the RT, Kelurahan and Kecamatan seeds.
-  - Source: UI.md "How each rule is checked"
-  - The crawl in the project files (`audit/`) is not in the repo, so it will be rebuilt in the repo from UI.md's rules.
-  - `claimed · Claude · 2026-11-06 · done when:` a new report shows every screen passing, or lists the remaining fails as TODO items.
 
 ### Later
 
@@ -90,13 +74,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: `decisions/second-rt-load.md`, "Not fixed"
   - `open · — · — · done when:` each Kelurahan residents goal is still open when the stage starts, or a decisions file says why not.
 
-- [ ] **English event bodies over 20 words.**
-  - Problem: the density test reads only the first event it meets, so long English bodies slip through. The hibah body is 23 words (UI.md rule 14 allows 20).
-  - Why: long bodies get skimmed, and the check gives a false pass.
-  - Suggested solution: make the test (or a unit test over `src/i18n/en.ts` and `id.ts`) check every event body and choice label, then cut the ones over.
-  - Source: `decisions/second-rt.md`, "English event text"
-  - `open · — · — · done when:` a test checks every event body and choice, and all pass in EN and ID.
-
 - [ ] **Following the game's hints is the slowest way through the RW.**
   - #326 removed the slowdown #323 caused: the bot was reading the RW combo step as an RT combo hint.
   - Problem: the hint reader bot, which builds only what the game names, is still the slowest player type: 1.21x the builder at RW 2★ and 1.11x at Kelurahan 1★ (`decisions/sebelah-step-hint-bot.md`).
@@ -107,6 +84,9 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **Full UI re-audit (T11).** The crawl is in the repo (`npm run audit:ui`); every screen passes at 4 widths, 2 languages and 2 themes apart from the allowlisted Settings and Warga. Fixed the 17 Agustus panel, the Kecamatan's Wacana and Neighbours, and dark-theme stat icons. #329, `decisions/ui-reaudit.md`.
+- [x] **English event bodies over 20 words.** `tests/event-words.test.ts` checks every event body and choice in both languages; four English lines cut. #329.
+- [x] **The 2nd RT, T7.** Judged on screen from RT 3★ to Kelurahan 1★; English singular for goal lines. #322, `decisions/second-rt-T7.md`.
 - [x] **The Kampung Sebelah stars goal names a next build.** "build Rumah in Kampung Sebelah" when it is short of warga, else its first unmet goal. #326, `decisions/sebelah-step-hint-bot.md`.
 - [x] **Agent playtest of the Kelurahan.** The report's income no longer reads as a loss; the tier-win goal says "yearly" and each ranking card says if it counts. #327, `decisions/playtest-kel.md`.
 - [x] **Make staffing integral: the permit desk queue.** Shipped as #200, fixed for the weekly calendar after; the claim was never closed. `decisions/desk-queue.md`, `decisions/desk-queue-weeks.md`.
