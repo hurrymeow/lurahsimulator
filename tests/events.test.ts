@@ -413,3 +413,22 @@ describe('kecamatan inspection', () => {
     expect(bad.res.sabar).toBeGreaterThan(0);
   });
 });
+
+describe('the first banjir', () => {
+  it('comes in the first rainy season (weeks 40 to 55) in every seed, so the Selokan unlocks, and later ones stay random', () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const s = newGame(seed);
+      const floods: number[] = [];
+      for (let w = 0; w < 200; w++) {
+        tick(s);
+        if (s.pendingEvent === 'banjir') floods.push(s.month);
+        if (s.pendingEvent) resolveEvent(s, [], 0);
+      }
+      expect(floods[0], `seed ${seed}`).toBeGreaterThanOrEqual(40);
+      expect(floods[0], `seed ${seed}`).toBeLessThan(56);
+      expect(s.problems).toContain('banjir');
+      // At most one a season: the gap between floods is at least the 16 weeks of the rainy months.
+      floods.forEach((m, i) => { if (i) expect(m - floods[i - 1], `seed ${seed}`).toBeGreaterThanOrEqual(16); });
+    }
+  });
+});

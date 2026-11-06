@@ -11,7 +11,7 @@ import { activeCombos } from './combos';
 import { def, isCover } from './content';
 import { gateOpen } from './gate';
 import { LOMBA } from '../data/lomba';
-import { GRACE_WEEKS, WEEKS_PER_YEAR, inMonths, weekOfYear } from './calendar';
+import { GRACE_WEEKS, WEEKS_PER_MONTH, WEEKS_PER_YEAR, inMonths, monthOfYear, weekOfYear } from './calendar';
 import { banjirCut, wacanaNoReceipt } from './kel';
 import type { StageEventChoice } from '../data/higher';
 import { gain, type Fx } from './gain';
@@ -67,11 +67,16 @@ function eligible(s: GameState, e: EventDef): boolean {
   if (w.minMonth !== undefined && s.month < w.minMonth) return false;
   if (w.maxMonth !== undefined && s.month > w.maxMonth) return false;
   if (w.minStars !== undefined && s.stage.stars.rt < w.minStars) return false;
-  if (w.months && !inMonths(s.month, w.months)) return false;
+  // A scheduled event (chance 1) comes on the first week of its month. A random seasonal one (the banjir in the rainy
+  // months) can come in any week of its months: when a tick was a month, that was every tick of the season, and
+  // keeping it to the first week made it twelve times rarer once ticks became weeks.
+  if (w.months && !(w.chance < 1 ? w.months.includes(monthOfYear(s.month)) : inMonths(s.month, w.months))) return false;
   if (w.needs && !s.buildings.some((b) => b.def === w.needs && b.status === 'active')) return false;
   if (w.queue && !s.buildings.some((b) => b.status === 'permit')) return false;
   const last = s.lastEvent?.[e.id];
-  const gap = w.chance < 1 ? Math.max(w.cooldown ?? 0, MIN_REPEAT_GAP) : (w.cooldown ?? 0);
+  // A seasonal random event comes at most once a season: its gap is at least the weeks its months span.
+  const season = w.chance < 1 && w.months ? w.months.length * WEEKS_PER_MONTH : 0;
+  const gap = w.chance < 1 ? Math.max(w.cooldown ?? 0, MIN_REPEAT_GAP, season) : (w.cooldown ?? 0);
   return !(gap && last !== undefined && s.month - last < gap);
 }
 
@@ -124,6 +129,10 @@ export function eventSystem(s: GameState, fx: Fx): void {
   const all = [...EVENTS, ...STAGE_EVENTS.filter((x) => gateOpen(s, x.gate))].filter((e) => eligible(s, e));
   const scheduled = all.find((e) => e.when.chance >= 1);
   if (scheduled) return raise(s, fx, scheduled);
+  // The first banjir comes for sure in its first rainy season, in the first week that keeps clear of other popups:
+  // the Selokan unlocks on it (GAME-DESIGN.md "Problem unlocks"). A season is 16 weeks, so there is always room.
+  const first = all.find((e) => e.when.firstSure && s.lastEvent?.[e.id] === undefined);
+  if (first && !crowded(s)) return raise(s, fx, first);
   const pool = all.filter((e) => e.when.chance < 1);
   if (!pool.length || sinceRandomPopup(s) < POPUP_GAP || crowded(s) || !chance(s, POPUP_CHANCE)) return;
   let roll = rand(s) * pool.reduce((n, e) => n + e.when.chance, 0);
