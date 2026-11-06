@@ -1,16 +1,8 @@
 import { type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { scanLegibility } from './legibility';
-import { countScreen, LIMITS, scanLabelWords, type ScreenCount } from './density';
+import { countScreen, DENSITY_ALLOW, LIMITS, scanLabelWords, type ScreenCount } from './density';
 import { scanCentring } from './vcenter';
-
-/** Screens still over a limit: the cap is today's count, so they can only improve. */
-// Each entry is a TODO.md item ("Bring <screen> inside UI.md rules 13 and 14"). Caps are the highest count over the 8 CI viewports in both languages on 2026-11-01.
-const DENSITY_ALLOW: Record<string, Partial<Record<keyof typeof LIMITS, number>>> = {
-  'event': { primary: 2 }, // Event card: two filled choices
-  'settings': { primary: 2, wordsInView: 65 }, // Settings
-  'warga': { wordsInView: 62, wordsAll: 494 }, // Warga: Kampung Sebelah's residents join at the Kelurahan, so the list is long
-};
 
 /** The project name ends in -id or -en. See playwright.config.ts. */
 const lang = (): 'id' | 'en' => (test.info().project.name.endsWith('-en') ? 'en' : 'id');
