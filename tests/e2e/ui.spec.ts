@@ -2128,6 +2128,31 @@ test.describe('Lomba Agustusan', () => {
 });
 
 test.describe('RW stage', () => {
+  test('the SK is a ceremony: its card accepts it, and while it waits the goal pill brings the card back', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.s.stage.stars.rt = 3;
+      app.s.stage.sk = 'offered';
+      app.refresh();
+    });
+    await dismissModals(page);
+    // The card was closed: the goal pill names the SK, and a tap on it brings the ceremony card back.
+    await expect(page.locator('#goal .goal-text')).toHaveText(lang() === 'en' ? 'Goal: accept your SK' : 'Target: terima SK-mu');
+    await page.locator('#goal-now').click();
+    await expect(page.locator('#modal .card.fanfare h2')).toHaveText(lang() === 'en' ? 'Your SK: Pak RW!' : 'SK-mu: Pak RW!');
+    await expect(page.locator('#sk-accept-card')).toBeVisible();
+    // The fanfare card pops in (0.35s scale): measure it once it has landed.
+    await page.waitForTimeout(500);
+    await expectLegible(page, 'SK ceremony card');
+    await page.locator('#sk-accept-card').click();
+    await dismissModals(page);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.stage.current)).toBe('rw');
+  });
+
   test('the SK opens a playable RW, and its panels list the RW content legibly', async ({ page }) => {
     await start(page);
     await dismissModals(page);
@@ -3215,6 +3240,33 @@ test.describe('map taps', () => {
 });
 
 test.describe('level art and menu icons', () => {
+  test('upgrading the last piece of a combo lights it up at once, with its card', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const uid = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const s = app.s;
+      s.res.rupiah = 1e9;
+      // Sayur Segar needs a Kebun Sayur beside a Warung at level 3. An empty corner, the Warung at 2.
+      const add = (def: string, x: number, y: number, level: number) => {
+        const b = { uid: s.nextUid++, def, x, y, level, status: 'active', timer: 0, invested: 0, placedAt: s.month };
+        s.buildings.push(b);
+        return b;
+      };
+      const w = add('warung', 0, 0, 2);
+      add('kebunSayur', 1, 0, 1);
+      app.inspect(w.uid);
+      return w.uid;
+    });
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.discovered.includes('sayurSegar'))).toBe(false);
+    await page.locator('#sheet .btn', { hasText: lang() === 'en' ? 'Upgrade to Lv 3' : 'Naikkan ke Lv 3' }).click();
+    expect(await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.s.buildings.find((b: any) => b.uid === u).level, uid)).toBe(3);
+    expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.discovered.includes('sayurSegar'))).toBe(true);
+    // The card comes at the next quiet moment, without a week passing.
+    await page.locator('#sheet .sheet-head .btn-icon').last().click();
+    await expect(page.locator('#modal')).toContainText('Sayur Segar');
+  });
+
   test('the panel shows the level as a roof badge, the next level as a diff, and nothing extra at the top level', async ({ page }) => {
     await start(page);
     await dismissModals(page);
