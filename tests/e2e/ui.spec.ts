@@ -786,7 +786,7 @@ test.describe('events, ranking, settings', () => {
     await passHome(page);
     await dismissModals(page);
     await expect(page.locator('html')).toHaveAttribute('lang', 'id');
-    await expect(page.locator('#place-ok')).toHaveText('Pasang');
+    await expect(page.locator('#place-ok')).toHaveAttribute('aria-label', 'Pasang');
     await page.locator('#menu-btn').click();
     await page.locator('#act-settings').click();
     await page.locator('#sheet [data-lang="en"]').click();
@@ -794,11 +794,11 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#sheet [data-lang="en"]')).toHaveAttribute('aria-pressed', 'true');
     await expectLegible(page, 'settings after switching to English');
     await page.locator('.sheet-head .btn-icon').click();
-    await expect(page.locator('#place-ok')).toHaveText('Place');
+    await expect(page.locator('#place-ok')).toHaveAttribute('aria-label', 'Place');
     await expect(page.locator('#pause-btn')).toHaveAttribute('aria-label', 'Pause');
     await page.reload();
     await passHome(page);
-    await expect(page.locator('#place-ok')).toHaveText('Place');
+    await expect(page.locator('#place-ok')).toHaveAttribute('aria-label', 'Place');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   });
 
@@ -2891,7 +2891,7 @@ test.describe('build mode', () => {
     await tap(-2, 3);
     await expect(page.locator('#place-float')).toBeHidden();
     await tap(2, 3);
-    await expect(page.locator('#place-ok')).toHaveText(lang() === 'en' ? 'Yes' : 'Ya');
+    await expect(page.locator('#place-ok')).toHaveAttribute('aria-label', lang() === 'en' ? 'Yes' : 'Ya');
     await expect(page.locator('#place-ok')).toBeEnabled();
     await expectLegible(page, 'path preview');
     await page.locator('#place-ok').click();

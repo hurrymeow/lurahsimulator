@@ -1078,11 +1078,13 @@ export class App {
         return;
       }
       btn.disabled = fresh === 0;
-      btn.textContent = t('page.yes');
+      btn.textContent = '✓';
+      btn.setAttribute('aria-label', t('page.yes'));
       info.replaceChildren(title, h('span', {}, fresh ? t('build.lineGo', { n: fresh, cost: rupiah(buildCost(this.s, d) * fresh) }) : t('build.lineNone')), ...(blocked ? [h('span', { class: 'meta' }, t('build.lineBlocked', { n: blocked }))] : []));
       return;
     }
-    btn.textContent = t('page.place');
+    btn.textContent = '✓';
+    btn.setAttribute('aria-label', t('page.place'));
     if (!g) {
       info.replaceChildren(title, h('span', {}, d.pathIncome ? t('build.lineStart') : t('build.tapToPlace')));
       btn.disabled = true;
