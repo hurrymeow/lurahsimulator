@@ -78,7 +78,7 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
                       home.                    +------+------+
 ```
 
-- RW = **2** RTs side by side: yours and Kampung Sebelah, the RT next door (playtest 2026-11-01: 4 RTs at the RW and 16 at the Kelurahan were too much to follow; `decisions/playtest-sk2.md`). At promotion Kampung Sebelah becomes yours to build on: its Kantor RT, Rumah and warga join you and its lots open to Build. They do not make your next buildings dearer. It earns its own stars on the RT ladder. (Hari, 2026-11-02: "let players control and build on the 2nd town, and introduce the RT AI later"; `decisions/second-rt.md`.)
+- RW = **2** RTs side by side: yours and Kampung Sebelah, the RT next door (playtest 2026-11-01: 4 RTs at the RW and 16 at the Kelurahan were too much to follow; `decisions/playtest-sk2.md`). At promotion Kampung Sebelah becomes yours to build on: its Kantor RT, Rumah and warga join you, it gets the same free starter lanes as a new game's RT, and its lots open to Build. They do not make your next buildings dearer. It earns its own stars on the RT ladder. (Hari, 2026-11-02: "let players control and build on the 2nd town, and introduce the RT AI later"; `decisions/second-rt.md`.)
 - Kelurahan = **2 RWs of 2 RTs**, 2x2 RTs in all. RW 2 is two new AI RTs you fund with Dana: the first AI RTs you meet.
 - RW buildings go inside the player's RTs (their own and any taken over) or on lots along the seams between RTs. Kelurahan buildings go inside the player's RTs or on lots along the seams between RWs. RT buildings stay inside an RT. The seams sit between the RTs, so promotion never takes tiles from the player's RT.
 - RW keeps today's 64x32 tiles. A pinch out gives a view-only overview, and a tap there zooms back in.
@@ -118,7 +118,7 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 #### 0★ Pak RT (start)
 
 - Open: Rumah, Jalan Setapak, Kantor RT, Warung Sembako, Pos Ronda, Rumah Makan. Wifi at **8** residents.
-- **Roads:** a building works only once a Jalan Setapak joins it to the Kantor RT. Fields, ponds, paths, decor and the Menara Wifi need none: a mast needs power, not visitors.
+- **Roads:** a building works only once a Jalan Setapak joins it to the Kantor RT. Fields, ponds, paths, decor and the Menara Wifi need none: a mast needs power, not visitors. A building may stand on a path tile and replace it, but not one that is another building's only way to the Kantor: that spot says so and is refused.
 - **Problem unlocks** open when their trouble first shows up, with a notice saying why: Selokan after the first banjir; Gudang Material and Kebun Sayur when **3** warga have gone **6** months without work; Fotokopi when a permit queue forms. Pos Satpam moves to the first preman when preman exist.
 - **Rumah** levels up like any building: level 2 adds a teras and houses **4**, level 3 is a rumah tingkat and houses **5** (level 1 houses **3**), and needs RT 2★. Rumah is the fast house: no permit, no build time, and it draws new warga. Denser housing (Kos-kosan, Kontrakan) houses more per tile and pays rent (`decisions/playtest-sk2.md`). An upgrade costs the build price times the current level, so a house grows without a new lot.
 - **Goal for 1★:** **10** residents and **1** combo found.

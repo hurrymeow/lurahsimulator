@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 import { connectedRoad, hasRoadBeside, layRoads, refreshAccess, setRoadRule } from '../src/sim/access';
-import { demolish, place } from '../src/sim/rules';
+import { checkPlace, demolish, place } from '../src/sim/rules';
 import { addBuilding, buildingAt, housing, isWorking, newGame } from '../src/sim/state';
 import { buildingIncome, tick } from '../src/sim/tick';
 import { deserialize, serialize } from '../src/sim/save';
@@ -37,6 +37,21 @@ describe('road access', () => {
     const link = buildingAt(s, k.x + 4, k.y + 3)!;
     demolish(s, link);
     expect(w.noRoad).toBe(true);
+  });
+
+  it('a building may replace a path tile, but not one that is another building\'s only way to the kantor', () => {
+    const s = newGame(1);
+    const k = s.buildings.find((b) => b.def === 'kantorRT')!;
+    const w = addBuilding(s, 'warung', k.x + 5, k.y + 4, 'active');
+    place(s, 'jalan', k.x + 4, k.y + 3);
+    place(s, 'jalan', k.x + 4, k.y + 4);
+    expect(w.noRoad).toBeUndefined();
+    const cut = checkPlace(s, 'rumah', k.x + 4, k.y + 3);
+    expect(cut.ok).toBe(false);
+    expect(!cut.ok && cut.missing).toContain('This cuts the path to 1 building');
+    // A dead end that serves nobody can still be built over.
+    place(s, 'jalan', k.x - 5, k.y + 2);
+    expect(checkPlace(s, 'rumah', k.x - 5, k.y + 2).ok).toBe(true);
   });
 
   it('a Wifi Tower needs no path, while a warung in the same spot does', () => {

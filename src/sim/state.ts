@@ -67,7 +67,7 @@ export function newGame(seed: number): GameState {
 }
 
 /** Free starter lanes: a loop round the kantor and a spur out to each side, so the first builds have somewhere to stand. */
-function laySetapak(s: GameState, cx: number, cy: number): void {
+export function laySetapak(s: GameState, cx: number, cy: number): void {
   const at = (x: number, y: number) => s.buildings.some((b) => b.x === x && b.y === y);
   const lay = (x: number, y: number) => { if (inBounds(x, y) && lotAt(x, y) === 'rt' && !at(x, y)) addBuilding(s, 'jalan', x, y, 'active'); };
   for (let x = cx - 4; x <= cx + 4; x++) { lay(x, cy + 2); lay(x, cy - 2); }

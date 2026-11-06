@@ -141,7 +141,7 @@ export class App {
     new ResizeObserver(() => this.view.resize()).observe(document.getElementById('map')!);
     this.view.resize();
     if (!this.storageOk) this.notice({ title: t('noticeSaveOff'), body: t('noticeSaveOffBody'), tone: 'info' });
-    if (this.s.pendingEvent) this.showEvent();
+    // A saved event card waits for the frame loop, which shows it once the home screen is gone (canShowQueued).
     requestAnimationFrame((t) => this.frame(t));
   }
 

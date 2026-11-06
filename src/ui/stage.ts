@@ -1,7 +1,7 @@
 import { cName, t } from '../i18n';
 import { COMBOS } from '../data/combos';
 import { RW_COMBOS } from '../data/higher/rw';
-import { comboConditions, comboStatus, comboStatusText } from '../sim/combos';
+import { comboConditions, comboStatus, comboStatusText, ruleCanHold } from '../sim/combos';
 import type { App } from '../app';
 import { canPromote, currentStage, declineSK, nextStarChecklist, reofferSK, stageTitle, starsOf } from '../sim/stages';
 import { h } from './dom';
@@ -58,7 +58,7 @@ export function openStage(app: App): void {
 
 /** Under a combo goal: every combo of that kind, what it needs, and whether it is active in town. */
 function comboList(app: App, kind: string): Node | null {
-  const list = kind === 'combos' ? COMBOS : kind === 'rwCombos' ? RW_COMBOS : null;
+  const list = kind === 'combos' ? COMBOS : kind === 'rwCombos' ? RW_COMBOS.filter((c) => ruleCanHold(app.s, c)) : null;
   if (!list) return null;
   return h('ul', { class: 'combo-list' }, ...list.map((c) => {
     const st = comboStatus(app.s, c);

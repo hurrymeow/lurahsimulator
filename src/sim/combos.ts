@@ -57,7 +57,7 @@ export const liveCombos = (s: GameState): ComboDef[] => [...COMBOS, ...STAGE_COM
 export const bookCombos = (s: GameState): ComboDef[] => [...COMBOS.filter((c) => !c.retired || s.discovered.includes(c.id)), ...STAGE_COMBOS.filter((c) => gateOpen(s, { ...c.gate, stars: 0 }))];
 
 /** Two AI RTs in the area share a trait. */
-const sameTraitNeighbours = (s: GameState): boolean => {
+export const sameTraitNeighbours = (s: GameState): boolean => {
   const ai = s.neighbours.filter((n) => n.run !== 'player');
   return ai.some((n, i) => ai.some((o, j) => j > i && o.trait === n.trait));
 };
@@ -67,6 +67,9 @@ const sameTraitNeighbours = (s: GameState): boolean => {
  * Income reads this once per building, so the answer is kept until the layout, the stage or the
  * neighbours change. The key is cheap to build compared with the search it saves.
  */
+/** False for a stage combo whose extra rule cannot hold yet: Grup Chat Warga needs two AI RTs, and the RW has none. */
+export const ruleCanHold = (s: GameState, c: ComboDef): boolean => (c as Partial<StageComboDef>).rule !== 'sameTraitNeighbours' || sameTraitNeighbours(s);
+
 const cache = new WeakMap<GameState, { key: number; out: ActiveCombo[] }>();
 
 /** A number that changes whenever a building moves, appears, or changes status, or the stage or neighbours change. */

@@ -2337,6 +2337,24 @@ test.describe('home screen', () => {
     await expect(page.locator('#howto')).toBeVisible();
   });
 
+  test('an event saved while open waits for Continue, not on top of the home screen', async ({ page }) => {
+    await start(page);
+    await page.locator('#howtoGo').click();
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.s.pendingEvent = 'cabai';
+      a.save();
+    });
+    await page.reload();
+    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.waitForTimeout(800);
+    await expect(page.locator('#home')).toBeVisible();
+    await expect(page.locator('#modal')).toBeHidden();
+    await page.locator('#home-start').click();
+    await page.locator('#home-continue').click();
+    await expect(page.locator('#modal .card.event')).toBeVisible();
+  });
+
   test('Install shows under Start only when the browser offers it, and hides once used', async ({ page }) => {
     await page.goto(`/?debug&lang=${lang()}`);
     await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
