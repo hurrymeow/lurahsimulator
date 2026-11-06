@@ -12,19 +12,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ### Next
 
-- [ ] **Make the SK promotion feel like a big moment, not a menu item.**
-  - Problem: an SK (Surat Keputusan, the promotion letter) is granted, but it is hidden. The player must open the Menu and find the stage sheet to accept it (`src/ui/stage.ts`). The goal line only says "accept the SK in Menu". The moment the player has worked toward for a whole stage gets no ceremony.
-  - Why: the SK is the game's promotion payoff. A tucked-away accept button makes the biggest reward feel like paperwork. Hari asked for it to feel "wow".
-  - Suggested solution: when an SK arrives, show a ceremony popup in the first-win style (centred, one button, Kairosoft tone). Give the accept action a visible place on the main screen while an SK waits, not only in Menu. Keep the Menu path too. Follow UI.md rules 14 to 17 and GAME-DESIGN.md section 3 for pacing. Existing strings: `sim.skTitle`, `stage.accept`, `goal.short.sk` in `src/i18n/`.
-  - Source: Hari, 2026-11-06 ("todo - sk should feel more wow and not just hidden in menu").
-  - `open · — · — · done when:` an SK arrival shows a ceremony popup, a waiting SK is accepted from outside the Menu, and both languages pass at 320 and 412px.
-
-- [ ] **Sayur Segar combo does not activate when a building in it is upgraded.**
-  - Problem: Sayur Segar needs a Kebun Sayur and a Warung at level 3 or more. Upgrading the Warung to level 3 can leave the combo off until the next check. The notice and the Buku Combo entry wait too.
-  - Why: a combo the player builds toward should light up the moment its last piece is upgraded. Otherwise the player thinks the upgrade did nothing.
-  - Suggested solution: likely cause, not yet checked. `discoverCombos` runs on place and monthly, not after an upgrade (`src/sim/combos.ts`, `src/sim/rules.ts` `upgrade()`). Run it after an upgrade too, and confirm the Warung income multiplier updates on the same tick. Defined in `src/data/combos-more.ts` (`sayurSegar`, `needs: ['kebunSayur', 'warung@3']`).
-  - `open · Hari · — · done when:` upgrading a Warung to level 3 next to a Kebun Sayur activates Sayur Segar at once, with its notice and income x1.25, in both languages.
-
 - [ ] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).**
   - Agent playtests of the whole range are done: RT 3★ to Kelurahan 1★ (#323, `decisions/playtest-rt3-kel1.md`) and the Kelurahan to 3★ and into the Kecamatan (#327, `decisions/playtest-kel.md`). Nine fixes in all. Only a person's play is left.
   - Problem: T1 to T8 are merged and tuned from bot numbers only. No person has played the new ladder.
@@ -92,6 +79,8 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **The SK is a ceremony.** The card names the new post and accepts it; while it waits, the goal pill brings it back. #336, `decisions/sk-ceremony-combo-upgrade.md`.
+- [x] **Sayur Segar lights up when its Warung is upgraded.** The upgrade button runs the combo check, so any combo that needs a level shows its card at once. #336.
 - [x] **Kelurahan residents goals barely bite.** Kept on purpose: the goal is a floor, the stage's work is Popularitas under growth, and 200 is tied to the taper and the Kecamatan's 250. `decisions/kel-residents-goals.md`.
 - [x] **WebKit: the yearly report card never shows.** A test race, not a game bug: WebKit opens the tip or event card a frame later, so the test's loop never reached the quarter end. Loop rewritten; passes in Chromium and WebKit. #333, `decisions/webkit-report-card.md`.
 - [x] **Full UI re-audit (T11).** The crawl is in the repo (`npm run audit:ui`); every screen passes at 4 widths, 2 languages and 2 themes apart from the allowlisted Settings and Warga. Fixed the 17 Agustus panel, the Kecamatan's Wacana and Neighbours, and dark-theme stat icons. #329, `decisions/ui-reaudit.md`.
