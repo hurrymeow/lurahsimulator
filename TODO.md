@@ -44,13 +44,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: `decisions/playtest-sk2.md`
   - `open · — · — · done when:` no 2x2 building stands taller than a 1x1 of its tier, site sprites have no scaled pixels, and `tests/art.test.ts` checks both.
 
-- [ ] **WebKit: the yearly report card never shows.**
-  - Problem: in the first WebKit nightly, `yearly report card is legible, pauses the game and dismisses on tap` waits for `#modal .card.report-card` and it never appears (also on retry).
-  - Why: iPhone players use WebKit; if the card really never shows, they miss the year's grade.
-  - Suggested solution: run the test in WebKit (`E2E_BROWSER=webkit`, in CI's image) with a trace, find whether the card is not built or the test's path differs, and fix it.
-  - Source: `decisions/webkit-first-run.md`
-  - `open · — · — · done when:` the test passes in the WebKit nightly.
-
 - [ ] **WebKit: Balap Karung's tap button detaches on every tap.**
   - Problem: in the first WebKit nightly, the Lomba test times out tapping `#lomba-mash` 40 times: the button is re-created on each tap, and WebKit's click waits for a stable element.
   - Why: a button that is rebuilt on every tap may drop fast taps on a real iPhone too.
@@ -85,6 +78,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **WebKit: the yearly report card never shows.** A test race, not a game bug: WebKit opens the tip or event card a frame later, so the test's loop never reached the quarter end. Loop rewritten; passes in Chromium and WebKit. #333, `decisions/webkit-report-card.md`.
 - [x] **Full UI re-audit (T11).** The crawl is in the repo (`npm run audit:ui`); every screen passes at 4 widths, 2 languages and 2 themes apart from the allowlisted Settings and Warga. Fixed the 17 Agustus panel, the Kecamatan's Wacana and Neighbours, and dark-theme stat icons. #329, `decisions/ui-reaudit.md`.
 - [x] **English event bodies over 20 words.** `tests/event-words.test.ts` checks every event body and choice in both languages; four English lines cut. #329.
 - [x] **The 2nd RT, T7.** Judged on screen from RT 3★ to Kelurahan 1★; English singular for goal lines. #322, `decisions/second-rt-T7.md`.
