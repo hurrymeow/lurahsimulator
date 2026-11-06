@@ -52,6 +52,7 @@ Status 2026-11-02: the map engine, RT stars, RW and Kelurahan are built. Live gr
 ### Rules for every stage
 
 - Each stage has stars from 0★ to 3★. Reaching 3★ sends an SK, the promotion letter.
+- The SK arrives as a ceremony card naming the new post ("Your SK: Pak RW!"), with its own accept button. Closed, it waits: the goal pill reads "accept your SK" and a tap on it brings the card back. The stage sheet in Menu keeps accept and decline.
 - The SK can be declined. A player who loves the RT can stay Pak RT.
 - Each star unlocks content and plays a fanfare.
 - The goal for the next star is a checklist. Each unmet line says exactly what is missing.
