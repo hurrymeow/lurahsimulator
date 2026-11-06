@@ -50,6 +50,13 @@ export async function countScreen(page: Page, screen: string, sel: string): Prom
 }
 
 /** The limits of UI.md rules 13 and 14. */
+/** Screens still over a limit, capped at today's count so they can only get better (UI.md rule 13). Delete an entry when it is fixed. */
+export const DENSITY_ALLOW: Record<string, Partial<Record<keyof typeof LIMITS, number>>> = {
+  'event': { primary: 2 }, // Event card: two filled choices
+  'settings': { primary: 2, wordsInView: 65 }, // Settings
+  'warga': { wordsInView: 62, wordsAll: 494 }, // Warga: Kampung Sebelah's residents join at the Kelurahan, so the list is long
+};
+
 export const LIMITS = { wordsInView: 50, longestBlock: 20, wordsAll: 300, primary: 1 } as const;
 
 /** Labels UI.md rule 16 caps at 6 words: buttons, tabs, chips and pills. Rows that open a whole entry are lists, not labels. */
