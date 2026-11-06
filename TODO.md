@@ -12,6 +12,12 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ### Next
 
+- [ ] **Sayur Segar combo does not activate when a building in it is upgraded.**
+  - Problem: Sayur Segar needs a Kebun Sayur and a Warung at level 3 or more. Upgrading the Warung to level 3 can leave the combo off until the next check. The notice and the Buku Combo entry wait too.
+  - Why: a combo the player builds toward should light up the moment its last piece is upgraded. Otherwise the player thinks the upgrade did nothing.
+  - Suggested solution: likely cause, not yet checked. `discoverCombos` runs on place and monthly, not after an upgrade (`src/sim/combos.ts`, `src/sim/rules.ts` `upgrade()`). Run it after an upgrade too, and confirm the Warung income multiplier updates on the same tick. Defined in `src/data/combos-more.ts` (`sayurSegar`, `needs: ['kebunSayur', 'warung@3']`).
+  - `open · Hari · — · done when:` upgrading a Warung to level 3 next to a Kebun Sayur activates Sayur Segar at once, with its notice and income x1.25, in both languages.
+
 - [ ] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).**
   - Agent playtests of the whole range are done: RT 3★ to Kelurahan 1★ (#323, `decisions/playtest-rt3-kel1.md`) and the Kelurahan to 3★ and into the Kecamatan (#327, `decisions/playtest-kel.md`). Nine fixes in all. Only a person's play is left.
   - Problem: T1 to T8 are merged and tuned from bot numbers only. No person has played the new ladder.
