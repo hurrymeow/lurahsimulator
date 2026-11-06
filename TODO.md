@@ -18,7 +18,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Why: each PR was self-approved for its own slice. The flow as one piece, and how it feels, still needs a check.
   - Suggested solution: `docs/plans/second-rt.md` T7. Run the screenshot-only check from `decisions/rw2-clear.md` on RW 1★ to 3★ and Kelurahan 0★ to 1★, judge against GAME-DESIGN.md §8, the UI.md checklist and TESTING.md with the verdict in `decisions/second-rt.md`, then ask Hari to play RT 3★ to Kelurahan 1★ (this also covers the RW part of T9 below). A docs-only note.
   - Source: Hari, 2026-11-02; `docs/plans/second-rt.md`
-  - `claimed · voidinside99 · 2026-11-04 · done when:` the T7 verdict is in `decisions/second-rt.md` and Hari has been asked to play it.
+  - `claimed · Claude (took over from voidinside99, no PR in 2 days) · 2026-11-06 · done when:` the T7 verdict is in `decisions/second-rt.md` and Hari has been asked to play it.
 
 - [ ] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).**
   - Problem: T1 to T8 are merged and tuned from bot numbers only. No person has played the new ladder.
@@ -32,13 +32,13 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Why: the CI checks for rules 10, 15, 16, 17 and 18 now run (#292, #295), but some rules are still checked by eye (2, 3, 6, 9, 11).
   - Suggested solution: `docs/plans/ui-audit-fixes.md` T11. Rerun the crawl in the project files (`audit/ui-rules-2026-11-01/audit.spec.ts`) at 320, 360, 412 and 430px, in EN and ID, in light and dark, on the RT, Kelurahan and Kecamatan seeds.
   - Source: UI.md "How each rule is checked"
-  - Needs the crawl in the project files (`audit/`), which a cloud session cannot reach. Run it from a session that has them.
-  - `open · — · — · done when:` a new report shows every screen passing, or lists the remaining fails as TODO items.
+  - The crawl in the project files (`audit/`) is not in the repo, so it will be rebuilt in the repo from UI.md's rules.
+  - `claimed · Claude · 2026-11-06 · done when:` a new report shows every screen passing, or lists the remaining fails as TODO items.
 
 ### Later
 
 - [ ] **Fix the remaining scorecard Fails that have a clear cause.**
-  - Problem: the scorecard of 2026-11-04 reads 3 Pass, 14 Fail, 10 Unknown. Still failing with a cause: Viral pinned near 100 in every band (5), goal gaps over the band (7, 10), novelty gaps (11), one reward kind per star (12), cash piles up for up to 52 min with no late sink (14), income outruns costs (15), Pencitraan never reaching Kel 1★ (17), Hint reader finds only 41% of combos (21, bar 65 to 85%). Kelurahan 2★ and 3★ still miss the goal-gap limit by 40 to 136 s (`decisions/second-rt-load.md`, cause not traced).
+  - Problem: the scorecard of 2026-11-04 reads 3 Pass, 14 Fail, 10 Unknown. Still failing with a cause: Viral pinned at 100 from B2 on (5, claimed: #319 adds a soft cap; B0 and B1 sit at 0 before any Viral source), goal gaps over the band (7, 10), novelty gaps (11), one reward kind per star (12), cash piles up for up to 52 min with no late sink (14), income outruns costs (15), Pencitraan never reaching Kel 1★ (17), Hint reader finds only 41% of combos (21, bar 65 to 85%). Kelurahan 2★ and 3★ still miss the goal-gap limit by 40 to 136 s (`decisions/second-rt-load.md`, cause not traced).
   - Why: each Fail is a place the game is too easy, too flat or can strand a player.
   - Suggested solution: one small PR per row, each proved by a Nightly rerun. Cash sink and late Popularitas sources are content, so check them against the Act 2 plan first.
   - Source: `scorecard/scorecard.md`; `decisions/rt-3star-pace.md`; `decisions/combo-stack-cap.md`; `decisions/cheapskate-bar.md`
@@ -59,13 +59,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: `decisions/playtest-sk2.md`
   - `open · — · — · done when:` no 2x2 building stands taller than a 1x1 of its tier, site sprites have no scaled pixels, and `tests/art.test.ts` checks both.
 
-- [ ] **Make staffing integral: the permit desk queue (prototype).**
-  - Problem: staff are optional bonuses. Inem made permits up to 40% faster, a Hansip adds a little Aman, and nothing breaks or asks for a hire when the player has nobody.
-  - Why: in Kairosoft's games staff are the hands that turn money into output, and running short of people is the pressure the player feels. Staffing should tighten the core loop: build, queue, hire or train, build faster.
-  - Suggested solution: permits become folders the Kantor clears in order; each Asisten clears some a month; the Asisten role can be posted from RT 1★; the map, panel and goal strip show the queue and say when to hire. Prototype in a PR and judge it against the checklists. Later steps: petugas on big public buildings, output numbers on staff cards, the same queue for Stempel and Serapan.
-  - Source: voidinside99, 2026-10-31
-  - `claimed · voidinside99 · 2026-10-31 · done when:` the prototype passes the checklists and merges (or is dropped), with the bite tuned in `decisions/desk-queue.md`.
-
 - [ ] **WebKit: the yearly report card never shows.**
   - Problem: in the first WebKit nightly, `yearly report card is legible, pauses the game and dismisses on tap` waits for `#modal .card.report-card` and it never appears (also on retry).
   - Why: iPhone players use WebKit; if the card really never shows, they miss the year's grade.
@@ -76,9 +69,9 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 - [ ] **WebKit: Balap Karung's tap button detaches on every tap.**
   - Problem: in the first WebKit nightly, the Lomba test times out tapping `#lomba-mash` 40 times: the button is re-created on each tap, and WebKit's click waits for a stable element.
   - Why: a button that is rebuilt on every tap may drop fast taps on a real iPhone too.
-  - Suggested solution: update the mash count in place instead of re-rendering the button, then rerun the WebKit nightly.
+  - Found: the button is not re-rendered. The 5-second race ends and the result page replaces it, and WebKit fits fewer than 40 clicks in 5 seconds. #320 makes the test tap until the race ends (`decisions/webkit-lomba-mash.md`).
   - Source: `decisions/webkit-first-run.md`
-  - `open · — · — · done when:` the Lomba test passes in the WebKit nightly.
+  - `claimed · Claude · 2026-11-06 · done when:` the Lomba test passes in the WebKit nightly.
 
 - [ ] **Scorecard bots: the last RT stalls.**
   - #313 fixed two combo loops in the bots (a leveled combo piece and an uncapped copy fallback); the builder now misses RT 3★ in 1 seed of 10, not 8. The 2nd RT was not the cause.
@@ -105,6 +98,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **Make staffing integral: the permit desk queue.** Shipped as #200, fixed for the weekly calendar after; the claim was never closed. `decisions/desk-queue.md`, `decisions/desk-queue-weeks.md`.
 - [x] **The 2nd RT, T1 to T6.** Kampung Sebelah is the player's from the RW (#303); its tutorial (#306); the AI RT tutorial at RW 2 (#316); a 24-week Serapan line for Kelurahan 1★ (#317). T7 stays open above. `decisions/second-rt.md`, `decisions/second-rt-T6.md`, `decisions/second-rt-load.md`.
 - [x] **WebKit: frame-rate bars.** Skipped in WebKit, where CI renders in software; Chromium keeps the check. #315, `decisions/webkit-first-run.md`.
 
