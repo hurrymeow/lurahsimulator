@@ -570,7 +570,8 @@ test.describe('events, ranking, settings', () => {
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.s.month = 10;
-      app.s.quarter = undefined;
+      // Last quarter earned far more, so income is down: the chip shows the amount with a falling arrow, never a minus.
+      app.s.quarter = { count: 0, earned: app.s.stats.earned, residents: app.s.residents.length, res: { ...app.s.res }, prevIncome: 1e15, net: {} };
     });
     // Two months to the year end. A random event can pause one of them, so play through it
     // rather than hoping the draw is kind: the report still has to land on time.
@@ -588,6 +589,7 @@ test.describe('events, ranking, settings', () => {
     await expect(page.locator('#modal .report-grade')).toBeVisible();
     await expect(page.locator('#modal .outcome-mod', { hasText: '☆' })).toBeVisible();
     await expect(page.locator('#modal .outcome-chip').first()).toBeVisible();
+    await expect(page.locator('#modal .outcome-chip .outcome-value').first()).toHaveText(/^▼ [^-]/);
     await expectLegible(page, 'report card');
     const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month);
     await page.waitForTimeout(300);
