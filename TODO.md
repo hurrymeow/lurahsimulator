@@ -61,13 +61,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: `decisions/scorecard-bot-combo-loop.md`
   - `open · — · — · done when:` the builder reaches RT 3★ in 10 of 10 seeds, and item 1 is under 60s or has a recorded balance reason.
 
-- [ ] **Kelurahan residents goals barely bite.**
-  - Problem: bots reach the Kelurahan with 150 to 200 residents against star goals of 50, 120 and 200, so the first two are met on arrival. The goals are meant to count the player's own kampung, so the count may include too many people.
-  - Why: a goal that is met on arrival gives the player nothing to aim at.
-  - Suggested solution: check which residents the goal counts against GAME-DESIGN.md; fix the count or raise the numbers, proved by a bot run.
-  - Source: `decisions/second-rt-load.md`, "Not fixed"
-  - `open · — · — · done when:` each Kelurahan residents goal is still open when the stage starts, or a decisions file says why not.
-
 - [ ] **Following the game's hints is the slowest way through the RW.**
   - #326 removed the slowdown #323 caused: the bot was reading the RW combo step as an RT combo hint.
   - Problem: the hint reader bot, which builds only what the game names, is still the slowest player type: 1.21x the builder at RW 2★ and 1.11x at Kelurahan 1★ (`decisions/sebelah-step-hint-bot.md`).
@@ -79,6 +72,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **Kelurahan residents goals barely bite.** Kept on purpose: the goal is a floor, the stage's work is Popularitas under growth, and 200 is tied to the taper and the Kecamatan's 250. `decisions/kel-residents-goals.md`.
 - [x] **WebKit: the yearly report card never shows.** A test race, not a game bug: WebKit opens the tip or event card a frame later, so the test's loop never reached the quarter end. Loop rewritten; passes in Chromium and WebKit. #333, `decisions/webkit-report-card.md`.
 - [x] **Full UI re-audit (T11).** The crawl is in the repo (`npm run audit:ui`); every screen passes at 4 widths, 2 languages and 2 themes apart from the allowlisted Settings and Warga. Fixed the 17 Agustus panel, the Kecamatan's Wacana and Neighbours, and dark-theme stat icons. #329, `decisions/ui-reaudit.md`.
 - [x] **English event bodies over 20 words.** `tests/event-words.test.ts` checks every event body and choice in both languages; four English lines cut. #329.
