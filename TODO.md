@@ -12,6 +12,13 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ### Next
 
+- [ ] **Make the SK promotion feel like a big moment, not a menu item.**
+  - Problem: an SK (Surat Keputusan, the promotion letter) is granted, but it is hidden. The player must open the Menu and find the stage sheet to accept it (`src/ui/stage.ts`). The goal line only says "accept the SK in Menu". The moment the player has worked toward for a whole stage gets no ceremony.
+  - Why: the SK is the game's promotion payoff. A tucked-away accept button makes the biggest reward feel like paperwork. Hari asked for it to feel "wow".
+  - Suggested solution: when an SK arrives, show a ceremony popup in the first-win style (centred, one button, Kairosoft tone). Give the accept action a visible place on the main screen while an SK waits, not only in Menu. Keep the Menu path too. Follow UI.md rules 14 to 17 and GAME-DESIGN.md section 3 for pacing. Existing strings: `sim.skTitle`, `stage.accept`, `goal.short.sk` in `src/i18n/`.
+  - Source: Hari, 2026-11-06 ("todo - sk should feel more wow and not just hidden in menu").
+  - `open · — · — · done when:` an SK arrival shows a ceremony popup, a waiting SK is accepted from outside the Menu, and both languages pass at 320 and 412px.
+
 - [ ] **Sayur Segar combo does not activate when a building in it is upgraded.**
   - Problem: Sayur Segar needs a Kebun Sayur and a Warung at level 3 or more. Upgrading the Warung to level 3 can leave the combo off until the next check. The notice and the Buku Combo entry wait too.
   - Why: a combo the player builds toward should light up the moment its last piece is upgraded. Otherwise the player thinks the upgrade did nothing.
