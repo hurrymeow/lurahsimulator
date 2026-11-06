@@ -21,6 +21,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - `claimed · Claude (took over from voidinside99, no PR in 2 days) · 2026-11-06 · done when:` the T7 verdict is in `decisions/second-rt.md` and Hari has been asked to play it.
 
 - [ ] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).**
+  - An agent playtest of RT 3★ to Kelurahan 1★, with the nine player types and a screen playthrough, fixed seven bugs (#323, `decisions/playtest-rt3-kel1.md`). Kelurahan 1★ to 3★ is not played yet.
   - Problem: T1 to T8 are merged and tuned from bot numbers only. No person has played the new ladder.
   - Why: T8 left questions bots cannot answer: stage lengths are short of target (RW about 7 min against 20, Kelurahan about 16 against 30), and preman can sink Aman at the Kecamatan.
   - Suggested solution: play it, then log what changes in a new `decisions/` file. The notes are under "For Hari" in `decisions/smaller-map-balance.md`.
@@ -95,6 +96,20 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Suggested solution: make the test (or a unit test over `src/i18n/en.ts` and `id.ts`) check every event body and choice label, then cut the ones over.
   - Source: `decisions/second-rt.md`, "English event text"
   - `open · — · — · done when:` a test checks every event body and choice, and all pass in EN and ID.
+
+- [ ] **The Kampung Sebelah stars goal names no next step.**
+  - Problem: "bring Kampung Sebelah to 3★" has no next step. Its how-to line sends the player to Menu, Neighbours, where the row reads "25 warga (punya 18)". In the playtest, a player who built shops there sat on this goal for 76 weeks.
+  - Why: every goal should say how (UI.md item 24). An RW combo goal now names its next build (#323), and this one should too.
+  - Suggested solution: in `nextStep`, while a `sebelahAtStars` goal is open, name Kampung Sebelah's first unmet RT goal as a build there (for example "build Rumah in Kampung Sebelah" when it is short of warga).
+  - Source: `decisions/playtest-rt3-kel1.md`, "Seen, not changed"
+  - `open · — · — · done when:` the goal list names a next build for Kampung Sebelah's star, with a unit test.
+
+- [ ] **Following the game's hints is the slowest way through the RW.**
+  - Problem: the hint reader bot, which builds only what the game names, was already the slowest player type, and #323 made it 0.4 to 0.8 min slower from RW 2★ to Kelurahan 1★ (31.9 min against 31.1).
+  - Why: a player who does what the game says should not be the one who falls behind.
+  - Suggested solution: compare the hint reader's build order with the builder's from RT 3★ on, and change what `nextStep` names where it costs time. Prove it with the scorecard bots.
+  - Source: `decisions/playtest-rt3-kel1.md`, "The nine player types"
+  - `open · — · — · done when:` the hint reader is within 1.1x of the builder at each star from RW 1★ to Kelurahan 1★, or a decisions file says why not.
 
 ## Done
 
