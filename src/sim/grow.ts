@@ -16,7 +16,7 @@ import { newKec } from './kec';
 import { pick } from './rng';
 import { score } from './ranking';
 import { stageDef, goalProgress } from './stages';
-import { addResident, bedsOf, covers, housing, price, tilesOf } from './state';
+import { addResident, bedsOf, covers, housing, laySetapak, price, tilesOf } from './state';
 import { RT_H, RT_W, mapSpan, setGrid, type Building, type GameState, type Goal, type Neighbour, type RtTrait, type StageId } from './types';
 
 /** The ladder this engine climbs. Matches `next` in the stage data. */
@@ -297,7 +297,15 @@ export function visit(s: GameState, n: Neighbour): string | null {
 /** Joins an RT to the player at promotion: no Orang Dalam cost, and it can never be handed back. */
 export function absorb(s: GameState, n: Neighbour): void {
   n.joined = n.buildings.filter((b) => !def(b.def).pathIncome).length;
-  if (n.run !== 'player') joinPlayer(s, n);
+  if (n.run !== 'player') {
+    joinPlayer(s, n);
+    // The same free starter lanes as a new game's RT, so the first builds there have a path to stand beside.
+    const kantor = s.buildings.find((b) => b.def === 'kantorRT' && inCell(n, b));
+    if (kantor) {
+      laySetapak(s, kantor.x, kantor.y);
+      refreshAccess(s);
+    }
+  }
   n.absorbed = true;
 }
 

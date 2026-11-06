@@ -91,3 +91,16 @@ describe('stempel next step', () => {
     expect(nextStep(s)?.kind).not.toBe('stempel');
   });
 });
+
+describe('RW combo next step', () => {
+  it('names an RW combo and its pieces while the RW star still needs one, never Grup Chat Warga at the RW', () => {
+    const s = newGame(1);
+    promote(s, []);
+    s.stage.stars.rw = 1;
+    s.res.rupiah = 1e9;
+    const step = nextStep(s);
+    expect(step?.kind).toBe('combo');
+    expect(step?.text).toMatch(/^combo (Pos Siaga|Jalan Ditutup)$/);
+    expect(step?.detail).toMatch(/^(First build Balai RW, then place side by side|Place side by side): /);
+  });
+});

@@ -682,7 +682,7 @@ test.describe('events, ranking, settings', () => {
     }
   }
 
-  test('a pending event comes back after a reload', async ({ page }) => {
+  test('a pending event comes back after a reload, once the home screen is passed, never on top of it', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     await page.evaluate(() => {
@@ -692,6 +692,10 @@ test.describe('events, ranking, settings', () => {
     });
     await page.reload();
     await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.waitForTimeout(800);
+    await expect(page.locator('#home')).toBeVisible();
+    await expect(page.locator('#modal')).toBeHidden();
+    await passHome(page);
     await expect(page.locator('#modal .card.event')).toBeVisible();
   });
 

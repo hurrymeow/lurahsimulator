@@ -85,6 +85,20 @@ export function refreshAccess(s: GameState): void {
 export const accessSystem = (s: GameState): void => refreshAccess(s);
 
 /**
+ * How many buildings that have a road now would lose it if these tiles' Jalan Setapak were built over. A building may
+ * replace a path tile, but not one that is another building's only way to the Kantor.
+ */
+export function cutBy(s: GameState, tiles: { x: number; y: number }[]): number {
+  if (!enforced) return 0;
+  const covered = tiles.filter((p) => s.buildings.some((b) => b.def === 'jalan' && b.x === p.x && b.y === p.y));
+  if (!covered.length) return 0;
+  const road = roadTiles(s);
+  for (const p of covered) road[p.y * GRID_W + p.x] = 0;
+  const conn = connectedRoad(s, road);
+  return s.buildings.filter((b) => needsRoad(b) && !b.noRoad && !hasRoadBeside(conn, b)).length;
+}
+
+/**
  * Old saves have no roads. Lay free paths from each cut-off building to the network (or the Kantor),
  * through empty tiles, so loading never switches a whole village off. Runs once per save.
  */
