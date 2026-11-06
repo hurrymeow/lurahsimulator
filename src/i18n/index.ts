@@ -39,7 +39,9 @@ export const playerTitle = (): string => player.title;
  */
 export function t(key: Key, vars?: Record<string, string | number>): string {
   const table = (lang === 'id' ? ID : EN) as Record<string, string>;
-  const raw = (player.title === 'Bu' && table[`${key}.bu`]) || table[key];
+  // English needs a singular for a count of 1 ("find 1 combo"); a `.one` key holds it.
+  const k = vars?.n === 1 && table[`${key}.one`] ? `${key}.one` : key;
+  const raw = (player.title === 'Bu' && table[`${k}.bu`]) || table[k];
   const all: Record<string, string | number> = { pt: player.title, pn: player.name, pk: player.kampung, ...vars };
   return raw.replace(/\{(\w+)\}/g, (_, k: string) => String(all[k] ?? `{${k}}`));
 }
