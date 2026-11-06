@@ -25,7 +25,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Why: the game uses icons for stats and tap-to-name, so the rest of the UI should use them too. Fewer words fit a 320px phone and read faster for a new player.
   - Suggested solution: Batal becomes an X, Rotate gets a rotate icon, and confirm becomes a checkmark. Cut the words on Settings to the minimum. Follow UI.md rules 14 to 17 and the icon rules: an icon shows its name when tapped. Keep the word for any action that an icon cannot make clear.
   - Source: Hari, 2026-11-06 ("use more icon as ui text"); `docs/plans/ui-hierarchy.md`; UI.md rules 14 to 17.
-  - `open · — · — · done when:` placement mode and Settings use icons where they fit, both languages pass the word-count scan at 320 and 412px, and a decisions/ file logs the choices.
+  - `claimed · Claude (DeepSeek executor, docs/plans/icon-first-ui.md) · 2026-11-06 · done when:` placement mode and Settings use icons where they fit, both languages pass the word-count scan at 320 and 412px, and a decisions/ file logs the choices.
 
 ### Later
 
