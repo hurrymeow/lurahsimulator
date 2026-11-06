@@ -65,6 +65,8 @@ export interface EventDef {
     cooldown?: number;
     /** Only while something waits in the permit queue. */
     queue?: boolean;
+    /** The first one comes for sure, on the first week of its first eligible month, like a scheduled event: a problem unlock waits on it. */
+    firstSure?: boolean;
   };
   /** The first choice must always be free so an event can never soft-lock. */
   choices: EventChoice[];
@@ -83,7 +85,7 @@ export const EVENTS: EventDef[] = [
     id: 'banjir',
     name: 'Banjir',
     body: 'Heavy rain for three days. Selokan level decides how much of the kampung floats. Each level cuts the damage by 20%.',
-    when: { months: [10, 11, 0, 1], minMonth: 10, chance: 0.3, cooldown: 9 },
+    when: { months: [10, 11, 0, 1], minMonth: 10, chance: 0.3, cooldown: 9, firstSure: true },
     choices: [{ label: 'Check the damage', special: 'banjir', result: '' }],
   },
   {
