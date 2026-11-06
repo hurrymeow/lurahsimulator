@@ -8,7 +8,8 @@ import { gateOpen } from './gate';
 import { requirementGaps } from './rules';
 import { attractTarget, buildCost, count, housing, population } from './state';
 import { placeableDefs } from './content';
-import { canPromote, nextStarChecklist } from './stages';
+import { canPromote, nextStarChecklist, starChecklist } from './stages';
+import { viewOf } from './neighbourView';
 import { openRoles, queueMonths, staffSlots } from './staff';
 import { ROLE_FX } from '../data/staff';
 import type { GameState } from './types';
@@ -53,6 +54,19 @@ function easiestRwCombo(s: GameState) {
   return best;
 }
 
+/**
+ * For an open "Kampung Sebelah at N★" goal: its first unmet RT goal. Its residents follow its share of beds, so short
+ * of residents means build Rumah there. The ranking goals are the player's own and never block it.
+ */
+function sebelahStep(s: GameState): { kind: StepKind; text: string } | null {
+  if (!(nextStarChecklist(s) ?? []).some((l) => !l.done && l.goal.kind === 'sebelahAtStars')) return null;
+  const n = s.neighbours.find((x) => x.cx === 1 && x.cy === 0 && x.run === 'player');
+  if (!n) return null;
+  const line = (starChecklist(viewOf(s, n), 'rt', n.stars as 0 | 1 | 2) ?? []).find((l) => !l.done && l.goal.kind !== 'rankWins' && l.goal.kind !== 'winStreak');
+  if (!line) return null;
+  return { kind: 'sebelah', text: line.goal.kind === 'residents' ? t('goal.short.sebelahHouses') : t('goal.short.sebelahNeed', { need: line.short }) };
+}
+
 /** The building that draws the most residents for its price, among those the player can build now. */
 function bestDraw(s: GameState): string | null {
   const open = placeableDefs().filter((d) => d.attract > 0 && !d.housing && count(s, d.id) === 0 && requirementGaps(s, d, { ignoreLimit: true }).length === 0);
@@ -71,7 +85,7 @@ function comboGoalOpen(s: GameState): boolean {
   return (nextStarChecklist(s) ?? []).some((l) => !l.done && l.goal.kind === 'combos');
 }
 
-export type StepKind = 'house' | 'combo' | 'desk' | 'wait' | 'beds' | 'draw' | 'stempel' | 'sk';
+export type StepKind = 'house' | 'combo' | 'desk' | 'wait' | 'beds' | 'draw' | 'stempel' | 'sk' | 'sebelah' | 'rwCombo';
 
 /** True when the player can post a lowongan for an Asisten right now: the role is open, a slot is free, none is posted. */
 const canPostDesk = (s: GameState): boolean =>
@@ -96,13 +110,15 @@ export function nextStep(s: GameState): { kind: StepKind; text: string; detail?:
   // An open RW combo goal names the cheapest RW combo, as the RT one does, rather than fall through to beds.
   if ((nextStarChecklist(s) ?? []).some((l) => !l.done && l.goal.kind === 'rwCombos')) {
     const c = easiestRwCombo(s);
-    if (c) return { kind: 'combo', text: t('goal.short.combo', { name: c.name }), detail: c.first ? t('goal.comboFirst', { first: c.first, pieces: c.pieces }) : t('goal.comboPieces', { pieces: c.pieces }) };
+    if (c) return { kind: 'rwCombo', text: t('goal.short.combo', { name: c.name }), detail: c.first ? t('goal.comboFirst', { first: c.first, pieces: c.pieces }) : t('goal.comboPieces', { pieces: c.pieces }) };
   }
   if ((s.month >= COMBO_HINT_MONTH && (s.discovered.length === 0 || comboGoalOpen(s))) || starWaitsOnCombo(s)) {
     const c = easiestCombo(s);
     // The pill names the combo; its buildings wait in the opened list, so the pill stays within two lines.
     if (c) return { kind: 'combo', text: t('goal.short.combo', { name: c.name }), detail: t('goal.comboPieces', { pieces: c.pieces }) };
   }
+  const seb = sebelahStep(s);
+  if (seb) return seb;
   // The permit queue is a staffing problem: say so once it is deep, while there is room to hire.
   const months = queueMonths(s);
   if (months >= ROLE_FX.asisten.hireAfter && canPostDesk(s)) return { kind: 'desk', text: t('goal.short.desk', { n: months }) };

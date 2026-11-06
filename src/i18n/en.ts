@@ -236,6 +236,8 @@ export const EN = {
   'goal.short.desk': 'post an Asisten lowongan',
   'goal.short.draw': '{name} draws residents',
   'goal.short.house': 'build your first Rumah',
+  'goal.short.sebelahHouses': 'build Rumah in Kampung Sebelah',
+  'goal.short.sebelahNeed': 'Kampung Sebelah: {need}',
   'goal.short.sk': 'accept the SK in Menu',
   'goal.short.stempel': 'clear letters: run a Calo',
   'goal.short.wait': '{name} opens soon',
