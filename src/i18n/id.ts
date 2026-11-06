@@ -237,6 +237,8 @@ export const ID: Record<Key, string> = {
   'goal.short.desk': 'pasang lowongan Asisten',
   'goal.short.draw': '{name} menarik warga',
   'goal.short.house': 'bangun Rumah pertama',
+  'goal.short.sebelahHouses': 'bangun Rumah di Kampung Sebelah',
+  'goal.short.sebelahNeed': 'Kampung Sebelah: {need}',
   'goal.short.sk': 'terima SK di Menu',
   'goal.short.stempel': 'kurangi surat: jalankan Calo',
   'goal.short.wait': 'tunggu {name} buka',
