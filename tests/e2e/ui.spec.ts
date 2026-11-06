@@ -682,7 +682,7 @@ test.describe('events, ranking, settings', () => {
     }
   }
 
-  test('a pending event comes back after a reload', async ({ page }) => {
+  test('a pending event comes back after a reload, once the home screen is passed, never on top of it', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     await page.evaluate(() => {
@@ -692,6 +692,10 @@ test.describe('events, ranking, settings', () => {
     });
     await page.reload();
     await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
+    await page.waitForTimeout(800);
+    await expect(page.locator('#home')).toBeVisible();
+    await expect(page.locator('#modal')).toBeHidden();
+    await passHome(page);
     await expect(page.locator('#modal .card.event')).toBeVisible();
   });
 
@@ -2335,24 +2339,6 @@ test.describe('home screen', () => {
     await page.locator('#home-begin').click();
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.res.rupiah)).not.toBe(777_000);
     await expect(page.locator('#howto')).toBeVisible();
-  });
-
-  test('an event saved while open waits for Continue, not on top of the home screen', async ({ page }) => {
-    await start(page);
-    await page.locator('#howtoGo').click();
-    await page.evaluate(() => {
-      const a = (window as unknown as { pakrt: any }).pakrt;
-      a.s.pendingEvent = 'cabai';
-      a.save();
-    });
-    await page.reload();
-    await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
-    await page.waitForTimeout(800);
-    await expect(page.locator('#home')).toBeVisible();
-    await expect(page.locator('#modal')).toBeHidden();
-    await page.locator('#home-start').click();
-    await page.locator('#home-continue').click();
-    await expect(page.locator('#modal .card.event')).toBeVisible();
   });
 
   test('Install shows under Start only when the browser offers it, and hides once used', async ({ page }) => {
