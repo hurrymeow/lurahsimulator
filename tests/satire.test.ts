@@ -9,7 +9,7 @@ import { addBuilding, addResident, byUid, count, emptyTiles, newGame } from '../
 import { checkTertibkan, parkirSystem, spawnParkir, tertibkan } from '../src/sim/parkir';
 import { PARKIR } from '../src/sim/balance';
 import { ensureStaff } from '../src/sim/staff';
-import type { Fx } from '../src/sim/gain';
+import { gain, type Fx } from '../src/sim/gain';
 import { tick } from '../src/sim/tick';
 import { announce } from '../src/sim/wacana';
 import type { GameState } from '../src/sim/types';
@@ -207,6 +207,27 @@ describe('jobs', () => {
     assign(s, s.residents[0], 'influencer');
     tick(s);
     expect(s.res.viral).toBeGreaterThan(2);
+  });
+
+  it('Viral gains shrink toward the cap, so a big inflow settles below 100', () => {
+    const s = newGame(11);
+    const fx: Fx = [];
+    s.res.viral = 0;
+    gain(s, fx, 'viral', 10);
+    expect(s.res.viral).toBe(10);
+    s.res.viral = 80;
+    gain(s, fx, 'viral', 10);
+    expect(s.res.viral).toBeCloseTo(82);
+    s.res.viral = 90;
+    gain(s, fx, 'viral', -5);
+    expect(s.res.viral).toBe(85);
+    // 100 a week against a 10% weekly loss settles at 90, not on the cap.
+    s.res.viral = 0;
+    for (let i = 0; i < 200; i++) {
+      gain(s, fx, 'viral', 100);
+      s.res.viral *= 0.9;
+    }
+    expect(s.res.viral).toBeLessThan(92);
   });
 
   it('buzzers make fake Viral that collapses', () => {
