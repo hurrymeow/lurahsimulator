@@ -567,20 +567,20 @@ test.describe('events, ranking, settings', () => {
     });
     // Two months to the quarter end. A tip or event can open between ticks, and WebKit shows it a frame later than
     // Chromium, so tick, then clear whatever modal is up (an event takes its free first choice), until the report lands.
-    for (let i = 0; i < 12 && !(await page.locator('#modal .card.report-card').isVisible()); i++) {
-      if (!(await page.locator('#modal').isVisible())) {
-        await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
-        await page.waitForTimeout(150);
-      }
-      if (await page.locator('#modal .card.report-card').isVisible()) break;
-      if (!(await page.locator('#modal').isVisible())) continue;
+    for (let i = 0; i < 40 && !(await page.locator('#modal .card.report-card').isVisible()); i++) {
+      // Clear what is open: an event takes its free first choice, a tip is tapped away. A card with neither stays; the tick still runs.
       const choice = page.locator('#modal .card.event .btn').first();
       if (await choice.isVisible()) await choice.click();
-      const tap = page.locator('#modal .tap-hint');
+      // Never tap the report itself away: it can land between the first check and this tap.
+      const tap = page.locator('#modal .card:not(.report-card) .tap-hint');
       if (await tap.isVisible()) await tap.click();
+      if ((await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.month)) < 12) {
+        await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.runTick());
+      }
+      await page.waitForTimeout(300);
       await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.refresh());
     }
-    await expect(page.locator('#modal .card.report-card')).toBeVisible();
+    await expect(page.locator('#modal .card.report-card')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('#modal .card h2')).toHaveText(title(1));
     await expect(page.locator('#modal .report-grade')).toBeVisible();
     await expect(page.locator('#modal .outcome-mod', { hasText: '☆' })).toBeVisible();
