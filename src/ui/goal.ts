@@ -20,6 +20,8 @@ export function setupGoal(app: App): void {
   const now = h('button', { class: 'goal-now', id: 'goal-now', type: 'button', 'aria-expanded': 'false' }, text);
   const star = h('div', { class: 'goal-star', hidden: true });
   now.addEventListener('click', () => {
+    // While an SK waits, the line says so and a tap brings its ceremony card back: no trip through the Menu.
+    if (now.dataset.sk === 'true') return app.showSK();
     if (now.dataset.more !== 'true') return;
     open = !open;
     app.refresh();
@@ -34,9 +36,10 @@ export function setupGoal(app: App): void {
   app.refreshers.push((a) => {
     const left = nextStarChecklist(a.s)?.filter((l) => !l.done) ?? [];
     const step = nextStep(a.s);
-    const stepLeads = !!step && (step.kind === 'house' || step.kind === 'combo' || step.kind === 'desk' || step.kind === 'stempel' || !left.length);
+    const stepLeads = !!step && (step.kind === 'house' || step.kind === 'sk' || step.kind === 'sebelah' || step.kind === 'rwCombo' || step.kind === 'combo' || step.kind === 'desk' || step.kind === 'stempel' || !left.length);
     el.hidden = !left.length && !step;
     text.textContent = t('goal.label', { goal: stepLeads ? step!.text : left[0]?.short ?? '' });
+    now.dataset.sk = String(step?.kind === 'sk');
     // Opened: every unmet goal, then the step when the line does not already say it.
     if (howAt >= left.length) howAt = 0;
     const rows = [

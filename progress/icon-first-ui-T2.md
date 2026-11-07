@@ -1,0 +1,5 @@
+# Settings without the help lines
+
+Cut the grey help paragraphs under language, theme, both volume sliders and the effects, haptics, large-text and high-contrast toggles. Each help string now lives on its control as `title` and `aria-description`: on the toggle button, on the language and theme button rows, and on the slider inputs. Reduce motion keeps its visible line because it changes behaviour; the satire line, the developer row and the new-game row are untouched. Settings words in view were measured in Indonesian at 320, 360, 412 and 430px (20, 20, 31, 31), so the `settings` `wordsInView` allowlist drops from 65 to 35 (31 rounded up to the next 5). English Playwright projects could not be launched in the executor environment because `CI` is set, so the 320/412 English measurement could not be run.
+
+Reviewed 2026-11-07: diff matches the task. Placement glyphs checked in Chromium and WebKit at 412; Settings density passes in EN and ID.

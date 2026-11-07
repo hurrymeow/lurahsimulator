@@ -247,7 +247,7 @@ export const MORE_EVENTS: EventDef[] = [
   {
     id: 'hibah',
     name: 'Proposal Hibah',
-    body: 'A hibah is open. It needs six forms, four stamps, and a photo of a banner of the thing you want to do.',
+    body: 'A hibah is open. It needs six forms, four stamps and a photo of a banner for the plan.',
     when: { minMonth: 12, minStars: 1, chance: 0.1, cooldown: 14, needs: 'kantorRT' },
     choices: [
       { label: 'Skip the forms', res: { sabar: 1 }, result: 'Peace of mind, and no money.' },

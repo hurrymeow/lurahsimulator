@@ -6,6 +6,7 @@ import { viewOf } from './neighbourView';
 import { lombaMult } from './kel';
 import { popReportBonus } from './rw';
 import { randInt } from './rng';
+import { YEARLY_EVERY } from './calendar';
 import { isWorking, population } from './state';
 import type { GameState } from './types';
 
@@ -44,14 +45,16 @@ export function yearlyRanking(s: GameState, fx: Fx, year: number): void {
   const won = us > them;
   s.ranking.push({ tier: stage, year, us, them, won });
   const hq = s.buildings.find((b) => b.def === 'kantorRT');
+  // From the RW on, only the yearly ranking counts for the star (tierWins): say which this one is.
+  const counts = stage === 'rt' ? '' : ` ${t(year % YEARLY_EVERY === 0 ? 'sim.rankYearly' : 'sim.rankQuarterly')}`;
   if (won) {
     gain(s, fx, 'sabar', WIN.sabar, hq);
     gain(s, fx, 'orangDalam', WIN.orangDalam);
     addEmas(s, WIN.emas);
-    fx.push({ kind: 'notice', title: t('sim.rankWinTitle', { year, rival: RIVAL_NAME }), body: t('sim.rankWinBody', { us, them, sabar: WIN.sabar, od: WIN.orangDalam, emas: WIN.emas }), tone: 'good', fanfare: true });
+    fx.push({ kind: 'notice', title: t('sim.rankWinTitle', { year, rival: RIVAL_NAME }), body: t('sim.rankWinBody', { us, them, sabar: WIN.sabar, od: WIN.orangDalam, emas: WIN.emas }) + counts, tone: 'good', fanfare: true });
   } else {
     gain(s, fx, 'sabar', LOSE.sabar, hq);
-    fx.push({ kind: 'notice', title: t('sim.rankLoseTitle', { year, rival: RIVAL_NAME }), body: t('sim.rankLoseBody', { us, them, sabar: LOSE.sabar }), tone: 'bad' });
+    fx.push({ kind: 'notice', title: t('sim.rankLoseTitle', { year, rival: RIVAL_NAME }), body: t('sim.rankLoseBody', { us, them, sabar: LOSE.sabar }) + counts, tone: 'bad' });
   }
   s.lastNovelty = s.month;
 }

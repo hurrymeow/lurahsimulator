@@ -16,14 +16,16 @@ const windows = (face: Face, u: number, j: number, i: number, rows: [number, num
 export const HIGHER_ART: Record<string, (p: Painter) => void> = {
   // RW
   balaiRW: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     p.shadow(1);
-    p.box(1, 10, 'w', (face, u, j, i) => {
-      if (face === 'L' && within(u, 0.42, 0.6) && j < 7) return 'k';
+    p.box(1, 12, 'w', (face, u, j, i) => {
+      if (face === 'L' && within(u, 0.42, 0.6) && j < 8) return 'k';
       if (j < 1) return 'S';
-      if (face !== 'T' && j === 9) return 'b';
-      return windows(face, u, j, i, [4, 8]);
+      if (face !== 'T' && j === 11) return 'b';
+      return windows(face, u, j, i, [4, 9]);
     });
-    p.roof(1, 10, 8, 'o', (x) => (Math.floor(x / 3) % 2 ? 'y' : undefined));
+    p.roof(1, 12, 13, 'o', (x) => (Math.floor(x / 3) % 2 ? 'y' : undefined));
   },
   posyandu: (p) => {
     p.shadow(3);
@@ -64,6 +66,8 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
   },
   // Kelurahan
   kantorKel: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     p.shadow(1);
     p.box(1, 9, 'w', (face, u, j, i) => {
       if (face === 'L' && within(u, 0.42, 0.6) && j < 6) return 'k';
@@ -79,33 +83,40 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
     for (let k = 1; k <= 4; k++) for (const dy of [5, 4]) p.set(ax + k, ay - dy, 'w');
   },
   puskesmasPembantu: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     p.shadow(2);
-    p.box(2, 9, 'w', (face, u, j, i) => {
-      if (face === 'L' && within(u, 0.44, 0.58) && j < 6) return 'k';
+    p.box(2, 12, 'w', (face, u, j, i) => {
+      if (face === 'L' && within(u, 0.44, 0.58) && j < 8) return 'k';
       if (j < 1) return 'S';
-      if (face === 'R' && within(u, 0.4, 0.6) && within(j, 3, 8)) return within(u, 0.46, 0.54) || within(j, 5, 6) ? 'r' : 'w';
-      return windows(face, u, j, i, [3, 7], 'c');
+      if (face === 'R' && within(u, 0.4, 0.6) && within(j, 4, 10)) return within(u, 0.46, 0.54) || within(j, 6, 7) ? 'r' : 'w';
+      return windows(face, u, j, i, [3, 9], 'c');
     });
-    p.roof(2, 9, 6, 'c');
+    p.roof(2, 12, 13, 'c');
   },
   pasar: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     p.shadow(1);
-    p.box(1, 6, 't', (face, _u, j, i) => {
+    p.box(1, 8, 't', (face, _u, j, i) => {
       if (face === 'T') return undefined;
       if (j < 1) return 'N';
-      if (within(j, 2, 5) && (i % 6 < 3)) return Math.floor(i / 6) % 2 ? 'y' : 'c';
+      if (within(j, 2, 7) && (i % 6 < 3)) return Math.floor(i / 6) % 2 ? 'y' : 'c';
       return undefined;
     });
-    p.roof(1, 6, 6, 'y', (x) => (Math.floor(x / 3) % 2 ? 'r' : undefined));
+    p.roof(1, 8, 12, 'y', (x) => (Math.floor(x / 3) % 2 ? 'r' : undefined));
   },
   terminal: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     p.shadow(1);
-    p.box(2, 7, 'S', (face, u, j, i) => {
+    p.box(2, 10, 'S', (face, u, j, i) => {
       if (face === 'T') return undefined;
-      if (j >= 5) return 'y';
-      return windows(face, u, j, i, [2, 5]);
+      if (j >= 8) return 'y';
+      return windows(face, u, j, i, [2, 7]);
     });
-    p.box(1, 2, 'b', (face, _u, j, i) => (face !== 'T' && j === 0 && i % 4 === 0 ? 'w' : undefined), 7);
+    // A long blue canopy over the bays: wide, not tall.
+    p.roofShape('gable', 1, 10, 10, 'b', 'S', (x) => (Math.floor(x / 4) % 2 ? 'B' : undefined));
   },
   taman: (p) => {
     p.shadow(2);
@@ -138,48 +149,56 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
   },
   // Kecamatan
   kantorKec: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     p.shadow(1);
-    p.box(1, 10, 'w', (face, u, j, i) => {
-      if (face === 'L' && within(u, 0.42, 0.6) && j < 7) return 'k';
+    p.box(1, 12, 'w', (face, u, j, i) => {
+      if (face === 'L' && within(u, 0.42, 0.6) && j < 8) return 'k';
       if (j < 1) return 'S';
-      if (face !== 'T' && j === 9) return 'o';
-      return windows(face, u, j, i, [3, 8]);
+      if (face !== 'T' && j === 11) return 'o';
+      return windows(face, u, j, i, [3, 9]);
     });
-    p.roof(1, 10, 9, 'S', (x) => (Math.floor(x / 4) % 2 ? 'b' : undefined));
+    p.roof(1, 12, 14, 'S', (x) => (Math.floor(x / 4) % 2 ? 'b' : undefined));
   },
   posSatpol: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     p.shadow(3);
     // A khaki post with a blue stripe and a barred window.
-    p.box(3, 7, 'y', (face, u, j) => {
+    p.box(3, 10, 'y', (face, u, j) => {
       if (face === 'T') return undefined;
       if (j < 1) return 'N';
-      if (face === 'L' && within(u, 0.4, 0.6) && j < 5) return 'k';
-      if (j === 5) return 'b';
-      if (face === 'R' && within(u, 0.3, 0.7) && within(j, 2, 4)) return 'l';
+      if (face === 'L' && within(u, 0.4, 0.6) && j < 7) return 'k';
+      if (j === 8) return 'b';
+      if (face === 'R' && within(u, 0.3, 0.7) && within(j, 3, 6)) return 'l';
       return undefined;
     });
-    p.roof(3, 7, 5, 'b');
+    p.roof(3, 10, 12, 'b');
   },
   koperasiSP: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     p.shadow(2);
-    p.box(2, 8, 'g', (face, u, j, i) => {
+    p.box(2, 11, 'g', (face, u, j, i) => {
       if (face === 'T') return undefined;
       if (j < 1) return 'N';
-      if (face === 'L' && within(u, 0.4, 0.6) && j < 5) return 'k';
-      if (j >= 6) return 'y';
-      return windows(face, u, j, i, [2, 5]);
+      if (face === 'L' && within(u, 0.4, 0.6) && j < 7) return 'k';
+      if (j >= 9) return 'y';
+      return windows(face, u, j, i, [2, 7]);
     });
-    p.roof(2, 8, 5, 'o');
+    p.roof(2, 11, 12, 'o');
   },
   balaiLatihanKerja: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     p.shadow(2);
-    p.box(2, 9, 'c', (face, u, j, i) => {
+    p.box(2, 12, 'c', (face, u, j, i) => {
       if (face === 'T') return undefined;
       if (j < 1) return 'S';
-      if (face === 'L' && within(u, 0.42, 0.6) && j < 5) return 'k';
-      return windows(face, u, j, i, [3, 7]);
+      if (face === 'L' && within(u, 0.42, 0.6) && j < 7) return 'k';
+      return windows(face, u, j, i, [3, 9]);
     });
-    p.roof(2, 9, 5, 'S', (x) => (Math.floor(x / 3) % 2 ? 'y' : undefined));
+    p.roof(2, 12, 12, 'S', (x) => (Math.floor(x / 3) % 2 ? 'y' : undefined));
   },
   baliho: (p) => {
     p.shadow(6);

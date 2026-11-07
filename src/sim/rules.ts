@@ -7,7 +7,7 @@ import { gateOpen } from './gate';
 import { aiLotAt, neighbourAt, sendBuildLetters } from './grow';
 import { stageTitle } from './stages';
 import { hasProblem } from './problems';
-import { FLAT, refreshAccess } from './access';
+import { FLAT, cutBy, refreshAccess } from './access';
 import { addBuilding, buildCost, count, covers, homelessWithout, inBounds, occupants, population, tilesOf, upgradeCost, year } from './state';
 import type { Building, BuildingDef, CheckResult, GameState } from './types';
 
@@ -63,6 +63,10 @@ export function siteGaps(s: GameState, d: BuildingDef, x: number, y: number, ign
   // An AI-run RT's free lots take the player's RT buildings too: they count for that RT, the kas pays as usual.
   else if (lots.includes('other') && !((d.scope ?? 'rt') === 'rt' && tiles.every((p) => aiLotAt(s, p.x, p.y)))) missing.push(t('sim.notYours'));
   else if (lots.some((l) => l !== 'other' && !LOTS[d.scope ?? 'rt'].includes(l))) missing.push(t(d.scope === 'kel' ? 'sim.needKelLot' : d.scope === 'rw' ? 'sim.needLot' : 'sim.needRtLot'));
+  else if (overwritesPath(d)) {
+    const n = cutBy(s, tiles);
+    if (n) missing.push(t('sim.cutsRoad', { n }));
+  }
   return missing;
 }
 

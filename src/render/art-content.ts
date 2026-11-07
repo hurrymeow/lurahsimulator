@@ -196,6 +196,8 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]]) p.set(x + dx, y + dy, 'r');
   },
   koperasi: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     shopfront('w', 'b', 'a', { height: 10, rise: 6, inset: 2, shape: 'gableY' })(p);
     p.blob(0, 18, 2.2, 'a');
   },
@@ -208,20 +210,24 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     for (const k of [0, 4, 8]) p.stroke(-5 + k, k / 11, -4 + k, k / 11, 2, 'r', false);
   },
   paud: (p) => {
-    shopfront('p', 'y', 'c', { height: 8, rise: 5 })(p);
-    p.blob(-8, 13, 2, 'r');
-    p.blob(8, 13, 2, 'b');
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
+    shopfront('p', 'y', 'c', { height: 11, rise: 11 })(p);
+    p.blob(-8, 16, 2, 'r');
+    p.blob(8, 16, 2, 'b');
   },
   balaiWarga: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     p.shadow(1);
-    p.box(1, 9, 't', (face, u, j, i) => {
+    p.box(1, 12, 't', (face, u, j, i) => {
       if (face === 'T') return undefined;
-      if (face === 'L' && within(u, 0.4, 0.62) && j < 6) return 'N';
-      if (i % 6 < 2 && j > 0 && j < 8) return 'w';
-      if (j >= 8) return 'R';
+      if (face === 'L' && within(u, 0.4, 0.62) && j < 8) return 'N';
+      if (i % 6 < 2 && j > 0 && j < 11) return 'w';
+      if (j >= 11) return 'R';
       return undefined;
     });
-    p.roof(1, 9, 8, 'R');
+    p.roof(1, 12, 13, 'R');
   },
   // Praktik Bidan: a cream house with a pink pelana, a teal door, and the practice board on a post by the corner.
   bidan: (p) => {
@@ -234,18 +240,20 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
   // Panggung Senam: a low plank stage, a merah putih banner on two posts at the back, and a grey toa on a pole.
   // Drawn in one-tile coordinates, so on its 2x2 lot every edge stays a 1px line.
   panggungSenam: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     p.shadow(2);
     p.box(2, 3, 'n', (face, _u, j) => (face === 'T' ? null : j === 2 ? 't' : undefined));
     // The deck, painted in native pixels: box() leaves an open top's back corner to the roof that usually covers it.
     p.id++;
     const n = p.n;
     const cx = (TW / 2) * n + p.ox;
-    const cy = (TOP + TH / 2 - 3) * n + p.oy;
+    const cy = (TOP + TH / 2) * n - 3 * p.zs + p.oy;
     const hw = (TW / 2 - 4) * n;
     const hh = (TH / 2 - 2) * n;
     for (let y = Math.floor(cy - hh); y <= Math.ceil(cy + hh); y++)
       for (let x = Math.floor(cx - hw); x <= Math.ceil(cx + hw); x++)
-        if (Math.abs(x + 0.5 - cx) / hw + Math.abs(y + 0.5 - cy) / hh <= 1) p.px(x, y, Math.floor((x - y * 2) / (3 * n)) % 2 ? 't' : 'a');
+        if (Math.abs(x + 0.5 - cx) / hw + Math.abs(y + 0.5 - cy) / hh <= 1) p.px(x, y, Math.floor((x - y * 2) / (3 * p.zs)) % 2 ? 't' : 'a');
     // The banner: red over white, on two bamboo posts standing on the back of the stage.
     p.stroke(-6, -6, -6, -16, 1, 'N');
     p.stroke(6, -6, 6, -16, 1, 'N');
@@ -279,15 +287,19 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     });
   },
   gudangMaterial: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     p.shadow(2);
-    p.box(2, 8, 'S', (face, u, j) => {
-      if (face === 'L' && within(u, 0.2, 0.8) && j < 6) return j === 5 ? 'N' : 'n';
+    p.box(2, 10, 'S', (face, u, j) => {
+      if (face === 'L' && within(u, 0.2, 0.8) && j < 7) return j === 6 ? 'N' : 'n';
       return undefined;
     });
     // A warehouse pelana with a vent on the gable end.
-    p.roofShape('gable', 2, 8, 5, 'n', 'S');
+    p.roofShape('gable', 2, 10, 8, 'n', 'S');
   },
   kontrakan: (p) => {
+    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    p.low();
     p.shadow(1);
     p.box(1, 9, 'a', (face, u, j, i) => {
       if (face === 'T') return undefined;

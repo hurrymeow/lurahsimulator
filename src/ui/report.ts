@@ -11,11 +11,13 @@ import { starRow } from './stage';
 const RES: ResourceId[] = ['sabar', 'orangDalam', 'viral'];
 const num = (v: number) => String(Math.round(Math.abs(v) * 10) / 10);
 
-function chip(colour: string, icon: string | null, name: string, value: string, v: number): Node {
+/** A row with its trend. `value` is a change, signed by `v`, unless `total`: then it is an amount, and only the arrow shows the trend. */
+function chip(colour: string, icon: string | null, name: string, value: string, v: number, total = false): Node {
+  const sign = total ? (v < 0 ? '▼ ' : v > 0 ? '▲ ' : '') : v < 0 ? '▼ -' : v > 0 ? '▲ +' : '';
   return h('div', { class: `outcome-chip ${v < 0 ? 'negative' : 'positive'}`, style: `--c:${colour}` },
     icon ? h('img', { src: iconURL(icon), alt: '', width: 24, height: 24 }) : null,
     h('span', { class: 'outcome-name' }, name),
-    h('span', { class: 'outcome-value' }, `${v < 0 ? '▼ -' : v > 0 ? '▲ +' : ''}${value}`),
+    h('span', { class: 'outcome-value' }, `${sign}${value}`),
   );
 }
 
@@ -23,7 +25,7 @@ function chip(colour: string, icon: string | null, name: string, value: string, 
 export function reportExtra(s: GameState, r: QuarterReport): { title: string; body: string; extra: Node } {
   const rows: Node[] = [
     h('div', { class: 'report-grade' }, t('report.grade', { g: r.grade })),
-    chip(RES_VAR.rupiah, 'rupiah', t('report.income'), rupiah(r.income), r.prevIncome === null ? 0 : r.income - r.prevIncome),
+    chip(RES_VAR.rupiah, 'rupiah', t('report.income'), rupiah(r.income), r.prevIncome === null ? 0 : r.income - r.prevIncome, true),
     h('p', { class: 'meta' }, r.prevIncome === null ? t('report.first') : t('report.vsLast', { amt: rupiah(r.prevIncome) })),
     chip('var(--muted)', null, t('report.residents', { n: r.residents }), String(Math.abs(r.residentsDelta)), r.residentsDelta),
     ...RES.map((id) => chip(RES_VAR[id], id, t(`res.${id}` as Key), num(r[`${id}Delta` as 'sabarDelta']), r[`${id}Delta` as 'sabarDelta'])),

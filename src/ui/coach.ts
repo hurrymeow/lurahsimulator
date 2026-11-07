@@ -180,12 +180,14 @@ export function setupCoach(app: App): void {
     rt2On = true;
     running = true;
     allowed = null;
+    // Once a session, on the arrival and on the build step: a game reopened mid-step starts on the home RT,
+    // and the note says to build "here".
+    if (!panned) {
+      panned = true;
+      const o = cellOrigin(n.cx, n.cy);
+      app.view.centreOn(o.x + RT_W / 2, o.y + RT_H / 2);
+    }
     if (!state) {
-      if (!panned) {
-        panned = true;
-        const o = cellOrigin(n.cx, n.cy);
-        app.view.centreOn(o.x + RT_W / 2, o.y + RT_H / 2);
-      }
       app.held = true;
       onNext = () => {
         storage.set(KEY_RT2, 'build');

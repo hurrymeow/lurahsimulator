@@ -5,7 +5,7 @@ import { acceptSK, canPromote, nextStarChecklist } from '../src/sim/stages';
 import { promote } from '../src/sim/grow';
 import { liveJobs, assign } from '../src/sim/jobs';
 import { onBuildingFinished } from '../src/sim/projects';
-import { areaScore } from '../src/sim/ranking';
+import { areaScore, yearlyRanking } from '../src/sim/ranking';
 import { viewOf } from '../src/sim/neighbourView';
 import { deserialize, serialize } from '../src/sim/save';
 import { addBuilding, addResident, newGame } from '../src/sim/state';
@@ -285,5 +285,20 @@ describe('saves', () => {
     const raw = JSON.parse(serialize(s));
     delete raw.rw;
     expect(deserialize(JSON.stringify(raw))!.rw).toEqual({ kaderDecay: 0 });
+  });
+});
+
+describe('RW ranking cards', () => {
+  it('say whether this ranking counts for the star: only the yearly one does from the RW on', () => {
+    const s = newGame(1);
+    promote(s, []);
+    const body = (year: number) => {
+      const fx: Parameters<typeof yearlyRanking>[1] = [];
+      yearlyRanking(s, fx, year);
+      const n = fx.find((f) => f.kind === 'notice');
+      return n && n.kind === 'notice' ? n.body : '';
+    };
+    expect(body(4)).toMatch(/The yearly ranking: it counts toward your star\.$/);
+    expect(body(5)).toMatch(/Only the yearly ranking counts toward your star\.$/);
   });
 });

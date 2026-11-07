@@ -19,7 +19,13 @@ const TOGGLES: { key: ToggleKey; label: Key; help: Key }[] = [
 
 function toggleRow(app: App, tg: (typeof TOGGLES)[number]): Node {
   const state = () => (app.settings[tg.key] ? t('set.on') : t('set.off'));
-  const btn = h('button', { class: 'btn toggle', role: 'switch', 'aria-checked': String(app.settings[tg.key]) });
+  const btn = h('button', {
+    class: 'btn toggle',
+    role: 'switch',
+    'aria-checked': String(app.settings[tg.key]),
+    title: t(tg.help),
+    'aria-description': t(tg.help),
+  });
   const paint = () => {
     btn.setAttribute('aria-checked', String(app.settings[tg.key]));
     btn.replaceChildren(h('span', {}, t(tg.label)), h('b', {}, state()));
@@ -30,7 +36,7 @@ function toggleRow(app: App, tg: (typeof TOGGLES)[number]): Node {
     paint();
   });
   paint();
-  return h('div', { class: 'action' }, btn, h('p', { class: 'meta' }, t(tg.help)));
+  return h('div', { class: 'action' }, btn, tg.key === 'reduceMotion' ? h('p', { class: 'meta' }, t(tg.help)) : null);
 }
 
 function languageRow(app: App): Node {
@@ -47,7 +53,7 @@ function languageRow(app: App): Node {
       },
     }, l.label),
   );
-  return h('div', { class: 'action lang-row' }, h('strong', {}, t('set.language')), h('div', { class: 'row' }, ...btns), h('p', { class: 'meta' }, t('set.languageHelp')));
+  return h('div', { class: 'action lang-row' }, h('strong', {}, t('set.language')), h('div', { class: 'row', title: t('set.languageHelp'), 'aria-description': t('set.languageHelp') }, ...btns));
 }
 
 function themeRow(app: App): Node {
@@ -64,7 +70,7 @@ function themeRow(app: App): Node {
       },
     }, t(th === 'light' ? 'set.themeLight' : 'set.themeDark')),
   );
-  return h('div', { class: 'action lang-row' }, h('strong', {}, t('set.theme')), h('div', { class: 'row' }, ...btns), h('p', { class: 'meta' }, t('set.themeHelp')));
+  return h('div', { class: 'action lang-row' }, h('strong', {}, t('set.theme')), h('div', { class: 'row', title: t('set.themeHelp'), 'aria-description': t('set.themeHelp') }, ...btns));
 }
 
 const SLIDERS: { key: 'musicVol' | 'sfxVol'; label: Key; help: Key }[] = [
@@ -74,7 +80,17 @@ const SLIDERS: { key: 'musicVol' | 'sfxVol'; label: Key; help: Key }[] = [
 
 function sliderRow(app: App, v: (typeof SLIDERS)[number]): Node {
   const out = h('b', {}, `${app.settings[v.key]}%`);
-  const input = h('input', { type: 'range', min: '0', max: '100', step: '10', value: String(app.settings[v.key]), 'aria-label': t(v.label), class: 'slider' }) as HTMLInputElement;
+  const input = h('input', {
+    type: 'range',
+    min: '0',
+    max: '100',
+    step: '10',
+    value: String(app.settings[v.key]),
+    'aria-label': t(v.label),
+    title: t(v.help),
+    'aria-description': t(v.help),
+    class: 'slider',
+  }) as HTMLInputElement;
   input.addEventListener('input', () => {
     app.settings[v.key] = Number(input.value);
     out.textContent = `${input.value}%`;
@@ -82,7 +98,7 @@ function sliderRow(app: App, v: (typeof SLIDERS)[number]): Node {
     if (v.key === 'sfxVol') audio.preview();
     else audio.start();
   });
-  return h('div', { class: 'action' }, h('label', { class: 'slider-row' }, h('span', {}, t(v.label)), out), input, h('p', { class: 'meta' }, t(v.help)));
+  return h('div', { class: 'action' }, h('label', { class: 'slider-row' }, h('span', {}, t(v.label)), out), input);
 }
 
 const SEEDS: { id: 'rt3' | 'rw' | 'kel'; label: Key }[] = [

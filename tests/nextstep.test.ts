@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cellOrigin } from '../src/sim/area';
 import { promote } from '../src/sim/grow';
 import { COMBO_HINT_MONTH, nextStep, shortGoal } from '../src/sim/nextstep';
+import { nextStarChecklist } from '../src/sim/stages';
 import { addBuilding, addResident, attractTarget, housing, newGame, population } from '../src/sim/state';
 import { setGrid } from '../src/sim/types';
 
@@ -89,5 +90,32 @@ describe('stempel next step', () => {
     const s = rw(false);
     s.stempel.backlog = 4;
     expect(nextStep(s)?.kind).not.toBe('stempel');
+  });
+});
+
+describe('RW combo next step', () => {
+  it('names an RW combo and its pieces while the RW star still needs one, never Grup Chat Warga at the RW', () => {
+    const s = newGame(1);
+    promote(s, []);
+    s.stage.stars.rw = 1;
+    s.res.rupiah = 1e9;
+    const step = nextStep(s);
+    expect(step?.kind).toBe('rwCombo');
+    expect(step?.text).toMatch(/^combo (Pos Siaga|Jalan Ditutup)$/);
+    expect(step?.detail).toMatch(/^(First build Balai RW, then place side by side|Place side by side): /);
+  });
+});
+
+describe('Kampung Sebelah next step', () => {
+  it('names Kampung Sebelah\'s first unmet goal while the RW star waits on its stars: houses when it is short of warga', () => {
+    const s = newGame(1);
+    promote(s, []);
+    s.stage.stars.rw = 1;
+    s.discovered.push('posSiaga');
+    s.res.rupiah = 1e9;
+    const lines = nextStarChecklist(s) ?? [];
+    expect(lines.find((l) => l.goal.kind === 'sebelahAtStars')?.done).toBe(false);
+    expect(lines.find((l) => l.goal.kind === 'rwCombos')?.done).toBe(true);
+    expect(nextStep(s)).toEqual({ kind: 'sebelah', text: 'build Rumah in Kampung Sebelah' });
   });
 });

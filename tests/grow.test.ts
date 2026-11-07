@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cellOf, cellOrigin, lotAt, ungapTile } from '../src/sim/area';
 import { goalProgress, nextStarChecklist } from '../src/sim/stages';
-import { viewOf } from '../src/sim/neighbourView';
-import { FLAT, connectedRoad, hasRoadBeside } from '../src/sim/access';
+import { inCell, viewOf } from '../src/sim/neighbourView';
+import { FLAT, connectedRoad, hasRoadBeside, ring } from '../src/sim/access';
 import { absorb, checkVisit, visit, nextWant, rivalTarget, lotFull, builtBy, layAiPath, autoFloor, autoMonthly, boostOf, checkFund, checkTakeover, fundCost, fundNeighbour, handBack, neighboursSystem, promote, setAutoFund, takeover } from '../src/sim/grow';
 import { NEIGHBOUR, STEMPEL } from '../src/sim/balance';
 
@@ -40,6 +40,10 @@ const grown = (stage: 'rw' | 'kelurahan' = 'rw') => {
 const aiNextDoor = (s: ReturnType<typeof newGame>) => {
   const n = s.neighbours[0];
   n.absorbed = false;
+  // The starter lanes are laid only for the player's Kampung Sebelah. A fresh AI RT has none: keep only the path
+  // that links its Rumah to its Kantor.
+  const touches = (p: { x: number; y: number }, id: string) => s.buildings.some((o) => o.def === id && inCell(n, o) && ring(o).some(([x, y]) => x === p.x && y === p.y));
+  s.buildings = s.buildings.filter((b) => !(b.def === 'jalan' && inCell(n, b) && !(touches(b, 'kantorRT') && touches(b, 'rumah'))));
   handBack(s, n);
   return s;
 };
@@ -516,6 +520,26 @@ describe('the 2nd RT', () => {
     const kantor = s.buildings.find((b) => b.def === 'kantorRT' && b.x >= o.x)!;
     expect(hasRoadBeside(conn, { def: 'warung', x: kantor.x + 1, y: kantor.y })).toBeTypeOf('boolean');
     expect(s.buildings.filter((b) => b.x >= o.x && b.def === 'rumah').every((b) => hasRoadBeside(conn, b))).toBe(true);
+  });
+
+  it('comes with starter lanes like a new game, so a first build beside them has a road, and they count as no build', () => {
+    const s = rich();
+    const n = s.neighbours[0];
+    const lanes = s.buildings.filter((b) => b.def === 'jalan' && inCell(n, b));
+    expect(lanes.length).toBeGreaterThan(10);
+    const conn = connectedRoad(s);
+    const o = cellOrigin(1, 0);
+    let served = 0;
+    let free = 0;
+    for (let y = o.y; y < o.y + RT_H; y++) for (let x = o.x; x < o.x + RT_W; x++) {
+      if (!checkPlace(s, 'warung', x, y).ok) continue;
+      if (!lanes.some((l) => Math.abs(l.x - x) + Math.abs(l.y - y) === 1)) continue;
+      free++;
+      if (hasRoadBeside(conn, { def: 'warung', x, y })) served++;
+    }
+    expect(free).toBeGreaterThan(10);
+    expect(served).toBe(free);
+    expect(goalProgress(s, { kind: 'sebelahBuilds', n: 3 }).have).toBe(0);
   });
 
   it('sends letters for a build there, never for the home RT, a seam lot or at the Kelurahan', () => {

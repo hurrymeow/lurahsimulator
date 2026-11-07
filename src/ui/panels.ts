@@ -77,7 +77,6 @@ function raziaPart(app: App): Node[] {
     h('div', { class: 'card-btn static' },
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, t('razia.head'))),
-        h('p', {}, t('razia.line')),
         left > 0 ? h('p', { class: 'meta good' }, t('razia.until', { n: left })) : null,
         actionButton(t('razia.button', { n: RAZIA.orangDalam }), checkRazia(s), () => {
           const fx: SimEffect[] = [];
