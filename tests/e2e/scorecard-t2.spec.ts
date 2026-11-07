@@ -79,9 +79,12 @@ test('row 6: a Popularitas fall names its cause', async ({ page }) => {
   });
   const title = t('warn.sabarTitle');
   const body = t('warn.sabar.queue');
-  expect(log[0]).toEqual({ title, body });
-  await expect(page.locator('#ticker')).toContainText(title);
-  await expect(page.locator('#ticker')).toContainText(body);
+  // The queue warning is in the log among other notices (weather); the title's stat word shows as an icon, so the
+  // visible check uses the body, which names the cause in words.
+  expect(log).toContainEqual({ title, body });
+  await page.locator('#menu-btn').click();
+  await page.locator('#act-log').click();
+  await expect(page.locator('#sheet')).toContainText(body);
 });
 
 test('row 3: the map grows with each star', async ({ page }) => {
