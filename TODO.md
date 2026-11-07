@@ -47,6 +47,13 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: `decisions/scorecard-bot-combo-loop.md`
   - `open · — · — · done when:` the builder reaches RT 3★ in 10 of 10 seeds, and item 1 is under 60s or has a recorded balance reason.
 
+- [ ] **Scorecard follow-ups from the 2026-11-07 calls.**
+  - Problem: three things the calls left open (`decisions/scorecard-calls.md`). 1) Row 22 now Fails: the Lomba Agustusan returns every 6.4 min, bar 10 min. 2) Rows 3, 6, 27 need one Playwright slice (sprites per star, cause shown on screen, save and reload at 5s in both languages). 3) Row 13: builder bots never spend Orang Dalam (B1, B4) and Stempel is never earned in B4.
+  - Why: they turn three rows from Unknown or Fail into a real verdict.
+  - Suggested solution: 1) a Lomba every second year, or a Lomba-free year, as a balance PR. 2) One spec file, one test per row, for the DeepSeek executor. 3) Teach the builder bot to spend Orang Dalam on the quarterly visit.
+  - Source: `decisions/scorecard-calls.md`
+  - `open · — · — · done when:` rows 3, 6, 22, 27 read Pass or Fail on evidence, and row 13 has no bot-gap line.
+
 ## Done
 
 - [x] **Visual baselines no longer flip with runner speed.** `page.clock.install` kept time running in real time, so the welcome toast was in or out of the HUD, event and tip shots depending on load. `visual.spec.ts` now pauses the clock after load, so only `settle` moves time. Passed CI first time with no baseline refresh; since then the baselines have failed only on PRs that changed the screen, the same on every retry. #281, `progress/visual-clock-pause.md`.
