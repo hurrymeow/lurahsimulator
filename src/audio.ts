@@ -39,13 +39,16 @@ class Audio {
   /** Hooks the first tap and the tab visibility. Call once. */
   init(s: Settings): void {
     this.set(s);
-    addEventListener('pointerdown', () => this.start(), { once: true, capture: true });
-    addEventListener('keydown', () => this.start(), { once: true, capture: true });
+    // Every gesture retries the unlock, not just the first: iOS Safari only lets audio start on touchend or click,
+    // and a context suspended by a phone call or the app switcher needs a gesture to resume.
+    for (const type of ['pointerdown', 'touchend', 'click', 'keydown']) {
+      addEventListener(type, () => this.start(), { capture: true, passive: true });
+    }
     document.addEventListener('click', (e) => this.onClick(e), true);
     document.addEventListener('visibilitychange', () => {
       if (!this.ctx) return;
       if (document.hidden) void this.ctx.suspend();
-      else void this.ctx.resume();
+      else void this.ctx.resume().catch(() => {});
       this.music();
     });
   }
@@ -77,12 +80,18 @@ class Audio {
         this.musicOut = this.ctx.createGain();
         this.musicOut.gain.value = this.musicVol * MUSIC_MIX;
         this.musicOut.connect(this.ctx.destination);
+        // A silent one-sample buffer played inside the gesture is what unlocks audio on older iOS.
+        const src = this.ctx.createBufferSource();
+        src.buffer = this.ctx.createBuffer(1, 1, this.ctx.sampleRate);
+        src.connect(this.ctx.destination);
+        src.start();
       } catch {
         this.ctx = null;
         return;
       }
     }
-    if (this.ctx.state === 'suspended' && !document.hidden) void this.ctx.resume();
+    // 'interrupted' is iOS's state after a call or Siri.
+    if (this.ctx.state !== 'running' && !document.hidden) void this.ctx.resume().catch(() => {});
     this.music();
   }
 
