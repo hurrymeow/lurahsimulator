@@ -42,7 +42,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Why: size should read as width, and every sprite should keep the 1px grid.
   - Suggested solution: redraw the 2x2 buildings (Gudang Material, Koperasi first, then any other 2x2 taller than its tier's 1x1) per ART.md's new geometry rules; draw scaffold and stakes at native pixels for 1x2, 2x2, 2x3 and 3x3 (the crane is being replaced, see the rising-build item). Never overwrite the artist's sprites.
   - Source: `decisions/playtest-sk2.md`
-  - `open · — · — · done when:` no 2x2 building stands taller than a 1x1 of its tier, site sprites have no scaled pixels, and `tests/art.test.ts` checks both.
+  - `claimed · voidinside99 (Julian) · 2026-11-07 · done when:` no 2x2 building stands taller than a 1x1 of its tier, site sprites have no scaled pixels, and `tests/art.test.ts` checks both.
 
 - [ ] **Scorecard bots: the last RT stalls.**
   - #313 fixed two combo loops in the bots (a leveled combo piece and an uncapped copy fallback); the builder now misses RT 3★ in 1 seed of 10, not 8. The 2nd RT was not the cause.
