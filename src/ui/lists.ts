@@ -8,7 +8,7 @@ import { rupiahShort } from '../format';
 import { bookCombos, comboConditions, comboStatus, comboStatusText, needName, parseNeed, type ComboStatus } from '../sim/combos';
 import { allDefs, def } from '../sim/content';
 import { levelOf } from '../sim/jobs';
-import { isoURL } from '../render/iso';
+import { buildingURL } from '../render/iso';
 import { iconURL } from '../render/sprites';
 import type { ComboDef } from '../data/combos';
 import type { JobId, Resident, ResourceId } from '../sim/types';
@@ -23,9 +23,9 @@ const RES: ResourceId[] = ['rupiah', 'sabar', 'orangDalam', 'viral'];
 const sprite = (id: string, size = 32, level = 1) => {
   let src = '';
   try {
-    src = isoURL(def(id).sprite, 2, level);
+    src = buildingURL(id, 2, level);
   } catch {
-    src = isoURL('rumah', 2);
+    src = buildingURL('rumah', 2);
   }
   return h('img', { src, alt: '', class: 'pixel ls-sprite', width: size, height: size });
 };

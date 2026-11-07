@@ -288,3 +288,6 @@ export const ROOF_COLOURS = ['o', 'p', 'G', 'l', 'R'];
 /** Rumah roof shapes: hip, pelana either way, shed, flat dak. Keys of ROOF_KEYS in iso.ts. */
 export const ROOF_SHAPES = ['h', 'g', 's', 'y', 'f'];
 export const WALL_COLOURS = ['t', 'w', 's'];
+
+/** A house's look from its uid: roof colour, roof shape and wall colour, like a perumahan built over the years. The map and every icon of that house use it. */
+export const houseVariant = (uid: number): string => ROOF_COLOURS[uid % ROOF_COLOURS.length] + ROOF_SHAPES[Math.floor(uid / 5) % ROOF_SHAPES.length] + WALL_COLOURS[Math.floor(uid / 2) % WALL_COLOURS.length];

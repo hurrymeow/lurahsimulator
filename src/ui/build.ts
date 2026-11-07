@@ -2,7 +2,7 @@ import { bBlurb, bName, t, type Key } from '../i18n';
 import type { App } from '../app';
 import { rupiah } from '../format';
 import { CATEGORIES, categoryOf } from '../data/categories';
-import { isoURL } from '../render/iso';
+import { buildingURL, isoURL } from '../render/iso';
 import { placeableDefs, sizeFor } from '../sim/content';
 import { requirementGaps } from '../sim/rules';
 import { attractTarget, buildCost, housing, population } from '../sim/state';
@@ -17,6 +17,11 @@ import { menuIconURL } from './icons';
 
 function spriteImg(name: string, size = 40, level = 1): HTMLImageElement {
   return h('img', { src: isoURL(name, 3, level), alt: '', width: size, height: size, class: 'pixel' });
+}
+
+/** A building's picture as it stands on the map: its footprint, its level and, for a placed house, its variant. */
+function buildingImg(id: string, size = 40, level = 1, variant?: string): HTMLImageElement {
+  return h('img', { src: buildingURL(id, 3, level, variant), alt: '', width: size, height: size, class: 'pixel' });
 }
 
 /** "2 owned", or "1/1 owned" for a building with a cap. Paths count tiles. */
@@ -138,7 +143,7 @@ export function openBuild(app: App): void {
       seenNow(d.id);
       if (ok) app.startPlacing(d.id);
     } },
-      spriteImg(d.sprite),
+      buildingImg(d.id),
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, bName(d), fresh.has(d.id) ? newTag() : null), h('span', { class: 'cost' }, rupiah(cost))),
         h('p', { class: 'card-sub' }, h('span', { class: 'owned', 'aria-label': ownedLabel(s, d) }, ownedShort(s, d)), house),
@@ -208,7 +213,7 @@ export function openBuild(app: App): void {
     const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
     const effects = [d.housing ? t('build.houses', { n: d.housing }) : '', d.attract ? t('build.attracts', { n: d.attract }) : ''].filter(Boolean);
     const body: (Node | null)[] = [
-      h('div', { class: 'build-detail-pic' }, spriteImg(d.sprite, 64)),
+      h('div', { class: 'build-detail-pic' }, buildingImg(d.id, 64)),
       h('p', {}, rupiah(cost), ' · ', ownedLabel(s, d)),
       h('p', {}, bBlurb(d)),
       h('p', { class: 'meta' }, t('build.size', { w: sizeFor(d.id)[0], h: sizeFor(d.id)[1] }), ' · ', instant ? t('build.noPermit') : t('build.permit', { permit: d.permitMonths, build: d.buildMonths })),
@@ -230,4 +235,4 @@ export function openBuild(app: App): void {
   showBuild();
 }
 
-export { spriteImg };
+export { buildingImg, spriteImg };

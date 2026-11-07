@@ -16,7 +16,7 @@ import { Crowd } from './people';
 import { Weather } from './weather';
 import { placeBadge, type BadgeBox } from './badge';
 import { buildWorld, clouds, smallTree, decoAt, farRoofs, layoutWorld, ringArt, ringBlocks, ringShown, RING_EXT, RING_SIDE, setRing, type DistrictId, shorePoints, SEA, WORLD_H, WORLD_OX, WORLD_OY, WORLD_W, worldTrees } from './scenery';
-import { ICONS, ROOF_COLOURS, ROOF_SHAPES, WALL_COLOURS, sprite } from './sprites';
+import { houseVariant, ICONS, sprite } from './sprites';
 
 /** Resource colours for page elements: CSS variables, so they follow the Light or Dark theme. */
 export const RES_VAR: Record<ResourceId, string> = { rupiah: 'var(--rupiah)', sabar: 'var(--sabar)', orangDalam: 'var(--orang)', viral: 'var(--viral)' };
@@ -495,7 +495,7 @@ export class MapView {
 
   variant(b: Building): string | undefined {
     // Houses vary by roof colour, roof shape and wall colour, like a perumahan built over the years.
-    if (b.def === 'rumah') return ROOF_COLOURS[b.uid % ROOF_COLOURS.length] + ROOF_SHAPES[Math.floor(b.uid / 5) % ROOF_SHAPES.length] + WALL_COLOURS[Math.floor(b.uid / 2) % WALL_COLOURS.length];
+    if (b.def === 'rumah') return houseVariant(b.uid);
     if (b.def !== 'selokan' && b.def !== 'biopori') return undefined;
     const has = (dx: number, dy: number) => this.selokan.has((b.y + dy) * GRID_W + b.x + dx);
     return !has(1, 0) && !has(-1, 0) && (has(0, 1) || has(0, -1)) ? 'y' : undefined;
