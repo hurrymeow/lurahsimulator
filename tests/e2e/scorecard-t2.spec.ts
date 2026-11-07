@@ -84,7 +84,8 @@ test('row 6: a Popularitas fall names its cause', async ({ page }) => {
   expect(log).toContainEqual({ title, body });
   await page.locator('#menu-btn').click();
   await page.locator('#act-log').click();
-  await expect(page.locator('#sheet')).toContainText(body);
+  // Stat words in the body (Orang Dalam) show as icons, so match the sentence that names the cause.
+  await expect(page.locator('#sheet')).toContainText(body.split('.')[0]);
 });
 
 test('row 3: the map grows with each star', async ({ page }) => {
