@@ -402,6 +402,8 @@ function playPlan(c: Ctx, p: Plan): void {
     const pick = easiestCombo(s);
     if (pick) buildCombo(c, p.buffer, pick.ids);
   }
+  // The RW combo step says "First build Balai RW": a player who reads it builds that before the pieces.
+  if (p.combo === 'hint' && nextStep(s)?.kind === 'rwCombo' && count(s, 'balaiRW') === 0) buy(c, 'balaiRW', p.buffer);
   // The RW combo line points to Build, Combo, so a player who reads it puts the pieces side by side.
   if ((nextStarChecklist(s) ?? []).some((l) => !l.done && l.goal.kind === 'rwCombos')) buildCombo(c, p.buffer, RW_PIECES);
   buildFrom(c, p.order(s), p.buffer, p.perTick, p.caps);
