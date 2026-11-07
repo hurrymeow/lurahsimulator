@@ -39,7 +39,11 @@ try {
   report = JSON.parse(readFileSync(`${ART}/report.json`, 'utf8'));
   if (!['done', 'stopped', 'failed'].includes(report.status)) throw new Error('bad status');
 } catch {
-  report = { status: 'failed', summary: 'report.json missing or invalid', checks: [] };
+  let spent = 0;
+  try { spent = JSON.parse(readFileSync(`${ART}/usage.json`, 'utf8')).turns || 0; } catch { /* none */ }
+  // 61 turns means the cap (60) cut the run before the report was written; the patch may still be complete.
+  const capped = spent > 60;
+  report = { status: 'failed', summary: capped ? `ran out of turns (${spent}, cap 60) before writing report.json; the patch may be complete, so check it and finish by hand` : 'report.json missing or invalid', checks: [] };
 }
 const patchPath = `${ART}/patch.diff`;
 const patch = existsSync(patchPath) ? readFileSync(patchPath) : Buffer.alloc(0);

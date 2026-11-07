@@ -18,7 +18,7 @@ import { linePath, placeLine, type LineTile } from './sim/line';
 import { lotAt } from './sim/area';
 import { promote } from './sim/grow';
 import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, type FirstKind } from './sim/types';
-import { acceptSK, canPromote } from './sim/stages';
+import { acceptSK, canPromote, currentStage, skNotice } from './sim/stages';
 import { deserialize, serialize } from './sim/save';
 import { attractTarget, buildCost, buildingAt, byUid, newGame, population, housing, sizeOf } from './sim/state';
 import { tick } from './sim/tick';
@@ -61,6 +61,8 @@ interface Notice {
   inem?: boolean;
   /** A Menu action id: the card gets a button that opens that panel. */
   open?: string;
+  /** The SK's ceremony card: it gets its own accept button. */
+  sk?: boolean;
 }
 
 type ExplainId = ResourceId | 'pop' | 'emas';
@@ -527,6 +529,7 @@ export class App {
         n.extra,
         n.tip?.pics,
         n.open ? this.openButton(n.open) : null,
+        n.sk && this.s.stage.sk === 'offered' && canPromote(this.s) ? this.skButton() : null,
         h('p', { class: 'tap-hint' }, t('modal.tap')),
       ),
     );
@@ -543,6 +546,19 @@ export class App {
       // 500ms after this tap, instead of landing on the player's next tap.
       el.hidden = true;
     };
+  }
+
+  /** The SK card's accept button. The tap also dismisses the card (it bubbles to the card's own handler). */
+  private skButton(): HTMLElement {
+    const toKel = currentStage(this.s).next === 'kelurahan';
+    return h('button', { class: 'btn btn-primary modal-open', type: 'button', id: 'sk-accept-card', onclick: () => this.accept(toKel ? 'kelurahan' : undefined) }, t(toKel ? 'stage.acceptKelurahan' : 'stage.accept'));
+  }
+
+  /** Shows the SK's ceremony card again while it waits: the goal pill's tap. */
+  showSK(): void {
+    if (this.s.stage.sk !== 'offered' || !canPromote(this.s)) return;
+    const n = skNotice(this.s);
+    if (n.kind === 'notice') this.modal(n);
   }
 
   /** A card's button to a Menu panel. The tap also dismisses the card (it bubbles to the card's own handler). */
@@ -1078,11 +1094,13 @@ export class App {
         return;
       }
       btn.disabled = fresh === 0;
-      btn.textContent = t('page.yes');
+      btn.textContent = '✓';
+      btn.setAttribute('aria-label', t('page.yes'));
       info.replaceChildren(title, h('span', {}, fresh ? t('build.lineGo', { n: fresh, cost: rupiah(buildCost(this.s, d) * fresh) }) : t('build.lineNone')), ...(blocked ? [h('span', { class: 'meta' }, t('build.lineBlocked', { n: blocked }))] : []));
       return;
     }
-    btn.textContent = t('page.place');
+    btn.textContent = '✓';
+    btn.setAttribute('aria-label', t('page.place'));
     if (!g) {
       info.replaceChildren(title, h('span', {}, d.pathIncome ? t('build.lineStart') : t('build.tapToPlace')));
       btn.disabled = true;

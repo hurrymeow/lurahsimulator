@@ -110,7 +110,8 @@ describe('star engine', () => {
     const fx = run(s);
     expect(s.stage.stars.rt).toBe(3);
     expect(s.stage.sk).toBe('offered');
-    expect(fx.some((f) => f.kind === 'notice' && f.title === 'An SK has arrived')).toBe(true);
+    // The ceremony card names the post and carries its own accept button (sk: true).
+    expect(fx.some((f) => f.kind === 'notice' && f.title === 'Your SK: Pak RW!' && f.sk === true)).toBe(true);
     expect(canPromote(s)).toBe(true);
     declineSK(s);
     expect(s.stage.sk).toBe('declined');

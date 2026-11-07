@@ -12,7 +12,8 @@ import { FRANCHISE, KANIBAL, NAME_MAX, RENAMABLE } from '../data/brands';
 import { premanTake } from '../sim/needs';
 import { buildingIncome, buildingUpkeep } from '../sim/tick';
 import { deskCapacity, permitEta, permitQueue } from '../sim/staff';
-import type { Building, BuildingDef, CheckResult } from '../sim/types';
+import type { Building, BuildingDef, CheckResult, SimEffect } from '../sim/types';
+import { discoverCombos } from '../sim/combos';
 import { spriteImg } from './build';
 import { h } from './dom';
 import { levelBadge, type BadgeState } from './levelBadge';
@@ -146,6 +147,10 @@ export function inspect(app: App, uid: number): void {
   if (b.level < d.maxLevel) {
     lines.push(actionButton(t('insp.upgradeTo', { n: b.level + 1, cost: rupiah(upgradeCost(s, b)) }), upCheck, () => {
       upgrade(s, b);
+      // A combo that needs this level (Sayur Segar wants a Warung at 3) lights up now, with its notice, not next week.
+      const fx: SimEffect[] = [];
+      discoverCombos(s, fx);
+      app.handleFx(fx);
       app.view.burst(b.x, b.y);
       app.tap(15);
       done();

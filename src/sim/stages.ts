@@ -169,6 +169,12 @@ export const starsEarnable = (s: GameState, id: StageId = s.stage.current): bool
 /** Stage title for a star count, for example "RT Rintisan" at 1 star. */
 export const stageTitle = (id: StageId, stars: number): string => tr(`stage.${id}.title${stars}`, stageDef(id).titles[stars]);
 
+/** The SK's ceremony card: the post it names, and (in the app) its own accept button. */
+export function skNotice(s: GameState): Fx[number] {
+  const next = currentStage(s).next;
+  return { kind: 'notice', title: t('sim.skTitle', { title: next ? stageTitle(next, 0) : '' }), body: t('sim.skBody'), tone: 'good', fanfare: true, sk: true };
+}
+
 /** Monthly system: earns the next star when its checklist is done. At most one star a month, so each gets its fanfare. */
 export function stageSystem(s: GameState, fx: Fx): void {
   const id = s.stage.current;
@@ -177,7 +183,7 @@ export function stageSystem(s: GameState, fx: Fx): void {
   // Saves that were at 3★ before the next stage opened (Kelurahan, before Kecamatan) get their SK now.
   if (have === 3 && stageDef(id).next && s.stage.sk === undefined && canPromote(s)) {
     s.stage.sk = 'offered';
-    fx.push({ kind: 'notice', title: t('sim.skTitle'), body: t('sim.skBody'), tone: 'good', fanfare: true });
+    fx.push(skNotice(s));
   }
   if (have === 3 || !starsEarnable(s, id)) return;
   const star = stageDef(id).stars[have];
@@ -190,7 +196,7 @@ export function stageSystem(s: GameState, fx: Fx): void {
   first(s, fx, 'star');
   if (stars === 3 && stageDef(id).next) {
     s.stage.sk = 'offered';
-    fx.push({ kind: 'notice', title: t('sim.skTitle'), body: t('sim.skBody'), tone: 'good', fanfare: true });
+    fx.push(skNotice(s));
   }
   s.lastNovelty = s.month;
 }
