@@ -53,7 +53,7 @@ export async function countScreen(page: Page, screen: string, sel: string): Prom
 /** Screens still over a limit, capped at today's count so they can only get better (UI.md rule 13). Delete an entry when it is fixed. */
 export const DENSITY_ALLOW: Record<string, Partial<Record<keyof typeof LIMITS, number>>> = {
   'event': { primary: 2 }, // Event card: two filled choices
-  'settings': { primary: 2, wordsInView: 65 }, // Settings
+  'settings': { primary: 2, wordsInView: 35 }, // Settings
   'warga': { wordsInView: 62, wordsAll: 494 }, // Warga: Kampung Sebelah's residents join at the Kelurahan, so the list is long
 };
 
