@@ -20,13 +20,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: `docs/plans/smaller-map.md`, task T9.
   - `open · Hari · — · done when:` a decisions file records Hari's own playtest and what it changes.
 
-- [ ] **Swap text buttons for icons in build placement and Settings.**
-  - Problem: in build placement mode the buttons read as words: Batal, Rotate and the confirm label. The Settings page carries too much text. The UI hierarchy audit already flagged Settings as over the word limits.
-  - Why: the game uses icons for stats and tap-to-name, so the rest of the UI should use them too. Fewer words fit a 320px phone and read faster for a new player.
-  - Suggested solution: Batal becomes an X, Rotate gets a rotate icon, and confirm becomes a checkmark. Cut the words on Settings to the minimum. Follow UI.md rules 14 to 17 and the icon rules: an icon shows its name when tapped. Keep the word for any action that an icon cannot make clear.
-  - Source: Hari, 2026-11-06 ("use more icon as ui text"); `docs/plans/ui-hierarchy.md`; UI.md rules 14 to 17.
-  - `claimed · Claude (DeepSeek executor, docs/plans/icon-first-ui.md) · 2026-11-06 · done when:` placement mode and Settings use icons where they fit, both languages pass the word-count scan at 320 and 412px, and a decisions/ file logs the choices.
-
 ### Later
 
 - [ ] **Fix the remaining scorecard Fails that have a clear cause.**
@@ -72,6 +65,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **Icons instead of text in build placement and Settings.** Placement bar uses ✕ ↻ ✓ with the word as aria-label (#334); Settings loses 8 help lines and its word cap drops from 65 to 35 (#335). Both ran on the DeepSeek executor. Touch phones show no title text, so the help is for screen readers only.
 - [x] **WebKit: Balap Karung's tap button detaches on every tap.** The race ended on its 5-second timer before WebKit's slower clicks finished; the test now taps until the race ends. The WebKit nightly of 2026-11-07 (run 42316657428) passes in full. #320, `decisions/webkit-lomba-mash.md`.
 - [x] **The SK is a ceremony.** The card names the new post and accepts it; while it waits, the goal pill brings it back. #336, `decisions/sk-ceremony-combo-upgrade.md`.
 - [x] **Sayur Segar lights up when its Warung is upgraded.** The upgrade button runs the combo check, so any combo that needs a level shows its card at once. #336.
