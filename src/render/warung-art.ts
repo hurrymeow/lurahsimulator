@@ -71,7 +71,7 @@ function cart(p: Painter, z: number, wood: string): void {
     p.set(GX + x + 1, GY + y - 1, 'n');
   }
   p.box(5, 5, wood, (face, u, j) => (face === 'L' && j === 2 && within(u, 0.1, 0.9) ? 'y' : undefined), z);
-  p.box(6, 4, 'l', (face, _u, j, i) => {
+  p.box(6, 3, 'l', (face, _u, j, i) => {
     if (face === 'T') return 'c';
     if (j === 0) return 'S';
     return (i + j) % 3 === 0 ? 'o' : (i + j) % 3 === 1 ? 'y' : undefined;
@@ -97,11 +97,12 @@ function tenda(p: Painter): void {
  * bench, a galon and an LPG melon.
  */
 function gerobak(p: Painter): void {
-  p.shadow(2);
-  p.box(2, 14, 'n', (face, u) => (face === 'L' && u > 0.08 ? null : face === 'R' && u < 0.92 ? null : undefined));
-  cart(p, 3, 'n');
-  p.roofShape('shed', 2, 16, 4, 's', 't', (x) => (x % 2 ? 'S' : undefined));
-  sachets(p, -12, -14, 7, [2, 1]);
+  // Smaller and lower than the level 3 toko: a short plank back wall and a low zinc lean-to over the cart.
+  p.shadow(3);
+  p.box(3, 9, 'n', (face, u) => (face === 'L' && u > 0.08 ? null : face === 'R' && u < 0.92 ? null : undefined));
+  cart(p, 1, 'n');
+  p.roofShape('shed', 3, 10, 3, 's', 't', (x) => (x % 2 ? 'S' : undefined));
+  sachets(p, -10, -9, 6, [2, 1], 3);
   galon(p, 6, 2);
   lpg(p, 10, 0);
   bench(p, -8, 1, 5);

@@ -25,9 +25,6 @@ const shopfront = (wall: string, roof: string, awning: string, opts: { height?: 
 };
 
 export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: number) => void> = {
-  // Rumah Makan grows from a bakso cart to a warkop to a rumah makan, each the existing art for that stage.
-  // Level 2 is a lower warkop, drawn here beside the artist's, so the step from the cart stays within one storey.
-  rumahMakan: (p, v, level = 1) => (level === 2 ? shopfront('N', 'r', 'y', { shape: 'shed', height: 7 })(p) : CONTENT_ART[level >= 3 ? 'warteg' : 'gerobakBakso'](p, v)),
   // Selokan: a concrete channel across the tile, edge to edge so neighbours line up, with a plank bridge over it.
   // Bare, so the kerbs and their ink line are drawn here.
   drain: (p, v) => {
@@ -70,13 +67,6 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     p.box(4, 2, 't', undefined, 3);
     p.box(6, 5, 'n', undefined, 5);
   },
-  lampuTaman: (p) => {
-    p.shadow(9);
-    p.box(6, 2, 'S');
-    p.stroke(0, -2, 0, -22, 2, 'S');
-    p.blob(0, 24, 3.4, 'y');
-    p.blob(-1, 25, 1.4, 'w');
-  },
   // Flat pond: bare, so it draws its own stone rim.
   kolamIkan: (p) => {
     p.bare = true;
@@ -90,15 +80,6 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
       return within(a, 0.7, 0.78) && within(b, 0.25, 0.32) ? 'w' : 'l';
     });
     p.overlay.push(dither);
-  },
-  mural: (p) => {
-    p.shadow(2);
-    p.box(3, 10, 'w', (face, u, j, i) => {
-      if (face === 'T') return 'S';
-      if (j < 2 || j > 8) return 'S';
-      if (face === 'L') return u < 0.25 ? 'r' : u < 0.5 ? 'y' : u < 0.75 ? 'b' : 'g';
-      return i % 6 < 3 ? 'p' : 'c';
-    });
   },
   tamanBermain: (p) => {
     p.ground((a, b, px) => (Math.min(a, b, 1 - a, 1 - b) < px ? null : Math.floor((a + b) * 6) % 2 ? 'g' : 'G'));
@@ -121,35 +102,8 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     p.blob(0, 18, 3, 'c');
     p.overlay.push(dither);
   },
-  patungIkon: (p) => {
-    p.shadow(6);
-    p.box(6, 7, 's', (face, _u, j) => (face !== 'T' && j === 5 ? 'S' : undefined));
-    p.box(7, 11, 'y', (face, _u, j) => (face !== 'T' && j > 7 ? 'a' : undefined), 7);
-    p.blob(0, 22, 4, 'y');
-  },
 
   // Farm. Flat plots are bare and draw their own pematang edge so neighbouring plots join up.
-  kebunSayur: (p) => {
-    p.bare = true;
-    p.ground((a, b, px) => {
-      if (Math.min(a, b, 1 - a, 1 - b) < 1.2 * px) return 'n';
-      const row = Math.floor(b * 5);
-      if (row % 2 === 0) return 'N';
-      return Math.floor(a * 6) % 2 ? 'g' : 'G';
-    });
-  },
-  // Water-filled paddies with green rice rows and a clay bund.
-  sawah: (p) => {
-    p.bare = true;
-    p.ground((a, b, px) => {
-      // A pematang bund: a 1px dark edge and a 1px top, the same width on a big plot.
-      const e = Math.min(a, b, 1 - a, 1 - b);
-      if (e < 1.2 * px) return 'n';
-      if (e < 2.4 * px) return 't';
-      const row = Math.floor(b * 6) % 2;
-      return row === 0 && Math.floor(a * 8) % 2 === 0 ? 'g' : row === 0 ? 'G' : 'l';
-    });
-  },
   kandangAyam: (p) => {
     p.shadow(4);
     p.box(5, 6, 'n', (face, u, j) => (face === 'L' && within(u, 0.3, 0.7) && within(j, 1, 4) ? 'N' : undefined));
@@ -163,72 +117,11 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
       const e = Math.min(a, b, 1 - a, 1 - b);
       if (e < 1.2 * px) return 'B';
       if (e < 2.4 * px) return 'b';
-      if (within(a, 0.3, 0.45) && within(b, 0.38, 0.46)) return 'k';
-      if (within(a, 0.55, 0.7) && within(b, 0.55, 0.63)) return 'k';
-      return 'c';
+      // Murky green water, as a lele pond is: the fish show as dark shapes moving in it.
+      return Math.floor((a * 7 + b * 3) * 2) % 5 === 0 ? '#9cc4a0' : '#7fae8e';
     });
   },
 
-  // Shops and facilities share the shopfront shape and differ in colour and one sign detail.
-  // Each shop type has its own roof, so a row of shops reads as a street, not one copy.
-  warteg: shopfront('t', 'G', 'g', { shape: 'gable' }),
-  warkop: shopfront('N', 'r', 'y', { shape: 'shed' }),
-  tokoKelontong: shopfront('y', 'o', 'r', { height: 9, rise: 5 }),
-  fotokopi: (p) => {
-    shopfront('w', 'B', 'b', { shape: 'flat' })(p);
-    p.blob(-7, 14, 2, 'a');
-  },
-  barbershop: (p) => {
-    shopfront('c', 'R', 'w', { shape: 'shed' })(p);
-    // The barber pole: red and white bands on a short post.
-    for (let k = 0; k < 8; k++) p.set(TW / 2 + 10, TOP + TH / 2 - 2 - k, k % 4 < 2 ? 'r' : 'w');
-    p.set(TW / 2 + 10, TOP + TH / 2 - 10, 'b');
-  },
-  bengkel: (p) => {
-    shopfront('S', 'b', 'o', { height: 9, rise: 4, door: 'k', shape: 'gable' })(p);
-    p.box(9, 4, 'k', undefined, 0);
-  },
-  apotek: (p) => {
-    shopfront('w', 'g', 'g', { shape: 'flat' })(p);
-    // A red cross over the door.
-    const x = TW / 2 - 5;
-    const y = TOP + TH / 2 - 11;
-    for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]]) p.set(x + dx, y + dy, 'r');
-  },
-  koperasi: (p) => {
-    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
-    p.low();
-    shopfront('w', 'b', 'a', { height: 10, rise: 6, inset: 2, shape: 'gableY' })(p);
-    p.blob(0, 18, 2.2, 'a');
-  },
-  posSatpam: (p) => {
-    p.shadow(5);
-    p.box(5, 8, 'b', (face, u, j) => (face === 'L' && within(u, 0.2, 0.8) && within(j, 3, 6) ? 'l' : undefined));
-    p.roof(5, 8, 3, 'B');
-    // A red and white barrier arm across the front, short enough to stay on its own tile (UI.md rule 17).
-    p.stroke(-5, 0, 6, 1, 2, 'w');
-    for (const k of [0, 4, 8]) p.stroke(-5 + k, k / 11, -4 + k, k / 11, 2, 'r', false);
-  },
-  paud: (p) => {
-    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
-    p.low();
-    shopfront('p', 'y', 'c', { height: 11, rise: 11 })(p);
-    p.blob(-8, 16, 2, 'r');
-    p.blob(8, 16, 2, 'b');
-  },
-  balaiWarga: (p) => {
-    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
-    p.low();
-    p.shadow(1);
-    p.box(1, 12, 't', (face, u, j, i) => {
-      if (face === 'T') return undefined;
-      if (face === 'L' && within(u, 0.4, 0.62) && j < 8) return 'N';
-      if (i % 6 < 2 && j > 0 && j < 11) return 'w';
-      if (j >= 11) return 'R';
-      return undefined;
-    });
-    p.roof(1, 12, 13, 'R');
-  },
   // Praktik Bidan: a cream house with a pink pelana, a teal door, and the practice board on a post by the corner.
   bidan: (p) => {
     shopfront('w', 'p', 'c', { shape: 'gable', door: 'c' })(p);
@@ -285,37 +178,5 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
         q.px(cx + x1 * n, cy + (y1 + 3) * n, 'w');
       }
     });
-  },
-  gudangMaterial: (p) => {
-    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
-    p.low();
-    p.shadow(2);
-    p.box(2, 10, 'S', (face, u, j) => {
-      if (face === 'L' && within(u, 0.2, 0.8) && j < 7) return j === 6 ? 'N' : 'n';
-      return undefined;
-    });
-    // A warehouse pelana with a vent on the gable end.
-    p.roofShape('gable', 2, 10, 8, 'n', 'S');
-  },
-  kontrakan: (p) => {
-    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
-    p.low();
-    p.shadow(1);
-    p.box(1, 9, 'a', (face, u, j, i) => {
-      if (face === 'T') return undefined;
-      if (face === 'L' && (within(u, 0.12, 0.3) || within(u, 0.42, 0.6) || within(u, 0.72, 0.9)) && within(j, 2, 7)) return j < 5 ? 'N' : 'l';
-      if (face === 'R' && i % 6 >= 2 && within(j, 3, 7)) return 'l';
-      return undefined;
-    });
-    // Row houses share one long shed roof.
-    p.roofShape('shed', 1, 9, 4, 'R', 'a');
-  },
-  gerobakBakso: (p) => {
-    p.shadow(8);
-    p.box(7, 5, 'r', (face, u, j) => (face === 'L' && within(u, 0.2, 0.8) && j === 3 ? 'y' : undefined), 3);
-    p.box(9, 2, 'w', undefined, 8);
-    p.stroke(-6, -3, -12, -4, 2, 'n');
-    p.blob(-4, 2, 2, 'k');
-    p.blob(5, 2, 2, 'k');
   },
 };

@@ -14,7 +14,7 @@ import {
 } from '../src/data/higher';
 import { JOBS } from '../src/data/jobs';
 import { STAGES } from '../src/data/stages';
-import { HIGHER_ART } from '../src/render/art-higher';
+import { hasArt } from '../src/render/iso';
 import { ID_HIGHER_DATA } from '../src/i18n/higher-id';
 import { promote } from '../src/sim/grow';
 import { nextStarChecklist } from '../src/sim/stages';
@@ -41,7 +41,7 @@ describe('RW and Kelurahan content', () => {
 
   it('draws every building and makes each one move a number', () => {
     for (const b of STAGE_BUILDINGS) {
-      expect(HIGHER_ART[b.sprite], b.id).toBeTypeOf('function');
+      expect(hasArt(b.sprite), b.id).toBe(true);
       expect(b.income || b.perMonth || b.fx || b.jobSlots || b.requires, b.id).toBeTruthy();
     }
   });
