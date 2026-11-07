@@ -88,7 +88,7 @@ jobs:
           JSON
           # Raw CLI output is never printed: it can echo env or file contents. It is scanned for the key, then reduced to usage numbers.
           set +e
-          timeout 22m claude -p --max-turns 40 --permission-mode acceptEdits --output-format json \
+          timeout 22m claude -p --max-turns 60 --permission-mode acceptEdits --output-format json \
             --settings "$RUNNER_TEMP/settings.json" \
             --allowedTools "Read,Edit,Write,Glob,Grep,Bash(npm run typecheck),Bash(npm test:*),Bash(npx playwright test:*),Bash(git diff:*),Bash(git status)" \
             --disallowedTools "WebSearch,WebFetch,Task,NotebookEdit" \
