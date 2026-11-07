@@ -41,7 +41,7 @@ Act 2 is approved as Kota: Camat, Pj. Wali Kota, Pj. Gubernur, with pinjol, judo
 - **Pj. Gubernur (Provinsi):** the verb is choosing which reports go to Pusat. Pinjol and judol are now regional, and so is the Aman fallout.
 - **Act 3, Pejabat Pusat:** Sidang Emas 2045 reads the Laporan against Sejahtera for the four endings already in section 1.
 
-## For Hari to decide
+## Open decisions
 
 1. Fix the Kelurahan findings first, or alongside Kecamatan?
 2. Kecamatan map: a live ring of simplified districts (proposed), or a separate district screen?

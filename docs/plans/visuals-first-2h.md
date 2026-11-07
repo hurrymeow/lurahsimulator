@@ -108,7 +108,7 @@ The aim is a different outline for every shop: level 1 smallest and simplest, th
 
 **Checks:** typecheck and `npm test` pass, including the art height, level and footprint tests. Because the Kantor Kecamatan tower would break the "2x2 reads wide, not tall" bar at the back corner, it stands on the front corner. E2e has not been run yet; it will be before the PR.
 
-**For Hari to decide before the PR:**
+**Open decisions before the PR:**
 
 1. IndoApril and BetaMart now use colours close to the real chains (blue/red/yellow; red/blue/yellow), with no logos and the parody names kept. ART.md says "No third-party art or names". Is a colour scheme alone fine, or should the doc say so explicitly?
 2. ART.md "Building levels" and "Roofs and walls" will need a short paragraph on the new shop progressions. Under AGENTS.md, that doc change and a `decisions/` note go in the same PR.
