@@ -41,7 +41,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - #313 fixed two combo loops in the bots (a leveled combo piece and an uncapped copy fallback); the builder now misses RT 3★ in 1 seed of 10, not 8. The 2nd RT was not the cause.
   - Problem: item 1 still waits 192s with nothing affordable (bar 60s; in #303 the longest waits were at the Kecamatan, for a building of Rp 171jt to Rp 250jt), RT 2★ is late in 10 of 10 seeds, and the Pencitraan bot never reaches RT 2★ (item 17).
   - Why: the scorecard cannot judge pace or strategy balance while bots stall.
-  - Since the banjir came back (#331), the builder and the honest bot also miss RT 3★ on seed 4. The floods cost it about 15 Popularitas. Its RT is full (59 path tiles, about 50 buildings), so it has no room for a Popularitas building, and Popularitas sinks as warga keep arriving (`decisions/banjir-selokan.md`).
+  - Seed 4 RT 3★ is fixed (#348, `decisions/last-rt-stall-bot.md`): a bot gap, not balance. All five main bots now reach RT 3★ on 10 of 10 seeds. Open question from it: when the RT is full, what does the Popularitas goal tell a person to do? (Swap a Sawah for a Pos Ronda.)
   - The Pencitraan stall is a strategy collapse on slow-growth seeds, not a bot bug (`decisions/scorecard-pencitraan-probe.md`); fixing it is a balance call that belongs with the scorecard Fails item.
   - Suggested solution: probe the 208s wait and the late RT 2★ the same way (state and building counts at the stall) and tell a bot bug from a balance gap.
   - Source: `decisions/scorecard-bot-combo-loop.md`
