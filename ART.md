@@ -18,7 +18,34 @@ Each reference is used for one thing:
 | Stylised autumn arena (3D top-down) | Painted ground clumps, scattered fallen leaves, soft value steps on the floor | 3D shapes and perspective |
 | Pokemon HGSS / DPPt overworld | Coloured outlines (a dark shade of each fill, never black), small character detail, light rims and foam on terrain edges, rain | Its top-down camera and tile grid |
 
-No third-party art or names. Everything is drawn in code.
+No third-party art or names. Everything is drawn in code. A chain's brand is told by a colour scheme
+close to the real chain's, never by its logo or name (Hari, 2026-11-07): IndoApril and BetaMart.
+
+## Hari's art preferences
+
+Learned in the silhouette pass of 2026-11-07 (`decisions/silhouette-pass.md`). Follow them for every
+building, and judge new art against them before showing it.
+
+1. **Silhouette first.** Every building is recognisable by its outline alone, before colour. Check
+   each one as a black silhouette next to its neighbours; two buildings that share an outline (Apotek
+   and Fotokopi, Lampu Jalan and Patung Ikon, the Kecamatan offices) are a bug.
+2. **Levels grow in shape.** Level 1 is the smallest and simplest; the top level is the biggest and
+   most complex. Each level adds a mass: a wing, a porch, a second roof tier, a second storey, an open
+   shed, a vehicle, a sign or a yard. A level that only changes colour or adds a fence is not enough.
+3. **Like the real thing.** A building looks like its Indonesian counterpart in a kampung, pasar or
+   kota: scout real references (market studies, kantor kelurahan and camat, pustu, terminal tipe C,
+   baliho) before designing, and borrow their massing, not their logos.
+4. **Competing chains share one shape.** Minimarkets of different chains have the same silhouette
+   and differ only in colour and pattern, as the real ones share a template.
+5. **Break big buildings into parts.** A 2x2 or 3x3 is several smaller masses on its lot (units in a
+   row, a hall and its annex, a shop in front of a warehouse), never one box scaled up. Use
+   `src/render/massing.ts`.
+6. **No bubble trees.** Every tree, scenery or built, is the tiered canopy: a sturdy trunk and two or
+   three stacked 2:1 discs with a shade band under each rim. Never a ball of foliage.
+7. **Small life.** Moving details are welcome where they belong: fish in ponds, steam, a waving
+   tukang parkir. They hold still with reduce motion.
+8. **Workflow.** Show a local render first: a before and after sheet at every level with silhouettes,
+   from the real art code. Hari judges it and sends notes in rounds; the PR waits for the verdict.
 
 ## Scale and grid (fixed)
 
@@ -36,11 +63,15 @@ No third-party art or names. Everything is drawn in code.
   and the sea are drawn in the same isometric view as the kampung. There is no horizon and no sky,
   since an isometric view has no vanishing point (playtest 2026-11-02: painted mountains and a sun
   between them broke the isometric feel).
-- Round shapes are allowed only where nature is round: leaf clumps, clouds, flowers.
-- Build buildings from `Painter.box` and `Painter.roof`. Reach for a custom shape only when a box
-  cannot say it.
-- Trees are sturdy: trunks at least 4 art pixels wide, crowns made of 2 or 3 overlapping clumps
-  or at least 3-pixel-thick fronds (`Painter.leaf`). No 1-pixel stems.
+- Round shapes are allowed only where nature is round: clouds, flowers, fruit, the discs of a canopy tree.
+  Never a round ball of foliage for a tree.
+- Build buildings from `Painter.box` and `Painter.roof`, or from `prism` and `roofRect` in
+  `src/render/massing.ts` when a lot holds several masses: a box and a roof (hip, gable either way,
+  shed or flat) over any rectangle of the footprint, drawn natively at any n. Reach for a custom shape
+  only when neither can say it.
+- Trees are sturdy: trunks at least 4 art pixels wide, crowns made of 2 or 3 stacked canopy tiers
+  (`canopyTree` in `kampung-art.ts`) or at least 3-pixel-thick fronds (`Painter.leaf`). No 1-pixel
+  stems, and no round blobs of foliage.
 - Scenery trees (the woods, plantations and islands round the kampung, not a tree the player builds)
   are their own small sprites, drawn natively at their size in `scenery-trees.ts` with the same
   outline and cel rules, never a shrunk copy of the buildable tree. Palms (kelapa) are 35% of a
@@ -247,7 +278,9 @@ volcanoes and hills, so the map still has depth.
 ## Motion
 
 - Ambient loops follow **reduce motion**: clouds drift over the sea. Trees bounce in a slow wave across the map, stretching at
-  most 1 art pixel from the roots. Walkers stroll.
+  most 1 art pixel from the roots. Walkers stroll. Fish swim slow loops in ponds: dark lele with
+  whiskers in a kolam lele's murky green water, now and then surfacing in a ring; orange and silver
+  fish in a kolam pancing (`fish()` in `map.ts`).
 - Particles, coins, lighting layers, motes, weather and night follow **effects**.
 - Weather: a rain shower comes every 60 to 150 s (the first after 25 to 60 s), lasts 15 to 30 s
   and eases in and out over 3 s. It brings up to 80 slanted pixel streaks, ripples on the
@@ -266,15 +299,33 @@ faceless, so the map stays readable.
 
 ## Building levels
 
-- Every level looks different, like a building card in a mobile builder: level 1 is makeshift,
-  the top level is built to last. The silhouette and the materials change, not just the size.
+- Every level looks different, like a building card in a mobile builder: level 1 is makeshift and
+  the smallest, the top level is built to last and the biggest and busiest. The silhouette and the
+  materials change, not just the size or the colour (Hari's preferences 1 and 2 above).
   Warung Sembako (`warung-art.ts`): a warung tenda under a red-and-white striped terpal on bamboo
   poles over a crate counter; a gerobak (push cart with a glass snack case) parked under a zinc
   lean-to with a plank back wall, a galon, an LPG melon and a bench; a whitewashed brick toko
   kelontong under a flat dak with a big yellow nameboard and a blue rolling door half up. Every level
   hangs rentengan sachet strips along its front, so it reads as a warung at a glance.
   Pos ronda: bamboo balai-balai under rumbia, wooden hut, green-and-white siskamling post. Kantor RT:
-  a front room with a nameboard, the office with a flag, a pendopo under a joglo roof.
+  a small front room with the RT board on a tall post, a bigger office with a flag, a pendopo under a
+  joglo roof.
+- Shops (`toko-art.ts`): Rumah Makan is a plank warung makan with a spanduk, a warkop lean-to, then a
+  warteg with a false-front nameboard. Fotokopi is a kiosk, a toko with its banner over the roof, then
+  a ruko. Apotek always has the green cross on a pylon: a kios obat, a shop under a green hip, then an
+  apotek with a praktik dokter stacked on top. Barbershop: a chair and mirror under a tarp, a teal
+  kiosk, a charcoal modern shop. Bengkel: tambal ban with a tyre on a stick, a garage, a bengkel resmi.
+  IndoApril and BetaMart share one shape: a flat dak and a box sign, a pylon and an ATM at level 2.
+- Everything else with its own levels (`level-art.ts`, `kampung-art.ts`) grows the same way, by mass:
+  Gudang Material from a small zinc shed to a long shed with an open roof bay to the full yard; PAUD
+  from a front room to a classroom to an L-shaped school with a playground; Posyandu from a tarp over
+  the dacin, to a hut and a waiting shed, to one long clinic across its lot; Kontrakan from a single
+  petakan row under one zinc roof to a two-storey L with a walkway; Pasar from one open los to two los
+  and kios to a market hall with a raised sawtooth crown; Terminal from one platform to two, with
+  buses and angkot; the Kelurahan and Kecamatan offices, Pos Satpol PP, Puskesmas Pembantu, Balai RW,
+  Balai Warga, Koperasi, BLK, Baliho and the parks each add a wing, porch, tower, roof tier or yard.
+  Gapura and Portal level 1 are smaller than their level 2. Sawah and Kebun Sayur grow their plants:
+  rice from seedlings to golden heads, vegetables from sprouts to fruiting plants.
 - Houses grow, not just fence in. Rumah: the bungalow, then a teras set into the front wall under a
   strip of the roof colour (door in its shade, a pot plant) with a low white pagar one pixel inside
   the tile's front edges, then a rumah tingkat with a balcony rail on the upper floor. Every roof
@@ -287,7 +338,7 @@ faceless, so the map stays readable.
   above 28px. A building that grows taller would hide the small ones behind it. `tests/art.test.ts`
   checks both.
 - Sprites with their own level art take `level` as the third argument and are listed in `LEVELLED`.
-  Every other sprite gets the upgrade kit along its front edges: a tidy wooden plank fence at level
+  Every other sprite (now only those not yet redrawn) gets the upgrade kit along its front edges: a tidy wooden plank fence at level
   2, a clean stone wall with a light cap, potted plants and a lamp at level 3. It is drawn in native
   1px lines after the ink pass, so it is as fine on a 3x3 as on one tile. Ground pieces skip it.
 - The inspector shows the level as a roof badge beside the name: a pixel gable roof with a 1px
@@ -307,6 +358,10 @@ faceless, so the map stays readable.
 - Each shop type has its own roof, so a row of shops reads as a street.
 - No roof shape rises above the hipped roof of the same house at the same level. `tests/art.test.ts` checks it.
 - The bank sampah is a TPS: an open concrete bak heaped with bags, a green sign, no roof.
+- Look-alikes get different outlines, not just colours: Apotek (green, a cross on a pylon) against
+  Fotokopi (blue, a printed banner); Lampu Jalan (a pole with a bent arm) against Patung Ikon (a fat
+  golden mini sawit on a plinth); the four Kecamatan offices (a clock tower, a rooftop lookout, a long
+  pelana, a monitor or sawtooth workshop roof).
 
 ## Ground materials
 
@@ -360,18 +415,22 @@ control map and index-map shader (`src/render/terrain.ts`, `controlAt` and `grou
 
 ## Adding a sprite
 
-1. Add a function to `ART` in `src/render/iso.ts`. Start with `p.shadow(inset)`.
+1. Add a function to `ART` in `src/render/iso.ts`, or to the table in the art file it belongs with
+   (`toko-art.ts` for shops, `level-art.ts` for levelled buildings), and list it in `LEVELLED` if it
+   draws its own levels. Start with `p.shadow(inset)`.
 2. Build it from `box` and `roof` with palette keys, and paint details per face through the
    `paint` callback.
 3. Keep it inside the tile's footprint and under the 40-pixel headroom. A 2x2 or 3x3 building is
    still written in one-tile coordinates: `iso(name, variant, n)` draws it natively at n.
 4. Let the outline pass run, unless it is a flat decal or lattice (`p.bare = true`). Flat decals
    that tile, like selokan and jalan, draw their own edges so neighbours join up.
-5. Check it at 4x on grass next to the existing sprites, then in game at day and night.
+5. Check it at 4x on grass next to the existing sprites, as a black silhouette beside its neighbours
+   and at every level, then in game at day and night.
 6. If it is flat (people walk over it), add it to `FLAT` in `people.ts` and `FLAT_AO` in `map.ts`.
 
 ## Checklist before merging art
 
+- [ ] Hari's art preferences above: a distinct silhouette, levels that grow in shape, no bubble trees.
 - [ ] Straight isometric lines; round only where nature is round.
 - [ ] 1px coloured outline (a dark shade of the fill it borders), no pure black anywhere.
 - [ ] Two-tone cel shading lit from the top left. Texture in flat painted steps, not noise.

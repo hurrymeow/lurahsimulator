@@ -1,5 +1,19 @@
 # Visuals: buildings unlocked in the first 2 hours
 
+## Round 4, 2026-11-07: Patung Ikon, Posyandu, Kontrakan, and the docs
+
+Images: [visuals-r4-before.png](visuals-r4-before.png) against [visuals-r4-after.png](visuals-r4-after.png); [visuals-first-2h-preview.png](visuals-first-2h-preview.png), all 56 again.
+
+| Building | Change |
+| --- | --- |
+| Patung Ikon | A fat golden mini sawit on a two-step plinth: a stout trunk with its frond bases in a gold checker, a rosette of stiff fronds rising and arching down, a fruit bunch under the crown. |
+| Posyandu | L1: no walls, a striped tarp on bamboo poles over a table and the dacin, mats beside. L2: its own small hut under a pink pelana with the KMS board, and an open waiting shed with a bench. L3: one long clinic across both tiles under a pink hip, an entrance canopy, the cross, a sign pole and a slide. |
+| Kontrakan | L1: a plain petakan, one low row of three doors under a single zinc shed roof. L2: a two-storey L with an upper walkway and railing, a steel stair, a tandon, a jemuran and motorbikes. |
+
+**Docs:** ART.md now holds "Hari's art preferences" (silhouette first, levels grow in shape, like the real thing, chains share one shape, break big buildings into parts, no bubble trees, small life, render first), plus the new level progressions, look-alikes, fish, the massing helpers, and chain colours without logos or names. Logged in `decisions/silhouette-pass.md` and `progress/silhouette-pass.md`.
+
+---
+
 ## Round 3, 2026-11-07: shape progression for every level
 
 Images: [visuals-r3-before.png](visuals-r3-before.png) (round 2) against [visuals-r3-after.png](visuals-r3-after.png), every level of each changed building with its silhouette; [visuals-first-2h-preview.png](visuals-first-2h-preview.png), all 56 again.

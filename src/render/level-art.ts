@@ -233,38 +233,62 @@ export const koperasi: Art = (p, _v, level = 1) => {
   prism(p, 0.9, 0.99, 0.96, 0.99, 3, 'y', (face) => (face === 'L' ? 'g' : undefined), 8);
 };
 
-/** Kontrakan: two rumah petak, then three and a two-storey end unit with a jemuran. */
+/**
+ * Kontrakan: level 1 is a plain petakan, one low row of three doors under a single zinc shed roof, set
+ * back on the lot. Level 2 is a two-storey kontrakan in an L: units below, an upper floor with a walkway
+ * and railing along its front, a steel stair, a tandon on the roof, a jemuran and motorbikes in the yard.
+ */
 export const kontrakan: Art = (p, _v, level = 1) => {
   p.low();
-  p.shadow(1);
-  const walls = ['a', 't', 'w', 'o'];
-  const roofs = ['R', 'r', 'R', 'r'];
-  const units: [number, number][] = level <= 1 ? [[0.12, 0.42], [0.43, 0.73]] : [[0.04, 0.3], [0.31, 0.57], [0.58, 0.84]];
-  units.forEach(([a0, a1], k) => {
-    prism(p, a0, a1, 0.12, 0.58, 7, walls[k], (face, u, j, i) => {
+  p.shadow(level <= 1 ? 3 : 1);
+  if (level <= 1) {
+    prism(p, 0.12, 0.88, 0.2, 0.52, 6, 't', (face, u, j) => {
       if (face === 'T') return undefined;
       if (j === 0) return 'S';
-      if (face === 'L' && within(u, 0.55, 0.8) && j < 5) return 'N';
-      if (face === 'L' && within(u, 0.15, 0.42) && within(j, 2, 5)) return 'l';
-      return face === 'R' ? win(u, j, i, 2, 5) : undefined;
+      if (face === 'L' && [0.12, 0.45, 0.78].some((d) => within(u, d, d + 0.08)) && j < 5) return 'N';
+      if (face === 'L' && [0.24, 0.57, 0.89].some((d) => within(u, d - 0.02, d + 0.04)) && within(j, 2, 4)) return 'l';
+      return undefined;
     });
-    roofRect(p, a0, a1, 0.12, 0.58, 7, 4, 'gableB', roofs[k], walls[k]);
-  });
-  if (level >= 2) {
-    // The end unit has a loteng: a second floor under a shed roof, a steel stair up its side.
-    prism(p, 0.85, 0.97, 0.12, 0.58, 12, walls[3], (face, u, j, i) => (face === 'T' ? undefined : j === 0 ? 'S' : j === 6 ? 'S' : face === 'L' && within(u, 0.2, 0.8) && within(j, 8, 11) ? 'l' : win(u, j, i, 2, 5)));
-    roofRect(p, 0.85, 0.97, 0.12, 0.58, 12, 2, 'shed', roofs[3], walls[3]);
-    pole(p, 0.2, 0.8, 6, 'S');
-    pole(p, 0.5, 0.8, 6, 'S');
-    p.overlay.push((q) => {
-      const cols = ['#e57a9c', '#f4b935', '#f6ecd4', '#3d72b4', '#df4a2c'];
-      for (let k = 0; k < 10; k++) {
-        const [x, y] = at(q, 0.2 + k * 0.03, 0.8, 6);
-        q.px(Math.round(x), Math.round(y), '#6d635a');
-        if (k % 2) for (let d = 1; d <= 2; d++) q.px(Math.round(x), Math.round(y) + d, cols[k % cols.length]);
-      }
-    });
+    roofRect(p, 0.12, 0.88, 0.2, 0.52, 6, 2, 'shed', ZINC, 't', zinc, 0.06);
+    return;
   }
+  // The back wing along b, then the main block along a, two floors each.
+  const unit = (face: string, u: number, j: number, i: number, wallC: string) => {
+    if (face === 'T') return undefined;
+    if (j === 0 || j === 6) return 'S';
+    const f = j < 6 ? j : j - 6;
+    if (face === 'L' && Math.floor(u * 4) % 2 === 0 && within((u * 4) % 1, 0.3, 0.7) && f < 5 && f > 0) return 'N';
+    if (within(f, 2, 4) && i % 5 >= 3) return 'l';
+    return wallC === 'w' ? undefined : undefined;
+  };
+  prism(p, 0.06, 0.34, 0.06, 0.62, 11, 'o', (face, u, j, i) => unit(face, u, j, i, 'o'));
+  roofRect(p, 0.06, 0.34, 0.06, 0.62, 11, 2, 'shed', 'R', 'o', undefined, 0.02);
+  prism(p, 0.34, 0.96, 0.06, 0.46, 11, 'w', (face, u, j, i) => unit(face, u, j, i, 'w'));
+  roofRect(p, 0.34, 0.96, 0.06, 0.46, 11, 2, 'shed', 'R', 'w', undefined, 0.02);
+  // The upper walkway: a slab and a railing along the front of the main block.
+  prism(p, 0.34, 0.96, 0.46, 0.54, 1, 's', undefined, 6);
+  p.overlay.push((q) => {
+    for (let k = 0; k <= 30; k++) {
+      const [x, y] = at(q, 0.34 + k * 0.02, 0.54, 9);
+      q.px(Math.round(x), Math.round(y), '#6d635a');
+      if (k % 3 === 0) for (let d = 1; d <= 2; d++) q.px(Math.round(x), Math.round(y) + d, '#6d635a');
+    }
+  });
+  // The steel stair up the right end, a tandon on the roof.
+  for (let k = 0; k < 6; k++) prism(p, 0.9, 0.96, 0.56 + k * 0.03, 0.59 + k * 0.03, 1, 'S', undefined, 6 - k);
+  prism(p, 0.08, 0.18, 0.12, 0.22, 3, 'b', (face) => (face === 'T' ? 'w' : undefined), 13);
+  // The yard: a jemuran and two motorbikes.
+  pole(p, 0.2, 0.84, 6, 'S');
+  pole(p, 0.5, 0.84, 6, 'S');
+  p.overlay.push((q) => {
+    const cols = ['#e57a9c', '#f4b935', '#f6ecd4', '#3d72b4', '#df4a2c'];
+    for (let k = 0; k < 10; k++) {
+      const [x, y] = at(q, 0.2 + k * 0.03, 0.84, 6);
+      q.px(Math.round(x), Math.round(y), '#6d635a');
+      if (k % 2) for (let d = 1; d <= 2; d++) q.px(Math.round(x), Math.round(y) + d, cols[k % cols.length]);
+    }
+  });
+  for (const a of [0.62, 0.76]) prism(p, a, a + 0.08, 0.66, 0.69, 2, a > 0.7 ? 'r' : 'k', (face) => (face === 'T' ? 'S' : undefined));
 };
 
 /** Balai Warga: a small pendopo, then a big two-tier pendopo, then the pendopo with a kitchen annex, a stage and umbul-umbul. */

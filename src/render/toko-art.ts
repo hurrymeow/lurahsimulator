@@ -430,15 +430,27 @@ const lampuJalan: Level = (p) => {
   p.stroke(5, -20, 7, -19, 1, 'y');
 };
 
-/** Patung Ikon: a golden durian on a two-step plinth, spikes and all, the kampung's own big landmark. */
+/**
+ * Patung Ikon: a golden mini oil palm, short and fat, on a two-step plinth. The trunk is stout and
+ * shaggy with the cut frond bases of a real sawit, the crown a rosette of stiff arching fronds, and a
+ * fruit bunch hangs under it, all in gold: the kampung's own landmark for its kebun sawit.
+ */
 const patungIkon: Level = (p) => {
   p.shadow(3);
-  p.box(3, 3, 's', (face) => (face === 'T' ? 'w' : undefined));
-  p.box(5, 4, 'S', (face, _u, j) => (face !== 'T' && j === 2 ? 'y' : undefined), 3);
-  p.blob(0, 14, 6, 'y');
-  p.id++;
-  for (const [dx, dy] of [[-6, -14], [6, -13], [-4, -19], [4, -19], [0, -21], [-2, -10], [3, -10], [-5, -17], [5, -16]]) p.set(GX + dx, GY + dy, 'a');
-  p.stroke(0, -20, 1, -23, 1, 'N');
+  p.box(3, 2, 's', (face) => (face === 'T' ? 'w' : undefined));
+  p.box(5, 3, 'S', (face, _u, j) => (face !== 'T' && j === 1 ? 'y' : undefined), 2);
+  // The fat trunk, its frond bases in a staggered gold checker.
+  p.box(6, 9, 'a', (face, _u, j, i) => (face !== 'T' && (i + j * 2) % 4 === 0 ? 'o' : face === 'T' ? 'y' : undefined), 5);
+  // The crown: stiff fronds rising out of the top, then arching over and down, back ones first, so the
+  // palm reads as a shaggy rosette and never as a flower.
+  const top = -15;
+  for (const [dx, dy, ex, ey] of [[-4, -5, -8, -3], [4, -5, 8, -3], [-6, -3, -12, 1], [6, -3, 12, 2], [-2, -6, -3, -2], [2, -6, 4, -2], [-5, -1, -9, 5], [5, -1, 9, 5]] as [number, number, number, number][]) {
+    p.leaf(0, top, dx, top + dy, 'y');
+    p.leaf(dx, top + dy, ex, top + ey, 'a');
+  }
+  // The fruit bunch under the crown.
+  p.blob(-1, 13, 2.4, 'o');
+  p.blob(2, 12, 1.8, 'o');
 };
 
 export const TOKO_ART: Record<string, (p: Painter, variant?: string, level?: number) => void> = {

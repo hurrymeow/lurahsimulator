@@ -206,56 +206,103 @@ export const win = (u: number, j: number, i: number, j0: number, j1: number, c =
 
 // ---------------------------------------------------------------- Posyandu
 
-/** Posyandu on its own tile, by level: a tarp over a table and the dacin scale, then the clinic, then a bigger clinic with a sign. */
+/** A dacin: the hanging baby scale on a wooden tripod, with its sarung sling. Native pixels, after the ink pass. */
+function dacin(p: Painter, a: number, b: number): void {
+  pole(p, a, b, 7, 'n');
+  p.overlay.push((q) => {
+    const [x, y] = at(q, a, b, 7);
+    for (let k = 1; k <= 4; k++) q.px(Math.round(x) + k, Math.round(y) + k, '#a8652f');
+    for (let d = 0; d < 3; d++) q.px(Math.round(x) + 4, Math.round(y) + 5 + d, '#6d635a');
+    for (const dx of [3, 4, 5]) q.px(Math.round(x) + dx, Math.round(y) + 8, '#e57a9c');
+  });
+}
+
+/**
+ * Posyandu on one tile, by level. Level 1 is held on a warga's teras: no walls, a pink-striped tarp on
+ * bamboo poles over a table and the dacin. Level 2 is its own small hut under a pink pelana, a KMS board
+ * on the wall. Level 3 is a proper clinic under a pink hip with an entrance canopy and the cross.
+ */
 const posyanduMain: Art = (p, _v, level = 1) => {
   if (level <= 1) {
-    p.shadow(4);
-    for (const [a, b] of [[0.2, 0.2], [0.8, 0.2], [0.2, 0.8], [0.8, 0.8]]) pole(p, a, b, 8, 'a');
-    prism(p, 0.3, 0.62, 0.42, 0.62, 3, 'w', (face) => (face === 'T' ? 'w' : 'p'));
-    // The dacin: a hanging scale on a wooden tripod, the sarung sling for the baby under it.
-    pole(p, 0.7, 0.5, 7, 'n');
-    p.overlay.push((q) => {
-      const [x, y] = at(q, 0.7, 0.5, 7);
-      for (let k = 1; k <= 4; k++) q.px(Math.round(x) + k, Math.round(y) + k, '#a8652f');
-      for (let d = 0; d < 3; d++) q.px(Math.round(x) + 4, Math.round(y) + 5 + d, '#6d635a');
-      q.px(Math.round(x) + 3, Math.round(y) + 8, '#e57a9c');
-      q.px(Math.round(x) + 4, Math.round(y) + 8, '#e57a9c');
-      q.px(Math.round(x) + 5, Math.round(y) + 8, '#e57a9c');
-    });
-    roofRect(p, 0.18, 0.82, 0.18, 0.82, 8, 2, 'shed', 'p', 'p', (x) => (Math.floor(x / 2) % 2 ? 'w' : undefined), 0.02);
+    p.shadow(5);
+    for (const [a, b] of [[0.26, 0.26], [0.74, 0.26], [0.26, 0.74], [0.74, 0.74]]) pole(p, a, b, 7, 'a');
+    prism(p, 0.32, 0.6, 0.44, 0.62, 3, 'w', (face) => (face === 'T' ? 'w' : 'p'));
+    dacin(p, 0.68, 0.5);
+    roofRect(p, 0.24, 0.76, 0.24, 0.76, 7, 2, 'shed', 'p', 'p', (x) => (Math.floor(x / 2) % 2 ? 'w' : undefined), 0.02);
     return;
   }
-  const big = level >= 3;
-  const [a0, a1, b0, b1] = big ? [0.1, 0.9, 0.1, 0.9] : [0.18, 0.82, 0.18, 0.82];
-  p.shadow(big ? 2 : 3);
-  prism(p, a0, a1, b0, b1, 8, big ? 'w' : 't', (face, u, j, i) => {
+  if (level === 2) {
+    p.shadow(4);
+    prism(p, 0.24, 0.76, 0.26, 0.72, 7, 't', (face, u, j) => {
+      if (face === 'T') return undefined;
+      if (j === 0) return 'S';
+      if (face === 'L' && within(u, 0.56, 0.76) && j < 5) return 'N';
+      if (face === 'L' && within(u, 0.14, 0.44) && within(j, 2, 6)) return within(u, 0.27, 0.31) || j === 4 ? 'r' : 'w';
+      if (face === 'R' && within(u, 0.3, 0.7) && within(j, 2, 5)) return 'l';
+      return undefined;
+    });
+    roofRect(p, 0.24, 0.76, 0.26, 0.72, 7, 5, 'gableB', 'p', 't');
+    return;
+  }
+  p.shadow(2);
+  prism(p, 0.08, 0.92, 0.08, 0.7, 8, 'w', (face, u, j, i) => {
     if (face === 'T') return undefined;
-    if (j === 0) return big ? 'p' : 'S';
-    if (face === 'L' && within(u, 0.4, 0.6) && within(j, 2, 7)) return within(u, 0.46, 0.54) || within(j, 4, 5) ? 'r' : 'w';
-    if (face === 'R') return win(u, j, i, 3, 6, big ? 'c' : 'l');
-    return big && j === 7 ? 'p' : undefined;
+    if (j === 0) return 'p';
+    if (j === 7) return 'p';
+    if (face === 'L' && within(u, 0.42, 0.58) && j < 6) return 'c';
+    if (face === 'R' && within(u, 0.35, 0.65) && within(j, 2, 7)) return within(u, 0.47, 0.53) || within(j, 4, 5) ? 'r' : 'w';
+    return win(u, j, i, 2, 6, 'c');
   });
-  roofRect(p, a0, a1, b0, b1, 8, big ? 5 : 6, big ? 'hip' : 'hip', big ? 'p' : 'p', 'w', big ? (x) => (x % 4 === 0 ? 'w' : undefined) : undefined);
+  roofRect(p, 0.08, 0.92, 0.08, 0.7, 8, 5, 'hip', 'p', 'w');
+  for (const a of [0.36, 0.64]) pole(p, a, 0.88, 6, 'S');
+  roofRect(p, 0.34, 0.66, 0.7, 0.9, 6, 0, 'flat', 'p', 'w', undefined, 0);
 };
 
-/** The second tile of a posyandu: mats and stools at level 1, a porch with a bench at 2, a porch with a bench, a sign and a play corner at 3. */
+/** The second tile at levels 1 and 2: mats and stools by the tarp, then an open waiting shed with a bench and the queue. */
 const posyanduYard: Art = (p, _v, level = 1) => {
   if (level <= 1) {
-    p.ground((a, b) => (within(a, 0.2, 0.8) && within(b, 0.25, 0.75) ? (Math.floor(a * 20) % 2 ? 'y' : 'o') : null));
+    p.ground((a, b) => (within(a, 0.24, 0.76) && within(b, 0.3, 0.7) ? (Math.floor(a * 20) % 2 ? 'y' : 'o') : null));
     for (const [a, b] of [[0.3, 0.86], [0.5, 0.86]]) prism(p, a, a + 0.08, b - 0.08, b, 2, 'r', (face) => (face === 'T' ? 'r' : 'R'));
-    pole(p, 0.86, 0.3, 6, 'n');
-    prism(p, 0.8, 0.92, 0.24, 0.3, 3, 'w', (face) => (face === 'L' ? 'g' : undefined), 4);
     return;
   }
-  p.shadow(3);
-  prism(p, 0.2, 0.8, 0.3, 0.42, 2, 'n', (face) => (face === 'T' ? 'N' : undefined));
-  for (const [a, b] of [[0.18, 0.82], [0.82, 0.82], [0.18, 0.18], [0.82, 0.18]]) pole(p, a, b, 8, 'n');
-  roofRect(p, 0.16, 0.84, 0.16, 0.84, 8, 3, 'shed', 'p', 't', undefined, 0.02);
-  if (level < 3) return;
-  // A sign pole by the front, and a small slide in the play corner.
-  pole(p, 0.92, 0.92, 10, 'S');
-  prism(p, 0.86, 0.98, 0.9, 0.95, 3, 'w', (face) => (face === 'L' ? 'p' : undefined), 9);
-  p.ground((a, b) => (within(a, 0.5, 0.8) && within(b, 0.6, 0.9) ? 'c' : null));
+  p.shadow(4);
+  prism(p, 0.28, 0.72, 0.36, 0.46, 2, 'n', (face) => (face === 'T' ? 'N' : undefined));
+  for (const [a, b] of [[0.24, 0.24], [0.76, 0.24], [0.24, 0.76], [0.76, 0.76]]) pole(p, a, b, 7, 'n');
+  roofRect(p, 0.22, 0.78, 0.22, 0.78, 7, 2, 'shed', 's', 't', (x) => (x % 2 ? 'S' : undefined), 0.02);
+};
+
+/**
+ * The 2x1 posyandu. Levels 1 and 2 are a tile of posyandu and a tile of yard. Level 3 is one long clinic
+ * across both tiles, under a pink hip, with a covered entrance, the sign on a pole and a slide in the corner.
+ */
+export const posyanduLong: Art = (p, v, level = 1) => {
+  if (level < 3) {
+    p.at(0, 0);
+    posyanduMain(p, v, level);
+    p.at(1, 0);
+    posyanduYard(p, v, level);
+    return;
+  }
+  p.at(0, 0);
+  p.shadow(2);
+  p.at(1, 0);
+  p.shadow(2);
+  p.at(0, 0);
+  // a runs 0..2 along the long side here: one mass across both tiles.
+  prism(p, 0.1, 1.9, 0.12, 0.66, 8, 'w', (face, u, j, i) => {
+    if (face === 'T') return undefined;
+    if (j === 0 || j === 7) return 'p';
+    if (face === 'L' && within(u, 0.46, 0.54) && j < 6) return 'c';
+    if (face === 'L' && within(u, 0.2, 0.3) && within(j, 2, 6)) return within(u, 0.24, 0.26) || j === 4 ? 'r' : 'w';
+    return win(u, j, i, 2, 6, 'c');
+  });
+  roofRect(p, 0.1, 1.9, 0.12, 0.66, 8, 5, 'hip', 'p', 'w');
+  for (const a of [0.84, 1.16]) pole(p, a, 0.86, 6, 'S');
+  roofRect(p, 0.8, 1.2, 0.66, 0.88, 6, 0, 'flat', 'p', 'w', undefined, 0);
+  pole(p, 1.86, 0.9, 10, 'S');
+  prism(p, 1.8, 1.94, 0.88, 0.92, 3, 'w', (face) => (face === 'L' ? 'p' : undefined), 9);
+  prism(p, 0.14, 0.2, 0.78, 0.84, 4, 'b');
+  prism(p, 0.2, 0.36, 0.79, 0.83, 1, 'r', (face) => (face === 'T' ? 'y' : undefined), 1);
 };
 
 export const KAMPUNG_ART: Record<string, Art> = {
@@ -266,12 +313,3 @@ export const KAMPUNG_ART: Record<string, Art> = {
   kebunSayur,
   posyandu: posyanduMain,
 };
-
-/** The 2x1 posyandu: the main tile and its yard, back to front. */
-export const posyanduLong: Art = (p, v, level = 1) => {
-  p.at(0, 0);
-  posyanduMain(p, v, level);
-  p.at(1, 0);
-  posyanduYard(p, v, level);
-};
-
