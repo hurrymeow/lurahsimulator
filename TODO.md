@@ -37,13 +37,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: `scorecard/scorecard.md`; `decisions/scorecard-harness.md`
   - `open · — · — · done when:` no row reads Unknown for a reason the harness could fix, and a nightly run finishes under 20 minutes.
 
-- [ ] **Low and wide 2x2 art, and native-size cranes on big sites.**
-  - Problem: Gudang Material and Koperasi look like a Rumah scaled up, too tall for 2x2. The crane over a 2x2 site is a 1x1 crane scaled 2x, with big pixels out of scale.
-  - Why: size should read as width, and every sprite should keep the 1px grid.
-  - Suggested solution: redraw the 2x2 buildings (Gudang Material, Koperasi first, then any other 2x2 taller than its tier's 1x1) per ART.md's new geometry rules; draw scaffold and stakes at native pixels for 1x2, 2x2, 2x3 and 3x3 (the crane is being replaced, see the rising-build item). Never overwrite the artist's sprites.
-  - Source: `decisions/playtest-sk2.md`
-  - `claimed · voidinside99 (Julian) · 2026-11-07 · done when:` no 2x2 building stands taller than a 1x1 of its tier, site sprites have no scaled pixels, and `tests/art.test.ts` checks both.
-
 - [ ] **Scorecard bots: the last RT stalls.**
   - #313 fixed two combo loops in the bots (a leveled combo piece and an uncapped copy fallback); the builder now misses RT 3★ in 1 seed of 10, not 8. The 2nd RT was not the cause.
   - Problem: item 1 still waits 192s with nothing affordable (bar 60s; in #303 the longest waits were at the Kecamatan, for a building of Rp 171jt to Rp 250jt), RT 2★ is late in 10 of 10 seeds, and the Pencitraan bot never reaches RT 2★ (item 17).
@@ -56,6 +49,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **Low and wide 2x2 art, and native-size cranes on big sites.** `Painter.low()` keeps heights native on big lots: 15 big buildings stand no taller than a 1x1 and read wide; stakes and scaffold keep 1px lines on any lot (the crane went in #256). `tests/art.test.ts` checks both. #343, `decisions/wide-2x2-art.md`.
 - [x] **The hint reader is no longer the slowest way through the RW.** It never built Balai RW though the RW combo step names it. Fixed in the bot; hint now reaches RW 2★ level with the builder on seeds 1 to 6. #341, `decisions/hint-bot-balai-rw.md`.
 
 - [x] **Icons instead of text in build placement and Settings.** Placement bar uses ✕ ↻ ✓ with the word as aria-label (#334); Settings loses 8 help lines and its word cap drops from 65 to 35 (#335). Both ran on the DeepSeek executor. Touch phones show no title text, so the help is for screen readers only.
