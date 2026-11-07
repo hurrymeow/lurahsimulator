@@ -1,4 +1,5 @@
 import type { Settings } from './settings';
+import { BAR, BARS, MusicPlayer } from './music';
 
 /**
  * All sound is synthesised with Web Audio, so there is nothing to download or license.
@@ -21,18 +22,6 @@ const MARCH: [number, number][] = [
 const ANGKLUNG = [67, 69, 72, 76, 79];
 
 const MUSIC_MIX = 0.5;
-const BEAT = 60 / 96 / 2;
-const BAR = 8 * BEAT;
-
-// Pentatonic melody over a I - vi - IV - V loop, 8 bars. [midi note or 0 for a rest, length in 8ths].
-const TUNE: [number, number][][] = [
-  [[69, 2], [72, 1], [74, 1], [76, 2], [74, 2]], [[72, 2], [69, 2], [67, 4]],
-  [[65, 2], [69, 1], [72, 1], [74, 2], [72, 2]], [[71, 2], [74, 2], [79, 2], [0, 2]],
-  [[76, 2], [74, 1], [72, 1], [69, 2], [72, 2]], [[74, 2], [72, 2], [69, 4]],
-  [[65, 2], [67, 1], [69, 1], [72, 2], [69, 2]], [[67, 2], [71, 2], [72, 4]],
-];
-const ROOTS = [45, 45, 41, 43];
-const CHORDS = [[57, 60, 64], [57, 60, 64], [53, 57, 60], [55, 59, 62]];
 
 const hz = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -187,18 +176,25 @@ class Audio {
   }
 
   private noiseBuf: AudioBuffer | null = null;
+  private player: MusicPlayer | null = null;
 
-  /** A burst of filtered noise: snares, crackles, claps and crowds. A swell rises and falls instead of striking. */
-  private noise(delay: number, len: number, vol: number, type: BiquadFilterType, freq: number, swell = false): void {
+  /** One second of white noise, shared by every noise burst. */
+  private noiseBuffer(): AudioBuffer {
     const ctx = this.ctx!;
     if (!this.noiseBuf) {
       this.noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
       const d = this.noiseBuf.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     }
+    return this.noiseBuf;
+  }
+
+  /** A burst of filtered noise: snares, crackles, claps and crowds. A swell rises and falls instead of striking. */
+  private noise(delay: number, len: number, vol: number, type: BiquadFilterType, freq: number, swell = false): void {
+    const ctx = this.ctx!;
     const t = ctx.currentTime + delay;
     const src = ctx.createBufferSource();
-    src.buffer = this.noiseBuf;
+    src.buffer = this.noiseBuffer();
     src.loop = true;
     const filter = ctx.createBiquadFilter();
     filter.type = type;
@@ -343,38 +339,16 @@ class Audio {
     const ctx = this.ctx!;
     while (this.at < ctx.currentTime + BAR) {
       this.playBar(this.at, this.bar);
-      this.bar = (this.bar + 1) % TUNE.length;
+      this.bar = (this.bar + 1) % BARS;
       this.at += BAR;
     }
     this.timer = window.setTimeout(() => this.tick(), BAR * 500);
   }
 
   private playBar(t0: number, b: number): void {
-    const ctx = this.ctx!;
-    const out = this.bus!;
-    const note = (m: number, at: number, len: number, vol: number, type: OscillatorType) => {
-      const t = t0 + at * BEAT;
-      const d = len * BEAT;
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = type;
-      o.frequency.value = hz(m);
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(vol, t + 0.01);
-      g.gain.exponentialRampToValueAtTime(vol * 0.4, t + Math.min(d, 0.15));
-      g.gain.exponentialRampToValueAtTime(0.0005, t + d);
-      o.connect(g).connect(out);
-      o.start(t);
-      o.stop(t + d + 0.02);
-    };
-    let at = 0;
-    for (const [m, l] of TUNE[b]) {
-      if (m) note(m, at, l * 0.9, 0.07, 'square');
-      at += l;
-    }
-    const r = ROOTS[b % 4];
-    for (let k = 0; k < 8; k += 2) note(k % 4 ? r + 7 : r, k, 1.6, 0.16, 'triangle');
-    for (let k = 1; k < 8; k += 2) CHORDS[b % 4].forEach((m) => note(m, k, 0.6, 0.025, 'triangle'));
+    this.player ??= new MusicPlayer(this.ctx!, this.musicOut, () => this.noiseBuffer());
+    this.player.out = this.bus!;
+    this.player.playBar(t0, b);
   }
 }
 
