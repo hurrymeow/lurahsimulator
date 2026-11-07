@@ -4,9 +4,9 @@ Open tasks and ideas that are not done yet. Each item has a Problem, a Why and a
 
 ## Tasks
 
-**Approval (Hari, 2026-11-02):** TODO items do not wait on Hari. The agent that claims an item judges the work against GAME-DESIGN.md §8, the UI.md review checklist and TESTING.md, and approves it itself. A bot run, a nightly scorecard and CI count as the playtest. Record the verdict in `decisions/`. Ask Hari only for what needs his hands: credentials and secrets, GitHub or repo settings, spending money, and irreversible actions such as deleting data or rewriting main.
+**Approval (2026-11-02):** TODO items wait on no one. The agent that claims an item judges the work against GAME-DESIGN.md §8, the UI.md review checklist and TESTING.md, and approves it itself. A bot run, a nightly scorecard and CI count as the playtest. Record the verdict in `decisions/`. Ask the repo owner only for what needs their hands: credentials and secrets, GitHub or repo settings, spending money, and irreversible actions such as deleting data or rewriting main.
 
-Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by player pain, then unblock value, then cost.
+Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pain, then unblock value, then cost.
 
 ### Now
 
@@ -16,9 +16,9 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Agent playtests of the whole range are done: RT 3★ to Kelurahan 1★ (#323, `decisions/playtest-rt3-kel1.md`) and the Kelurahan to 3★ and into the Kecamatan (#327, `decisions/playtest-kel.md`). Nine fixes in all. Per the Approval rule above, the claiming agent signs it off from bot runs, the Nightly scorecard and CI.
   - Problem: T1 to T8 are merged and tuned from bot numbers only. Bots have played it but no person has.
   - Why: T8 left questions bots cannot answer: stage lengths are short of target (RW about 7 min against 20, Kelurahan about 16 against 30), and preman can sink Aman at the Kecamatan.
-  - Suggested solution: run the bots across the whole ladder, check each "For Hari" note in `decisions/smaller-map-balance.md` against GAME-DESIGN.md §8 and UI.md, fix what is clear, then log the verdict and changes in a new `decisions/` file. 
+  - Suggested solution: run the bots across the whole ladder, check each "Open notes" item in `decisions/smaller-map-balance.md` against GAME-DESIGN.md §8 and UI.md, fix what is clear, then log the verdict and changes in a new `decisions/` file. 
   - Source: `docs/plans/smaller-map.md`, task T9.
-  - `open · — · — · done when:` a decisions file records the agent's verdict and what it changes. No sign-off from Hari.
+  - `open · — · — · done when:` a decisions file records the agent's verdict and what it changes.
 
 ### Later
 
@@ -112,7 +112,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 - [x] **Dense housing pays: Rumah 3/4/5, Kos-kosan 10/14, Kontrakan 24/32.** #251, `docs/plans/executor-sonnet-batch.md` T2.
 - [x] **Take level-dependent numbers out of building blurbs.** #238, #239, #248, #249.
 - [x] **Ship the UI hierarchy plan: four button looks, Wacana list, setup screen.** T1 to T5 merged: #225, #230, #235, #240, #242.
-- [x] **Decide on Kecamatan and above from the playtest.** Act 2 in slices, Kecamatan first (`docs/plans/kecamatan-slice.md`); slice 1 is live, slice 2 waits on Hari's playtest.
+- [x] **Decide on Kecamatan and above from the playtest.** Act 2 in slices, Kecamatan first (`docs/plans/kecamatan-slice.md`); slice 1 is live, slice 2 waits on a playtest.
 - [x] **Dropped 2026-11-01: close the gap between the Kelurahan bot's 19 minutes and the 30-minute target.** Superseded by the smaller map and the Kecamatan pacing bands.
 - [x] **Dropped 2026-11-01: give idle warga more jobs at Desa.** Desa is cut (`docs/plans/cut-desa-code.md`).
 - [x] **Fix the balance failures on the scorecard (first wave).** RT 3★ is a 9 to 12 min band and builder lands at 10.2 min in 10 of 10 seeds; combo hint at week 12; Kecamatan dominated options (item 18, now Unknown); soft-lock takeovers 15 of 15; wifi pile death spiral fixed by capping combo stacking at 3; cheapskate bar is "never stranded"; nightly now runs in about 45 min and uploads its cache. #203, #210, #211, #212, #219, #224; `decisions/rt-3star-pace.md`, `decisions/combo-stack-cap.md`, `decisions/cheapskate-bar.md`. Proof: Nightly run 41262187917, 3 Pass, 12 Fail, 12 Unknown (was 4 / 13 / 10).
@@ -127,9 +127,9 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 - [x] **Replace 'Kini: do xx' with the pending goals for the next star.** The strip reads "★ berikutnya, N target lagi: ..."; tapping lists every unmet goal, then one next step when it helps. #178, `decisions/goal-strip-star-goals.md`.
 - [x] **Redo the staff page UI so it has far fewer buttons.** One card per person with one main button; stats, refuse, mutasi and let go in a detail view; one lowongan button per role. #179, `decisions/staff-cards.md`.
 - [x] **Add more buildings that raise Popularitas, so it is not just Pos Ronda.** Praktik Bidan, Panggung Senam and Kolam Pancing, with new art; a langgar was left out (no religious jokes). #180, `decisions/popularitas-buildings.md`.
-- [x] **Later buildings cost more, do more and look bigger.** Full table of every building's tier, cost, effect and size; seven buildings moved up; Kontrakan 2x2 with 12 beds, old saves kept. Built before Hari's sign-off, reviewed in the PR. #181, `decisions/building-ladder.md`.
+- [x] **Later buildings cost more, do more and look bigger.** Full table of every building's tier, cost, effect and size; seven buildings moved up; Kontrakan 2x2 with 12 beds, old saves kept. Built before sign-off, reviewed in the PR. #181, `decisions/building-ladder.md`.
 - [x] **Stat icons PR 2** and **Stat icons PR 3.** Plain escapes for Lubang Viral and the Orang Dalam person; English uses Orang Inside and Virality so the words become icons; the explainer keeps its word-plus-icon legend. #177, `decisions/stat-icons-2-3.md`.
-- [x] **Playtest the Kelurahan.** Bot playtest on seeds 1 to 4 with seven findings and a Kecamatan proposal. Hari's decision is the open task "Decide on Kecamatan and above from the playtest". #182, `decisions/kelurahan-playtest.md`.
+- [x] **Playtest the Kelurahan.** Bot playtest on seeds 1 to 4 with seven findings and a Kecamatan proposal. The decision is the open task "Decide on Kecamatan and above from the playtest". #182, `decisions/kelurahan-playtest.md`.
 - [x] **English e2e on a schedule.** Weekly workflow `e2e-en.yml` (Sundays 20:00 UTC, or by hand). #187, `decisions/e2e-en-schedule.md`.
 - [x] **Make the dev seeds look like a proper city.** Planned streets, a wide mix of kinds, road access for every building, checked by tests. Residents rose (45, 87, 60). #186, `decisions/city-seeds.md`.
 - [x] **Sejahtera must not reward an empty kampung.** A population ceiling on Sejahtera: 30 at none, 100 from 25 residents. #184, `decisions/sejahtera-cap.md`.
@@ -137,7 +137,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 - [x] **Add more buildings bigger than 1x1, starting with Balai RW at 2x2.** Reworked with Julian: 1x2 Kos-kosan, Bengkel, Posyandu, Pasar Kaget; 2x2 Koperasi and Balai RW; Lapangan 2x3 with year-round rent; Terminal the only 3x3. Long buildings turn 90 degrees. Square ones reuse their art at full size; long ones are built from the existing one-tile art, which is untouched. #173, `decisions/building-shapes.md`.
 - [x] **Force the update with a full-screen screen.** Option A: full screen on the home screen only, a dot and a Perbarui tile in Menu during play. #172, `decisions/id-text-and-update.md`.
 - [x] **Review the Bahasa Indonesia UI text (not event content).** Rows 1 to 15 of the proposals doc; row 16 stays Combo. #172.
-- [x] **Fit the tutorial dialogue to the game column on desktop.** Fitted in #151; Hari kept Skip on the first-build guide (UI.md rule 10 stands). `decisions/id-text-and-update.md`.
+- [x] **Fit the tutorial dialogue to the game column on desktop.** Fitted in #151; Skip kept on the first-build guide (UI.md rule 10 stands). `decisions/id-text-and-update.md`.
 - [x] **Vary the Kecamatan inspection by merging it into the other events.** Four teams as events (Kampung Bersih, Ketertiban, Kampung Sehat, Kampung Digital), each with its own criteria and shortcuts; never the same twice in a row. #168, `decisions/inspect-variants.md`.
 - [x] **Show money with the coin icon everywhere, and audit every screen for stat text.** The stat-icon renderer turns every "Rp" amount into the coin and the amount; icons inside buttons leave the tap to the button; the Neighbours row reads 1★. #170, `decisions/coin-icon.md` (audit table there).
 - [x] **HIGH PRIORITY: Let AI RTs build many more kinds of building** and **Explain how another RT wins the yearly competition.** Each trait wants 11 to 13 kinds, partners of half-built combos first; every trait finds 4 or more combos and reaches 3★. The Neighbours row shows each RT's score against this year's target and its parts. #162.

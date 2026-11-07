@@ -46,7 +46,7 @@ Kecamatan bot, `tests/kec-bot.test.ts` bars, weeks after promotion:
 
 3★ at week 425 is 56.7 min, inside the 45 to 70 band, and the district clock sets it. I ran this through a temporary test, because `tests/kec-bot.test.ts` writes to `/tmp`, which fails on Windows. The test's comment says it runs in the nightly job, but `nightly.yml` does not run it, so no CI run checks this result.
 
-## For Hari
+## Open notes
 
 - **Stage lengths are still short of the plan's targets, and no band moved.** The builder spends about 7 min at the RW (target about 20) and about 16 min at the Kelurahan (target about 30). The Kelurahan is longer than before, when it ran about 4 min to 2★.
 - **Kel 2★ and 3★ land at the same minute on nearly every bot** (33.1 and 38.4). Something on a fixed clock sets them, not how well the bot plays. I did not trace it, and it is worth a look in the playtest.
