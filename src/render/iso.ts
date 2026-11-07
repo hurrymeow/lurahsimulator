@@ -79,8 +79,22 @@ export class Painter {
     this.h = n === 1 ? TOP + ((fa + fb) * TH) / 2 : (TOP + TH) * n;
     this.ox0 = ((fb - 1) * TW) / 2;
     this.ox = this.ox0;
+    this.zs = n;
     this.data = new Uint8ClampedArray(this.w * this.h * 4);
     this.ids = new Uint16Array(this.w * this.h);
+  }
+
+  /**
+   * Pixels per unit of height. On a big square canvas heights scale with n like everything else,
+   * so a 2x2 comes out twice as tall; low() makes them native, so the building keeps the height of
+   * its 1x1 version and its size shows as width (ART.md: big buildings read wide, not tall).
+   */
+  zs: number;
+
+  /** Heights, wall rows and wall columns in native pixels: a big building as tall as a 1x1, and wider. */
+  low(): this {
+    this.zs = 1;
+    return this;
   }
 
   /** Draws the next pieces on tile (u, v) of a long footprint: u along the map's x axis, v along its y. */
@@ -109,7 +123,10 @@ export class Painter {
   /** One art pixel in one-tile coordinates: an n x n block on a big canvas. */
   set(x: number, y: number, c: string | null, alpha = 255): void {
     const n = this.n;
-    for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) this.px(x * n + dx + this.ox, y * n + dy + this.oy, c, alpha);
+    const zs = this.zs;
+    // Heights count from the ground centre, so a low big building keeps its details at their native height.
+    const Y = (TOP + TH / 2) * n + (y - (TOP + TH / 2)) * zs;
+    for (let dy = 0; dy < zs; dy++) for (let dx = 0; dx < n; dx++) this.px(x * n + dx + this.ox, Y + dy + this.oy, c, alpha);
   }
 
   /** Native ground centre, for drawing that follows the whole footprint (fences, kerbs). */
@@ -162,9 +179,10 @@ export class Painter {
     const n = this.n;
     const hw = (TW / 2 - inset * 2) * n;
     const hh = (TH / 2 - inset) * n;
-    const H = h * n;
+    const zs = this.zs;
+    const H = h * zs;
     const cx = (TW / 2) * n + this.ox;
-    const cy = (TOP + TH / 2 - z) * n + this.oy;
+    const cy = (TOP + TH / 2) * n - z * zs + this.oy;
     const base = (this.id += 3);
     const FACE_ID: Record<Face, number> = { L: base - 2, R: base - 1, T: base };
     for (let x = Math.floor(cx - hw); x < Math.ceil(cx + hw); x++) {
@@ -173,12 +191,12 @@ export class Painter {
       const t = left ? (px - (cx - hw)) / hw : (cx + hw - px) / hw;
       const yb = cy + t * hh;
       const u = left ? t : 1 - t;
-      const i = Math.floor((left ? x - Math.floor(cx - hw) : x - cx) / n);
+      const i = Math.floor((left ? x - Math.floor(cx - hw) : x - cx) / zs);
       for (let y = Math.floor(yb - H - hh); y <= Math.ceil(yb); y++) {
         const py = y + 0.5;
         const face: Face | null = py <= yb && py >= yb - H ? (left ? 'L' : 'R') : Math.abs(px - cx) / hw + Math.abs(py - (cy - H)) / hh <= 1 ? 'T' : null;
         if (!face) continue;
-        const j = face === 'T' ? 0 : Math.floor((yb - py) / n);
+        const j = face === 'T' ? 0 : Math.floor((yb - py) / zs);
         const p = paint(face, u, j, i);
         if (p === null) continue;
         this.id = FACE_ID[face];
@@ -197,9 +215,10 @@ export class Painter {
     // Clamped: a negative radius would flip the test and fill the whole box with a dark rectangle.
     const hw = Math.max(2, TW / 2 - inset * 2 + 2) * n;
     const hh = Math.max(1, TH / 2 - inset + 1) * n;
+    const zs = this.zs;
     const cx = (TW / 2) * n + this.ox;
-    const cy = (TOP + TH / 2 - h) * n + this.oy;
-    const apex = [cx, cy - rise * n];
+    const cy = (TOP + TH / 2) * n - h * zs + this.oy;
+    const apex = [cx, cy - rise * zs];
     const L = [cx - hw, cy];
     const F = [cx, cy + hh];
     const R = [cx + hw, cy];
@@ -216,11 +235,11 @@ export class Painter {
         for (let x = Math.floor(L[0]); x < Math.ceil(R[0]); x++)
           if (inTri(x + 0.5, y + 0.5, p, q, apex)) {
             // Tile courses every third row, with staggered joints, darker under each lip.
-            const ox = Math.floor(x / n);
-            const row = Math.floor((y - apex[1]) / n);
+            const ox = Math.floor(x / zs);
+            const row = Math.floor((y - apex[1]) / zs);
             const course = row % 3 === 2 ? 0.86 : row % 3 === 0 ? 1.06 : 1;
             const joint = row % 3 !== 2 && (ox + (Math.floor(row / 3) % 2) * 2) % 4 === 0 ? 0.93 : 1;
-            this.px(x, y, shade(paint(ox, Math.floor(y / n)) ?? colour, f * course * joint));
+            this.px(x, y, shade(paint(ox, Math.floor(y / zs)) ?? colour, f * course * joint));
           }
     }
   }
@@ -244,9 +263,10 @@ export class Painter {
     // Clamped: a negative radius would flip the test and fill the whole box with a dark rectangle.
     const hw = Math.max(2, TW / 2 - inset * 2 + 2) * n;
     const hh = Math.max(1, TH / 2 - inset + 1) * n;
+    const zs = this.zs;
     const cx = (TW / 2) * n + this.ox;
-    const cy = (TOP + TH / 2 - h) * n + this.oy;
-    const up = (p: number[]) => [p[0], p[1] - rise * n];
+    const cy = (TOP + TH / 2) * n - h * zs + this.oy;
+    const up = (p: number[]) => [p[0], p[1] - rise * zs];
     const mid = (a: number[], b: number[]) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
     const L = [cx - hw, cy];
     const F = [cx, cy + hh];
@@ -275,18 +295,18 @@ export class Painter {
       for (let y = Math.floor(top); y <= Math.ceil(Math.max(...ys)); y++)
         for (let x = Math.floor(Math.min(...xs)); x < Math.ceil(Math.max(...xs)); x++) {
           if (!tris.some(([a, b, c]) => inTri(x + 0.5, y + 0.5, a, b, c))) continue;
-          const ox = Math.floor(x / n);
-          const row = Math.floor((y - top) / n);
+          const ox = Math.floor(x / zs);
+          const row = Math.floor((y - top) / zs);
           if (isWall) {
             // Gable wall: plain, with a small roster vent near the peak.
-            const vent = row >= 2 && row <= 3 && Math.abs(ox - Math.floor(pts.reduce((s, q) => s + q[0], 0) / pts.length / n)) <= 1 && (ox + row) % 2 === 0;
+            const vent = row >= 2 && row <= 3 && Math.abs(ox - Math.floor(pts.reduce((s, q) => s + q[0], 0) / pts.length / zs)) <= 1 && (ox + row) % 2 === 0;
             this.px(x, y, shade(vent ? 'S' : wall, f));
             continue;
           }
           // Tile or zinc courses along the slope, as on the hipped roof.
           const course = row % 3 === 2 ? 0.86 : row % 3 === 0 ? 1.06 : 1;
           const joint = row % 3 !== 2 && (ox + (Math.floor(row / 3) % 2) * 2) % 4 === 0 ? 0.93 : 1;
-          this.px(x, y, shade(paint(ox, Math.floor(y / n)) ?? colour, f * course * joint));
+          this.px(x, y, shade(paint(ox, Math.floor(y / zs)) ?? colour, f * course * joint));
         }
     }
   }
@@ -307,9 +327,10 @@ export class Painter {
   blob(dx: number, up: number, r: number, colour: string): void {
     this.id++;
     const n = this.n;
+    const zs = this.zs;
     const cx = (TW / 2 + dx) * n + this.ox;
-    const cy = (TOP + TH / 2 - up) * n + this.oy;
-    const R = r * n;
+    const cy = (TOP + TH / 2) * n - up * zs + this.oy;
+    const R = r * zs;
     for (let y = Math.floor(cy - R); y <= Math.ceil(cy + R); y++)
       for (let x = Math.floor(cx - R); x <= Math.ceil(cx + R); x++) {
         const ex = (x + 0.5 - cx) / R;
@@ -318,7 +339,7 @@ export class Painter {
         if (d > 1) continue;
         // Cel light, then small leaf clusters: bright sprigs on the lit side, dark gaps in the shade.
         const light = ex + ey < -0.7 ? 1.3 : ex + ey > 0.5 ? 0.72 : 1;
-        const sp = speck(Math.floor(x / n), Math.floor(y / n));
+        const sp = speck(Math.floor(x / zs), Math.floor(y / zs));
         const leaf = sp < 0.12 && ex + ey < 0.2 ? 1.14 : sp > 0.9 && ex + ey > -0.4 ? 0.84 : 1;
         this.px(x, y, shade(colour, light * leaf));
       }
@@ -328,13 +349,14 @@ export class Painter {
   stroke(x0: number, y0: number, x1: number, y1: number, w: number, colour: string, id = true): void {
     if (id) this.id++;
     const n = this.n;
-    const W = w * n;
+    const zs = this.zs;
+    const W = w * zs;
     const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2 * n));
     const ox = (TW / 2) * n - Math.floor(W / 2) + this.ox;
     const oy = (TOP + TH / 2) * n - Math.floor(W / 2) + this.oy;
     for (let k = 0; k <= steps; k++) {
       const x = Math.round((x0 + ((x1 - x0) * k) / steps) * n);
-      const y = Math.round((y0 + ((y1 - y0) * k) / steps) * n);
+      const y = Math.round((y0 + ((y1 - y0) * k) / steps) * zs);
       for (let dy = 0; dy < W; dy++) for (let dx = 0; dx < W; dx++) this.px(ox + x + dx, oy + y + dy, colour);
     }
   }
@@ -840,8 +862,10 @@ const ART: Record<string, ArtFn> = {
     p.box(7, 3, 't', undefined, 8);
   },
   // Bamboo poles lashed with rope. Bare, so the ink pass does not turn the lattice into a black net.
+  // Bamboo scaffold round the site. Low on a big lot, so its poles and ties stay 1px and it stands as high as the building behind it.
   scaffold: (p) => {
     p.bare = true;
+    p.low();
     p.box(2, 13, 'a', (face, _u, j, i) => {
       if (face === 'T') return null;
       if (i % 6 === 0 && j % 4 === 0) return 'N';
@@ -852,18 +876,24 @@ const ART: Record<string, ArtFn> = {
   // Permit phase: the plot is staked out with string, nothing built yet. Bare, so the string stays one pixel thin.
   patok: (p) => {
     p.bare = true;
-    const corners: [number, number][] = [[-12, 0], [0, -6], [12, 0], [0, 6]];
-    // String round the plot, a little above the ground.
+    // Drawn in native pixels for any lot: string 1px thin, stakes 1px wide, more of them on a bigger plot.
+    const n = p.n;
+    const cx = (TW / 2) * n + p.ox;
+    const cy = (TOP + TH / 2) * n + p.oy;
+    const corners: [number, number][] = [[-12 * n, 0], [0, -6 * n], [12 * n, 0], [0, 6 * n]];
+    const stakes: [number, number][] = [];
+    // String round the plot, a little above the ground, with a stake at each corner and along each side.
     for (let c = 0; c < 4; c++) {
       const [x0, y0] = corners[c];
       const [x1, y1] = corners[(c + 1) % 4];
       const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
-      for (let k = 0; k <= steps; k++) p.set(TW / 2 + Math.round(x0 + ((x1 - x0) * k) / steps), TOP + TH / 2 + Math.round(y0 + ((y1 - y0) * k) / steps) - 2, 'w');
+      for (let k = 0; k <= steps; k++) p.px(cx + Math.round(x0 + ((x1 - x0) * k) / steps), cy + Math.round(y0 + ((y1 - y0) * k) / steps) - 2, 'w');
+      for (let m = 0; m < n; m++) stakes.push([Math.round(x0 + ((x1 - x0) * m) / n), Math.round(y0 + ((y1 - y0) * m) / n)]);
     }
-    // Wooden stakes at the corners, with a red-painted tip.
-    for (const [x, y] of corners) {
-      for (let k = 0; k < 4; k++) p.set(TW / 2 + x, TOP + TH / 2 + y - k, k === 3 ? 'r' : 'n');
-      p.set(TW / 2 + x + 1, TOP + TH / 2 + y, 'N');
+    // Wooden stakes with a red-painted tip.
+    for (const [x, y] of stakes) {
+      for (let k = 0; k < 4; k++) p.px(cx + x, cy + y - k, k === 3 ? 'r' : 'n');
+      p.px(cx + x + 1, cy + y, 'N');
     }
   },
   // Scenery. These never go in the tap list, so the tile under them stays buildable.

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { INK, Painter, paint, TOP, TH, TW } from '../src/render/iso';
 import { ROOF_COLOURS, ROOF_SHAPES, WALL_COLOURS } from '../src/render/sprites';
-import { allDefs } from '../src/sim/content';
+import { allDefs, sizeFor } from '../src/sim/content';
 
 /** Opaque pixels in one row, left to right, as brightness. */
 function row(p: Painter, data: Uint8ClampedArray, y: number): number[] {
@@ -150,5 +150,47 @@ describe('rumah roof shapes', () => {
 
   it('a one-letter variant still means a hipped roof in that colour, as old saves and icons use it', () => {
     expect(draw('G').join(',')).toBe(draw('Ght').join(','));
+  });
+});
+
+describe('big buildings read wide, not tall', () => {
+  /** How far the art stands above the back corner of its lot: the same measure on any footprint. */
+  const stand = (n: number, sprite: string, level = 1) => {
+    const p = new Painter(n);
+    paint(p, sprite, undefined, level);
+    const d = p.pixels();
+    for (let y = 0; y < p.h; y++) for (let x = 0; x < p.w; x++) if (d[(y * p.w + x) * 4 + 3] === 255) return TOP * n - y;
+    return 0;
+  };
+  // A tower, a billboard and parks with trees are the exceptions: they are tall by what they are.
+  const TALL = new Set(['wifi', 'baliho', 'taman', 'tamanKota']);
+  const defs = allDefs().filter((d) => !d.pathIncome && !TALL.has(d.id) && (d as { category?: string }).category !== 'decoration');
+  const square = (id: string) => sizeFor(id)[0] === sizeFor(id)[1];
+
+  it('no 2x2 or 3x3 stands taller over its lot than the tallest 1x1 building at the same level', () => {
+    const small = defs.filter((d) => sizeFor(d.id).join() === '1,1');
+    const big = defs.filter((d) => square(d.id) && sizeFor(d.id)[0] > 1);
+    expect(big.length).toBeGreaterThan(10);
+    for (let level = 1; level <= 3; level++) {
+      const bar = Math.max(...small.filter((d) => d.maxLevel >= level).map((d) => stand(1, d.sprite, level)));
+      for (const d of big.filter((b) => b.maxLevel >= level)) expect(stand(sizeFor(d.id)[0], d.sprite, level), `${d.id} level ${level} (bar ${bar})`).toBeLessThanOrEqual(bar);
+    }
+  });
+
+  it('the stakes and scaffold of a site keep 1px lines on any lot: no 2x2 block of one colour', () => {
+    for (const name of ['patok', 'scaffold'])
+      for (const n of [1, 2, 3]) {
+        const p = new Painter(n);
+        paint(p, name);
+        const d = p.pixels();
+        const at = (x: number, y: number) => (d[(y * p.w + x) * 4 + 3] === 255 ? d.slice((y * p.w + x) * 4, (y * p.w + x) * 4 + 3).join() : null);
+        let blocks = 0;
+        for (let y = 0; y + 1 < p.h; y++)
+          for (let x = 0; x + 1 < p.w; x++) {
+            const c = at(x, y);
+            if (c && c === at(x + 1, y) && c === at(x, y + 1) && c === at(x + 1, y + 1)) blocks++;
+          }
+        expect(blocks, `${name} at ${n}x${n}`).toBe(0);
+      }
   });
 });
