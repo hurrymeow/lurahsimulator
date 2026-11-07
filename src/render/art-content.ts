@@ -25,9 +25,6 @@ const shopfront = (wall: string, roof: string, awning: string, opts: { height?: 
 };
 
 export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: number) => void> = {
-  // Rumah Makan grows from a bakso cart to a warkop to a rumah makan, each the existing art for that stage.
-  // Level 2 is a lower warkop, drawn here beside the artist's, so the step from the cart stays within one storey.
-  rumahMakan: (p, v, level = 1) => (level === 2 ? shopfront('N', 'r', 'y', { shape: 'shed', height: 7 })(p) : CONTENT_ART[level >= 3 ? 'warteg' : 'gerobakBakso'](p, v)),
   // Selokan: a concrete channel across the tile, edge to edge so neighbours line up, with a plank bridge over it.
   // Bare, so the kerbs and their ink line are drawn here.
   drain: (p, v) => {
@@ -69,13 +66,6 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     p.box(6, 3, 'N');
     p.box(4, 2, 't', undefined, 3);
     p.box(6, 5, 'n', undefined, 5);
-  },
-  lampuTaman: (p) => {
-    p.shadow(9);
-    p.box(6, 2, 'S');
-    p.stroke(0, -2, 0, -22, 2, 'S');
-    p.blob(0, 24, 3.4, 'y');
-    p.blob(-1, 25, 1.4, 'w');
   },
   // Flat pond: bare, so it draws its own stone rim.
   kolamIkan: (p) => {
@@ -121,12 +111,6 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     p.blob(0, 18, 3, 'c');
     p.overlay.push(dither);
   },
-  patungIkon: (p) => {
-    p.shadow(6);
-    p.box(6, 7, 's', (face, _u, j) => (face !== 'T' && j === 5 ? 'S' : undefined));
-    p.box(7, 11, 'y', (face, _u, j) => (face !== 'T' && j > 7 ? 'a' : undefined), 7);
-    p.blob(0, 22, 4, 'y');
-  },
 
   // Farm. Flat plots are bare and draw their own pematang edge so neighbouring plots join up.
   kebunSayur: (p) => {
@@ -171,30 +155,6 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
 
   // Shops and facilities share the shopfront shape and differ in colour and one sign detail.
   // Each shop type has its own roof, so a row of shops reads as a street, not one copy.
-  warteg: shopfront('t', 'G', 'g', { shape: 'gable' }),
-  warkop: shopfront('N', 'r', 'y', { shape: 'shed' }),
-  tokoKelontong: shopfront('y', 'o', 'r', { height: 9, rise: 5 }),
-  fotokopi: (p) => {
-    shopfront('w', 'B', 'b', { shape: 'flat' })(p);
-    p.blob(-7, 14, 2, 'a');
-  },
-  barbershop: (p) => {
-    shopfront('c', 'R', 'w', { shape: 'shed' })(p);
-    // The barber pole: red and white bands on a short post.
-    for (let k = 0; k < 8; k++) p.set(TW / 2 + 10, TOP + TH / 2 - 2 - k, k % 4 < 2 ? 'r' : 'w');
-    p.set(TW / 2 + 10, TOP + TH / 2 - 10, 'b');
-  },
-  bengkel: (p) => {
-    shopfront('S', 'b', 'o', { height: 9, rise: 4, door: 'k', shape: 'gable' })(p);
-    p.box(9, 4, 'k', undefined, 0);
-  },
-  apotek: (p) => {
-    shopfront('w', 'g', 'g', { shape: 'flat' })(p);
-    // A red cross over the door.
-    const x = TW / 2 - 5;
-    const y = TOP + TH / 2 - 11;
-    for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]]) p.set(x + dx, y + dy, 'r');
-  },
   koperasi: (p) => {
     // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
     p.low();
@@ -309,13 +269,5 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     });
     // Row houses share one long shed roof.
     p.roofShape('shed', 1, 9, 4, 'R', 'a');
-  },
-  gerobakBakso: (p) => {
-    p.shadow(8);
-    p.box(7, 5, 'r', (face, u, j) => (face === 'L' && within(u, 0.2, 0.8) && j === 3 ? 'y' : undefined), 3);
-    p.box(9, 2, 'w', undefined, 8);
-    p.stroke(-6, -3, -12, -4, 2, 'n');
-    p.blob(-4, 2, 2, 'k');
-    p.blob(5, 2, 2, 'k');
   },
 };

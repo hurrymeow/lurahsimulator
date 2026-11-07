@@ -148,57 +148,78 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
     p.box(8, 3, 'r', undefined, 9);
   },
   // Kecamatan
+  // The four Kecamatan offices each get their own outline, so a row of them never reads as one
+  // building copied: a flat block with a corner clock tower, a post with a lookout on its roof, a long pelana,
+  // and a workshop hall with a raised monitor roof.
   kantorKec: (p) => {
     // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    // A long flat-roofed office block with a clock tower Stacked on one corner.
     p.low();
     p.shadow(1);
-    p.box(1, 12, 'w', (face, u, j, i) => {
-      if (face === 'L' && within(u, 0.42, 0.6) && j < 8) return 'k';
+    p.box(1, 9, 'w', (face, u, j, i) => {
       if (j < 1) return 'S';
-      if (face !== 'T' && j === 11) return 'o';
-      return windows(face, u, j, i, [3, 9]);
+      if (face !== 'T' && j === 8) return 'o';
+      if (face === 'L' && within(u, 0.44, 0.58) && j < 6) return 'k';
+      return windows(face, u, j, i, [2, 6]);
     });
-    p.roof(1, 12, 14, 'S', (x) => (Math.floor(x / 4) % 2 ? 'b' : undefined));
+    p.roofShape('flat', 1, 9, 0, 's', 'w');
+    // A clock tower on the front-right street corner carries the flag, so its outline is never the Kelurahan's centred roof.
+    p.at(1, 0);
+    p.box(6, 10, 'w', (face, u, j) => (face !== 'T' && j === 6 && within(u, 0.3, 0.7) ? 'y' : face !== 'T' && within(j, 2, 5) && within(u, 0.35, 0.65) ? 'l' : undefined), 9);
+    p.roof(6, 19, 4, 'R');
+    const ax = 16;
+    const ay = 40 + TH / 2 - 19 - 7;
+    for (let k = 1; k <= 5; k++) p.set(ax, ay - k, 'k');
+    for (let k = 1; k <= 3; k++) for (const dy of [5, 4]) p.set(ax + k, ay - dy, dy === 5 ? 'r' : 'w');
+    p.at(0, 0);
   },
   posSatpol: (p) => {
     // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    // A khaki post under a flat dak, a lookout cabin Lifted onto the roof and a radio mast.
     p.low();
     p.shadow(3);
-    // A khaki post with a blue stripe and a barred window.
-    p.box(3, 10, 'y', (face, u, j) => {
+    p.box(3, 9, 'y', (face, u, j) => {
       if (face === 'T') return undefined;
       if (j < 1) return 'N';
       if (face === 'L' && within(u, 0.4, 0.6) && j < 7) return 'k';
-      if (j === 8) return 'b';
-      if (face === 'R' && within(u, 0.3, 0.7) && within(j, 3, 6)) return 'l';
+      if (j === 7) return 'b';
+      if (face === 'R' && within(u, 0.3, 0.7) && within(j, 3, 6)) return 'S';
       return undefined;
     });
-    p.roof(3, 10, 12, 'b');
+    p.roofShape('flat', 3, 9, 0, 's', 'y');
+    p.box(7, 5, 'y', (face, _u, j, i) => (face !== 'T' && within(j, 2, 4) && i % 3 ? 'l' : undefined), 11);
+    p.roof(7, 16, 3, 'b');
+    p.stroke(9, -11, 9, -24, 1, 'S');
+    p.set(32 / 2 + 9, 40 + TH / 2 - 25, 'r');
   },
   koperasiSP: (p) => {
     // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    // One long, low pelana over the hall, its gable end to the street, a canopy on posts over the door.
     p.low();
     p.shadow(2);
-    p.box(2, 11, 'g', (face, u, j, i) => {
+    p.box(2, 9, 'g', (face, u, j, i) => {
       if (face === 'T') return undefined;
       if (j < 1) return 'N';
       if (face === 'L' && within(u, 0.4, 0.6) && j < 7) return 'k';
-      if (j >= 9) return 'y';
-      return windows(face, u, j, i, [2, 7]);
+      if (j >= 7) return 'y';
+      return windows(face, u, j, i, [2, 6]);
     });
-    p.roof(2, 11, 12, 'o');
+    p.roofShape('gable', 2, 9, 6, 'o', 'g');
   },
   balaiLatihanKerja: (p) => {
     // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
+    // A workshop hall: a zinc pelana with a raised monitor roof along the ridge to light the benches.
     p.low();
     p.shadow(2);
-    p.box(2, 12, 'c', (face, u, j, i) => {
+    p.box(2, 9, 'c', (face, u, j, i) => {
       if (face === 'T') return undefined;
       if (j < 1) return 'S';
-      if (face === 'L' && within(u, 0.42, 0.6) && j < 7) return 'k';
-      return windows(face, u, j, i, [3, 9]);
+      if (face === 'L' && within(u, 0.3, 0.7) && j < 7) return j >= 5 ? (i % 2 ? 's' : 'S') : 'k';
+      return windows(face, u, j, i, [3, 7]);
     });
-    p.roof(2, 12, 12, 'S', (x) => (Math.floor(x / 3) % 2 ? 'y' : undefined));
+    p.roofShape('gableY', 2, 9, 5, 'S', 'c', (x) => (x % 2 ? 's' : undefined));
+    p.box(6, 3, 'c', (face, _u, j, i) => (face !== 'T' && j === 1 && i % 2 ? 'l' : undefined), 12);
+    p.roofShape('gableY', 6, 15, 2, 'S', 'c', (x) => (Math.floor(x / 3) % 2 ? 'y' : undefined));
   },
   baliho: (p) => {
     p.shadow(6);

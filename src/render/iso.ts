@@ -5,6 +5,7 @@ import { CONTENT_ART } from './art-content';
 import { HIGHER_ART } from './art-higher';
 import { warungArt } from './warung-art';
 import { PALETTE } from './sprites';
+import { TOKO_ART } from './toko-art';
 
 /** Art-pixel size of one ground diamond. The view scales these up by a whole number. */
 export const TW = 32;
@@ -192,7 +193,8 @@ export class Painter {
       const yb = cy + t * hh;
       const u = left ? t : 1 - t;
       const i = Math.floor((left ? x - Math.floor(cx - hw) : x - cx) / zs);
-      for (let y = Math.floor(yb - H - hh); y <= Math.ceil(yb); y++) {
+      // From the top face's back corner, which sits hh above the top's centre whatever column this is.
+      for (let y = Math.floor(cy - H - hh); y <= Math.ceil(yb); y++) {
         const py = y + 0.5;
         const face: Face | null = py <= yb && py >= yb - H ? (left ? 'L' : 'R') : Math.abs(px - cx) / hw + Math.abs(py - (cy - H)) / hh <= 1 ? 'T' : null;
         if (!face) continue;
@@ -522,37 +524,13 @@ function upgradeKit(p: Painter, level: number): void {
   p.px(gx + gate + 3, fy - 8, 'y');
 }
 
-function minimarket(bands: string[]): (p: Painter, v?: string, level?: number) => void {
-  return (p, _v, level = 1) => {
-    p.shadow(1);
-    p.box(1, 15, 'w', (face, u, j, i) => {
-      if (face === 'T') return j === 0 && (u < 0.06 || u > 0.94) ? 'S' : 's';
-      if (j >= 11) return bands[14 - j] ?? 'w';
-      if (face === 'L' && within(u, 0.42, 0.62) && j < 7) return j === 6 ? 'S' : 'k';
-      if (j >= 2 && j <= 8) return i % 4 === 0 ? 'w' : 'c';
-      return undefined;
-    });
-    if (level >= 2) {
-      // A tiang reklame by the road in the shop's colours, lower than the roof, and an ATM column at the
-      // other corner. The shop reads as the busy branch without growing taller.
-      // Both stand on the shop's own tile (UI.md rule 17).
-      p.stroke(-12, 1, -12, -12, 1, 'S');
-      p.stroke(-13, -18, -11, -13, 3, bands[0]);
-      p.stroke(-13, -15, -11, -14, 3, bands[2] ?? bands[1], false);
-      p.stroke(9, 1, 9, -7, 3, 'S');
-      p.set(TW / 2 + 9, TOP + TH / 2 - 6, 'c');
-      p.set(TW / 2 + 10, TOP + TH / 2 - 6, 'c');
-    }
-  };
-}
-
 type ArtFn = (p: Painter, variant?: string, level?: number) => void;
 
 /** Roof shape keys a rumah variant can carry, second after the roof colour. */
 const ROOF_KEYS: Record<string, RoofShape> = { h: 'hip', g: 'gable', y: 'gableY', s: 'shed', f: 'flat' };
 
 /** Sprites that draw their own level progression. Everything else gets the upgrade kit. */
-const LEVELLED = new Set(['rumah', 'warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart', 'rumahMakan']);
+const LEVELLED = new Set(['rumah', 'warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart', 'rumahMakan', 'fotokopi', 'apotek', 'barbershop', 'bengkel']);
 /** Ground pieces and the tukang parkir level up without a fence round them. */
 const NO_KIT = new Set(['parkir', 'biopori', 'drain', 'kebunSayur', 'sawah', 'kolamLele', 'kolamIkan', 'taman', 'aspalUlang', 'jalan', 'selokan']);
 
@@ -850,8 +828,6 @@ const ART: Record<string, ArtFn> = {
     p.stroke(6, 1, 6, 1, 2, 'k');
     p.stroke(10, -1, 10, -1, 2, 'k');
   },
-  indomaret: minimarket(['B', 'b', 'r', 'y']),
-  alfamart: minimarket(['r', 'y', 'B', 'B']),
   parkir: (p) => {
     p.ground((a, b) => {
       if (a < 0.08 || a > 0.92 || b < 0.08 || b > 0.92) return null;
@@ -996,7 +972,7 @@ export const LONG_ART: Record<string, ArtFn> = {
   // The workshop, and an open bay with a car up for repair on the concrete.
   bengkel: (p, v, level) => {
     p.at(0, 0);
-    CONTENT_ART.bengkel(p, v, level);
+    TOKO_ART.bengkel(p, v, level);
     p.at(1, 0);
     p.ground((a, b, px) => (Math.min(a, b, 1 - a, 1 - b) < px ? 'S' : 's'));
     p.box(5, 3, 'r', (face, u, j) => (face !== 'T' && j === 0 && (within(u, 0.15, 0.3) || within(u, 0.7, 0.85)) ? 'k' : undefined), 1);
@@ -1024,7 +1000,7 @@ const cache = new Map<string, Art>();
 
 /** Paints a sprite at a level: its own level art if it has some, otherwise the base art plus the upgrade kit. */
 export function paint(p: Painter, name: string, variant?: string, level = 1): void {
-  const fn: ArtFn = ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's'));
+  const fn: ArtFn = TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's'));
   fn(p, variant, level);
   if (!LEVELLED.has(name) && !NO_KIT.has(name) && !p.bare && level > 1) p.overlay.push((q) => upgradeKit(q, level));
 }
@@ -1048,7 +1024,7 @@ export function iso(name: string, variant?: string, n = 1, level = 1, fa = 1, fb
           const v = d - u;
           if (v < 0 || v >= fb) continue;
           p.at(u, v);
-          (ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant, level);
+          (TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant, level);
         }
     const art = p.finish();
     cache.set(key, art);
