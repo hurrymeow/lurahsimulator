@@ -12,15 +12,21 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Next
 
-- [ ] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).**
-  - Agent playtests of the whole range are done: RT 3★ to Kelurahan 1★ (#323, `decisions/playtest-rt3-kel1.md`) and the Kelurahan to 3★ and into the Kecamatan (#327, `decisions/playtest-kel.md`). Nine fixes in all. Per the Approval rule above, the claiming agent signs it off from bot runs, the Nightly scorecard and CI.
-  - Problem: T1 to T8 are merged and tuned from bot numbers only. Bots have played it but no person has.
-  - Why: T8 left questions bots cannot answer: stage lengths are short of target (RW about 7 min against 20, Kelurahan about 16 against 30), and preman can sink Aman at the Kecamatan.
-  - Suggested solution: run the bots across the whole ladder, check each "Open notes" item in `decisions/smaller-map-balance.md` against GAME-DESIGN.md §8 and UI.md, fix what is clear, then log the verdict and changes in a new `decisions/` file. 
-  - Source: `docs/plans/smaller-map.md`, task T9.
-  - `open · — · — · done when:` a decisions file records the agent's verdict and what it changes.
-
 ### Later
+
+- [ ] **Stage lengths, and stars that wait on the yearly ranking.**
+  - Problem: the RW takes 7 to 12 min (target about 20) and the Kelurahan 14 to 19 min (target about 30). Kel 2★ and 3★, and Kec 2★ and 3★, need yearly ranking wins, so they land on the same week for every bot. The Kecamatan waits about 23 min between goal lines.
+  - Why: a star the calendar sets ignores how well the player plays (GAME-DESIGN.md §8 items 4 and 10). Short stages leave the late content thin.
+  - Suggested solution: decide per stage whether a tier-win goal should count quarterly rankings, ask for fewer yearly wins, or be paired with goals that skill moves. Then retune the stage goals toward the length targets. Prove each change with the nine player types against main.
+  - Source: `decisions/smaller-map-T9.md`, notes 1, 2 and 5
+  - `open · — · — · done when:` each stage is inside its length band, or a decisions file says why not, and no star lands on the same week for every bot.
+
+- [ ] **Run the scorecard bots with the road rule on.**
+  - Problem: `tests/setup.ts` turns the road rule off for every test, the scorecard included. Bot buildings work without a path, so bots have more room than a player and the numbers flatter the game.
+  - Why: the scorecard judges balance for real play.
+  - Suggested solution: turn the rule on for the scorecard runs (`tests/scorecard/`), teach the driver to lay a path when a spot has none, and compare the nine player types before and after.
+  - Source: `decisions/smaller-map-T9.md`, note 4; `decisions/smaller-map-balance.md`
+  - `open · — · — · done when:` the scorecard runs with the road rule on and its numbers are refreshed.
 
 - [ ] **Scorecard row 27: the goal's progress is a tap away.**
   - Problem: row 27 reads Fail since #356. GAME-DESIGN.md §8 item 27 asks for "current goal and its progress on screen within 5s". `decisions/goal-line-one-goal.md` keeps have and need off the closed goal pill, so after a reload the goal shows but its progress needs a tap.
@@ -63,6 +69,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ## Done
 
+- [x] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).** The agent's verdict: playable end to end; every climbing bot reaches Kelurahan 3★ on every seed, and the Kecamatan bot reaches 3★ in 57 min. The Aman goal now names the preman fix. Pacing and the road rule are new items above. #358, `decisions/smaller-map-T9.md`.
 - [x] **The scorecard harness reads the T2 specs (scorecard follow-ups, part 2).** `npm run scorecard:t2` runs `tests/e2e/scorecard-t2.spec.ts` at 412px in id and en into the scorecard cache, and a new nightly job runs it. Rows 3, 6 and 27 now read Pass, Pass and Fail instead of Unknown. The row 6 spec no longer flakes on a pending event. #356, `decisions/scorecard-t2-harness.md`.
 - [x] **Visual baselines no longer flip with runner speed.** `page.clock.install` kept time running in real time, so the welcome toast was in or out of the HUD, event and tip shots depending on load. `visual.spec.ts` now pauses the clock after load, so only `settle` moves time. Passed CI first time with no baseline refresh; since then the baselines have failed only on PRs that changed the screen, the same on every retry. #281, `progress/visual-clock-pause.md`.
 - [x] **Low and wide 2x2 art, and native-size cranes on big sites.** `Painter.low()` keeps heights native on big lots: 15 big buildings stand no taller than a 1x1 and read wide; stakes and scaffold keep 1px lines on any lot (the crane went in #256). `tests/art.test.ts` checks both. #343, `decisions/wide-2x2-art.md`.
