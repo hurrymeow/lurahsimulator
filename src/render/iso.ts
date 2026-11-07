@@ -5,6 +5,7 @@ import { CONTENT_ART } from './art-content';
 import { HIGHER_ART } from './art-higher';
 import { warungArt } from './warung-art';
 import { PALETTE } from './sprites';
+import { KAMPUNG_ART, posyanduLong } from './kampung-art';
 import { TOKO_ART } from './toko-art';
 
 /** Art-pixel size of one ground diamond. The view scales these up by a whole number. */
@@ -530,11 +531,15 @@ type ArtFn = (p: Painter, variant?: string, level?: number) => void;
 const ROOF_KEYS: Record<string, RoofShape> = { h: 'hip', g: 'gable', y: 'gableY', s: 'shed', f: 'flat' };
 
 /** Sprites that draw their own level progression. Everything else gets the upgrade kit. */
-const LEVELLED = new Set(['rumah', 'warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart', 'rumahMakan', 'fotokopi', 'apotek', 'barbershop', 'bengkel']);
+const LEVELLED = new Set(['rumah', 'warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart', 'rumahMakan', 'fotokopi', 'apotek', 'barbershop', 'bengkel', 'gapura', 'portal', 'posyandu']);
 /** Ground pieces and the tukang parkir level up without a fence round them. */
 const NO_KIT = new Set(['parkir', 'biopori', 'drain', 'kebunSayur', 'sawah', 'kolamLele', 'kolamIkan', 'taman', 'aspalUlang', 'jalan', 'selokan']);
 
+/** Portal: the boom gate, then a booth and striped pillars at level 2. */
+const portal: ArtFn = (p, v, level = 1) => (level >= 2 ? KAMPUNG_ART.portal2(p, v, level) : HIGHER_ART.portal(p));
+
 const ART: Record<string, ArtFn> = {
+  portal,
   // A house in a perumahan. The variant is up to three keys: roof colour, roof shape (h hip, g and
   // y pelana, s shed, f flat dak) and wall colour. Every house has a band of roster vents under the
   // eave and weep holes along its base; the minimalis ones (shed, flat) get batu alam cladding, and a
@@ -642,23 +647,23 @@ const ART: Record<string, ArtFn> = {
       }
       return;
     }
-    p.shadow(1);
-    p.box(1, 11, 'w', (face, u, j, i) => {
-      if (face === 'L' && within(u, 0.42, 0.6) && j < 7) return 'k';
+    // Level 2 is the office proper, smaller and lower than the level 3 pendopo: a whitewashed room
+    // under a red hip, the flag on its ridge.
+    p.shadow(2);
+    p.box(3, 9, 'w', (face, u, j, i) => {
+      if (face === 'L' && within(u, 0.42, 0.6) && j < 6) return 'k';
       if (j < 1) return 'S';
-      if (within(j, 4, 8) && i % 5 >= 2 && !(face === 'L' && within(u, 0.36, 0.66))) return 'l';
+      if (within(j, 3, 7) && i % 5 >= 2 && !(face === 'L' && within(u, 0.36, 0.66))) return 'l';
       return undefined;
     });
-    p.roof(1, 11, 9, 'R');
+    p.roof(3, 9, 6, 'R');
     // Flag pole on the ridge: red over white. Short, so the Kantor never hides the houses behind it.
     const ax = TW / 2;
-    const ay = TOP + TH / 2 - 11 - 9;
+    const ay = TOP + TH / 2 - 9 - 6;
     for (let k = 1; k <= 5; k++) p.set(ax, ay - k, 'k');
-    for (let k = 1; k <= 4; k++) {
+    for (let k = 1; k <= 3; k++) {
       p.set(ax + k, ay - 5, 'r');
-      p.set(ax + k, ay - 4, 'r');
-      p.set(ax + k, ay - 3, 'w');
-      p.set(ax + k, ay - 2, 'w');
+      p.set(ax + k, ay - 4, 'w');
     }
   },
   // Warung tenda, then a gerobak under a zinc lean-to, then a brick toko kelontong (warung-art.ts).
@@ -926,14 +931,6 @@ const ART: Record<string, ArtFn> = {
     p.blob(tx - 1, -ty - 1, 2, 'n');
     p.blob(tx + 2, -ty - 2, 2, 'n');
   },
-  pohon: (p) => {
-    p.shadow(3);
-    p.box(6, 9, 'N', (face, _u, j) => (face !== 'T' && j === 5 ? 'n' : undefined));
-    // Three overlapping clumps make one full crown.
-    p.blob(-6, 17, 7, 'G');
-    p.blob(6, 18, 7, 'G');
-    p.blob(0, 24, 9, 'g');
-  },
 };
 
 /**
@@ -959,16 +956,8 @@ export const LONG_ART: Record<string, ArtFn> = {
     p.at(1, 0);
     ART.kosan(p, v, level);
   },
-  // The clinic, and a shaded waiting porch with a bench for the queue.
-  posyandu: (p) => {
-    p.at(0, 0);
-    HIGHER_ART.posyandu(p);
-    p.at(1, 0);
-    p.shadow(3);
-    p.box(7, 2, 'n', (face) => (face === 'T' ? 'N' : undefined));
-    posts(p, 3, 8, 'n');
-    p.roofShape('shed', 3, 8, 3, 'p', 't');
-  },
+  // The posyandu and its yard, by level: a tarp and the dacin, then the clinic with a porch, then a bigger clinic with a sign.
+  posyandu: posyanduLong,
   // The workshop, and an open bay with a car up for repair on the concrete.
   bengkel: (p, v, level) => {
     p.at(0, 0);
@@ -996,11 +985,16 @@ export const LONG_ART: Record<string, ArtFn> = {
   },
 };
 
+/** True when a sprite name has its own art in any table, rather than the plain fallback box. */
+export function hasArt(name: string): boolean {
+  return !!(KAMPUNG_ART[name] ?? TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name]);
+}
+
 const cache = new Map<string, Art>();
 
 /** Paints a sprite at a level: its own level art if it has some, otherwise the base art plus the upgrade kit. */
 export function paint(p: Painter, name: string, variant?: string, level = 1): void {
-  const fn: ArtFn = TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's'));
+  const fn: ArtFn = KAMPUNG_ART[name] ?? TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's'));
   fn(p, variant, level);
   if (!LEVELLED.has(name) && !NO_KIT.has(name) && !p.bare && level > 1) p.overlay.push((q) => upgradeKit(q, level));
 }
@@ -1024,7 +1018,7 @@ export function iso(name: string, variant?: string, n = 1, level = 1, fa = 1, fb
           const v = d - u;
           if (v < 0 || v >= fb) continue;
           p.at(u, v);
-          (TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant, level);
+          (KAMPUNG_ART[name] ?? TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant, level);
         }
     const art = p.finish();
     cache.set(key, art);

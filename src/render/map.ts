@@ -917,6 +917,7 @@ export class MapView {
       px(-1, -36, '#fca5a5');
       px(0, -36, '#ef4444');
     } else if (b.def === 'warung' && this.effects) this.fx.steam(b.x, b.y, now);
+    else if (b.def === 'kolamLele' || b.def === 'kolamPancing') this.fish(ctx, b, now);
     else if (b.def === 'rumah' && this.night > 0) {
       // Windows light up after dark. They draw over the night tint, so note which buildings sit in front.
       for (const [x, y] of [[-8, -5], [2, -3], [6, -5]]) this.lights.push({ x: Math.round(c.x + (b.rot ? -x : x) * s), y: Math.round(c.y + y * s), after: this.hits.length });
@@ -928,6 +929,56 @@ export class MapView {
       for (const [x, y] of arm) px(x, y, '#ea580c');
       const hand = up ? [3, -11] : [5, -10];
       px(hand[0], hand[1], '#d6b38a');
+    }
+  }
+
+  /**
+   * Fish swimming in a pond, drawn over its art: dark lele with whiskers in a kolam lele, orange and
+   * silver fish in a kolam pancing. Each swims its own slow loop inside the pond, faces the way it goes
+   * and flicks its tail; a lele now and then breaks the surface in a ring. They hold still with reduce motion.
+   */
+  private fish(ctx: CanvasRenderingContext2D, b: Building, now: number): void {
+    const n = sizeFor(b.def)[0];
+    const c0 = this.tileCentre(b.x, b.y);
+    const s = this.scale;
+    const cx = c0.x;
+    const cy = c0.y + (n - 1) * (TH / 2) * s;
+    const lele = b.def === 'kolamLele';
+    const count = lele ? 3 : 2 + 2 * n;
+    const rx = (lele ? 8 : 9) * n;
+    const t = this.motion ? now / 1000 : 0;
+    const px = (x: number, y: number, col: string) => {
+      ctx.fillStyle = col;
+      ctx.fillRect(Math.round(cx + x * s), Math.round(cy + y * s), s, s);
+    };
+    for (let k = 0; k < count; k++) {
+      const speed = (lele ? 0.35 : 0.6) * (k % 2 ? 1 : -1) * (0.8 + 0.15 * k);
+      const th = b.uid * 1.7 + k * 2.1 + t * speed;
+      const r = 0.35 + 0.5 * (((k * 37) % 10) / 10);
+      const x = Math.round(Math.cos(th) * rx * r);
+      const y = Math.round(Math.sin(th) * (rx / 2) * r);
+      const f = -Math.sin(th) * speed > 0 ? 1 : -1;
+      const flick = this.motion && Math.floor(now / 180 + k) % 2 ? 1 : 0;
+      if (lele) {
+        // A long dark body with a pale belly, a broad flat head, whiskers and a flicking tail.
+        for (let i = -2; i <= 3; i++) {
+          px(x + i * f, y, i >= 2 ? '#3a322c' : '#4f463d');
+          if (i > -2) px(x + i * f, y + 1, i >= 2 ? '#4f463d' : '#a39478');
+        }
+        px(x - 3 * f, y - flick, '#3a322c');
+        px(x - 3 * f, y + 1 - flick, '#3a322c');
+        px(x + 4 * f, y - 1, '#2a1810');
+        px(x + 4 * f, y + 2, '#2a1810');
+        // Now and then a lele comes up for air: a pale ring on the water.
+        const up = this.motion && (t + k * 1.3 + b.uid) % 5 < 0.6;
+        if (up) for (const [dx, dy] of [[-2, 0], [2, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [1, -1], [-1, 1]]) px(x + dx, y - 2 + dy, 'rgba(240, 248, 255, 0.7)');
+      } else {
+        const body = k % 3 === 1 ? '#d8dde0' : '#e57d2e';
+        const dark = k % 3 === 1 ? '#9aa3a8' : '#a8321f';
+        for (let i = -1; i <= 2; i++) px(x + i * f, y, i === 2 ? dark : body);
+        px(x - 2 * f, y - flick, dark);
+        px(x - 2 * f, y + 1 - flick, dark);
+      }
     }
   }
 

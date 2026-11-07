@@ -137,12 +137,37 @@ const warteg: Level = (p) => {
 // ---------------------------------------------------------------- Minimarkets
 
 /**
- * The two minimarket chains, told apart by silhouette as well as colour. IndoApril is a flat dak with a
- * nameboard Extruded off the roof and the chain's blue band over red and yellow stripes. BetaMart wears
- * a low red mansard over a deep red fascia and a blue band, with a red canopy Shifted out over the door.
- * Level 1 is a small branch, level 2 the full store with a pylon sign and an ATM.
+ * The two minimarket chains share one silhouette, as the real ones share a template: a white box under
+ * a flat dak, a box sign on the roof, glass along the front, and at level 2 a pylon sign and an ATM.
+ * They differ in colour and pattern only. IndoApril runs a blue band over red and yellow stripes with
+ * close-set blue mullions; BetaMart a deep red fascia with a white strip, a yellow line over a blue
+ * base band, and wider-set red mullions. Level 1 is a small branch, level 2 the full store.
  */
-function indoApril(level: number): Level {
+interface Chain {
+  fascia: (j: number, h: number) => string | undefined;
+  mullion: (i: number) => string;
+  base: string;
+  sign: (j: number, i: number) => string;
+  pylon: (r: number) => string;
+}
+
+const INDO: Chain = {
+  fascia: (j, h) => (j >= h - 3 ? (j === h - 1 ? 'B' : 'b') : j === h - 4 ? 'r' : j === h - 5 ? 'y' : undefined),
+  mullion: (i) => (i % 4 === 0 ? 'B' : 'c'),
+  base: 'S',
+  sign: (j, i) => (j === 0 ? 'y' : j === 1 ? 'r' : j >= 3 && i % 3 === 1 ? 'w' : 'b'),
+  pylon: (r) => (r < 3 ? 'b' : r === 3 ? 'r' : 'y'),
+};
+
+const BETA: Chain = {
+  fascia: (j, h) => (j >= h - 3 ? (j === h - 2 ? 'w' : 'r') : j === h - 4 ? 'y' : j === h - 5 ? 'B' : undefined),
+  mullion: (i) => (i % 6 === 0 ? 'r' : i % 6 === 3 ? 'w' : 'c'),
+  base: 'B',
+  sign: (j, i) => (j === 0 ? 'B' : j === 1 ? 'y' : j >= 3 && (i % 4 === 0) ? 'w' : 'r'),
+  pylon: (r) => (r < 3 ? 'r' : r === 3 ? 'y' : 'B'),
+};
+
+function minimarket(chain: Chain, level: number): Level {
   return (p) => {
     const big = level >= 2;
     const inset = big ? 1 : 3;
@@ -150,56 +175,18 @@ function indoApril(level: number): Level {
     p.shadow(inset);
     p.box(inset, h, 'w', (face, u, j, i) => {
       if (face === 'T') return undefined;
-      // The fascia: blue band, a red stripe, a yellow stripe.
-      if (j >= h - 3) return j === h - 1 ? 'B' : 'b';
-      if (j === h - 4) return 'r';
-      if (j === h - 5) return 'y';
-      if (j === 0) return 'S';
-      if (face === 'L' && within(u, 0.44, 0.62) && j < h - 6) return j === h - 7 ? 'B' : 'k';
-      if (j >= 1 && j <= h - 6) return i % 4 === 0 ? 'B' : 'c';
+      const f = chain.fascia(j, h);
+      if (f) return f;
+      if (j === 0) return chain.base;
+      if (face === 'L' && within(u, 0.44, 0.62) && j < h - 6) return j === h - 7 ? chain.base : 'k';
+      if (j >= 1 && j <= h - 6) return chain.mullion(i);
       return undefined;
     });
     p.roofShape('flat', inset, h, 0, 's', 'w');
-    // A box sign on the roof: blue with the stripes under it.
-    p.box(inset + 3, big ? 6 : 5, 'b', (face, _u, j, i) => (face === 'T' ? 'B' : j === 0 ? 'y' : j === 1 ? 'r' : j >= 3 && face === 'L' && i % 3 === 1 ? 'w' : 'b'), h + 1);
+    p.box(inset + 3, big ? 6 : 5, 'w', (face, _u, j, i) => (face === 'T' ? chain.sign(0, 0) : chain.sign(j, i)), h + 1);
     if (!big) return;
-    pylon(p, -12, 1, 17, 4, 5, (_k, r) => (r < 3 ? 'b' : r === 3 ? 'r' : 'y'));
+    pylon(p, -12, 1, 17, 4, 5, (_k, r) => chain.pylon(r));
     // An ATM column by the right corner.
-    p.stroke(10, 1, 10, -6, 3, 'S');
-    p.set(GX + 10, GY - 5, 'c');
-    p.set(GX + 11, GY - 5, 'c');
-  };
-}
-
-function betaMart(level: number): Level {
-  return (p) => {
-    const big = level >= 2;
-    const inset = big ? 1 : 3;
-    const h = big ? 12 : 10;
-    p.shadow(inset);
-    p.box(inset, h, 'w', (face, u, j, i) => {
-      if (face === 'T') return undefined;
-      // The fascia: deep red with a white strip, a yellow line, then a blue band.
-      if (j >= h - 3) return j === h - 2 ? 'w' : 'r';
-      if (j === h - 4) return 'y';
-      if (j === h - 5) return 'B';
-      if (j === 0) return 'B';
-      if (face === 'L' && within(u, 0.5, 0.68) && j < h - 6) return 'k';
-      if (j >= 1 && j <= h - 6) return i % 5 === 0 ? 'b' : 'c';
-      return undefined;
-    });
-    // A low red mansard, so its outline is a broad hip, never IndoApril's flat box.
-    p.roof(inset, h, big ? 7 : 6, 'r', (x, y) => ((x + y) % 7 === 0 ? 'R' : undefined));
-    // The canopy over the door, Shifted forward off the wall.
-    const hw = TW / 2 - inset * 2;
-    const hh = TH / 2 - inset;
-    p.id++;
-    for (let x = Math.round(-hw * 0.52); x < Math.round(-hw * 0.28); x++) {
-      const yb = Math.round(((x + hw) / hw) * hh);
-      for (let r = 0; r < 2; r++) p.set(GX + x - 1, GY + yb - h + 4 + r + 1, r ? 'R' : 'r');
-    }
-    if (!big) return;
-    pylon(p, -12, 1, 17, 4, 5, (_k, r) => (r < 3 ? 'r' : r === 3 ? 'y' : 'B'));
     p.stroke(10, 1, 10, -6, 3, 'S');
     p.set(GX + 10, GY - 5, 'c');
     p.set(GX + 11, GY - 5, 'c');
@@ -455,8 +442,8 @@ const patungIkon: Level = (p) => {
 
 export const TOKO_ART: Record<string, (p: Painter, variant?: string, level?: number) => void> = {
   rumahMakan: byLevel(gerobakBakso, warkop, warteg),
-  indomaret: (p, _v, level = 1) => indoApril(level)(p),
-  alfamart: (p, _v, level = 1) => betaMart(level)(p),
+  indomaret: (p, _v, level = 1) => minimarket(INDO, level)(p),
+  alfamart: (p, _v, level = 1) => minimarket(BETA, level)(p),
   fotokopi: byLevel(fotokopiKios, fotokopiToko, fotokopiRuko),
   apotek: byLevel(apotekKios, apotekToko, apotekKlinik),
   barbershop: byLevel(pangkas, barberKios, barberModern),

@@ -81,15 +81,6 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     });
     p.overlay.push(dither);
   },
-  mural: (p) => {
-    p.shadow(2);
-    p.box(3, 10, 'w', (face, u, j, i) => {
-      if (face === 'T') return 'S';
-      if (j < 2 || j > 8) return 'S';
-      if (face === 'L') return u < 0.25 ? 'r' : u < 0.5 ? 'y' : u < 0.75 ? 'b' : 'g';
-      return i % 6 < 3 ? 'p' : 'c';
-    });
-  },
   tamanBermain: (p) => {
     p.ground((a, b, px) => (Math.min(a, b, 1 - a, 1 - b) < px ? null : Math.floor((a + b) * 6) % 2 ? 'g' : 'G'));
     p.overlay.push(dither);
@@ -113,27 +104,6 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
   },
 
   // Farm. Flat plots are bare and draw their own pematang edge so neighbouring plots join up.
-  kebunSayur: (p) => {
-    p.bare = true;
-    p.ground((a, b, px) => {
-      if (Math.min(a, b, 1 - a, 1 - b) < 1.2 * px) return 'n';
-      const row = Math.floor(b * 5);
-      if (row % 2 === 0) return 'N';
-      return Math.floor(a * 6) % 2 ? 'g' : 'G';
-    });
-  },
-  // Water-filled paddies with green rice rows and a clay bund.
-  sawah: (p) => {
-    p.bare = true;
-    p.ground((a, b, px) => {
-      // A pematang bund: a 1px dark edge and a 1px top, the same width on a big plot.
-      const e = Math.min(a, b, 1 - a, 1 - b);
-      if (e < 1.2 * px) return 'n';
-      if (e < 2.4 * px) return 't';
-      const row = Math.floor(b * 6) % 2;
-      return row === 0 && Math.floor(a * 8) % 2 === 0 ? 'g' : row === 0 ? 'G' : 'l';
-    });
-  },
   kandangAyam: (p) => {
     p.shadow(4);
     p.box(5, 6, 'n', (face, u, j) => (face === 'L' && within(u, 0.3, 0.7) && within(j, 1, 4) ? 'N' : undefined));
@@ -147,20 +117,13 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
       const e = Math.min(a, b, 1 - a, 1 - b);
       if (e < 1.2 * px) return 'B';
       if (e < 2.4 * px) return 'b';
-      if (within(a, 0.3, 0.45) && within(b, 0.38, 0.46)) return 'k';
-      if (within(a, 0.55, 0.7) && within(b, 0.55, 0.63)) return 'k';
-      return 'c';
+      // Murky green water, as a lele pond is: the fish show as dark shapes moving in it.
+      return Math.floor((a * 7 + b * 3) * 2) % 5 === 0 ? '#9cc4a0' : '#7fae8e';
     });
   },
 
   // Shops and facilities share the shopfront shape and differ in colour and one sign detail.
   // Each shop type has its own roof, so a row of shops reads as a street, not one copy.
-  koperasi: (p) => {
-    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
-    p.low();
-    shopfront('w', 'b', 'a', { height: 10, rise: 6, inset: 2, shape: 'gableY' })(p);
-    p.blob(0, 18, 2.2, 'a');
-  },
   posSatpam: (p) => {
     p.shadow(5);
     p.box(5, 8, 'b', (face, u, j) => (face === 'L' && within(u, 0.2, 0.8) && within(j, 3, 6) ? 'l' : undefined));
@@ -175,19 +138,6 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     shopfront('p', 'y', 'c', { height: 11, rise: 11 })(p);
     p.blob(-8, 16, 2, 'r');
     p.blob(8, 16, 2, 'b');
-  },
-  balaiWarga: (p) => {
-    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
-    p.low();
-    p.shadow(1);
-    p.box(1, 12, 't', (face, u, j, i) => {
-      if (face === 'T') return undefined;
-      if (face === 'L' && within(u, 0.4, 0.62) && j < 8) return 'N';
-      if (i % 6 < 2 && j > 0 && j < 11) return 'w';
-      if (j >= 11) return 'R';
-      return undefined;
-    });
-    p.roof(1, 12, 13, 'R');
   },
   // Praktik Bidan: a cream house with a pink pelana, a teal door, and the practice board on a post by the corner.
   bidan: (p) => {
@@ -245,29 +195,5 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
         q.px(cx + x1 * n, cy + (y1 + 3) * n, 'w');
       }
     });
-  },
-  gudangMaterial: (p) => {
-    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
-    p.low();
-    p.shadow(2);
-    p.box(2, 10, 'S', (face, u, j) => {
-      if (face === 'L' && within(u, 0.2, 0.8) && j < 7) return j === 6 ? 'N' : 'n';
-      return undefined;
-    });
-    // A warehouse pelana with a vent on the gable end.
-    p.roofShape('gable', 2, 10, 8, 'n', 'S');
-  },
-  kontrakan: (p) => {
-    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
-    p.low();
-    p.shadow(1);
-    p.box(1, 9, 'a', (face, u, j, i) => {
-      if (face === 'T') return undefined;
-      if (face === 'L' && (within(u, 0.12, 0.3) || within(u, 0.42, 0.6) || within(u, 0.72, 0.9)) && within(j, 2, 7)) return j < 5 ? 'N' : 'l';
-      if (face === 'R' && i % 6 >= 2 && within(j, 3, 7)) return 'l';
-      return undefined;
-    });
-    // Row houses share one long shed roof.
-    p.roofShape('shed', 1, 9, 4, 'R', 'a');
   },
 };

@@ -1,4 +1,4 @@
-import { dither, type Painter } from './iso';
+import type { Painter } from './iso';
 
 // Sprites for the RW and Kelurahan buildings. Same rules as ART.md: straight isometric
 // boxes, palette keys, the ink pass from Painter.finish. Registered in iso.ts.
@@ -15,27 +15,6 @@ const windows = (face: Face, u: number, j: number, i: number, rows: [number, num
 
 export const HIGHER_ART: Record<string, (p: Painter) => void> = {
   // RW
-  balaiRW: (p) => {
-    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
-    p.low();
-    p.shadow(1);
-    p.box(1, 12, 'w', (face, u, j, i) => {
-      if (face === 'L' && within(u, 0.42, 0.6) && j < 8) return 'k';
-      if (j < 1) return 'S';
-      if (face !== 'T' && j === 11) return 'b';
-      return windows(face, u, j, i, [4, 9]);
-    });
-    p.roof(1, 12, 13, 'o', (x) => (Math.floor(x / 3) % 2 ? 'y' : undefined));
-  },
-  posyandu: (p) => {
-    p.shadow(3);
-    p.box(3, 8, 't', (face, u, j) => {
-      if (face === 'L' && within(u, 0.4, 0.6) && within(j, 2, 7)) return within(u, 0.46, 0.54) || within(j, 4, 5) ? 'r' : 'w';
-      if (face === 'R' && within(u, 0.25, 0.45) && within(j, 3, 6)) return 'l';
-      return undefined;
-    });
-    p.roof(3, 8, 6, 'p');
-  },
   portal: (p) => {
     p.shadow(6);
     // Two posts and a red-and-white boom between them.
@@ -52,17 +31,6 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
     p.box(2, 5, 'n', (face, _u, j) => (face !== 'T' && j < 2 ? 'N' : undefined));
     p.box(1, 3, 'r', (face, _u, _j, i) => (face !== 'T' ? (Math.floor(i / 3) % 2 ? 'w' : 'r') : undefined), 8);
     p.box(5, 4, 'y', (face, _u, _j, i) => (face !== 'T' && i % 4 === 0 ? 'o' : undefined), 5);
-  },
-  gapura: (p) => {
-    p.shadow(2);
-    // Two pillars with a gap between, red and white band on top.
-    p.box(2, 16, 'R', (face, u, j, i) => {
-      if (face === 'T') return undefined;
-      if (j >= 12) return Math.floor(i / 3) % 2 ? 'w' : 'r';
-      if (within(u, 0.2, 0.8)) return null;
-      return j % 4 === 3 ? 'r' : undefined;
-    });
-    p.roof(2, 16, 4, 'y');
   },
   // Kelurahan
   kantorKel: (p) => {
@@ -117,17 +85,6 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
     });
     // A long blue canopy over the bays: wide, not tall.
     p.roofShape('gable', 1, 10, 10, 'b', 'S', (x) => (Math.floor(x / 4) % 2 ? 'B' : undefined));
-  },
-  taman: (p) => {
-    p.shadow(2);
-    p.ground((a, b) => {
-      if (within(a, 0.46, 0.54) || within(b, 0.46, 0.54)) return 't';
-      return (Math.floor(a * 4) + Math.floor(b * 4)) % 2 ? 'g' : 'G';
-    });
-    p.box(7, 9, 'N');
-    p.blob(-2, 15, 6, 'G');
-    p.blob(3, 18, 5, 'g');
-    p.overlay.push(dither);
   },
   aspalUlang: (p) => {
     p.ground((a, b) => {
@@ -229,18 +186,5 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
     p.stroke(-10, -14, 10, -4, 10, 'w');
     p.stroke(-9, -12, 9, -3, 3, 'y', false);
     p.stroke(-9, -16, 9, -6, 2, 'r', false);
-  },
-  tamanKota: (p) => {
-    p.shadow(2);
-    p.ground((a, b) => {
-      const d = Math.max(Math.abs(a - 0.5), Math.abs(b - 0.5));
-      if (d < 0.14) return Math.floor((a + b) * 12) % 3 === 0 ? 'c' : 'l';
-      if (d < 0.2) return 's';
-      if (within(a, 0.46, 0.54) || within(b, 0.46, 0.54)) return 't';
-      return (Math.floor(a * 4) + Math.floor(b * 4)) % 2 ? 'g' : 'G';
-    });
-    p.blob(-8, 16, 5, 'G');
-    p.blob(8, 18, 5, 'g');
-    p.overlay.push(dither);
   },
 };

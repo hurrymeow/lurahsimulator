@@ -1,6 +1,30 @@
 # Visuals: buildings unlocked in the first 2 hours
 
-## Status 2026-11-07: local preview, waiting for Hari's verdict
+## Round 2, 2026-11-07: Hari's notes on round 1
+
+Images: [visuals-r2-before.png](visuals-r2-before.png) (round 1) against [visuals-r2-after.png](visuals-r2-after.png), each building at every level with its silhouette; [visuals-r2-fish.gif](visuals-r2-fish.gif), the fish on the live map; [visuals-first-2h-preview.png](visuals-first-2h-preview.png), all 56 buildings again.
+
+| Note | What changed |
+| --- | --- |
+| No bubble trees | Pohon Rindang, Taman and Taman Kota use the canopy tree from ART.md: a sturdy trunk and two or three stacked tiers, each a 2:1 disc lit top left with a shade band under its rim. The parks hold several smaller trees at different sizes, with paths, a bench and a flower bed. |
+| Gapura: 2 columns, bolder L2 | Two pillars and a banner beam across the lane. L2 stands the pillars on stepped plinths, adds gold capitals and finials, and puts a small red roof with a gold gable over the beam. |
+| Portal L2 | Own art, not just the fence: striped concrete pillars, a hansip booth with a lamp, a boom with a counterweight, and a yellow-and-black speed bump. |
+| Moving fish | Kolam Lele: dark lele with whiskers and pale bellies in murky green water, now and then coming up for air in a ring. Kolam Pancing: orange and silver fish. Each fish swims its own loop, faces the way it goes and flicks its tail. They hold still with reduce motion. The frame-rate e2e test passes. |
+| Mural is a wall | A long, thin wall with a coping and paint cans: sky, sun, hills, two houses and a merah putih band. |
+| IndoApril = BetaMart silhouette | One shared shape, a flat dak with a box sign on the roof (pylon and ATM at L2). Only the colours and patterns differ: fascia stripes, mullion rhythm and sign. |
+| Sawah grows | Rice stands in the rows: 2px seedlings at L1, 4px green clumps at L2, 6px golden heads at L3. Kebun Sayur got the same idea: sprouts, then leafy plants, then chilli and tomato. |
+| Gudang Material | An open builder's shed under galvanised zinc (ribbed, with a shine), steel posts and a low front wall. The stock shows through: bata merah, semen sacks, a sand heap and pipes. The back walls have open window bays. |
+| Kantor RT L2, Warung L2 smaller | Kantor RT L2 is a smaller, lower office (inset 3, 9px walls, rise 6) under the L3 pendopo. The Warung L2 gerobak has a lower lean-to and a shorter glass case. |
+| Big halls broken up | Kontrakan: three rumah petak, each with its own pelana and wall colour, and a jemuran in the yard. Balai RW: a hall, a lower office wing, a teras over the door and a flag. Balai Warga: an open pendopo on a plinth under a two-tier roof, with a kitchen annex. Koperasi (RT): a zinc warehouse behind a lower blue-roofed shopfront, with sacks by the door. |
+| Posyandu progression | L1: a pink tarp on bamboo poles over a table and the dacin scale, with mats and stools. L2: the clinic and a porch with a bench. L3: a bigger clinic in white and pink, a porch, a sign pole and a play corner. |
+
+**Engine:** `src/render/massing.ts` adds `prism` (a box over any rectangle of the lot) and `roofRect` (hip, gable either way, shed or flat over any rectangle). Both draw in native pixels, so edges stay 1px on 2x2 lots. They are what lets a lot hold several small masses. `hasArt()` in `iso.ts` lets the stage test find art in any table.
+
+**Checks:** typecheck and all 641 unit tests pass. The e2e frame-rate check passes at 412px id.
+
+---
+
+## Round 1, 2026-11-07: local preview, waiting for Hari's verdict
 
 Redrawn on branch `claude/determined-hypatia-oz3xji`, with no PR yet. Images:
 
