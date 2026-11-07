@@ -51,13 +51,6 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: `decisions/playtest-sk2.md`
   - `open · — · — · done when:` no 2x2 building stands taller than a 1x1 of its tier, site sprites have no scaled pixels, and `tests/art.test.ts` checks both.
 
-- [ ] **WebKit: Balap Karung's tap button detaches on every tap.**
-  - Problem: in the first WebKit nightly, the Lomba test times out tapping `#lomba-mash` 40 times: the button is re-created on each tap, and WebKit's click waits for a stable element.
-  - Why: a button that is rebuilt on every tap may drop fast taps on a real iPhone too.
-  - Found: the button is not re-rendered. The 5-second race ends and the result page replaces it, and WebKit fits fewer than 40 clicks in 5 seconds. #320 makes the test tap until the race ends (`decisions/webkit-lomba-mash.md`).
-  - Source: `decisions/webkit-first-run.md`
-  - `claimed · Claude · 2026-11-06 · done when:` the Lomba test passes in the WebKit nightly.
-
 - [ ] **Scorecard bots: the last RT stalls.**
   - #313 fixed two combo loops in the bots (a leveled combo piece and an uncapped copy fallback); the builder now misses RT 3★ in 1 seed of 10, not 8. The 2nd RT was not the cause.
   - Problem: item 1 still waits 192s with nothing affordable (bar 60s; in #303 the longest waits were at the Kecamatan, for a building of Rp 171jt to Rp 250jt), RT 2★ is late in 10 of 10 seeds, and the Pencitraan bot never reaches RT 2★ (item 17).
@@ -79,6 +72,7 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 
 ## Done
 
+- [x] **WebKit: Balap Karung's tap button detaches on every tap.** The race ended on its 5-second timer before WebKit's slower clicks finished; the test now taps until the race ends. The WebKit nightly of 2026-11-07 (run 42316657428) passes in full. #320, `decisions/webkit-lomba-mash.md`.
 - [x] **The SK is a ceremony.** The card names the new post and accepts it; while it waits, the goal pill brings it back. #336, `decisions/sk-ceremony-combo-upgrade.md`.
 - [x] **Sayur Segar lights up when its Warung is upgraded.** The upgrade button runs the combo check, so any combo that needs a level shows its card at once. #336.
 - [x] **Kelurahan residents goals barely bite.** Kept on purpose: the goal is a floor, the stage's work is Popularitas under growth, and 200 is tied to the taper and the Kecamatan's 250. `decisions/kel-residents-goals.md`.
