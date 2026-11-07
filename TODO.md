@@ -41,14 +41,22 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - #313 fixed two combo loops in the bots (a leveled combo piece and an uncapped copy fallback); the builder now misses RT 3★ in 1 seed of 10, not 8. The 2nd RT was not the cause.
   - Problem: item 1 still waits 192s with nothing affordable (bar 60s; in #303 the longest waits were at the Kecamatan, for a building of Rp 171jt to Rp 250jt), RT 2★ is late in 10 of 10 seeds, and the Pencitraan bot never reaches RT 2★ (item 17).
   - Why: the scorecard cannot judge pace or strategy balance while bots stall.
-  - Since the banjir came back (#331), the builder and the honest bot also miss RT 3★ on seed 4. The floods cost it about 15 Popularitas. Its RT is full (59 path tiles, about 50 buildings), so it has no room for a Popularitas building, and Popularitas sinks as warga keep arriving (`decisions/banjir-selokan.md`).
+  - Seed 4 RT 3★ is fixed (#348, `decisions/last-rt-stall-bot.md`): a bot gap, not balance. All five main bots now reach RT 3★ on 10 of 10 seeds. Open question from it: when the RT is full, what does the Popularitas goal tell a person to do? (Swap a Sawah for a Pos Ronda.)
   - The Pencitraan stall is a strategy collapse on slow-growth seeds, not a bot bug (`decisions/scorecard-pencitraan-probe.md`); fixing it is a balance call that belongs with the scorecard Fails item.
   - Suggested solution: probe the 208s wait and the late RT 2★ the same way (state and building counts at the stall) and tell a bot bug from a balance gap.
   - Source: `decisions/scorecard-bot-combo-loop.md`
   - `open · — · — · done when:` the builder reaches RT 3★ in 10 of 10 seeds, and item 1 is under 60s or has a recorded balance reason.
 
+- [ ] **Scorecard follow-ups from the 2026-11-07 calls.**
+  - Problem: three things the calls left open (`decisions/scorecard-calls.md`). 1) Row 22 now Fails: the Lomba Agustusan returns every 6.4 min, bar 10 min. 2) Rows 3, 6, 27 need one Playwright slice (sprites per star, cause shown on screen, save and reload at 5s in both languages). 3) Row 13: builder bots never spend Orang Dalam (B1, B4) and Stempel is never earned in B4.
+  - Why: they turn three rows from Unknown or Fail into a real verdict.
+  - Suggested solution: 1) a Lomba every second year, or a Lomba-free year, as a balance PR. 2) Done: `tests/e2e/scorecard-t2.spec.ts` (#350). Still to do: make the harness read these specs so rows 3, 6 and 27 stop reading Unknown. 3) Teach the builder bot to spend Orang Dalam on the quarterly visit.
+  - Source: `decisions/scorecard-calls.md`
+  - `open · — · — · done when:` rows 3, 6, 22, 27 read Pass or Fail on evidence, and row 13 has no bot-gap line.
+
 ## Done
 
+- [x] **Visual baselines no longer flip with runner speed.** `page.clock.install` kept time running in real time, so the welcome toast was in or out of the HUD, event and tip shots depending on load. `visual.spec.ts` now pauses the clock after load, so only `settle` moves time. Passed CI first time with no baseline refresh; since then the baselines have failed only on PRs that changed the screen, the same on every retry. #281, `progress/visual-clock-pause.md`.
 - [x] **Low and wide 2x2 art, and native-size cranes on big sites.** `Painter.low()` keeps heights native on big lots: 15 big buildings stand no taller than a 1x1 and read wide; stakes and scaffold keep 1px lines on any lot (the crane went in #256). `tests/art.test.ts` checks both. #343, `decisions/wide-2x2-art.md`.
 - [x] **The hint reader is no longer the slowest way through the RW.** It never built Balai RW though the RW combo step names it. Fixed in the bot; hint now reaches RW 2★ level with the builder on seeds 1 to 6. #341, `decisions/hint-bot-balai-rw.md`.
 

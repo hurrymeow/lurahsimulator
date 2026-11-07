@@ -10,6 +10,8 @@ import { setGrid } from '../../src/sim/types';
 import { newGame } from '../../src/sim/state';
 import { starChecklist } from '../../src/sim/stages';
 import { def } from '../../src/sim/content';
+import { LOMBA } from '../../src/data/lomba';
+import { RANKING_WEEKS, WEEKS_PER_YEAR } from '../../src/sim/calendar';
 import { SECONDS_PER_TICK, type BotId, type Timeline, type TLEvent } from './driver';
 
 export type Verdict = 'Pass' | 'Fail' | 'Unknown';
@@ -37,6 +39,8 @@ const median = (xs: number[]): number => {
   const a = [...xs].sort((p, q) => p - q);
   return a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2;
 };
+/** First tick Viral rises above 0 in a run: before it, the player has no Viral source. */
+const firstViral = (tl: Timeline): number => tl.rows.find((r) => r.viral > 0)?.t ?? Infinity;
 const sum = (xs: number[]) => xs.reduce((n, x) => n + x, 0);
 
 /** Time bands from GAME-DESIGN.md section 8, by wall minutes at 1x. */
@@ -136,9 +140,11 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
     let worst = 0;
     for (const [name, get] of Object.entries(meters)) {
       for (let b = 0; b < BANDS.length; b++) {
-        const rs = builder.flatMap((tl) => tl.rows.filter((r) => bandOf(r.t) === b));
+        // Viral sits at 0 until the first Viral source exists; that is not a pinned meter (decisions/scorecard-calls.md).
+        const rs = builder.flatMap((tl) => tl.rows.filter((r) => bandOf(r.t) === b && (name !== 'Viral' || r.t >= firstViral(tl))));
         if (rs.length < 20) continue;
-        const pinned = rs.filter((r) => get(r) <= 5 || get(r) >= 95).length / rs.length;
+        // Aman is a hold-above meter (goals ask for a level, then keep it): sitting at the cap is its goal state, only the floor counts.
+        const pinned = rs.filter((r) => get(r) <= 5 || (name !== 'Aman' && get(r) >= 95)).length / rs.length;
         worst = Math.max(worst, pinned);
         if (pinned >= 0.25) bad.push(`${name} ${BANDS[b]} ${(pinned * 100).toFixed(0)}%`);
       }
@@ -190,7 +196,7 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
 
   // 10. Gates that loosen.
   {
-    const weak = (['shopkeeper', 'safety', 'cheapskate', 'pencitraan', 'honest'] as BotId[]).filter((b) => runsOf(runs, b).length);
+    const weak = (['shopkeeper', 'safety', 'pencitraan', 'honest'] as BotId[]).filter((b) => runsOf(runs, b).length);
     const bad: string[] = [];
     for (const bot of weak) {
       for (const tl of runsOf(runs, bot)) {
@@ -212,7 +218,7 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
         });
       }
     }
-    add(10, 'Gates that loosen', 'T1', verdict(bad.length === 0), bad.length ? `${bad.length} gaps over 2x the star gap. Examples: ${bad.slice(0, 4).join('; ')}.` : 'No gap over 2x the star gap for any non-idle strategy bot.');
+    add(10, 'Gates that loosen', 'T1', verdict(bad.length === 0), bad.length ? `${bad.length} gaps over 2x the star gap. Examples: ${bad.slice(0, 4).join('; ')}.` : 'No gap over 2x the star gap for any strategy bot. The cheapskate bar is its own check (item 17).');
   }
 
   // 11. Novelty and content depth.
@@ -268,7 +274,7 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
         let n = 0;
         let seen = false;
         for (const tl of builder) {
-          const rs = tl.rows.filter((r) => bandOf(r.t) === b);
+          const rs = tl.rows.filter((r) => bandOf(r.t) === b && (name !== 'Viral' || r.t >= firstViral(tl)));
           n += rs.length;
           if (rs.some((r) => get(r) > 0)) seen = true;
           for (let i = 1; i < rs.length; i++) {
@@ -416,7 +422,15 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
   }
 
   // 22. Calendar rhythm.
-  none(22, 'Calendar rhythm', 'T1', 'Needs the warning lead of each fixed beat in wall seconds, which the timeline does not log yet.');
+  {
+    // Counted as warned fixed beats (decisions/scorecard-calls.md): the Triwulan ranking and quarterly report, both on a
+    // countdown from the last one, and the Lomba Agustusan, announced by the panitia card. Read from the calendar constants.
+    const rankingLead = RANKING_WEEKS * SECONDS_PER_TICK;
+    const lombaLead = (LOMBA.dayWeek - LOMBA.announceWeek) * SECONDS_PER_TICK;
+    const bigDayGapMin = (WEEKS_PER_YEAR * SECONDS_PER_TICK) / 60;
+    const ok = rankingLead >= 30 && lombaLead >= 30 && bigDayGapMin >= 10;
+    add(22, 'Calendar rhythm', 'T1', verdict(ok), `Fixed beats: Triwulan ranking and quarterly report every ${RANKING_WEEKS} weeks, warned ${rankingLead}s ahead; Lomba Agustusan, warned ${lombaLead}s ahead (bar 30s). Big days: the Lomba comes every ${bigDayGapMin.toFixed(1)} min (bar 10 min apart). Beats per stage are not counted by stage yet.`);
+  }
 
   // 23. Reliability.
   {

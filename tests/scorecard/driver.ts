@@ -402,6 +402,14 @@ function playPlan(c: Ctx, p: Plan): void {
     const pick = easiestCombo(s);
     if (pick) buildCombo(c, p.buffer, pick.ids);
   }
+  // A star that waits only on Popularitas: a player builds Pos Ronda past the usual few. When every site beside a path is taken,
+  // the player swaps a Sawah for one, since a field earns little and a Pos Ronda adds Popularitas every week.
+  if (s.stage.current === 'rt' && (nextStarChecklist(s) ?? []).filter((l) => !l.done).every((l) => l.goal.kind === 'sabar') && count(s, 'posRonda') < (def('posRonda').maxCount ?? 3)) {
+    if (!buy(c, 'posRonda', p.buffer)) {
+      const field = s.buildings.find((b) => b.def === 'sawah');
+      if (field && s.res.rupiah > p.buffer + buildCost(s, def('posRonda')) && demolish(s, field).ok) buy(c, 'posRonda', p.buffer, { x: field.x, y: field.y });
+    }
+  }
   // The RW combo step says "First build Balai RW": a player who reads it builds that before the pieces.
   if (p.combo === 'hint' && nextStep(s)?.kind === 'rwCombo' && count(s, 'balaiRW') === 0) buy(c, 'balaiRW', p.buffer);
   // The RW combo line points to Build, Combo, so a player who reads it puts the pieces side by side.
