@@ -49,7 +49,7 @@ Recommendation: **C**.
 - Job 1 `execute`: `permissions: contents: read`, `persist-credentials: false`. Runs in the Playwright container used by `e2e-en.yml`. Outputs a patch and `report.json` as artifacts.
 - Job 2 `publish`: `contents: write`, `pull-requests: write`, `actions: write`. No model and no DeepSeek key. Applies the patch, runs the gate, pushes, opens the PR, dispatches `ci.yml`.
 - Pre-flight refusal (before the model): the task heading in `docs/plans/<plan>.md` on main must match `### <task>. … (Haiku)`. It must have `Files:`, `Exact changes:`, `Done when:` and `Don't touch:` lines. Otherwise fail with a one-line reason.
-- CLI: `claude -p --max-turns 40 --permission-mode acceptEdits --output-format json`, pinned CLI version, `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`.
+- CLI: `claude -p --max-turns 60 --permission-mode acceptEdits --output-format json`, pinned CLI version, `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`.
 - Allowed tools: Read, Edit, Write, Glob, Grep, `Bash(npm run typecheck)`, `Bash(npm test:*)`, `Bash(npx playwright test:*)`, `Bash(git diff:*)`, `Bash(git status)`.
 - Disallowed: WebSearch, WebFetch, Task (subagents), NotebookEdit, any other Bash. No git commit or push by the model.
 - Key safety (public repo, public logs): deny `Read(/proc/**)`, `Read(/etc/**)`, `Read(~/**)` and any path outside the workspace. The gate scans patch, `report.json` and PR body for the key in plain and base64 form; a match opens no PR, and the key is rotated. Keep a small DeepSeek balance.
