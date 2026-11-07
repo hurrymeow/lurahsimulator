@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { BOTS, runBot } from './driver';
 import { takeover } from './takeover';
-import { lintTraitsCombos, simText } from './scorecard';
+import { buildScorecard, lintTraitsCombos, simText } from './scorecard';
 import { TRAITS } from '../../src/data/staff';
+import { parseT2Report, t2Verdict, type T2Result } from './t2';
 
 // Fast checks that the harness itself works. The full scorecard runs with `npm run scorecard`.
 describe('scorecard harness', () => {
@@ -35,5 +36,44 @@ describe('scorecard harness', () => {
     } finally {
       TRAITS.pop();
     }
+  });
+
+  it('rows 3, 6 and 27 read their verdict from the T2 Playwright report', () => {
+    // The shape Playwright's json reporter writes: suites by file, specs by test title, one test per project.
+    const spec = (title: string, ...tests: [string, string, string?][]) => ({
+      title,
+      tests: tests.map(([projectName, status, message]) => ({ projectName, status, results: [{ error: message ? { message: `[31m${message}[39m
+  at x` } : undefined }] })),
+    });
+    const report = { suites: [{ title: 'scorecard-t2.spec.ts', specs: [
+      spec('row 27: coming back', ['phone-412-id', 'expected'], ['phone-412-en', 'expected']),
+      spec('row 6: a Popularitas fall names its cause', ['phone-412-id', 'unexpected', 'expected "x" to be visible']),
+      spec('row 3: the map grows with each star', ['phone-412-en', 'flaky']),
+      spec('not a row', ['phone-412-id', 'unexpected']),
+    ] }] };
+    const results = parseT2Report(report);
+    expect(results).toHaveLength(4);
+    expect(t2Verdict(27, results, '').verdict).toBe('Pass');
+    const six = t2Verdict(6, results, '');
+    expect(six.verdict).toBe('Fail');
+    expect(six.evidence).toContain('expected "x" to be visible');
+    expect(six.evidence).not.toContain('');
+    // Passed only on retry is a Fail (TESTING.md item 2).
+    expect(t2Verdict(3, results, '').verdict).toBe('Fail');
+    // No report, a skipped run, or row 27 in one language only: Unknown, never Pass.
+    expect(t2Verdict(3, [], '').verdict).toBe('Unknown');
+    const oneLang: T2Result[] = [{ row: 27, lang: 'id', status: 'expected' }];
+    expect(t2Verdict(27, oneLang, '').verdict).toBe('Unknown');
+    expect(t2Verdict(3, [{ row: 3, lang: 'id', status: 'skipped' }], '').verdict).toBe('Unknown');
+    // Row 27: a passing spec that records the progress as hidden reads Fail in the scorecard.
+    const r27 = [
+      ...parseT2Report({ specs: [{ title: 'row 27: coming back', tests: ['id', 'en'].map((l) => ({ projectName: `phone-412-${l}`, status: 'expected', annotations: [{ type: 'progress-on-screen', description: 'false' }] })) }] }),
+    ];
+    expect(r27[0].notes).toEqual({ 'progress-on-screen': 'false' });
+    const runs = { builder: [runBot('builder', 1, 20)] };
+    const row = (t2: T2Result[]) => buildScorecard(runs, [], '', t2).find((r) => r.n === 27)!;
+    expect(row(r27).verdict).toBe('Fail');
+    expect(row(r27.map((x) => ({ ...x, notes: { 'progress-on-screen': 'true' } }))).verdict).toBe('Pass');
+    expect(row(r27.map((x) => ({ ...x, notes: undefined }))).verdict).toBe('Unknown');
   });
 });

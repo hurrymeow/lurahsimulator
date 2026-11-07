@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "playwright test",
-    "scorecard": "SCORECARD=1 vitest run tests/scorecard/run- && SCORECARD=1 vitest run tests/scorecard/report.test.ts",
+    "scorecard": "SCORECARD=1 vitest run tests/scorecard/run- && node scripts/scorecard-t2.mjs && SCORECARD=1 vitest run tests/scorecard/report.test.ts",
+    "scorecard:t2": "node scripts/scorecard-t2.mjs",
     "audit:ui": "playwright test -c audit/playwright.config.ts && node audit/report.mjs"
   },
   "devDependencies": {

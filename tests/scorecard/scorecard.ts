@@ -13,6 +13,7 @@ import { def } from '../../src/sim/content';
 import { LOMBA } from '../../src/data/lomba';
 import { RANKING_WEEKS, WEEKS_PER_YEAR } from '../../src/sim/calendar';
 import { SECONDS_PER_TICK, type BotId, type Timeline, type TLEvent } from './driver';
+import { t2Verdict, type T2Result } from './t2';
 
 export type Verdict = 'Pass' | 'Fail' | 'Unknown';
 export interface ScoreRow {
@@ -85,7 +86,8 @@ function gaps(ticks: number[], from: number, to: number): { t: number; gap: numb
 
 // ---------------------------------------------------------------- rows
 
-export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: string): ScoreRow[] {
+/** `t2` holds the Playwright results for rows 3, 6 and 27 (`./t2`). Without them those rows read Unknown. */
+export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: string, t2: T2Result[] = []): ScoreRow[] {
   const builder = runsOf(runs, 'builder');
   const idle = runsOf(runs, 'idle');
   const rows: ScoreRow[] = [];
@@ -116,7 +118,10 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
   }
 
   // 3. Growth shows on the map.
-  none(3, 'Growth shows on the map', 'T2', 'Needs a Playwright run on the real app that counts sprites per star.');
+  {
+    const r = t2Verdict(3, t2, 'Check: the map draws more buildings at each RT star, 1★ to 3★, on the developer seed (N not set yet). It counts the draw list, not sprites in view.');
+    add(3, 'Growth shows on the map', 'T2', r.verdict, r.evidence);
+  }
 
   // 4. Skill matters.
   {
@@ -156,7 +161,10 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
   {
     const drops = builder.flatMap((tl) => tl.events.filter((e): e is Extract<TLEvent, { kind: 'drop' }> => e.kind === 'drop'));
     const logged = drops.filter((d) => d.cause).length;
-    add(6, 'Causes are legible', 'T1', partial(logged === drops.length), `${logged} of ${drops.length} Popularitas drops over 2 had a logged cause (a pop number or a bad notice). Whether the cause is shown to the player is T2.`);
+    const logText = `${logged} of ${drops.length} Popularitas drops over 2 had a logged cause (a pop number or a bad notice).`;
+    // T2: the spec shows that the first queue-caused fall names its cause in the Log sheet, not that every drop does.
+    const shown = t2Verdict(6, t2, 'Shown check: a queue-caused fall names its cause in the Log sheet; not every drop is checked.');
+    add(6, 'Causes are legible', 'T1', logged === drops.length ? shown.verdict : 'Fail', `${logText} ${shown.evidence}`);
   }
 
   // 7. Goal cadence and stop points.
@@ -468,7 +476,15 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
 
   none(25, 'The run ends', 'T1', 'Act 3 and the endings do not exist yet. The builder bot finishes all content at minute ' + median(builder.map((t) => min(t.ticks))).toFixed(0) + ' at 1x against a target near 480.');
   none(26, 'Replay drivers (optional New Game+)', 'T3', 'A design check, not a sim measurement. Not required for the core 8h.');
-  none(27, 'Coming back', 'T2', 'Needs a Playwright save, reload and screenshot at 5s, in both languages.');
+  {
+    const r = t2Verdict(27, t2, 'Check: save, reload, wait 5s; same buildings and residents, the same goal line on screen, legibility scan clean, screenshot kept.');
+    // The bar is "current goal and its progress on screen". The spec records whether the have and need rows show
+    // without a tap; today they show only on the opened pill (decisions/goal-line-one-goal.md), so a passing spec is a Fail.
+    const hidden = t2.filter((x) => x.row === 27 && x.notes?.['progress-on-screen'] === 'false').map((x) => x.lang);
+    if (r.verdict === 'Pass' && hidden.length) add(27, 'Coming back', 'T2', 'Fail', `${r.evidence} But the goal's progress (have and need) is a tap away, not on screen, in ${[...new Set(hidden)].sort().join(' and ')}.`);
+    else if (r.verdict === 'Pass' && t2.some((x) => x.row === 27 && !x.notes?.['progress-on-screen'])) add(27, 'Coming back', 'T2', 'Unknown', `${r.evidence} The spec did not record whether progress is on screen.`);
+    else add(27, 'Coming back', 'T2', r.verdict, r.evidence);
+  }
   return rows;
 }
 

@@ -45,6 +45,7 @@ test('row 27: coming back', async ({ page }, testInfo) => {
     return { buildings: app.s.buildings.length, residents: app.s.residents.length };
   });
   expect(before.buildings).toBeGreaterThan(0);
+  const goalBefore = await page.locator('#goal .goal-text').textContent();
 
   await page.reload();
   await passHome(page);
@@ -55,6 +56,14 @@ test('row 27: coming back', async ({ page }, testInfo) => {
     return { buildings: app.s.buildings.length, residents: app.s.residents.length };
   });
   expect(after).toEqual(before);
+  // The current goal is back on screen at 5s: the same goal line as before the reload.
+  await expect(page.locator('#goal .goal-now')).toBeVisible({ timeout: 1 });
+  expect(goalBefore).toBeTruthy();
+  await expect(page.locator('#goal .goal-text')).toHaveText(goalBefore!, { timeout: 1 });
+  // The bar also asks for the goal's progress. Its have and need rows show only when the pill is opened
+  // (decisions/goal-line-one-goal.md), so this is recorded for the scorecard, not asserted: the harness judges it.
+  const progressShown = await page.locator('#goal .goal-row').first().isVisible();
+  testInfo.annotations.push({ type: 'progress-on-screen', description: String(progressShown) });
 
   const problems = await scanLegibility(page);
   expect(problems, problems.map((p) => `${p.rule}: "${p.text}" (${p.detail})`).join('\n')).toEqual([]);
@@ -65,18 +74,24 @@ test('row 6: a Popularitas fall names its cause', async ({ page }) => {
   setLang(lang());
   await start(page);
   await passHowto(page);
-  const log = await page.evaluate(() => {
+  const log = await page.evaluate((warnTitle) => {
     const app = (window as unknown as { pakrt: any }).pakrt;
     const s = app.s;
     // The first warning waits for the opening weeks, and the monthly regen stays out while Popularitas is high.
-    s.month = 6;
-    s.res.sabar = 50;
+    s.month = Math.max(s.month, 6);
     s.warned = [];
-    // A permit waiting in the queue drains Popularitas each month. This is the first drop's cause.
-    s.buildings.push({ uid: s.nextUid++, def: 'warung', x: 1, y: 1, level: 1, status: 'permit', timer: 3, invested: 0, placedAt: s.month });
-    app.runTick();
+    // A permit waiting in the queue drains Popularitas each month. This is the first drop's cause. A random event
+    // waiting for an answer stops the week (tick returns early), so it is set aside; the setup repeats for a few weeks
+    // in case something in the same week offsets the 1 point drop.
+    for (let i = 0; i < 6 && !app.log.some((n: { title: string }) => n.title === warnTitle); i++) {
+      s.pendingEvent = null;
+      s.res.sabar = 50;
+      if (!s.buildings.some((b: { status: string }) => b.status === 'permit'))
+        s.buildings.push({ uid: s.nextUid++, def: 'warung', x: 1, y: 1, level: 1, status: 'permit', timer: 3, invested: 0, placedAt: s.month });
+      app.runTick();
+    }
     return app.log.map((n: { title: string; body: string }) => ({ title: n.title, body: n.body }));
-  });
+  }, t('warn.sabarTitle'));
   const title = t('warn.sabarTitle');
   const body = t('warn.sabar.queue');
   // The queue warning is in the log among other notices (weather); the title's stat word shows as an icon, so the
