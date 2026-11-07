@@ -13,12 +13,12 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
 ### Next
 
 - [ ] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).**
-  - Agent playtests of the whole range are done: RT 3★ to Kelurahan 1★ (#323, `decisions/playtest-rt3-kel1.md`) and the Kelurahan to 3★ and into the Kecamatan (#327, `decisions/playtest-kel.md`). Nine fixes in all. Only a person's play is left.
-  - Problem: T1 to T8 are merged and tuned from bot numbers only. No person has played the new ladder.
+  - Agent playtests of the whole range are done: RT 3★ to Kelurahan 1★ (#323, `decisions/playtest-rt3-kel1.md`) and the Kelurahan to 3★ and into the Kecamatan (#327, `decisions/playtest-kel.md`). Nine fixes in all. Per the Approval rule above, the claiming agent signs it off from bot runs, the Nightly scorecard and CI.
+  - Problem: T1 to T8 are merged and tuned from bot numbers only. Bots have played it but no person has.
   - Why: T8 left questions bots cannot answer: stage lengths are short of target (RW about 7 min against 20, Kelurahan about 16 against 30), and preman can sink Aman at the Kecamatan.
-  - Suggested solution: play it, then log what changes in a new `decisions/` file. The notes are under "For Hari" in `decisions/smaller-map-balance.md`.
+  - Suggested solution: run the bots across the whole ladder, check each "For Hari" note in `decisions/smaller-map-balance.md` against GAME-DESIGN.md §8 and UI.md, fix what is clear, then log the verdict and changes in a new `decisions/` file. 
   - Source: `docs/plans/smaller-map.md`, task T9.
-  - `open · Hari · — · done when:` a decisions file records Hari's own playtest and what it changes.
+  - `open · — · — · done when:` a decisions file records the agent's verdict and what it changes. No sign-off from Hari.
 
 ### Later
 
