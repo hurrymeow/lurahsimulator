@@ -79,6 +79,16 @@ No third-party art or names. Everything is drawn in code.
   roofline is a smooth 1px 2:1 line like a warung's, never a scaled stair step. Paint callbacks get
   one-tile rows and columns, so windows and courses keep their proportions. Never stretch a
   finished sprite: its outline comes out n pixels thick and its diagonals scallop.
+- A big building starts its art with `p.low()`. Heights, wall rows and wall columns are then native
+  pixels while the footprint keeps its n: the building stands as high as a 1x1, windows keep their
+  size and repeat along the longer wall, and the roof runs long and low. Measure height above the
+  back corner of the lot, not the ground centre, since a deeper lot puts its back corner higher on
+  screen. No 2x2 or 3x3 stands taller over its lot than the tallest 1x1 building at the same
+  level; the wifi tower, the baliho and the parks with trees are tall by what they are.
+  `tests/art.test.ts` checks it.
+- Site sprites follow the same rule: stakes and scaffold draw 1px lines on any lot (the scaffold is
+  low, the stakes are native pixels with one more stake per side for each extra tile), and the test
+  finds no 2x2 block of one colour in them.
 - Long buildings (1x2, 2x3) use `new Painter(1, fa, fb)`: a canvas for fa tiles along the map's x axis
   and fb along its y axis. Build them from one-tile pieces: `p.at(u, v)` moves every primitive onto
   tile (u, v), and pieces draw back to front (lower u + v first). `groundLong()` paints ground over the
