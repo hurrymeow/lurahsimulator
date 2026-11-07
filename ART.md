@@ -44,8 +44,10 @@ building, and judge new art against them before showing it.
    three stacked 2:1 discs with a shade band under each rim. Never a ball of foliage.
 7. **Small life.** Moving details are welcome where they belong: fish in ponds, steam, a waving
    tukang parkir. They hold still with reduce motion.
-8. **Workflow.** Show a local render first: a before and after sheet at every level with silhouettes,
-   from the real art code. Hari judges it and sends notes in rounds; the PR waits for the verdict.
+8. **Workflow.** For a new look, show a local render first: a before and after sheet at every level
+   with silhouettes, from the real art code. Hari judges it and sends notes in rounds. Once Hari says
+   go, and for fixes and follow-ups, open the PR yourself with auto-merge on and see it through to
+   the live build (AGENTS.md).
 
 ## Scale and grid (fixed)
 
