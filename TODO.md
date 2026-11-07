@@ -54,16 +54,9 @@ Ranked 2026-11-01 with Hari: Now, Next, Later, top first within a tier. Rank by 
   - Source: `decisions/scorecard-bot-combo-loop.md`
   - `open · — · — · done when:` the builder reaches RT 3★ in 10 of 10 seeds, and item 1 is under 60s or has a recorded balance reason.
 
-- [ ] **Following the game's hints is the slowest way through the RW.**
-  - #326 removed the slowdown #323 caused: the bot was reading the RW combo step as an RT combo hint.
-  - Problem: the hint reader bot, which builds only what the game names, is still the slowest player type: 1.21x the builder at RW 2★ and 1.11x at Kelurahan 1★ (`decisions/sebelah-step-hint-bot.md`).
-  - Why: a player who does what the game says should not be the one who falls behind.
-  - Probe (2026-11-06, seed 1): the hint bot plays the builder's plan except combos (it builds only the combo the game names; the builder reads the whole book). Both buy the same buildings, so the lag is not the build order. The gap opens between RW 1★ and RW 2★: 66 ticks against 45, with the hint bot buying 5 Wifi Towers and extra barbershops while it waits. Next: print the open RW 2★ goals at those ticks for both bots; likely a goal the game never names.
-  - Suggested solution: compare the hint reader's build order with the builder's from RT 3★ on, and change what `nextStep` names where it costs time. Prove it with the scorecard bots.
-  - Source: `decisions/playtest-rt3-kel1.md`, "The nine player types"
-  - `open · — · — · done when:` the hint reader is within 1.1x of the builder at each star from RW 1★ to Kelurahan 1★, or a decisions file says why not.
-
 ## Done
+
+- [x] **The hint reader is no longer the slowest way through the RW.** It never built Balai RW though the RW combo step names it. Fixed in the bot; hint now reaches RW 2★ level with the builder on seeds 1 to 6. #341, `decisions/hint-bot-balai-rw.md`.
 
 - [x] **Icons instead of text in build placement and Settings.** Placement bar uses ✕ ↻ ✓ with the word as aria-label (#334); Settings loses 8 help lines and its word cap drops from 65 to 35 (#335). Both ran on the DeepSeek executor. Touch phones show no title text, so the help is for screen readers only.
 - [x] **WebKit: Balap Karung's tap button detaches on every tap.** The race ended on its 5-second timer before WebKit's slower clicks finished; the test now taps until the race ends. The WebKit nightly of 2026-11-07 (run 42316657428) passes in full. #320, `decisions/webkit-lomba-mash.md`.
