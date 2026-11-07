@@ -32,7 +32,7 @@ Unsure whether it conflicts? Treat it as a conflict and ask.
 
 ## Workflow rules
 
-- After opening a PR, enable auto-merge (squash). It merges when the required `ci` check is green. Exception: executor PRs (opened by the DeepSeek executor workflow). Never enable auto-merge on them. The reviewer enables it after reading the full diff. See `decisions/deepseek-executor.md`.
+- Open the PR yourself once the local checks pass, without asking Hari, and enable auto-merge (squash) at once (Hari, 2026-11-07). After opening a PR, enable auto-merge (squash). It merges when the required `ci` check is green. Exception: executor PRs (opened by the DeepSeek executor workflow). Never enable auto-merge on them. The reviewer enables it after reading the full diff. See `decisions/deepseek-executor.md`.
 - Plans: a task marked Haiku lists exact file paths in `Files:`, not "grep X". It also has `Exact changes:`, `Done when:` and `Don't touch:` lines. The executor refuses a task without them.
 - Plans: when you write a plan, split out every mechanical task (copy, i18n strings, config values, renames, small style changes where the exact files and strings are known) and tag it `(Haiku)` with exact old and new strings. Those tasks go to the DeepSeek executor by default: dispatch `deepseek-exec.yml` with the plan slug and task id, one task per run, instead of opening a Claude thread. Tasks that need reading code to decide how stay Sonnet. Review the executor PR's full diff before merging.
 - After every push, check the PR for merge conflicts. A conflicted PR never starts CI. Merge main in and push again.
