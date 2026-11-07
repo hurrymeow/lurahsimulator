@@ -122,23 +122,6 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     });
   },
 
-  // Shops and facilities share the shopfront shape and differ in colour and one sign detail.
-  // Each shop type has its own roof, so a row of shops reads as a street, not one copy.
-  posSatpam: (p) => {
-    p.shadow(5);
-    p.box(5, 8, 'b', (face, u, j) => (face === 'L' && within(u, 0.2, 0.8) && within(j, 3, 6) ? 'l' : undefined));
-    p.roof(5, 8, 3, 'B');
-    // A red and white barrier arm across the front, short enough to stay on its own tile (UI.md rule 17).
-    p.stroke(-5, 0, 6, 1, 2, 'w');
-    for (const k of [0, 4, 8]) p.stroke(-5 + k, k / 11, -4 + k, k / 11, 2, 'r', false);
-  },
-  paud: (p) => {
-    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
-    p.low();
-    shopfront('p', 'y', 'c', { height: 11, rise: 11 })(p);
-    p.blob(-8, 16, 2, 'r');
-    p.blob(8, 16, 2, 'b');
-  },
   // Praktik Bidan: a cream house with a pink pelana, a teal door, and the practice board on a post by the corner.
   bidan: (p) => {
     shopfront('w', 'p', 'c', { shape: 'gable', door: 'c' })(p);

@@ -1,5 +1,44 @@
 # Visuals: buildings unlocked in the first 2 hours
 
+## Round 3, 2026-11-07: shape progression for every level
+
+Images: [visuals-r3-before.png](visuals-r3-before.png) (round 2) against [visuals-r3-after.png](visuals-r3-after.png), every level of each changed building with its silhouette; [visuals-first-2h-preview.png](visuals-first-2h-preview.png), all 56 again.
+
+Rule for every building below: L1 is the smallest and plainest; each level adds a mass (a wing, a porch, a second roof tier, a shed, a vehicle, a sign) rather than a colour or a fence. The shared upgrade kit no longer runs on any of them.
+
+**References scouted:** studies of Indonesian pasar design (semi-open los, truncated and two-tier limasan roofs, zinc, sawtooth vents), kantor kelurahan and camat design (a gapura on the facade, limasan, wide tritisan eaves), puskesmas pembantu room needs (registration, waiting, examination), type C bus terminals (platform canopies, angkot bays, a halte at the minimum), and baliho practice (a steel frame on legs by the road). Sources: [Pasar Mbaru Niang, Undana](https://ejurnal.undana.ac.id/index.php/gewang/article/download/28095/9919/), [Pasar Karangayu, Undip](https://ejournal2.undip.ac.id/index.php/jpps/article/download/8308/4345), [Karakteristik kantor kelurahan Surakarta, UMS](https://publikasiilmiah.ums.ac.id/xmlui/handle/11617/3945), [Kantor Kelurahan Caturharjo, Bantul](https://ojs.bantulkab.go.id/index.php/jrd/article/download/20/51), [Terminal tipe C Karangkobar](https://digilib.ptdisttd.ac.id/3758/), [Terminal Ngabang tipe C, UKDW](https://repository.ukdw.ac.id/id/eprint/4106), [Baliho dan APK, KPU Yogyakarta](https://jdih.jogjakota.go.id/index.php/pages/download_file/l6SYmw70k3R3D70k3R3D).
+
+| Building | L1 | L2 | L3 |
+| --- | --- | --- | --- |
+| Rumah | Smaller bungalow (one pixel in, one lower) | Teras and pagar | Rumah tingkat |
+| Kantor RT | Small front room, the RT board on a tall post | Office under a red hip, flag | Pendopo under a joglo roof |
+| Rumah Makan | Warung makan: plank stall, counter of pots, printed spanduk, bench | Smaller warkop lean-to | Warteg (biggest) |
+| Pos Satpam | Small wooden booth | Blue booth with a barrier arm | Concrete post, flat roof, canopy over the lane, barrier, lamp and camera |
+| Gudang Material | Small zinc shed | Long shed with an open roof bay showing purlins | Full yard, two open bays, pipes, a lean-to |
+| PAUD | Pink front room and a slide | Classroom and a play yard | L-shaped school, swings, seesaw, painted fence |
+| Koperasi (RT) | Shopfront | Shop and a zinc warehouse | Loading canopy, pick-up, sign pylon |
+| Kontrakan | Two rumah petak | Three units, a two-storey end unit, jemuran | – |
+| Balai Warga | Small pendopo | Big pendopo, two-tier roof | Kitchen annex and umbul-umbul |
+| Balai RW | Simple hall | Hall and office wing | Teras, flag, notice board |
+| Pasar Kaget | Two lapak under payung | A row of stalls under one long striped tarp | – |
+| Portal | Two short posts and a boom (smaller than L2) | Booth, striped pillars, speed bump | – |
+| Gapura | Two slim painted posts and a banner (smaller than L2) | Plinths, gold capitals, roof | – |
+| Kantor Kelurahan | Plain office and a flagpole | Gapura porch over the door | Two-tier limasan centre block, wings, wide eaves, fence |
+| Puskesmas Pembantu | House-sized pustu with the cross | Waiting porch with a bench | Exam wing, drop-off canopy, ambulance |
+| Pasar | One open los under a zinc limasan | Two los and a row of kios | Big hall, raised crown with sawtooth vents, kios, umbul-umbul |
+| Terminal | Office, one platform canopy, a bus and an angkot | Name frame, two platforms, three buses, three angkot | – |
+| Taman | Lawn, one tree, a bench | Paths, flower bed, more trees | Gazebo and lamps |
+| Kantor Kecamatan | Long flat block | Clock tower | Pendopo portico, three flags |
+| Pos Satpol PP | Small post | Lookout on the roof, mast | Garage with the patrol pick-up, barrier |
+| Koperasi Simpan Pinjam (Kec.) | Small office | Long hall under a pelana | Second wing, front canopy, ATM |
+| Balai Latihan Kerja | Workshop shed | Hall with a raised monitor roof | Second hall under sawtooth roofs, machines in the yard |
+| Baliho | Cloth spanduk between bamboo poles | Steel billboard on legs: a generic grinning figure in a black peci, a big number, slogan lines, a lamp | Bigger board on a catwalk with two lamps |
+| Taman Kota | Fountain pool and two trees | Paths and four trees | Stage, lamps, statue plinth |
+
+**Code:** the designs live in `src/render/level-art.ts`, built with the round 2 massing helpers; the old single-look versions are deleted. **Checks:** typecheck and all 641 unit tests pass, including the height limits (each level at most one storey over L1; 2x2s no taller than the 1x1s of their level). To stay inside those limits, the Kantor RT L1 board stands on a tall post and the Kantor RT L3 flag is a pixel shorter.
+
+---
+
 ## Round 2, 2026-11-07: Hari's notes on round 1
 
 Images: [visuals-r2-before.png](visuals-r2-before.png) (round 1) against [visuals-r2-after.png](visuals-r2-after.png), each building at every level with its silhouette; [visuals-r2-fish.gif](visuals-r2-fish.gif), the fish on the live map; [visuals-first-2h-preview.png](visuals-first-2h-preview.png), all 56 buildings again.

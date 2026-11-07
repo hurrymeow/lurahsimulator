@@ -6,6 +6,7 @@ import { HIGHER_ART } from './art-higher';
 import { warungArt } from './warung-art';
 import { PALETTE } from './sprites';
 import { KAMPUNG_ART, posyanduLong } from './kampung-art';
+import { LEVEL_ART, portal1 } from './level-art';
 import { TOKO_ART } from './toko-art';
 
 /** Art-pixel size of one ground diamond. The view scales these up by a whole number. */
@@ -531,12 +532,12 @@ type ArtFn = (p: Painter, variant?: string, level?: number) => void;
 const ROOF_KEYS: Record<string, RoofShape> = { h: 'hip', g: 'gable', y: 'gableY', s: 'shed', f: 'flat' };
 
 /** Sprites that draw their own level progression. Everything else gets the upgrade kit. */
-const LEVELLED = new Set(['rumah', 'warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart', 'rumahMakan', 'fotokopi', 'apotek', 'barbershop', 'bengkel', 'gapura', 'portal', 'posyandu']);
+const LEVELLED = new Set(['rumah', 'warung', 'posRonda', 'kantorRT', 'kosan', 'wifi', 'bankSampah', 'indomaret', 'alfamart', 'rumahMakan', 'fotokopi', 'apotek', 'barbershop', 'bengkel', 'gapura', 'portal', 'posyandu', ...Object.keys(LEVEL_ART)]);
 /** Ground pieces and the tukang parkir level up without a fence round them. */
 const NO_KIT = new Set(['parkir', 'biopori', 'drain', 'kebunSayur', 'sawah', 'kolamLele', 'kolamIkan', 'taman', 'aspalUlang', 'jalan', 'selokan']);
 
 /** Portal: the boom gate, then a booth and striped pillars at level 2. */
-const portal: ArtFn = (p, v, level = 1) => (level >= 2 ? KAMPUNG_ART.portal2(p, v, level) : HIGHER_ART.portal(p));
+const portal: ArtFn = (p, v, level = 1) => (level >= 2 ? KAMPUNG_ART.portal2(p, v, level) : portal1(p, v, level));
 
 const ART: Record<string, ArtFn> = {
   portal,
@@ -551,9 +552,12 @@ const ART: Record<string, ArtFn> = {
     const modern = shape === 'shed' || shape === 'flat';
     // Level 3 is a rumah tingkat: a lower ground floor, then an upper floor set one pixel in.
     const tall = level >= 3;
-    const ground = tall ? 7 : 8;
-    p.shadow(3);
-    p.box(3, ground, wall, (face, u, j, i) => {
+    // Level 1 is the smallest: a bungalow one pixel in on every side and a pixel lower than level 2.
+    const small = level <= 1;
+    const ground = tall || small ? 7 : 8;
+    const base = small ? 4 : 3;
+    p.shadow(base);
+    p.box(base, ground, wall, (face, u, j, i) => {
       if (face === 'T') return undefined;
       // Level 2's teras is set into the front-left wall under the main roof, so it never leaves the tile:
       // a strip of roof over it, the door in its shade, a tiled floor, a pot plant and a corner post.
@@ -567,7 +571,7 @@ const ART: Record<string, ArtFn> = {
         }
       }
       // Roster: a band of ventilation blocks under the eave, open and solid in turn.
-      if (!tall && j === 7 && (face === 'R' || within(u, 0.12, 0.45))) return i % 2 ? 'S' : 'w';
+      if (!tall && j === ground - 1 && (face === 'R' || within(u, 0.12, 0.45))) return i % 2 ? 'S' : 'w';
       if (face === 'L' && within(u, 0.6, 0.82) && j < 6) return modern ? 'k' : 'N';
       if (face === 'L' && within(u, 0.15, 0.4) && within(j, 3, 6)) return j === 5 && modern ? 'S' : 'l';
       if (face === 'R' && (within(u, 0.2, 0.42) || within(u, 0.6, 0.82)) && within(j, 3, 6)) return 'l';
@@ -589,8 +593,8 @@ const ART: Record<string, ArtFn> = {
       p.id++;
       for (let x = -11; x <= -2; x++) p.set(TW / 2 + x, TOP + TH / 2 - ground - 2 + Math.round((x + 11) / 2), x & 1 ? 'S' : 'w');
     }
-    const top = tall ? ground + 6 : 8;
-    const inset = tall ? 4 : 3;
+    const top = tall ? ground + 6 : ground;
+    const inset = tall ? 4 : base;
     // Rises keep every shape at or under the hipped roof's apex, so no house hides its neighbour.
     p.roofShape(shape, inset, top, shape === 'shed' ? 2 : shape === 'hip' ? (tall ? 7 : 8) : tall ? 4 : 5, roof, wall);
     // A tandon air on the deck of a flat roof, orange or blue.
@@ -613,16 +617,17 @@ const ART: Record<string, ArtFn> = {
   kantorRT: (p, _v, level = 1) => {
     if (level <= 1) {
       // Pak RT's own front room: a plain house with a zinc roof and a nameboard on a post.
-      p.shadow(2);
-      p.box(3, 10, 't', (face, u, j) => {
-        if (face === 'L' && within(u, 0.42, 0.62) && j < 6) return 'N';
-        if (face === 'R' && within(u, 0.25, 0.75) && within(j, 4, 7)) return 'l';
+      p.shadow(4);
+      p.box(4, 7, 't', (face, u, j) => {
+        if (face === 'L' && within(u, 0.42, 0.62) && j < 5) return 'N';
+        if (face === 'R' && within(u, 0.25, 0.75) && within(j, 3, 6)) return 'l';
         return j === 0 ? 'n' : undefined;
       });
-      p.roof(3, 10, 7, 's', (x) => (x % 3 === 0 ? 'S' : undefined));
-      p.stroke(-10, 2, -10, -6, 1, 'N');
-      p.stroke(-13, -9, -7, -6, 3, 'w');
-      p.stroke(-12, -8, -9, -7, 1, 'k', false);
+      p.roof(4, 7, 5, 's', (x) => (x % 3 === 0 ? 'S' : undefined));
+      // The RT nameboard on a tall post by the lane, the one thing taller than the house.
+      p.stroke(-10, 2, -10, -12, 1, 'N');
+      p.stroke(-13, -16, -7, -13, 3, 'w');
+      p.stroke(-12, -15, -9, -14, 1, 'k', false);
       return;
     }
     if (level >= 3) {
@@ -640,10 +645,10 @@ const ART: Record<string, ArtFn> = {
       p.roof(5, 13, 6, 'R');
       const ax = TW / 2;
       const ay = TOP + TH / 2 - 13 - 6;
-      for (let k = 1; k <= 5; k++) p.set(ax, ay - k, 'k');
+      for (let k = 1; k <= 4; k++) p.set(ax, ay - k, 'k');
       for (let k = 1; k <= 3; k++) {
-        p.set(ax + k, ay - 5, 'r');
-        p.set(ax + k, ay - 4, 'w');
+        p.set(ax + k, ay - 4, 'r');
+        p.set(ax + k, ay - 3, 'w');
       }
       return;
     }
@@ -939,16 +944,8 @@ const ART: Record<string, ArtFn> = {
  * drawing covers both ways round.
  */
 export const LONG_ART: Record<string, ArtFn> = {
-  // A row of stalls under striped awnings, each its own colour.
-  pasarKaget: (p) => {
-    for (const [u, awning] of [[0, 'r'], [1, 'b']] as [number, string][]) {
-      p.at(u, 0);
-      p.shadow(2);
-      p.box(2, 5, 'n', (face, _u, j) => (face !== 'T' && j < 2 ? 'N' : undefined));
-      p.box(1, 3, awning, (face, _u, _j, i) => (face !== 'T' ? (Math.floor(i / 3) % 2 ? 'w' : awning) : undefined), 8);
-      p.box(5, 4, u ? 'g' : 'y', (face, _u, _j, i) => (face !== 'T' && i % 4 === 0 ? 'o' : undefined), 5);
-    }
-  },
+  // Two lapak under payung, then a row of stalls under one long striped tarp.
+  pasarKaget: LEVEL_ART.pasarKaget,
   // Two kos blocks joined in a row, the rooms running the length of the lot.
   kosan: (p, v, level) => {
     p.at(0, 0);
@@ -987,14 +984,14 @@ export const LONG_ART: Record<string, ArtFn> = {
 
 /** True when a sprite name has its own art in any table, rather than the plain fallback box. */
 export function hasArt(name: string): boolean {
-  return !!(KAMPUNG_ART[name] ?? TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name]);
+  return !!(LEVEL_ART[name] ?? KAMPUNG_ART[name] ?? TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name]);
 }
 
 const cache = new Map<string, Art>();
 
 /** Paints a sprite at a level: its own level art if it has some, otherwise the base art plus the upgrade kit. */
 export function paint(p: Painter, name: string, variant?: string, level = 1): void {
-  const fn: ArtFn = KAMPUNG_ART[name] ?? TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's'));
+  const fn: ArtFn = LEVEL_ART[name] ?? KAMPUNG_ART[name] ?? TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's'));
   fn(p, variant, level);
   if (!LEVELLED.has(name) && !NO_KIT.has(name) && !p.bare && level > 1) p.overlay.push((q) => upgradeKit(q, level));
 }
@@ -1018,7 +1015,7 @@ export function iso(name: string, variant?: string, n = 1, level = 1, fa = 1, fb
           const v = d - u;
           if (v < 0 || v >= fb) continue;
           p.at(u, v);
-          (KAMPUNG_ART[name] ?? TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant, level);
+          (LEVEL_ART[name] ?? KAMPUNG_ART[name] ?? TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's')))(p, variant, level);
         }
     const art = p.finish();
     cache.set(key, art);

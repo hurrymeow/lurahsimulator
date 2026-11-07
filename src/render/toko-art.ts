@@ -1,4 +1,5 @@
 import type { Painter } from './iso';
+import { warungMakan } from './level-art';
 import { warungArt } from './warung-art';
 
 // Toko art: the shops a player meets in the first hours, one silhouette per kind and one per level.
@@ -100,20 +101,20 @@ const gerobakBakso: Level = (p) => {
 
 /** Level 2, a warkop: a plank lean-to Extruded off its back wall, an open counter, a banner under a zinc shed roof, a bench. */
 const warkop: Level = (p) => {
-  p.shadow(2);
-  p.box(3, 9, 'N', (face, u, j, i) => {
+  p.shadow(3);
+  p.box(4, 7, 'N', (face, u, j, i) => {
     if (face === 'T') return undefined;
     // The open front: a counter of planks, jars on it, a dark room behind.
     if (face === 'L' && within(u, 0.08, 0.92)) {
       if (j < 3) return i % 3 === 0 ? 'N' : 'n';
       if (j === 3) return i % 3 === 1 ? 'y' : i % 3 === 2 ? 'r' : 'c';
-      if (j < 7) return 'k';
+      if (j < 6) return 'k';
       return i % 4 < 2 ? 'y' : 'r';
     }
     return i % 3 === 0 ? 'n' : undefined;
   });
-  p.roofShape('shed', 2, 9, 4, 's', 'N', (x) => (x % 2 ? 'S' : undefined));
-  bench(p, -12, 3, 7);
+  p.roofShape('shed', 3, 7, 3, 's', 'N', (x) => (x % 2 ? 'S' : undefined));
+  bench(p, -11, 3, 6);
   stool(p, 6, 4);
 };
 
@@ -441,7 +442,7 @@ const patungIkon: Level = (p) => {
 };
 
 export const TOKO_ART: Record<string, (p: Painter, variant?: string, level?: number) => void> = {
-  rumahMakan: byLevel(gerobakBakso, warkop, warteg),
+  rumahMakan: byLevel(warungMakan, warkop, warteg),
   indomaret: (p, _v, level = 1) => minimarket(INDO, level)(p),
   alfamart: (p, _v, level = 1) => minimarket(BETA, level)(p),
   fotokopi: byLevel(fotokopiKios, fotokopiToko, fotokopiRuko),
