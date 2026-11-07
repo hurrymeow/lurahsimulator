@@ -22,6 +22,13 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Later
 
+- [ ] **Scorecard row 27: the goal's progress is a tap away.**
+  - Problem: row 27 reads Fail since #356. GAME-DESIGN.md §8 item 27 asks for "current goal and its progress on screen within 5s". `decisions/goal-line-one-goal.md` keeps have and need off the closed goal pill, so after a reload the goal shows but its progress needs a tap.
+  - Why: the bar and the pill decision disagree, so the row cannot pass without changing one of them.
+  - Suggested solution: decide which changes. Either show a short progress (for example "12/25") on the closed pill if it fits without cutting the line (UI.md rule 5), or reword the §8 bar to "progress one tap away" with a decisions/ note. The T2 spec records `progress-on-screen`, so the row flips to Pass by itself if the pill shows progress.
+  - Source: `decisions/scorecard-t2-harness.md`; `decisions/goal-line-one-goal.md`
+  - `open · — · — · done when:` row 27 reads Pass, or the §8 bar is reworded with a decisions/ note.
+
 - [ ] **Fix the remaining scorecard Fails that have a clear cause.**
   - Problem: the scorecard of 2026-11-04 reads 3 Pass, 14 Fail, 10 Unknown. Still failing with a cause: Viral pinned at 100 from B2 on (5, claimed: #319 adds a soft cap; B0 and B1 sit at 0 before any Viral source), goal gaps over the band (7, 10), novelty gaps (11), one reward kind per star (12), cash piles up for up to 52 min with no late sink (14), income outruns costs (15), Pencitraan never reaching Kel 1★ (17), Hint reader finds only 41% of combos (21, bar 65 to 85%). Kelurahan 2★ and 3★ still miss the goal-gap limit by 40 to 136 s (`decisions/second-rt-load.md`, cause not traced).
   - Why: each Fail is a place the game is too easy, too flat or can strand a player.
@@ -50,13 +57,13 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 - [ ] **Scorecard follow-ups from the 2026-11-07 calls.**
   - Problem: three things the calls left open (`decisions/scorecard-calls.md`). 1) Row 22 now Fails: the Lomba Agustusan returns every 6.4 min, bar 10 min. 2) Rows 3, 6, 27 need one Playwright slice (sprites per star, cause shown on screen, save and reload at 5s in both languages). 3) Row 13: builder bots never spend Orang Dalam (B1, B4) and Stempel is never earned in B4.
   - Why: they turn three rows from Unknown or Fail into a real verdict.
-  - Suggested solution: 1) a Lomba every second year, or a Lomba-free year, as a balance PR. 2) Done: `tests/e2e/scorecard-t2.spec.ts` (#350). Still to do: make the harness read these specs so rows 3, 6 and 27 stop reading Unknown. 3) Teach the builder bot to spend Orang Dalam on the quarterly visit.
-  - Part 2 claimed: Claude, 2026-11-07, branch `claude/sweet-kilby-af6009` (the harness reads a Playwright JSON report of the T2 specs).
+  - Suggested solution: 1) a Lomba every second year, or a Lomba-free year, as a balance PR. 2) Done: specs in #350, harness reads them in #356 (row 3 Pass, row 6 Pass, row 27 Fail). 3) Teach the builder bot to spend Orang Dalam on the quarterly visit.
   - Source: `decisions/scorecard-calls.md`
-  - `open · — · — · done when:` rows 3, 6, 22, 27 read Pass or Fail on evidence, and row 13 has no bot-gap line.
+  - `open · — · — · done when:` row 22 reads Pass or Fail on evidence after the Lomba change, and row 13 has no bot-gap line. (Rows 3, 6 and 27 done in #356.)
 
 ## Done
 
+- [x] **The scorecard harness reads the T2 specs (scorecard follow-ups, part 2).** `npm run scorecard:t2` runs `tests/e2e/scorecard-t2.spec.ts` at 412px in id and en into the scorecard cache, and a new nightly job runs it. Rows 3, 6 and 27 now read Pass, Pass and Fail instead of Unknown. The row 6 spec no longer flakes on a pending event. #356, `decisions/scorecard-t2-harness.md`.
 - [x] **Visual baselines no longer flip with runner speed.** `page.clock.install` kept time running in real time, so the welcome toast was in or out of the HUD, event and tip shots depending on load. `visual.spec.ts` now pauses the clock after load, so only `settle` moves time. Passed CI first time with no baseline refresh; since then the baselines have failed only on PRs that changed the screen, the same on every retry. #281, `progress/visual-clock-pause.md`.
 - [x] **Low and wide 2x2 art, and native-size cranes on big sites.** `Painter.low()` keeps heights native on big lots: 15 big buildings stand no taller than a 1x1 and read wide; stakes and scaffold keep 1px lines on any lot (the crane went in #256). `tests/art.test.ts` checks both. #343, `decisions/wide-2x2-art.md`.
 - [x] **The hint reader is no longer the slowest way through the RW.** It never built Balai RW though the RW combo step names it. Fixed in the bot; hint now reaches RW 2★ level with the builder on seeds 1 to 6. #341, `decisions/hint-bot-balai-rw.md`.
