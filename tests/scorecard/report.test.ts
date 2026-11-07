@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BOTS, type BotId } from './driver';
 import { CACHE, readCache } from './plan';
+import { readT2 } from './t2';
 import { buildScorecard, renderMarkdown, sourceText, trendOf, type Runs, type Takeover, type Trend } from './scorecard';
 
 describe.skipIf(!process.env.SCORECARD)('scorecard report', () => {
@@ -9,7 +10,7 @@ describe.skipIf(!process.env.SCORECARD)('scorecard report', () => {
     const runs: Runs = {};
     for (const bot of BOTS as BotId[]) runs[bot] = readCache(bot);
     const takeovers: Takeover[] = JSON.parse(readFileSync(`${CACHE}/takeover.json`, 'utf8'));
-    const rows = buildScorecard(runs, takeovers, sourceText());
+    const rows = buildScorecard(runs, takeovers, sourceText(), readT2(CACHE));
     expect(rows.map((r) => r.n)).toEqual(Array.from({ length: 27 }, (_, i) => i + 1));
     for (const r of rows) expect(r.evidence.length, `row ${r.n}`).toBeGreaterThan(10);
     const generated = new Date().toISOString().slice(0, 10);

@@ -1,4 +1,4 @@
-# Nightly checks that are too heavy for every PR. Today: the design scorecard (GAME-DESIGN.md section 8).
+# Nightly checks that are too heavy for every PR. Today: the design scorecard (GAME-DESIGN.md section 8), bots and T2 specs.
 # Also the property tests at 1000 games per rule. The WebKit e2e suite has its own workflow, e2e-webkit.yml.
 name: Nightly
 
@@ -74,8 +74,35 @@ jobs:
           include-hidden-files: true
           retention-days: 1
 
+  # Scorecard rows 3, 6 and 27: the T2 specs on the real app at 412px, in id and en. Adds about 3 min.
+  scorecard-t2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Keep the tag equal to @playwright/test in package-lock.json, as in ci.yml.
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/scorecard-t2.mjs
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scorecard-cache-t2
+          path: scorecard/.cache
+          include-hidden-files: true
+          retention-days: 1
+
   scorecard-report:
-    needs: [scorecard-runs, scorecard-takeover]
+    # Runs when scorecard-t2 fails too: rows 3, 6 and 27 then read Unknown, not the whole report lost.
+    needs: [scorecard-runs, scorecard-takeover, scorecard-t2]
+    if: ${{ !cancelled() && needs.scorecard-runs.result == 'success' && needs.scorecard-takeover.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
