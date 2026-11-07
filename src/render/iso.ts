@@ -5,6 +5,7 @@ import { CONTENT_ART } from './art-content';
 import { HIGHER_ART } from './art-higher';
 import { warungArt } from './warung-art';
 import { PALETTE } from './sprites';
+import { def, sizeFor } from '../sim/content';
 import { KAMPUNG_ART, posyanduLong } from './kampung-art';
 import { LEVEL_ART, portal1 } from './level-art';
 import { TOKO_ART } from './toko-art';
@@ -1029,8 +1030,12 @@ export function iso(name: string, variant?: string, n = 1, level = 1, fa = 1, fb
   return art;
 }
 
-export function isoURL(name: string, scale = 3, level = 1): string {
-  const { canvas, alpha: a } = iso(name, undefined, 1, level);
+/**
+ * A sprite as an image URL for icons: the same art the map draws, at the same footprint and variant,
+ * scaled up by a whole number with its empty headroom cropped.
+ */
+export function isoURL(name: string, scale = 3, level = 1, variant?: string, n = 1, fa = 1, fb = 1): string {
+  const { canvas, alpha: a } = fa !== fb ? iso(name, variant, 1, level, fa, fb) : iso(name, variant, n, level);
   // Crop the empty headroom so the thumbnail fills its button.
   let top = 0;
   while (top < canvas.height && !a.slice(top * canvas.width, (top + 1) * canvas.width).some((v) => v)) top++;
@@ -1042,4 +1047,16 @@ export function isoURL(name: string, scale = 3, level = 1): string {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(canvas, 0, top, canvas.width, h, 0, 0, c.width, c.height);
   return c.toDataURL();
+}
+
+/**
+ * A building's icon, exactly as it stands on the map: its own footprint (a 2x2 is wide, a 1x2 shows both
+ * tiles), its level and, for a placed house, its variant. Bigger footprints draw at a smaller whole scale
+ * so every icon comes out about the same size.
+ */
+export function buildingURL(id: string, scale = 3, level = 1, variant?: string): string {
+  const [w, h] = sizeFor(id);
+  const side = Math.max(w, h);
+  const s = Math.max(1, scale - (side - 1));
+  return w === h ? isoURL(def(id).sprite, s, level, variant, w) : isoURL(def(id).sprite, s, level, variant, 1, w, h);
 }

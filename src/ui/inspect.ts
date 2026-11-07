@@ -14,7 +14,8 @@ import { buildingIncome, buildingUpkeep } from '../sim/tick';
 import { deskCapacity, permitEta, permitQueue } from '../sim/staff';
 import type { Building, BuildingDef, CheckResult, SimEffect } from '../sim/types';
 import { discoverCombos } from '../sim/combos';
-import { spriteImg } from './build';
+import { buildingImg } from './build';
+import { houseVariant } from '../render/sprites';
 import { h } from './dom';
 import { levelBadge, type BadgeState } from './levelBadge';
 import { closeSheet, openSheet } from './sheet';
@@ -73,7 +74,7 @@ export function inspect(app: App, uid: number): void {
   const left = b.status === 'permit' ? t('insp.left', { n: permitEta(s, b) }) : b.timer > 0 && b.status === 'building' ? t('insp.left', { n: b.timer }) : '';
   const effect = effectLine(d, b);
   const lines: Node[] = [
-    h('div', { class: 'inspect-head' }, spriteImg(d.sprite, 40, b.level), h('div', {},
+    h('div', { class: 'inspect-head' }, buildingImg(b.def, 40, b.level, b.def === 'rumah' ? houseVariant(b.uid) : undefined), h('div', {},
       b.status === 'active' ? null : h('p', { class: `meta status status-${b.status}` }, h('span', { class: 'status-dot', 'aria-hidden': 'true' }), `${t(`status.${b.status}`)}${left}`),
       effect ? h('p', { class: 'effect' }, effect) : null,
       d.housing ? h('p', { class: 'meta occupancy' }, t('insp.occupancy', { n: occupants(s, b), max: bedsOf(b) })) : null,

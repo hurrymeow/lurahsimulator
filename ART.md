@@ -346,6 +346,10 @@ faceless, so the map stays readable.
   triangle), and the number in cream in its lower half. A small green arrow over the peak means an
   upgrade is affordable; the top level is a gold roof with one sparkle pixel and MAKS under it. The
   level art itself shows on the map, in Build and while moving.
+- Every icon of a building is the art the map draws: its own footprint (a 2x2 wide, a 1x2 with both
+  tiles), its level and, for a placed house, its variant (`buildingURL` in `iso.ts`, `houseVariant` in
+  `sprites.ts`). Never a one-tile stand-in: playtest 2026-11-07 found Rumah icons in the default orange
+  hip while the house on the map had its own roof, and big buildings squeezed onto one tile.
 
 ## Roofs and walls
 
