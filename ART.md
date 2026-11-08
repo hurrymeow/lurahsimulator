@@ -322,6 +322,8 @@ faceless, so the map stays readable.
   of roster, a small crown) in green zinc, then red tile with a concrete kanopi on white columns, then
   a pendopo under a joglo roof. The merah putih flies from a grey pole with a concrete foot in the
   front yard at levels 1 and 2.
+  Menara Wifi level 1 is an RT/RW net mast, a thin galvanised pipe on three guy wires with two sector
+  panels, a grid dish and a router box, never a pole with a head; level 2 is the lattice tower.
 - Shops (`toko-art.ts`): Rumah Makan is a plank warung makan with a spanduk, a warkop lean-to, then a
   warteg with a false-front nameboard. Fotokopi is a kiosk, a toko with its banner over the roof, then
   a ruko. Apotek has no house roof: a flat dak with a deep green fascia and a plus-shaped green

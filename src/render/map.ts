@@ -918,10 +918,12 @@ export class MapView {
       ctx.fillRect(Math.round(c.x + x * s), Math.round(c.y + y * s), s, s);
     };
     if (b.def === 'wifi' && (!this.motion || Math.floor((now + b.uid * 211) / 450) % 3 === 0)) {
+      // The light tops the mast: lower on the level 1 pipe than on the lattice tower.
+      const top = b.level <= 1 ? -27 : -36;
       ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
-      ctx.fillRect(Math.round(c.x - 2 * s), Math.round(c.y - 37 * s), 4 * s, 4 * s);
-      px(-1, -36, '#fca5a5');
-      px(0, -36, '#ef4444');
+      ctx.fillRect(Math.round(c.x - 2 * s), Math.round(c.y + (top - 1) * s), 4 * s, 4 * s);
+      px(-1, top, '#fca5a5');
+      px(0, top, '#ef4444');
     } else if (b.def === 'warung' && this.effects) this.fx.steam(b.x, b.y, now);
     else if (b.def === 'kolamLele' || b.def === 'kolamPancing') this.fish(ctx, b, now);
     else if (b.def === 'rumah' && this.night > 0) {
