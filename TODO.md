@@ -12,6 +12,24 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Next
 
+- [ ] **Studi Banding: draw the bus at the Terminal's scale.**
+  - Problem: the Studi Banding sprite (`art-higher.ts`, Kelurahan 2x2) is one tour bus blown up to fill the whole lot, about four times the length of the buses at the Terminal. It also has 38 near-black pixels (palette `d`, `#0b0b0c`) in its wheels and base.
+  - Why: two buses at two scales on one map breaks the diorama, and ART.md allows no pure black. Found in a to-scale sheet of every building on 2026-11-08 (main at a060996).
+  - Suggested solution: draw the bus at the Terminal's bus size, parked on a paved lot with a few props (a rombongan under a payung, a spanduk, luggage). Keep it low (`decisions/wide-2x2-art.md`). Use a dark shade of the body colour instead of `d`.
+  - `open · — · — · done when:` the Studi Banding bus is the Terminal bus's size, the lot reads as used, and the sprite has no `#0b0b0c` pixels.
+
+- [ ] **Shrink IndoApril and BetaMart to match other buildings at each level.**
+  - Problem: level 1 stands 20px above the ground centre, against 13 to 18px for every other level-1 1x1 building (Rumah and Warung Sembako 16). Level 2 stands 25px, the tallest RT building after the wifi tower. Both fill the tile and carry heavy stripes.
+  - Why: they tower over the houses and shops next to them. #362 shrank Warung Sembako for the same reason.
+  - Suggested solution: lower both by about 3 to 4px per level (about 16 to 17px at level 1 and 21px at level 2) and narrow the level-2 body by a couple of pixels, in `toko-art.ts`. Keep one shared shape (ART.md, Hari's preference 4).
+  - `open · — · — · done when:` both minimarkets are within 1 to 2px of the tallest peer at each level, measured from the ground centre, and still share one silhouette.
+
+- [ ] **Kos-kosan: one long building, not one block drawn twice.**
+  - Problem: `LONG_ART.kosan` in `iso.ts` draws the same tall kos block on both tiles of its 2x1 lot, so it reads as two identical buildings. Level 2 stands 32px above the ground centre, the tallest RT building after the wifi tower.
+  - Why: ART.md, Hari's preference 5, says to break big buildings into parts, not to repeat one box. Its height hides the houses behind it.
+  - Suggested solution: one long kos row under a shared roof, with the steel stair at one end and doors along its length. Make the second tile a lower wing or the jemuran deck. Keep level 2 no more than one storey over level 1.
+  - `open · — · — · done when:` the Kos-kosan reads as one building at both levels and level 2 is no taller than about 26px over the ground centre.
+
 ### Later
 
 - [ ] **Stage lengths, and stars that wait on the yearly ranking.**
