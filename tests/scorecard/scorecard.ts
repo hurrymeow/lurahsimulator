@@ -14,6 +14,7 @@ import { LOMBA } from '../../src/data/lomba';
 import { RANKING_WEEKS, WEEKS_PER_YEAR } from '../../src/sim/calendar';
 import { SECONDS_PER_TICK, type BotId, type Timeline, type TLEvent } from './driver';
 import { t2Verdict, type T2Result } from './t2';
+import type { KecRun } from '../kec-bot-lib';
 
 export type Verdict = 'Pass' | 'Fail' | 'Unknown';
 export interface ScoreRow {
@@ -536,7 +537,86 @@ export function trendOf(runs: Runs, rows: ScoreRow[], generated: string): Trend 
   return trend;
 }
 
-export function renderMarkdown(runs: Runs, rows: ScoreRow[], takeovers: Takeover[], generated: string, previous?: Trend): string {
+
+// ---------------------------------------------------------------- band table and Kecamatan rows
+
+/** The bands the first 2 hours cover: B0 to B5 (RT 0 stars to Kecamatan 3 stars). */
+const PLAY_BANDS = 6;
+const bandStart = (b: number): number => (b === 0 ? 0 : BAND_END_MIN[b - 1] * 60) / SECONDS_PER_TICK;
+const bandEnd = (b: number): number => (BAND_END_MIN[b] * 60) / SECONDS_PER_TICK;
+
+type BandMetric = 'novelty' | 'goal' | 'star' | 'stop';
+const METRIC_KINDS: Record<BandMetric, (e: TLEvent) => boolean> = {
+  novelty: isNovel,
+  goal: (e) => e.kind === 'goal' || e.kind === 'star' || e.kind === 'promote',
+  star: (e) => e.kind === 'star' || e.kind === 'promote',
+  stop: (e) => e.kind === 'star' || e.kind === 'promote' || e.kind === 'report',
+};
+
+/** Longest gap in seconds of a metric inside a band for one run, or undefined when the run ended before the band began. */
+export function bandGap(tl: Timeline, band: number, metric: BandMetric): number | undefined {
+  const from = bandStart(band);
+  if (tl.ticks <= from) return undefined;
+  const to = Math.min(bandEnd(band), tl.ticks);
+  const ticks = tl.events.filter(METRIC_KINDS[metric]).map((e) => e.t);
+  return Math.max(...gaps(ticks, from, to).map((g) => g.gap)) * SECONDS_PER_TICK;
+}
+
+const fmtGap = (s: number | undefined, unit: 's' | 'min'): string => (s === undefined ? '–' : unit === 's' ? `${s}` : (s / 60).toFixed(1));
+
+/** One table per metric: a row per bot, a column per band B0 to B5. A cell is the worst run over the seeds, so one bad seed shows. */
+export function bandTables(runs: Runs): string[] {
+  const out: string[] = ['', '## Band table, B0 to B5', '', 'Worst seed per bot and band. A dash means the run ended before the band began (or the bot stops at the last star). Gaps are inside the band window only. A stop point is a star, a promotion or a report. Bars: GAME-DESIGN.md section 8.', ''];
+  const metrics: { m: BandMetric; title: string; unit: 's' | 'min'; bar: string }[] = [
+    { m: 'novelty', title: 'Novelty max (seconds)', unit: 's', bar: `bar ${NOVELTY_MAX_S.join(', ')} for B0 to B4` },
+    { m: 'goal', title: 'Goal max (seconds)', unit: 's', bar: `bar ${GOAL_MAX_S.slice(1).join(', ')} for B1 to B4` },
+    { m: 'star', title: 'Star gap (minutes between stars or a promotion)', unit: 'min', bar: 'bar 4 min RT, 7 min RW, 10 min Kelurahan, 15 to 25 min Kecamatan' },
+    { m: 'stop', title: 'Stop point gap (minutes)', unit: 'min', bar: `bar ${STOP_MAX_MIN[3]} min in B3 and B4, 20 min in B5` },
+  ];
+  for (const { m, title, unit, bar } of metrics) {
+    out.push(`### ${title} (${bar})`, '', `| Bot | ${BANDS.slice(0, PLAY_BANDS).join(' | ')} |`, `| --- | ${BANDS.slice(0, PLAY_BANDS).map(() => '---').join(' | ')} |`);
+    for (const [bot, tls] of Object.entries(runs) as [BotId, Timeline[]][]) {
+      const cells = BANDS.slice(0, PLAY_BANDS).map((_, b) => {
+        const vals = tls.map((tl) => bandGap(tl, b, m)).filter((v): v is number => v !== undefined);
+        return fmtGap(vals.length ? Math.max(...vals) : undefined, unit);
+      });
+      out.push(`| ${bot} | ${cells.join(' | ')} |`);
+    }
+    out.push('');
+  }
+  return out;
+}
+
+const wkMin = (w: number | undefined): string => (w === undefined ? 'never' : `${((w * SECONDS_PER_TICK) / 60).toFixed(1)} min`);
+
+/** The three open Kecamatan rows of decisions/kecamatan-playtest.md, from the hint-path Kecamatan bot on every seed that reached it. */
+export function kecTables(kec: KecRun[]): string[] {
+  const out: string[] = ['', '## Kecamatan rows (hint path)', ''];
+  if (!kec.length) return [...out, 'Not run: no Kecamatan bot results in the cache.', ''];
+  const sorted = [...kec].sort((a, b) => a.seed - b.seed);
+  const reached = sorted.filter((k) => k.promoted !== undefined);
+  const done = reached.filter((k) => k.at.length === 3);
+  out.push(`The hint bot plays a new game to Kelurahan 3 stars, then the Kecamatan bot plays on. ${reached.length} of ${sorted.length} seeds reached the Kecamatan, ${done.length} reached its 3rd star. Times are at 1x. Bot gaps are logged, not counted as game fails.`, '');
+  out.push('| Seed | Promoted (min) | 1★ / 2★ / 3★ after promotion (min) | First pinjol after promotion | Longest stop gap | Longest gap, stars only | Pinjol at end | Judol peak / mean (%) | Baliho share of income (%) | Baliho Rp a week |', '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |');
+  for (const k of sorted) {
+    if (k.promoted === undefined) { out.push(`| ${k.seed} | never (Kelurahan ${k.stars}) | – | – | – | – | – | – | – | – |`); continue; }
+    out.push(`| ${k.seed} | ${wkMin(k.promoted)} | ${k.at.length ? k.at.map((w) => wkMin(w).replace(' min', '')).join(' / ') : '–'} | ${wkMin(k.firstPinjol)} | ${wkMin(k.stopGap)} | ${wkMin(k.starGap)} | ${k.pinjol}% | ${k.judolPeak ?? '–'} / ${k.judolMean ?? '–'} | ${k.balihoPct ?? 'no Baliho'} | ${k.balihoRp ?? '–'} |`);
+  }
+  const first = reached.map((k) => (k.firstPinjol === undefined ? Infinity : k.firstPinjol));
+  const inTime = first.filter((w) => w * SECONDS_PER_TICK <= 180).length;
+  const stops = reached.map((k) => k.stopGap).filter((x): x is number => x !== undefined);
+  const stopOk = stops.filter((w) => w * SECONDS_PER_TICK <= 20 * 60).length;
+  const judol = reached.map((k) => k.judolMean).filter((x): x is number => x !== undefined);
+  const baliho = reached.map((k) => k.balihoPct).filter((x): x is number => x !== undefined);
+  out.push('', '| Row | Bar | Result | Verdict |', '| --- | --- | --- | --- |');
+  out.push(`| First pinjol case | within 3 min of promotion | ${inTime} of ${reached.length} seeds in time. Median ${wkMin(median(first.filter(Number.isFinite)))} where it happened; never on ${first.filter((w) => !Number.isFinite(w)).length} seeds. | ${reached.length === 0 ? 'Unknown' : inTime === reached.length ? 'Pass' : 'Fail'} |`);
+  out.push(`| Stop point every 20 min | longest gap at most 20 min | ${stopOk} of ${stops.length} seeds. Longest ${stops.length ? wkMin(Math.max(...stops)) : 'n/a'}. | ${stops.length === 0 ? 'Unknown' : stopOk === stops.length ? 'Pass' : 'Fail'} |`);
+  out.push(`| Judol share and Baliho income | measured, no bar yet | Judol mean share ${judol.length ? `${median(judol).toFixed(1)}% (median of seeds)` : 'n/a'}. Baliho ${baliho.length ? `${median(baliho).toFixed(1)}% of building income (median of seeds), built on ${baliho.length} of ${reached.length} seeds` : 'never built by the bot'}. | Measured |`);
+  out.push('');
+  return out;
+}
+
+export function renderMarkdown(runs: Runs, rows: ScoreRow[], takeovers: Takeover[], generated: string, previous?: Trend, kec: KecRun[] = []): string {
   const counts = { Pass: 0, Fail: 0, Unknown: 0 };
   for (const r of rows) counts[r.verdict]++;
   const out: string[] = [];
@@ -551,6 +631,7 @@ export function renderMarkdown(runs: Runs, rows: ScoreRow[], takeovers: Takeover
     const cells = STAR_NAMES.map((_, i) => (Number.isNaN(starMedian(tls, i)) ? `– (${reached(tls, i)}/${tls.length})` : min(starMedian(tls, i)).toFixed(1) + (reached(tls, i) < tls.length ? ` (${reached(tls, i)}/${tls.length})` : '')));
     out.push(`| ${bot} | ${tls.length} | ${cells.join(' | ')} | ${median(tls.map((tl) => tl.rows.at(-1)?.pop ?? 0)).toFixed(0)} |`);
   }
+  out.push(...bandTables(runs), ...kecTables(kec));
   out.push('', '## Soft-lock takeover', '', 'An idle or random bot plays to mid-game, then a builder bot takes over the state. It must earn a star or finish a goal line within 150 ticks (20 min).', '');
   out.push('| Seed | From | At tick | Progressed | Detail |', '| --- | --- | --- | --- | --- |');
   for (const t of takeovers) out.push(`| ${t.seed} | ${t.from} | ${t.atTick} | ${t.gained ? 'yes' : 'NO'} | ${t.detail} |`);
