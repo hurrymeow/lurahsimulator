@@ -392,6 +392,7 @@ export const EN = {
   'insp.parkirShop': 'shop',
   'insp.pathBonus': 'Beside a path: +{pct}% income',
   'insp.perMonth': '{bits} a week',
+  'insp.staffShort': '{job}: {filled} of {total} posts filled across the kampung. Income -{pct}%.',
   'insp.premanTake': 'A preman takes uang keamanan here: income -{pct}%.',
   'insp.queue': 'Permit queue: {pos} of {n}, about {eta} weeks to go. The Kantor desks clear {cap} folders a week.',
   'insp.rename': 'Rename',

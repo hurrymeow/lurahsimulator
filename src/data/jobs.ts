@@ -28,6 +28,11 @@ export const JOBS: JobDef[] = [
   { id: 'satpam', appeal: 25, name: 'Satpam', blurb: 'Watches the gate so the pos ronda does not have to. Raises Popularitas, paid from the kas.', perMonth: { sabar: 0.5, rupiah: -20_000 }, perLevel: { resources: ['sabar'], boost: 0.15 } },
   { id: 'tukang', appeal: 30, name: 'Tukang', blurb: 'Builds things. Each tukang on the crew speeds up every construction site by a quarter. Pays a little.', perMonth: { rupiah: 50_000 }, perLevel: { resources: ['rupiah'], boost: 0.15 } },
   { id: 'panitia', appeal: 15, name: 'Panitia', blurb: 'Sits on committees. Makes Orang Inside, and the konsumsi comes out of the kas.', perMonth: { orangDalam: 0.12, rupiah: -40_000 }, perLevel: { resources: ['orangDalam'], boost: 0.25 } },
+  // Shop staff (decisions/shop-jobs.md): the shop's income is their output, so they pay the kas nothing
+  // themselves. A shop short of them earns less (SHOP_STAFF_CUT).
+  { id: 'penjaga', appeal: 60, name: 'Penjaga Toko', blurb: 'Minds the counter at a warung, toko or minimarket. A shop short of staff earns less.', perMonth: {}, perLevel: { resources: [], boost: 0 } },
+  { id: 'tukangMasak', appeal: 55, name: 'Tukang Masak', blurb: 'Cooks at a rumah makan, warteg, warkop or gerobak. A shop short of staff earns less.', perMonth: {}, perLevel: { resources: [], boost: 0 } },
+  { id: 'tukangCukur', appeal: 40, name: 'Tukang Cukur', blurb: 'Cuts hair at the barbershop and hears all the news. A shop short of staff earns less.', perMonth: {}, perLevel: { resources: [], boost: 0 } },
   { id: 'buzzer', appeal: 0, name: 'Buzzer', blurb: 'Pays well and makes fake Virality fast. Gets exposed sooner or later.', perMonth: { rupiah: 60_000, viral: 6 }, perLevel: { resources: ['viral'], boost: 0.25 } },
 ];
 
@@ -52,6 +57,10 @@ export const BUZZER_FAKE_PER_LEVEL = 0.25;
 export const levelFor = (months: number): number => LEVEL_MONTHS.reduce((lv, m, i) => (months >= m ? i + 1 : lv), 1);
 /** Multiplier on a job's scaling output at a level. */
 export const levelMult = (boost: number, level: number): number => 1 + boost * (level - 1);
+
+/** Shop jobs, and the share of a shop's income lost with none of its posts filled (pro rata when some are). */
+export const SHOP_JOBS = ['penjaga', 'tukangMasak', 'tukangCukur'] as const;
+export const SHOP_STAFF_CUT = 0.25;
 
 export const PENSIUN_MONTHS = 120;
 export const PENSIUN_PAYOUT = 1_500_000;

@@ -187,7 +187,7 @@ export interface Neighbour {
   ranking: RankingResult[];
 }
 
-export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'petani' | 'peternak' | 'pengepul' | 'guru' | 'satpam' | 'tukang' | 'panitia' | 'kaderPosyandu' | 'calo' | 'honorer';
+export type JobId = 'none' | 'pns' | 'ojol' | 'influencer' | 'buzzer' | 'petani' | 'peternak' | 'pengepul' | 'guru' | 'satpam' | 'tukang' | 'panitia' | 'penjaga' | 'tukangMasak' | 'tukangCukur' | 'kaderPosyandu' | 'calo' | 'honorer';
 
 /** Trouble that has shown up at least once. Some buildings open only when their problem appears. */
 export type ProblemId = 'banjir' | 'jobless' | 'permitQueue' | 'preman';

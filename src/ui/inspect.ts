@@ -1,4 +1,5 @@
-import { bBlurb, bName, t, type Key } from '../i18n';
+import { bBlurb, bName, jName, t, type Key } from '../i18n';
+import { jobDef } from '../data/jobs';
 import type { App } from '../app';
 import { iconURL } from '../render/sprites';
 import { rupiah } from '../format';
@@ -10,6 +11,7 @@ import { bedsOf, byUid, levelMult, occupants, pathMult, upgradeCost } from '../s
 import { brandKind, brandOf, displayName, hasBrand, hasOwnName, kanibal, nextBrand, rename, sisterOutlets } from '../sim/brands';
 import { FRANCHISE, KANIBAL, NAME_MAX, RENAMABLE } from '../data/brands';
 import { premanTake } from '../sim/needs';
+import { staffing, staffMult } from '../sim/jobs';
 import { buildingIncome, buildingUpkeep } from '../sim/tick';
 import { deskCapacity, permitEta, permitQueue } from '../sim/staff';
 import type { Building, BuildingDef, CheckResult, SimEffect } from '../sim/types';
@@ -118,6 +120,9 @@ export function inspect(app: App, uid: number): void {
     ));
     if (brandKind(b.def) === 'franchise') lines.push(h('p', { class: 'meta' }, k ? t('insp.franchise', { n: k, pct: Math.round(Math.min(FRANCHISE.max, FRANCHISE.perOutlet * k) * 100), royalty: Math.round(FRANCHISE.royalty * 100) }) : t('insp.franchiseNone')));
   }
+  // A shop short of staff says so: the posts are shared across the kampung, so the count is too.
+  const st = staffing(s, b);
+  if (st && st.filled < st.total) lines.push(h('p', { class: 'meta warn' }, t('insp.staffShort', { job: jName(jobDef(st.job)!), filled: st.filled, total: st.total, pct: Math.round((1 - staffMult(s, b)) * 100) })));
   const take = premanTake(s, b);
   if (take) lines.push(h('p', { class: 'meta warn' }, t('insp.premanTake', { pct: Math.round(take * 100) })));
   if (kanibal(s, b)) lines.push(h('p', { class: 'meta warn' }, t('insp.kanibal', { pct: Math.round((1 - KANIBAL.mult) * 100) })));
