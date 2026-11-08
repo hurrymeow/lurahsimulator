@@ -99,6 +99,38 @@ jobs:
           include-hidden-files: true
           retention-days: 1
 
+  # docs/plans/first-2h-playtest.md T2: a bot that plays from visible text only and is scored against the sim afterwards.
+  # 412 EN and 360 ID, two jobs. Artifact: a CSV (time, visible goal, chosen action, verdict) and a screenshot per miss.
+  screen-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [screenbot-412-en, screenbot-360-id]
+    # Keep the tag equal to @playwright/test in package-lock.json, as in ci.yml.
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright test --project=${{ matrix.project }} --trace off --reporter=list
+        env:
+          SCREEN_BOT: '1'
+      - run: cat reports/screen-bot/*.summary.json >> "$GITHUB_STEP_SUMMARY"
+        if: ${{ !cancelled() }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: screen-bot-${{ matrix.project }}
+          path: reports/screen-bot
+          retention-days: 30
+
   scorecard-report:
     # Runs when scorecard-t2 fails too: rows 3, 6 and 27 then read Unknown, not the whole report lost.
     needs: [scorecard-runs, scorecard-takeover, scorecard-t2]
