@@ -10,12 +10,6 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Now
 
-- [ ] **Shops give jobs, and earn less short-staffed.**
-  - Problem: no shop has a job slot, so in late game 42 to 59% of warga sit idle for every scorecard bot (Kelurahan, seeds 1 to 6) and Aman pins at 0, since each warga idle 6+ months costs 2 Aman. Playtest 2026-11-09: 139 of 264 idle at T5.
-  - Why: a kampung full of warung with nobody working in them reads wrong, and Kerja and Aman feel unfixable however the player builds.
-  - Suggested solution: each shop opens jobs of its own kind per level (Penjaga Toko, Tukang Masak, Tukang Cukur), and a shop with empty slots earns less. Big-impact buildings (PAUD, farms, offices) stay the bigger lever. Prove with the bots before and after.
-  - `claimed · Claude · 2026-11-09 · done when:` shops have job slots, the idle share and Aman move in the bot runs, star pacing holds, and GAME-DESIGN.md says so.
-
 ### Next
 
 ### Later
@@ -25,7 +19,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Why: a star the calendar sets ignores how well the player plays (GAME-DESIGN.md §8 items 4 and 10). Short stages leave the late content thin.
   - Suggested solution: decide per stage whether a tier-win goal should count quarterly rankings, ask for fewer yearly wins, or be paired with goals that skill moves. Then retune the stage goals toward the length targets. Prove each change with the nine player types against main.
   - Source: `decisions/smaller-map-T9.md`, notes 1, 2 and 5
-  - `open · — · — · done when:` each stage is inside its length band, or a decisions file says why not, and no star lands on the same week for every bot.
+  - `claimed · Claude · 2026-11-09 · done when:` each stage is inside its length band, or a decisions file says why not, and no star lands on the same week for every bot.
 
 - [ ] **Run the scorecard bots with the road rule on.**
   - Problem: `tests/setup.ts` turns the road rule off for every test, the scorecard included. Bot buildings work without a path, so bots have more room than a player and the numbers flatter the game.
@@ -75,6 +69,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ## Done
 
+- [x] **Shops give jobs, and earn less short-staffed.** Penjaga Toko, Tukang Masak and Tukang Cukur, 1 to 3 posts a shop; a short-staffed shop earns up to 25% less. Late idle share fell from about 0.5 to about 0.3 for the bots; RW 2★/3★ come 0 to 11 weeks later. GAME-DESIGN.md §4. #374, `decisions/shop-jobs.md`.
 - [x] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).** The agent's verdict: playable end to end; every climbing bot reaches Kelurahan 3★ on every seed, and the Kecamatan bot reaches 3★ in 57 min. The Aman goal now names the preman fix. Pacing and the road rule are new items above. #358, `decisions/smaller-map-T9.md`.
 - [x] **The scorecard harness reads the T2 specs (scorecard follow-ups, part 2).** `npm run scorecard:t2` runs `tests/e2e/scorecard-t2.spec.ts` at 412px in id and en into the scorecard cache, and a new nightly job runs it. Rows 3, 6 and 27 now read Pass, Pass and Fail instead of Unknown. The row 6 spec no longer flakes on a pending event. #356, `decisions/scorecard-t2-harness.md`.
 - [x] **Visual baselines no longer flip with runner speed.** `page.clock.install` kept time running in real time, so the welcome toast was in or out of the HUD, event and tip shots depending on load. `visual.spec.ts` now pauses the clock after load, so only `settle` moves time. Passed CI first time with no baseline refresh; since then the baselines have failed only on PRs that changed the screen, the same on every retry. #281, `progress/visual-clock-pause.md`.
