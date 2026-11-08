@@ -435,7 +435,7 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
     // countdown from the last one, and the Lomba Agustusan, announced by the panitia card. Read from the calendar constants.
     const rankingLead = RANKING_WEEKS * SECONDS_PER_TICK;
     const lombaLead = (LOMBA.dayWeek - LOMBA.announceWeek) * SECONDS_PER_TICK;
-    const bigDayGapMin = (WEEKS_PER_YEAR * SECONDS_PER_TICK) / 60;
+    const bigDayGapMin = (WEEKS_PER_YEAR * LOMBA.everyYears * SECONDS_PER_TICK) / 60;
     const ok = rankingLead >= 30 && lombaLead >= 30 && bigDayGapMin >= 10;
     add(22, 'Calendar rhythm', 'T1', verdict(ok), `Fixed beats: Triwulan ranking and quarterly report every ${RANKING_WEEKS} weeks, warned ${rankingLead}s ahead; Lomba Agustusan, warned ${lombaLead}s ahead (bar 30s). Big days: the Lomba comes every ${bigDayGapMin.toFixed(1)} min (bar 10 min apart). Beats per stage are not counted by stage yet.`);
   }
