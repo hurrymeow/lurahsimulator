@@ -1,4 +1,4 @@
-// Staff portraits for every hire, at Inem's size (44x60): the specials' hand-picked looks, and generic hires dressed
+// Staff portraits for every hire, in Inem's 44x60 slot: the specials' hand-picked looks, and generic hires dressed
 // for their job with a face seeded by their staff id. All drawn in code from parts: skin, hair, outfit and
 // a prop. Each special is a recognisable TYPE (a TV news anchor, a radio traffic reporter), never one real person
 // or anyone else's character (GAME-DESIGN.md section 5). ART.md rules: flat two-tone fills lit from the top left,
@@ -6,7 +6,13 @@
 
 import { PALETTE as P } from './sprites';
 
-export const PORTRAIT = { w: 44, h: 60 };
+/**
+ * Art pixels. Shown at 44x60 CSS px, so one art pixel is 2 CSS px, the same as the map at its
+ * smallest zoom: outlines, seams and eyes are as thick as a walker's. Layout below is written on a
+ * 44x60 half-pixel grid (D) and snapped down to art pixels; faces are drawn natively.
+ */
+export const PORTRAIT = { w: 22, h: 30 };
+const D = 2;
 
 type Hair = 'short' | 'side' | 'long' | 'bun' | 'curly' | 'bald' | 'ponytail' | 'mullet' | 'pompadour' | 'grey';
 type Outfit = 'suit' | 'dress' | 'hoodie' | 'kebaya' | 'tshirt' | 'safari' | 'vest' | 'blouse' | 'sequin' | 'tracksuit' | 'tank' | 'batik';
@@ -53,18 +59,19 @@ function shade(hex: string, k: number): string {
   return `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
 
-/** A 44x60 grid of colours; null is clear. */
+/** A 22x30 grid of colours; null is clear. */
 type Grid = (string | null)[][];
 
 /** Rosy cheeks and the tongue (ART.md, Faces). */
 const ROSY = '#f07f86';
 
 /**
- * The line pass (ART.md, Outlines): wherever two parts meet, the pixel of the part behind (painted
- * earlier) takes a 0.55x shade of its own colour, so hair, face, neck, arms and props each read as
- * one clean shape, as on Inem and the map sprites. Details painted inside a part share its id.
+ * The line pass (ART.md, Outlines): where a part in front meets one behind, the pixel behind takes a
+ * 0.55x shade of its own colour. At 2 CSS px an art pixel, a line on the face or the arms would be as
+ * heavy as an eye, and walkers carry none, so only parts in `lined` take one: the back hair and the
+ * chest, giving a line round the collar. Details share their part's id.
  */
-function seams(g: Grid, ids: number[][]): Grid {
+function seams(g: Grid, ids: number[][], lined: Set<number>): Grid {
   const { w, h } = PORTRAIT;
   const out = g.map((row) => [...row]);
   for (let y = 0; y < h; y++)
@@ -72,6 +79,7 @@ function seams(g: Grid, ids: number[][]): Grid {
       const c = g[y][x];
       if (!c) continue;
       const a = ids[y][x];
+      if (!lined.has(a)) continue;
       const front = [[x, y - 1], [x, y + 1], [x - 1, y], [x + 1, y]].some(([u, v]) => g[v]?.[u] && ids[v][u] > a);
       if (front) out[y][x] = shade(c, 0.55);
     }
@@ -86,19 +94,29 @@ function paint(look: Look): Grid {
   let cur = 1;
   let next = 1;
   const part = (id?: number) => (cur = id ?? (next += 10));
-  const set = (x: number, y: number, c: string) => {
+  const lined = new Set<number>();
+  /** One art pixel. */
+  const dot = (x: number, y: number, c: string) => {
     if (x >= 0 && y >= 0 && x < w && y < h) {
       g[y][x] = c;
       ids[y][x] = cur;
     }
   };
-  const rect = (x0: number, y0: number, x1: number, y1: number, c: string) => {
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, c);
+  /** Native rows and columns, inclusive. */
+  const box = (x0: number, y0: number, x1: number, y1: number, c: string) => {
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) dot(x, y, c);
   };
+  // Layout helpers on the half-pixel grid.
+  const set = (x: number, y: number, c: string) => dot(Math.floor(x / D), Math.floor(y / D), c);
+  const rect = (x0: number, y0: number, x1: number, y1: number, c: string) => box(Math.floor(x0 / D), Math.floor(y0 / D), Math.floor(x1 / D), Math.floor(y1 / D), c);
+  /** An ellipse, tested at the middle of each art pixel. keep gets that point on the half-pixel grid. */
   const oval = (cx: number, cy: number, rx: number, ry: number, c: string, keep?: (x: number, y: number) => boolean) => {
-    for (let y = Math.floor(cy - ry); y <= cy + ry; y++)
-      for (let x = Math.floor(cx - rx); x <= cx + rx; x++)
-        if (((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1 && (!keep || keep(x, y))) set(x, y, c);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const u = x * D + 0.5;
+        const v = y * D + 0.5;
+        if (((u - cx) / rx) ** 2 + ((v - cy) / ry) ** 2 <= 1 && (!keep || keep(u, v))) dot(x, y, c);
+      }
   };
   const skinDark = shade(look.skin, 0.86);
   const skinLight = shade(look.skin, 1.08);
@@ -110,7 +128,7 @@ function paint(look: Look): Grid {
   const has = (p: Prop) => look.props.includes(p);
 
   // Hair that falls behind the head and shoulders, rounded at the ends.
-  part();
+  lined.add(part());
   if (look.hair === 'long') {
     oval(22, 30, 13, 19, look.hairColour, (_x, y) => y >= 18);
     oval(22, 30, 13, 19, hairDark, (x, y) => y >= 30 && x <= 12);
@@ -122,23 +140,22 @@ function paint(look: Look): Grid {
     oval(36, 26, 2, 4, hairDark);
   }
 
-  // Arms first, hanging at the sides, so the line pass draws a sleeve seam where the chest overlaps them.
+  // Arms at the sides, then the shoulders and chest: a rounded top lit from the top left, the shade
+  // curving round the right side.
   const body = (_x: number, y: number) => y >= 44;
   const inBody = (x: number, y: number) => ((x - 22) / 19) ** 2 + ((y - 58) / 15) ** 2 <= 1;
-  part();
+  lined.add(part());
   oval(8, 57, 6, 11, main, (x, y) => y >= 47 && inBody(x, y));
-  oval(8, 57, 6, 11, mainLight, (x, y) => y >= 47 && y <= 50 && inBody(x, y));
   oval(36, 57, 6, 11, mainDark, (x, y) => y >= 47 && inBody(x, y));
-  // Shoulders and chest: a rounded top lit from the top left, the shade curving round the right side.
-  part();
   oval(22, 58, 14, 15, main, body);
   oval(30, 60, 9, 15, mainDark, (x, y) => body(x, y) && ((x - 22) / 14) ** 2 + ((y - 58) / 15) ** 2 <= 1);
   oval(17, 50, 6, 3, mainLight, (x, y) => body(x, y) && ((x - 22) / 14) ** 2 + ((y - 58) / 15) ** 2 <= 1);
   const torso = cur;
-  // The neck.
+  // The neck, with a soft shadow under the chin rather than a line.
   part();
   rect(19, 37, 24, 45, look.skin);
   rect(22, 37, 24, 45, skinDark);
+  rect(19, 38, 24, 39, shade(look.skin, 0.78));
   part(torso);
 
   switch (look.outfit) {
@@ -150,7 +167,7 @@ function paint(look: Look): Grid {
     case 'kebaya':
       // A scooped neckline; the kebaya gets lace dots in the second colour.
       oval(22, 44, 6, 3, look.skin, (_x, y) => y >= 44);
-      if (look.outfit === 'kebaya') for (let y = 48; y < 60; y += 3) for (let x = 6 + (y % 2); x < 38; x += 4) set(x, y, second);
+      if (look.outfit === 'kebaya') for (let y = 24; y < 30; y += 2) for (let x = 3 + ((y >> 1) % 2) * 2; x < 19; x += 4) dot(x, y, second);
       else for (let y = 49; y < 60; y += 4) for (let x = 8 + (y % 3); x < 37; x += 5) set(x, y, second);
       break;
     case 'hoodie':
@@ -182,7 +199,7 @@ function paint(look: Look): Grid {
       break;
     case 'sequin':
       // Sequins: bright dots all over the jacket.
-      for (let y = 46; y < 60; y += 2) for (let x = 5 + (y % 4); x < 39; x += 4) set(x, y, P.w);
+      for (let y = 23; y < 30; y += 2) for (let x = 2 + ((y >> 1) % 2) * 2; x < 20; x += 4) dot(x, y, P.w);
       rect(19, 44, 24, 59, P.w);
       break;
     case 'tracksuit':
@@ -280,72 +297,49 @@ function paint(look: Look): Grid {
 
   // A light sheen on the hair, top left, where the light falls.
   if (look.hair !== 'bald')
-    for (let y = 0; y < 22; y++)
-      for (let x = 0; x < 22; x++) {
-        const k = 2 * x + y;
-        if (g[y][x] === look.hairColour && ids[y][x] === cur && (k === 44 || k === 45) && g[y + 1]?.[x] === look.hairColour) set(x, y, hairLight);
-      }
+    for (let y = 0; y < 11; y++)
+      for (let x = 0; x < 11; x++)
+        if (2 * x + y === 22 && g[y][x] === look.hairColour && ids[y][x] === cur && g[y + 1]?.[x] === look.hairColour) dot(x, y, hairLight);
 
-  // The face (ART.md, Faces): oval ink eyes with a one-pixel sparkle, brows, rosy cheeks, and a smile.
+  // The face (ART.md, Faces), in art pixels like a walker's: ink eyes, rosy cheeks and a smile. No
+  // brows: at this size they sit on the eyes and read as a frown.
   part(head);
   const ink = P.k;
-  const browY = 23;
-  rect(16, browY, 19, browY, hairDark);
-  rect(25, browY, 28, browY, hairDark);
-  const eye = (x: number) => {
-    rect(x, 25, x + 1, 28, ink);
-    set(x, 25, P.w);
-    // Under glasses the eye sits one row lower, inside the frame.
-    if (has('glasses')) {
-      set(x, 25, look.skin);
-      set(x + 1, 25, look.skin);
-      set(x, 26, P.w);
-    }
-  };
-  eye(17);
+  const mouth = shade(look.skin, 0.55);
+  box(8, 12, 8, 13, ink);
   if (look.face === 'wink') {
     // A happy closed arc.
-    set(25, 27, ink);
-    rect(26, 26, 27, 26, ink);
-    set(28, 27, ink);
-  } else eye(26);
-  rect(14, 30, 16, 31, ROSY);
-  rect(28, 30, 30, 31, shade(ROSY, 0.9));
+    dot(12, 13, ink);
+    dot(13, 12, ink);
+    dot(14, 13, ink);
+  } else box(13, 12, 13, 13, ink);
+  dot(7, 15, ROSY);
+  dot(14, 15, shade(ROSY, 0.9));
   if (look.face === 'grin') {
     // An open smile with a pink tongue.
-    rect(18, 33, 26, 33, ink);
-    rect(18, 34, 26, 34, P.R);
-    rect(19, 35, 25, 35, P.R);
-    rect(21, 35, 23, 35, ROSY);
-    rect(20, 36, 24, 36, ink);
-    set(18, 34, ink);
-    set(26, 34, ink);
-    set(19, 35, ink);
-    set(25, 35, ink);
+    box(9, 16, 12, 16, ink);
+    box(10, 17, 11, 17, ROSY);
+    dot(9, 17, ink);
+    dot(12, 17, ink);
   } else {
-    rect(19, 33, 25, 33, shade(look.skin, 0.55));
-    set(18, 32, shade(look.skin, 0.55));
-    set(26, 32, shade(look.skin, 0.55));
+    box(10, 17, 11, 17, mouth);
+    dot(9, 16, mouth);
+    dot(12, 16, mouth);
   }
 
   // Props, front to back. Thin ones (mustache, glasses) belong to the face; the rest are their own parts.
-  if (has('mustache')) rect(18, 31, 26, 31, look.hairColour);
+  if (has('mustache')) box(9, 15, 12, 15, look.hairColour);
   if (has('glasses')) {
-    for (const cx of [17, 26]) {
-      rect(cx - 2, 24, cx + 2, 24, P.S);
-      rect(cx - 2, 29, cx + 2, 29, P.S);
-      rect(cx - 2, 24, cx - 2, 29, P.S);
-      rect(cx + 2, 24, cx + 2, 29, P.S);
-    }
-    rect(20, 26, 23, 26, P.S);
+    // A thin rim either side of each eye, joined by a bridge: a full frame would read as a visor.
+    for (const x of [7, 9, 10, 11, 12, 14]) dot(x, 12, P.S);
   }
   part();
   if (has('sunglasses')) {
-    rect(14, 25, 20, 28, P.k);
-    rect(24, 25, 30, 28, P.k);
-    rect(20, 26, 24, 26, P.k);
-    rect(15, 25, 16, 25, P.l);
-    rect(25, 25, 26, 25, P.l);
+    box(7, 12, 9, 13, P.k);
+    box(12, 12, 14, 13, P.k);
+    box(10, 12, 11, 12, P.k);
+    dot(7, 12, P.l);
+    dot(12, 12, P.l);
   }
   part();
   if (has('cap')) {
@@ -377,13 +371,10 @@ function paint(look: Look): Grid {
   part();
   if (has('lanyard')) {
     // A strap round the neck to an ID card.
-    for (let y = 44; y <= 50; y++) {
-      set(19 + Math.floor((y - 44) / 3), y, P.b);
-      set(25 - Math.floor((y - 44) / 3), y, P.b);
-    }
-    rect(19, 51, 25, 57, P.w);
-    rect(20, 52, 24, 53, P.b);
-    rect(20, 55, 24, 55, P.S);
+    box(9, 22, 9, 23, P.b);
+    box(12, 22, 12, 23, P.b);
+    box(9, 24, 12, 27, P.w);
+    box(10, 25, 11, 25, P.b);
   }
   part();
   if (has('waistbag')) {
@@ -453,7 +444,7 @@ function paint(look: Look): Grid {
     rect(34, 43, 36, 49, P.y);
     rect(35, 37, 35, 43, P.s);
   }
-  return seams(g, ids);
+  return seams(g, ids, lined);
 }
 
 /** The coloured outline: every clear pixel next to a filled one takes a dark shade of its neighbour. */
@@ -527,6 +518,7 @@ function draw(key: string, look: Look): string {
   const hit = cache.get(key);
   if (hit) return hit;
   const g = outline(paint(look));
+  // Drawn at 2 canvas pixels per art pixel, the size of the img (44x60).
   const k = 2;
   const c = document.createElement('canvas');
   c.width = PORTRAIT.w * k;
