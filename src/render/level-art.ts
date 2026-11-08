@@ -269,7 +269,7 @@ export const kontrakan: Art = (p, _v, level = 1) => {
     roofRect(p, 0.1, 0.34, 0.12, 0.6, 6, 2, 'shed', SENG, 'o', seng, 0.02);
     prism(p, 0.34, 0.9, 0.12, 0.46, 6, 'w', (face, u, j, i) => unit(face, u, j, i, 'w'));
     roofRect(p, 0.34, 0.9, 0.12, 0.46, 6, 2, 'shed', 'R', 'w', patched(21, 25, 0, 999), 0.02);
-    antenna(p, 4, -10, 18);
+    antenna(p, 4, -10, 14);
     prism(p, 0.34, 0.9, 0.46, 0.52, 1, 's');
     pole(p, 0.2, 0.84, 5, 'S');
     pole(p, 0.5, 0.84, 5, 'S');
@@ -289,7 +289,7 @@ export const kontrakan: Art = (p, _v, level = 1) => {
   roofRect(p, 0.06, 0.34, 0.06, 0.62, 11, 2, 'shed', SENG, 'o', seng, 0.02);
   prism(p, 0.34, 0.96, 0.06, 0.46, 11, 'w', (face, u, j, i) => unit(face, u, j, i, 'w'));
   roofRect(p, 0.34, 0.96, 0.06, 0.46, 11, 2, 'shed', 'R', 'w', patched(23, 27, 0, 999), 0.02);
-  antenna(p, 6, -14, 13);
+  antenna(p, 6, -14, 11);
   // The upper walkway: a slab and a railing along the front of the main block.
   prism(p, 0.34, 0.96, 0.46, 0.54, 1, 's', undefined, 6);
   p.overlay.push((q) => {

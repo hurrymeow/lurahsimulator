@@ -115,10 +115,11 @@ export function antenna(p: Painter, x: number, y: number, len: number): void {
     const Y = Math.round(q.gy + y * q.zs);
     const free = (px: number, py: number) => px >= 0 && py >= 0 && px < q.w && py < q.h && q.data[(py * q.w + px) * 4 + 3] === 0;
     const put = (px: number, py: number, c: string) => free(px, py) && q.px(px, py, c);
+    // A thin, muted mast with two short crossbars: a small detail on the skyline, not a landmark.
     for (let k = 0; k < len; k++) {
       if (!free(X, Y - len + k)) break;
-      q.px(X, Y - len + k, '#5c544c');
+      q.px(X, Y - len + k, '#857b70');
     }
-    for (const [d, w] of [[1, 3], [3, 2], [5, 1]]) for (let e = -w; e <= w; e++) put(X + e, Y - len + d, '#5c544c');
+    for (const [d, w] of [[1, 2], [3, 1]]) for (let e = -w; e <= w; e++) if (e) put(X + e, Y - len + d, '#857b70');
   });
 }

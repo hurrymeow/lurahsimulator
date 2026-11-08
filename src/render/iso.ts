@@ -628,8 +628,8 @@ const ART: Record<string, ArtFn> = {
     p.roofShape(shape, inset, top, shape === 'shed' ? 2 : shape === 'hip' ? (tall ? 6 : 8) : tall ? 4 : 5, roof, wall, patch);
     // A tandon air on the deck of a flat roof, orange or blue.
     if (shape === 'flat') p.box(6, 3, roof === 'l' || roof === 'G' ? 'b' : 'o', (face) => (face === 'T' ? 'w' : undefined), top + 2);
-    // The TV antenna on a mast behind the roof, the same height on every shape so none stands taller.
-    if (wall !== 's') antenna(p, 5, -5, small ? 18 : tall ? 22 : 19);
+    // The TV antenna on a mast behind the roof, on the cream houses only, the same height on every shape so none stands taller.
+    if (wall === 't') antenna(p, 5, -5, small ? 15 : tall ? 19 : 16);
     // The yard: a pot by the door and an ember at the side, then a jemuran, then a motor and a tandon.
     pot(p, -12, 0, level >= 2);
     if (!tall) ember(p, 10, 0, wall === 'w' ? 'r' : 'b', wall === 'w' ? 'R' : 'B');
