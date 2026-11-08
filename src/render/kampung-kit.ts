@@ -18,6 +18,12 @@ export const RUST = '#a8652f';
 /** A roof paint for corrugated zinc: a darker rib every second column, a rust streak now and then. */
 export const zinc = (x: number, y: number): string => ((x * 7 + y * 3) % 23 === 0 ? RUST : x % 2 ? ZINC : ZINC_RIB);
 
+/** Old seng gone brown with rust: close to a clay roof's value, so a patch on red tile reads quietly. */
+export const rustySeng = (x: number): string => (x % 2 ? '#93705c' : '#80614f');
+
+/** A quiet patch of rusty seng over the columns x0 to x1 of a clay roof. */
+export const rustyPatch = (x0: number, x1: number) => (x: number): string | undefined => (x >= x0 && x < x1 ? rustySeng(x) : undefined);
+
 /**
  * A roof paint that patches a clay roof with zinc: sheets of seng over the part that leaked, the rest
  * left to the roof's own colour. The patch is a band of columns, so it reads as a sheet laid down the slope.

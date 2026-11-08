@@ -2,7 +2,7 @@ import type { Painter } from './iso';
 import { at, canopyTree, pole, unit, win } from './kampung-art';
 import { prism, roofRect, type MassPaint } from './massing';
 import { flagAt, flowers, frontFence, garuda, gateway, noticeBoard } from './sign-art';
-import { antenna, motor, patched, pavedLot, pot, ZINC as SENG, zinc as seng } from './kampung-kit';
+import { antenna, motor, pavedLot, pot, rustyPatch } from './kampung-kit';
 
 // Level art, third silhouette pass (playtest 2026-11-07): every building here changes shape by level,
 // not just colour. Level 1 is the smallest and plainest, level 3 the biggest and busiest: it adds a wing,
@@ -249,7 +249,7 @@ export const koperasi: Art = (p, _v, level = 1) => {
  */
 export const kontrakan: Art = (p, _v, level = 1) => {
   p.low();
-  // A paved yard, the back wing in seng and the main row's clay tile patched with it, the antenna, pots.
+  // A paved yard, red tile throughout with one narrow sheet of rusty seng on the back wing, the antenna, pots.
   pavedLot(p);
   p.shadow(level <= 1 ? 3 : 1);
   // The back wing along b, then the main block along a, two floors each.
@@ -266,9 +266,9 @@ export const kontrakan: Art = (p, _v, level = 1) => {
     // The same L as level 2, one storey: an orange back wing and a white row of petak under red shed roofs,
     // a terrace slab along the doors, a jemuran and a motor in the yard. Level 2 builds the floor above.
     prism(p, 0.1, 0.34, 0.12, 0.6, 6, 'o', (face, u, j, i) => unit(face, u, j, i, 'o'));
-    roofRect(p, 0.1, 0.34, 0.12, 0.6, 6, 2, 'shed', SENG, 'o', seng, 0.02);
+    roofRect(p, 0.1, 0.34, 0.12, 0.6, 6, 2, 'shed', 'R', 'o', rustyPatch(12, 15), 0.02);
     prism(p, 0.34, 0.9, 0.12, 0.46, 6, 'w', (face, u, j, i) => unit(face, u, j, i, 'w'));
-    roofRect(p, 0.34, 0.9, 0.12, 0.46, 6, 2, 'shed', 'R', 'w', patched(21, 25, 0, 999), 0.02);
+    roofRect(p, 0.34, 0.9, 0.12, 0.46, 6, 2, 'shed', 'R', 'w', undefined, 0.02);
     antenna(p, 4, -10, 14);
     prism(p, 0.34, 0.9, 0.46, 0.52, 1, 's');
     pole(p, 0.2, 0.84, 5, 'S');
@@ -286,9 +286,9 @@ export const kontrakan: Art = (p, _v, level = 1) => {
     return;
   }
   prism(p, 0.06, 0.34, 0.06, 0.62, 11, 'o', (face, u, j, i) => unit(face, u, j, i, 'o'));
-  roofRect(p, 0.06, 0.34, 0.06, 0.62, 11, 2, 'shed', SENG, 'o', seng, 0.02);
+  roofRect(p, 0.06, 0.34, 0.06, 0.62, 11, 2, 'shed', 'R', 'o', rustyPatch(11, 14), 0.02);
   prism(p, 0.34, 0.96, 0.06, 0.46, 11, 'w', (face, u, j, i) => unit(face, u, j, i, 'w'));
-  roofRect(p, 0.34, 0.96, 0.06, 0.46, 11, 2, 'shed', 'R', 'w', patched(23, 27, 0, 999), 0.02);
+  roofRect(p, 0.34, 0.96, 0.06, 0.46, 11, 2, 'shed', 'R', 'w', undefined, 0.02);
   antenna(p, 6, -14, 11);
   // The upper walkway: a slab and a railing along the front of the main block.
   prism(p, 0.34, 0.96, 0.46, 0.54, 1, 's', undefined, 6);
