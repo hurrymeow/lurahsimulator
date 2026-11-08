@@ -1,4 +1,5 @@
 import type { Painter } from './iso';
+import { at } from './kampung-art';
 import { prism, roofRect } from './massing';
 
 // Signs and small props that tell a building's trade by silhouette: the merah putih on its pole, the
@@ -34,6 +35,49 @@ export function flag(p: Painter, x: number, y: number, len: number): void {
       q.px(X + k, Y - len + 2 + dip, 'e');
       q.px(X + k, Y - len + 3 + dip, k === 7 ? 'f' : 'e');
     }
+  });
+}
+
+/** The flag on a lot point (a, b), its foot `up` art pixels above the ground (a roof ridge, say): same pole and cloth as flag. */
+export function flagAt(p: Painter, a: number, b: number, up: number, len: number): void {
+  p.overlay.push((q) => {
+    const [x, y] = at(q, a, b, up);
+    const X = Math.round(x);
+    const Y = Math.round(y);
+    for (let k = 0; k < len; k++) {
+      q.px(X, Y - k, k === 0 ? 'S' : 'e');
+      q.px(X + 1, Y - k, k === 0 ? 'S' : 'f');
+    }
+    q.px(X, Y - len, 'y');
+    q.px(X + 1, Y - len, 'h');
+    for (let k = 2; k <= 7; k++) {
+      const dip = k >= 5 ? 1 : 0;
+      q.px(X + k, Y - len + 1 + dip, k === 7 ? 'R' : 'j');
+      q.px(X + k, Y - len + 2 + dip, 'e');
+      q.px(X + k, Y - len + 3 + dip, k === 7 ? 'f' : 'e');
+    }
+  });
+}
+
+/** A gold Garuda emblem, 9 by 7 native pixels, centred on lot point (a, b) at height up: spread wings, a head, a shield on the chest. */
+export function garuda(p: Painter, a: number, b: number, up: number): void {
+  const art = [
+    '....h....',
+    'y..yhy..y',
+    'yy.yyy.yy',
+    '.yyyryyy.',
+    '..yyeyy..',
+    '...y.y...',
+    '..yy.yy..',
+  ];
+  p.overlay.push((q) => {
+    const [x, y] = at(q, a, b, up);
+    const X = Math.round(x) - 4;
+    const Y = Math.round(y) - 3;
+    art.forEach((row, j) => [...row].forEach((c, i) => {
+      if (c === '.') return;
+      q.px(X + i, Y + j, c === 'y' ? (j > 3 ? 'a' : 'y') : c);
+    }));
   });
 }
 

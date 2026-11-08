@@ -1,7 +1,7 @@
 import type { Painter } from './iso';
 import { at, canopyTree, pole, unit, win } from './kampung-art';
 import { prism, roofRect, type MassPaint } from './massing';
-import { flowers, frontFence, gateway, noticeBoard } from './sign-art';
+import { flagAt, flowers, frontFence, garuda, gateway, noticeBoard } from './sign-art';
 
 // Level art, third silhouette pass (playtest 2026-11-07): every building here changes shape by level,
 // not just colour. Level 1 is the smallest and plainest, level 3 the biggest and busiest: it adds a wing,
@@ -242,42 +242,13 @@ export const koperasi: Art = (p, _v, level = 1) => {
 };
 
 /**
- * Kontrakan: level 1 is a plain petakan, one low row of three doors under a single zinc shed roof, set
- * back on the lot. Level 2 is a two-storey kontrakan in an L: units below, an upper floor with a walkway
+ * Kontrakan: level 1 is the one-storey L, an orange wing and a white row of petak under red shed roofs.
+ * Level 2 is a two-storey kontrakan in an L: units below, an upper floor with a walkway
  * and railing along its front, a steel stair, a tandon on the roof, a jemuran and motorbikes in the yard.
  */
 export const kontrakan: Art = (p, _v, level = 1) => {
   p.low();
   p.shadow(level <= 1 ? 3 : 1);
-  if (level <= 1) {
-    // Three petak in a row, each its owner's colour under its own short run of red tile, split by party
-    // walls, with a jemuran out front and a motor by the end door: a row of homes, not a shed.
-    const cols = ['t', 'c', 'p'];
-    for (let k = 0; k < 3; k++) {
-      const a0 = 0.12 + k * 0.26;
-      prism(p, a0, a0 + 0.26, 0.24, 0.56, 6, cols[k], (face, u, j, i) => {
-        if (face === 'T') return undefined;
-        if (j === 0) return 'S';
-        if (face === 'L' && within(u, 0.12, 0.38) && j < 5) return 'N';
-        if (face === 'L' && within(u, 0.56, 0.86) && within(j, 2, 4)) return i % 3 === 0 ? 'w' : 'l';
-        return undefined;
-      });
-      roofRect(p, a0, a0 + 0.26, 0.24, 0.56, 6, 3, 'gableB', 'o', cols[k], undefined, 0.02);
-    }
-    pole(p, 0.24, 0.8, 5, 'S');
-    pole(p, 0.6, 0.8, 5, 'S');
-    p.overlay.push((q) => {
-      const cl = ['#e57a9c', '#f4b935', '#f6ecd4', '#3d72b4', '#df4a2c'];
-      for (let k = 0; k < 12; k++) {
-        const [x, y] = at(q, 0.24 + k * 0.03, 0.8, 5);
-        q.px(Math.round(x), Math.round(y), '#6d635a');
-        if (k % 2) for (let d = 1; d <= 2; d++) q.px(Math.round(x), Math.round(y) + d, cl[k % cl.length]);
-      }
-    });
-    prism(p, 0.74, 0.84, 0.66, 0.69, 2, 'r', (face) => (face === 'T' ? 'S' : undefined));
-    flowers(p, 0.1, 0.9, 0.6, 0.66, 8);
-    return;
-  }
   // The back wing along b, then the main block along a, two floors each.
   const unit = (face: string, u: number, j: number, i: number, wallC: string) => {
     if (face === 'T') return undefined;
@@ -287,6 +258,28 @@ export const kontrakan: Art = (p, _v, level = 1) => {
     if (within(f, 2, 4) && i % 5 >= 3) return 'l';
     return wallC === 'w' ? undefined : undefined;
   };
+  if (level <= 1) {
+    // The same L as level 2, one storey: an orange back wing and a white row of petak under red shed roofs,
+    // a terrace slab along the doors, a jemuran and a motor in the yard. Level 2 builds the floor above.
+    prism(p, 0.1, 0.34, 0.12, 0.6, 6, 'o', (face, u, j, i) => unit(face, u, j, i, 'o'));
+    roofRect(p, 0.1, 0.34, 0.12, 0.6, 6, 2, 'shed', 'R', 'o', undefined, 0.02);
+    prism(p, 0.34, 0.9, 0.12, 0.46, 6, 'w', (face, u, j, i) => unit(face, u, j, i, 'w'));
+    roofRect(p, 0.34, 0.9, 0.12, 0.46, 6, 2, 'shed', 'R', 'w', undefined, 0.02);
+    prism(p, 0.34, 0.9, 0.46, 0.52, 1, 's');
+    pole(p, 0.2, 0.84, 5, 'S');
+    pole(p, 0.5, 0.84, 5, 'S');
+    p.overlay.push((q) => {
+      const cl = ['#e57a9c', '#f4b935', '#f6ecd4', '#3d72b4', '#df4a2c'];
+      for (let k = 0; k < 10; k++) {
+        const [x, y] = at(q, 0.2 + k * 0.03, 0.84, 5);
+        q.px(Math.round(x), Math.round(y), '#6d635a');
+        if (k % 2) for (let d = 1; d <= 2; d++) q.px(Math.round(x), Math.round(y) + d, cl[k % cl.length]);
+      }
+    });
+    prism(p, 0.7, 0.78, 0.66, 0.69, 2, 'r', (face) => (face === 'T' ? 'S' : undefined));
+    flowers(p, 0.36, 0.88, 0.54, 0.58, 6);
+    return;
+  }
   prism(p, 0.06, 0.34, 0.06, 0.62, 11, 'o', (face, u, j, i) => unit(face, u, j, i, 'o'));
   roofRect(p, 0.06, 0.34, 0.06, 0.62, 11, 2, 'shed', 'R', 'o', undefined, 0.02);
   prism(p, 0.34, 0.96, 0.06, 0.46, 11, 'w', (face, u, j, i) => unit(face, u, j, i, 'w'));
@@ -353,18 +346,22 @@ export const balaiRW: Art = (p, _v, level = 1) => {
   // The hall first and the office wing after it: the wing stands further along a, so where they meet it is
   // the nearer of the two and must be drawn over the hall, not under it.
   const [a0, a1, b0, b1] = level <= 1 ? [0.16, 0.66, 0.2, 0.74] : [0.06, 0.6, 0.08, 0.7];
+  const rise = level <= 1 ? 5 : 6;
   prism(p, a0, a1, b0, b1, 9, 'w', wall([0.42, 0.6], 3, 7, { band: [8, 'o'] }));
-  roofRect(p, a0, a1, b0, b1, 9, level <= 1 ? 5 : 6, 'hip', 'o', 'w');
+  roofRect(p, a0, a1, b0, b1, 9, rise, 'hip', 'o', 'w');
+  // The sign of office from level 1: the merah putih on the ridge of the hall, taller as the balai grows.
+  flagAt(p, (a0 + a1) / 2, (b0 + b1) / 2, 9 + rise, level <= 1 ? 10 : 11);
   if (level >= 2) {
     prism(p, 0.6, 0.94, 0.08, 0.52, 7, 't', wall([0.5, 0.7], 2, 5));
     roofRect(p, 0.6, 0.94, 0.08, 0.52, 7, 3, 'gableA', 'R', 't');
+    // The Garuda over the hall door, in gold on the orange band.
+    garuda(p, 0.33, b1, 8);
   }
   noticeBoard(p, 4, 0, 6, 4, 'N');
   if (level < 3) return;
-  // A teras on posts before the hall door, the flag in the yard.
+  // A teras on posts before the hall door.
   for (const a of [0.24, 0.46]) pole(p, a, 0.84, 6, 'n');
   roofRect(p, 0.22, 0.48, 0.7, 0.84, 6, 2, 'shed', 'R', 'w', undefined, 0.01);
-  flag(p, 0.86, 0.78, 13);
 };
 
 /** Pasar Kaget, 2x1: two lapak under umbrellas, then a row of stalls under one long striped tarp with lamps. */
