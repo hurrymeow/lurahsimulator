@@ -2,6 +2,7 @@ import type { Painter } from './iso';
 import { at, canopyTree, pole, unit, win } from './kampung-art';
 import { prism, roofRect, type MassPaint } from './massing';
 import { flagAt, flowers, frontFence, garuda, gateway, noticeBoard } from './sign-art';
+import { antenna, motor, patched, pavedLot, pot, ZINC as SENG, zinc as seng } from './kampung-kit';
 
 // Level art, third silhouette pass (playtest 2026-11-07): every building here changes shape by level,
 // not just colour. Level 1 is the smallest and plainest, level 3 the biggest and busiest: it adds a wing,
@@ -248,13 +249,16 @@ export const koperasi: Art = (p, _v, level = 1) => {
  */
 export const kontrakan: Art = (p, _v, level = 1) => {
   p.low();
+  // A paved yard, the back wing in seng and the main row's clay tile patched with it, the antenna, pots.
+  pavedLot(p);
   p.shadow(level <= 1 ? 3 : 1);
   // The back wing along b, then the main block along a, two floors each.
   const unit = (face: string, u: number, j: number, i: number, wallC: string) => {
     if (face === 'T') return undefined;
     if (j === 0 || j === 6) return 'S';
     const f = j < 6 ? j : j - 6;
-    if (face === 'L' && Math.floor(u * 4) % 2 === 0 && within((u * 4) % 1, 0.3, 0.7) && f < 5 && f > 0) return 'N';
+    // Each petak's own door colour: blue, green, brown, red.
+    if (face === 'L' && Math.floor(u * 4) % 2 === 0 && within((u * 4) % 1, 0.3, 0.7) && f < 5 && f > 0) return ['b', 'G', 'N', 'r'][(Math.floor(u * 8) + (j >= 6 ? 1 : 0)) % 4];
     if (within(f, 2, 4) && i % 5 >= 3) return 'l';
     return wallC === 'w' ? undefined : undefined;
   };
@@ -262,9 +266,10 @@ export const kontrakan: Art = (p, _v, level = 1) => {
     // The same L as level 2, one storey: an orange back wing and a white row of petak under red shed roofs,
     // a terrace slab along the doors, a jemuran and a motor in the yard. Level 2 builds the floor above.
     prism(p, 0.1, 0.34, 0.12, 0.6, 6, 'o', (face, u, j, i) => unit(face, u, j, i, 'o'));
-    roofRect(p, 0.1, 0.34, 0.12, 0.6, 6, 2, 'shed', 'R', 'o', undefined, 0.02);
+    roofRect(p, 0.1, 0.34, 0.12, 0.6, 6, 2, 'shed', SENG, 'o', seng, 0.02);
     prism(p, 0.34, 0.9, 0.12, 0.46, 6, 'w', (face, u, j, i) => unit(face, u, j, i, 'w'));
-    roofRect(p, 0.34, 0.9, 0.12, 0.46, 6, 2, 'shed', 'R', 'w', undefined, 0.02);
+    roofRect(p, 0.34, 0.9, 0.12, 0.46, 6, 2, 'shed', 'R', 'w', patched(21, 25, 0, 999), 0.02);
+    antenna(p, 4, -10, 18);
     prism(p, 0.34, 0.9, 0.46, 0.52, 1, 's');
     pole(p, 0.2, 0.84, 5, 'S');
     pole(p, 0.5, 0.84, 5, 'S');
@@ -276,14 +281,15 @@ export const kontrakan: Art = (p, _v, level = 1) => {
         if (k % 2) for (let d = 1; d <= 2; d++) q.px(Math.round(x), Math.round(y) + d, cl[k % cl.length]);
       }
     });
-    prism(p, 0.7, 0.78, 0.66, 0.69, 2, 'r', (face) => (face === 'T' ? 'S' : undefined));
-    flowers(p, 0.36, 0.88, 0.54, 0.58, 6);
+    motor(p, 8, 8);
+    for (const x of [-6, 2, 10]) pot(p, x, 2 + Math.round(x / 2));
     return;
   }
   prism(p, 0.06, 0.34, 0.06, 0.62, 11, 'o', (face, u, j, i) => unit(face, u, j, i, 'o'));
-  roofRect(p, 0.06, 0.34, 0.06, 0.62, 11, 2, 'shed', 'R', 'o', undefined, 0.02);
+  roofRect(p, 0.06, 0.34, 0.06, 0.62, 11, 2, 'shed', SENG, 'o', seng, 0.02);
   prism(p, 0.34, 0.96, 0.06, 0.46, 11, 'w', (face, u, j, i) => unit(face, u, j, i, 'w'));
-  roofRect(p, 0.34, 0.96, 0.06, 0.46, 11, 2, 'shed', 'R', 'w', undefined, 0.02);
+  roofRect(p, 0.34, 0.96, 0.06, 0.46, 11, 2, 'shed', 'R', 'w', patched(23, 27, 0, 999), 0.02);
+  antenna(p, 6, -14, 13);
   // The upper walkway: a slab and a railing along the front of the main block.
   prism(p, 0.34, 0.96, 0.46, 0.54, 1, 's', undefined, 6);
   p.overlay.push((q) => {
@@ -307,7 +313,9 @@ export const kontrakan: Art = (p, _v, level = 1) => {
       if (k % 2) for (let d = 1; d <= 2; d++) q.px(Math.round(x), Math.round(y) + d, cols[k % cols.length]);
     }
   });
-  for (const a of [0.62, 0.76]) prism(p, a, a + 0.08, 0.66, 0.69, 2, a > 0.7 ? 'r' : 'k', (face) => (face === 'T' ? 'S' : undefined));
+  motor(p, -5, 12, 'k');
+  motor(p, 2, 11);
+  for (const x of [-8, -2]) pot(p, x, 5 + Math.round(x / 2), true);
 };
 
 /** Balai Warga: a small pendopo, then a big two-tier pendopo, then the pendopo with a kitchen annex, a stage and umbul-umbul. */

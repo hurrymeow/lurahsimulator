@@ -9,8 +9,9 @@ import { def, sizeFor } from '../sim/content';
 import { KAMPUNG_ART, posyanduLong } from './kampung-art';
 import { LEVEL_ART, portal1 } from './level-art';
 import { TOKO_ART } from './toko-art';
-import { prism } from './massing';
+import { prism, roofRect } from './massing';
 import { flag } from './sign-art';
+import { antenna, ember, jemuran, motor, patched, pavedLot, pot, tandon, ZINC, zinc } from './kampung-kit';
 
 /** Art-pixel size of one ground diamond. The view scales these up by a whole number. */
 export const TW = 32;
@@ -327,7 +328,15 @@ export class Painter {
     const cy = (TOP + TH / 2) * n + this.oy;
     for (let y = TOP * n + this.oy; y < (TOP + TH) * n + this.oy; y++)
       for (let x = this.ox; x < (TW + 4) * n + this.ox; x++)
-        if (Math.abs(x + 0.5 - cx) / hw + Math.abs(y + 0.5 - cy) / hh <= 1) this.px(x, y, INK, 90);
+        if (Math.abs(x + 0.5 - cx) / hw + Math.abs(y + 0.5 - cy) / hh <= 1) {
+          // Over a lot the building painted itself (a paved yard), darken that pixel; over bare map, leave a see-through shadow.
+          const k = (y * this.w + x) * 4;
+          if (x < 0 || y < 0 || x >= this.w || y >= this.h) continue;
+          if (this.data[k + 3] === 255) {
+            const f = 1 - 90 / 255;
+            this.data.set([this.data[k] * f + 0x2a * (1 - f), this.data[k + 1] * f + 0x18 * (1 - f), this.data[k + 2] * f + 0x10 * (1 - f), 255], k);
+          } else this.px(x, y, INK, 90);
+        }
   }
 
   /** A round leafy clump centred r art pixels above the ground centre, cel-lit from the top left. */
@@ -553,12 +562,16 @@ const ART: Record<string, ArtFn> = {
     const shape = ROOF_KEYS[v[1]] ?? 'hip';
     const wall = v[2] ?? 't';
     const modern = shape === 'shed' || shape === 'flat';
-    // Level 3 is a rumah tingkat: a lower ground floor, then an upper floor set one pixel in.
+    // Level 3 is a rumah tingkat: a lower ground floor under a zinc skirt, then an upper floor set back.
     const tall = level >= 3;
     // Level 1 is the smallest: a bungalow one pixel in on every side and a pixel lower than level 2.
     const small = level <= 1;
     const ground = tall || small ? 7 : 8;
     const base = small ? 4 : 3;
+    // A kampung house, built up over the years (decisions/kampung-vibe.md): a paved yard, a painted door,
+    // a zinc lean-to for the dapur, a seng patch on the clay roof, the TV antenna, pots and an ember.
+    const door = modern ? 'k' : wall === 't' ? 'b' : wall === 'w' ? 'G' : 'N';
+    pavedLot(p);
     p.shadow(base);
     p.box(base, ground, wall, (face, u, j, i) => {
       if (face === 'T') return undefined;
@@ -568,52 +581,75 @@ const ART: Record<string, ArtFn> = {
         if (j === 6) return roof;
         if (j < 6) {
           if (j === 0) return 's';
-          if (within(u, 0.62, 0.8) && j < 5) return 'N';
+          if (within(u, 0.62, 0.8) && j < 5) return door;
           if (within(u, 0.5, 0.56) && j < 3) return j === 0 ? 'n' : 'G';
           return 'S';
         }
       }
       // Roster: a band of ventilation blocks under the eave, open and solid in turn.
       if (!tall && j === ground - 1 && (face === 'R' || within(u, 0.12, 0.45))) return i % 2 ? 'S' : 'w';
-      if (face === 'L' && within(u, 0.6, 0.82) && j < 6) return modern ? 'k' : 'N';
-      if (face === 'L' && within(u, 0.15, 0.4) && within(j, 3, 6)) return j === 5 && modern ? 'S' : 'l';
+      if (face === 'L' && within(u, 0.6, 0.82) && j < 6) return door;
+      // Windows in a dark wooden frame.
+      if (face === 'L' && within(u, 0.15, 0.4) && within(j, 3, 6)) return j === 5 && modern ? 'S' : within(u, 0.2, 0.36) ? 'l' : 'N';
       if (face === 'R' && (within(u, 0.2, 0.42) || within(u, 0.6, 0.82)) && within(j, 3, 6)) return 'l';
       // Batu alam on the corners of a minimalis front.
       if (modern && face === 'L' && (u < 0.12 || u > 0.86) && j < 7) return (i + j) % 3 ? 'S' : 's';
-      // Weep holes: a small dark slot every few bricks just above the ground.
+      // A damp plinth: the bottom course of render stained darker, with weep holes.
+      if (j === 0) return 'S';
       if (j === 1 && i % 5 === 2) return 'S';
       return undefined;
     });
+    // The dapur: a zinc lean-to against the right wall, below the eave, on levels 1 and 2.
+    if (!tall) {
+      const a0 = 1 - base / 16;
+      prism(p, a0, a0 + 0.16, 0.32, 0.62, 5, 'n', (face, u, j, i) => (face === 'L' && within(u, 0.3, 0.7) && j < 4 ? 'N' : face !== 'T' && i % 3 === 0 ? 'N' : undefined));
+      roofRect(p, a0, a0 + 0.16, 0.32, 0.62, 5, 2, 'shed', ZINC, 'n', zinc, 0.02);
+    }
     if (tall) {
+      // The ground floor's roof becomes a skirt of tile round the upper floor.
+      p.roof(3, ground, 1, roof);
       p.box(4, 6, wall, (face, u, j, i) => {
         if (face === 'T') return undefined;
         if (j === 5 && (face === 'R' || within(u, 0.12, 0.45))) return i % 2 ? 'S' : 'w';
         if (face === 'L' && (within(u, 0.15, 0.4) || within(u, 0.6, 0.85)) && within(j, 1, 4)) return 'l';
         if (face === 'R' && within(u, 0.3, 0.7) && within(j, 1, 4)) return 'l';
         return undefined;
-      }, ground);
+      }, ground + 1);
       // A balcony rail along the front of the upper floor.
       p.id++;
       for (let x = -11; x <= -2; x++) p.set(TW / 2 + x, TOP + TH / 2 - ground - 2 + Math.round((x + 11) / 2), x & 1 ? 'S' : 'w');
     }
-    const top = tall ? ground + 6 : ground;
+    const top = tall ? ground + 7 : ground;
     const inset = tall ? 4 : base;
+    // A sheet of seng over the part of a clay roof that leaked: on the right slope of a cream house, the
+    // left slope of a white one. A rendered grey house and the minimalis ones kept their roofs whole.
+    const patch = modern || wall === 's' ? undefined : wall === 't' ? patched(18, 23, top > 9 ? 24 : 34, top > 9 ? 28 : 39) : patched(9, 14, top > 9 ? 25 : 35, top > 9 ? 29 : 40);
     // Rises keep every shape at or under the hipped roof's apex, so no house hides its neighbour.
-    p.roofShape(shape, inset, top, shape === 'shed' ? 2 : shape === 'hip' ? (tall ? 7 : 8) : tall ? 4 : 5, roof, wall);
+    p.roofShape(shape, inset, top, shape === 'shed' ? 2 : shape === 'hip' ? (tall ? 6 : 8) : tall ? 4 : 5, roof, wall, patch);
     // A tandon air on the deck of a flat roof, orange or blue.
     if (shape === 'flat') p.box(6, 3, roof === 'l' || roof === 'G' ? 'b' : 'o', (face) => (face === 'T' ? 'w' : undefined), top + 2);
-    // Level 2 also gets a low pagar one pixel inside the tile's front edges, open in front of the door.
+    // The TV antenna on a mast behind the roof, the same height on every shape so none stands taller.
+    if (wall !== 's') antenna(p, 5, -5, small ? 18 : tall ? 22 : 19);
+    // The yard: a pot by the door and an ember at the side, then a jemuran, then a motor and a tandon.
+    pot(p, -12, 0, level >= 2);
+    if (!tall) ember(p, 10, 0, wall === 'w' ? 'r' : 'b', wall === 'w' ? 'R' : 'B');
+    if (level === 2) jemuran(p, 0.08, 0.4, 0.93, 6);
+    if (tall) {
+      motor(p, -9, 2);
+      tandon(p, 8, 1, 5);
+    }
+    // Level 2 also gets a low rendered wall one pixel inside the tile's front edges, open in front of the door.
     if (level === 2)
       p.overlay.push((q) => {
         const { gx, gy } = q;
         for (const side of [-1, 1])
           for (let k = 1; k < gx - 1; k++) {
             if (side < 0 && k >= 11 && k <= 14) continue;
+            if (side > 0 && k >= 9 && k <= 13) continue;
             const x = side < 0 ? k : 2 * gx - 1 - k;
             const y = Math.round(gy + k / 2) - 1;
-            const post = k % 3 === 1;
-            q.px(x, y - 2, post ? 'S' : 'w');
-            if (post) q.px(x, y - 1, 'S');
+            q.px(x, y - 2, 'w');
+            q.px(x, y - 1, k % 4 === 1 ? 'S' : 's');
           }
       });
   },

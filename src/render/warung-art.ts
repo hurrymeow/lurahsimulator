@@ -1,4 +1,6 @@
 import type { Painter } from './iso';
+import { ember, pavedLot, pot, ZINC, zinc } from './kampung-kit';
+import { prism } from './massing';
 
 // Warung Sembako art, one look per level: makeshift at level 1, built to last at level 3 (ART.md,
 // Building levels). Level 1 is a warung tenda under a red-and-white striped terpal, level 2 a
@@ -63,6 +65,18 @@ function sign(p: Painter, x: number, y: number, w: number, slope = 0): void {
     for (let d = 0; d < 3; d++) p.set(GX + x + k, GY + y + d + Math.floor(k * slope), d === 1 ? (k % 2 ? 'r' : 'y') : 'y');
 }
 
+/** A chest freezer for es and frozen goods: a white box with a red lid band and a dark seam. */
+function freezer(p: Painter, x: number, y: number): void {
+  p.id++;
+  for (let d = 0; d < 4; d++) for (let e = 0; e < 5; e++) p.set(GX + x + e, GY + y - d + Math.floor(e / 2), d === 3 ? 'r' : d === 2 ? (e === 4 ? 'R' : 'S') : e === 4 ? 's' : 'w');
+}
+
+/** A stack of plastic crates of bottled drinks, yellow and red. */
+function crates(p: Painter, x: number, y: number): void {
+  p.id++;
+  for (let d = 0; d < 4; d++) for (let e = 0; e < 3; e++) p.set(GX + x + e, GY + y - d, d < 2 ? (e % 2 ? 'R' : 'r') : e % 2 ? 'a' : 'y');
+}
+
 /** A wooden push cart on two spoked wheels, a glass case of snacks on top, lifted z off the ground. */
 function cart(p: Painter, z: number, wood: string): void {
   p.id++;
@@ -84,6 +98,7 @@ function cart(p: Painter, z: number, wood: string): void {
  */
 function tenda(p: Painter): void {
   // Sized like the other level 1 buildings (a rumah, a pos ronda): a small tent, not a big one.
+  pavedLot(p);
   p.shadow(5);
   for (const [x, y] of [[-7, 0], [7, 0], [0, 3], [0, -3]]) p.stroke(x, y, x, y - 9, 1, 'a');
   p.box(7, 4, 'n', (face, _u, j, i) => (face !== 'T' && j === 2 ? 'N' : face !== 'T' && i % 4 === 0 ? 'N' : undefined));
@@ -91,6 +106,8 @@ function tenda(p: Painter): void {
   p.roofShape('gable', 5, 9, 4, 'r', 't', (x) => (Math.floor(x / 2) % 2 ? 'w' : undefined));
   sachets(p, -7, -8, 4, [2, 1], 3);
   stool(p, 4, 2);
+  galon(p, 8, 1);
+  crates(p, -12, 0);
 }
 
 /**
@@ -99,14 +116,17 @@ function tenda(p: Painter): void {
  */
 function gerobak(p: Painter): void {
   // Smaller and lower than the level 3 toko: a short plank back wall and a low zinc lean-to over the cart.
+  pavedLot(p);
   p.shadow(4);
   p.box(4, 8, 'n', (face, u) => (face === 'L' && u > 0.08 ? null : face === 'R' && u < 0.92 ? null : undefined));
   cart(p, 1, 'n');
-  p.roofShape('shed', 4, 9, 2, 's', 't', (x) => (x % 2 ? 'S' : undefined));
+  p.roofShape('shed', 4, 9, 2, ZINC, 'n', zinc);
   sachets(p, -9, -8, 5, [2, 1], 3);
   galon(p, 4, 2);
   lpg(p, 7, 0);
   bench(p, -7, 1, 4);
+  freezer(p, 7, -3);
+  pot(p, -12, 0);
 }
 
 /**
@@ -115,6 +135,7 @@ function gerobak(p: Painter): void {
  * out front and a bench.
  */
 function kelontong(p: Painter): void {
+  pavedLot(p, false);
   p.shadow(2);
   // One storey of 11px, so it stands no taller than the other level 3 shops (a warteg, a barbershop).
   p.box(2, 11, 'w', (face, u, j, i) => {
@@ -128,11 +149,16 @@ function kelontong(p: Painter): void {
     return j === 0 ? 'S' : undefined;
   });
   p.roofShape('flat', 2, 11, 0, 's', 'w');
+  // A green-and-yellow striped awning out over the shop front, the warung's own colours.
+  prism(p, 0.14, 0.86, 0.875, 0.98, 1, 'g', (face, _u, _j, i) => (Math.floor(i / 2) % 2 ? 'y' : face === 'T' ? 'g' : 'G'), 7);
+  // A tandon on the dak.
+  p.box(6, 3, 'o', (face, u) => (face === 'T' ? 'h' : face === 'R' ? 'R' : u < 0.3 ? 'm' : undefined), 13);
   sign(p, -13, -16, 12, 0.5);
   sachets(p, -13, -5, 7, [2, 1], 3);
-  p.box(9, 3, 'n', (face, _u, j) => (face !== 'T' && j === 1 ? 'N' : undefined));
   lpg(p, 9, 1);
   bench(p, 1, 4, 5);
+  freezer(p, -12, -1);
+  ember(p, 10, -2, 'b', 'B');
 }
 
 /** The Warung Sembako at a level, 1 to 3. */
