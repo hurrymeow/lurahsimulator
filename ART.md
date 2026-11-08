@@ -256,7 +256,8 @@ Layers, from the ground up (`src/render/map.ts`, `src/render/atmosphere.ts`):
    - Baked: walls darken in their bottom two rows (0.78x, 0.9x).
    - On the map: a soft brown contact shadow pools under every standing building (not selokan,
      parkir or jalan).
-   - Sprites also cast a flat ink shadow at 35% to the right.
+   - Sprites also cast a flat ink shadow at 35% to the right. Over a lot the building paints itself
+     (a paved yard) the shadow darkens that pixel; over bare map it stays see-through.
 2. **Warm grade.** A gradient that is golden from the top left and warm dark toward the bottom
    right.
 3. **God rays.** Five soft diagonal shafts from the top left. They dim at dusk and vanish at night.
@@ -312,28 +313,41 @@ faceless, so the map stays readable.
   lean-to with a plank back wall, a galon, an LPG melon and a bench; a whitewashed brick toko
   kelontong under a flat dak with a big yellow nameboard and a blue rolling door half up. Every level
   hangs rentengan sachet strips along its front, so it reads as a warung at a glance.
-  Pos ronda: bamboo balai-balai under rumbia, wooden hut, green-and-white siskamling post. Kantor RT:
-  a small front room with the RT board on a tall post, a bigger office with a flag, a pendopo under a
-  joglo roof.
+  Pos ronda: bamboo balai-balai under rumbia, wooden hut, green-and-white siskamling post. Kantor RT
+  never reads as a rumah: whitewash over a green plinth, a two-tier stepped roof (a low skirt, a band
+  of roster, a small crown) in green zinc, then red tile with a concrete kanopi on white columns, then
+  a pendopo under a joglo roof. The merah putih flies from a grey pole with a concrete foot in the
+  front yard at levels 1 and 2.
 - Shops (`toko-art.ts`): Rumah Makan is a plank warung makan with a spanduk, a warkop lean-to, then a
   warteg with a false-front nameboard. Fotokopi is a kiosk, a toko with its banner over the roof, then
-  a ruko. Apotek always has the green cross on a pylon: a kios obat, a shop under a green hip, then an
-  apotek with a praktik dokter stacked on top. Barbershop: a chair and mirror under a tarp, a teal
-  kiosk, a charcoal modern shop. Bengkel: tambal ban with a tyre on a stick, a garage, a bengkel resmi.
+  a ruko. Apotek has no house roof: a flat dak with a deep green fascia and a plus-shaped green
+  lightbox at every level, an AC unit and a tandon on the roof, from a kios obat to a shop to a
+  two-storey apotek. Barbershop has no house roof either and a 2px spiral pole in red, white and blue
+  by the door: a stall under a striped tarp, a teal kiosk with a tricolour false front, a charcoal shop
+  with a gold lightbox and a lit pole at each end. Bengkel: tambal ban with a tyre on a stick, a garage, a bengkel resmi.
   IndoApril and BetaMart share one shape: a flat dak and a box sign, a pylon and an ATM at level 2.
 - Everything else with its own levels (`level-art.ts`, `kampung-art.ts`) grows the same way, by mass:
   Gudang Material from a small zinc shed to a long shed with an open roof bay to the full yard; PAUD
   from a front room to a classroom to an L-shaped school with a playground; Posyandu from a tarp over
   the dacin, to a hut and a waiting shed, to one long clinic across its lot; Kontrakan from a single
-  petakan row under one zinc roof to a two-storey L with a walkway; Pasar from one open los to two los
+  storey L (an orange back wing and a white row of petak with their own door colours, under red
+  tile with one narrow sheet of rusty seng) to the same L on two storeys with a walkway; Pasar from one open los to two los
   and kios to a market hall with a raised sawtooth crown; Terminal from one platform to two, with
   buses and angkot; the Kelurahan and Kecamatan offices, Pos Satpol PP, Puskesmas Pembantu, Balai RW,
   Balai Warga, Koperasi, BLK, Baliho and the parks each add a wing, porch, tower, roof tier or yard.
+  Balai Warga has a white pagar and a red gapura from level 1; PAUD a rainbow fence, flower beds and a
+  yellow bear mascot; Balai RW the merah putih on its ridge from level 1 and a gold Garuda over the
+  door from level 2. Taman Bermain is a play set on a rubber mat (a tower with a pyramid roof in the
+  back corner, a slide, a climbing wall, monkey bars, a seesaw) with its shade tree clear in the right
+  corner. Panggung Senam has umbul-umbul with bent tips and swaying pennants; Kolam Pancing a saung,
+  a jetty with anglers, lily pads and a payung.
   Gapura and Portal level 1 are smaller than their level 2. Sawah and Kebun Sayur grow their plants:
   rice from seedlings to golden heads, vegetables from sprouts to fruiting plants.
-- Houses grow, not just fence in. Rumah: the bungalow, then a teras set into the front wall under a
-  strip of the roof colour (door in its shade, a pot plant) with a low white pagar one pixel inside
-  the tile's front edges, then a rumah tingkat with a balcony rail on the upper floor. Every roof
+- Houses grow, not just fence in. Rumah: the bungalow with a wooden dapur under a zinc lean-to, then
+  a teras set into the front wall under a strip of the roof colour (door in its shade, a pot plant), a
+  jemuran and a low rendered wall one pixel inside the tile's front edges, then a rumah tingkat whose
+  ground-floor roof is a skirt of tile round the upper floor, with a balcony rail, a tandon on a frame
+  and a motor. Every roof
   shape and colour carries through all three levels, and every level stays on its one tile
   (`tests/art.test.ts` checks every variant). Kos-kosan is tall and narrow from level 1 (two
   floors of rooms under a pelana, a steel stair up the side), then a third floor with a flat dak, a
@@ -364,6 +378,13 @@ faceless, so the map stays readable.
 - Every house has a band of roster vents under the eave and small weep holes along its base.
   Minimalis houses (shed, flat) get batu alam on the corners, and a flat roof carries a tandon.
 - Gable ends and a shed's side are wall, with a small vent near the peak.
+- A kampung is built up over the years (`src/render/kampung-kit.ts`, `decisions/distinct-buildings.md`).
+  Rumah, Warung, Kontrakan and the other RT and RW buildings stand on a paved yard with a kerb, pots
+  at the side corners. Seng is a warm mid grey with a soft rib every third column and no bright
+  shine; on clay tile it is a small patched sheet, or rusty brown where it must stay quiet against
+  red. A rumah has a painted door, dark window frames and a damp band at its base. Cream houses
+  carry a small muted TV antenna that rises from behind the roof. The Kelurahan and Kecamatan
+  buildings, paths, farms and parks keep their own ground.
 - Each shop type has its own roof, so a row of shops reads as a street.
 - No roof shape rises above the hipped roof of the same house at the same level. `tests/art.test.ts` checks it.
 - The bank sampah is a TPS: an open concrete bak heaped with bags, a green sign, no roof.

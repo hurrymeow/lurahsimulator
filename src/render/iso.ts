@@ -568,7 +568,7 @@ const ART: Record<string, ArtFn> = {
     const small = level <= 1;
     const ground = tall || small ? 7 : 8;
     const base = small ? 4 : 3;
-    // A kampung house, built up over the years (decisions/kampung-vibe.md): a paved yard, a painted door,
+    // A kampung house, built up over the years (decisions/distinct-buildings.md): a paved yard, a painted door,
     // a zinc lean-to for the dapur, a seng patch on the clay roof, the TV antenna, pots and an ember.
     const door = modern ? 'k' : wall === 't' ? 'b' : wall === 'w' ? 'G' : 'N';
     pavedLot(p);
@@ -1041,7 +1041,7 @@ const cache = new Map<string, Art>();
 
 /** Paints a sprite at a level: its own level art if it has some, otherwise the base art plus the upgrade kit. */
 /**
- * Kampung buildings that stand on a paved yard with a kerb (decisions/kampung-vibe.md), like rumah,
+ * Kampung buildings that stand on a paved yard with a kerb (decisions/distinct-buildings.md), like rumah,
  * warung and kontrakan, which pave their own. Paths, farms, parks and the Kelurahan and Kecamatan
  * buildings keep their own ground.
  */

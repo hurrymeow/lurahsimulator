@@ -2,7 +2,7 @@ import type { Painter } from './iso';
 import { at } from './kampung-art';
 
 // The kampung kit: what makes a kampung lot look lived in and built up over the years, after the
-// reference sheet of 2026-11-08 (decisions/kampung-vibe.md). Patched zinc next to clay tile, a paved
+// reference sheet of 2026-11-08 (decisions/distinct-buildings.md). Patched zinc next to clay tile, a paved
 // yard with a kerb, a TV antenna behind the roof, and the clutter of daily life: pot plants, an ember,
 // a jemuran, a tandon on its frame, a motor. Offsets are art pixels from the ground centre (y down),
 // in native pixels, so a prop on a 2x2 lot is the same size as on a rumah. Only `import type` from iso.ts, so there is no import cycle.
