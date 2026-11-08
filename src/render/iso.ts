@@ -9,6 +9,8 @@ import { def, sizeFor } from '../sim/content';
 import { KAMPUNG_ART, posyanduLong } from './kampung-art';
 import { LEVEL_ART, portal1 } from './level-art';
 import { TOKO_ART } from './toko-art';
+import { prism } from './massing';
+import { flag } from './sign-art';
 
 /** Art-pixel size of one ground diamond. The view scales these up by a whole number. */
 export const TW = 32;
@@ -616,19 +618,29 @@ const ART: Record<string, ArtFn> = {
       });
   },
   kantorRT: (p, _v, level = 1) => {
+    // Every level flies the merah putih from a pole in the yard and wears a kantor's colours, a whitewashed
+    // wall over a green plinth with a green fascia, so it never reads as one more rumah.
+    const walls = (face: Face, u: number, j: number, i: number, h: number) => {
+      if (j === 0) return 'G';
+      if (j === h - 1) return 'g';
+      if (face === 'L' && within(u, 0.42, 0.58) && j < h - 3) return 'N';
+      if (within(j, 2, h - 2) && i % 5 >= 2 && !(face === 'L' && within(u, 0.34, 0.66))) return 'l';
+      return undefined;
+    };
+    // Two roof tiers: a low skirt over the walls, a band of white roster, then a smaller, steeper crown.
+    const tiers = (inset: number, h: number, colour: string, rib?: string) => {
+      const ribs = rib ? (x: number) => (x % 3 === 0 ? rib : undefined) : undefined;
+      p.roof(inset, h, 2, colour, ribs);
+      p.box(inset + 4, 4, 'w', (face, _u, j, i) => (face === 'T' ? undefined : j === 2 && i % 2 ? 'S' : 'w'), h);
+      p.roof(inset + 4, h + 4, 4, colour, ribs);
+    };
     if (level <= 1) {
-      // Pak RT's own front room: a plain house with a zinc roof and a nameboard on a post.
+      // Pak RT's sekretariat: one small room under a two-tier green zinc roof (a skirt, a band of roster, then
+      // a small crown), the stepped silhouette every level of the kantor keeps, and the flag at the back corner.
       p.shadow(4);
-      p.box(4, 7, 't', (face, u, j) => {
-        if (face === 'L' && within(u, 0.42, 0.62) && j < 5) return 'N';
-        if (face === 'R' && within(u, 0.25, 0.75) && within(j, 3, 6)) return 'l';
-        return j === 0 ? 'n' : undefined;
-      });
-      p.roof(4, 7, 5, 's', (x) => (x % 3 === 0 ? 'S' : undefined));
-      // The RT nameboard on a tall post by the lane, the one thing taller than the house.
-      p.stroke(-10, 2, -10, -12, 1, 'N');
-      p.stroke(-13, -16, -7, -13, 3, 'w');
-      p.stroke(-12, -15, -9, -14, 1, 'k', false);
+      flag(p, 8, -6, 18);
+      p.box(4, 7, 'w', (face, u, j, i) => walls(face, u, j, i, 7));
+      tiers(4, 7, 'G', 'g');
       return;
     }
     if (level >= 3) {
@@ -653,24 +665,25 @@ const ART: Record<string, ArtFn> = {
       }
       return;
     }
-    // Level 2 is the office proper, smaller and lower than the level 3 pendopo: a whitewashed room
-    // under a red hip, the flag on its ridge.
+    // Level 2 is the office proper, lower than the level 3 pendopo: a whitewashed office under a two-tier red
+    // roof, a flat concrete kanopi on two white columns over the door with the papan nama standing on it, and
+    // the flag on a taller pole.
     p.shadow(2);
-    p.box(3, 9, 'w', (face, u, j, i) => {
-      if (face === 'L' && within(u, 0.42, 0.6) && j < 6) return 'k';
-      if (j < 1) return 'S';
-      if (within(j, 3, 7) && i % 5 >= 2 && !(face === 'L' && within(u, 0.36, 0.66))) return 'l';
-      return undefined;
+    flag(p, 9, -4, 21);
+    p.box(3, 9, 'w', (face, u, j, i) => walls(face, u, j, i, 9));
+    tiers(3, 9, 'R');
+    // The kanopi: a slab in front of the door on two columns, its fascia painted green and white.
+    prism(p, 0.36, 0.66, 0.78, 1.0, 1, 'e', (face, _u, _j, i) => (face === 'T' ? 's' : i % 2 ? 'G' : 'e'), 6);
+    p.overlay.push((q) => {
+      // Columns in native pixels, so they stay one pixel thin: white, with a grey shaded side.
+      for (const [a, b] of [[0.38, 0.98], [0.64, 0.98]]) {
+        const X = Math.round(q.gx + (a - b) * 16 * q.n), Y = Math.round(q.gy - 8 * q.n + (a + b) * 8 * q.n);
+        for (let k = 1; k < 6 * q.n; k++) q.px(X, Y - k, 'e');
+        q.px(X, Y, 'S');
+      }
     });
-    p.roof(3, 9, 6, 'R');
-    // Flag pole on the ridge: red over white. Short, so the Kantor never hides the houses behind it.
-    const ax = TW / 2;
-    const ay = TOP + TH / 2 - 9 - 6;
-    for (let k = 1; k <= 5; k++) p.set(ax, ay - k, 'k');
-    for (let k = 1; k <= 3; k++) {
-      p.set(ax + k, ay - 5, 'r');
-      p.set(ax + k, ay - 4, 'w');
-    }
+    // The papan nama on the kanopi: a white board with a green rim.
+    prism(p, 0.4, 0.62, 0.9, 0.94, 3, 'e', (face, _u, j) => (face === 'T' || j === 2 || j === 0 ? 'G' : face === 'R' ? 'G' : 'e'), 7);
   },
   // Warung tenda, then a gerobak under a zinc lean-to, then a brick toko kelontong (warung-art.ts).
   warung: (p, _v, level = 1) => warungArt(p, level),

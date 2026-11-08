@@ -1,6 +1,8 @@
 import type { Painter } from './iso';
 import { warungMakan } from './level-art';
 import { warungArt } from './warung-art';
+import { prism } from './massing';
+import { awning, barberPole, plusPylon, plusSign, stripes } from './sign-art';
 
 // Toko art: the shops a player meets in the first hours, one silhouette per kind and one per level.
 // Level 1 is makeshift and smallest, level 3 is built to last and the biggest and busiest (ART.md,
@@ -257,75 +259,90 @@ const fotokopiRuko: Level = (p) => {
 
 // ---------------------------------------------------------------- Apotek
 
-/** A green cross on a white board, the apotek's one sign, w = 5. */
-const cross = (k: number, r: number) => ((k === 2 && r >= 1 && r <= 3) || (r === 2 && k >= 1 && k <= 3) ? 'g' : 'w');
+/** Clutter on a dak: an AC outdoor unit and, when tandon is set, an orange water tank on a stand. (a, b) is the unit's back corner, z the roof height. */
+function roofKit(p: Painter, a: number, b: number, tandon: boolean, z = 7): void {
+  prism(p, a, a + 0.14, b, b + 0.08, 2, 'e', (face, _u, j, i) => (face === 'R' && j === 1 && i % 2 ? 'S' : face === 'T' ? 'e' : undefined), z);
+  if (tandon) {
+    prism(p, a + 0.2, a + 0.3, b - 0.06, b + 0.04, 1, 'S', undefined, z);
+    prism(p, a + 0.19, a + 0.31, b - 0.07, b + 0.05, 3, 'o', (face, _u, j) => (j === 2 || face === 'T' ? 'a' : undefined), z + 1);
+  }
+}
 
-/** Level 1, a kios obat: a small counter under a green awning, the cross on a post. */
+
+/**
+ * Every apotek is flat-roofed with a deep green fascia and wears the plus-shaped lightbox, so its outline is a
+ * box with a cross standing over it, never a house roof. Level 1, a kios obat: a glass counter under a green
+ * awning, the cross on a post beside it.
+ */
 const apotekKios: Level = (p) => {
   p.shadow(5);
-  p.box(5, 7, 'w', (face, u, j, i) => {
-    if (face === 'T') return undefined;
-    if (j < 2) return 'g';
-    if (face === 'L' && within(u, 0.15, 0.85) && within(j, 2, 6)) return i % 3 === 0 ? 'w' : 'c';
+  prism(p, 0.28, 0.76, 0.26, 0.7, 7, 'e', (face, u, j, i) => {
+    if (face === 'T') return 's';
+    if (j === 0) return 'G';
+    if (j >= 5) return j === 6 ? 'G' : 'g';
+    if (face === 'L' && within(u, 0.1, 0.9) && within(j, 1, 5)) return i % 3 === 0 ? 'e' : 'c';
     return undefined;
   });
-  p.roofShape('gableY', 5, 7, 4, 'g', 'w');
-  pylon(p, 11, 1, 17, 5, 5, cross);
+  awning(p, 0.3, 0.74, 0.7, 0.1, 6, 'g', stripes(['g', 'e']));
+  roofKit(p, 0.5, 0.36, false);
+  plusPylon(p, 9, 0, 17);
 };
 
-/** Level 2, an apotek: a cool white shop under a green hip, a deep green canopy along the glass, the cross on a tall pole. */
+/** Level 2, an apotek: a wide white shop, a green fascia band with the cross mounted on it, a glass front under a canopy. */
 const apotekToko: Level = (p) => {
   p.shadow(2);
-  p.box(3, 10, 'w', (face, u, j, i) => {
-    if (face === 'T') return undefined;
-    if (j < 1) return 'G';
-    if (j === 7) return 'G';
-    if (face === 'L' && within(u, 0.62, 0.82) && j < 7) return 'k';
-    if (face === 'L' && within(u, 0.08, 0.56) && within(j, 1, 7)) return i % 4 === 0 ? 'w' : 'c';
-    if (face === 'R' && within(u, 0.2, 0.8) && within(j, 2, 7)) return i % 4 === 0 ? 'w' : 'l';
+  prism(p, 0.14, 0.86, 0.12, 0.74, 9, 'e', (face, u, j, i) => {
+    if (face === 'T') return 's';
+    if (j === 0) return 'G';
+    if (j >= 7) return j === 8 ? 'G' : 'g';
+    if (face === 'L' && within(u, 0.62, 0.8) && j < 6) return 'k';
+    if (face === 'L' && within(u, 0.06, 0.56) && within(j, 1, 6)) return i % 4 === 0 ? 'e' : 'c';
+    if (face === 'R' && within(u, 0.2, 0.8) && within(j, 2, 6)) return i % 4 === 0 ? 'e' : 'l';
     return undefined;
   });
-  p.roof(3, 10, 5, 'g');
-  pylon(p, -12, 1, 21, 5, 5, cross);
+  awning(p, 0.14, 0.86, 0.74, 0.08, 8, 'G');
+  // The parapet rim round the dak, and the lightbox standing on the roof's front corner.
+  prism(p, 0.14, 0.86, 0.12, 0.74, 1, 'e', (face) => (face === 'T' ? 's' : 'e'), 9);
+  roofKit(p, 0.62, 0.2, true, 10);
+  p.stroke(-1, -4, -1, -16, 1, 'S');
+  plusSign(p, -1, -17);
 };
 
-/** Level 3, apotek and praktik dokter: the shop with a clinic Stacked on top, a balcony rail, the lit cross on a taller pole. */
+/** Level 3, apotek and praktik dokter: the shop with a clinic stacked on top behind a balcony, the cross lit gold on the roof. */
 const apotekKlinik: Level = (p) => {
-  p.shadow(2);
-  p.box(2, 9, 'w', (face, u, j, i) => {
-    if (face === 'T') return undefined;
-    if (j < 1) return 'G';
-    if (j === 7) return 'G';
-    if (face === 'L' && within(u, 0.62, 0.82) && j < 7) return 'k';
-    if (face === 'L' && within(u, 0.06, 0.56) && within(j, 1, 7)) return i % 4 === 0 ? 'w' : 'c';
-    if (face === 'R' && within(u, 0.15, 0.85) && within(j, 2, 7)) return i % 4 === 0 ? 'w' : 'l';
+  p.shadow(1);
+  prism(p, 0.1, 0.9, 0.1, 0.8, 8, 'e', (face, u, j, i) => {
+    if (face === 'T') return 's';
+    if (j === 0) return 'G';
+    if (j >= 6) return j === 7 ? 'G' : 'g';
+    if (face === 'L' && within(u, 0.62, 0.8) && j < 5) return 'k';
+    if (face === 'L' && within(u, 0.06, 0.56) && within(j, 1, 5)) return i % 4 === 0 ? 'e' : 'c';
+    if (face === 'R' && within(u, 0.15, 0.85) && within(j, 2, 5)) return i % 4 === 0 ? 'e' : 'l';
     return undefined;
   });
-  p.box(4, 6, 'w', (face, u, j) => {
-    if (face === 'T') return undefined;
-    if (face === 'L' && (within(u, 0.15, 0.4) || within(u, 0.6, 0.85)) && within(j, 1, 5)) return 'l';
-    if (face === 'R' && within(u, 0.3, 0.7) && within(j, 1, 5)) return 'l';
+  awning(p, 0.1, 0.9, 0.8, 0.07, 7, 'G');
+  // The praktik dokter upstairs, set back so its balcony runs along the front.
+  prism(p, 0.14, 0.78, 0.12, 0.64, 6, 'e', (face, u, j) => {
+    if (face === 'T') return 's';
+    if (j === 5) return 'G';
+    if (face === 'L' && (within(u, 0.1, 0.35) || within(u, 0.55, 0.8)) && within(j, 1, 4)) return 'l';
+    if (face === 'R' && within(u, 0.3, 0.7) && within(j, 1, 4)) return 'l';
     return undefined;
-  }, 9);
-  p.roof(4, 15, 5, 'g');
-  // The balcony rail along the front of the clinic floor.
+  }, 8);
   p.id++;
-  for (let x = -11; x <= -2; x++) p.set(GX + x, GY - 9 - 2 + Math.round((x + 11) / 2), x & 1 ? 'G' : 'w');
-  pylon(p, -13, 1, 24, 5, 5, cross);
-  p.set(GX - 15, GY - 24, 'y');
-  p.set(GX - 11, GY - 24, 'y');
+  for (let x = -11; x <= 1; x++) p.set(GX + x, GY - 8 - 2 + Math.round((x + 11) / 2) + 2, x & 1 ? 'G' : 'e');
+  roofKit(p, 0.3, 0.2, true, 14);
+  p.stroke(9, -9, 9, -20, 1, 'S');
+  plusSign(p, 9, -21, 'y');
 };
 
 // ---------------------------------------------------------------- Barbershop
 
-/** The barber pole: red, white and blue bands, len tall, at ground offset (x, y). */
-function barberPole(p: Painter, x: number, y: number, len: number): void {
-  p.id++;
-  for (let k = 0; k < len; k++) p.set(GX + x, GY + y - k, ['r', 'w', 'b', 'w'][k % 4]);
-  p.set(GX + x, GY + y - len, 'S');
-}
+// Every barbershop has the spiral pole by its door and a tricolour stripe somewhere, and none has a house
+// roof: a tarp, then a flat kiosk with a false front, then a charcoal box with a lit nameboard.
+const BARBER = stripes(['r', 'e', 'b', 'e']);
 
-/** Level 1, pangkas rambut: a chair and a mirror nailed to a plank wall, under a tarp on two poles. */
+/** Level 1, pangkas rambut: a chair and a mirror nailed to a plank wall, under a striped tarp on two poles. */
 const pangkas: Level = (p) => {
   p.shadow(6);
   // The plank back wall, only its back half, so the stall stays open.
@@ -334,45 +351,50 @@ const pangkas: Level = (p) => {
   // The mirror and the chair.
   p.stroke(-6, -7, -4, -6, 2, 'c');
   p.box(10, 3, 'r', (face) => (face === 'T' ? 'R' : undefined));
-  p.roofShape('shed', 6, 9, 3, 'b', 'n', (x) => (x % 3 === 0 ? 'B' : undefined));
-  barberPole(p, -9, 1, 5);
+  p.roofShape('shed', 6, 9, 3, 'r', 'n', BARBER);
+  barberPole(p, -10, 1, 7);
 };
 
-/** Level 2, a barbershop kiosk: teal walls, a wide window, a red shed roof Shifted over the front, the pole by the door. */
+/** Level 2, a barbershop kiosk: flat-roofed teal walls behind a tall false front painted in the tricolour, a striped awning over the window. */
 const barberKios: Level = (p) => {
   p.shadow(3);
-  p.box(3, 9, 'c', (face, u, j, i) => {
-    if (face === 'T') return undefined;
+  prism(p, 0.2, 0.8, 0.2, 0.72, 8, 'c', (face, u, j, i) => {
+    if (face === 'T') return 's';
     if (j === 0) return 'S';
-    if (face === 'L' && within(u, 0.66, 0.86) && j < 7) return 'N';
-    if (face === 'L' && within(u, 0.1, 0.58) && within(j, 2, 7)) return i % 5 === 0 ? 'w' : 'l';
-    if (j === 8) return i % 2 ? 'r' : 'w';
+    if (face === 'L' && within(u, 0.66, 0.86) && j < 6) return 'N';
+    if (face === 'L' && within(u, 0.1, 0.58) && within(j, 1, 5)) return i % 5 === 0 ? 'e' : 'l';
+    if (face === 'R' && within(u, 0.3, 0.7) && within(j, 2, 6)) return 'l';
     return undefined;
   });
-  p.roofShape('gableY', 3, 9, 5, 'R', 'c');
+  // The false front: the front wall carried up past the roof, a sign band of red, white and blue.
+  prism(p, 0.2, 0.8, 0.68, 0.72, 5, 'e', (face, _u, j, i) => (face === 'T' ? 'e' : j === 4 || j === 0 ? 'B' : ['r', 'e', 'b'][Math.floor(i / 2) % 3]), 8);
+  roofKit(p, 0.3, 0.3, false, 8);
+  awning(p, 0.24, 0.62, 0.72, 0.09, 6, 'r', BARBER);
   barberPole(p, -1, 7, 8);
 };
 
-/** Level 3, a modern barbershop: a charcoal box with a gold nameboard false front, full glass with the chairs inside, a lit pole. */
+/** Level 3, a modern barbershop: a wide charcoal box with full glass and the chairs inside, a lit gold nameboard on the roof, a pole at each end. */
 const barberModern: Level = (p) => {
   const char = '#3b3430';
   p.shadow(2);
-  p.box(2, 12, char, (face, u, j, i) => {
-    if (face === 'T') return undefined;
+  prism(p, 0.1, 0.9, 0.12, 0.82, 11, char, (face, u, j, i) => {
+    if (face === 'T') return '#4a423d';
     if (j === 0) return 'S';
-    if (face === 'L' && within(u, 0.06, 0.94) && within(j, 1, 8)) {
+    if (j === 10) return 'a';
+    if (face === 'L' && within(u, 0.06, 0.94) && within(j, 1, 7)) {
       // Two red chairs and their mirrors through the glass.
       if (j < 3 && (i % 8 === 2 || i % 8 === 3)) return 'r';
-      if (j >= 5 && j < 7 && i % 8 === 2) return 'w';
+      if (j >= 4 && j < 6 && i % 8 === 2) return 'e';
       return i % 8 === 0 ? char : 'l';
     }
     if (face === 'R' && within(u, 0.2, 0.8) && within(j, 3, 8)) return 'l';
     return undefined;
   });
-  p.roofShape('gable', 2, 12, 4, 'S', char);
-  falseFront(p, 2, 12, 0.08, 0.92, 4, (k, r) => (r === 0 || r === 3 ? 'a' : k % 3 === 1 ? 'y' : char));
-  barberPole(p, -1, 7, 10);
-  p.set(GX - 1, GY - 4, 'y');
+  awning(p, 0.14, 0.86, 0.82, 0.1, 8, 'r', BARBER);
+  // The lightbox nameboard standing on the roof's front edge, gold letters on charcoal.
+  prism(p, 0.2, 0.8, 0.66, 0.72, 4, char, (face, _u, j, i) => (face === 'T' ? 'a' : j === 0 || j === 3 ? 'a' : i % 3 === 1 ? 'y' : char), 11);
+  barberPole(p, -13, 1, 10, true);
+  barberPole(p, 10, 1, 10, true);
 };
 
 // ---------------------------------------------------------------- Bengkel
