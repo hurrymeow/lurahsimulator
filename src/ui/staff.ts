@@ -6,6 +6,7 @@ import type { App } from '../app';
 import { rupiah } from '../format';
 import { inemSmallURL } from '../render/inem';
 import { portraitURL, staffPortraitURL } from '../render/portraits';
+import { isFemaleName } from '../data/names';
 import { answerNo, answerYes, checkYes, requestLine, yesLabel } from '../sim/requests';
 import { chainKey, chainOf } from '../sim/chains';
 import { BIMTEK, CHANNELS, GIGS, RAISE, SPECIALS, STATS, STAT_ICON, STAT_MAX, roleDef, traitDef, type RoleId, type StatId } from '../data/staff';
@@ -88,7 +89,7 @@ function aboutLines(a: Applicant): Node[] {
 
 /** Inem's face, a special's portrait, or a generic hire dressed for the job, with a face kept by their id. */
 const face = (x: Applicant & { inem?: boolean }, role: string) => {
-  const url = x.inem ? inemSmallURL() : (portraitURL(x.special) ?? staffPortraitURL(role, x.id));
+  const url = x.inem ? inemSmallURL() : (portraitURL(x.special) ?? staffPortraitURL(role, x.id, isFemaleName(x.name)));
   return h('img', { src: url, alt: '', width: 44, height: 60, class: 'pixel staff-face' });
 };
 

@@ -9,7 +9,7 @@ import {
   SPECIAL_CHANCE, SPECIALS, STAFF_CAP, STAFF_LEVEL_MONTHS, STAR_SALARY, STAR_TOTAL, STAT_MAX, STATS, TRAITS, roleDef, traitDef,
   type ChannelId, type RoleDef, type RoleId, type StatId, type TraitId,
 } from '../data/staff';
-import { NAMES, TITLES } from '../data/names';
+import { namesFor, TITLES } from '../data/names';
 import { RIVAL_NAMES } from '../data/ranking';
 import { IURAN } from './balance';
 import { gain, type Fx } from './gain';
@@ -278,7 +278,9 @@ export function rollApplicants(s: GameState): Applicant[] {
       const pool = TRAITS.filter((x) => x.id !== 'titipan' && x.id !== 'mantanPreman');
       trait = pool[pickN(roll(s, s.month, 500 + i), pool.length)].id;
     }
-    const name = local?.name ?? `${TITLES[pickN(roll(s, s.month, 600 + i), TITLES.length)]} ${NAMES[pickN(roll(s, s.month, 700 + i), NAMES.length)]}`;
+    const title = TITLES[pickN(roll(s, s.month, 600 + i), TITLES.length)];
+    const given = namesFor(title);
+    const name = local?.name ?? `${title} ${given[pickN(roll(s, s.month, 700 + i), given.length)]}`;
     const stats = applyTrait(rollStats(s, STAR_TOTAL[stars], role.stat, s.month * 31 + i), trait);
     out.push({ id, name, stars, stats, trait, salary: STAR_SALARY[stars], fromResident: local?.id });
   }
