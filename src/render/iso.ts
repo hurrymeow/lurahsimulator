@@ -1040,9 +1040,35 @@ export function hasArt(name: string): boolean {
 const cache = new Map<string, Art>();
 
 /** Paints a sprite at a level: its own level art if it has some, otherwise the base art plus the upgrade kit. */
+/**
+ * Kampung buildings that stand on a paved yard with a kerb (decisions/kampung-vibe.md), like rumah,
+ * warung and kontrakan, which pave their own. Paths, farms, parks and the Kelurahan and Kecamatan
+ * buildings keep their own ground.
+ */
+const PAVED = new Set(['posRonda', 'wifi', 'indomaret', 'alfamart', 'kantorRT', 'bankSampah', 'rumahMakan', 'warteg', 'warkop', 'gerobakBakso', 'fotokopi', 'barbershop', 'apotek', 'posSatpam', 'bidan', 'kosan', 'bengkel', 'posyandu', 'koperasi', 'paud', 'balaiWarga', 'gudangMaterial', 'balaiRW']);
+
+/** The paved yard under a kampung building, painted once for the whole lot before the building. */
+export function lotGround(p: Painter, name: string): void {
+  if (PAVED.has(name)) pavedLot(p);
+}
+
+/** Corners already taken by a building's own pole, sign or flag, so the yard's pots keep clear of them. */
+const NO_POT_LEFT = new Set(['barbershop', 'wifi']);
+const NO_POT_RIGHT = new Set(['barbershop', 'wifi', 'kantorRT', 'apotek']);
+
+/** The yard's life on a paved square lot: a pot plant at each side corner, a bigger one from level 2. */
+function yardKit(p: Painter, name: string, level: number): void {
+  if (!PAVED.has(name) || p.long) return;
+  const side = p.n === 1 ? [-12, 10] : [-28, 25];
+  if (!NO_POT_LEFT.has(name)) pot(p, side[0], 0, level >= 2);
+  if (!NO_POT_RIGHT.has(name)) pot(p, side[1], 0, level >= 3);
+}
+
 export function paint(p: Painter, name: string, variant?: string, level = 1): void {
+  if (!p.long) lotGround(p, name);
   const fn: ArtFn = LEVEL_ART[name] ?? KAMPUNG_ART[name] ?? TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's'));
   fn(p, variant, level);
+  yardKit(p, name, level);
   if (!LEVELLED.has(name) && !NO_KIT.has(name) && !p.bare && level > 1) p.overlay.push((q) => upgradeKit(q, level));
 }
 
@@ -1057,6 +1083,7 @@ export function iso(name: string, variant?: string, n = 1, level = 1, fa = 1, fb
   if (fa !== fb) {
     // A long footprint: its own art, or the one-tile sprite on every tile.
     const p = new Painter(1, fa, fb);
+    lotGround(p, name);
     const own = LONG_ART[name];
     if (own) own(p, variant, level);
     else
