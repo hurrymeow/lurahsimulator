@@ -169,6 +169,9 @@ function kecPhase(s: GameState, seam: { x: number; y: number }[], all: { x: numb
       goals = now;
     }
   }
+  // The wait still open when the run ends counts: a bot that never earns a star has waited the whole run.
+  stopGap = Math.max(stopGap, s.month - stopAt);
+  starGap = Math.max(starGap, s.month - starAt);
   return {
     ...run, pop: population(s), pinjol: Math.round(pinjolShare(s)), stars: `${s.stage.stars.kecamatan}`, noveltyGap, goalGap, stopGap, starGap,
     judolPeak, judolMean: weeks ? Math.round((judolSum / weeks) * 10) / 10 : 0,
