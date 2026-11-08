@@ -10,6 +10,12 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Now
 
+- [ ] **Shops give jobs, and earn less short-staffed.**
+  - Problem: no shop has a job slot, so in late game 42 to 59% of warga sit idle for every scorecard bot (Kelurahan, seeds 1 to 6) and Aman pins at 0, since each warga idle 6+ months costs 2 Aman. Playtest 2026-11-09: 139 of 264 idle at T5.
+  - Why: a kampung full of warung with nobody working in them reads wrong, and Kerja and Aman feel unfixable however the player builds.
+  - Suggested solution: each shop opens jobs of its own kind per level (Penjaga Toko, Tukang Masak, Tukang Cukur), and a shop with empty slots earns less. Big-impact buildings (PAUD, farms, offices) stay the bigger lever. Prove with the bots before and after.
+  - `claimed · Claude · 2026-11-09 · done when:` shops have job slots, the idle share and Aman move in the bot runs, star pacing holds, and GAME-DESIGN.md says so.
+
 ### Next
 
 ### Later
