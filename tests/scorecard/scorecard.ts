@@ -597,10 +597,10 @@ export function kecTables(kec: KecRun[]): string[] {
   const reached = sorted.filter((k) => k.promoted !== undefined);
   const done = reached.filter((k) => k.at.length === 3);
   out.push(`The hint bot plays a new game to Kelurahan 3 stars, then the Kecamatan bot plays on. ${reached.length} of ${sorted.length} seeds reached the Kecamatan, ${done.length} reached its 3rd star. Times are at 1x. Bot gaps are logged, not counted as game fails.`, '');
-  out.push('| Seed | Promoted (min) | 1★ / 2★ / 3★ after promotion (min) | First pinjol after promotion | Longest stop gap | Longest gap, stars only | Pinjol at end | Judol peak / mean (%) | Baliho share of income (%) | Baliho Rp a week |', '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |');
+  out.push('| Seed | Promoted (min) | 1★ / 2★ / 3★ after promotion (min) | First pinjol after promotion | Longest stop gap (report counts) | Longest gap, stars only | Longest novelty / goal gap | Pinjol at end | Judol peak / mean (%) | Baliho share of income (%) | Baliho Rp a week |', '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |');
   for (const k of sorted) {
-    if (k.promoted === undefined) { out.push(`| ${k.seed} | never (Kelurahan ${k.stars}) | – | – | – | – | – | – | – | – |`); continue; }
-    out.push(`| ${k.seed} | ${wkMin(k.promoted)} | ${k.at.length ? k.at.map((w) => wkMin(w).replace(' min', '')).join(' / ') : '–'} | ${wkMin(k.firstPinjol)} | ${wkMin(k.stopGap)} | ${wkMin(k.starGap)} | ${k.pinjol}% | ${k.judolPeak ?? '–'} / ${k.judolMean ?? '–'} | ${k.balihoPct ?? 'no Baliho'} | ${k.balihoRp ?? '–'} |`);
+    if (k.promoted === undefined) { out.push(`| ${k.seed} | never (Kelurahan ${k.stars}) | – | – | – | – | – | – | – | – | – |`); continue; }
+    out.push(`| ${k.seed} | ${wkMin(k.promoted)} | ${k.at.length ? k.at.map((w) => wkMin(w).replace(' min', '')).join(' / ') : '–'} | ${wkMin(k.firstPinjol)} | ${wkMin(k.stopGap)} | ${wkMin(k.starGap)} | ${wkMin(k.noveltyGap)} / ${wkMin(k.goalGap)} | ${k.pinjol}% | ${k.judolPeak ?? '–'} / ${k.judolMean ?? '–'} | ${k.balihoPct ?? 'no Baliho'} | ${k.balihoRp ?? '–'} |`);
   }
   const first = reached.map((k) => (k.firstPinjol === undefined ? Infinity : k.firstPinjol));
   const inTime = first.filter((w) => w * SECONDS_PER_TICK <= 180).length;
@@ -610,7 +610,9 @@ export function kecTables(kec: KecRun[]): string[] {
   const baliho = reached.map((k) => k.balihoPct).filter((x): x is number => x !== undefined);
   out.push('', '| Row | Bar | Result | Verdict |', '| --- | --- | --- | --- |');
   out.push(`| First pinjol case | within 3 min of promotion | ${inTime} of ${reached.length} seeds in time. Median ${wkMin(median(first.filter(Number.isFinite)))} where it happened; never on ${first.filter((w) => !Number.isFinite(w)).length} seeds. | ${reached.length === 0 ? 'Unknown' : inTime === reached.length ? 'Pass' : 'Fail'} |`);
-  out.push(`| Stop point every 20 min | longest gap at most 20 min | ${stopOk} of ${stops.length} seeds. Longest ${stops.length ? wkMin(Math.max(...stops)) : 'n/a'}. | ${stops.length === 0 ? 'Unknown' : stopOk === stops.length ? 'Pass' : 'Fail'} |`);
+  const starStops = reached.map((k) => k.starGap).filter((x): x is number => x !== undefined);
+  const starOk = starStops.filter((w) => w * SECONDS_PER_TICK <= 20 * 60).length;
+  out.push(`| Stop point every 20 min | longest gap at most 20 min | With a report counted as a stop (as scorecard item 7 does): ${stopOk} of ${stops.length} seeds, longest ${stops.length ? wkMin(Math.max(...stops)) : 'n/a'}. Reports come every ~1.6 min, so this cannot fail. Stars and promotion only: ${starOk} of ${starStops.length} seeds, longest ${starStops.length ? wkMin(Math.max(...starStops)) : 'n/a'}. | ${starStops.length === 0 ? 'Unknown' : starOk === starStops.length ? 'Pass' : 'Fail (stars only)'} |`);
   out.push(`| Judol share and Baliho income | measured, no bar yet | Judol mean share ${judol.length ? `${median(judol).toFixed(1)}% (median of seeds)` : 'n/a'}. Baliho ${baliho.length ? `${median(baliho).toFixed(1)}% of building income (median of seeds), built on ${baliho.length} of ${reached.length} seeds` : 'never built by the bot'}. | Measured |`);
   out.push('');
   return out;
