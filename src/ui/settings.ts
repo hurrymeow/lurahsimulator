@@ -101,10 +101,11 @@ function sliderRow(app: App, v: (typeof SLIDERS)[number]): Node {
   return h('div', { class: 'action' }, h('label', { class: 'slider-row' }, h('span', {}, t(v.label)), out), input);
 }
 
-const SEEDS: { id: 'rt3' | 'rw' | 'kel'; label: Key }[] = [
+const SEEDS: { id: 'rt3' | 'rw' | 'kel' | 'kec'; label: Key }[] = [
   { id: 'rt3', label: 'dev.rt3' },
   { id: 'rw', label: 'dev.rw' },
   { id: 'kel', label: 'dev.kel' },
+  { id: 'kec', label: 'dev.kec' },
 ];
 
 /** Developer test mode: jump to a seeded higher-stage game. Two taps, because it replaces the current save. */

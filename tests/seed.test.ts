@@ -10,8 +10,8 @@ afterEach(() => setGrid('rt'));
 
 const file = (id: SeedId) => new URL(`../src/sim/seeds/${id}.json`, import.meta.url);
 /** Fewest different building kinds a seed must show, so no seed is many copies of a few. */
-const MIN_KINDS = { rt3: 10, rw: 18, kel: 20 } as const;
-const STAGE = { rt3: 'rt', rw: 'rw', kel: 'kelurahan' } as const;
+const MIN_KINDS = { rt3: 10, rw: 18, kel: 20, kec: 20 } as const;
+const STAGE = { rt3: 'rt', rw: 'rw', kel: 'kelurahan', kec: 'kecamatan' } as const;
 
 describe('developer seeds', () => {
   // SEED_WRITE=1 rebuilds the files. Slow, so it is off in normal runs.
@@ -63,6 +63,12 @@ describe('developer seeds can advance', () => {
   it('kel has a next-star checklist to work toward', () => {
     const s = deserialize(readFileSync(file('kel'), 'utf8'))!;
     expect(s.stage.stars.kelurahan).toBeLessThan(3);
+    expect(nextStarChecklist(s)?.length).toBeGreaterThan(0);
+  });
+  it('kec starts just promoted at 0 stars with a checklist', () => {
+    const s = deserialize(readFileSync(file('kec'), 'utf8'))!;
+    expect(s.stage.stars.kecamatan ?? 0).toBe(0);
+    expect(s.kec).toBeTruthy();
     expect(nextStarChecklist(s)?.length).toBeGreaterThan(0);
   });
 });

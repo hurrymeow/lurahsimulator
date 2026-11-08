@@ -761,6 +761,7 @@ export const ID: Record<Key, string> = {
   'dev.rt3': "RT, 3 bintang",
   'dev.rw': "RW, 3 bintang",
   'dev.kel': "Kelurahan",
+  'dev.kec': "Kecamatan",
   'dev.armed': "Ketuk lagi untuk ganti kampung ini",
   'dev.help': 'Memuat game jadi dengan bangunan, bintang, dan uang. Ini mengganti simpananmu saat ini.',
   'set.satire': 'Pak Pejabat adalah satire tentang sistem dan birokrasi. Kemiripan dengan kelurahanmu hanya kebetulan. Laporkan, lalu tunggu 3 minggu.',
