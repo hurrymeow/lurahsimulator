@@ -26,6 +26,10 @@ What carries over at 32px per tile, and what does not:
 
 `Painter.shadow` used to replace every pixel under it with a see-through ink pixel, so on a paved yard it punched a hole. It now darkens an opaque pixel under it and leaves a see-through shadow only over bare map, which looks the same as before for every building that paints no ground.
 
+## Construction
+
+Review (2026-11-08): the building under construction "looks unfinished". The clip that raises it stopped at the lot's centre, so its front walls never drew, and its finished paved yard and clutter showed from the first month. Now the lot is a proyek (bare earth, sand, bata, cement sacks), the building is drawn without its yard (`Painter.site`), and it rises whole from the ground behind the scaffold. Mangkrak uses the same, greyed out.
+
 ## Checks
 
 - `npm test`: the height rules (28px cap, at most 8px over level 1), the one-tile rule for every rumah variant and the footprint spill rule all pass. The roof flag on Balai RW, the Kantor RT flags and the antennas were shortened to fit them.

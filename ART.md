@@ -122,6 +122,10 @@ building, and judge new art against them before showing it.
 - Site sprites follow the same rule: stakes and scaffold draw 1px lines on any lot (the scaffold is
   low, the stakes are native pixels with one more stake per side for each extra tile), and the test
   finds no 2x2 block of one colour in them.
+- While a building goes up it stands on the proyek: bare earth with a darker rim, a sand pile, a
+  stack of bata and cement sacks, in native pixels on any lot. The building is drawn without its
+  paved yard or clutter (`iso(..., site = true)`) and rises whole from the ground, front walls
+  included, behind the scaffold. A mangkrak site is the same, greyed out.
 - Long buildings (1x2, 2x3) use `new Painter(1, fa, fb)`: a canvas for fa tiles along the map's x axis
   and fb along its y axis. Build them from one-tile pieces: `p.at(u, v)` moves every primitive onto
   tile (u, v), and pieces draw back to front (lower u + v first). `groundLong()` paints ground over the

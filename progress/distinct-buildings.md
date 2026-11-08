@@ -8,5 +8,6 @@ Shipped (2026-11-08):
 - Rumah, Warung and Kontrakan redrawn in the kampung look; every other RT and RW building stands on a paved yard with corner pots.
 - Zinc on the big sheds toned down to a warm grey without the bright shine.
 - `Painter.shadow` darkens an opaque pixel under it instead of replacing it.
+- Construction: a proyek ground sprite, the building rises without its yard and with its front walls (`Painter.site`, `iso(..., site)`), mangkrak the same in grey.
 
 See `decisions/distinct-buildings.md`.

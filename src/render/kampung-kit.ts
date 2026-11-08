@@ -32,6 +32,8 @@ export const patched = (x0: number, x1: number, y0: number, y1: number) => (x: n
 
 /** The paved yard: worn concrete slabs, a darker kerb on the lot's rim, and a grass verge at the back. */
 export function pavedLot(p: Painter, verge = true): void {
+  // While the building goes up it stands on the proyek, not on its finished yard.
+  if (p.site) return;
   // A long footprint (2x1) paints its whole lot at once; a square one paints its own diamond.
   (p.long ? p.groundLong.bind(p) : p.ground.bind(p))((a, b, px) => {
     const e = Math.min(a, b, 1 - a, 1 - b);
@@ -47,6 +49,7 @@ export function pavedLot(p: Painter, verge = true): void {
 
 /** A pot plant on the ground at (x, y): a terracotta pot and a leafy crown. big is a taller palm-like crown. */
 export function pot(p: Painter, x: number, y: number, big = false): void {
+  if (p.site) return;
   p.id++;
   for (const [e, d] of [[0, 0], [1, 0], [0, 1], [1, 1]]) dot(p, x + e, y - d, e ? 'R' : 'o');
   p.id++;
@@ -58,6 +61,7 @@ export function pot(p: Painter, x: number, y: number, big = false): void {
 
 /** A plastic ember or drum, 3 wide: blue by default. */
 export function ember(p: Painter, x: number, y: number, c = 'b', shade = 'B'): void {
+  if (p.site) return;
   p.id++;
   for (let d = 0; d < 3; d++) for (let e = 0; e < 3; e++) dot(p, x + e, y - d, d === 2 ? (e === 1 ? shade : c) : e === 2 ? shade : c);
 }
@@ -72,6 +76,7 @@ export function tandon(p: Painter, x: number, y: number, z: number): void {
 
 /** A motor parked side-on: two dark wheels, a red body and a seat. */
 export function motor(p: Painter, x: number, y: number, body = 'r'): void {
+  if (p.site) return;
   p.id++;
   for (const e of [0, 4]) {
     dot(p, x + e, y, 'k');
@@ -90,6 +95,7 @@ const CLOTHES = ['#e57a9c', '#3d72b4', '#f6ecd4', '#f4b935', '#df4a2c', '#82bfdc
  * with clothes hanging off it. Drawn after the ink pass, so the line stays one pixel thin.
  */
 export function jemuran(p: Painter, a0: number, a1: number, b: number, up: number, along: 'a' | 'b' = 'a'): void {
+  if (p.site) return;
   p.overlay.push((q) => {
     const pt = (t: number, h: number) => (along === 'a' ? at(q, a0 + (a1 - a0) * t, b, h) : at(q, b, a0 + (a1 - a0) * t, h));
     for (const t of [0, 1]) for (let h = 0; h <= up; h++) {

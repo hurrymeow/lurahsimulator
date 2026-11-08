@@ -63,6 +63,8 @@ export class Painter {
   id = 1;
   /** Skip the ink pass, for specks too small to outline. */
   bare = false;
+  /** The building as it goes up: no paved yard and no yard clutter yet, it stands on the proyek site. */
+  site = false;
   /** Fine detail drawn after the ink pass in native pixels, so 1px lines stay 1px and get no outline. */
   readonly overlay: ((p: Painter) => void)[] = [];
   private inked = false;
@@ -909,6 +911,36 @@ const ART: Record<string, ArtFn> = {
       return j % 4 === 0 ? 'n' : null;
     });
   },
+  // The proyek: the lot while a building goes up on it. Bare earth with a darker rim, a sand pile at the
+  // left corner, a stack of red bata at the right and two cement sacks at the front, in native pixels on
+  // any lot, so the building rising out of it never stands on a finished paved yard.
+  proyek: (p) => {
+    p.ground((a, b, px) => {
+      const e = Math.min(a, b, 1 - a, 1 - b);
+      if (e < px) return null;
+      if (e < 2 * px) return '#7a5c3c';
+      const clump = (Math.floor(a / (px * 3)) * 7 + Math.floor(b / (px * 2)) * 3) % 11;
+      return clump === 0 ? '#8f6c47' : clump === 5 ? '#b18f66' : '#a5835b';
+    });
+    const n = p.n;
+    const dot = (x: number, y: number, c: string) => p.px(p.gx + x, p.gy + y, c);
+    // The sand pile: a low mound, lit on the left.
+    p.id++;
+    const sx = -11 * n, r = 4 + n;
+    for (let dx = -r; dx <= r; dx++) {
+      const h = Math.round(Math.sqrt(r * r - dx * dx) * 0.6);
+      for (let d = 0; d <= h; d++) dot(sx + dx, -d, d === h ? '#e6c98f' : dx < 0 ? '#d9b77a' : '#c49e62');
+    }
+    // A stack of bata, two courses with staggered joints.
+    p.id++;
+    const bx = 7 * n;
+    for (let d = 0; d < 3; d++) for (let e = 0; e < 5; e++) dot(bx + e, -d - Math.floor(e / 2), (e + d * 2) % 4 === 3 ? 'R' : d === 2 ? '#e86a4a' : 'r');
+    // Two cement sacks by the front corner.
+    for (const [x, y] of [[-3, 5 * n - 2], [1, 5 * n - 1]]) {
+      p.id++;
+      for (let d = 0; d < 2; d++) for (let e = 0; e < 3; e++) dot(x + e, y - d, d === 1 ? 'w' : e === 2 ? 's' : '#e4dccb');
+    }
+  },
   // Permit phase: the plot is staked out with string, nothing built yet. Bare, so the string stays one pixel thin.
   patok: (p) => {
     p.bare = true;
@@ -1058,14 +1090,14 @@ const NO_POT_RIGHT = new Set(['barbershop', 'wifi', 'kantorRT', 'apotek']);
 
 /** The yard's life on a paved square lot: a pot plant at each side corner, a bigger one from level 2. */
 function yardKit(p: Painter, name: string, level: number): void {
-  if (!PAVED.has(name) || p.long) return;
+  if (!PAVED.has(name) || p.long || p.site) return;
   const side = p.n === 1 ? [-12, 10] : [-28, 25];
   if (!NO_POT_LEFT.has(name)) pot(p, side[0], 0, level >= 2);
   if (!NO_POT_RIGHT.has(name)) pot(p, side[1], 0, level >= 3);
 }
 
 export function paint(p: Painter, name: string, variant?: string, level = 1): void {
-  if (!p.long) lotGround(p, name);
+  if (!p.long && !p.site) lotGround(p, name);
   const fn: ArtFn = LEVEL_ART[name] ?? KAMPUNG_ART[name] ?? TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's'));
   fn(p, variant, level);
   yardKit(p, name, level);
@@ -1076,14 +1108,15 @@ export function paint(p: Painter, name: string, variant?: string, level = 1): vo
  * Isometric art for a sprite name. variant is a roof colour for rumah, or 'y' for a selokan. n is the
  * footprint: big buildings get their own art at n times the size. Unknown names get a plain box.
  */
-export function iso(name: string, variant?: string, n = 1, level = 1, fa = 1, fb = 1): Art {
-  const key = `${name}:${variant ?? ''}:${n}:${level}:${fa}x${fb}`;
+export function iso(name: string, variant?: string, n = 1, level = 1, fa = 1, fb = 1, site = false): Art {
+  const key = `${name}:${variant ?? ''}:${n}:${level}:${fa}x${fb}${site ? ':site' : ''}`;
   const hit = cache.get(key);
   if (hit) return hit;
   if (fa !== fb) {
     // A long footprint: its own art, or the one-tile sprite on every tile.
     const p = new Painter(1, fa, fb);
-    lotGround(p, name);
+    p.site = site;
+    if (!site) lotGround(p, name);
     const own = LONG_ART[name];
     if (own) own(p, variant, level);
     else
@@ -1100,6 +1133,7 @@ export function iso(name: string, variant?: string, n = 1, level = 1, fa = 1, fb
   }
   // A big footprint is drawn at its own size, so its edges and outlines stay 1px.
   const p = new Painter(n);
+  p.site = site;
   paint(p, name, variant, level);
   const art = p.finish();
   cache.set(key, art);
