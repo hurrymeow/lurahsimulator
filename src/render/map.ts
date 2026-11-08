@@ -652,7 +652,11 @@ export class MapView {
         this.hits.push(site('patok')!);
         this.sign(ctx, 'permit', b.x, b.y);
       } else if (b.status === 'building') {
-        // Being built: the building rises out of its plot as the months pass, behind scaffolding.
+        // Being built: the building rises out of the proyek (bare earth, sand, bata) as the months pass,
+        // behind scaffolding. It is drawn without its yard, and whole from the ground up: the clip only
+        // hides what is not built yet above the rising line, never the front walls below the lot's centre.
+        site('proyek');
+        const rising = iso(sprite, variant, n, level, sh.fa, sh.fb, true);
         const progress = Math.max(0, Math.min(1, 1 - b.timer / Math.max(1, def(b.def).buildMonths)));
         const c = this.corner(b.x, b.y);
         const k = (this.scale * n) / art.n;
@@ -661,15 +665,17 @@ export class MapView {
         const h = (ground - top) * progress;
         ctx.save();
         ctx.beginPath();
-        ctx.rect(c.x - art.cornerX * k, ground - h, art.canvas.width * k, h);
+        ctx.rect(c.x - art.cornerX * k, ground - h, art.canvas.width * k, h + art.canvas.height * k);
         ctx.clip();
-        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
+        this.hits.push(this.art(ctx, rising, b.x, b.y, 1, 0, n, flip));
         ctx.restore();
         site('scaffold');
         if (this.effects) this.fx.construct(b.x, b.y, world);
       } else if (b.status === 'mangkrak') {
+        // Stalled: the proyek and the half-built shell, greyed out.
         ctx.filter = 'grayscale(1) brightness(0.7)';
-        this.hits.push(this.art(ctx, art, b.x, b.y, 1, 0, n, flip));
+        site('proyek');
+        this.hits.push(this.art(ctx, iso(sprite, variant, n, level, sh.fa, sh.fb, true), b.x, b.y, 1, 0, n, flip));
         ctx.filter = 'none';
         site('scaffold');
       } else if (b.status === 'damaged') {

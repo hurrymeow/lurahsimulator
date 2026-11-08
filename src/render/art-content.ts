@@ -1,4 +1,5 @@
 import { dither, type Painter, type RoofShape } from './iso';
+import { kolamPancing, panggungSenam, tamanBermain } from './park-art';
 
 // Sprites for the content wave: selokan, decorations, farm, shops and facilities. Same rules as ART.md:
 // straight isometric boxes, palette keys, the ink pass from Painter.finish. Registered in iso.ts.
@@ -81,14 +82,8 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     });
     p.overlay.push(dither);
   },
-  tamanBermain: (p) => {
-    p.ground((a, b, px) => (Math.min(a, b, 1 - a, 1 - b) < px ? null : Math.floor((a + b) * 6) % 2 ? 'g' : 'G'));
-    p.overlay.push(dither);
-    p.box(7, 5, 'S');
-    p.stroke(-10, -6, 10, -1, 3, 'o');
-    p.blob(-11, 8, 2, 'r');
-    p.blob(11, 4, 2, 'b');
-  },
+  // The playground set, the senam stage and the fishing pond are in park-art.ts.
+  tamanBermain,
   airMancur: (p) => {
     p.shadow(3);
     p.ground((a, b) => {
@@ -130,53 +125,6 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     p.stroke(9, -11, 14, -8, 3, 'w');
     p.stroke(10, -10, 13, -9, 1, 'p', false);
   },
-  // Panggung Senam: a low plank stage, a merah putih banner on two posts at the back, and a grey toa on a pole.
-  // Drawn in one-tile coordinates, so on its 2x2 lot every edge stays a 1px line.
-  panggungSenam: (p) => {
-    // Wide, not tall: as high as a 1x1 building, its size shows as width (ART.md).
-    p.low();
-    p.shadow(2);
-    p.box(2, 3, 'n', (face, _u, j) => (face === 'T' ? null : j === 2 ? 't' : undefined));
-    // The deck, painted in native pixels: box() leaves an open top's back corner to the roof that usually covers it.
-    p.id++;
-    const n = p.n;
-    const cx = (TW / 2) * n + p.ox;
-    const cy = (TOP + TH / 2) * n - 3 * p.zs + p.oy;
-    const hw = (TW / 2 - 4) * n;
-    const hh = (TH / 2 - 2) * n;
-    for (let y = Math.floor(cy - hh); y <= Math.ceil(cy + hh); y++)
-      for (let x = Math.floor(cx - hw); x <= Math.ceil(cx + hw); x++)
-        if (Math.abs(x + 0.5 - cx) / hw + Math.abs(y + 0.5 - cy) / hh <= 1) p.px(x, y, Math.floor((x - y * 2) / (3 * p.zs)) % 2 ? 't' : 'a');
-    // The banner: red over white, on two bamboo posts standing on the back of the stage.
-    p.stroke(-6, -6, -6, -16, 1, 'N');
-    p.stroke(6, -6, 6, -16, 1, 'N');
-    p.stroke(-6, -16, 6, -16, 3, 'r');
-    p.stroke(-6, -13, 6, -13, 2, 'w', false);
-    // The toa on the front corner: louder than the instructor.
-    p.stroke(9, 2, 9, -11, 1, 'S');
-    p.stroke(8, -13, 11, -11, 2, 's');
-  },
-  // Kolam Pancing: a green pond in a stone kerb, a plank jetty, and two rods out over the water.
-  kolamPancing: (p) => {
-    p.ground((a, b, px) => {
-      const e = Math.min(a, b, 1 - a, 1 - b);
-      if (e < 2 * px) return 'S';
-      if (e < 4 * px) return 's';
-      if (within(a, 0.42, 0.58) && b > 0.62) return Math.floor(b * 40) % 2 ? 'n' : 't';
-      const r = (a * 7 + b * 3) % 1;
-      return r < 0.08 ? 'w' : r < 0.5 ? 'c' : 'l';
-    });
-    p.overlay.push(dither);
-    // Two short rods off the jetty end, each with a white float on the water.
-    p.overlay.push((q) => {
-      const n = q.n;
-      const cx = q.gx;
-      const cy = q.gy;
-      for (const [x0, y0, x1, y1] of [[0, 2, -5, -2], [1, 3, 6, -1]]) {
-        const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) * n;
-        for (let k = 0; k <= steps; k++) q.px(Math.round(cx + (x0 + ((x1 - x0) * k) / steps) * n), Math.round(cy + (y0 + ((y1 - y0) * k) / steps) * n), 'N');
-        q.px(cx + x1 * n, cy + (y1 + 3) * n, 'w');
-      }
-    });
-  },
+  panggungSenam,
+  kolamPancing,
 };

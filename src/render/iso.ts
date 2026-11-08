@@ -9,6 +9,9 @@ import { def, sizeFor } from '../sim/content';
 import { KAMPUNG_ART, posyanduLong } from './kampung-art';
 import { LEVEL_ART, portal1 } from './level-art';
 import { TOKO_ART } from './toko-art';
+import { prism, roofRect } from './massing';
+import { flag } from './sign-art';
+import { antenna, ember, jemuran, motor, patched, pavedLot, pot, tandon, ZINC, zinc } from './kampung-kit';
 
 /** Art-pixel size of one ground diamond. The view scales these up by a whole number. */
 export const TW = 32;
@@ -60,6 +63,8 @@ export class Painter {
   id = 1;
   /** Skip the ink pass, for specks too small to outline. */
   bare = false;
+  /** The building as it goes up: no paved yard and no yard clutter yet, it stands on the proyek site. */
+  site = false;
   /** Fine detail drawn after the ink pass in native pixels, so 1px lines stay 1px and get no outline. */
   readonly overlay: ((p: Painter) => void)[] = [];
   private inked = false;
@@ -325,7 +330,15 @@ export class Painter {
     const cy = (TOP + TH / 2) * n + this.oy;
     for (let y = TOP * n + this.oy; y < (TOP + TH) * n + this.oy; y++)
       for (let x = this.ox; x < (TW + 4) * n + this.ox; x++)
-        if (Math.abs(x + 0.5 - cx) / hw + Math.abs(y + 0.5 - cy) / hh <= 1) this.px(x, y, INK, 90);
+        if (Math.abs(x + 0.5 - cx) / hw + Math.abs(y + 0.5 - cy) / hh <= 1) {
+          // Over a lot the building painted itself (a paved yard), darken that pixel; over bare map, leave a see-through shadow.
+          const k = (y * this.w + x) * 4;
+          if (x < 0 || y < 0 || x >= this.w || y >= this.h) continue;
+          if (this.data[k + 3] === 255) {
+            const f = 1 - 90 / 255;
+            this.data.set([this.data[k] * f + 0x2a * (1 - f), this.data[k + 1] * f + 0x18 * (1 - f), this.data[k + 2] * f + 0x10 * (1 - f), 255], k);
+          } else this.px(x, y, INK, 90);
+        }
   }
 
   /** A round leafy clump centred r art pixels above the ground centre, cel-lit from the top left. */
@@ -551,12 +564,16 @@ const ART: Record<string, ArtFn> = {
     const shape = ROOF_KEYS[v[1]] ?? 'hip';
     const wall = v[2] ?? 't';
     const modern = shape === 'shed' || shape === 'flat';
-    // Level 3 is a rumah tingkat: a lower ground floor, then an upper floor set one pixel in.
+    // Level 3 is a rumah tingkat: a lower ground floor under a zinc skirt, then an upper floor set back.
     const tall = level >= 3;
     // Level 1 is the smallest: a bungalow one pixel in on every side and a pixel lower than level 2.
     const small = level <= 1;
     const ground = tall || small ? 7 : 8;
     const base = small ? 4 : 3;
+    // A kampung house, built up over the years (decisions/distinct-buildings.md): a paved yard, a painted door,
+    // a zinc lean-to for the dapur, a seng patch on the clay roof, the TV antenna, pots and an ember.
+    const door = modern ? 'k' : wall === 't' ? 'b' : wall === 'w' ? 'G' : 'N';
+    pavedLot(p);
     p.shadow(base);
     p.box(base, ground, wall, (face, u, j, i) => {
       if (face === 'T') return undefined;
@@ -566,69 +583,102 @@ const ART: Record<string, ArtFn> = {
         if (j === 6) return roof;
         if (j < 6) {
           if (j === 0) return 's';
-          if (within(u, 0.62, 0.8) && j < 5) return 'N';
+          if (within(u, 0.62, 0.8) && j < 5) return door;
           if (within(u, 0.5, 0.56) && j < 3) return j === 0 ? 'n' : 'G';
           return 'S';
         }
       }
       // Roster: a band of ventilation blocks under the eave, open and solid in turn.
       if (!tall && j === ground - 1 && (face === 'R' || within(u, 0.12, 0.45))) return i % 2 ? 'S' : 'w';
-      if (face === 'L' && within(u, 0.6, 0.82) && j < 6) return modern ? 'k' : 'N';
-      if (face === 'L' && within(u, 0.15, 0.4) && within(j, 3, 6)) return j === 5 && modern ? 'S' : 'l';
+      if (face === 'L' && within(u, 0.6, 0.82) && j < 6) return door;
+      // Windows in a dark wooden frame.
+      if (face === 'L' && within(u, 0.15, 0.4) && within(j, 3, 6)) return j === 5 && modern ? 'S' : within(u, 0.2, 0.36) ? 'l' : 'N';
       if (face === 'R' && (within(u, 0.2, 0.42) || within(u, 0.6, 0.82)) && within(j, 3, 6)) return 'l';
       // Batu alam on the corners of a minimalis front.
       if (modern && face === 'L' && (u < 0.12 || u > 0.86) && j < 7) return (i + j) % 3 ? 'S' : 's';
-      // Weep holes: a small dark slot every few bricks just above the ground.
+      // A damp plinth: the bottom course of render stained darker, with weep holes.
+      if (j === 0) return 'S';
       if (j === 1 && i % 5 === 2) return 'S';
       return undefined;
     });
+    // The dapur: a zinc lean-to against the right wall, below the eave, on levels 1 and 2.
+    if (!tall) {
+      const a0 = 1 - base / 16;
+      prism(p, a0, a0 + 0.16, 0.32, 0.62, 5, 'n', (face, u, j, i) => (face === 'L' && within(u, 0.3, 0.7) && j < 4 ? 'N' : face !== 'T' && i % 3 === 0 ? 'N' : undefined));
+      roofRect(p, a0, a0 + 0.16, 0.32, 0.62, 5, 2, 'shed', ZINC, 'n', zinc, 0.02);
+    }
     if (tall) {
+      // The ground floor's roof becomes a skirt of tile round the upper floor.
+      p.roof(3, ground, 1, roof);
       p.box(4, 6, wall, (face, u, j, i) => {
         if (face === 'T') return undefined;
         if (j === 5 && (face === 'R' || within(u, 0.12, 0.45))) return i % 2 ? 'S' : 'w';
         if (face === 'L' && (within(u, 0.15, 0.4) || within(u, 0.6, 0.85)) && within(j, 1, 4)) return 'l';
         if (face === 'R' && within(u, 0.3, 0.7) && within(j, 1, 4)) return 'l';
         return undefined;
-      }, ground);
+      }, ground + 1);
       // A balcony rail along the front of the upper floor.
       p.id++;
       for (let x = -11; x <= -2; x++) p.set(TW / 2 + x, TOP + TH / 2 - ground - 2 + Math.round((x + 11) / 2), x & 1 ? 'S' : 'w');
     }
-    const top = tall ? ground + 6 : ground;
+    const top = tall ? ground + 7 : ground;
     const inset = tall ? 4 : base;
+    // A sheet of seng over the part of a clay roof that leaked: on the right slope of a cream house, the
+    // left slope of a white one. A rendered grey house and the minimalis ones kept their roofs whole.
+    const patch = modern || wall === 's' ? undefined : wall === 't' ? patched(18, 23, top > 9 ? 24 : 34, top > 9 ? 28 : 39) : patched(9, 14, top > 9 ? 25 : 35, top > 9 ? 29 : 40);
     // Rises keep every shape at or under the hipped roof's apex, so no house hides its neighbour.
-    p.roofShape(shape, inset, top, shape === 'shed' ? 2 : shape === 'hip' ? (tall ? 7 : 8) : tall ? 4 : 5, roof, wall);
+    p.roofShape(shape, inset, top, shape === 'shed' ? 2 : shape === 'hip' ? (tall ? 6 : 8) : tall ? 4 : 5, roof, wall, patch);
     // A tandon air on the deck of a flat roof, orange or blue.
     if (shape === 'flat') p.box(6, 3, roof === 'l' || roof === 'G' ? 'b' : 'o', (face) => (face === 'T' ? 'w' : undefined), top + 2);
-    // Level 2 also gets a low pagar one pixel inside the tile's front edges, open in front of the door.
+    // The TV antenna on a mast behind the roof, on the cream houses only, the same height on every shape so none stands taller.
+    if (wall === 't') antenna(p, 5, -5, small ? 15 : tall ? 19 : 16);
+    // The yard: a pot by the door and an ember at the side, then a jemuran, then a motor and a tandon.
+    pot(p, -12, 0, level >= 2);
+    if (!tall) ember(p, 10, 0, wall === 'w' ? 'r' : 'b', wall === 'w' ? 'R' : 'B');
+    if (level === 2) jemuran(p, 0.08, 0.4, 0.93, 6);
+    if (tall) {
+      motor(p, -9, 2);
+      tandon(p, 8, 1, 5);
+    }
+    // Level 2 also gets a low rendered wall one pixel inside the tile's front edges, open in front of the door.
     if (level === 2)
       p.overlay.push((q) => {
         const { gx, gy } = q;
         for (const side of [-1, 1])
           for (let k = 1; k < gx - 1; k++) {
             if (side < 0 && k >= 11 && k <= 14) continue;
+            if (side > 0 && k >= 9 && k <= 13) continue;
             const x = side < 0 ? k : 2 * gx - 1 - k;
             const y = Math.round(gy + k / 2) - 1;
-            const post = k % 3 === 1;
-            q.px(x, y - 2, post ? 'S' : 'w');
-            if (post) q.px(x, y - 1, 'S');
+            q.px(x, y - 2, 'w');
+            q.px(x, y - 1, k % 4 === 1 ? 'S' : 's');
           }
       });
   },
   kantorRT: (p, _v, level = 1) => {
+    // Every level flies the merah putih from a pole in the yard and wears a kantor's colours, a whitewashed
+    // wall over a green plinth with a green fascia, so it never reads as one more rumah.
+    const walls = (face: Face, u: number, j: number, i: number, h: number) => {
+      if (j === 0) return 'G';
+      if (j === h - 1) return 'g';
+      if (face === 'L' && within(u, 0.42, 0.58) && j < h - 3) return 'N';
+      if (within(j, 2, h - 2) && i % 5 >= 2 && !(face === 'L' && within(u, 0.34, 0.66))) return 'l';
+      return undefined;
+    };
+    // Two roof tiers: a low skirt over the walls, a band of white roster, then a smaller, steeper crown.
+    const tiers = (inset: number, h: number, colour: string, rib?: string) => {
+      const ribs = rib ? (x: number) => (x % 3 === 0 ? rib : undefined) : undefined;
+      p.roof(inset, h, 2, colour, ribs);
+      p.box(inset + 4, 4, 'w', (face, _u, j, i) => (face === 'T' ? undefined : j === 2 && i % 2 ? 'S' : 'w'), h);
+      p.roof(inset + 4, h + 4, 4, colour, ribs);
+    };
     if (level <= 1) {
-      // Pak RT's own front room: a plain house with a zinc roof and a nameboard on a post.
+      // Pak RT's sekretariat: one small room under a two-tier green zinc roof (a skirt, a band of roster, then
+      // a small crown), the stepped silhouette every level of the kantor keeps, and the flag at the back corner.
       p.shadow(4);
-      p.box(4, 7, 't', (face, u, j) => {
-        if (face === 'L' && within(u, 0.42, 0.62) && j < 5) return 'N';
-        if (face === 'R' && within(u, 0.25, 0.75) && within(j, 3, 6)) return 'l';
-        return j === 0 ? 'n' : undefined;
-      });
-      p.roof(4, 7, 5, 's', (x) => (x % 3 === 0 ? 'S' : undefined));
-      // The RT nameboard on a tall post by the lane, the one thing taller than the house.
-      p.stroke(-10, 2, -10, -12, 1, 'N');
-      p.stroke(-13, -16, -7, -13, 3, 'w');
-      p.stroke(-12, -15, -9, -14, 1, 'k', false);
+      flag(p, 10, 2, 18);
+      p.box(4, 7, 'w', (face, u, j, i) => walls(face, u, j, i, 7));
+      tiers(4, 7, 'G', 'g');
       return;
     }
     if (level >= 3) {
@@ -653,24 +703,25 @@ const ART: Record<string, ArtFn> = {
       }
       return;
     }
-    // Level 2 is the office proper, smaller and lower than the level 3 pendopo: a whitewashed room
-    // under a red hip, the flag on its ridge.
+    // Level 2 is the office proper, lower than the level 3 pendopo: a whitewashed office under a two-tier red
+    // roof, a flat concrete kanopi on two white columns over the door with the papan nama standing on it, and
+    // the flag on a taller pole.
     p.shadow(2);
-    p.box(3, 9, 'w', (face, u, j, i) => {
-      if (face === 'L' && within(u, 0.42, 0.6) && j < 6) return 'k';
-      if (j < 1) return 'S';
-      if (within(j, 3, 7) && i % 5 >= 2 && !(face === 'L' && within(u, 0.36, 0.66))) return 'l';
-      return undefined;
+    flag(p, 11, 2, 21);
+    p.box(3, 9, 'w', (face, u, j, i) => walls(face, u, j, i, 9));
+    tiers(3, 9, 'R');
+    // The kanopi: a slab in front of the door on two columns, its fascia painted green and white.
+    prism(p, 0.36, 0.66, 0.78, 1.0, 1, 'e', (face, _u, _j, i) => (face === 'T' ? 's' : i % 2 ? 'G' : 'e'), 6);
+    p.overlay.push((q) => {
+      // Columns in native pixels, so they stay one pixel thin: white, with a grey shaded side.
+      for (const [a, b] of [[0.38, 0.98], [0.64, 0.98]]) {
+        const X = Math.round(q.gx + (a - b) * 16 * q.n), Y = Math.round(q.gy - 8 * q.n + (a + b) * 8 * q.n);
+        for (let k = 1; k < 6 * q.n; k++) q.px(X, Y - k, 'e');
+        q.px(X, Y, 'S');
+      }
     });
-    p.roof(3, 9, 6, 'R');
-    // Flag pole on the ridge: red over white. Short, so the Kantor never hides the houses behind it.
-    const ax = TW / 2;
-    const ay = TOP + TH / 2 - 9 - 6;
-    for (let k = 1; k <= 5; k++) p.set(ax, ay - k, 'k');
-    for (let k = 1; k <= 3; k++) {
-      p.set(ax + k, ay - 5, 'r');
-      p.set(ax + k, ay - 4, 'w');
-    }
+    // The papan nama on the kanopi: a white board with a green rim.
+    prism(p, 0.4, 0.62, 0.9, 0.94, 3, 'e', (face, _u, j) => (face === 'T' || j === 2 || j === 0 ? 'G' : face === 'R' ? 'G' : 'e'), 7);
   },
   // Warung tenda, then a gerobak under a zinc lean-to, then a brick toko kelontong (warung-art.ts).
   warung: (p, _v, level = 1) => warungArt(p, level),
@@ -860,6 +911,36 @@ const ART: Record<string, ArtFn> = {
       return j % 4 === 0 ? 'n' : null;
     });
   },
+  // The proyek: the lot while a building goes up on it. Bare earth with a darker rim, a sand pile at the
+  // left corner, a stack of red bata at the right and two cement sacks at the front, in native pixels on
+  // any lot, so the building rising out of it never stands on a finished paved yard.
+  proyek: (p) => {
+    p.ground((a, b, px) => {
+      const e = Math.min(a, b, 1 - a, 1 - b);
+      if (e < px) return null;
+      if (e < 2 * px) return '#7a5c3c';
+      const clump = (Math.floor(a / (px * 3)) * 7 + Math.floor(b / (px * 2)) * 3) % 11;
+      return clump === 0 ? '#8f6c47' : clump === 5 ? '#b18f66' : '#a5835b';
+    });
+    const n = p.n;
+    const dot = (x: number, y: number, c: string) => p.px(p.gx + x, p.gy + y, c);
+    // The sand pile: a low mound, lit on the left.
+    p.id++;
+    const sx = -11 * n, r = 4 + n;
+    for (let dx = -r; dx <= r; dx++) {
+      const h = Math.round(Math.sqrt(r * r - dx * dx) * 0.6);
+      for (let d = 0; d <= h; d++) dot(sx + dx, -d, d === h ? '#e6c98f' : dx < 0 ? '#d9b77a' : '#c49e62');
+    }
+    // A stack of bata, two courses with staggered joints.
+    p.id++;
+    const bx = 7 * n;
+    for (let d = 0; d < 3; d++) for (let e = 0; e < 5; e++) dot(bx + e, -d - Math.floor(e / 2), (e + d * 2) % 4 === 3 ? 'R' : d === 2 ? '#e86a4a' : 'r');
+    // Two cement sacks by the front corner.
+    for (const [x, y] of [[-3, 5 * n - 2], [1, 5 * n - 1]]) {
+      p.id++;
+      for (let d = 0; d < 2; d++) for (let e = 0; e < 3; e++) dot(x + e, y - d, d === 1 ? 'w' : e === 2 ? 's' : '#e4dccb');
+    }
+  },
   // Permit phase: the plot is staked out with string, nothing built yet. Bare, so the string stays one pixel thin.
   patok: (p) => {
     p.bare = true;
@@ -991,9 +1072,35 @@ export function hasArt(name: string): boolean {
 const cache = new Map<string, Art>();
 
 /** Paints a sprite at a level: its own level art if it has some, otherwise the base art plus the upgrade kit. */
+/**
+ * Kampung buildings that stand on a paved yard with a kerb (decisions/distinct-buildings.md), like rumah,
+ * warung and kontrakan, which pave their own. Paths, farms, parks and the Kelurahan and Kecamatan
+ * buildings keep their own ground.
+ */
+const PAVED = new Set(['posRonda', 'wifi', 'indomaret', 'alfamart', 'kantorRT', 'bankSampah', 'rumahMakan', 'warteg', 'warkop', 'gerobakBakso', 'fotokopi', 'barbershop', 'apotek', 'posSatpam', 'bidan', 'kosan', 'bengkel', 'posyandu', 'koperasi', 'paud', 'balaiWarga', 'gudangMaterial', 'balaiRW']);
+
+/** The paved yard under a kampung building, painted once for the whole lot before the building. */
+export function lotGround(p: Painter, name: string): void {
+  if (PAVED.has(name)) pavedLot(p);
+}
+
+/** Corners already taken by a building's own pole, sign or flag, so the yard's pots keep clear of them. */
+const NO_POT_LEFT = new Set(['barbershop', 'wifi']);
+const NO_POT_RIGHT = new Set(['barbershop', 'wifi', 'kantorRT', 'apotek']);
+
+/** The yard's life on a paved square lot: a pot plant at each side corner, a bigger one from level 2. */
+function yardKit(p: Painter, name: string, level: number): void {
+  if (!PAVED.has(name) || p.long || p.site) return;
+  const side = p.n === 1 ? [-12, 10] : [-28, 25];
+  if (!NO_POT_LEFT.has(name)) pot(p, side[0], 0, level >= 2);
+  if (!NO_POT_RIGHT.has(name)) pot(p, side[1], 0, level >= 3);
+}
+
 export function paint(p: Painter, name: string, variant?: string, level = 1): void {
+  if (!p.long && !p.site) lotGround(p, name);
   const fn: ArtFn = LEVEL_ART[name] ?? KAMPUNG_ART[name] ?? TOKO_ART[name] ?? ART[name] ?? HIGHER_ART[name] ?? CONTENT_ART[name] ?? ((q: Painter) => q.box(3, 8, 's'));
   fn(p, variant, level);
+  yardKit(p, name, level);
   if (!LEVELLED.has(name) && !NO_KIT.has(name) && !p.bare && level > 1) p.overlay.push((q) => upgradeKit(q, level));
 }
 
@@ -1001,13 +1108,15 @@ export function paint(p: Painter, name: string, variant?: string, level = 1): vo
  * Isometric art for a sprite name. variant is a roof colour for rumah, or 'y' for a selokan. n is the
  * footprint: big buildings get their own art at n times the size. Unknown names get a plain box.
  */
-export function iso(name: string, variant?: string, n = 1, level = 1, fa = 1, fb = 1): Art {
-  const key = `${name}:${variant ?? ''}:${n}:${level}:${fa}x${fb}`;
+export function iso(name: string, variant?: string, n = 1, level = 1, fa = 1, fb = 1, site = false): Art {
+  const key = `${name}:${variant ?? ''}:${n}:${level}:${fa}x${fb}${site ? ':site' : ''}`;
   const hit = cache.get(key);
   if (hit) return hit;
   if (fa !== fb) {
     // A long footprint: its own art, or the one-tile sprite on every tile.
     const p = new Painter(1, fa, fb);
+    p.site = site;
+    if (!site) lotGround(p, name);
     const own = LONG_ART[name];
     if (own) own(p, variant, level);
     else
@@ -1024,6 +1133,7 @@ export function iso(name: string, variant?: string, n = 1, level = 1, fa = 1, fb
   }
   // A big footprint is drawn at its own size, so its edges and outlines stay 1px.
   const p = new Painter(n);
+  p.site = site;
   paint(p, name, variant, level);
   const art = p.finish();
   cache.set(key, art);
