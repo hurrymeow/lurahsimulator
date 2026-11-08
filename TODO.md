@@ -63,9 +63,9 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 - [ ] **Scorecard follow-ups from the 2026-11-07 calls.**
   - Problem: three things the calls left open (`decisions/scorecard-calls.md`). 1) Row 22 now Fails: the Lomba Agustusan returns every 6.4 min, bar 10 min. 2) Rows 3, 6, 27 need one Playwright slice (sprites per star, cause shown on screen, save and reload at 5s in both languages). 3) Row 13: builder bots never spend Orang Dalam (B1, B4) and Stempel is never earned in B4.
   - Why: they turn three rows from Unknown or Fail into a real verdict.
-  - Suggested solution: 1) a Lomba every second year, or a Lomba-free year, as a balance PR. 2) Done: specs in #350, harness reads them in #356 (row 3 Pass, row 6 Pass, row 27 Fail). 3) Teach the builder bot to spend Orang Dalam on the quarterly visit.
+  - Suggested solution: 1) Done: the Lomba is held every second year (#361; `decisions/lomba-every-second-year-T1.md`). Follow-up: `agustusan()` bunting still shows every year; gate it on the lomba year, and check row 22 on the next Nightly. 2) Done: specs in #350, harness reads them in #356 (row 3 Pass, row 6 Pass, row 27 Fail). 3) Teach the builder bot to spend Orang Dalam on the quarterly visit.
   - Source: `decisions/scorecard-calls.md`
-  - `open · — · — · done when:` row 22 reads Pass or Fail on evidence after the Lomba change, and row 13 has no bot-gap line. (Rows 3, 6 and 27 done in #356.)
+  - `open · — · — · done when:` row 22 reads Pass or Fail on the next Nightly, the bunting follows the lomba year, and row 13 has no bot-gap line. (Rows 3, 6 and 27 done in #356.)
 
 ## Done
 
