@@ -13,7 +13,7 @@ import { first } from './firsts';
 import { camatCallSystem, lineSystem } from './lines';
 import { debtSystem, iuranFromNeighbours, neighboursSystem, neighboursYearEnd, stempelSystem } from './grow';
 import { inspectionSystem } from './inspection';
-import { jobsSystem, used } from './jobs';
+import { jobsSystem, staffMult, used } from './jobs';
 import { mangkrakSystem, onBuildingFinished } from './projects';
 import { addEmas, yearlyRanking } from './ranking';
 import { kelSystem, comboUpkeepMult } from './kel';
@@ -53,7 +53,7 @@ export function incomeMult(s: GameState, b: Building): number {
 export function buildingIncome(s: GameState, b: Building): number {
   if (!isWorking(b)) return 0;
   const d = def(b.def);
-  return Math.round(d.income * levelMult(b.level) * incomeMult(s, b) * pathMult(s, b) * decorMult(s, b) * burstMult(s, b) * brandMult(s, b) * (1 - premanTake(s, b)) * (b.def === 'warung' ? realisasiWarungMult(s) : 1));
+  return Math.round(d.income * levelMult(b.level) * incomeMult(s, b) * pathMult(s, b) * decorMult(s, b) * burstMult(s, b) * brandMult(s, b) * (1 - premanTake(s, b)) * staffMult(s, b) * (b.def === 'warung' ? realisasiWarungMult(s) : 1));
 }
 
 export function buildingUpkeep(s: GameState, b: Building): number {

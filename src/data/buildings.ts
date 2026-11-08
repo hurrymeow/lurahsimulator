@@ -41,6 +41,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
     placeable: true,
     removable: true,
     shop: true,
+    jobSlots: { penjaga: 1 },
     sprite: 'warung',
   },
   {
@@ -129,6 +130,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
     shop: true,
     requires: { stars: { stage: 'rt', n: 2 }, buildings: ['warung'] },
     mangkrakChance: 0.2,
+    jobSlots: { penjaga: 2 },
     sprite: 'indomaret',
   },
   {
@@ -148,6 +150,7 @@ const CORE_BUILDINGS: BuildingDef[] = [
     shop: true,
     requires: { stars: { stage: 'rt', n: 2 }, buildings: ['warung'] },
     mangkrakChance: 0.2,
+    jobSlots: { penjaga: 2 },
     sprite: 'alfamart',
   },
   {

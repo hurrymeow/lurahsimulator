@@ -99,6 +99,7 @@ export const RW_BUILDINGS: StageBuildingDef[] = [
     requires: { buildings: ['balaiRW'] },
     mangkrakChance: 0.1,
     footprint: [2, 1],
+    jobSlots: { penjaga: 2 },
     sprite: 'pasarKaget',
     gate: RW2,
     fx: { burst: { every: 4, mult: 3 }, spawns: { def: 'parkir', count: 2 } },

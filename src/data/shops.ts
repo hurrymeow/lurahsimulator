@@ -19,6 +19,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     buildMonths: 0,
     maxLevel: 3,
     category: 'shops',
+    jobSlots: { tukangMasak: 1 },
     sprite: 'rumahMakan',
   },
   // Retired: Gerobak Bakso, Warkop and Warteg merged into Rumah Makan (levels 1 to 3), and Toko Kelontong
@@ -34,6 +35,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     buildMonths: 0,
     maxLevel: 3,
     placeable: false,
+    jobSlots: { tukangMasak: 1 },
     sprite: 'gerobakBakso',
   },
   {
@@ -51,6 +53,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     shop: true,
     requires: { buildings: ['warung'] },
     placeable: false,
+    jobSlots: { tukangMasak: 1 },
     sprite: 'warteg',
   },
   {
@@ -69,6 +72,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     shop: true,
     requires: { stars: { stage: 'rt', n: 1 } },
     placeable: false,
+    jobSlots: { tukangMasak: 1 },
     sprite: 'warkop',
   },
   {
@@ -87,6 +91,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     mangkrakChance: 0.15,
     requires: { stars: { stage: 'rt', n: 1 } },
     placeable: false,
+    jobSlots: { penjaga: 1 },
     sprite: 'tokoKelontong',
   },
   {
@@ -102,6 +107,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     buildMonths: 1,
     maxLevel: 3,
     requires: { problem: 'permitQueue', buildings: ['kantorRT'] },
+    jobSlots: { penjaga: 1 },
     sprite: 'fotokopi',
   },
   {
@@ -117,6 +123,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     buildMonths: 1,
     maxLevel: 3,
     requires: { stars: { stage: 'rt', n: 1 } },
+    jobSlots: { tukangCukur: 1 },
     sprite: 'barbershop',
   },
   {
@@ -151,6 +158,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     maxLevel: 3,
     orangDalamCost: 1,
     requires: { stars: { stage: 'rt', n: 3 } },
+    jobSlots: { penjaga: 1 },
     sprite: 'apotek',
   },
   {
@@ -169,6 +177,7 @@ export const SHOP_BUILDINGS: BuildingDef[] = [
     maxCount: 1,
     orangDalamCost: 1,
     requires: { stars: { stage: 'rt', n: 3 } },
+    jobSlots: { penjaga: 1 },
     sprite: 'koperasi',
   },
   // ---- Facilities ----

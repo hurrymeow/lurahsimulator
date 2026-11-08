@@ -147,6 +147,8 @@ describe('Kelurahan combos, jobs and buildings', () => {
     const t = kel();
     put(t, 'wifi', 4, 4);
     hire(t, 'ojol');
+    // The Terminal opens Penjaga Toko posts, so idle warga would take different jobs in the two kampungs.
+    for (const r of [...s.residents, ...t.residents]) r.manual = true;
     expect(jobsSystemForTest(s).rupiah).toBeCloseTo(jobsSystemForTest(t).rupiah * 1.3, -3);
   });
 

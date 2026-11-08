@@ -1,7 +1,7 @@
 import { bName, jName, t } from '../i18n';
 import {
   ALL_JOBS, BUZZER_EXPOSE_BASE, BUZZER_EXPOSE_PER_FAKE, BUZZER_EXPOSE_SABAR, BUZZER_FAKE_PER_MONTH, EMPLOYED_SABAR,
-  BUZZER_FAKE_PER_LEVEL, PENSIUN_MONTHS, PENSIUN_PAYOUT, PNS_PAYOUT_PER_LEVEL, jobDef, levelFor, levelMult, type JobDef,
+  BUZZER_FAKE_PER_LEVEL, PENSIUN_MONTHS, SHOP_JOBS, SHOP_STAFF_CUT, PENSIUN_PAYOUT, PNS_PAYOUT_PER_LEVEL, jobDef, levelFor, levelMult, type JobDef,
 } from '../data/jobs';
 import { allDefs, def } from './content';
 import { gain, type Fx } from './gain';
@@ -23,6 +23,24 @@ export const used = (s: GameState, job: JobId) => s.residents.filter((r) => r.jo
 /** The building a job's number pops should appear on. */
 export function jobSite(s: GameState, job: JobId): Building | undefined {
   return s.buildings.find((b) => isWorking(b) && def(b.def).jobSlots?.[job]);
+}
+
+/** The shop job a building is staffed by, if any. */
+export const shopJob = (id: string): (typeof SHOP_JOBS)[number] | undefined => SHOP_JOBS.find((j) => def(id).jobSlots?.[j]);
+
+/** Filled and open posts of a shop job across the kampung. Staff are pooled, so every shop of the kind shares one ratio. */
+export function staffing(s: GameState, b: Building): { job: (typeof SHOP_JOBS)[number]; filled: number; total: number } | undefined {
+  const job = shopJob(b.def);
+  if (!job) return undefined;
+  const total = slots(s, job);
+  return { job, filled: Math.min(total, used(s, job)), total };
+}
+
+/** Income multiplier for a shop's staff: 1 when every post is filled, 1 - SHOP_STAFF_CUT with none. */
+export function staffMult(s: GameState, b: Building): number {
+  const st = staffing(s, b);
+  if (!st || st.total === 0) return 1;
+  return 1 - SHOP_STAFF_CUT * (1 - st.filled / st.total);
 }
 
 export const levelOf = (r: Resident): number => levelFor(r.xp ?? 0);

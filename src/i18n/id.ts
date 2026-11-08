@@ -393,6 +393,7 @@ export const ID: Record<Key, string> = {
   'insp.parkirShop': 'toko',
   'insp.pathBonus': 'Di samping jalan: pemasukan +{pct}%',
   'insp.perMonth': '{bits} per minggu',
+  'insp.staffShort': '{job}: {filled} dari {total} lowongan terisi di kampung. Pemasukan -{pct}%.',
   'insp.premanTake': 'Preman minta uang keamanan di sini: pemasukan -{pct}%.',
   'insp.queue': 'Antrean izin: urutan {pos} dari {n}, sekitar {eta} minggu lagi. Meja Kantor memproses {cap} berkas per minggu.',
   'insp.rename': 'Ganti nama',
