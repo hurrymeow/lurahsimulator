@@ -54,6 +54,32 @@ jobs:
           include-hidden-files: true
           retention-days: 1
 
+  # Playtest T1: the Kecamatan rows. The hint bot plays to Kelurahan 3 stars, then the Kecamatan bot plays on. One seed pair per job.
+  scorecard-kec:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        seeds: ['1,2', '3,4', '5,6', '7,8', '9,10']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run tests/scorecard/run-kec
+        env:
+          SCORECARD: '1'
+          SEEDS: ${{ matrix.seeds }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scorecard-cache-kec-${{ matrix.seeds }}
+          path: scorecard/.cache
+          include-hidden-files: true
+          retention-days: 1
+
   scorecard-takeover:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -101,7 +127,7 @@ jobs:
 
   scorecard-report:
     # Runs when scorecard-t2 fails too: rows 3, 6 and 27 then read Unknown, not the whole report lost.
-    needs: [scorecard-runs, scorecard-takeover, scorecard-t2]
+    needs: [scorecard-runs, scorecard-takeover, scorecard-t2, scorecard-kec]
     if: ${{ !cancelled() && needs.scorecard-runs.result == 'success' && needs.scorecard-takeover.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5

@@ -1,5 +1,6 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import type { KecRun } from '../kec-bot-lib';
 import { BOTS, type BotId } from './driver';
 import { CACHE, readCache } from './plan';
 import { readT2 } from './t2';
@@ -13,11 +14,12 @@ describe.skipIf(!process.env.SCORECARD)('scorecard report', () => {
     const rows = buildScorecard(runs, takeovers, sourceText(), readT2(CACHE));
     expect(rows.map((r) => r.n)).toEqual(Array.from({ length: 27 }, (_, i) => i + 1));
     for (const r of rows) expect(r.evidence.length, `row ${r.n}`).toBeGreaterThan(10);
+    const kec: KecRun[] = existsSync(CACHE) ? readdirSync(CACHE).filter((f) => /^kec-\d+\.json$/.test(f)).map((f) => JSON.parse(readFileSync(`${CACHE}/${f}`, 'utf8')) as KecRun) : [];
     const generated = new Date().toISOString().slice(0, 10);
     const trendFile = 'scorecard/golden-trend.json';
     const previous: Trend | undefined = existsSync(trendFile) ? JSON.parse(readFileSync(trendFile, 'utf8')) : undefined;
     mkdirSync('scorecard', { recursive: true });
-    writeFileSync('scorecard/scorecard.md', renderMarkdown(runs, rows, takeovers, generated, previous));
+    writeFileSync('scorecard/scorecard.md', renderMarkdown(runs, rows, takeovers, generated, previous, kec));
     writeFileSync(trendFile, JSON.stringify(trendOf(runs, rows, generated), null, 2) + '\n');
   });
 });

@@ -4,10 +4,13 @@ import { def, placeableDefs } from '../src/sim/content';
 import { promote } from '../src/sim/grow';
 import { checkDemolish, checkPlace, demolish, place } from '../src/sim/rules';
 import { amanAcross, checkRazia, startRazia } from '../src/sim/kec';
-import { pinjolShare } from '../src/sim/pinjol';
-import { buildCost, occupants, population } from '../src/sim/state';
+import { judolShare, pinjolShare } from '../src/sim/pinjol';
+import { lotAt } from '../src/sim/area';
+import { buildingIncome, tick } from '../src/sim/tick';
+import { GRID_H, GRID_W, setGrid } from '../src/sim/types';
+import { runBot } from './scorecard/driver';
+import { buildCost, isWorking, occupants, population } from '../src/sim/state';
 import { nextStarChecklist } from '../src/sim/stages';
-import { tick } from '../src/sim/tick';
 import type { GameState } from '../src/sim/types';
 import { kelSetup, kelWeek, SABAR } from './kel-bot-lib';
 
@@ -88,29 +91,42 @@ export interface KecRun {
   /** Longest wait, in weeks, between two novelties and between two goal lines done, after promotion. A week is 8s at 1x. */
   noveltyGap?: number;
   goalGap?: number;
+  /** Weeks after promotion until the first household was in debt. Undefined: never. A week is 8s at 1x. */
+  firstPinjol?: number;
+  /** Longest wait in weeks between two stop points: the promotion, a star or a report. Counted to the 3rd star. */
+  stopGap?: number;
+  /** The same, counting only the promotion and the stars. */
+  starGap?: number;
+  /** Judol: highest and mean share of households on it, in percent, after promotion. */
+  judolPeak?: number;
+  judolMean?: number;
+  /** Mean share of all building income that Baliho earned, in percent, from the week the first Baliho worked. Undefined: never built. */
+  balihoPct?: number;
+  /** Mean weekly income of one working Baliho, in rupiah, over the same weeks. */
+  balihoRp?: number;
+  /** How the run got to the Kecamatan: the Kelurahan routine on a shortcut start, or the hint bot from a new game. */
+  path?: 'shortcut' | 'hint';
 }
 
-/**
- * A Kecamatan bot: plays the Kelurahan routine to 3 stars on Auto-dana, takes the promotion, then keeps the same routine
- * and adds the Kecamatan buildings. It runs a razia while pinjol is high and the 3rd star is not yet near.
- */
-export function playKec(seed: number, kelWeeks = 200, kecWeeks = 700, jobShare = 0.1): KecRun {
-  const { s, seam, all } = kelSetup(seed, true);
-  const run: KecRun = { seed, at: [], pop: 0, pinjol: 0, stars: '', razias: 0 };
-  for (let w = 0; w < kelWeeks && s.stage.stars.kelurahan < 3; w++) {
-    kecWeek(s, seam, all, jobShare, 'kelurahan');
-    tick(s);
-  }
-  if (s.stage.stars.kelurahan < 3) return { ...run, pop: population(s), stars: `kel ${s.stage.stars.kelurahan}` };
-  run.promoted = s.month;
-  promote(s, []);
+/** The Kecamatan phase: from the promotion to the 3rd star. Shared by both ways of reaching the Kelurahan 3rd star. */
+function kecPhase(s: GameState, seam: { x: number; y: number }[], all: { x: number; y: number }[], run: KecRun, kecWeeks: number, jobShare: number): KecRun {
   const from = s.month;
   let lastNov = s.lastNovelty;
   let novAt = s.month;
   let goalAt = s.month;
+  let stopAt = s.month;
+  let starAt = s.month;
   let goals = doneGoals(s) + s.stage.stars.kecamatan * 10;
   let noveltyGap = 0;
   let goalGap = 0;
+  let stopGap = 0;
+  let starGap = 0;
+  let judolSum = 0;
+  let judolPeak = 0;
+  let weeks = 0;
+  let balihoShare = 0;
+  let balihoRp = 0;
+  let balihoWeeks = 0;
   for (let w = 0; w < kecWeeks && s.stage.stars.kecamatan < 3; w++) {
     kecWeek(s, seam, all, jobShare);
     if (s.stage.stars.kecamatan < 2 && pinjolShare(s) >= 30 && checkRazia(s).ok) {
@@ -118,8 +134,29 @@ export function playKec(seed: number, kelWeeks = 200, kecWeeks = 700, jobShare =
       run.razias++;
     }
     const before = s.stage.stars.kecamatan;
-    tick(s);
-    if (s.stage.stars.kecamatan > before) run.at.push(s.month - from);
+    const fx = tick(s);
+    if (s.stage.stars.kecamatan > before) {
+      run.at.push(s.month - from);
+      starGap = Math.max(starGap, s.month - starAt);
+      starAt = s.month;
+    }
+    if (s.stage.stars.kecamatan > before || fx.some((e) => e.kind === 'report')) {
+      stopGap = Math.max(stopGap, s.month - stopAt);
+      stopAt = s.month;
+    }
+    if (run.firstPinjol === undefined && pinjolShare(s) > 0) run.firstPinjol = s.month - from;
+    const judol = judolShare(s);
+    judolSum += judol;
+    judolPeak = Math.max(judolPeak, judol);
+    weeks++;
+    const balihos = s.buildings.filter((b) => b.def === 'baliho' && isWorking(b));
+    if (balihos.length) {
+      const total = s.buildings.reduce((n, b) => n + buildingIncome(s, b), 0);
+      const mine = balihos.reduce((n, b) => n + buildingIncome(s, b), 0);
+      balihoShare += total ? mine / total : 0;
+      balihoRp += mine / balihos.length;
+      balihoWeeks++;
+    }
     if (s.lastNovelty !== lastNov) {
       noveltyGap = Math.max(noveltyGap, s.month - novAt);
       novAt = s.month;
@@ -132,6 +169,53 @@ export function playKec(seed: number, kelWeeks = 200, kecWeeks = 700, jobShare =
       goals = now;
     }
   }
-  return { ...run, pop: population(s), pinjol: Math.round(pinjolShare(s)), stars: `${s.stage.stars.kecamatan}`, noveltyGap, goalGap };
+  return {
+    ...run, pop: population(s), pinjol: Math.round(pinjolShare(s)), stars: `${s.stage.stars.kecamatan}`, noveltyGap, goalGap, stopGap, starGap,
+    judolPeak, judolMean: weeks ? Math.round((judolSum / weeks) * 10) / 10 : 0,
+    balihoPct: balihoWeeks ? Math.round((balihoShare / balihoWeeks) * 1000) / 10 : undefined,
+    balihoRp: balihoWeeks ? Math.round(balihoRp / balihoWeeks) : undefined,
+  };
 }
 
+/**
+ * A Kecamatan bot: plays the Kelurahan routine to 3 stars on Auto-dana, takes the promotion, then keeps the same routine
+ * and adds the Kecamatan buildings. It runs a razia while pinjol is high and the 3rd star is not yet near.
+ */
+export function playKec(seed: number, kelWeeks = 200, kecWeeks = 700, jobShare = 0.1): KecRun {
+  const { s, seam, all } = kelSetup(seed, true);
+  const run: KecRun = { seed, at: [], pop: 0, pinjol: 0, stars: '', razias: 0, path: 'shortcut' };
+  for (let w = 0; w < kelWeeks && s.stage.stars.kelurahan < 3; w++) {
+    kecWeek(s, seam, all, jobShare, 'kelurahan');
+    tick(s);
+  }
+  if (s.stage.stars.kelurahan < 3) return { ...run, pop: population(s), stars: `kel ${s.stage.stars.kelurahan}` };
+  run.promoted = s.month;
+  promote(s, []);
+  return kecPhase(s, seam, all, run, kecWeeks, jobShare);
+}
+
+/**
+ * The same Kecamatan phase, but reached by playing the hint bot from a new game to the Kelurahan 3rd star
+ * (the one bot that gets there on 10 of 10 seeds), instead of the shortcut start of `kelSetup`.
+ */
+export function playKecHint(seed: number, kecWeeks = 700, jobShare = 0.1): KecRun {
+  const out: { s?: GameState } = {};
+  runBot('hint', seed, 900, { stopStars: 9, out });
+  const s = out.s!;
+  const run: KecRun = { seed, at: [], pop: 0, pinjol: 0, stars: '', razias: 0, path: 'hint' };
+  if (s.stage.stars.kelurahan < 3) return { ...run, pop: population(s), stars: `kel ${s.stage.stars.kelurahan}` };
+  run.promoted = s.month;
+  try {
+    promote(s, []);
+    setGrid(s.stage.current);
+    const seam: { x: number; y: number }[] = [];
+    const all: { x: number; y: number }[] = [];
+    for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) {
+      if (lotAt(x, y) === 'kel') seam.push({ x, y });
+      if (['rt', 'rw'].includes(lotAt(x, y))) all.push({ x, y });
+    }
+    return kecPhase(s, seam, all, run, kecWeeks, jobShare);
+  } finally {
+    setGrid('rt');
+  }
+}
