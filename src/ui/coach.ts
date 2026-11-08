@@ -6,7 +6,7 @@ import { inCell } from '../sim/neighbourView';
 import { RT_H, RT_W } from '../sim/types';
 import { storage } from '../storage';
 import { h } from './dom';
-import { inemURL } from '../render/inem';
+import { inemSmallURL } from '../render/inem';
 
 const KEY = 'pakrt.coach';
 /** The 2nd RT's steps: unset until the player has seen the arrival, 'build' until they build there, then 'done'. */
@@ -46,7 +46,7 @@ export function setupCoach(app: App): void {
   // No Skip: the button only appears on the last note, as "Got it".
   const next = h('button', { class: 'btn', id: 'coach-skip', hidden: true, onclick: () => onNext() }, t('coach.gotIt'));
   // Inem guides the first build, so her face sits beside the words.
-  const face = h('img', { src: inemURL(), alt: '', width: 44, height: 60, class: 'pixel coach-face' });
+  const face = h('img', { src: inemSmallURL(), alt: '', width: 44, height: 60, class: 'pixel coach-face' });
   const bar = h('div', { id: 'coach', class: 'coach', hidden: true }, face, text, next);
   document.body.append(bar);
   const rumahs = () => app.s.buildings.filter((b) => b.def === 'rumah').length;

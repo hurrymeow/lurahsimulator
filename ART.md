@@ -148,6 +148,9 @@ building, and judge new art against them before showing it.
 ## Characters
 
 - Walkers are 7x10 art pixels and ojol riders 11x9. Keep that scale.
+- Portraits in the UI draw one art pixel as 2 CSS px, the map's smallest zoom, so their outlines and
+  eyes are as thick as a walker's. A 44x60 slot holds 22x30 art (`portraits.ts`, Inem's small art in
+  `inem.ts`); only Inem's 88x120 plate uses her 44x60 art.
 - Walkers have two-tone hair with a shine (one of five hair colours per resident), dark eyes, a
   shaded chin, a collar, a shirt with a shaded right side, a belt, trousers shaded on one leg,
   and shoes. Ojol riders have a helmet with a shine and visor, a bike with shaded ends and a

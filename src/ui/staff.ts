@@ -4,7 +4,7 @@
 import { chBlurb, chName, getLang, gName, gNeeds, gReward, roleBlurb, roleName, spType, t, traitEffect, traitName, type Key } from '../i18n';
 import type { App } from '../app';
 import { rupiah } from '../format';
-import { inemURL } from '../render/inem';
+import { inemSmallURL } from '../render/inem';
 import { portraitURL, staffPortraitURL } from '../render/portraits';
 import { answerNo, answerYes, checkYes, requestLine, yesLabel } from '../sim/requests';
 import { chainKey, chainOf } from '../sim/chains';
@@ -88,7 +88,7 @@ function aboutLines(a: Applicant): Node[] {
 
 /** Inem's face, a special's portrait, or a generic hire dressed for the job, with a face kept by their id. */
 const face = (x: Applicant & { inem?: boolean }, role: string) => {
-  const url = x.inem ? inemURL() : (portraitURL(x.special) ?? staffPortraitURL(role, x.id));
+  const url = x.inem ? inemSmallURL() : (portraitURL(x.special) ?? staffPortraitURL(role, x.id));
   return h('img', { src: url, alt: '', width: 44, height: 60, class: 'pixel staff-face' });
 };
 

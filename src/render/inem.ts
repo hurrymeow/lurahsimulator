@@ -117,16 +117,52 @@ const ROWS = [
 export const INEM_W = 44;
 export const INEM_H = 60;
 
+/**
+ * Inem at half size, 22x30, for the 44x60 slots (the Staf list, the coach). Shown at 2 CSS px an art
+ * pixel, like the map and every other staff portrait; the full art is only for her 88x120 plate. Her
+ * face is placed by hand: 1px ink eyes, a wink, cheeks and lips, as on a walker.
+ */
+const SMALL = [
+  '..........aaa.........',
+  '.......aaeeeebd.......',
+  '......aeefffffef......',
+  '.....beffjjjjjjfj.....',
+  '....keffjjjjjjjjcc....',
+  '...kllljjcccjjjjcma...',
+  '...kllomjcpppcjjcmc...',
+  '...tlomfccrssjvjcmca..',
+  '...dceccccrsssvfccca..',
+  '...dceccsxsssxsfceca..',
+  '...dfecpsxssxsxfcca...',
+  '...dfecpyssssywccfa...',
+  '...dfjersssssswmffca..',
+  '..dfjjqrssABswwmfjca..',
+  '..dfjjjjsssswwmfjjcca.',
+  '..djjjjccwwwweEjjjcca.',
+  '..djjcccceCCDHEEjccc..',
+  '...ccceeFFFFFEEImcca..',
+  '...beeFFFFFFFDqCFcc...',
+  '....FFFFFFFFFDICGGK...',
+  '...JFGGFFFFMGGFFGCGK..',
+  '...JFQQQGGGGGGFFOPGK..',
+  '..JFGQRRRQQQRQFGFCGK..',
+  '..JFGRRRRRRRRRROFFGK..',
+  '..JFFJRRRRRRRRPPFFGK..',
+  '...FFFFRRRRRRRPPTGGK..',
+  '....JFFQRRRRRRPT.KKK..',
+  '.....FGQRRRRRRRT......',
+  '.....TPPPPPPPPPPT.....',
+  '.....TPPPPPPPPPPP.....',
+];
+
 let cached: string | null = null;
 
-/** Inem's portrait as a PNG data URL, drawn once at 1 art pixel per pixel. Scale it with CSS (image-rendering: pixelated). */
-export function inemURL(): string {
-  if (cached) return cached;
+function draw(rows: string[]): string {
   const c = document.createElement('canvas');
-  c.width = INEM_W;
-  c.height = INEM_H;
+  c.width = rows[0].length;
+  c.height = rows.length;
   const ctx = c.getContext('2d')!;
-  ROWS.forEach((row, y) => {
+  rows.forEach((row, y) => {
     for (let x = 0; x < row.length; x++) {
       const k = row[x];
       if (k === '.') continue;
@@ -134,6 +170,20 @@ export function inemURL(): string {
       ctx.fillRect(x, y, 1, 1);
     }
   });
-  cached = c.toDataURL();
-  return cached;
+  return c.toDataURL();
 }
+
+/** Inem's full portrait (44x60) as a PNG data URL, for her 88x120 plate. Scale it with CSS (image-rendering: pixelated). */
+export function inemURL(): string {
+  return (cached ??= draw(ROWS));
+}
+
+let cachedSmall: string | null = null;
+
+/** Inem at half size (22x30), for the 44x60 slots. */
+export function inemSmallURL(): string {
+  return (cachedSmall ??= draw(SMALL));
+}
+
+/** For tests: the art rows. */
+export const INEM_ROWS = { full: ROWS, small: SMALL };
