@@ -11,12 +11,12 @@ import { at } from './kampung-art';
 const dot = (p: Painter, x: number, y: number, c: string) => p.px(p.gx + x, p.gy + y, c);
 
 /** Seng: weathered corrugated zinc, warm grey, so a patched roof stays in the storybook palette. */
-export const ZINC = '#b1a89b';
-export const ZINC_RIB = '#8e8579';
+export const ZINC = '#a8a095';
+export const ZINC_RIB = '#9a9287';
 export const RUST = '#a8652f';
 
-/** A roof paint for corrugated zinc: a darker rib every second column, a rust streak now and then. */
-export const zinc = (x: number, y: number): string => ((x * 7 + y * 3) % 23 === 0 ? RUST : x % 2 ? ZINC : ZINC_RIB);
+/** A roof paint for corrugated zinc: a soft rib every third column, a rare rust spot. */
+export const zinc = (x: number, y: number): string => ((x * 7 + y * 3) % 41 === 0 ? RUST : x % 3 === 0 ? ZINC_RIB : ZINC);
 
 /** Old seng gone brown with rust: close to a clay roof's value, so a patch on red tile reads quietly. */
 export const rustySeng = (x: number): string => (x % 2 ? '#93705c' : '#80614f');

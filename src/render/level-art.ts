@@ -15,10 +15,11 @@ import { antenna, motor, pavedLot, pot, rustyPatch } from './kampung-kit';
 const within = (v: number, lo: number, hi: number) => v >= lo && v < hi;
 type Art = (p: Painter, variant?: string, level?: number) => void;
 
-const ZINC = '#b9c2c6';
-const ZINC_RIB = '#8f999e';
-const ZINC_SHINE = '#e2e8ea';
-const zinc = (x: number) => (x % 3 === 0 ? ZINC_RIB : x % 3 === 1 ? ZINC_SHINE : undefined);
+// Weathered seng: a warm mid grey with a soft rib every third column and no bright shine, so a big
+// zinc roof stays quiet next to clay tile (review of 2026-11-08: the old steel blue was too bright and noisy).
+const ZINC = '#a59f96';
+const ZINC_RIB = '#958f87';
+const zinc = (x: number) => (x % 3 === 0 ? ZINC_RIB : undefined);
 
 /** A plain wall: a plinth course at the bottom, a door on the front-left between u0 and u1, windows between rows j0 and j1. */
 const wall = (door: [number, number] | null, j0: number, j1: number, opts: { plinth?: string; band?: [number, string]; glass?: string; doorC?: string } = {}): MassPaint => (face, u, j, i) => {
