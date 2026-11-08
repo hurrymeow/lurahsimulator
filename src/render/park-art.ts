@@ -25,44 +25,46 @@ export const tamanBermain: Art = (p) => {
     return Math.floor((a + b) * 5) % 2 ? '#4f8a5a' : '#467f50';
   });
   p.overlay.push(dither);
-  canopyTree(p, 0.18, 0.16, 0.7, 2);
-  prism(p, 0.08, 0.28, 0.4, 0.45, 2, 'n', (face) => (face === 'T' ? 't' : undefined));
+  // The play tower stands in the back corner, so nothing on the lot hides behind it.
   const t = unit(p);
-  // The play tower: four red posts, a yellow deck, a rail on the back, a pyramid roof.
-  const [a0, a1, b0, b1] = [0.36, 0.6, 0.24, 0.48];
+  const [a0, a1, b0, b1] = [0.1, 0.34, 0.1, 0.34];
   for (const [a, b] of [[a0, b0], [a1 - t, b0], [a0, b1 - t], [a1 - t, b1 - t]]) prism(p, a, a + t * 1.4, b, b + t * 1.4, 12, 'r', (face) => (face === 'R' ? 'R' : undefined));
   prism(p, a0, a1, b0, b1, 1, 'y', (face) => (face === 'T' ? 'a' : undefined), 5);
   prism(p, a0, a1, b0, b0 + t, 3, 'y', (_f, _u, j, i) => (j === 2 ? 'y' : i % 2 ? null : 'e'), 6);
   roofRect(p, a0 - 0.03, a1 + 0.03, b0 - 0.03, b1 + 0.03, 12, 5, 'hip', 'y', 'y', (x) => (x % 4 === 0 ? 'a' : undefined), 0.01);
-  // The slide: a blue chute down the front of the deck to the mat.
+  // The slide: a blue chute from the deck down towards the left corner.
   for (let k = 0; k < 8; k++) {
     const b = b1 + k * 0.04;
     prism(p, a0 + 0.04, a0 + 0.16, b, b + 0.045, 1, 'b', (face) => (face === 'T' ? (k % 2 ? 'l' : 'b') : undefined), Math.max(0, 5 - k * 0.7));
   }
   // A climbing wall up the right side: a blue panel with bright holds.
-  prism(p, a1, a1 + 0.05, 0.28, 0.44, 5, 'b', (face, _u, j, i) => (face === 'R' && (i + j * 2) % 4 === 0 ? ['r', 'y', 'g'][(i + j) % 3] : face === 'T' ? 'B' : undefined));
-  // Monkey bars: four blue posts, yellow side rails and grey rungs between them.
-  for (const a of [0.66, 0.9]) for (const b of [0.62, 0.72]) pole(p, a, b, 8, 'b');
+  prism(p, a1, a1 + 0.05, b0 + 0.04, b1 - 0.04, 5, 'b', (face, _u, j, i) => (face === 'R' && (i + j * 2) % 4 === 0 ? ['r', 'y', 'g'][(i + j) % 3] : face === 'T' ? 'B' : undefined));
+  // The shade tree in the right corner, clear of the play set, with a bench in its shade.
+  canopyTree(p, 0.8, 0.2, 0.8, 2);
+  prism(p, 0.86, 0.91, 0.42, 0.62, 2, 'n', (face) => (face === 'T' ? 't' : undefined));
+  // Monkey bars across the middle, running front to back: four blue posts, yellow side rails and grey rungs.
+  const [m0, m1, n0, n1] = [0.5, 0.6, 0.4, 0.66];
+  for (const a of [m0, m1]) for (const b of [n0, n1]) pole(p, a, b, 8, 'b');
   p.overlay.push((q) => {
     for (let k = 0; k <= 24; k++) {
-      const a = 0.66 + k * 0.01;
-      for (const b of [0.62, 0.72]) {
+      const b = n0 + ((n1 - n0) * k) / 24;
+      for (const a of [m0, m1]) {
         const [x, y] = at(q, a, b, 8);
         q.px(Math.round(x), Math.round(y), '#f4b935');
       }
       if (k % 3 === 0)
         for (let m = 1; m < 5 * q.n; m++) {
-          const [x, y] = at(q, a, 0.62 + (0.1 * m) / (5 * q.n), 8);
+          const [x, y] = at(q, m0 + ((m1 - m0) * m) / (5 * q.n), b, 8);
           q.px(Math.round(x), Math.round(y), '#bdb4a3');
         }
     }
   });
-  // A seesaw near the front corner: a red plank on a grey pivot, one end down, yellow handles.
-  prism(p, 0.74, 0.78, 0.86, 0.9, 2, 'S');
-  prism(p, 0.62, 0.76, 0.87, 0.89, 1, 'r', (face) => (face === 'T' ? 'r' : undefined), 1);
-  prism(p, 0.76, 0.9, 0.87, 0.89, 1, 'r', (face) => (face === 'T' ? 'r' : undefined), 2);
-  prism(p, 0.63, 0.65, 0.86, 0.9, 1, 'y', undefined, 2);
-  prism(p, 0.88, 0.9, 0.86, 0.9, 1, 'y', undefined, 3);
+  // A seesaw along the front edge:: a red plank on a grey pivot, one end down, yellow handles.
+  prism(p, 0.6, 0.64, 0.84, 0.88, 2, 'S');
+  prism(p, 0.48, 0.62, 0.85, 0.87, 1, 'r', (face) => (face === 'T' ? 'r' : undefined), 1);
+  prism(p, 0.62, 0.76, 0.85, 0.87, 1, 'r', (face) => (face === 'T' ? 'r' : undefined), 2);
+  prism(p, 0.49, 0.51, 0.84, 0.88, 1, 'y', undefined, 2);
+  prism(p, 0.74, 0.76, 0.84, 0.88, 1, 'y', undefined, 3);
 };
 
 /**
