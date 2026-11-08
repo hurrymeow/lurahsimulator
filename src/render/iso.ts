@@ -789,13 +789,48 @@ const ART: Record<string, ArtFn> = {
   },
   wifi: (p, _v, level = 1) => {
     if (level <= 1) {
-      // A bamboo pole lashed to a post, a pan antenna and a small router box at its foot.
-      p.shadow(8);
-      p.box(9, 3, 'S', (face, _u, j) => (face === 'L' && j === 1 ? 'c' : undefined));
-      p.stroke(0, -3, 0, -20, 2, 'a');
-      for (const y of [-8, -14]) p.set(TW / 2, TOP + TH / 2 + y, 'n');
-      p.stroke(-3, -20, 3, -22, 2, 's');
-      p.set(TW / 2, TOP + TH / 2 - 23, 'r');
+      // An RT/RW net mast: a galvanised pipe on a concrete foot, held by three guy wires, with two sector
+      // panels at the top, a grid dish halfway up and the router box with its cable at the foot. Thin all
+      // the way up so it never reads as a pole with a head.
+      const dot = (x: number, y: number, c: string) => p.px(p.gx + x, p.gy + y, c);
+      p.shadow(5);
+      p.box(5, 2, 'S');
+      p.stroke(0, -2, 0, -26, 2, 's');
+      p.stroke(0, -2, 0, -26, 1, 'S', false);
+      for (const y of [-7, -13, -19]) dot(-1, y, 'S');
+      // Sector panels on a short bracket either side of the top.
+      p.id++;
+      for (const x of [-3, 2]) for (let y = -25; y <= -21; y++) { dot(x, y, 'w'); dot(x + 1, y, x < 0 ? 'w' : 'c'); }
+      dot(-2, -23, 'S');
+      dot(1, -23, 'S');
+      // The grid dish on the left, facing out over the kampung.
+      p.id++;
+      for (const [x, y, c] of [[-4, -18, 'c'], [-5, -17, 'w'], [-4, -17, 'w'], [-5, -16, 'w'], [-4, -16, 'c'], [-5, -15, 'w'], [-4, -15, 'w'], [-4, -14, 'c']] as [number, number, string][]) dot(x, y, c);
+      dot(-3, -16, 'S');
+      dot(-2, -16, 'S');
+      // The router box with a green light, under a scrap of seng.
+      p.id++;
+      for (let y = -10; y <= -7; y++) for (let x = 1; x <= 3; x++) dot(x, y, y === -10 ? ZINC : 'k');
+      dot(2, -8, 'g');
+      dot(0, -27, 'r');
+      dot(-1, -27, 'r');
+      p.overlay.push((q) => {
+        const put = (x: number, y: number, c: string) => {
+          const X = q.gx + x, Y = q.gy + y;
+          if (X < 0 || Y < 0 || X >= q.w || Y >= q.h) return;
+          const k = (Y * q.w + X) * 4;
+          // Wires pass in front of the bare map and the yard, never across the mast or its parts.
+          if (q.data[k + 3] && (X === q.gx || X === q.gx - 1 || Y < q.gy - 6)) return;
+          q.px(X, Y, c);
+        };
+        // Three guy wires from high on the mast down to pegs at the lot's side and front corners.
+        for (const [x1, y1] of [[-12, 1], [12, 1], [3, 6]]) {
+          const steps = Math.max(Math.abs(x1), Math.abs(y1 + 20));
+          for (let k = 1; k <= steps; k++) put(Math.round((x1 * k) / steps), Math.round(-20 + ((y1 + 20) * k) / steps), '#9a968e');
+        }
+        // The cable sags from the router to the ground.
+        for (const [x, y] of [[3, -6], [4, -5], [4, -4], [4, -3], [3, -2]]) put(x, y, '#2a2a2a');
+      });
       return;
     }
     p.shadow(6);
