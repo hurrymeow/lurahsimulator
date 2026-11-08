@@ -49,18 +49,48 @@ export const LOOKS: Record<string, Look> = {
 /** A colour scaled toward black: the shade for outlines and the dark half of a fill. */
 function shade(hex: string, k: number): string {
   const n = parseInt(hex.slice(1), 16);
-  const c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v * k));
+  const c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.min(255, Math.round(v * k)));
   return `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
 
 /** A 44x60 grid of colours; null is clear. */
 type Grid = (string | null)[][];
 
+/** Rosy cheeks and the tongue (ART.md, Faces). */
+const ROSY = '#f07f86';
+
+/**
+ * The line pass (ART.md, Outlines): wherever two parts meet, the pixel of the part behind (painted
+ * earlier) takes a 0.55x shade of its own colour, so hair, face, neck, arms and props each read as
+ * one clean shape, as on Inem and the map sprites. Details painted inside a part share its id.
+ */
+function seams(g: Grid, ids: number[][]): Grid {
+  const { w, h } = PORTRAIT;
+  const out = g.map((row) => [...row]);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const c = g[y][x];
+      if (!c) continue;
+      const a = ids[y][x];
+      const front = [[x, y - 1], [x, y + 1], [x - 1, y], [x + 1, y]].some(([u, v]) => g[v]?.[u] && ids[v][u] > a);
+      if (front) out[y][x] = shade(c, 0.55);
+    }
+  return out;
+}
+
 function paint(look: Look): Grid {
   const { w, h } = PORTRAIT;
   const g: Grid = Array.from({ length: h }, () => Array<string | null>(w).fill(null));
+  const ids: number[][] = Array.from({ length: h }, () => Array<number>(w).fill(0));
+  // The part being painted; a higher id is in front.
+  let cur = 1;
+  let next = 1;
+  const part = (id?: number) => (cur = id ?? (next += 10));
   const set = (x: number, y: number, c: string) => {
-    if (x >= 0 && y >= 0 && x < w && y < h) g[y][x] = c;
+    if (x >= 0 && y >= 0 && x < w && y < h) {
+      g[y][x] = c;
+      ids[y][x] = cur;
+    }
   };
   const rect = (x0: number, y0: number, x1: number, y1: number, c: string) => {
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, c);
@@ -70,16 +100,21 @@ function paint(look: Look): Grid {
       for (let x = Math.floor(cx - rx); x <= cx + rx; x++)
         if (((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1 && (!keep || keep(x, y))) set(x, y, c);
   };
-  const skinDark = shade(look.skin, 0.9);
+  const skinDark = shade(look.skin, 0.86);
+  const skinLight = shade(look.skin, 1.08);
   const hairDark = shade(look.hairColour, 0.7);
+  const hairLight = shade(look.hairColour, look.hairColour === HAIR.grey ? 1.12 : 1.6);
   const [main, second] = look.colours;
   const mainDark = shade(main, 0.78);
+  const mainLight = shade(main, 1.14);
   const has = (p: Prop) => look.props.includes(p);
 
-  // Hair that falls behind the head and shoulders.
+  // Hair that falls behind the head and shoulders, rounded at the ends.
+  part();
   if (look.hair === 'long') {
-    rect(9, 18, 34, 48, look.hairColour);
-    rect(9, 30, 12, 48, hairDark);
+    oval(22, 30, 13, 19, look.hairColour, (_x, y) => y >= 18);
+    oval(22, 30, 13, 19, hairDark, (x, y) => y >= 30 && x <= 12);
+    oval(22, 30, 13, 19, hairDark, (x, y) => y >= 30 && x >= 32);
   }
   if (look.hair === 'mullet') rect(13, 26, 30, 44, hairDark);
   if (look.hair === 'ponytail') {
@@ -87,13 +122,24 @@ function paint(look: Look): Grid {
     oval(36, 26, 2, 4, hairDark);
   }
 
-  // Shoulders and outfit: a rounded top, lit from the left.
+  // Arms first, hanging at the sides, so the line pass draws a sleeve seam where the chest overlaps them.
   const body = (_x: number, y: number) => y >= 44;
-  oval(22, 58, 19, 15, main, body);
-  oval(30, 58, 11, 13, mainDark, (x, y) => body(x, y) && x > 26);
+  const inBody = (x: number, y: number) => ((x - 22) / 19) ** 2 + ((y - 58) / 15) ** 2 <= 1;
+  part();
+  oval(8, 57, 6, 11, main, (x, y) => y >= 47 && inBody(x, y));
+  oval(8, 57, 6, 11, mainLight, (x, y) => y >= 47 && y <= 50 && inBody(x, y));
+  oval(36, 57, 6, 11, mainDark, (x, y) => y >= 47 && inBody(x, y));
+  // Shoulders and chest: a rounded top lit from the top left, the shade curving round the right side.
+  part();
+  oval(22, 58, 14, 15, main, body);
+  oval(30, 60, 9, 15, mainDark, (x, y) => body(x, y) && ((x - 22) / 14) ** 2 + ((y - 58) / 15) ** 2 <= 1);
+  oval(17, 50, 6, 3, mainLight, (x, y) => body(x, y) && ((x - 22) / 14) ** 2 + ((y - 58) / 15) ** 2 <= 1);
+  const torso = cur;
   // The neck.
+  part();
   rect(19, 37, 24, 45, look.skin);
-  rect(23, 37, 24, 45, skinDark);
+  rect(22, 37, 24, 45, skinDark);
+  part(torso);
 
   switch (look.outfit) {
     case 'suit':
@@ -163,13 +209,21 @@ function paint(look: Look): Grid {
       break;
   }
 
-  // The head: an oval lit from the left, ears either side.
-  oval(22, 27, 10, 12, look.skin);
-  oval(22, 27, 10, 12, skinDark, (x, y) => ((x - 21) / 10) ** 2 + ((y - 26) / 12) ** 2 > 0.8 && x > 22);
+  // Ears behind the head, then the head: an oval lit from the top left, a soft shade down the right
+  // and a lighter cheek on the left.
+  part();
   oval(11, 28, 2, 3, look.skin);
   oval(33, 28, 2, 3, skinDark);
+  part();
+  const head = cur;
+  // The jaw tapers to a softer chin below the cheeks.
+  const jaw = (x: number, y: number) => y <= 30 || Math.abs(x + 0.5 - 22) <= 10.5 - (y - 30) * 0.8;
+  oval(22, 27, 10, 12, look.skin, jaw);
+  oval(22, 27, 10, 12, skinDark, (x, y) => jaw(x, y) && ((x - 20) / 10) ** 2 + ((y - 25) / 12) ** 2 > 0.78 && x > 21);
+  oval(17, 24, 4, 5, skinLight);
 
   // Hair on top of the head.
+  part();
   const top = (y0: number, y1: number) => oval(22, 22, 11, 10, look.hairColour, (_x, y) => y >= y0 && y <= y1);
   switch (look.hair) {
     case 'short':
@@ -224,39 +278,68 @@ function paint(look: Look): Grid {
       break;
   }
 
-  // The face: brows, eyes, cheeks and a mouth.
+  // A light sheen on the hair, top left, where the light falls.
+  if (look.hair !== 'bald')
+    for (let y = 0; y < 22; y++)
+      for (let x = 0; x < 22; x++) {
+        const k = 2 * x + y;
+        if (g[y][x] === look.hairColour && ids[y][x] === cur && (k === 44 || k === 45) && g[y + 1]?.[x] === look.hairColour) set(x, y, hairLight);
+      }
+
+  // The face (ART.md, Faces): oval ink eyes with a one-pixel sparkle, brows, rosy cheeks, and a smile.
+  part(head);
   const ink = P.k;
   const browY = 23;
   rect(16, browY, 19, browY, hairDark);
   rect(25, browY, 28, browY, hairDark);
-  rect(17, 26, 18, 27, ink);
-  if (look.face === 'wink') rect(25, 27, 28, 27, ink);
-  else rect(26, 26, 27, 27, ink);
-  set(17, 26, P.w);
-  if (look.face !== 'wink') set(26, 26, P.w);
-  rect(14, 30, 15, 30, P.p);
-  rect(28, 30, 29, 30, shade(P.p, 0.9));
+  const eye = (x: number) => {
+    rect(x, 25, x + 1, 28, ink);
+    set(x, 25, P.w);
+    // Under glasses the eye sits one row lower, inside the frame.
+    if (has('glasses')) {
+      set(x, 25, look.skin);
+      set(x + 1, 25, look.skin);
+      set(x, 26, P.w);
+    }
+  };
+  eye(17);
+  if (look.face === 'wink') {
+    // A happy closed arc.
+    set(25, 27, ink);
+    rect(26, 26, 27, 26, ink);
+    set(28, 27, ink);
+  } else eye(26);
+  rect(14, 30, 16, 31, ROSY);
+  rect(28, 30, 30, 31, shade(ROSY, 0.9));
   if (look.face === 'grin') {
+    // An open smile with a pink tongue.
     rect(18, 33, 26, 33, ink);
-    rect(19, 34, 25, 34, P.R);
-    rect(20, 35, 24, 35, ink);
+    rect(18, 34, 26, 34, P.R);
+    rect(19, 35, 25, 35, P.R);
+    rect(21, 35, 23, 35, ROSY);
+    rect(20, 36, 24, 36, ink);
+    set(18, 34, ink);
+    set(26, 34, ink);
+    set(19, 35, ink);
+    set(25, 35, ink);
   } else {
     rect(19, 33, 25, 33, shade(look.skin, 0.55));
     set(18, 32, shade(look.skin, 0.55));
     set(26, 32, shade(look.skin, 0.55));
   }
 
-  // Props, front to back.
+  // Props, front to back. Thin ones (mustache, glasses) belong to the face; the rest are their own parts.
   if (has('mustache')) rect(18, 31, 26, 31, look.hairColour);
   if (has('glasses')) {
     for (const cx of [17, 26]) {
-      rect(cx - 2, 25, cx + 2, 25, P.S);
-      rect(cx - 2, 28, cx + 2, 28, P.S);
-      rect(cx - 2, 25, cx - 2, 28, P.S);
-      rect(cx + 2, 25, cx + 2, 28, P.S);
+      rect(cx - 2, 24, cx + 2, 24, P.S);
+      rect(cx - 2, 29, cx + 2, 29, P.S);
+      rect(cx - 2, 24, cx - 2, 29, P.S);
+      rect(cx + 2, 24, cx + 2, 29, P.S);
     }
     rect(20, 26, 23, 26, P.S);
   }
+  part();
   if (has('sunglasses')) {
     rect(14, 25, 20, 28, P.k);
     rect(24, 25, 30, 28, P.k);
@@ -264,28 +347,34 @@ function paint(look: Look): Grid {
     rect(15, 25, 16, 25, P.l);
     rect(25, 25, 26, 25, P.l);
   }
+  part();
   if (has('cap')) {
     oval(22, 16, 12, 6, second === P.w ? main : second, (_x, y) => y <= 18);
     rect(22, 17, 37, 19, shade(second === P.w ? main : second, 0.75));
   }
+  part();
   if (has('headband')) rect(11, 18, 33, 19, second);
+  part();
   if (has('beret')) {
     // A green beret tipped to one side, with a small badge.
     oval(20, 15, 12, 5, P.G, (_x, y) => y <= 18);
     rect(10, 17, 32, 18, shade(P.G, 0.8));
     rect(14, 14, 15, 15, P.y);
   }
+  part();
   if (has('helmet')) {
     // A site helmet: a dome and a brim.
     oval(22, 18, 12, 9, P.y, (_x, y) => y <= 18);
     rect(9, 18, 35, 19, P.h);
     rect(21, 10, 23, 18, shade(P.y, 0.85));
   }
+  part();
   if (has('peci')) {
     // A black peci, flat-topped, straight across the brow.
     rect(12, 12, 32, 18, P.k);
     rect(12, 12, 32, 12, P.S);
   }
+  part();
   if (has('lanyard')) {
     // A strap round the neck to an ID card.
     for (let y = 44; y <= 50; y++) {
@@ -296,6 +385,7 @@ function paint(look: Look): Grid {
     rect(20, 52, 24, 53, P.b);
     rect(20, 55, 24, 55, P.S);
   }
+  part();
   if (has('waistbag')) {
     // A bag slung across the chest for the iuran.
     for (let x = 8; x <= 34; x++) set(x, 46 + Math.round((x - 8) / 2.2), P.N);
@@ -303,6 +393,7 @@ function paint(look: Look): Grid {
     rect(26, 52, 35, 52, P.N);
     set(33, 54, P.y);
   }
+  part();
   if (has('notebook')) {
     oval(9, 52, 3, 3, look.skin);
     rect(4, 43, 12, 50, P.y);
@@ -310,32 +401,39 @@ function paint(look: Look): Grid {
     rect(5, 46, 11, 46, P.w);
     rect(5, 48, 11, 48, P.w);
   }
+  part();
   if (has('headset')) {
     // A band over the head to one ear, and a thin boom to the mouth.
     oval(22, 20, 12, 11, P.S, (x, y) => y <= 16 && (((x - 22) / 12) ** 2 + ((y - 20) / 11) ** 2 > 0.75));
     rect(9, 25, 11, 30, P.S);
     for (let x = 12; x <= 18; x++) set(x, 31 + (x > 15 ? 1 : 0), P.S);
   }
+  part();
   if (has('headphones')) {
     oval(22, 20, 13, 12, P.k, (x, y) => y <= 17 && (((x - 22) / 13) ** 2 + ((y - 20) / 12) ** 2 > 0.78));
     rect(8, 24, 11, 31, P.r);
     rect(33, 24, 36, 31, P.r);
   }
+  part();
   if (has('pencil')) {
     rect(33, 19, 34, 26, P.y);
     rect(33, 26, 34, 27, P.t);
   }
+  part();
   if (has('tie')) {
     rect(21, 45, 22, 46, P.r);
     rect(20, 47, 23, 56, P.r);
     rect(22, 47, 23, 56, P.R);
   }
+  part();
   if (has('bowtie')) {
     rect(17, 44, 20, 47, P.r);
     rect(23, 44, 26, 47, P.r);
     rect(21, 45, 22, 46, P.R);
   }
+  part();
   if (has('chain')) for (let x = 15; x <= 28; x++) set(x, 46 + Math.round(3 * Math.sin(((x - 15) / 13) * Math.PI)), P.y);
+  part();
   if (has('mic')) {
     // A hand-held mic in the right hand.
     rect(33, 40, 36, 44, P.S);
@@ -343,17 +441,19 @@ function paint(look: Look): Grid {
     oval(34, 50, 3, 3, look.skin);
     rect(34, 44, 35, 49, P.k);
   }
+  part();
   if (has('phone')) {
     oval(9, 50, 3, 3, look.skin);
     rect(6, 41, 11, 49, P.k);
     rect(7, 42, 10, 47, P.l);
   }
+  part();
   if (has('screwdriver')) {
     oval(35, 51, 3, 3, look.skin);
     rect(34, 43, 36, 49, P.y);
     rect(35, 37, 35, 43, P.s);
   }
-  return g;
+  return seams(g, ids);
 }
 
 /** The coloured outline: every clear pixel next to a filled one takes a dark shade of its neighbour. */

@@ -57,6 +57,23 @@ describe('generic hires and their portraits', () => {
       }
   });
 
+  it('parts meet in a 0.55x seam line and the eyes carry a sparkle, like Inem and the map (ART.md)', () => {
+    const k = (hex: string, f: number) => {
+      const n = parseInt(hex.slice(1), 16);
+      return `#${[n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.min(255, Math.round(v * f)).toString(16).padStart(2, '0')).join('')}`;
+    };
+    for (const r of ROLES)
+      for (let id = 1; id <= 12; id++) {
+        const look = staffLook(r.id, id);
+        const g = staffGrid(r.id, id);
+        // The seam under the chin and round the ears and hair, in a dark shade of the skin.
+        expect(g.flat().filter((c) => c === k(look.skin, 0.55)).length, `${r.id} ${id}`).toBeGreaterThan(8);
+        // The left eye: an oval of ink with a white sparkle on top.
+        expect(g[look.props.includes('glasses') ? 26 : 25][17], `${r.id} ${id}`).toBe('#f6ecd4');
+        expect(g[27][17], `${r.id} ${id}`).not.toBe(look.skin);
+      }
+  });
+
   it('headwear never sits on long hair', () => {
     for (const role of ['hansip', 'pu', 'supir', 'satpol'])
       for (let id = 1; id <= 40; id++) expect(['long', 'bun', 'ponytail'], `${role} ${id}`).not.toContain(staffLook(role, id).hair);
