@@ -4,6 +4,7 @@ import { allDefs, def, hasDef } from './content';
 import { ensureStaff } from './staff';
 import { SAVE_VERSION, covers, inBounds, newStageState, tilesOf } from './state';
 import { absorb, neighbourAt } from './grow';
+import { FEMALE_NAMES, isFemaleTitle, MALE_NAMES } from '../data/names';
 import { RT_H, RT_W, STAGE_SPAN, setGrid, type Building, type GameState, type ProblemId } from './types';
 
 export function serialize(s: GameState): string {
@@ -23,6 +24,7 @@ export function deserialize(raw: string | null): GameState | null {
     if ((s.stage?.path as string | undefined) === 'desa') return null;
     if (!Array.isArray(s.buildings) || !Array.isArray(s.residents) || typeof s.res?.rupiah !== 'number') return null;
     migrateSelokan(s);
+    fixTitles(s);
     mendPaths(s);
     if (!s.buildings.every((b) => hasDef(b.def))) return null;
     // Saves from before stages: start at 0 stars. The first tick catches the stars up.
@@ -117,6 +119,23 @@ function growBuildings(s: GameState, grewFrom: Record<string, number>): void {
       if (fitsAt(b, list, other)) b.rot = other;
       else b.small = was;
     }
+}
+
+/**
+ * Titles used to be picked apart from names, so old saves hold a Pak Yanti or a Bu Joko. The name
+ * stays (the player knows them by it) and the title turns to fit: Pak and Bu, Mas and Mbak swap.
+ */
+function fixTitles(s: GameState): void {
+  const SWAP: Record<string, string> = { Pak: 'Bu', Bu: 'Pak', Mas: 'Mbak', Mbak: 'Mas' };
+  const fix = (name: string): string => {
+    const [title, given, ...rest] = name.split(' ');
+    if (!SWAP[title] || !given || rest.length) return name;
+    const wrong = isFemaleTitle(title) ? MALE_NAMES.includes(given) : FEMALE_NAMES.includes(given);
+    return wrong ? `${SWAP[title]} ${given}` : name;
+  };
+  for (const r of s.residents) r.name = fix(r.name);
+  for (const x of s.staff ?? []) if (!x.special && !x.inem) x.name = fix(x.name);
+  for (const a of s.lowongan?.applicants ?? []) if (!a.special) a.name = fix(a.name);
 }
 
 /** The selokan became the biopori, at the same level. Old saves swap it over, including unlocks and Kerja Bakti. */

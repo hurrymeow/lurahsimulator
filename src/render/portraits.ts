@@ -473,7 +473,9 @@ const ROLE_LOOK: Record<string, Pick<Look, 'outfit' | 'colours' | 'props'>> = {
   satpol: { outfit: 'safari', colours: [P.t, P.N], props: ['cap'] },
 };
 const SKINS = Object.values(SKIN);
-const HAIRS: Hair[] = ['short', 'side', 'long', 'bun', 'curly', 'ponytail', 'grey', 'bald'];
+/** Pak and Mas wear it short; Bu and Mbak long, in a bun or a ponytail. */
+const MALE_HAIRS: Hair[] = ['short', 'side', 'curly', 'grey', 'bald', 'short'];
+const FEMALE_HAIRS: Hair[] = ['long', 'bun', 'ponytail', 'long'];
 const HAIR_COLOURS = [HAIR.black, HAIR.black, HAIR.brown, HAIR.red];
 const FACES: Look['face'][] = ['calm', 'grin', 'calm', 'wink'];
 
@@ -485,18 +487,27 @@ const hash = (n: number, salt: number) => {
   return (x ^ (x >>> 13)) >>> 0;
 };
 
-/** A generic hire's look: the outfit of their job, the face seeded by their staff id, so it lasts for good. */
-export function staffLook(role: string, id: number): Look {
+/**
+ * A generic hire's look: the outfit of their job, the face seeded by their staff id, so it lasts for
+ * good, and hair that fits their title: short for Pak and Mas, long, a bun or a ponytail for Bu and Mbak.
+ */
+export function staffLook(role: string, id: number, female = false): Look {
   const job = ROLE_LOOK[role] ?? ROLE_LOOK.asisten;
-  const hair = HAIRS[hash(id, 2) % HAIRS.length];
-  const capped = job.props.some((p) => p === 'beret' || p === 'helmet' || p === 'peci' || p === 'cap');
+  // A peci is a man's cap: a woman driver goes bareheaded.
+  const jobProps = female ? job.props.filter((p) => p !== 'peci') : job.props;
+  const capped = jobProps.some((p) => p === 'beret' || p === 'helmet' || p === 'cap');
+  const hairs = female ? FEMALE_HAIRS : MALE_HAIRS;
+  let hair = hairs[hash(id, 2) % hairs.length];
+  // Under a beret, helmet or cap, long hair or a bun would sit oddly: it is tied back in a ponytail.
+  if (female && capped) hair = 'ponytail';
+  // Now and then an older Bu, her bun gone grey.
+  const greyBun = female && hair === 'bun' && hash(id, 6) % 4 === 0;
   return {
     skin: SKINS[hash(id, 1) % SKINS.length],
-    // Long hair would hang out from under a beret or helmet oddly, so headwear gets a short cut.
-    hair: capped && (hair === 'long' || hair === 'bun' || hair === 'ponytail') ? 'short' : hair,
-    hairColour: hair === 'grey' ? HAIR.grey : HAIR_COLOURS[hash(id, 3) % HAIR_COLOURS.length],
+    hair,
+    hairColour: hair === 'grey' || greyBun ? HAIR.grey : HAIR_COLOURS[hash(id, 3) % HAIR_COLOURS.length],
     ...job,
-    props: [...job.props, ...(hash(id, 4) % 4 === 0 ? (['glasses'] as Prop[]) : [])],
+    props: [...jobProps, ...(hash(id, 4) % 4 === 0 ? (['glasses'] as Prop[]) : [])],
     face: FACES[hash(id, 5) % FACES.length],
   };
 }
@@ -512,7 +523,7 @@ export function portraitURL(id: string | undefined): string | null {
 }
 
 /** A generic hire's portrait: their job's outfit, their own face. */
-export const staffPortraitURL = (role: string, id: number): string => draw(`staff:${role}:${id}`, staffLook(role, id));
+export const staffPortraitURL = (role: string, id: number, female = false): string => draw(`staff:${role}:${id}:${female ? 'f' : 'm'}`, staffLook(role, id, female));
 
 function draw(key: string, look: Look): string {
   const hit = cache.get(key);
@@ -538,4 +549,4 @@ function draw(key: string, look: Look): string {
 
 /** For tests: the painted grid of a look, outline included. */
 export const portraitGrid = (id: string): Grid => outline(paint(LOOKS[id]));
-export const staffGrid = (role: string, id: number): Grid => outline(paint(staffLook(role, id)));
+export const staffGrid = (role: string, id: number, female = false): Grid => outline(paint(staffLook(role, id, female)));

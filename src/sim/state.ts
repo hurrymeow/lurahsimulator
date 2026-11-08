@@ -1,4 +1,4 @@
-import { NAMES, TITLES } from '../data/names';
+import { namesFor, TITLES } from '../data/names';
 import { EMAS } from '../data/ranking';
 import { BASE_ATTRACT, DECOR_CAP, LEVEL_BONUS, SPRAWL_FREE, SPRAWL_STEP, START, START_RESIDENTS } from './balance';
 import { def, footprintFor, sizeFor } from './content';
@@ -81,7 +81,8 @@ export function addBuilding(s: GameState, id: string, x: number, y: number, stat
 }
 
 export function addResident(s: GameState): Resident {
-  const r: Resident = { id: s.nextResidentId++, name: `${pick(s, TITLES)} ${pick(s, NAMES)}`, job: 'none', pensiun: 0, fake: 0, arrived: s.month };
+  const title = pick(s, TITLES);
+  const r: Resident = { id: s.nextResidentId++, name: `${title} ${pick(s, namesFor(title))}`, job: 'none', pensiun: 0, fake: 0, arrived: s.month };
   s.residents.push(r);
   return r;
 }
