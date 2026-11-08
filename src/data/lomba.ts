@@ -65,6 +65,8 @@ export const LOMBA = {
   dayWeek: 31,
   /** No lomba before this game month: the first year is for learning. */
   fromMonth: 12,
+  /** The lomba is held every this many years, starting in the first year (`yearsDone` 0). */
+  everyYears: 2,
   /** Contests a kampung can run in one year. */
   maxContests: 3,
   /** Climb: grips needed to reach the top, misses allowed, and the green band's height (share of the bar). */

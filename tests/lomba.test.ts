@@ -35,6 +35,22 @@ describe('Lomba Agustusan', () => {
     expect(fx).toContainEqual(expect.objectContaining({ kind: 'notice', card: true, open: 'lomba' }));
   });
 
+  it('the lomba comes every second year: none in year 1, back in year 2', () => {
+    const s = newGame(1);
+    s.month = 66;
+    s.pendingEvent = null;
+    const skipped = tick(s);
+    expect(s.month).toBe(67);
+    expect(s.lomba).toBeUndefined();
+    expect(skipped).not.toContainEqual(expect.objectContaining({ open: 'lomba' }));
+    s.month = 114;
+    s.pendingEvent = null;
+    const held = tick(s);
+    expect(s.month).toBe(115);
+    expect(s.lomba!.year).toBe(2);
+    expect(held).toContainEqual(expect.objectContaining({ kind: 'notice', open: 'lomba' }));
+  });
+
   it('contests are paid for when picked, refunded when dropped, capped at three, and the pole needs a Lapangan', () => {
     const s = prepared();
     const kas = s.res.rupiah;

@@ -95,7 +95,7 @@ export function setKetua(s: GameState, staffId: number | undefined): void {
 /** Month by month: the panitia forms in May; on 17 Agustus the day begins, or a skipped lomba costs Popularitas. */
 export function lombaSystem(s: GameState, fx: Fx): void {
   const wk = weekOfYear(s.month);
-  if (wk === LOMBA.announceWeek && s.month + (LOMBA.dayWeek - LOMBA.announceWeek) >= LOMBA.fromMonth && s.lomba?.year !== year(s)) {
+  if (wk === LOMBA.announceWeek && s.month + (LOMBA.dayWeek - LOMBA.announceWeek) >= LOMBA.fromMonth && year(s) % LOMBA.everyYears === 0 && s.lomba?.year !== year(s)) {
     s.lomba = { year: year(s), contests: [], stage: 0 };
     fx.push({ kind: 'notice', title: t('lomba.announceTitle'), body: t('lomba.announceBody', { n: LOMBA.dayWeek - LOMBA.announceWeek }), tone: 'info', card: true, open: 'lomba' });
     return;
