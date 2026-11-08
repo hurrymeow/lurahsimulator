@@ -122,6 +122,8 @@ describe('Tim Audit', () => {
     s.month = 30;
     audit(s, 1);
     expect(s.kel.cleanAudits).toBe(1);
+    // The clean audit is a 3★ line.
+    s.stage.stars.kelurahan = 2;
     expect(nextStarChecklist(s, 'kelurahan')!.find((l) => l.goal.kind === 'cleanAudits')!.done).toBe(true);
   });
 

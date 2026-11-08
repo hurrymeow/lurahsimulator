@@ -17,7 +17,7 @@ export const RW_STAGE: StageDef = {
       unlocks: ['posyandu', 'portal'],
     },
     {
-      goals: [{ kind: 'sebelahAtStars', n: 1 }, { kind: 'tierWins', n: 1, tier: 'rw' }, { kind: 'rwCombos', n: 1 }],
+      goals: [{ kind: 'sebelahAtStars', n: 1 }, { kind: 'tierWins', n: 4, tier: 'rw' }, { kind: 'rwCombos', n: 1 }],
       unlocks: ['pasarKaget', 'gapura'],
     },
     {
@@ -25,6 +25,7 @@ export const RW_STAGE: StageDef = {
         { kind: 'sebelahAtStars', n: 3 },
         { kind: 'rwCombos', n: 2 },
         { kind: 'winStreak', n: 2 },
+        { kind: 'tierWins', n: 8, tier: 'rw' },
         { kind: 'noDebtMonths', n: 24 },
       ],
       unlocks: [],
@@ -43,11 +44,11 @@ export const KELURAHAN_STAGE: StageDef = {
       unlocks: ['puskesmasPembantu', 'studiBanding'],
     },
     {
-      goals: [{ kind: 'rw2AtStars', n: 2 }, { kind: 'tierWins', n: 1, tier: 'kelurahan' }, { kind: 'cleanAudits', n: 1 }, { kind: 'residents', n: 120 }, { kind: 'sabar', n: 45 }],
+      goals: [{ kind: 'rw2AtStars', n: 2 }, { kind: 'tierWins', n: 8, tier: 'kelurahan' }, { kind: 'residents', n: 120 }, { kind: 'sabar', n: 45 }],
       unlocks: [],
     },
     {
-      goals: [{ kind: 'tierWins', n: 3, tier: 'kelurahan' }, { kind: 'rw2AtStars', n: 3 }, { kind: 'residents', n: 200 }, { kind: 'sabar', n: 35 }],
+      goals: [{ kind: 'tierWins', n: 14, tier: 'kelurahan' }, { kind: 'rw2AtStars', n: 3 }, { kind: 'cleanAudits', n: 1 }, { kind: 'residents', n: 200 }, { kind: 'sabar', n: 35 }],
       unlocks: [],
     },
   ],
@@ -64,11 +65,11 @@ export const KECAMATAN_STAGE: StageDef = {
       unlocks: ['baliho', 'tamanKota'],
     },
     {
-      goals: [{ kind: 'kelsAtStars', n: 4, stars: 2 }, { kind: 'tierWins', n: 1, tier: 'kecamatan' }, { kind: 'amanWeeks', n: 24, min: 60 }, { kind: 'sabar', n: 35 }],
+      goals: [{ kind: 'kelsAtStars', n: 4, stars: 2 }, { kind: 'tierWins', n: 4, tier: 'kecamatan' }, { kind: 'amanWeeks', n: 24, min: 60 }, { kind: 'sabar', n: 35 }],
       unlocks: [],
     },
     {
-      goals: [{ kind: 'kelsAtStars', n: 4, stars: 3 }, { kind: 'tierWins', n: 3, tier: 'kecamatan' }, { kind: 'pinjolUnder', n: 10 }, { kind: 'amanNow', n: 65 }, { kind: 'noRaziaWeeks', n: 48 }],
+      goals: [{ kind: 'kelsAtStars', n: 4, stars: 3 }, { kind: 'tierWins', n: 12, tier: 'kecamatan' }, { kind: 'pinjolUnder', n: 10 }, { kind: 'amanNow', n: 65 }, { kind: 'noRaziaWeeks', n: 48 }],
       unlocks: [],
     },
   ],

@@ -451,7 +451,9 @@ describe('RW goals and Stempel', () => {
     expect(line(s, 'sebelahAtStars').done).toBe(true);
     s.ranking.push({ tier: 'rt', year: 1, us: 9, them: 1, won: true });
     expect(line(s, 'tierWins').done).toBe(false);
-    s.ranking.push({ tier: 'rw', year: 4, us: 9, them: 1, won: true });
+    for (const year of [2, 3, 4]) s.ranking.push({ tier: 'rw', year, us: 9, them: 1, won: true });
+    expect(line(s, 'tierWins').done).toBe(false);
+    s.ranking.push({ tier: 'rw', year: 5, us: 9, them: 1, won: true });
     expect(line(s, 'tierWins').done).toBe(true);
   });
 

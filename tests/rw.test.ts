@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { RIVAL_GROWTH_QUARTERS, RIVAL_START } from '../src/data/ranking';
 import { activeCombos } from '../src/sim/combos';
 import { agustusMult, banjirProtection, resolveEvent } from '../src/sim/events';
 import { acceptSK, canPromote, nextStarChecklist } from '../src/sim/stages';
 import { promote } from '../src/sim/grow';
 import { liveJobs, assign } from '../src/sim/jobs';
 import { onBuildingFinished } from '../src/sim/projects';
-import { areaScore, yearlyRanking } from '../src/sim/ranking';
+import { areaScore, rivalYear } from '../src/sim/ranking';
 import { viewOf } from '../src/sim/neighbourView';
 import { deserialize, serialize } from '../src/sim/save';
 import { addBuilding, addResident, newGame } from '../src/sim/state';
@@ -288,17 +289,28 @@ describe('saves', () => {
   });
 });
 
-describe('RW ranking cards', () => {
-  it('say whether this ranking counts for the star: only the yearly one does from the RW on', () => {
+
+describe('the RW rival', () => {
+  it('grows with the quarters spent in the stage, so a late arrival meets the rival a typical one did', () => {
+    const early = newGame(1);
+    promote(early, []);
+    const late = newGame(1);
+    promote(late, []);
+    late.month = 400;
+    late.ranking.push({ tier: 'rt', year: 30, us: 1, them: 1, won: true });
+    expect(rivalYear(early, 9)).toBe(rivalYear(late, 33));
+    early.ranking.push({ tier: 'rw', year: 9, us: 1, them: 2, won: false });
+    expect(rivalYear(early, 10)).toBe(rivalYear(late, 33) + 1);
+    // The RT keeps the calendar.
+    expect(rivalYear(newGame(1), 5)).toBe(5);
+  });
+});
+
+describe('the rival from the RW on', () => {
+  it('stops growing after RIVAL_GROWTH_QUARTERS in the stage', () => {
     const s = newGame(1);
     promote(s, []);
-    const body = (year: number) => {
-      const fx: Parameters<typeof yearlyRanking>[1] = [];
-      yearlyRanking(s, fx, year);
-      const n = fx.find((f) => f.kind === 'notice');
-      return n && n.kind === 'notice' ? n.body : '';
-    };
-    expect(body(4)).toMatch(/The yearly ranking: it counts toward your star\.$/);
-    expect(body(5)).toMatch(/Only the yearly ranking counts toward your star\.$/);
+    for (let year = 1; year <= 30; year++) s.ranking.push({ tier: 'rw', year, us: 1, them: 2, won: false });
+    expect(rivalYear(s, 31)).toBe(RIVAL_START.rw + RIVAL_GROWTH_QUARTERS);
   });
 });

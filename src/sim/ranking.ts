@@ -1,12 +1,11 @@
 import { t } from '../i18n';
-import { LOSE, RIVAL_BASE, RIVAL_JITTER, RIVAL_NAMES, RIVAL_PER_YEAR, RIVAL_SCALE, SCORE, WIN } from '../data/ranking';
+import { LOSE, RIVAL_BASE, RIVAL_JITTER, RIVAL_NAMES, RIVAL_PER_YEAR, RIVAL_GROWTH_QUARTERS, RIVAL_SCALE, RIVAL_START, SCORE, WIN } from '../data/ranking';
 import { def, isCover } from './content';
 import { gain, type Fx } from './gain';
 import { viewOf } from './neighbourView';
 import { lombaMult } from './kel';
 import { popReportBonus } from './rw';
 import { randInt } from './rng';
-import { YEARLY_EVERY } from './calendar';
 import { isWorking, population } from './state';
 import type { GameState } from './types';
 
@@ -36,25 +35,30 @@ export function addEmas(s: GameState, amount: number): void {
   s.emas = Math.max(0, s.emas + amount);
 }
 
+/** The quarter the rival's score is set by: the calendar at the RT; from the RW on, the quarters spent in the stage, up to RIVAL_GROWTH_QUARTERS. */
+export function rivalYear(s: GameState, year: number): number {
+  const stage = s.stage.current;
+  if (stage === 'rt') return year;
+  return RIVAL_START[stage] + Math.min(RIVAL_GROWTH_QUARTERS, s.ranking.filter((r) => (r.tier ?? 'rt') === stage).length + 1);
+}
+
 /** Runs at each year end. Win: Sabar, Orang Dalam and a sliver of Emas. Lose: a little Sabar. */
 export function yearlyRanking(s: GameState, fx: Fx, year: number): void {
   const stage = s.stage.current;
   const RIVAL_NAME = RIVAL_NAMES[stage];
   const us = areaScore(s);
-  const them = Math.round((RIVAL_BASE + RIVAL_PER_YEAR * year + randInt(s, -RIVAL_JITTER, RIVAL_JITTER)) * RIVAL_SCALE[stage]);
+  const them = Math.round((RIVAL_BASE + RIVAL_PER_YEAR * rivalYear(s, year) + randInt(s, -RIVAL_JITTER, RIVAL_JITTER)) * RIVAL_SCALE[stage]);
   const won = us > them;
   s.ranking.push({ tier: stage, year, us, them, won });
   const hq = s.buildings.find((b) => b.def === 'kantorRT');
-  // From the RW on, only the yearly ranking counts for the star (tierWins): say which this one is.
-  const counts = stage === 'rt' ? '' : ` ${t(year % YEARLY_EVERY === 0 ? 'sim.rankYearly' : 'sim.rankQuarterly')}`;
   if (won) {
     gain(s, fx, 'sabar', WIN.sabar, hq);
     gain(s, fx, 'orangDalam', WIN.orangDalam);
     addEmas(s, WIN.emas);
-    fx.push({ kind: 'notice', title: t('sim.rankWinTitle', { year, rival: RIVAL_NAME }), body: t('sim.rankWinBody', { us, them, sabar: WIN.sabar, od: WIN.orangDalam, emas: WIN.emas }) + counts, tone: 'good', fanfare: true });
+    fx.push({ kind: 'notice', title: t('sim.rankWinTitle', { year, rival: RIVAL_NAME }), body: t('sim.rankWinBody', { us, them, sabar: WIN.sabar, od: WIN.orangDalam, emas: WIN.emas }), tone: 'good', fanfare: true });
   } else {
     gain(s, fx, 'sabar', LOSE.sabar, hq);
-    fx.push({ kind: 'notice', title: t('sim.rankLoseTitle', { year, rival: RIVAL_NAME }), body: t('sim.rankLoseBody', { us, them, sabar: LOSE.sabar }) + counts, tone: 'bad' });
+    fx.push({ kind: 'notice', title: t('sim.rankLoseTitle', { year, rival: RIVAL_NAME }), body: t('sim.rankLoseBody', { us, them, sabar: LOSE.sabar }), tone: 'bad' });
   }
   s.lastNovelty = s.month;
 }
