@@ -23,17 +23,19 @@ export function flag(p: Painter, x: number, y: number, len: number): void {
   p.overlay.push((q) => {
     const X = q.gx + x * q.n;
     const Y = q.gy + y * q.n;
+    // A small concrete foot, so the pole stands on the ground rather than hanging in the air.
+    for (let d = -1; d <= 2; d++) q.px(X + d, Y, 'S');
     for (let k = 0; k < len; k++) {
-      q.px(X, Y - k, k === 0 ? 'S' : 'e');
-      q.px(X + 1, Y - k, k === 0 ? 'S' : 'f');
+      q.px(X, Y - k, k === 0 ? 'S' : 's');
+      q.px(X + 1, Y - k, k === 0 ? 'S' : 'S');
     }
     q.px(X, Y - len, 'y');
     q.px(X + 1, Y - len, 'h');
     for (let k = 2; k <= 7; k++) {
       const dip = k >= 5 ? 1 : 0;
       q.px(X + k, Y - len + 1 + dip, k === 7 ? 'R' : 'j');
-      q.px(X + k, Y - len + 2 + dip, 'e');
-      q.px(X + k, Y - len + 3 + dip, k === 7 ? 'f' : 'e');
+      q.px(X + k, Y - len + 2 + dip, 'w');
+      q.px(X + k, Y - len + 3 + dip, k === 7 ? 's' : 'w');
     }
   });
 }
@@ -45,16 +47,16 @@ export function flagAt(p: Painter, a: number, b: number, up: number, len: number
     const X = Math.round(x);
     const Y = Math.round(y);
     for (let k = 0; k < len; k++) {
-      q.px(X, Y - k, k === 0 ? 'S' : 'e');
-      q.px(X + 1, Y - k, k === 0 ? 'S' : 'f');
+      q.px(X, Y - k, k === 0 ? 'S' : 's');
+      q.px(X + 1, Y - k, k === 0 ? 'S' : 'S');
     }
     q.px(X, Y - len, 'y');
     q.px(X + 1, Y - len, 'h');
     for (let k = 2; k <= 7; k++) {
       const dip = k >= 5 ? 1 : 0;
       q.px(X + k, Y - len + 1 + dip, k === 7 ? 'R' : 'j');
-      q.px(X + k, Y - len + 2 + dip, 'e');
-      q.px(X + k, Y - len + 3 + dip, k === 7 ? 'f' : 'e');
+      q.px(X + k, Y - len + 2 + dip, 'w');
+      q.px(X + k, Y - len + 3 + dip, k === 7 ? 's' : 'w');
     }
   });
 }

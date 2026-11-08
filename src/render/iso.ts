@@ -638,7 +638,7 @@ const ART: Record<string, ArtFn> = {
       // Pak RT's sekretariat: one small room under a two-tier green zinc roof (a skirt, a band of roster, then
       // a small crown), the stepped silhouette every level of the kantor keeps, and the flag at the back corner.
       p.shadow(4);
-      flag(p, 8, -6, 18);
+      flag(p, 10, 2, 18);
       p.box(4, 7, 'w', (face, u, j, i) => walls(face, u, j, i, 7));
       tiers(4, 7, 'G', 'g');
       return;
@@ -669,7 +669,7 @@ const ART: Record<string, ArtFn> = {
     // roof, a flat concrete kanopi on two white columns over the door with the papan nama standing on it, and
     // the flag on a taller pole.
     p.shadow(2);
-    flag(p, 9, -4, 21);
+    flag(p, 11, 2, 21);
     p.box(3, 9, 'w', (face, u, j, i) => walls(face, u, j, i, 9));
     tiers(3, 9, 'R');
     // The kanopi: a slab in front of the door on two columns, its fascia painted green and white.
