@@ -184,7 +184,7 @@ function kecPhase(s: GameState, seam: { x: number; y: number }[], all: { x: numb
  * A Kecamatan bot: plays the Kelurahan routine to 3 stars on Auto-dana, takes the promotion, then keeps the same routine
  * and adds the Kecamatan buildings. It runs a razia while pinjol is high and the 3rd star is not yet near.
  */
-export function playKec(seed: number, kelWeeks = 200, kecWeeks = 700, jobShare = 0.1): KecRun {
+export function playKec(seed: number, kelWeeks = 340, kecWeeks = 700, jobShare = 0.1): KecRun {
   const { s, seam, all } = kelSetup(seed, true);
   const run: KecRun = { seed, at: [], pop: 0, pinjol: 0, stars: '', razias: 0, path: 'shortcut' };
   for (let w = 0; w < kelWeeks && s.stage.stars.kelurahan < 3; w++) {

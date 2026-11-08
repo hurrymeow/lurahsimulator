@@ -215,7 +215,7 @@ export const KEL_EVENTS: StageEventDef[] = [
     name: 'Tim Audit',
     body: 'A faceless team arrives with clipboards. They ask for the receipt for every wacana you announced.',
     gate: K1,
-    // A yearly visit in March once the Kelurahan has its first star: 2 stars need a clean audit, so it cannot be left to chance.
+    // A yearly visit in March once the Kelurahan has its first star: 3 stars need a clean audit, so it cannot be left to chance.
     when: { months: [2], minMonth: 36, chance: 1, cooldown: 12 },
     choices: [
       {

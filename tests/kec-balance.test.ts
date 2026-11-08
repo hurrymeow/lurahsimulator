@@ -8,13 +8,13 @@ import { setGrid } from '../src/sim/types';
 afterEach(() => setGrid('rt'));
 
 describe('Kecamatan balance', () => {
-  it('counts only yearly rankings won in the stage for a tier-win goal', () => {
+  it('counts every ranking won in the stage for a tier-win goal, and no loss', () => {
     const s = newGame(1);
-    // Quarterly rankings come every 12 weeks, so every fourth one (year 4, 8) is the yearly one.
-    s.ranking = [1, 2, 3, 4, 5, 6, 7, 8].map((year) => ({ year, us: 2, them: 1, won: true, tier: 'kecamatan' as const }));
+    // Every quarterly ranking counts, as at the RT; a loss does not, nor a win in another stage.
+    s.ranking = [1, 2, 3, 4, 5, 6, 7, 8].map((year) => ({ year, us: 2, them: 1, won: year !== 3, tier: 'kecamatan' as const }));
     s.ranking.push({ year: 12, us: 2, them: 1, won: true, tier: 'kelurahan' });
-    expect(goalProgress(s, { kind: 'tierWins', n: 3, tier: 'kecamatan' }).have).toBe(2);
-    expect(goalProgress(s, { kind: 'tierWins', n: 1, tier: 'kelurahan' }).have).toBe(1);
+    expect(goalProgress(s, { kind: 'tierWins', n: 12, tier: 'kecamatan' }).have).toBe(7);
+    expect(goalProgress(s, { kind: 'tierWins', n: 8, tier: 'kelurahan' }).have).toBe(1);
   });
 
   it('a resident drains less Popularitas in the Kecamatan', () => {

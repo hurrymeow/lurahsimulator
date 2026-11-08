@@ -22,7 +22,7 @@ describe('string tables', () => {
     setLang('en');
     expect(t('stage.goalShort.combos', { n: 1 })).toBe('find 1 combo');
     expect(t('stage.goalShort.combos', { n: 2 })).toBe('find 2 combos');
-    expect(t('stage.goalShort.tierWins', { n: 1 })).toBe('win 1 yearly area ranking');
+    expect(t('stage.goalShort.tierWins', { n: 1 })).toBe('win 1 area ranking');
     setLang('id');
     expect(t('stage.goalShort.combos', { n: 1 })).toBe('temukan 1 combo');
   });

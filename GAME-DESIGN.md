@@ -96,7 +96,7 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 - Nothing pauses. Sabar, residents and the kas keep running.
 - Kas RT becomes Kas RW, then Kas Kelurahan. AI areas pay iuran into it.
 - Combos found earlier keep working where they stand.
-- The ranking rival moves up a level. Kampung Sebelah becomes your RT, RW Sebelah becomes the rival, then Kelurahan Sebelah.
+- The ranking rival moves up a level. Kampung Sebelah becomes your RT, RW Sebelah becomes the rival, then Kelurahan Sebelah. Its score starts where a typical player's area is on arrival and grows each quarter the player stays.
 
 #### AI neighbours
 
@@ -166,7 +166,7 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 #### 1★ RW Rintisan
 
 - Unlocks Posyandu, Portal and the Kader Posyandu job.
-- **Goal for 2★:** Kampung Sebelah at 1★ or above, **1** win against RW Sebelah, and **1** RW combo.
+- **Goal for 2★:** Kampung Sebelah at 1★ or above, **4** wins against RW Sebelah, and **1** RW combo.
 
 #### 2★ RW Berkembang
 
@@ -174,7 +174,7 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
 - **Goal for 3★:**
   - Kampung Sebelah at 3★
   - **2** RW combos
-  - **2** wins in a row
+  - **2** wins in a row, and **8** wins against RW Sebelah in all
   - no debt for **24** weeks
 
 #### 3★ RW Teladan
@@ -214,12 +214,12 @@ Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 #### 1★
 
 - Unlocks Puskesmas Pembantu and the Honorer job. Kelurahan gets Pasar.
-- **Goal for 2★:** RW 2 at 2★ or above, **1** Piala Kelurahan win, a clean Tim Audit, and the player's own kampung at **120** residents and Popularitas **45**.
+- **Goal for 2★:** RW 2 at 2★ or above, **8** Piala Kelurahan wins, and the player's own kampung at **120** residents and Popularitas **45**.
 
 #### 2★
 
 - Unlocks Terminal and Taman. Terminal is the one 3x3 building, the Kelurahan landmark: **Rp 25jt**, and shops within **3** tiles earn **20%** more. A 3x3 never fits a 2-tile seam, so it stands inside the player's RT lots.
-- **Goal for 3★:** **3** Piala wins, RW 2 at 3★, and the player's own kampung at **200** residents and Popularitas **35**. A bigger kampung expects more, so holding Popularitas while growing is the work of this stage. Residents past **200** expect half as much, and a warga with no bed moves to the neighbours (one a week), so a kampung that overgrew can always climb back over the bar (decisions/big-kampung-taper.md).
+- **Goal for 3★:** **14** Piala wins, RW 2 at 3★, a clean Tim Audit, and the player's own kampung at **200** residents and Popularitas **35**. A bigger kampung expects more, so holding Popularitas while growing is the work of this stage. Residents past **200** expect half as much, and a warga with no bed moves to the neighbours (one a week), so a kampung that overgrew can always climb back over the bar (decisions/big-kampung-taper.md).
 
 #### 3★ Lurah Teladan
 
@@ -252,11 +252,11 @@ The first Act 2 stage (Pak Camat). Built in `docs/plans/kecamatan-slice.md`; num
 #### 1★
 
 - Unlocks Baliho and Taman Kota.
-- **Goal for 2★:** every Kelurahan at 2★, **1** yearly ranking win, Aman **60+** across the Kecamatan for **24** weeks, Popularitas **35**.
+- **Goal for 2★:** every Kelurahan at 2★, **4** ranking wins, Aman **60+** across the Kecamatan for **24** weeks, Popularitas **35**.
 
 #### 2★
 
-- **Goal for 3★:** every Kelurahan at 3★, **3** yearly ranking wins, pinjol under **10%**, Aman **65+** with no razia in the last **48** weeks.
+- **Goal for 3★:** every Kelurahan at 3★, **12** ranking wins, pinjol under **10%**, Aman **65+** with no razia in the last **48** weeks.
 
 #### 3★ Camat Teladan
 
@@ -269,7 +269,7 @@ The first Act 2 stage (Pak Camat). Built in `docs/plans/kecamatan-slice.md`; num
 - **Judol:** each **10** Viral above **20** adds **1%** a week to start. A judol household loses **30%** of its income and borrows at **2x**.
 - **Responses:** Razia Satpol PP (**1** Orang Inside, Aman +8 for 8 weeks, Popularitas -3, half the cases move to the next Kelurahan: the problem is somewhere else, which is the joke). Literasi Keuangan (Realisasi, Rp 3jt, lands after 8 weeks, new cases -50% for 48 weeks). Spanduk Anti Judol (Wacana: Laporan up, nothing real). Koperasi Simpan Pinjam cuts new cases 25% each, two count. Balai Latihan Kerja retrains one idle warga a week.
 - **Crowd and expectations:** in the Kecamatan each resident weighs **0.1** Aman (0.3 elsewhere) and drains **0.6x** the Popularitas. 250 residents are a goal here, not a crisis (decisions/kecamatan-balance-1.md and -2.md).
-- **Tier-win goals** (RW, Kelurahan, Kecamatan) count only yearly rankings won in that stage. The ranking runs every 12 weeks, so every fourth one counts.
+- **Tier-win goals** (RW, Kelurahan, Kecamatan) count every ranking won in that stage, as at the RT. The ranking runs every 12 weeks. From the RW on, the rival grows with the quarters the player has spent in the stage, starting from the quarter a typical player arrives in, so a late arrival meets the same rival and is never locked out. The rival is about **1.6x** stronger than before 2026-11-09, so a kampung that grows slowly loses its first quarters and its stars come later (decisions/stage-lengths-quarterly-wins.md).
 
 #### New Kecamatan content
 

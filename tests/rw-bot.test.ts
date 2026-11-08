@@ -5,7 +5,8 @@ import { cellOrigin } from '../src/sim/area';
 import { promote } from '../src/sim/grow';
 import { lotAt } from '../src/sim/area';
 import { checkPlace, place, skipPermit } from '../src/sim/rules';
-import { newGame } from '../src/sim/state';
+import { readFileSync } from 'node:fs';
+import { deserialize } from '../src/sim/save';
 import { tick } from '../src/sim/tick';
 import { GRID_H, GRID_W, RT_H, RT_W, setGrid, type GameState } from '../src/sim/types';
 
@@ -16,10 +17,10 @@ const SEBELAH = ['rumah', 'warung', 'posRonda', 'rumah', 'wifi', 'biopori', 'rum
 
 /** An RW bot: builds up Kampung Sebelah one building at a time, builds each RW building once on a seam lot, takes the free event choice. */
 function playRw(seed: number, years: number, auto = false): GameState {
-  const s = newGame(seed);
-  s.stage.stars.rt = 3;
-  // The player's RT reached 3 stars, which takes 3 combos.
-  if (auto) s.discovered = ['tongkrongan', 'rapatMalam', 'perangKuota'];
+  // A played RT at 3 stars (the dev save), so the RW ranking meets a kampung a real player brings. The seed varies the dice.
+  const s = deserialize(readFileSync(new URL('../src/sim/seeds/rt3.json', import.meta.url), 'utf8'))!;
+  s.rng = (s.rng ^ (seed * 7919)) | 0;
+  if (auto) for (const id of ['tongkrongan', 'rapatMalam', 'perangKuota']) if (!s.discovered.includes(id)) s.discovered.push(id);
   promote(s, []);
   s.stage.current = 'rw';
   s.res.rupiah = 30_000_000;
@@ -63,9 +64,9 @@ describe('RW bot', () => {
     
     expect(got.filter((g) => g.stars >= 2).length, JSON.stringify(got)).toBeGreaterThanOrEqual(4);
     for (const g of got) expect(g.combos.length, `seed ${g.seed}`).toBeGreaterThanOrEqual(2);
-  }, 30_000);
+  }, 90_000);
 
-  it('reaches 3 stars within 9 years: Kampung Sebelah at 3 stars and 2 RW combos', () => {
+  it('reaches 3 stars within 9 years: Kampung Sebelah at 3 stars, 2 RW combos and 8 ranking wins', () => {
     const got = [1, 2, 3, 4, 5].map((seed) => {
       const s = playRw(seed, 9, true);
       return { seed, stars: s.stage.stars.rw, rts: s.neighbours.map((n) => n.stars).join('') };
