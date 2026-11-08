@@ -419,8 +419,8 @@ export class App {
   }
 
   /** Developer test mode: replaces the current kampung with a seeded save from src/sim/seeds/. */
-  async loadSeed(id: 'rt3' | 'rw' | 'kel'): Promise<boolean> {
-    const load = { rt3: () => import('./sim/seeds/rt3.json?raw'), rw: () => import('./sim/seeds/rw.json?raw'), kel: () => import('./sim/seeds/kel.json?raw') }[id];
+  async loadSeed(id: 'rt3' | 'rw' | 'kel' | 'kec'): Promise<boolean> {
+    const load = { rt3: () => import('./sim/seeds/rt3.json?raw'), rw: () => import('./sim/seeds/rw.json?raw'), kel: () => import('./sim/seeds/kel.json?raw'), kec: () => import('./sim/seeds/kec.json?raw') }[id];
     const raw = (await load()).default;
     const s = deserialize(raw);
     if (!s) return false;

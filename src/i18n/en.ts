@@ -760,6 +760,7 @@ export const EN = {
   'dev.rt3': "RT, 3 stars",
   'dev.rw': "RW, 3 stars",
   'dev.kel': "Kelurahan",
+  'dev.kec': "Kecamatan",
   'dev.armed': "Tap again to replace this kampung",
   'dev.help': "Loads a ready-made game with buildings, stars and money. It replaces your current save.",
   'set.satire': 'Pak Pejabat is satire about systems and bureaucracy. Any resemblance to your kelurahan is coincidence. Report it, then wait 3 weeks.',

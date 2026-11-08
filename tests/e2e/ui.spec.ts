@@ -733,6 +733,21 @@ test.describe('events, ranking, settings', () => {
     expect(saved.stage.stars.rt).toBe(3);
   });
 
+  test('developer mode loads a seeded Kecamatan game after a second tap', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.locator('#menu-btn').click();
+    await page.locator('#act-settings').click();
+    const kec = page.locator('#sheet [data-seed="kec"]');
+    await kec.scrollIntoViewIfNeeded();
+    await kec.click();
+    await expect(kec).toHaveClass(/btn-danger/);
+    await kec.click();
+    await expect(page.locator('#sheet')).toBeHidden();
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('pakrt.save') ?? '{}'));
+    expect(saved.stage.current).toBe('kecamatan');
+  });
+
   test('every setting flips, saves, and leaves the game readable', async ({ page }) => {
     await start(page);
     await dismissModals(page);

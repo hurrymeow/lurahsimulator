@@ -1,5 +1,5 @@
 // Builds the developer seed saves in src/sim/seeds/: a game played forward by a plain bot to a higher stage.
-export type SeedId = 'rt3' | 'rw' | 'kel';
+export type SeedId = 'rt3' | 'rw' | 'kel' | 'kec';
 // Regenerate with `SEED_WRITE=1 npx vitest run tests/seed.test.ts`.
 import { checkRepair, repair, resolveEvent } from '../src/sim/events';
 import { fundNeighbour, promote, setAutoFund } from '../src/sim/grow';
@@ -104,6 +104,14 @@ function build(id: SeedId): GameState {
   s.stage.path = 'kelurahan';
   s.res.rupiah = 60_000_000;
   play(s, 36, ['rt', 'rw', 'kel']);
+  s.res.rupiah = 45_000_000;
+  if (id === 'kel') return s;
+  // Kecamatan: the Kelurahan is finished, then promoted. Stars start at 0.
+  s.stage.stars.kelurahan = 3;
+  promote(s, []);
+  // A few months to mend and restart anything the promotion left stopped.
+  play(s, 3, ['rt', 'rw', 'kel']);
+  for (const b of s.buildings) if (b.status === 'mangkrak' && checkRestart(s, b).ok) restart(s, b);
   s.res.rupiah = 45_000_000;
   return s;
 }
