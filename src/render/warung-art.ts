@@ -66,16 +66,16 @@ function sign(p: Painter, x: number, y: number, w: number, slope = 0): void {
 /** A wooden push cart on two spoked wheels, a glass case of snacks on top, lifted z off the ground. */
 function cart(p: Painter, z: number, wood: string): void {
   p.id++;
-  for (const [x, y] of [[-6, 1], [2, 5]]) {
+  for (const [x, y] of [[-5, 1], [1, 4]]) {
     for (const [e, d] of [[1, 0], [0, 1], [2, 1], [1, 2]]) p.set(GX + x + e, GY + y - d, 'S');
     p.set(GX + x + 1, GY + y - 1, 'n');
   }
-  p.box(5, 5, wood, (face, u, j) => (face === 'L' && j === 2 && within(u, 0.1, 0.9) ? 'y' : undefined), z);
-  p.box(6, 3, 'l', (face, _u, j, i) => {
+  p.box(6, 4, wood, (face, u, j) => (face === 'L' && j === 2 && within(u, 0.1, 0.9) ? 'y' : undefined), z);
+  p.box(7, 2, 'l', (face, _u, j, i) => {
     if (face === 'T') return 'c';
     if (j === 0) return 'S';
     return (i + j) % 3 === 0 ? 'o' : (i + j) % 3 === 1 ? 'y' : undefined;
-  }, z + 5);
+  }, z + 4);
 }
 
 /**
@@ -83,13 +83,14 @@ function cart(p: Painter, z: number, wood: string): void {
  * plank counter of crates inside with packets on top, sachets along the eave and a red stool.
  */
 function tenda(p: Painter): void {
-  p.shadow(3);
-  for (const [x, y] of [[-10, 0], [10, 0], [0, 5], [0, -5]]) p.stroke(x, y, x, y - 13, 1, 'a');
-  p.box(6, 5, 'n', (face, _u, j, i) => (face !== 'T' && j === 2 ? 'N' : face !== 'T' && i % 4 === 0 ? 'N' : undefined));
-  p.box(7, 2, 'y', (face, _u, _j, i) => (face === 'T' ? (i % 2 ? 'p' : 'c') : undefined), 5);
-  p.roofShape('gable', 3, 13, 5, 'r', 't', (x) => (Math.floor(x / 2) % 2 ? 'w' : undefined));
-  sachets(p, -11, -12, 6, [2, 1]);
-  stool(p, 5, 3);
+  // Sized like the other level 1 buildings (a rumah, a pos ronda): a small tent, not a big one.
+  p.shadow(5);
+  for (const [x, y] of [[-7, 0], [7, 0], [0, 3], [0, -3]]) p.stroke(x, y, x, y - 9, 1, 'a');
+  p.box(7, 4, 'n', (face, _u, j, i) => (face !== 'T' && j === 2 ? 'N' : face !== 'T' && i % 4 === 0 ? 'N' : undefined));
+  p.box(7, 1, 'y', (face, _u, _j, i) => (face === 'T' ? (i % 2 ? 'p' : 'c') : undefined), 4);
+  p.roofShape('gable', 5, 9, 4, 'r', 't', (x) => (Math.floor(x / 2) % 2 ? 'w' : undefined));
+  sachets(p, -7, -8, 4, [2, 1], 3);
+  stool(p, 4, 2);
 }
 
 /**
@@ -98,14 +99,14 @@ function tenda(p: Painter): void {
  */
 function gerobak(p: Painter): void {
   // Smaller and lower than the level 3 toko: a short plank back wall and a low zinc lean-to over the cart.
-  p.shadow(3);
-  p.box(3, 9, 'n', (face, u) => (face === 'L' && u > 0.08 ? null : face === 'R' && u < 0.92 ? null : undefined));
+  p.shadow(4);
+  p.box(4, 8, 'n', (face, u) => (face === 'L' && u > 0.08 ? null : face === 'R' && u < 0.92 ? null : undefined));
   cart(p, 1, 'n');
-  p.roofShape('shed', 3, 10, 3, 's', 't', (x) => (x % 2 ? 'S' : undefined));
-  sachets(p, -10, -9, 6, [2, 1], 3);
-  galon(p, 6, 2);
-  lpg(p, 10, 0);
-  bench(p, -8, 1, 5);
+  p.roofShape('shed', 4, 9, 2, 's', 't', (x) => (x % 2 ? 'S' : undefined));
+  sachets(p, -9, -8, 5, [2, 1], 3);
+  galon(p, 4, 2);
+  lpg(p, 7, 0);
+  bench(p, -7, 1, 4);
 }
 
 /**
@@ -115,18 +116,19 @@ function gerobak(p: Painter): void {
  */
 function kelontong(p: Painter): void {
   p.shadow(2);
-  p.box(2, 13, 'w', (face, u, j, i) => {
+  // One storey of 11px, so it stands no taller than the other level 3 shops (a warteg, a barbershop).
+  p.box(2, 11, 'w', (face, u, j, i) => {
     if (face === 'T') return undefined;
-    if (j >= 10) return 'y';
-    if (face === 'L' && within(u, 0.1, 0.9) && j < 9) {
-      if (j >= 5) return i % 2 ? 'b' : 'B';
+    if (j >= 9) return 'y';
+    if (face === 'L' && within(u, 0.1, 0.9) && j < 8) {
+      if (j >= 4) return i % 2 ? 'b' : 'B';
       return j === 0 ? 'k' : (i + j) % 3 === 0 ? 'y' : (i + j) % 3 === 1 ? 'r' : 'c';
     }
-    if (face === 'R' && within(u, 0.3, 0.7) && within(j, 3, 8)) return j === 3 ? 'n' : 'l';
+    if (face === 'R' && within(u, 0.3, 0.7) && within(j, 3, 7)) return j === 3 ? 'n' : 'l';
     return j === 0 ? 'S' : undefined;
   });
-  p.roofShape('flat', 2, 13, 0, 's', 'w');
-  sign(p, -13, -18, 12, 0.5);
+  p.roofShape('flat', 2, 11, 0, 's', 'w');
+  sign(p, -13, -16, 12, 0.5);
   sachets(p, -13, -5, 7, [2, 1], 3);
   p.box(9, 3, 'n', (face, _u, j) => (face !== 'T' && j === 1 ? 'N' : undefined));
   lpg(p, 9, 1);
