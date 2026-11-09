@@ -2732,6 +2732,24 @@ test.describe('build mode', () => {
     await expect(page.locator('#sheet .staff-akrab')).toBeVisible();
   });
 
+  test('no to a personal request reads as a refused request, never a refused raise', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.staff.push({ id: 78, name: 'Mbak Rina', stars: 2, stats: { rajin: 40, lobi: 40, jujur: 50, gaul: 40 }, salary: 1_000_000, role: 'hansip', xp: 30, level: 3, hiredAt: 0,
+        request: { kind: 'loan', line: 0, due: app.s.month + 4, amt: 1_500_000 } });
+      app.refresh();
+    });
+    await openPanel(page, 'staff');
+    const row = page.locator('#sheet .staff-card[data-staff="78"]');
+    await row.locator('.staff-open').click();
+    await page.locator('#req-no').click();
+    const en = lang() === 'en';
+    await expect(page.locator('#sheet')).toContainText(en ? 'Request refused.' : 'Permintaan ditolak.');
+    await expect(page.locator('#sheet')).not.toContainText(en ? 'Raise refused' : 'Kenaikan ditolak');
+  });
+
   test('each staff row opens its detail; raise and let go work there', async ({ page }) => {
     await start(page);
     await dismissModals(page);

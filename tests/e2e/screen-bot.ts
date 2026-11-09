@@ -101,7 +101,13 @@ export function decide(screen: Screen, cards: Card[]): Action {
     const c = byName.get(name);
     if (c && !c.locked && c.owned === 0) return { kind: 'build', name, why: `named on screen: ${name}` };
   }
-  // Every named building is already owned. A line that still asks for more (residents, combos) means build another.
+  // Every named building is already owned. A line that still asks for more (residents, combos) means build another,
+  // unless another named building is locked and unowned: the player is saving for it.
+  const saving = seen.filter((name) => {
+    const c = byName.get(name);
+    return c?.locked && c.owned === 0;
+  });
+  if (saving.length) return { kind: 'wait', why: `saving for: ${saving.join(', ')}` };
   for (const name of seen) {
     const c = byName.get(name);
     if (c && !c.locked) return { kind: 'build', name, why: `named on screen, own ${c.owned} and the star still waits: ${name}` };

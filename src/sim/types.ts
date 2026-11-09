@@ -254,8 +254,12 @@ export interface Staff extends Applicant {
   away?: number;
   /** Asked for a raise at the last level up and not answered yet. */
   raiseAsked?: boolean;
-  /** A raise was refused: Kampung Sebelah may poach them. */
+  /** A raise or a personal request was refused: Kampung Sebelah may poach them. */
   refused?: boolean;
+  /** What the last refusal was, so the card names it. Missing in older saves: a raise. */
+  refusedWhat?: 'raise' | 'request';
+  /** Refusals so far, raises and requests alike. A Baperan's chance to leave grows with each (BAPERAN_LEAVE_STEP). */
+  refusals?: number;
   /** Month of the last raise, for Rajin Lembur. */
   lastRaise?: number;
   /** Akrab, the bond with Pak RT: 0 to 3 hearts, each +3 to the work stat. Urusan Pribadi (decisions/staff-requests.md section 2). */
