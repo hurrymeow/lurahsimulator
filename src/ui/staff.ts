@@ -97,13 +97,13 @@ const face = (x: Applicant & { inem?: boolean }, role: string) => {
 function flags(x: Staff, rival: string): Node[] {
   const out: Node[] = [];
   if (x.away) out.push(h('p', { class: 'meta warn' }, t('staff.awayNow', { n: x.away })));
-  if (x.refused) out.push(h('p', { class: 'meta warn' }, t('staff.refused', { rival })));
+  if (x.refused) out.push(h('p', { class: 'meta warn' }, t(x.refusedWhat === 'request' ? 'staff.refusedRequest' : 'staff.refused', { rival })));
   return out;
 }
 
 /** One line per person; every action waits in their detail view. A chip flags what needs the player. */
 function staffCard(app: App, x: Staff): HTMLElement {
-  const chip = x.request ? t('req.chip') : x.raiseAsked ? t('staff.raiseChip') : x.away ? t('staff.awayNow', { n: x.away }) : x.refused ? t('staff.refusedChip') : '';
+  const chip = x.request ? t('req.chip') : x.raiseAsked ? t('staff.raiseChip') : x.away ? t('staff.awayNow', { n: x.away }) : x.refused ? t(x.refusedWhat === 'request' ? 'staff.refusedRequestChip' : 'staff.refusedChip') : '';
   return h('div', { class: `card-btn static staff-card${x.inem ? ' inem' : ''}`, 'data-staff': String(x.id) },
     face(x, x.role),
     h('div', { class: 'card-text' },
@@ -165,7 +165,15 @@ function personView(app: App, x: Staff, done: () => void): Node[] {
     parts.push(h('p', { class: 'meta' }, t('staff.raiseAsk', { amt: rupiah(price(s, Math.round(x.salary * (1 + RAISE)))) })));
     parts.push(h('div', { class: 'row staff-actions' },
       h('button', { class: 'btn btn-primary', onclick: () => { answerRaise(s, x, true); app.tap(10); done(); } }, t('staff.accept')),
-      h('button', { class: 'btn', onclick: () => { answerRaise(s, x, false); app.tap(10); done(); } }, t('staff.refuse')),
+      h('button', { class: 'btn', onclick: () => {
+        const left = answerRaise(s, x, false);
+        app.tap(10);
+        if (left) {
+          app.save();
+          app.refresh();
+          openStaff(app);
+        } else done();
+      } }, t('staff.refuse')),
     ));
   }
   if (!x.inem) {

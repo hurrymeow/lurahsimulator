@@ -2,10 +2,11 @@
 // each role does, and Inem's gigs. Rolls hash the seed, month and ids, so staff never shift the shared random
 // stream that events and arrivals draw from.
 import { atMonth } from './calendar';
+import { rand } from './rng';
 import { gName, gReward, t, type Key } from '../i18n';
 import { rupiah } from '../format';
 import {
-  APPLICANTS, BIMTEK, CHANNELS, COURSE_COST, LEVEL_STAT_GAIN, RISK, GIGS, INEM, MUTASI, PESANGON_MONTHS, POACH_CHANCE, RAISE, REQUIREMENTS, ROLE_FX, ROLES, SLOTS,
+  APPLICANTS, BAPERAN_LEAVE_STEP, BIMTEK, CHANNELS, COURSE_COST, LEVEL_STAT_GAIN, RISK, GIGS, INEM, MUTASI, PESANGON_MONTHS, POACH_CHANCE, RAISE, REQUIREMENTS, ROLE_FX, ROLES, SLOTS,
   SPECIAL_CHANCE, SPECIALS, STAFF_CAP, STAFF_LEVEL_MONTHS, STAR_SALARY, STAR_TOTAL, STAT_MAX, STATS, TRAITS, roleDef, traitDef,
   type ChannelId, type RoleDef, type RoleId, type StatId, type TraitId,
 } from '../data/staff';
@@ -366,17 +367,32 @@ export function bimtek(s: GameState, x: Staff, stat: StatId = roleDef(x.role).st
   return true;
 }
 
-/** Answers a raise request. Refused: a Baperan leaves at once, anyone else may be poached. */
-export function answerRaise(s: GameState, x: Staff, accept: boolean): void {
+/**
+ * Says no to a raise or a personal request. A Baperan may leave at once, more likely with each refusal
+ * (25%, 50%, 75%, then always); anyone who stays may be poached. True if they left.
+ */
+export function refuse(s: GameState, x: Staff, what: 'raise' | 'request'): boolean {
+  x.refusals = (x.refusals ?? 0) + 1;
+  if (x.trait && traitDef(x.trait).leavesOnRefuse && rand(s) < BAPERAN_LEAVE_STEP * x.refusals) {
+    release(s, x);
+    return true;
+  }
+  x.refused = true;
+  x.refusedWhat = what;
+  return false;
+}
+
+/** Answers a raise request. Refused: see `refuse`. True if they left. */
+export function answerRaise(s: GameState, x: Staff, accept: boolean): boolean {
   x.raiseAsked = false;
   if (accept) {
     x.salary = Math.round(x.salary * (1 + RAISE));
     x.refused = false;
+    delete x.refusedWhat;
     x.lastRaise = s.month;
-    return;
+    return false;
   }
-  if (x.trait && traitDef(x.trait).leavesOnRefuse) release(s, x);
-  else x.refused = true;
+  return refuse(s, x, 'raise');
 }
 
 /** AI RTs that can take a Ketua RT. Absorbed RTs stay out, each with its index in `s.neighbours`. */
@@ -455,7 +471,7 @@ export function staffSystem(s: GameState, fx: Fx): void {
     }
     if (x.refused && (x.akrab ?? 0) < AKRAB_PERK.hearts && roll(s, s.month, x.id, 9) < POACH_CHANCE && !tr?.noFire) {
       release(s, x);
-      fx.push({ kind: 'notice', title: t('staff.poachedTitle', { name: x.name, rival: RIVAL_NAMES[s.stage.current] }), body: t('staff.poachedBody'), tone: 'bad' });
+      fx.push({ kind: 'notice', title: t('staff.poachedTitle', { name: x.name, rival: RIVAL_NAMES[s.stage.current] }), body: t(x.refusedWhat === 'request' ? 'staff.poachedBodyRequest' : 'staff.poachedBody'), tone: 'bad' });
       continue;
     }
     if (tr?.quitsUnpaidAfter && s.month - (x.lastRaise ?? x.hiredAt) >= tr.quitsUnpaidAfter) {
