@@ -8,7 +8,7 @@ import { gateOpen } from './gate';
 import { gain, type Fx } from './gain';
 import { isWorking, withinEdges } from './state';
 import { brandOf } from './brands';
-import type { Building, GameState, JobId } from './types';
+import { GRID_W, type Building, type GameState, type JobId } from './types';
 
 export interface ActiveCombo {
   combo: ComboDef;
@@ -52,6 +52,27 @@ const near = withinEdges;
 
 /** Combos that can fire now: the RT ones, plus later-stage ones whose gate is open. */
 export const liveCombos = (s: GameState): ComboDef[] => [...COMBOS, ...STAGE_COMBOS.filter((c) => gateOpen(s, c.gate))];
+
+/**
+ * Tiles where placing `id` would join a live combo: a one-tile footprint within reach of an owned
+ * building that fills another of the combo's needs. Level requirements are ignored.
+ */
+export function comboJoinTiles(s: GameState, id: string, tiles: { x: number; y: number }[]): Set<number> {
+  const out = new Set<number>();
+  const joins: { radius: number; partners: string[] }[] = [];
+  for (const c of liveCombos(s)) {
+    const needs = c.needs.map(parseNeed);
+    const slot = needs.findIndex((n) => n.id === id);
+    if (slot < 0) continue;
+    joins.push({ radius: c.radius, partners: needs.filter((_, i) => i !== slot).map((n) => n.id) });
+  }
+  if (!joins.length) return out;
+  for (const tile of tiles) {
+    const spot = { x: tile.x, y: tile.y, def: id, small: 1 };
+    if (joins.some((j) => j.partners.some((p) => s.buildings.some((b) => baseDef(b) === p && withinEdges(spot, b, j.radius))))) out.add(tile.y * GRID_W + tile.x);
+  }
+  return out;
+}
 
 /** Combos the Buku Combo lists: the RT ones, plus every combo of a stage the player has reached. */
 export const bookCombos = (s: GameState): ComboDef[] => [...COMBOS.filter((c) => !c.retired || s.discovered.includes(c.id)), ...STAGE_COMBOS.filter((c) => gateOpen(s, { ...c.gate, stars: 0 }))];

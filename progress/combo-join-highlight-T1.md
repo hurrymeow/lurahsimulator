@@ -1,0 +1,1 @@
+Shipped `comboJoinTiles` in `src/sim/combos.ts` and `tests/combo-join.test.ts` covering a posRonda joining a placed kantorRT, the no-partner case, and a rumah never joining. `npm run typecheck` and `npm test` (680 passed, 9 skipped) pass, including the new spec.
