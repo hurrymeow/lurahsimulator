@@ -834,7 +834,7 @@ describe('AI RT variety', () => {
   it('explains a score by its parts', () => {
     const s = withAi();
     const p = scoreParts(viewOf(s, s.neighbours[0]));
-    expect(Math.abs(p.residents + p.buildings + p.combos + p.sabar - p.total)).toBeLessThanOrEqual(2);
+    expect(Math.abs(p.residents + p.buildings + p.combos + p.sabar + p.programs - p.total)).toBeLessThanOrEqual(2);
     expect(rivalTarget(2)).toBeGreaterThan(rivalTarget(1));
   });
 });
