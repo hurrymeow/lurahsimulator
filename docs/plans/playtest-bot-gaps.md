@@ -12,7 +12,7 @@ Fix two bot gaps found by the first-2h playtest (Hari, 2026-11-08: "fix all, use
 ### T1. Kecamatan bot uses the pinjol tools (Sonnet, executor trial)
 - Files: `tests/kec-bot-lib.ts`, `tests/kec-bot.test.ts`
 - Exact changes: in `kecWeek`, when `stage === 'kecamatan'` and the Kantor Kecamatan stands: (a) call `makeRoomFor(s, 'koperasiSP', [...seam, ...all])` while fewer than 2 `koperasiSP` buildings exist; (b) call `makeRoomFor(s, 'balaiLatihanKerja', [...seam, ...all])` while none exists; (c) when `pinjolShare(s) >= 20` and `checkRealisasi(s, 'literasiKeuangan').ok`, call `startRealisasi(s, 'literasiKeuangan')`. Import `checkRealisasi` and `startRealisasi` from `../src/sim/realisasi`. Do this before the `kelWeek` call. In `tests/kec-bot.test.ts` add no new slow test; keep the existing ones passing.
-- Done when: `npm run typecheck` passes; `npx vitest run tests/kec-bot.test.ts` passes; a one-off local run of `playKecHint(1, 300)` (not committed) reports `pinjol` below 41; `decisions/playtest-bot-gaps-T1.md` and `progress/playtest-bot-gaps-T1.md` exist.
+- Done when: `npm run typecheck` passes; `npx vitest run tests/kec-bot.test.ts` passes; you may check with a one-off `playKecHint(1, 300)` run (takes ~4 min), but any scratch test file you create MUST be deleted before you finish: the gate rejects files outside the Files list; `decisions/playtest-bot-gaps-T1.md` and `progress/playtest-bot-gaps-T1.md` exist.
 - Don't touch: `src/`, other bot files, scorecard files, TODO.md. No e2e.
 
 ### T2. Screen bot saves instead of rebuilding (Sonnet, executor trial)
