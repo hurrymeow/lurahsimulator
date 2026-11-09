@@ -13,8 +13,12 @@ import { checkRestart, restart } from '../../src/sim/projects';
 import { demolish, checkPlace, checkUpgrade, place, requirementGaps, siteGaps, skipPermit, upgrade } from '../../src/sim/rules';
 import { COMBO_HINT_MONTH, easiestCombo, nextStep } from '../../src/sim/nextstep';
 import { hasProblem } from '../../src/sim/problems';
+import { checkRealisasi, realisasiCost, startRealisasi } from '../../src/sim/realisasi';
+import { REALISASI } from '../../src/data/realisasi';
 import { acceptSK, canPromote, nextStarChecklist } from '../../src/sim/stages';
-import { buildCost, housing, newGame, population, tilesOf } from '../../src/sim/state';
+import { answerRaise, hire, lowonganCost, postLowongan } from '../../src/sim/staff';
+import { STAR_SALARY } from '../../src/data/staff';
+import { buildCost, housing, newGame, population, price, tilesOf } from '../../src/sim/state';
 import { tick } from '../../src/sim/tick';
 import { announce } from '../../src/sim/wacana';
 import { GRID_H, GRID_W, RT_H, RT_W, setGrid, type GameState, type StageId } from '../../src/sim/types';
@@ -326,6 +330,29 @@ function buildCombo(c: Ctx, buffer: number, only?: string[]): void {
   }
 }
 
+/** Answers every raise, takes the best applicant on the board, and posts for a second Asisten once the kas can carry the wages. */
+function staffWhen(c: Ctx, p: Plan): void {
+  const { s } = c;
+  if (!p.hire) return;
+  for (const x of s.staff ?? []) if (x.raiseAsked) answerRaise(s, x, true);
+  const apps = s.lowongan?.applicants ?? [];
+  if (apps.length) {
+    const best = [...apps].sort((a, b) => b.stats.lobi - a.stats.lobi || a.id - b.id)[0];
+    if (hire(s, best.id)) c.acts++;
+  } else if (!s.lowongan && c.t % 4 === 0 && (s.staff ?? []).filter((x) => x.role === 'asisten').length < 2) {
+    const wages = (s.staff ?? []).reduce((n, x) => n + price(s, x.salary), 0) + price(s, STAR_SALARY[2]);
+    if (s.res.rupiah >= lowonganCost(s, 'grupWa') + p.buffer + 12 * wages && postLowongan(s, 'asisten', 'grupWa').ok) c.acts++;
+  }
+}
+
+/** Runs the first Realisasi the kas can afford beyond the buffer. */
+function realisasiWhen(c: Ctx, p: Plan): void {
+  const { s } = c;
+  if (!p.realisasi || c.t % 4 !== 0) return;
+  const d = REALISASI.find((x) => checkRealisasi(s, x.id).ok && s.res.rupiah >= realisasiCost(s, x) + p.buffer);
+  if (d && startRealisasi(s, d.id).ok) c.acts++;
+}
+
 function announceWhen(c: Ctx, mode: 'never' | 'low' | 'always'): void {
   const { s } = c;
   if (mode === 'never') return;
@@ -352,6 +379,10 @@ interface Plan {
   comboFrom: number;
   /** Per-kind limits that replace the default of 3. */
   caps?: Record<string, number>;
+  /** Hires staff and answers raises. */
+  hire: boolean;
+  /** Runs Realisasi programs. */
+  realisasi: boolean;
 }
 
 const shopsFirst = (s: GameState): string[] => {
@@ -362,14 +393,14 @@ const safetyFirst = (s: GameState): string[] => ['posRonda', 'posSatpam', 'lampu
 const noNeeds = (s: GameState): string[] => builderOrder(s).filter((id) => !['posSatpam', 'kebunSayur', 'lampuTaman', 'bidan', 'sawah', 'kandangAyam', 'kolamLele', 'paud'].includes(id));
 const needsFirst = (s: GameState): string[] => ['kebunSayur', 'posSatpam', 'lampuTaman', ...builderOrder(s)];
 
-const BASE: Plan = { every: 1, buffer: 200_000, perTick: 2, upgradeAt: 2_000_000, announce: 'low', event: 'free', fund: true, order: builderOrder, combo: 'book', comboFrom: COMBO_HINT_MONTH };
+const BASE: Plan = { every: 1, buffer: 200_000, perTick: 2, upgradeAt: 2_000_000, announce: 'low', event: 'free', fund: true, order: builderOrder, combo: 'book', comboFrom: COMBO_HINT_MONTH, hire: true, realisasi: false };
 const PLANS: Partial<Record<BotId, Plan>> = {
   builder: BASE,
   shopkeeper: { ...BASE, order: shopsFirst },
   safety: { ...BASE, order: safetyFirst, event: 'paid', caps: { posRonda: 2, posSatpam: 1, lampuTaman: 2, bidan: 1 } },
-  cheapskate: { ...BASE, every: 4, buffer: 3_000_000, perTick: 1, upgradeAt: null, announce: 'never' },
+  cheapskate: { ...BASE, every: 4, buffer: 3_000_000, perTick: 1, upgradeAt: null, announce: 'never', hire: false },
   pencitraan: { ...BASE, order: noNeeds, announce: 'always', upgradeAt: 4_000_000 },
-  honest: { ...BASE, order: needsFirst, announce: 'never' },
+  honest: { ...BASE, order: needsFirst, announce: 'never', realisasi: true },
   hint: { ...BASE, combo: 'hint' },
 };
 
@@ -415,6 +446,8 @@ function playPlan(c: Ctx, p: Plan): void {
   // The RW combo line points to Build, Combo, so a player who reads it puts the pieces side by side.
   if ((nextStarChecklist(s) ?? []).some((l) => !l.done && l.goal.kind === 'rwCombos')) buildCombo(c, p.buffer, RW_PIECES);
   buildFrom(c, p.order(s), p.buffer, p.perTick, p.caps);
+  staffWhen(c, p);
+  realisasiWhen(c, p);
   announceWhen(c, p.announce);
 }
 

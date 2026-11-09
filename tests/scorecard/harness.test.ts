@@ -3,6 +3,7 @@ import { BOTS, runBot } from './driver';
 import { takeover } from './takeover';
 import { buildScorecard, lintTraitsCombos, simText } from './scorecard';
 import { TRAITS } from '../../src/data/staff';
+import type { GameState } from '../../src/sim/types';
 import { parseT2Report, t2Verdict, type T2Result } from './t2';
 
 // Fast checks that the harness itself works. The full scorecard runs with `npm run scorecard`.
@@ -20,6 +21,14 @@ describe('scorecard harness', () => {
     const b = runBot('builder', 5, 60);
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
+
+  it('a builder hires an Asisten once it can afford one', () => {
+    const out: { s?: GameState } = {};
+    runBot('builder', 3, 400, { out });
+    const asisten = (out.s?.staff ?? []).filter((x) => x.role === 'asisten');
+    expect(asisten.length, `asisten: ${asisten.map((x) => x.name).join(', ')}`).toBeGreaterThanOrEqual(2);
+    expect(asisten.some((x) => x.inem)).toBe(true);
+  }, 60_000);
 
   it('a builder that takes over an idle game still progresses', () => {
     const t = takeover(2, 'idle', 60, 80);

@@ -1,0 +1,3 @@
+# T1: bots hire an Asisten and answer raises
+
+Shipped in `tests/scorecard/driver.ts` and `tests/scorecard/harness.test.ts`. `Plan` gained `hire` and `realisasi`; `BASE` turns hiring on and Realisasi off, `cheapskate` turns hiring off, and `honest` turns Realisasi on. `staffWhen` answers raises, hires the best-Lobi applicant, and posts an Asisten lowongan on a wage-aware budget; `realisasiWhen` starts the first affordable Realisasi. A new test runs `builder` on seed 3 for 400 ticks and finds at least two Asisten including Inem. `npm run typecheck` and `npm test` pass (661 tests), and the test fails without `staffWhen`.
