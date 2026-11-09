@@ -1,1 +1,3 @@
 Drew the combo join hint on the map. `MapView` gained a `join` set beside `valid`, and the placement block draws those valid tiles as gold diamonds (fill `rgba(250, 204, 21, 0.38)`, stroke `rgba(250, 204, 21, 0.8)`) over the faint neutral ones. `App.markValid` fills it from `comboJoinTiles` using the valid tiles, and `stopPlacing` clears it with `valid`, so the hint costs no strings or sprites and disappears when placement ends.
+
+Review (Claude, 2026-11-09): diff matches the task and touches only the listed files. Join tiles draw only while placing.
