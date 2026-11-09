@@ -979,7 +979,8 @@ export class MapView {
     const cx = c0.x;
     const lele = b.def === 'kolamLele';
     // A lele pond's water stands above the ground in its terpal tub at levels 1 and 2.
-    const cy = c0.y + (n - 1) * (TH / 2) * s - (lele ? LELE_WATER[Math.min(b.level, 3) - 1] ?? 0 : 0) * s;
+    // The level 1 tub stands 1px up so its soil line stays on the tile (decisions/icons-not-words.md).
+    const cy = c0.y + (n - 1) * (TH / 2) * s - (lele ? (LELE_WATER[Math.min(b.level, 3) - 1] ?? 0) + (b.level <= 1 ? 1 : 0) : 0) * s;
     const count = lele ? 2 + Math.min(b.level, 3) : 2 + 2 * n;
     const rx = (lele ? 7 : 9) * n;
     const t = this.motion ? now / 1000 : 0;

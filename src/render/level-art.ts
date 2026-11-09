@@ -626,7 +626,11 @@ export const terminal: Art = (p, _v, level = 1) => {
   angkot(p, 0.64, 0.84, 'b');
 };
 
-/** Taman: a lawn with one tree and a bench, then paths, a flower bed and more trees, then a gazebo, lamps and a ring of trees. */
+/**
+ * Taman: a lawn with one tree and a bench, then paths, a flower bed and a tree in each of the back, right
+ * and left quarters, then a gazebo in the back quarter and lamps along the path. One thing per quarter, so
+ * no two trees bunch and nothing stands on the gazebo (review 2026-11-09).
+ */
 export const taman: Art = (p, _v, level = 1) => {
   p.low();
   p.shadow(2);
@@ -635,16 +639,16 @@ export const taman: Art = (p, _v, level = 1) => {
     if (level >= 2 && within(a, 0.62, 0.86) && within(b, 0.62, 0.86)) return (Math.floor(a * 40) + Math.floor(b * 40)) % 3 === 0 ? 'r' : (Math.floor(a * 40) + Math.floor(b * 40)) % 3 === 1 ? 'y' : 'G';
     return (Math.floor(a * 4) + Math.floor(b * 4)) % 2 ? 'g' : 'G';
   });
-  canopyTree(p, 0.26, 0.26, level <= 1 ? 0.75 : 0.95, level <= 1 ? 2 : 3);
-  if (level >= 2) canopyTree(p, 0.76, 0.26, 0.8, 2);
+  if (level <= 2) canopyTree(p, 0.26, 0.26, level <= 1 ? 0.75 : 0.95, level <= 1 ? 2 : 3);
+  if (level >= 2) canopyTree(p, 0.76, 0.24, 0.8, 2);
   if (level >= 3) {
-    // A gazebo on the back-left lawn, and lamps along the path.
-    for (const [a, b] of [[0.1, 0.62], [0.36, 0.62], [0.1, 0.88], [0.36, 0.88]]) pole(p, a, b, 6, 'N');
-    roofRect(p, 0.08, 0.38, 0.6, 0.9, 6, 4, 'hip', 'R', 'w', undefined, 0.02);
+    // The gazebo takes the back quarter, where the big tree stood; lamps along the path.
+    for (const [a, b] of [[0.1, 0.1], [0.36, 0.1], [0.1, 0.36], [0.36, 0.36]]) pole(p, a, b, 6, 'N');
+    roofRect(p, 0.08, 0.38, 0.08, 0.38, 6, 4, 'hip', 'R', 'w', undefined, 0.02);
     for (const a of [0.56, 0.9]) pole(p, a, 0.44, 8, 'S');
   }
-  prism(p, 0.3, 0.42, 0.66, 0.7, 2, 'n', (face) => (face === 'T' ? 't' : undefined));
-  if (level >= 2) canopyTree(p, level >= 3 ? 0.84 : 0.26, level >= 3 ? 0.62 : 0.8, 0.85, 2);
+  prism(p, 0.3, 0.42, 0.62, 0.66, 2, 'n', (face) => (face === 'T' ? 't' : undefined));
+  if (level >= 2) canopyTree(p, 0.24, 0.8, 0.85, 2);
   if (level >= 2) {
     // A bin by the bench and the park's name on a low board at the path's front end.
     prism(p, 0.44, 0.47, 0.66, 0.69, 3, 'g', (face) => (face === 'T' ? 'G' : undefined));
@@ -821,6 +825,29 @@ export const baliho: Art = (p, _v, level = 1) => {
   for (const a of lamps) {
     prism(p, a - 0.01, a + 0.01, 0.53, 0.6, 1, 'S', undefined, z + H);
     prism(p, a - 0.03, a + 0.03, 0.58, 0.62, 1, 'y', undefined, z + H - 1);
+  }
+  // A steel ladder up the left leg, and rolled spanduk waiting at its foot.
+  p.overlay.push((q) => {
+    for (let d = 1; d <= z; d++) {
+      const [x, y] = at(q, a0 + 0.08, 0.6, d);
+      q.px(Math.round(x) - 1, Math.round(y), '#6d635a');
+      q.px(Math.round(x) + 1, Math.round(y), '#6d635a');
+      if (d % 2 === 0) q.px(Math.round(x), Math.round(y), '#6d635a');
+    }
+  });
+  for (const [a, c] of [[0.62, 'r'], [0.7, 'y']] as [number, string][]) prism(p, a, a + 0.06, 0.72, 0.75, 1, c, (face) => (face === 'T' ? 'w' : undefined));
+  if (big) {
+    // The tukang pasang on the catwalk, pasting the next face over the old one.
+    p.overlay.push((q) => {
+      const [x, y] = at(q, 0.78, 0.6, z);
+      const X = Math.round(x), Y = Math.round(y);
+      q.px(X, Y - 1, '#3d72b4');
+      q.px(X, Y - 2, '#e57d2e');
+      q.px(X, Y - 3, '#e57d2e');
+      q.px(X, Y - 4, '#eac58f');
+      q.px(X, Y - 5, '#f4b935');
+      q.px(X - 1, Y - 3, '#eac58f');
+    });
   }
 };
 
