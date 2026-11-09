@@ -247,30 +247,34 @@ function letters(text: string): boolean[][] {
  * 'raised' lifts it on two posts above z (a sign on the roof); 'emblem' draws the building's 5x5 pictogram
  * instead of the word, for sprites where lettering made the front too busy.
  */
-export function namePlate(p: Painter, text: string, a0: number, a1: number, b: number, z: number, opts: { bg?: string; fg?: string; frame?: string; legs?: boolean; style?: 'text' | 'raised' | 'emblem'; lift?: number } = {}): void {
+export function namePlate(p: Painter, text: string, a0: number, a1: number, b: number, z: number, opts: { bg?: string; fg?: string; frame?: string; legs?: boolean; style?: 'text' | 'raised' | 'emblem'; lift?: number; icon?: boolean } = {}): void {
   const { bg = '#f6ecd4', fg = '#2a1810', frame = '#27427c', legs = false, style = 'text' } = opts;
   if (p.site) return;
   p.overlay.push((q) => {
-    const ink = style === 'emblem' ? emblem(text) : letters(text).map((col) => col.map((on) => (on ? fg : null)));
+    // An icon, not a word (review 2026-11-09): a raised board can carry the pictogram too.
+    const ink = style === 'emblem' || opts.icon ? emblem(text) : letters(text).map((col) => col.map((on) => (on ? fg : null)));
     // A raised plate stands on two posts well clear of the roof it rides on, so it reads as a sign on top.
     const lift = style === 'raised' ? (opts.lift ?? 8) : 0;
     const pad = 2;
     const w = ink.length + 2 * pad;
-    const h = 7;
+    const rows = ink[0]?.length ?? 5;
+    const h = rows + 2;
     const [xm, ym] = spot(q, (a0 + a1) / 2, b, z + lift);
     const X0 = Math.round(xm - w / 2);
-    const Y0 = ym - w / 4;
+    // A pictogram faces the street flat, so its shape reads; only a word is slanted with the wall like paint.
+    const pict = style === 'emblem' || !!opts.icon;
+    const Y0 = pict ? ym : ym - w / 4;
     // The posts stand where the span a0..a1 is, so they land on the roof or wall below, never in the air
     // past the building's edge when the plate is wider than its front.
     const inset = Math.min(0.04, (a1 - a0) / 4);
     const postCols = [a0 + inset, a1 - inset].map((a) => Math.max(1, Math.min(w - 2, Math.round(spot(q, a, b, z + lift)[0]) - X0)));
     for (let c = 0; c < w; c++) {
-      const base = Math.round(Y0 + c / 2);
+      const base = Math.round(pict ? Y0 : Y0 + c / 2);
       for (let r = 0; r < h; r++) {
         const edge = r === 0 || r === h - 1 || c === 0 || c === w - 1;
         const col = ink[c - pad];
         const tr = r - 1;
-        const on = !edge && col && tr >= 0 && tr <= 4 ? col[tr] : null;
+        const on = !edge && col && tr >= 0 && tr < rows ? col[tr] : null;
         q.px(X0 + c, base - h + 1 + r, edge ? frame : on ?? bg);
       }
       // Posts: down to the ground for a yard plate, down to the roof for a raised one.
@@ -280,11 +284,16 @@ export function namePlate(p: Painter, text: string, a0: number, a1: number, b: n
   });
 }
 
-// 5x5 pictograms for the emblem plate style, one per building, keyed by the plate's name.
+// Pictograms for the emblem plate style, one per building, keyed by the plate's name. Most are 5x5; the
+// Pasar basket and the RSUD cross are bigger so they read from across the map (review 2026-11-09: an icon,
+// never a word, unless the name is as short as RT or RW).
 const EMBLEMS: Record<string, string[]> = {
   LURAH: ['..y..', '.yyy.', 'yyyyy', '.y.y.', 'y...y'],
-  PASAR: ['.n.n.', 'nnnnn', 'ngoyn', 'nnnnn', '.nnn.'],
-  TERMINAL: ['bbbbb', 'bcbcb', 'bbbbb', 'bbbbb', '.k.k.'],
+  // A basket of produce: a banana, a chili, an orange and a cabbage leaf over a woven rim.
+  PASAR: ['..g..y.', '.rrg.yy', 'rrooggy', 'nnnnnnn', '.nanan.'],
+  // The red cross of a hospital, bigger than the Apotek's green plus.
+  RSUD: ['..rrr..', '..rrr..', 'rrrrrrr', 'rrrrrrr', 'rrrrrrr', '..rrr..', '..rrr..'],
+  TERMINAL: ['bbbbbbb', 'bcbcbcb', 'bbbbbbb', 'byybbbb', '.k...k.'],
   TAMAN: ['.ggg.', 'ggggg', '.ggg.', '..n..', '..n..'],
   CAMAT: ['..y..', 'yyyyy', '.yyy.', '.y.y.', 'y...y'],
   SATPOL: ['bbbbb', 'byyyb', 'byyyb', '.byb.', '..b..'],
@@ -292,14 +301,45 @@ const EMBLEMS: Record<string, string[]> = {
   KSP: ['.yyy.', 'yaaay', 'yayay', 'yaaay', '.yyy.'],
   BLK: ['.S.S.', 'SSSSS', 'SS.SS', 'SSSSS', '.S.S.'],
 };
-const EMBLEM_C: Record<string, string> = { y: '#f4b935', a: '#c98a2e', r: '#df4a2c', n: '#a8652f', g: '#6aa443', o: '#e57d2e', b: '#3d72b4', c: '#82bfdc', k: '#2a1810', S: '#6d635a' };
+const EMBLEM_C: Record<string, string> = { y: '#f4b935', R: '#df4a2c', a: '#c98a2e', r: '#df4a2c', n: '#a8652f', g: '#6aa443', o: '#e57d2e', b: '#3d72b4', c: '#82bfdc', k: '#2a1810', S: '#6d635a' };
 
 /** The emblem for a plate name as columns of colours (null is the plate's background). */
 function emblem(text: string): (string | null)[][] {
   const g = EMBLEMS[text] ?? EMBLEMS.LURAH;
   const cols: (string | null)[][] = [];
-  for (let c = 0; c < 5; c++) cols.push(g.map((row) => (row[c] === '.' ? null : EMBLEM_C[row[c]])));
+  for (let c = 0; c < g[0].length; c++) cols.push(g.map((row) => (row[c] === '.' ? null : EMBLEM_C[row[c]])));
   return cols;
+}
+
+/**
+ * A light the map blinks over the sprite at lot point (a, b), up art pixels high: it steps through cycle
+ * (null shows the sprite under it) every period ms. Native 1px, so it stays a dot on any lot.
+ */
+export function beacon(p: Painter, a: number, b: number, up: number, cycle: (string | null)[], period = 400, dx = 0): void {
+  if (p.site) return;
+  const [x, y] = spot(p, a, b, up);
+  p.blink.push({ x: Math.round(x) + dx, y: Math.round(y), cycle, period });
+}
+
+/**
+ * A rotator light bar on a roof at lot point (a, b), z up: a dark base with a red lamp on the left and a
+ * blue one on the right, drawn dim on the sprite; the map flashes them in turn (beacon).
+ */
+export function sirenBar(p: Painter, a: number, b: number, z: number): void {
+  if (p.site) return;
+  // Two lamp rows each side of a pale centre, on a dark base: red on the left, blue on the right.
+  const lamps: [number, number, string][] = [];
+  for (const d of [1, 2]) for (let e = -4; e <= 4; e++) if (e) lamps.push([e, d, e < 0 ? (d === 2 ? '#a8321f' : '#8a2a20') : d === 2 ? '#27427c' : '#1d3260']);
+  p.overlay.push((q) => {
+    const [x, y] = spot(q, a, b, z);
+    const X = Math.round(x), Y = Math.round(y);
+    for (let e = -5; e <= 5; e++) q.px(X + e, Y, '#2a1810');
+    for (const [e, d, c] of lamps) q.px(X + e, Y - d, c);
+    for (const d of [1, 2, 3]) q.px(X, Y - d, '#d8d0c0');
+  });
+  const RED = '#ff5a40', BLUE = '#5aa8ff';
+  // The lamps sweep: red lit, then blue, a beat apart, like a rotator seen from the street.
+  for (const [e, d] of lamps) beacon(p, a, b, z + d, e < 0 ? [RED, null] : [null, BLUE], 260, e);
 }
 
 /** A motor parked side-on at ground (a, b), in native pixels: two wheels, a body in its colour, a seat. */

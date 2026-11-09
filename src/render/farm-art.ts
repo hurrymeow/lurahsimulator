@@ -32,12 +32,16 @@ function terpalTub(p: Painter, x: number, y: number, rx: number, h: number): voi
   const inside = (dx: number, dy: number, r: number) => (dx * dx) / (r * r) + (dy * dy) / ((r / 2) * (r / 2)) <= 1;
   // The wall: lit blue on the left, shaded on the right, a pale fold every few columns.
   p.id++;
+  // The bottom runs flat across the middle, so the tub stands on the ground instead of rocking on a curve.
+  const flat = Math.round(ry * 0.7);
   for (let dx = -rx; dx <= rx; dx++) {
-    const front = Math.round(ry * Math.sqrt(Math.max(0, 1 - (dx * dx) / (rx * rx))));
+    const front = Math.min(flat, Math.round(ry * Math.sqrt(Math.max(0, 1 - (dx * dx) / (rx * rx)))));
     for (let k = 0; k <= h; k++) {
       const c = dx > rx * 0.35 ? '#27427c' : (dx + 40) % 5 === 0 ? '#5a8cc8' : '#3d72b4';
       p.px(x + dx, y + front - k, c);
     }
+    // Packed soil banked against the foot of the wall.
+    if (Math.abs(dx) < rx) p.px(x + dx, y + front + 1, '#7a5c3c');
   }
   // The rim: a fold of terpal over the stakes, then the water.
   p.id++;
@@ -94,7 +98,8 @@ export const kolamLele: Art = (p, _v, level = 1) => {
     // One round terpal pond on a patch of earth, a bucket of pelet beside it. Small and plain.
     earth(p, 0.42);
     const [x, y] = at(p, 0.5, 0.5);
-    terpalTub(p, Math.round(x), Math.round(y), 10, LELE_WATER[0]);
+    // One pixel up, so the soil line at its foot stays inside the tile.
+    terpalTub(p, Math.round(x), Math.round(y) - 1, 10, LELE_WATER[0]);
     peletBucket(p, 0.84, 0.7);
     return;
   }

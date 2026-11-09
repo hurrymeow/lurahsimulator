@@ -35,6 +35,16 @@ export interface Art {
   /** Where the footprint's top corner sits on the canvas, in canvas pixels. */
   cornerX: number;
   cornerY: number;
+  /** Lights the map blinks over the art (a siren, an ambulance beacon), in canvas pixels. */
+  blink: Blink[];
+}
+
+/** A light on a sprite that the map animates: it steps through cycle (null shows the sprite under it), one step per period ms. */
+export interface Blink {
+  x: number;
+  y: number;
+  cycle: (string | null)[];
+  period: number;
 }
 
 type Face = 'L' | 'R' | 'T';
@@ -67,6 +77,8 @@ export class Painter {
   site = false;
   /** Fine detail drawn after the ink pass in native pixels, so 1px lines stay 1px and get no outline. */
   readonly overlay: ((p: Painter) => void)[] = [];
+  /** Lights the map animates over the finished art (see Blink). */
+  readonly blink: Blink[] = [];
   private inked = false;
   /**
    * n is the footprint the art is drawn for. Every call below takes one-tile art pixels, as if n were
@@ -445,7 +457,7 @@ export class Painter {
       alpha[k] = this.data[k * 4 + 3];
       if (alpha[k] === 255 && !top) top = ground - Math.floor(k / this.w);
     }
-    return { canvas: c, alpha, height: top, n: this.n, w: this.fa * this.n, h: this.fb * this.n, cornerX: ((this.fb * TW) / 2) * this.n, cornerY: TOP * this.n };
+    return { canvas: c, alpha, height: top, n: this.n, w: this.fa * this.n, h: this.fb * this.n, cornerX: ((this.fb * TW) / 2) * this.n, cornerY: TOP * this.n, blink: this.site ? [] : [...this.blink] };
   }
 }
 

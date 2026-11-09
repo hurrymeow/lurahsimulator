@@ -328,7 +328,7 @@ faceless, so the map stays readable.
   cabinet and a chain-link fence.
   Pos Satpam: a narrow plank booth under a scrap of zinc with a stool, no pots; a blue booth under a
   hip with a striped portal arm and a bench; a concrete post with a canopy over the lane, a lamp and a
-  camera. Kolam Lele: one round blue terpal pond; a square terpal pond on a plank frame under a
+  camera. Kolam Lele: one round blue terpal pond with a flat bottom on a line of packed soil; a square terpal pond on a plank frame under a
   paranet, with a hose and sacks of pelet; a raised whitewashed concrete pond with a divider, a painted
   sign, a low zinc roof over its back half, a water pipe, an aerator and a drum. The lele swim on the
   water at its height (`LELE_WATER` in `farm-art.ts`).
@@ -355,25 +355,34 @@ faceless, so the map stays readable.
   back corner, a slide, a climbing wall, monkey bars, a seesaw) with its shade tree clear in the right
   corner. Panggung Senam has umbul-umbul with bent tips and swaying pennants; Kolam Pancing a saung,
   a jetty with anglers, lily pads and a payung.
-  Kelurahan and Kecamatan buildings carry a name plate (`namePlate` in `sign-art.ts`, drawn after
-  the ink pass so it stays crisp), in one of three styles chosen per building so the front never gets
-  too busy (Koko, 2026-11-09):
-  - Emblem: a 5x5 pictogram on a small framed board, where a word covered the facade. A gold star on
-    Kantor Kelurahan and Kantor Kecamatan, a tree on Taman and Taman Kota, a coin on Koperasi Simpan
-    Pinjam, a gear on BLK.
-  - Raised: the name in the 3x5 plate font on a board standing on two posts clearly above the roof,
-    the posts landing on the building, never in the air past its edge. PASAR (from level 1), SATPOL
-    (POL PP at level 1) and TERMINAL (over the front platform canopy). Raised plates still keep the
-    height rules below.
-  - Text: the name in the plate font on the wall or roof edge, or on posts in the yard. RSUD.
+  **An icon, never a word** (Julian, 2026-11-09, `decisions/icons-not-words.md`): a building says
+  what it is with a pictogram or a light, not its name. Lettering is only for names as short as RT,
+  RW or BLK. Kelurahan and Kecamatan buildings carry their sign as a plate (`namePlate` in
+  `sign-art.ts`, drawn after the ink pass so it stays crisp). A pictogram plate faces the street flat;
+  only a word is slanted with the wall.
+  - Emblem: a pictogram on a small framed board. A gold star on Kantor Kelurahan and Kantor
+    Kecamatan, a tree on Taman and Taman Kota, a coin on Koperasi Simpan Pinjam, a gear on BLK, and a
+    7x7 red cross on white on RSUD, bigger than the Apotek's green plus.
+  - Raised: the pictogram on a board standing on two posts clearly above the roof, the posts landing
+    on the building, never in the air past its edge. A basket of fruit and vegetables on the Pasar
+    (from level 1), a bus on the Terminal (over the front platform canopy). Raised plates still keep
+    the height rules below.
+  - A light instead of a plate: Pos Satpol PP carries a red and blue rotator on its roof (from level 2
+    on top of the lookout).
   At level 1 a yard plate stands on two posts as a papan nama. They also carry the small life the RT
   buildings have: parked motors, AC units, benches, lamp posts, cones, a spanduk, payung and baskets
   at the pasar, the camat's dinas car. RSUD (the building id stays `puskesmasPembantu`) looks like a
   kabupaten hospital: whitewashed blocks with a hospital-green band between storeys, ribbon windows,
   a flat dak, a red cross and a canopied IGD entrance in red; one two-storey block, then a ward wing
   and an ambulance, then a three-storey main block between two wings with a drop-off canopy.
-  dinas car. Taman Kota keeps its trees at the back and sides, never in front of the fountain, so no
+  dinas car. Kantor Kelurahan has dark green roofs and a teras of white columns at level 1, so it
+  never reads as the Terminal's blue office. Taman Kota keeps its trees at the back and sides, never in front of the fountain, so no
   part of the lot hides another.
+  Higher-stage buildings carry simple lights the map animates (`blink` on the art, `beacon` in
+  `sign-art.ts`, drawn in `map.ts`): the Satpol PP rotator flashes red then blue, ambulances at RSUD
+  level 2 and up flash red and blue, lampu hias twinkle along the level 3 Pasar eave, and the Terminal
+  bus board's lamp blinks. Each is one native pixel per lamp, out of step per building, and holds its
+  first colour with reduce motion.
   Air Mancur is Payung Air: a terracotta lotus pool with pink petals, a slim column, a gold bud and a
   dome of 1px jets falling like an umbrella onto the water. Studi Banding is a Bus Pariwisata: a tour
   coach with a curved roof, a tinted window band, an orange swoosh and a roof rack of luggage, the
