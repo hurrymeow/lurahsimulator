@@ -59,6 +59,9 @@ export const SLOTS: { stage: StageId; stars: number; slots: number }[] = [
   { stage: 'kecamatan', stars: 0, slots: 9 },
 ];
 
+/** A bigger area files more paperwork: permit folders grow with the stage, so one Asisten falls behind from the RW. */
+export const PERMIT_STAGE_MULT: Record<StageId, number> = { rt: 1, rw: 1.5, kelurahan: 2, kecamatan: 2.5 };
+
 /** Stars set only the starting stat total and the salary. The kampung act never sees 5 or 6 stars. */
 export const STAR_TOTAL: Record<number, number> = { 2: 120, 3: 160, 4: 210, 5: 270, 6: 340 };
 export const STAR_SALARY: Record<number, number> = { 2: 300_000, 3: 450_000, 4: 700_000, 5: 1_200_000, 6: 2_000_000 };

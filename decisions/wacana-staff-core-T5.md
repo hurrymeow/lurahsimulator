@@ -1,0 +1,1 @@
+Permit files now scale with the stage: a building's permit timer is its `permitMonths` times `PERMIT_STAGE_MULT` (RT ×1, RW ×1.5, Kelurahan ×2, Kecamatan ×2.5), rounded up to at least one month. This makes one Asisten fall behind from the RW as a bigger area files more paperwork, matching the updated Desk queue bullet in GAME-DESIGN.md §4.
