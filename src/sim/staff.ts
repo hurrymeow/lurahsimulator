@@ -6,7 +6,7 @@ import { rand } from './rng';
 import { gName, gReward, t, type Key } from '../i18n';
 import { rupiah } from '../format';
 import {
-  APPLICANTS, BAPERAN_LEAVE_STEP, BIMTEK, CHANNELS, COURSE_COST, LEVEL_STAT_GAIN, RISK, GIGS, INEM, MUTASI, PESANGON_MONTHS, POACH_CHANCE, RAISE, REQUIREMENTS, ROLE_FX, ROLES, SLOTS,
+  APPLICANTS, BAPERAN_LEAVE_STEP, BIMTEK, CHANNELS, COURSE_COST, LEVEL_STAT_GAIN, PIC, RISK, GIGS, INEM, MUTASI, PESANGON_MONTHS, POACH_CHANCE, RAISE, REQUIREMENTS, ROLE_FX, ROLES, SLOTS,
   SPECIAL_CHANCE, SPECIALS, STAFF_CAP, STAFF_LEVEL_MONTHS, STAR_SALARY, STAR_TOTAL, STAT_MAX, STATS, TRAITS, roleDef, traitDef,
   type ChannelId, type RoleDef, type RoleId, type StatId, type TraitId,
 } from '../data/staff';
@@ -20,7 +20,7 @@ import type { Applicant, Building, CheckResult, GameState, Resident, RtTrait, St
 const ORDER = ['rt', 'rw', 'kelurahan', 'kecamatan'];
 
 /** A 0..1 roll from the seed and some salts. */
-function roll(s: GameState, ...salt: number[]): number {
+export function roll(s: GameState, ...salt: number[]): number {
   let h = Math.imul(s.seed ^ 0x51ed270b, 0x85ebca6b);
   for (const x of salt) {
     h = Math.imul(h ^ (x * 0x9e3779b1), 0xc2b2ae35);
@@ -46,6 +46,20 @@ export function ensureStaff(s: GameState): void {
 }
 
 export const inem = (s: GameState): Staff | undefined => s.staff?.find((x) => x.inem);
+
+/** Staff who can lead a program for this stat: free, sorted best first, and always including Inem. */
+export function picCandidates(s: GameState, stat: StatId): Staff[] {
+  ensureStaff(s);
+  return s.staff!
+    .filter((x) => !x.away && (x.inem || stat !== 'rajin' || !x.leading))
+    .sort((a, b) => b.stats[stat] - a.stats[stat] || a.id - b.id);
+}
+
+/** A wacana's approval multiplier from its lead: Gaul 50 is 1, each point adds 0.01. */
+export const wacanaPicMult = (x: Staff): number => PIC.gaulBase + x.stats.gaul / 100;
+
+/** A Realisasi's delay with its lead: Rajin 50 is x1, each point subtracts 0.01, never under 1 month. */
+export const realisasiDelay = (base: number, x: Staff): number => Math.max(1, Math.round(base * (PIC.rajinBase - x.stats.rajin / 100)));
 
 const reached = (s: GameState, stage: string, stars: number) =>
   ORDER.indexOf(s.stage.current) > ORDER.indexOf(stage) || (s.stage.current === stage && s.stage.stars[s.stage.current] >= stars);
@@ -79,6 +93,8 @@ export function output(x: Staff): number {
   // Bu Juru Ketik's typewriter, repaired at the end of her chain: her desk folders count twice.
   if (x.special === 'buJuruKetik' && x.chainDone && x.role === 'asisten') m *= 2;
   m *= perkMult(x);
+  // Leading a program takes their attention: they work at half output until it lands.
+  if (x.leading) m *= PIC.busyOutput;
   return x.level * stat * m;
 }
 

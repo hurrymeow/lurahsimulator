@@ -277,6 +277,8 @@ export interface Staff extends Applicant {
   promise?: { kind: 'utus' | 'panitia'; left: number; due: number };
   /** The 3-heart perk was announced. */
   perkSeen?: boolean;
+  /** The Realisasi they lead, until it lands. A busy lead works at half output. */
+  leading?: string;
   /** A business loan out: it comes back, or doesn't, at `due`. */
   loan?: { amt: number; due: number; line: number };
 }
@@ -306,6 +308,8 @@ export interface Lowongan {
 
 export interface RealisasiState {
   id: string;
+  /** The staff member leading it. Missing in saves from before PICs. */
+  pic?: number;
   /** Month the program starts to work. */
   landsAt: number;
   /** Month it stops working. Infinity for a lasting one. */
