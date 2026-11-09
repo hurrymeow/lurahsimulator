@@ -10,6 +10,7 @@ import { agustusan } from '../sim/lomba';
 import { permitEta, queueBerkas } from '../sim/staff';
 import { drawTint, darkness, dusk, Fx } from './fx';
 import { iso, TH, TOP, TW, type Art } from './iso';
+import { LELE_WATER } from './farm-art';
 import { t } from '../i18n';
 import { cellPlates } from '../sim/owners';
 import { Crowd } from './people';
@@ -922,7 +923,7 @@ export class MapView {
     };
     if (b.def === 'wifi' && (!this.motion || Math.floor((now + b.uid * 211) / 450) % 3 === 0)) {
       // The light tops the mast: lower on the level 1 pipe than on the lattice tower.
-      const top = b.level <= 1 ? -27 : -36;
+      const top = b.level <= 1 ? -21 : -37;
       ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
       ctx.fillRect(Math.round(c.x - 2 * s), Math.round(c.y + (top - 1) * s), 4 * s, 4 * s);
       px(-1, top, '#fca5a5');
@@ -953,10 +954,11 @@ export class MapView {
     const c0 = this.tileCentre(b.x, b.y);
     const s = this.scale;
     const cx = c0.x;
-    const cy = c0.y + (n - 1) * (TH / 2) * s;
     const lele = b.def === 'kolamLele';
-    const count = lele ? 3 : 2 + 2 * n;
-    const rx = (lele ? 8 : 9) * n;
+    // A lele pond's water stands above the ground in its terpal tub at levels 1 and 2.
+    const cy = c0.y + (n - 1) * (TH / 2) * s - (lele ? LELE_WATER[Math.min(b.level, 3) - 1] ?? 0 : 0) * s;
+    const count = lele ? 2 + Math.min(b.level, 3) : 2 + 2 * n;
+    const rx = (lele ? 7 : 9) * n;
     const t = this.motion ? now / 1000 : 0;
     const px = (x: number, y: number, col: string) => {
       ctx.fillStyle = col;

@@ -322,8 +322,16 @@ faceless, so the map stays readable.
   of roster, a small crown) in green zinc, then red tile with a concrete kanopi on white columns, then
   a pendopo under a joglo roof. The merah putih flies from a grey pole with a concrete foot in the
   front yard at levels 1 and 2.
-  Menara Wifi level 1 is an RT/RW net mast, a thin galvanised pipe on three guy wires with two sector
-  panels, a grid dish and a router box, never a pole with a head; level 2 is the lattice tower.
+  Menara Wifi level 1 is a short RT/RW net mast, the smallest and plainest: a galvanised pipe on two
+  guy wires with one pair of sector panels and a router box, never a pole with a head. Level 2 is a BTS
+  lattice tower in see-through 1px steel with three sector panels, a microwave dish, an equipment
+  cabinet and a chain-link fence.
+  Pos Satpam: a narrow plank booth under a scrap of zinc with a stool, no pots; a blue booth under a
+  hip with a striped portal arm and a bench; a concrete post with a canopy over the lane, a lamp and a
+  camera. Kolam Lele: one round blue terpal pond; a square terpal pond on a plank frame under a
+  paranet, with a hose and sacks of pelet; a raised whitewashed concrete pond with a divider, a painted
+  sign, a low zinc roof over its back half, a water pipe, an aerator and a drum. The lele swim on the
+  water at its height (`LELE_WATER` in `farm-art.ts`).
 - Shops (`toko-art.ts`): Rumah Makan is a plank warung makan with a spanduk, a warkop lean-to, then a
   warteg with a false-front nameboard. Fotokopi is a kiosk, a toko with its banner over the roof, then
   a ruko. Apotek has no house roof: a flat dak with a deep green fascia and a plus-shaped green
@@ -347,6 +355,14 @@ faceless, so the map stays readable.
   back corner, a slide, a climbing wall, monkey bars, a seesaw) with its shade tree clear in the right
   corner. Panggung Senam has umbul-umbul with bent tips and swaying pennants; Kolam Pancing a saung,
   a jetty with anglers, lily pads and a payung.
+  Kelurahan and Kecamatan buildings carry a name plate in the plate font (`namePlate` in
+  `sign-art.ts`: 3x5 capitals, a framed board slanted with the front-left wall, drawn after the ink
+  pass so the letters stay crisp): LURAH, PUSTU, PASAR, TERMINAL, TAMAN, CAMAT, SATPOL (POL PP at level
+  1), KSP and BLK. At level 1 it stands on two posts in the front yard as a papan nama; from level 2 it
+  rides on the eave, parapet or crown. They also carry the small life the RT buildings have: parked
+  motors, AC units, benches, lamp posts, cones, a spanduk, payung and baskets at the pasar, the camat's
+  dinas car. Taman Kota keeps its trees at the back and sides, never in front of the fountain, so no
+  part of the lot hides another.
   Gapura and Portal level 1 are smaller than their level 2. Sawah and Kebun Sayur grow their plants:
   rice from seedlings to golden heads, vegetables from sprouts to fruiting plants.
 - Houses grow, not just fence in. Rumah: the bungalow with a wooden dapur under a zinc lean-to, then

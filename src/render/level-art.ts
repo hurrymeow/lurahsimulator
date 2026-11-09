@@ -1,7 +1,7 @@
 import type { Painter } from './iso';
 import { at, canopyTree, pole, unit, win } from './kampung-art';
 import { prism, roofRect, type MassPaint } from './massing';
-import { flagAt, flowers, frontFence, garuda, gateway, noticeBoard } from './sign-art';
+import { acUnit, bench, flagAt, flowers, frontFence, garuda, gateway, lampPost, motorAt, namePlate, noticeBoard } from './sign-art';
 import { antenna, motor, pavedLot, pot, rustyPatch } from './kampung-kit';
 
 // Level art, third silhouette pass (playtest 2026-11-07): every building here changes shape by level,
@@ -100,17 +100,21 @@ export const warungMakan: Art = (p) => {
 /** Pos Satpam: a wooden booth, then a blue booth with a barrier, then a concrete post with a flat roof, a canopy over the lane, a lamp and a camera. */
 export const posSatpam: Art = (p, _v, level = 1) => {
   if (level <= 1) {
-    p.shadow(6);
-    prism(p, 0.34, 0.66, 0.34, 0.66, 7, 'n', (face, u, j) => (face === 'L' && within(u, 0.2, 0.8) && within(j, 3, 6) ? 'l' : undefined));
-    roofRect(p, 0.34, 0.66, 0.34, 0.66, 7, 2, 'shed', 's', 'n', (x) => (x % 2 ? 'S' : undefined));
+    // The smallest: a narrow plank booth with one window and a scrap of zinc for a roof, a stool by the door.
+    p.shadow(8);
+    prism(p, 0.38, 0.62, 0.4, 0.62, 7, 'n', (face, u, j, i) => (face === 'L' && within(u, 0.25, 0.75) && within(j, 3, 5) ? 'l' : face !== 'T' && i % 3 === 0 ? 'N' : undefined));
+    roofRect(p, 0.35, 0.65, 0.37, 0.66, 7, 1, 'shed', ZINC, 'n', zinc, 0.02);
+    prism(p, 0.66, 0.72, 0.5, 0.56, 2, 'N', (face) => (face === 'T' ? 'n' : undefined));
     return;
   }
   if (level === 2) {
     p.shadow(5);
     prism(p, 0.3, 0.7, 0.3, 0.7, 8, 'b', (face, u, j) => (face === 'L' && within(u, 0.15, 0.85) && within(j, 3, 6) ? 'l' : face === 'R' && within(u, 0.3, 0.7) && j < 6 ? 'k' : undefined));
     roofRect(p, 0.3, 0.7, 0.3, 0.7, 8, 3, 'hip', 'B', 'b');
-    prism(p, 0.08, 0.3, 0.8, 0.84, 1, 'w', (face, u) => (face === 'T' ? undefined : Math.floor(u * 6) % 2 ? 'r' : 'w'), 4);
-    pole(p, 0.3, 0.82, 5, 'S');
+    // The portal arm across the lane: a striped boom on a post, raised off the ground, and a bench by the door.
+    prism(p, 0.72, 0.78, 0.76, 0.82, 4, 'S', (face) => (face === 'T' ? 'y' : undefined));
+    prism(p, 0.04, 0.74, 0.77, 0.81, 1, 'w', (face, u) => (face === 'T' ? undefined : Math.floor(u * 8) % 2 ? 'r' : 'w'), 4);
+    prism(p, 0.3, 0.5, 0.74, 0.78, 2, 'n', (face) => (face === 'T' ? 't' : undefined));
     return;
   }
   p.shadow(3);
@@ -434,6 +438,9 @@ export const kantorKel: Art = (p, _v, level = 1) => {
     prism(p, 0.16, 0.76, 0.2, 0.72, 8, 'w', wall([0.42, 0.58], 3, 6));
     roofRect(p, 0.16, 0.76, 0.2, 0.72, 8, 5, 'hip', 'b', 'w');
     flag(p, 0.84, 0.86, 13);
+    // The papan nama on two posts in the front yard, and a motor by the door.
+    namePlate(p, 'LURAH', 0.18, 0.5, 0.9, 4, { legs: true });
+    motorAt(p, 0.62, 0.8, '#3d72b4');
     return;
   }
   if (level >= 3) {
@@ -453,6 +460,12 @@ export const kantorKel: Art = (p, _v, level = 1) => {
   prism(p, pa + 0.08, pa + 0.12, 0.74, 0.86, 7, 'w');
   roofRect(p, pa - 0.14, pa + 0.14, 0.7, 0.88, 7, 3, 'gableB', 'R', 'w', undefined, 0);
   flag(p, 0.9, 0.88, 14);
+  // AC units on the side wall, the name over the porch, motors of the staff in the yard.
+  acUnit(p, a1, 0.3, 4);
+  acUnit(p, a1, 0.5, 4);
+  namePlate(p, 'LURAH', pa - 0.16, pa + 0.16, 0.86, 9, { frame: '#a8321f' });
+  motorAt(p, 0.14, 0.84, '#3d72b4');
+  motorAt(p, 0.2, 0.9);
   if (level >= 3) {
     p.overlay.push((q) => {
       for (let k = 0; k < 44; k++) {
@@ -477,6 +490,13 @@ export const puskesmasPembantu: Art = (p, _v, level = 1) => {
   const [a0, a1, b0, b1] = level <= 1 ? [0.2, 0.7, 0.2, 0.7] : [0.08, 0.64, 0.1, 0.66];
   prism(p, a0, a1, b0, b1, 9, 'w', (face, u, j, i) => cross(face, u, j) ?? wall([0.44, 0.58], 3, 7, { glass: 'c', plinth: 'c' })(face, u, j, i));
   roofRect(p, a0, a1, b0, b1, 9, 5, 'hip', 'c', 'w');
+  if (level <= 1) {
+    namePlate(p, 'PUSTU', 0.5, 0.8, 0.86, 3, { frame: '#3d9a8a', legs: true });
+    return;
+  }
+  // The name on the eave over the porch, a tandon at the back, an oxygen tube and pots by the door.
+  namePlate(p, 'PUSTU', 0.12, 0.44, 0.84, 7, { frame: '#3d9a8a' });
+  prism(p, 0.5, 0.53, 0.8, 0.83, 4, 'g', (face) => (face === 'T' ? 'w' : undefined));
   if (level >= 2) {
     // The waiting porch with a bench.
     for (const a of [0.12, 0.4]) pole(p, a, 0.84, 6, 'S');
@@ -499,6 +519,9 @@ export const pasar: Art = (p, _v, level = 1) => {
   if (level <= 1) {
     stalls(p, 0.24, 0.76, 0.3, 0.7);
     shed(p, 0.2, 0.8, 0.22, 0.78, 8, 5, 'hip', ZINC, zinc);
+    // Baskets of produce on the ground and a gerobak parked by the los.
+    for (const [a, c] of [[0.3, 'g'], [0.4, 'o'], [0.5, 'r']] as [number, string][]) prism(p, a, a + 0.06, 0.84, 0.9, 2, 'a', (face) => (face === 'T' ? c : undefined));
+    prism(p, 0.66, 0.84, 0.84, 0.92, 3, 'b', (face, _u, j) => (face === 'T' ? 'w' : j === 0 ? 'k' : undefined));
     return;
   }
   // A row of kios along the back, rolling doors half up.
@@ -509,6 +532,8 @@ export const pasar: Art = (p, _v, level = 1) => {
       stalls(p, a0 + 0.04, a1 - 0.04, 0.4, 0.82);
       shed(p, a0, a1, 0.34, 0.9, 8, 5, 'hip', ZINC, zinc);
     }
+    namePlate(p, 'PASAR', 0.3, 0.7, 0.24, 9, { frame: '#a8321f', bg: '#f4b935' });
+    motorAt(p, 0.46, 0.92);
     return;
   }
   // The market hall: a truncated limasan, a raised crown with sawtooth vents, gerobak out front.
@@ -517,6 +542,14 @@ export const pasar: Art = (p, _v, level = 1) => {
   roofRect(p, 0.3, 0.7, 0.48, 0.76, 12, 0, 'flat', 'w', 'w', undefined, 0);
   for (const k of [0, 1, 2, 3]) roofRect(p, 0.3 + k * 0.1, 0.4 + k * 0.1, 0.48, 0.76, 12, 2, 'shed', ZINC, 'w', zinc, 0);
   umbul(p, [[0.06, 0.96], [0.94, 0.96]], 14);
+  // The market's name on the crown, payung of the pedagang outside, motors and a gerobak.
+  namePlate(p, 'PASAR', 0.32, 0.68, 0.76, 13, { frame: '#a8321f', bg: '#f4b935' });
+  for (const [a, c] of [[0.18, 'b'], [0.78, 'g']] as [number, string][]) {
+    pole(p, a + 0.04, 0.95, 6, 'S');
+    roofRect(p, a, a + 0.08, 0.91, 0.99, 6, 2, 'hip', c, 'w', (x) => (Math.floor(x / 2) % 2 ? 'w' : undefined), 0.01);
+  }
+  motorAt(p, 0.4, 0.96);
+  motorAt(p, 0.52, 0.96, '#3d72b4');
 };
 
 /** Terminal, 3x3: one platform canopy, an office and a bus, then two platforms, a bigger office with a sign and a row of buses and angkot. */
@@ -530,10 +563,12 @@ export const terminal: Art = (p, _v, level = 1) => {
   roofRect(p, 0.06, big ? 0.6 : 0.4, 0.06, 0.3, 8, 4, 'hip', 'b', 'w');
   if (big) {
     // The terminal's name on a frame over the office.
-    pole(p, 0.66, 0.2, 14, 'S');
-    pole(p, 0.92, 0.2, 14, 'S');
-    prism(p, 0.66, 0.92, 0.19, 0.21, 3, 'b', (face, _u, j, i) => (face === 'L' && j === 1 ? (i % 2 ? 'w' : 'b') : undefined), 11);
+    namePlate(p, 'TERMINAL', 0.4, 0.76, 0.2, 10, { legs: true, bg: '#3d72b4', fg: '#f6ecd4', frame: '#27427c' });
   }
+  // Benches under the canopy and ojek waiting by the office.
+  bench(p, 0.2, 0.32, 0.36);
+  motorAt(p, 0.44, 0.26);
+  motorAt(p, 0.48, 0.3, '#3d72b4');
   // Platform canopies, long and low, with buses and angkot pulled in alongside.
   const peron = (b: number) => {
     for (const a of [0.08, 0.36, 0.64, 0.9]) pole(p, a, b, 7, 'S');
@@ -569,6 +604,11 @@ export const taman: Art = (p, _v, level = 1) => {
   }
   prism(p, 0.3, 0.42, 0.66, 0.7, 2, 'n', (face) => (face === 'T' ? 't' : undefined));
   if (level >= 2) canopyTree(p, level >= 3 ? 0.84 : 0.26, level >= 3 ? 0.62 : 0.8, 0.85, 2);
+  if (level >= 2) {
+    // A bin by the bench and the park's name on a low board at the path's front end.
+    prism(p, 0.44, 0.47, 0.66, 0.69, 3, 'g', (face) => (face === 'T' ? 'G' : undefined));
+    namePlate(p, 'TAMAN', 0.5, 0.74, 0.94, 3, { legs: true, frame: '#527f34' });
+  }
 };
 
 // ---------------------------------------------------------------- Kecamatan
@@ -591,6 +631,16 @@ export const kantorKec: Art = (p, _v, level = 1) => {
     roofRect(p, 0.44, 0.56, 0.74, 0.86, 10, 2, 'hip', 'R', 'w', undefined, 0);
     for (const a of [0.1, 0.18, 0.26]) flag(p, a, 0.86, 13);
   } else flag(p, 0.9, 0.86, 13);
+  // The name on the parapet, AC units on the side, the camat's black dinas car and staff motors.
+  namePlate(p, 'CAMAT', level >= 3 ? 0.62 : 0.34, level >= 3 ? 0.9 : 0.66, b1, 9, { frame: '#e57d2e' });
+  acUnit(p, a1, b0 + 0.12, 4);
+  acUnit(p, a1, b0 + 0.32, 4);
+  if (level <= 1) motorAt(p, 0.7, 0.8);
+  else {
+    bus(p, 0.7, 0.86, 0.76, 0.84, '#3b3430', 'S');
+    motorAt(p, level >= 3 ? 0.04 : 0.2, 0.94);
+    motorAt(p, level >= 3 ? 0.68 : 0.3, 0.94, '#3d72b4');
+  }
 };
 
 /** Pos Satpol PP: a small post, then a lookout on the roof and a mast, then a garage with the patrol pick-up and a barrier. */
@@ -614,6 +664,10 @@ export const posSatpol: Art = (p, _v, level = 1) => {
     roofRect(p, ma - 0.1, ma + 0.1, mb - 0.12, mb + 0.12, 13, 2, 'hip', 'b', 'y');
     pole(p, a1 - 0.04, b1 - 0.04, 16, 'S');
   }
+  // The post's name on its parapet, a patrol motor and traffic cones by the door.
+  namePlate(p, level <= 1 ? 'POL PP' : 'SATPOL', a0 + 0.02, a1 - 0.02, b1, 8, { frame: '#27427c', bg: '#f4b935' });
+  motorAt(p, 0.18, 0.86, '#f6ecd4');
+  if (level >= 2) for (const a of [0.36, 0.44]) prism(p, a, a + 0.03, 0.86, 0.89, 3, 'o', (face, _u, j) => (j === 1 && face !== 'T' ? 'w' : undefined));
 };
 
 /** Koperasi Simpan Pinjam: a small office, then a long hall under a low pelana, then a front canopy with an ATM and a second wing. */
@@ -632,6 +686,13 @@ export const koperasiSP: Art = (p, _v, level = 1) => {
     roofRect(p, 0.1, 0.62, 0.7, 0.9, 6, 0, 'flat', 'y', 'g', undefined, 0);
     prism(p, 0.78, 0.86, 0.72, 0.78, 6, 'b', (face, _u, j) => (face === 'L' && within(j, 3, 5) ? 'c' : undefined));
   }
+  // KSP on a plate, on posts at level 1 and on the eave above; a spanduk of the loan offer and motors.
+  if (level <= 1) namePlate(p, 'KSP', 0.66, 0.9, 0.9, 3, { legs: true, frame: '#527f34', bg: '#f4b935' });
+  else {
+    namePlate(p, 'KSP', 0.26, 0.46, b1, 8, { frame: '#527f34', bg: '#f4b935' });
+    prism(p, 0.1, 0.24, b1, b1 + 0.01, 3, 'w', (face, _u, j, i) => (face === 'L' ? (j === 1 ? (i % 3 ? 'r' : 'w') : 'b') : undefined), 3);
+    motorAt(p, 0.5, 0.9);
+  }
 };
 
 /** Balai Latihan Kerja: a workshop shed, then a hall with a raised monitor roof, then a second hall under sawtooth roofs and a yard with machines. */
@@ -647,12 +708,17 @@ export const balaiLatihanKerja: Art = (p, _v, level = 1) => {
   if (level <= 1) {
     prism(p, 0.24, 0.72, 0.24, 0.72, 7, 'c', wall([0.3, 0.7], 3, 6));
     roofRect(p, 0.24, 0.72, 0.24, 0.72, 7, 4, 'gableB', ZINC, 'c', zinc);
+    namePlate(p, 'BLK', 0.6, 0.86, 0.88, 3, { legs: true, frame: '#27427c' });
     return;
   }
   prism(p, 0.06, 0.6, 0.08, 0.88, 9, 'c', (face, u, j, i) => (face === 'L' && within(u, 0.3, 0.7) && j < 7 ? (j >= 5 ? (i % 2 ? 's' : 'S') : 'k') : wall(null, 3, 7)(face, u, j, i)));
   roofRect(p, 0.06, 0.6, 0.08, 0.88, 9, 5, 'gableB', ZINC, 'c', zinc);
   prism(p, 0.24, 0.42, 0.08, 0.88, 2, 'c', (face, _u, j, i) => (face !== 'T' && j === 1 && i % 2 ? 'l' : undefined), 12);
   roofRect(p, 0.24, 0.42, 0.08, 0.88, 14, 2, 'gableB', 'S', 'c', (x) => (Math.floor(x / 3) % 2 ? 'y' : undefined));
+  // The name over the big door, a tandon, and the trainees' motors.
+  namePlate(p, 'BLK', 0.24, 0.42, 0.88, 9, { frame: '#27427c' });
+  motorAt(p, 0.1, 0.94);
+  motorAt(p, level >= 3 ? 0.5 : 0.7, 0.94, '#3d72b4');
 };
 
 /**
@@ -709,32 +775,54 @@ export const baliho: Art = (p, _v, level = 1) => {
   }
 };
 
-/** Taman Kota: a fountain pool and two trees, then paths, benches and four trees, then a stage, lamps and a statue. */
+/**
+ * Taman Kota: a fountain pool and two trees, then paths, benches, lamps and a third tree, then a statue on the
+ * fountain, a pendopo stage in the back corner, flower beds and a gate with the park's name. Trees stand only
+ * at the back and the sides, never in front of the fountain, so nothing on the lot hides another part
+ * (review 2026-11-09: the level 3 stage and the front tree covered the fountain and each other).
+ */
 export const tamanKota: Art = (p, _v, level = 1) => {
   p.low();
   p.shadow(2);
   p.ground((a, b) => {
     const d = Math.max(Math.abs(a - 0.5), Math.abs(b - 0.5));
     if (d < 0.14) return Math.floor((a + b) * 12) % 3 === 0 ? 'c' : 'l';
-    if (d < 0.2) return 's';
+    if (d < 0.18) return 's';
     if (level >= 2 && (within(a, 0.46, 0.54) || within(b, 0.46, 0.54))) return 't';
+    // Flower beds in the two front quarters.
+    if (level >= 3 && ((within(a, 0.64, 0.9) && within(b, 0.7, 0.9)) || (within(b, 0.64, 0.9) && within(a, 0.7, 0.9))) && !(a > 0.7 && b > 0.7)) {
+      const k = (Math.floor(a * 40) + Math.floor(b * 40)) % 4;
+      return k === 0 ? 'r' : k === 1 ? 'y' : k === 2 ? 'p' : 'G';
+    }
     return (Math.floor(a * 4) + Math.floor(b * 4)) % 2 ? 'g' : 'G';
   });
-  canopyTree(p, 0.2, 0.2, level <= 1 ? 0.8 : 1, level <= 1 ? 2 : 3);
-  if (level >= 2) canopyTree(p, 0.8, 0.22, 0.8, 2);
+  // The back corner: a big tree, or the pendopo stage at level 3.
   if (level >= 3) {
-    // A stage at the back right, under a shed roof.
-    prism(p, 0.66, 0.92, 0.04, 0.14, 2, 'n');
-    roofRect(p, 0.66, 0.92, 0.04, 0.14, 7, 2, 'shed', 'R', 'w', undefined, 0.01);
-    for (const a of [0.66, 0.9]) pole(p, a, 0.14, 7, 'S');
-  }
-  canopyTree(p, 0.22, 0.8, 0.8, 2);
-  pole(p, 0.5, 0.5, level >= 3 ? 8 : 5, 'c');
+    prism(p, 0.06, 0.32, 0.06, 0.32, 2, 'w', (face) => (face === 'T' ? 'n' : 'S'));
+    for (const [a, b] of [[0.07, 0.07], [0.29, 0.07], [0.07, 0.29], [0.29, 0.29]]) prism(p, a, a + 0.02, b, b + 0.02, 6, 'w', undefined, 2);
+    roofRect(p, 0.03, 0.35, 0.03, 0.35, 8, 3, 'hip', 'R', 'w', undefined, 0.01);
+    roofRect(p, 0.12, 0.26, 0.12, 0.26, 11, 3, 'hip', 'R', 'w', undefined, 0);
+  } else canopyTree(p, 0.2, 0.2, level <= 1 ? 0.8 : 1, level <= 1 ? 2 : 3);
+  if (level >= 2) canopyTree(p, 0.82, 0.18, 0.85, level >= 3 ? 3 : 2);
+  canopyTree(p, 0.18, 0.82, level >= 3 ? 0.9 : 0.8, level >= 3 ? 3 : 2);
+  // The fountain's jet, or the statue on a plinth at level 3.
   if (level >= 3) {
-    prism(p, 0.46, 0.54, 0.46, 0.54, 3, 's');
-    for (const [a, b] of [[0.3, 0.42], [0.7, 0.58]]) pole(p, a, b, 8, 'S');
+    prism(p, 0.45, 0.55, 0.45, 0.55, 3, 's', (face) => (face === 'T' ? 'w' : undefined));
+    prism(p, 0.48, 0.52, 0.48, 0.52, 5, '#c9a227', (face) => (face === 'T' ? 'y' : undefined), 3);
+  } else pole(p, 0.5, 0.5, level >= 2 ? 6 : 5, 'c');
+  if (level >= 2) {
+    // Benches facing the fountain and lamps at the path crossings.
+    bench(p, 0.3, 0.4, 0.62);
+    bench(p, 0.6, 0.7, 0.36);
+    lampPost(p, 0.42, 0.3, 8);
+    lampPost(p, 0.62, 0.7, 8);
   }
-  if (level >= 2) canopyTree(p, 0.8, 0.8, 0.9, 3);
+  if (level >= 3) {
+    // The gate at the front where the path leaves the park, with the park's name.
+    namePlate(p, 'TAMAN', 0.36, 0.64, 0.96, 6, { legs: true, frame: '#527f34' });
+    lampPost(p, 0.3, 0.7, 8);
+    lampPost(p, 0.7, 0.3, 8);
+  }
 };
 
 export const LEVEL_ART: Record<string, Art> = {

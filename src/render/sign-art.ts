@@ -202,3 +202,109 @@ export function flowers(p: Painter, a0: number, a1: number, b0: number, b1: numb
     }
   });
 }
+
+// A 3x5 pixel font for name plates (N and M are wider). Rows top to bottom, '#' is ink.
+const GLYPHS: Record<string, string[]> = {
+  A: ['.#.', '#.#', '###', '#.#', '#.#'],
+  B: ['##.', '#.#', '##.', '#.#', '##.'],
+  C: ['.##', '#..', '#..', '#..', '.##'],
+  D: ['##.', '#.#', '#.#', '#.#', '##.'],
+  E: ['###', '#..', '##.', '#..', '###'],
+  G: ['.##', '#..', '#.#', '#.#', '.##'],
+  H: ['#.#', '#.#', '###', '#.#', '#.#'],
+  I: ['###', '.#.', '.#.', '.#.', '###'],
+  J: ['..#', '..#', '..#', '#.#', '.#.'],
+  K: ['#.#', '#.#', '##.', '#.#', '#.#'],
+  L: ['#..', '#..', '#..', '#..', '###'],
+  M: ['#...#', '##.##', '#.#.#', '#...#', '#...#'],
+  N: ['#..#', '##.#', '#.##', '#..#', '#..#'],
+  O: ['.#.', '#.#', '#.#', '#.#', '.#.'],
+  P: ['##.', '#.#', '##.', '#..', '#..'],
+  R: ['##.', '#.#', '##.', '#.#', '#.#'],
+  S: ['###', '#..', '###', '..#', '###'],
+  T: ['###', '.#.', '.#.', '.#.', '.#.'],
+  U: ['#.#', '#.#', '#.#', '#.#', '.#.'],
+  W: ['#...#', '#...#', '#.#.#', '##.##', '#...#'],
+  ' ': ['.', '.', '.', '.', '.'],
+};
+
+/** The ink of a word in the plate font: columns of 5 booleans, a blank column between letters. */
+function letters(text: string): boolean[][] {
+  const cols: boolean[][] = [];
+  [...text].forEach((ch, k) => {
+    const g = GLYPHS[ch] ?? GLYPHS[' '];
+    if (k) cols.push([false, false, false, false, false]);
+    for (let c = 0; c < g[0].length; c++) cols.push(g.map((row) => row[c] === '#'));
+  });
+  return cols;
+}
+
+/**
+ * A name plate on the front-left of a building: a framed board along a (from a0 to a1) at b, its bottom z
+ * art pixels up, with the name lettered in the plate font, centred and slanted with the wall like paint.
+ * Drawn after the ink pass in native pixels so the letters stay crisp on any lot. legs stands it on two
+ * thin posts from the ground (a papan nama in the front yard); otherwise it rides where z puts it.
+ */
+export function namePlate(p: Painter, text: string, a0: number, a1: number, b: number, z: number, opts: { bg?: string; fg?: string; frame?: string; legs?: boolean } = {}): void {
+  const { bg = '#f6ecd4', fg = '#2a1810', frame = '#27427c', legs = false } = opts;
+  if (p.site) return;
+  p.overlay.push((q) => {
+    const ink = letters(text);
+    const w = ink.length + 4;
+    const h = 7;
+    // Centred on the span a0..a1, slanted with the wall: each column one pixel lower every two.
+    const [xm, ym] = spot(q, (a0 + a1) / 2, b, z);
+    const X0 = Math.round(xm - w / 2);
+    const Y0 = ym - w / 4;
+    for (let c = 0; c < w; c++) {
+      const base = Math.round(Y0 + c / 2);
+      for (let r = 0; r < h; r++) {
+        const edge = r === 0 || r === h - 1 || c === 0 || c === w - 1;
+        const col = ink[c - 2];
+        const on = !edge && col && r >= 1 && r <= 5 && col[r - 1];
+        q.px(X0 + c, base - h + 1 + r, edge ? frame : on ? fg : bg);
+      }
+      // The two posts down to the ground.
+      if (legs && (c === 1 || c === w - 2)) for (let d = 1; d <= z * q.zs; d++) q.px(X0 + c, base + d, '#6d635a');
+    }
+  });
+}
+
+/** A motor parked side-on at ground (a, b), in native pixels: two wheels, a body in its colour, a seat. */
+export function motorAt(p: Painter, a: number, b: number, body = '#df4a2c'): void {
+  if (p.site) return;
+  p.overlay.push((q) => {
+    const [x, y] = spot(q, a, b);
+    const X = Math.round(x), Y = Math.round(y);
+    for (const e of [0, 4]) for (const d of [0, 1]) q.px(X + e, Y - d, '#2a1810');
+    for (let e = 0; e < 5; e++) q.px(X + e, Y - 2, e === 4 ? '#6d635a' : body);
+    q.px(X + 1, Y - 3, '#2a1810');
+    q.px(X + 2, Y - 3, '#2a1810');
+    q.px(X + 4, Y - 3, '#bdb4a3');
+    q.px(X + 4, Y - 4, '#6d635a');
+  });
+}
+
+/** A split AC unit on a wall face: a small cream box with a dark grille, at ground (a, b), z up. */
+export function acUnit(p: Painter, a: number, b: number, z: number): void {
+  prism(p, a, a + 0.05, b, b + 0.03, 2, 'w', (face, _u, j, i) => (face !== 'T' && j === 0 && i % 2 ? 'S' : undefined), z);
+}
+
+/** A bench along a at b: a plank seat on two legs. */
+export function bench(p: Painter, a0: number, a1: number, b: number): void {
+  prism(p, a0, a1, b, b + 0.03, 2, 'n', (face) => (face === 'T' ? 't' : undefined));
+}
+
+/** A lamp post at ground (a, b), h tall, with a warm lamp head. Native 1px. */
+export function lampPost(p: Painter, a: number, b: number, h: number): void {
+  p.overlay.push((q) => {
+    const [x, y] = spot(q, a, b);
+    const X = Math.round(x), Y = Math.round(y);
+    for (let d = 0; d < h * q.zs; d++) q.px(X, Y - d, '#3b3430');
+    q.px(X - 1, Y - h * q.zs, '#3b3430');
+    q.px(X + 1, Y - h * q.zs, '#3b3430');
+    q.px(X, Y - h * q.zs - 1, '#f4b935');
+    q.px(X - 1, Y - h * q.zs + 1, '#f4b935');
+    q.px(X + 1, Y - h * q.zs + 1, '#f4b935');
+  });
+}
