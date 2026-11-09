@@ -439,7 +439,7 @@ export const kantorKel: Art = (p, _v, level = 1) => {
     roofRect(p, 0.16, 0.76, 0.2, 0.72, 8, 5, 'hip', 'b', 'w');
     flag(p, 0.84, 0.86, 13);
     // The papan nama on two posts in the front yard, and a motor by the door.
-    namePlate(p, 'LURAH', 0.18, 0.5, 0.9, 4, { legs: true });
+    namePlate(p, 'LURAH', 0.26, 0.5, 0.9, 4, { legs: true, style: 'emblem' });
     motorAt(p, 0.62, 0.8, '#3d72b4');
     return;
   }
@@ -463,7 +463,7 @@ export const kantorKel: Art = (p, _v, level = 1) => {
   // AC units on the side wall, the name over the porch, motors of the staff in the yard.
   acUnit(p, a1, 0.3, 4);
   acUnit(p, a1, 0.5, 4);
-  namePlate(p, 'LURAH', pa - 0.16, pa + 0.16, 0.86, 9, { frame: '#a8321f' });
+  namePlate(p, 'LURAH', pa - 0.16, pa + 0.16, 0.86, 9, { frame: '#a8321f', style: 'emblem' });
   motorAt(p, 0.14, 0.84, '#3d72b4');
   motorAt(p, 0.2, 0.9);
   if (level >= 3) {
@@ -478,38 +478,63 @@ export const kantorKel: Art = (p, _v, level = 1) => {
   }
 };
 
-/** Puskesmas Pembantu: a pustu like a small house with the cross, then a waiting porch, then an exam wing, a drop-off canopy and an ambulance. */
+/**
+ * RSUD (Rumah Sakit Umum Daerah), the building id stays puskesmasPembantu for old saves. Like a kabupaten
+ * hospital: whitewashed blocks with a hospital-green band and rows of ribbon windows under a flat dak, a red
+ * cross on the wall, a canopied IGD entrance with its red sign and an ambulance. Level 1 is one two-storey
+ * block; level 2 adds a ward wing and the drop-off canopy; level 3 raises a three-storey main block between
+ * two wings, with a porte-cochere, a second ambulance and the name lettered on the roof.
+ */
 export const puskesmasPembantu: Art = (p, _v, level = 1) => {
   p.low();
   p.shadow(2);
-  const cross = (face: string, u: number, j: number) => face === 'R' && within(u, 0.4, 0.6) && within(j, 3, 8) ? (within(u, 0.47, 0.53) || within(j, 5, 6) ? 'r' : 'w') : undefined;
-  if (level >= 3) {
-    prism(p, 0.64, 0.94, 0.06, 0.5, 7, 'w', wall(null, 2, 5, { glass: 'c', plinth: 'c' }));
-    roofRect(p, 0.64, 0.94, 0.06, 0.5, 7, 3, 'gableA', 'c', 'w');
-  }
-  const [a0, a1, b0, b1] = level <= 1 ? [0.2, 0.7, 0.2, 0.7] : [0.08, 0.64, 0.1, 0.66];
-  prism(p, a0, a1, b0, b1, 9, 'w', (face, u, j, i) => cross(face, u, j) ?? wall([0.44, 0.58], 3, 7, { glass: 'c', plinth: 'c' })(face, u, j, i));
-  roofRect(p, a0, a1, b0, b1, 9, 5, 'hip', 'c', 'w');
+  const GREEN = '#4f9e7a';
+  // Storeys of six rows: a plinth, ribbon windows in each storey, a green slab band between them.
+  const storeys = (n: number, cross = false): MassPaint => (face, u, j, i) => {
+    if (face === 'T') return undefined;
+    if (j === 0) return 'S';
+    if (j === n * 6) return GREEN;
+    const f = (j - 1) % 6;
+    if (f === 5) return GREEN;
+    if (cross && face === 'R' && within(u, 0.36, 0.64) && j >= n * 6 - 6 && j < n * 6 - 1) return within(u, 0.46, 0.54) || j === n * 6 - 4 ? 'r' : 'w';
+    if (within(f, 1, 4) && i % 4 !== 0 && within(u, 0.08, 0.92)) return 'c';
+    return undefined;
+  };
+  const block = (a0: number, a1: number, b0: number, b1: number, n: number, cross = false) => {
+    prism(p, a0, a1, b0, b1, n * 6 + 1, 'w', storeys(n, cross));
+    roofRect(p, a0, a1, b0, b1, n * 6 + 1, 0, 'flat', 's', 'w', undefined, 0.01);
+  };
+  /** The IGD entrance: a flat canopy on two posts over the door, its fascia red with the sign. */
+  const igd = (a0: number, a1: number, b: number) => {
+    for (const a of [a0 + 0.01, a1 - 0.03]) pole(p, a, b + 0.16, 5, 'S');
+    prism(p, a0, a1, b, b + 0.18, 2, 'r', (face, _u, j, i) => (face === 'T' ? 'w' : j === 1 && i % 2 ? 'w' : undefined), 5);
+  };
   if (level <= 1) {
-    namePlate(p, 'PUSTU', 0.5, 0.8, 0.86, 3, { frame: '#3d9a8a', legs: true });
+    block(0.18, 0.72, 0.16, 0.6, 2, true);
+    igd(0.26, 0.5, 0.6);
+    namePlate(p, 'RSUD', 0.5, 0.8, 0.88, 3, { legs: true, frame: GREEN });
     return;
   }
-  // The name on the eave over the porch, a tandon at the back, an oxygen tube and pots by the door.
-  namePlate(p, 'PUSTU', 0.12, 0.44, 0.84, 7, { frame: '#3d9a8a' });
-  prism(p, 0.5, 0.53, 0.8, 0.83, 4, 'g', (face) => (face === 'T' ? 'w' : undefined));
-  if (level >= 2) {
-    // The waiting porch with a bench.
-    for (const a of [0.12, 0.4]) pole(p, a, 0.84, 6, 'S');
-    roofRect(p, 0.1, 0.44, 0.66, 0.84, 6, 2, 'shed', 'c', 'w', undefined, 0.01);
-    prism(p, 0.16, 0.36, 0.72, 0.76, 2, 'n');
+  if (level === 2) {
+    // The main block and a ward wing along the back, the canopy and an ambulance at the IGD.
+    block(0.62, 0.94, 0.06, 0.66, 2);
+    block(0.08, 0.62, 0.12, 0.6, 2, true);
+    igd(0.16, 0.44, 0.6);
+    bus(p, 0.6, 0.8, 0.78, 0.86, 'w', 'r');
+    namePlate(p, 'RSUD', 0.2, 0.48, 0.6, 13, { frame: GREEN });
+    motorAt(p, 0.12, 0.92);
+    return;
   }
-  if (level >= 3) {
-    // Drop-off canopy and an ambulance under it.
-    pole(p, 0.66, 0.92, 6, 'S');
-    pole(p, 0.92, 0.92, 6, 'S');
-    roofRect(p, 0.62, 0.96, 0.52, 0.94, 6, 0, 'flat', 'w', 'w', undefined, 0);
-    bus(p, 0.68, 0.88, 0.7, 0.8, 'w', 'r');
-  }
+  // Level 3: wings either side of a taller main block, a porte-cochere, two ambulances, the name on the roof.
+  block(0.04, 0.3, 0.1, 0.62, 2);
+  block(0.7, 0.96, 0.1, 0.62, 2);
+  block(0.3, 0.7, 0.16, 0.56, 3, true);
+  for (const a of [0.34, 0.64]) pole(p, a, 0.84, 6, 'S');
+  roofRect(p, 0.3, 0.7, 0.56, 0.86, 6, 2, 'hip', GREEN, 'w', undefined, 0.01);
+  bus(p, 0.38, 0.58, 0.66, 0.74, 'w', 'r');
+  bus(p, 0.76, 0.94, 0.76, 0.84, 'w', 'r');
+  namePlate(p, 'RSUD', 0.36, 0.64, 0.56, 17, { frame: GREEN });
+  motorAt(p, 0.08, 0.92);
 };
 
 /** Pasar: an open los under one zinc limasan, then two los and a row of kios, then a big two-tier market hall with sawtooth vents, kios and gerobak. */
@@ -522,6 +547,7 @@ export const pasar: Art = (p, _v, level = 1) => {
     // Baskets of produce on the ground and a gerobak parked by the los.
     for (const [a, c] of [[0.3, 'g'], [0.4, 'o'], [0.5, 'r']] as [number, string][]) prism(p, a, a + 0.06, 0.84, 0.9, 2, 'a', (face) => (face === 'T' ? c : undefined));
     prism(p, 0.66, 0.84, 0.84, 0.92, 3, 'b', (face, _u, j) => (face === 'T' ? 'w' : j === 0 ? 'k' : undefined));
+    namePlate(p, 'PASAR', 0.34, 0.66, 0.5, 13, { frame: '#a8321f', bg: '#f4b935', style: 'raised', lift: 4 });
     return;
   }
   // A row of kios along the back, rolling doors half up.
@@ -532,7 +558,7 @@ export const pasar: Art = (p, _v, level = 1) => {
       stalls(p, a0 + 0.04, a1 - 0.04, 0.4, 0.82);
       shed(p, a0, a1, 0.34, 0.9, 8, 5, 'hip', ZINC, zinc);
     }
-    namePlate(p, 'PASAR', 0.3, 0.7, 0.24, 9, { frame: '#a8321f', bg: '#f4b935' });
+    namePlate(p, 'PASAR', 0.3, 0.7, 0.66, 11, { frame: '#a8321f', bg: '#f4b935', style: 'raised', lift: 6 });
     motorAt(p, 0.46, 0.92);
     return;
   }
@@ -543,7 +569,7 @@ export const pasar: Art = (p, _v, level = 1) => {
   for (const k of [0, 1, 2, 3]) roofRect(p, 0.3 + k * 0.1, 0.4 + k * 0.1, 0.48, 0.76, 12, 2, 'shed', ZINC, 'w', zinc, 0);
   umbul(p, [[0.06, 0.96], [0.94, 0.96]], 14);
   // The market's name on the crown, payung of the pedagang outside, motors and a gerobak.
-  namePlate(p, 'PASAR', 0.32, 0.68, 0.76, 13, { frame: '#a8321f', bg: '#f4b935' });
+  namePlate(p, 'PASAR', 0.32, 0.68, 0.7, 12, { frame: '#a8321f', bg: '#f4b935', style: 'raised', lift: 6 });
   for (const [a, c] of [[0.18, 'b'], [0.78, 'g']] as [number, string][]) {
     pole(p, a + 0.04, 0.95, 6, 'S');
     roofRect(p, a, a + 0.08, 0.91, 0.99, 6, 2, 'hip', c, 'w', (x) => (Math.floor(x / 2) % 2 ? 'w' : undefined), 0.01);
@@ -562,8 +588,8 @@ export const terminal: Art = (p, _v, level = 1) => {
   prism(p, 0.06, big ? 0.6 : 0.4, 0.06, 0.3, 8, 'w', wall([0.4, 0.55], 3, 6, { band: [7, 'y'] }));
   roofRect(p, 0.06, big ? 0.6 : 0.4, 0.06, 0.3, 8, 4, 'hip', 'b', 'w');
   if (big) {
-    // The terminal's name on a frame over the office.
-    namePlate(p, 'TERMINAL', 0.4, 0.76, 0.2, 10, { legs: true, bg: '#3d72b4', fg: '#f6ecd4', frame: '#27427c' });
+    // The terminal's name raised on posts over the front platform canopy.
+    namePlate(p, 'TERMINAL', 0.3, 0.64, 0.72, 8, { bg: '#3d72b4', fg: '#f6ecd4', frame: '#27427c', style: 'raised', lift: 8 });
   }
   // Benches under the canopy and ojek waiting by the office.
   bench(p, 0.2, 0.32, 0.36);
@@ -607,7 +633,7 @@ export const taman: Art = (p, _v, level = 1) => {
   if (level >= 2) {
     // A bin by the bench and the park's name on a low board at the path's front end.
     prism(p, 0.44, 0.47, 0.66, 0.69, 3, 'g', (face) => (face === 'T' ? 'G' : undefined));
-    namePlate(p, 'TAMAN', 0.5, 0.74, 0.94, 3, { legs: true, frame: '#527f34' });
+    namePlate(p, 'TAMAN', 0.54, 0.7, 0.94, 3, { legs: true, frame: '#527f34', style: 'emblem' });
   }
 };
 
@@ -632,7 +658,7 @@ export const kantorKec: Art = (p, _v, level = 1) => {
     for (const a of [0.1, 0.18, 0.26]) flag(p, a, 0.86, 13);
   } else flag(p, 0.9, 0.86, 13);
   // The name on the parapet, AC units on the side, the camat's black dinas car and staff motors.
-  namePlate(p, 'CAMAT', level >= 3 ? 0.62 : 0.34, level >= 3 ? 0.9 : 0.66, b1, 9, { frame: '#e57d2e' });
+  namePlate(p, 'CAMAT', level >= 3 ? 0.66 : 0.42, level >= 3 ? 0.86 : 0.58, b1, 9, { frame: '#e57d2e', style: 'emblem' });
   acUnit(p, a1, b0 + 0.12, 4);
   acUnit(p, a1, b0 + 0.32, 4);
   if (level <= 1) motorAt(p, 0.7, 0.8);
@@ -665,7 +691,7 @@ export const posSatpol: Art = (p, _v, level = 1) => {
     pole(p, a1 - 0.04, b1 - 0.04, 16, 'S');
   }
   // The post's name on its parapet, a patrol motor and traffic cones by the door.
-  namePlate(p, level <= 1 ? 'POL PP' : 'SATPOL', a0 + 0.02, a1 - 0.02, b1, 8, { frame: '#27427c', bg: '#f4b935' });
+  namePlate(p, level <= 1 ? 'POL PP' : 'SATPOL', a0 + 0.02, a1 - 0.02, b1, 8, { frame: '#27427c', bg: '#f4b935', style: 'raised' });
   motorAt(p, 0.18, 0.86, '#f6ecd4');
   if (level >= 2) for (const a of [0.36, 0.44]) prism(p, a, a + 0.03, 0.86, 0.89, 3, 'o', (face, _u, j) => (j === 1 && face !== 'T' ? 'w' : undefined));
 };
@@ -687,9 +713,9 @@ export const koperasiSP: Art = (p, _v, level = 1) => {
     prism(p, 0.78, 0.86, 0.72, 0.78, 6, 'b', (face, _u, j) => (face === 'L' && within(j, 3, 5) ? 'c' : undefined));
   }
   // KSP on a plate, on posts at level 1 and on the eave above; a spanduk of the loan offer and motors.
-  if (level <= 1) namePlate(p, 'KSP', 0.66, 0.9, 0.9, 3, { legs: true, frame: '#527f34', bg: '#f4b935' });
+  if (level <= 1) namePlate(p, 'KSP', 0.7, 0.86, 0.9, 3, { legs: true, frame: '#527f34', bg: '#f4b935', style: 'emblem' });
   else {
-    namePlate(p, 'KSP', 0.26, 0.46, b1, 8, { frame: '#527f34', bg: '#f4b935' });
+    namePlate(p, 'KSP', 0.26, 0.46, b1, 8, { frame: '#527f34', bg: '#f4b935', style: 'emblem' });
     prism(p, 0.1, 0.24, b1, b1 + 0.01, 3, 'w', (face, _u, j, i) => (face === 'L' ? (j === 1 ? (i % 3 ? 'r' : 'w') : 'b') : undefined), 3);
     motorAt(p, 0.5, 0.9);
   }
@@ -708,7 +734,7 @@ export const balaiLatihanKerja: Art = (p, _v, level = 1) => {
   if (level <= 1) {
     prism(p, 0.24, 0.72, 0.24, 0.72, 7, 'c', wall([0.3, 0.7], 3, 6));
     roofRect(p, 0.24, 0.72, 0.24, 0.72, 7, 4, 'gableB', ZINC, 'c', zinc);
-    namePlate(p, 'BLK', 0.6, 0.86, 0.88, 3, { legs: true, frame: '#27427c' });
+    namePlate(p, 'BLK', 0.64, 0.82, 0.88, 3, { legs: true, frame: '#27427c', style: 'emblem' });
     return;
   }
   prism(p, 0.06, 0.6, 0.08, 0.88, 9, 'c', (face, u, j, i) => (face === 'L' && within(u, 0.3, 0.7) && j < 7 ? (j >= 5 ? (i % 2 ? 's' : 'S') : 'k') : wall(null, 3, 7)(face, u, j, i)));
@@ -716,7 +742,7 @@ export const balaiLatihanKerja: Art = (p, _v, level = 1) => {
   prism(p, 0.24, 0.42, 0.08, 0.88, 2, 'c', (face, _u, j, i) => (face !== 'T' && j === 1 && i % 2 ? 'l' : undefined), 12);
   roofRect(p, 0.24, 0.42, 0.08, 0.88, 14, 2, 'gableB', 'S', 'c', (x) => (Math.floor(x / 3) % 2 ? 'y' : undefined));
   // The name over the big door, a tandon, and the trainees' motors.
-  namePlate(p, 'BLK', 0.24, 0.42, 0.88, 9, { frame: '#27427c' });
+  namePlate(p, 'BLK', 0.24, 0.42, 0.88, 9, { frame: '#27427c', style: 'emblem' });
   motorAt(p, 0.1, 0.94);
   motorAt(p, level >= 3 ? 0.5 : 0.7, 0.94, '#3d72b4');
 };
@@ -819,7 +845,7 @@ export const tamanKota: Art = (p, _v, level = 1) => {
   }
   if (level >= 3) {
     // The gate at the front where the path leaves the park, with the park's name.
-    namePlate(p, 'TAMAN', 0.36, 0.64, 0.96, 6, { legs: true, frame: '#527f34' });
+    namePlate(p, 'TAMAN', 0.42, 0.58, 0.96, 6, { legs: true, frame: '#527f34', style: 'emblem' });
     lampPost(p, 0.3, 0.7, 8);
     lampPost(p, 0.7, 0.3, 8);
   }
