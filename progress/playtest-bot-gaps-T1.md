@@ -1,0 +1,3 @@
+# playtest-bot-gaps-T1
+
+Changed `tests/kec-bot-lib.ts`: `kecWeek` now builds up to two Koperasi Simpan Pinjam and one Balai Latihan Kerja on the seam and RT/RW lots, and starts Literasi Keuangan when `pinjolShare(s) >= 20` and `checkRealisasi(s, 'literasiKeuangan').ok`, all before the `kelWeek` call. Imported `checkRealisasi` and `startRealisasi` from `src/sim/realisasi`. `tests/kec-bot.test.ts` is unchanged and still skips without `KEC_BOT`. Verified with `npm run typecheck`, `npm test` (658 passed, 9 skipped), `npm test -- tests/kec-bot.test.ts` (skipped as designed), and a one-off `playKecHint(1, 300)` smoke run that passed without throwing.
