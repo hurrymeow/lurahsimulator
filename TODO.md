@@ -18,6 +18,12 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Next
 
+- [ ] **Build Decor in rows, like Jalan Setapak.**
+  - Problem: every hiasan building (Pohon Rindang, Balai-balai Bambu, Lampu Jalan, Mural, Patung Ikon, Taman) takes its own trip through Build, a tap and Place. A row of trees or lamps along a gang takes many round trips.
+  - Why: decorating is a late-game cash sink and a pleasure; one building per trip makes it a chore (owner request, 2026-11-09).
+  - Suggested solution: place everything on the Decor tab the way paths are laid: tap the first spot, tap the last, then Yes. The preview counts only what the kas, Orang Inside and caps allow, and spaces bigger footprints.
+  - `claimed · Claude · 2026-11-09 · done when:` every Decor-tab building goes down as a row from two taps and Yes, with unit and e2e checks, and GAME-DESIGN.md says so.
+
 ### Later
 
 - [ ] **Secondary goals board from Pak Camat (Kairosoft style).**
