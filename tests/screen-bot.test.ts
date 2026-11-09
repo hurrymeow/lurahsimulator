@@ -47,4 +47,11 @@ describe('screen-only bot', () => {
     expect(score('wait', waiting, structuredClone(waiting)).verdict).toBe('right');
     expect(score('wait', a, structuredClone(a)).verdict).toBe('wrong');
   });
+
+  it('scores a wait the player could not afford as right', () => {
+    const a = newGame(1);
+    const b = structuredClone(a);
+    expect(score('wait', a, b, true)).toEqual({ verdict: 'right', reason: 'saving: could not afford the named building' });
+    expect(score('build', a, b, true).verdict).toBe('wrong');
+  });
 });
