@@ -14,7 +14,7 @@ import { checkChoice, eventCost, resolveEvent, sendCandidates, sendChance } from
 import { STAT_ICON } from './data/staff';
 import { discoverCombos } from './sim/combos';
 import { checkMove, checkPlace, moveBuilding, place } from './sim/rules';
-import { buildsInLine, linePath, placeLine, type LineTile } from './sim/line';
+import { buildsInLine, keepsPlacing, linePath, placeLine, type LineTile } from './sim/line';
 import { lotAt } from './sim/area';
 import { promote } from './sim/grow';
 import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, type FirstKind } from './sim/types';
@@ -853,6 +853,8 @@ export class App {
   /** First and last tile of a path being laid. */
   private line: { a: { x: number; y: number }; b: { x: number; y: number } | null } | null = null;
   private lineTiles: LineTile[] = [];
+  /** A Decor building just went up and another is in hand: the bar says so. */
+  private placedOne = false;
 
   /** Uid of the building being moved, or null while placing something new. */
   private moving: number | null = null;
@@ -884,6 +886,7 @@ export class App {
     this.placeRot = 0;
     this.view.hidden = null;
     this.placing = id;
+    this.placedOne = false;
     this.line = null;
     this.view.ghost = null;
     this.view.selected = null;
@@ -1007,7 +1010,7 @@ export class App {
     const id = this.placing!;
     const d = def(id);
     if (buildsInLine(d)) {
-      // Paths and Decor take two taps, a start and an end, then Yes: a whole row in one go.
+      // Paths take two taps, a start and an end, then Yes.
       if (!this.line || this.line.b) this.line = { a: tile, b: null };
       else this.line.b = tile;
       this.refreshLine();
@@ -1068,6 +1071,16 @@ export class App {
       if (cost) this.view.pop(g.x, g.y, 'rupiah', -cost);
       this.haptic(15);
       audio.play('build');
+      if (keepsPlacing(d)) {
+        // Decor stays in hand: the next one is a tap away, until Cancel.
+        this.view.ghost = null;
+        this.placedOne = true;
+        this.save();
+        this.refresh();
+        this.markValid();
+        this.updatePlacing();
+        return;
+      }
       this.stopPlacing();
       this.save();
       this.refresh();
@@ -1086,13 +1099,12 @@ export class App {
     float.hidden = !g;
     document.getElementById('place-exit')!.hidden = !!g;
     const row = buildsInLine(d);
-    const path = !!d.pathIncome;
     document.getElementById('place-rot')!.hidden = row;
     if (this.line && g?.tiles) {
       const fresh = this.lineTiles.filter((p) => p.ok && !p.have).length;
       const blocked = this.lineTiles.filter((p) => !p.ok).length;
       if (!this.line.b) {
-        info.replaceChildren(title, h('span', {}, t(path ? 'build.lineEnd' : 'build.rowEnd')));
+        info.replaceChildren(title, h('span', {}, t('build.lineEnd')));
         float.hidden = true;
         document.getElementById('place-exit')!.hidden = false;
         btn.disabled = true;
@@ -1101,13 +1113,13 @@ export class App {
       btn.disabled = fresh === 0;
       btn.textContent = '✓';
       btn.setAttribute('aria-label', t('page.yes'));
-      info.replaceChildren(title, h('span', {}, fresh ? t(path ? 'build.lineGo' : 'build.rowGo', { n: fresh, cost: rupiah(buildCost(this.s, d) * fresh) }) : t('build.lineNone')), ...(blocked ? [h('span', { class: 'meta' }, t('build.lineBlocked', { n: blocked }))] : []));
+      info.replaceChildren(title, h('span', {}, fresh ? t('build.lineGo', { n: fresh, cost: rupiah(buildCost(this.s, d) * fresh) }) : t('build.lineNone')), ...(blocked ? [h('span', { class: 'meta' }, t('build.lineBlocked', { n: blocked }))] : []));
       return;
     }
     btn.textContent = '✓';
     btn.setAttribute('aria-label', t('page.place'));
     if (!g) {
-      info.replaceChildren(title, h('span', {}, row ? t(path ? 'build.lineStart' : 'build.rowStart') : t('build.tapToPlace')));
+      info.replaceChildren(title, h('span', {}, row ? t('build.lineStart') : t(this.placedOne ? 'build.again' : 'build.tapToPlace')));
       btn.disabled = true;
       return;
     }
