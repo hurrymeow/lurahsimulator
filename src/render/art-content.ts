@@ -1,5 +1,6 @@
 import { dither, type Painter, type RoofShape } from './iso';
 import { kolamLele } from './farm-art';
+import { SHOWCASE_ART } from './showcase-art';
 import { kolamPancing, panggungSenam, tamanBermain } from './park-art';
 
 // Sprites for the content wave: selokan, decorations, farm, shops and facilities. Same rules as ART.md:
@@ -119,4 +120,5 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
   },
   panggungSenam,
   kolamPancing,
+  ...SHOWCASE_ART,
 };
