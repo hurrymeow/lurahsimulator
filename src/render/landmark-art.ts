@@ -1,12 +1,15 @@
 import { dither, type Painter } from './iso';
-import { at, unit } from './kampung-art';
-import { prism, roofRect } from './massing';
+import { at } from './kampung-art';
+import { prism } from './massing';
 import { PALETTE } from './sprites';
 
-// Air Mancur and Studi Banding, three options each (review 2026-11-09). Air Mancur gets round forms:
-// bowls, basins and balls are drawn as true 2:1 ellipses and cel-lit spheres in native pixels.
+// Air Mancur (Payung Air) and Studi Banding (Bus Pariwisata), picked by Koko from three options each
+// (2026-11-09, decisions/air-mancur-studi-banding.md). Round forms (basins, bowls, balls) are true 2:1
+// ellipses and cel-lit spheres in native pixels. bolaDunia and kunkerLuarNegeri are the runner-up designs,
+// kept unregistered as the higher levels if these two ever level up. Registered in art-content.ts.
 
 type Art = (p: Painter, variant?: string, level?: number) => void;
+const within = (v: number, lo: number, hi: number) => v >= lo && v < hi;
 
 const hex = (c: string): string => (c.startsWith('#') ? c : (PALETTE as Record<string, string>)[c] ?? c);
 function shade(c: string, f: number): string {
@@ -76,29 +79,9 @@ function plaza(p: Painter, r = 0.46): void {
   p.overlay.push(dither);
 }
 
-/** Option A: a tiered fountain. A round pool, a pedestal, a wide lower bowl and a small upper bowl, a ball on top; water spills from both rims. */
-export const airMancurA: Art = (p) => {
-  plaza(p);
-  const [x, y] = at(p, 0.5, 0.5).map(Math.round);
-  drum(p, x, y, 12, 3, STONE, WATER, 0, '#efe7d6');
-  drum(p, x, y, 3, 6, STONE, STONE, 3);
-  drum(p, x, y, 8, 2, STONE, WATER, 9, '#efe7d6');
-  drum(p, x, y, 2, 4, STONE, STONE, 11);
-  drum(p, x, y, 5, 1, STONE, WATER, 15, '#efe7d6');
-  ball(p, x, y - 19, 2, '#f4b935');
-  p.overlay.push((q) => {
-    // Curtains of water falling off each bowl's rim into the bowl or pool below.
-    for (const dx of [-8, -5, 5, 8]) for (let k = 0; k < 5; k++) q.px(x + dx + Math.sign(dx), y - 10 + k + (Math.abs(dx) === 5 ? 1 : 0), k % 2 ? WATER : FOAM);
-    for (const dx of [-5, 5]) for (let k = 0; k < 4; k++) q.px(x + dx + Math.sign(dx), y - 16 + k, k % 2 ? WATER : FOAM);
-    // A jet from the ball and ripples on the pool.
-    q.px(x, y - 22, FOAM);
-    q.px(x, y - 23, WATER);
-    for (const [dx, dy] of [[-9, 0], [9, 0], [-6, 2], [6, 2]]) q.px(x + dx, y - 3 + dy, FOAM);
-  });
-};
-
-/** Option B: Bola Dunia. A round pool with a stepped plinth and a big globe on top, four jets arching onto it from the rim. */
-export const airMancurB: Art = (p) => {
+/**
+ * Backup for an Air Mancur level up (not registered): Bola Dunia. A round pool with a stepped plinth and a big globe on top, four jets arching onto it from the rim. */
+export const bolaDunia: Art = (p) => {
   plaza(p);
   const [x, y] = at(p, 0.5, 0.5).map(Math.round);
   drum(p, x, y, 13, 3, '#3d72b4', WATER, 0, '#93d8cb');
@@ -117,11 +100,11 @@ export const airMancurB: Art = (p) => {
   });
 };
 
-/** Option C: Payung Air. A lotus pool with a slim column, a gold bud on top and a dome of jets arching from it like an umbrella. */
-export const airMancurC: Art = (p) => {
+/** Air Mancur: Payung Air. A lotus pool with a slim column, a gold bud on top and a dome of jets arching from it like an umbrella. */
+export const airMancur: Art = (p) => {
   plaza(p);
   const [x, y] = at(p, 0.5, 0.5).map(Math.round);
-  drum(p, x, y, 12, 2, '#a8652f', WATER, 0, '#e57d2e');
+  drum(p, x, y, 10, 2, '#a8652f', WATER, 0, '#e57d2e');
   // Lotus petals round the base of the column.
   p.id++;
   for (const [dx, dy] of [[-4, 0], [4, 0], [-2, 1], [2, 1], [0, 1], [-3, -1], [3, -1]]) {
@@ -135,12 +118,12 @@ export const airMancurC: Art = (p) => {
     // The water dome: jets from the bud fall in an umbrella onto a ring of the pool.
     for (let k = 0; k < 8; k++) {
       const th = (k / 8) * Math.PI * 2;
-      const ex = Math.round(Math.cos(th) * 10);
+      const ex = Math.round(Math.cos(th) * 8);
       const ey = Math.round(Math.sin(th) * 5);
       if (ey < -3) continue;
       arc(q, x, y - 16, x + ex, y - 2 + ey, 4);
     }
-    for (const [dx, dy] of [[-10, 0], [10, 0], [-7, 3], [7, 3], [0, 5]]) q.px(x + dx, y - 2 + dy, '#ffffff');
+    for (const [dx, dy] of [[-8, 0], [8, 0], [-5, 2], [5, 2], [0, 3]]) q.px(x + dx, y - 2 + dy, '#ffffff');
   });
 };
 
@@ -170,10 +153,10 @@ function luggage(p: Painter, a: number, b: number, z = 0): void {
 }
 
 /**
- * Option A: Bus Pariwisata. A long tour coach along the lot with a curved roof, a tinted window band, a
+ * Studi Banding: Bus Pariwisata. A long tour coach along the lot with a curved roof, a tinted window band, a
  * swoosh livery and a roof rack piled with luggage; the rombongan in batik pose with a spanduk in front.
  */
-export const studiBandingA: Art = (p) => {
+export const studiBanding: Art = (p) => {
   p.low();
   p.shadow(1);
   p.ground((a, b, px) => (Math.min(a, b, 1 - a, 1 - b) < 2 * px ? 'S' : (Math.floor(a * 8) + Math.floor(b * 8)) % 2 ? '#3f3a35' : '#47413b'));
@@ -200,37 +183,10 @@ export const studiBandingA: Art = (p) => {
 };
 
 /**
- * Option B: Terop Seremoni. A striped tent on poles over rows of plastic chairs, a podium and a spanduk
- * backdrop, a tumpeng on a table, and the minibus that brought everyone, parked at the side.
- */
-export const studiBandingB: Art = (p) => {
-  p.low();
-  p.shadow(1);
-  p.ground((a, b, px) => (Math.min(a, b, 1 - a, 1 - b) < 2 * px ? 'S' : (Math.floor(a * 6) + Math.floor(b * 6)) % 2 ? '#cfc4b0' : '#c6baa5'));
-  // The backdrop: a big blue spanduk on a frame along the back.
-  for (const a of [0.1, 0.62]) prism(p, a, a + 0.02, 0.1, 0.12, 12, 'S');
-  prism(p, 0.1, 0.64, 0.1, 0.12, 8, 'b', (face, _u, j, i) => (face === 'L' ? (j === 7 || j === 0 ? 'y' : within(j, 3, 5) ? (i % 3 ? 'w' : 'b') : j === 2 && i % 2 ? 'y' : undefined) : undefined), 4);
-  // The podium and the rows of chairs facing it.
-  prism(p, 0.32, 0.4, 0.18, 0.24, 4, 'n', (face) => (face === 'T' ? 'r' : undefined));
-  for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) prism(p, 0.14 + c * 0.09, 0.19 + c * 0.09, 0.36 + r * 0.1, 0.4 + r * 0.1, 2, r === 0 ? 'r' : 'b', (face) => (face === 'T' ? (r === 0 ? 'w' : 'c') : undefined));
-  // The terop: a striped red-and-white tent on six poles.
-  const t = unit(p);
-  for (const a of [0.08, 0.36, 0.64]) for (const b of [0.16, 0.7]) prism(p, a, a + t, b, b + t, 9, 'S');
-  roofRect(p, 0.06, 0.68, 0.14, 0.72, 9, 4, 'gableA', 'r', 'w', (x) => (Math.floor(x / 2) % 2 ? 'w' : undefined), 0.01);
-  // The tumpeng on a table at the side and the minibus.
-  prism(p, 0.74, 0.86, 0.2, 0.3, 3, 'w');
-  prism(p, 0.78, 0.82, 0.23, 0.27, 3, 'y', (face) => (face === 'T' ? 'y' : undefined), 3);
-  prism(p, 0.74, 0.94, 0.54, 0.7, 6, '#3b3430', (face, u, j) => (face === 'T' ? 'S' : j === 0 ? 'k' : within(j, 3, 5) ? 'c' : face === 'L' && j === 1 && Math.abs(u - 0.5) < 0.2 ? 'S' : undefined));
-  person(p, 0.36, 0.25, 'n', true);
-  person(p, 0.72, 0.8, 'n', true);
-  person(p, 0.8, 0.82, 'p');
-};
-
-/**
- * Option C: Kunjungan Kerja ke Luar Negeri. A small airliner on the apron with its nose, wings and tail fin,
+ * Backup for a Studi Banding level up (not registered): Kunjungan Kerja ke Luar Negeri. A small airliner on the apron with its nose, wings and tail fin,
  * a boarding stair truck at the door, a luggage cart, and the rombongan in batik climbing aboard.
  */
-export const studiBandingC: Art = (p) => {
+export const kunkerLuarNegeri: Art = (p) => {
   p.low();
   p.shadow(1);
   p.ground((a, b, px) => {
@@ -260,7 +216,3 @@ export const studiBandingC: Art = (p) => {
   prism(p, 0.84, 0.96, 0.7, 0.8, 1, 'S', undefined, 1);
   luggage(p, 0.84, 0.72, 2);
 };
-
-const within = (v: number, lo: number, hi: number) => v >= lo && v < hi;
-
-export const SHOWCASE_ART: Record<string, Art> = { airMancurA, airMancurB, airMancurC, studiBandingA, studiBandingB, studiBandingC };
