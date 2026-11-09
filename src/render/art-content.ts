@@ -1,5 +1,6 @@
 import { dither, type Painter, type RoofShape } from './iso';
 import { kolamLele } from './farm-art';
+import { airMancur, studiBanding } from './landmark-art';
 import { kolamPancing, panggungSenam, tamanBermain } from './park-art';
 
 // Sprites for the content wave: selokan, decorations, farm, shops and facilities. Same rules as ART.md:
@@ -85,19 +86,6 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
   },
   // The playground set, the senam stage and the fishing pond are in park-art.ts.
   tamanBermain,
-  airMancur: (p) => {
-    p.shadow(3);
-    p.ground((a, b) => {
-      const d = Math.hypot(a - 0.5, b - 0.5);
-      return d > 0.44 ? null : d > 0.38 ? 'S' : d > 0.31 ? 's' : 'l';
-    });
-    p.box(6, 6, 's');
-    p.stroke(0, -6, 0, -17, 2, 'c');
-    p.stroke(0, -17, -7, -9, 1, 'l');
-    p.stroke(0, -17, 7, -9, 1, 'l');
-    p.blob(0, 18, 3, 'c');
-    p.overlay.push(dither);
-  },
 
   // Farm. Flat plots are bare and draw their own pematang edge so neighbouring plots join up.
   kandangAyam: (p) => {
@@ -119,4 +107,6 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
   },
   panggungSenam,
   kolamPancing,
+  airMancur,
+  studiBanding,
 };

@@ -25,15 +25,4 @@ export const HIGHER_ART: Record<string, (p: Painter) => void> = {
       return within(a, 0.3, 0.34) ? 'S' : 's';
     });
   },
-  studiBanding: (p) => {
-    p.shadow(3);
-    // A tour bus with a roof rack of suitcases.
-    p.box(4, 7, 'y', (face, u, j, i) => {
-      if (face === 'T') return undefined;
-      if (j < 2) return 'k';
-      return within(j, 3, 6) && i % 4 < 3 && within(u, 0.1, 0.9) ? 'l' : undefined;
-    });
-    p.box(7, 2, 'n', undefined, 7);
-    p.box(8, 3, 'r', undefined, 9);
-  },
 };

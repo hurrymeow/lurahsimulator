@@ -363,6 +363,14 @@ faceless, so the map stays readable.
   motors, AC units, benches, lamp posts, cones, a spanduk, payung and baskets at the pasar, the camat's
   dinas car. Taman Kota keeps its trees at the back and sides, never in front of the fountain, so no
   part of the lot hides another.
+  Air Mancur is Payung Air: a terracotta lotus pool with pink petals, a slim column, a gold bud and a
+  dome of 1px jets falling like an umbrella onto the water. Studi Banding is a Bus Pariwisata: a tour
+  coach with a curved roof, a tinted window band, an orange swoosh and a roof rack of luggage, the
+  rombongan in batik posing with a spanduk and a photographer. Both live in `landmark-art.ts`, which
+  draws round forms (basins, bowls, balls) as true 2:1 ellipses and cel-lit spheres. It also keeps the
+  runner-up designs, unregistered, for the day these two get levels: `bolaDunia` (a globe on a plinth
+  with four jets) for Air Mancur and `kunkerLuarNegeri` (a plane with a stair truck and the rombongan
+  boarding) for Studi Banding.
   Gapura and Portal level 1 are smaller than their level 2. Sawah and Kebun Sayur grow their plants:
   rice from seedlings to golden heads, vegetables from sprouts to fruiting plants.
 - Houses grow, not just fence in. Rumah: the bungalow with a wooden dapur under a zinc lean-to, then
