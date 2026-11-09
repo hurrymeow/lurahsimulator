@@ -347,7 +347,7 @@ faceless, so the map stays readable.
   storey L (an orange back wing and a white row of petak with their own door colours, under red
   tile with one narrow sheet of rusty seng) to the same L on two storeys with a walkway; Pasar from one open los to two los
   and kios to a market hall with a raised sawtooth crown; Terminal from one platform to two, with
-  buses and angkot; the Kelurahan and Kecamatan offices, Pos Satpol PP, Puskesmas Pembantu, Balai RW,
+  buses and angkot; the Kelurahan and Kecamatan offices, Pos Satpol PP, RSUD, Balai RW,
   Balai Warga, Koperasi, BLK, Baliho and the parks each add a wing, porch, tower, roof tier or yard.
   Balai Warga has a white pagar and a red gapura from level 1; PAUD a rainbow fence, flower beds and a
   yellow bear mascot; Balai RW the merah putih on its ridge from level 1 and a gold Garuda over the
@@ -355,12 +355,23 @@ faceless, so the map stays readable.
   back corner, a slide, a climbing wall, monkey bars, a seesaw) with its shade tree clear in the right
   corner. Panggung Senam has umbul-umbul with bent tips and swaying pennants; Kolam Pancing a saung,
   a jetty with anglers, lily pads and a payung.
-  Kelurahan and Kecamatan buildings carry a name plate in the plate font (`namePlate` in
-  `sign-art.ts`: 3x5 capitals, a framed board slanted with the front-left wall, drawn after the ink
-  pass so the letters stay crisp): LURAH, PUSTU, PASAR, TERMINAL, TAMAN, CAMAT, SATPOL (POL PP at level
-  1), KSP and BLK. At level 1 it stands on two posts in the front yard as a papan nama; from level 2 it
-  rides on the eave, parapet or crown. They also carry the small life the RT buildings have: parked
-  motors, AC units, benches, lamp posts, cones, a spanduk, payung and baskets at the pasar, the camat's
+  Kelurahan and Kecamatan buildings carry a name plate (`namePlate` in `sign-art.ts`, drawn after
+  the ink pass so it stays crisp), in one of three styles chosen per building so the front never gets
+  too busy (Koko, 2026-11-09):
+  - Emblem: a 5x5 pictogram on a small framed board, where a word covered the facade. A gold star on
+    Kantor Kelurahan and Kantor Kecamatan, a tree on Taman and Taman Kota, a coin on Koperasi Simpan
+    Pinjam, a gear on BLK.
+  - Raised: the name in the 3x5 plate font on a board standing on two posts clearly above the roof,
+    the posts landing on the building, never in the air past its edge. PASAR (from level 1), SATPOL
+    (POL PP at level 1) and TERMINAL (over the front platform canopy). Raised plates still keep the
+    height rules below.
+  - Text: the name in the plate font on the wall or roof edge, or on posts in the yard. RSUD.
+  At level 1 a yard plate stands on two posts as a papan nama. They also carry the small life the RT
+  buildings have: parked motors, AC units, benches, lamp posts, cones, a spanduk, payung and baskets
+  at the pasar, the camat's dinas car. RSUD (the building id stays `puskesmasPembantu`) looks like a
+  kabupaten hospital: whitewashed blocks with a hospital-green band between storeys, ribbon windows,
+  a flat dak, a red cross and a canopied IGD entrance in red; one two-storey block, then a ward wing
+  and an ambulance, then a three-storey main block between two wings with a drop-off canopy.
   dinas car. Taman Kota keeps its trees at the back and sides, never in front of the fountain, so no
   part of the lot hides another.
   Air Mancur is Payung Air: a terracotta lotus pool with pink petals, a slim column, a gold bud and a

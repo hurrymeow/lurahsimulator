@@ -260,6 +260,10 @@ export function namePlate(p: Painter, text: string, a0: number, a1: number, b: n
     const [xm, ym] = spot(q, (a0 + a1) / 2, b, z + lift);
     const X0 = Math.round(xm - w / 2);
     const Y0 = ym - w / 4;
+    // The posts stand where the span a0..a1 is, so they land on the roof or wall below, never in the air
+    // past the building's edge when the plate is wider than its front.
+    const inset = Math.min(0.04, (a1 - a0) / 4);
+    const postCols = [a0 + inset, a1 - inset].map((a) => Math.max(1, Math.min(w - 2, Math.round(spot(q, a, b, z + lift)[0]) - X0)));
     for (let c = 0; c < w; c++) {
       const base = Math.round(Y0 + c / 2);
       for (let r = 0; r < h; r++) {
@@ -271,7 +275,7 @@ export function namePlate(p: Painter, text: string, a0: number, a1: number, b: n
       }
       // Posts: down to the ground for a yard plate, down to the roof for a raised one.
       const post = (legs ? z + lift : lift) * q.zs;
-      if ((legs || lift) && (c === 1 || c === w - 2)) for (let d = 1; d <= post; d++) q.px(X0 + c, base + d, '#6d635a');
+      if ((legs || lift) && postCols.includes(c)) for (let d = 1; d <= post; d++) q.px(X0 + c, base + d, '#6d635a');
     }
   });
 }
