@@ -1,7 +1,7 @@
 import { REALISASI } from '../data/realisasi';
 import { checkRealisasi, realisasiCost, startRealisasi } from '../sim/realisasi';
 import { rEffect, rName } from '../i18n';
-import { jBlurb, jName, t, wLine, wName, wTrade } from '../i18n';
+import { jBlurb, jName, t, wLine, wName, wTrade, type Key } from '../i18n';
 import { LEVEL_MONTHS, PNS_PAYOUT_PER_LEVEL, jobDef } from '../data/jobs';
 import { RAZIA } from '../data/higher/kecamatan';
 import type { SimEffect } from '../sim/types';
@@ -12,8 +12,10 @@ import { checkAssign, assign, levelOf, liveJobs } from '../sim/jobs';
 import { checkRepair, repair, repairCost } from '../sim/events';
 import { checkRestart, checkRestartODn, RESTART_ODN, restart, restartCost, VIRAL_REPAIR_AT } from '../sim/projects';
 import { announce, availableWacana, checkAnnounce, wacanaCost } from '../sim/wacana';
+import { picCandidates, realisasiDelay, wacanaPicMult } from '../sim/staff';
+import { STAT_ICON } from '../data/staff';
 import { iconURL } from '../render/sprites';
-import type { Building, JobId, Resident } from '../sim/types';
+import type { Building, JobId, Resident, Staff } from '../sim/types';
 import { actionButton } from './inspect';
 import { h } from './dom';
 import { openSheet } from './sheet';
@@ -110,6 +112,9 @@ export function openWacana(app: App): void {
   openSheet(t('menu.wacana'), [h('p', { class: 'meta' }, t('wac.intro')), ...raziaPart(app), ...rows]);
 }
 
+/** The lead picked for each column of a policy's detail, keyed by `${id}:announce` and `${id}:realisasi`. */
+const picChoice: Record<string, number> = {};
+
 /** One policy: the joke line, then Umumkan (secondary) beside Kerjakan (primary). It stays open after announcing. */
 function openWacanaDetail(app: App, id: string): void {
   const s = app.s;
@@ -124,27 +129,49 @@ function openWacanaDetail(app: App, id: string): void {
     openWacanaDetail(app, id);
   };
   const back = h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': t('page.back'), onclick: () => openWacana(app) }, '‹');
+  // The lead's row, above the button it belongs to: their name, the stat they lead with, and what that buys.
+  const picParts = (col: 'announce' | 'realisasi', stat: 'gaul' | 'rajin', effect: (x: Staff) => string): { nodes: (Node | null)[]; pick: number } => {
+    const pool = picCandidates(s, stat);
+    const i = Math.max(0, pool.findIndex((x) => x.id === picChoice[`${id}:${col}`]));
+    const pic = pool[i];
+    const row = h('div', { class: 'wac-pic', 'data-pic': col },
+      h('span', {}, pic.name),
+      h('span', { class: 'send-odds' }, h('img', { src: iconURL(STAT_ICON[stat], 2), alt: t(`staff.stat.${stat}` as Key), width: 18, height: 18, class: 'inline-icon pixel' }), ` ${pic.stats[stat]}`),
+      h('span', {}, effect(pic)),
+    );
+    const next = pool.length > 1
+      ? h('button', { class: 'btn', type: 'button', 'data-pic-next': '', onclick: () => {
+          picChoice[`${id}:${col}`] = pool[(i + 1) % pool.length].id;
+          openWacanaDetail(app, id);
+        } }, t('wac.picNext'))
+      : null;
+    return { nodes: [row, next], pick: pic.id };
+  };
+  const announcePic = picParts('announce', 'gaul', (x) => t('wac.picPower', { x: wacanaPicMult(x).toFixed(1) }));
   const announceCol = h('div', { class: 'wac-col', 'data-col': 'announce' },
     h('strong', {}, t('wac.announceHead')),
     h('p', { class: 'meta' }, wTrade(w)),
     h('p', { class: 'meta' }, state ? t('wac.approval', { n: Math.round(state.power * 10) }) : t('wac.none')),
     state?.times ? h('p', { class: 'meta' }, t('wac.times', { n: state.times })) : null,
+    ...announcePic.nodes,
     actionButton(t('wac.announce', { cost: rupiah(wacanaCost(s, id)) }), checkAnnounce(s, id), () => {
       const paid = wacanaCost(s, id);
-      announce(s, id);
+      announce(s, id, announcePic.pick);
       const k = s.buildings.find((b) => b.def === 'kantorRT')!;
       app.view.pop(k.x, k.y, 'rupiah', -paid);
       app.tap(10);
       redo();
     }),
   );
-  const doCol = d
+  const realisasiPic = d ? picParts('realisasi', 'rajin', (x) => t('wac.picWeeks', { n: realisasiDelay(d.delay, x) })) : null;
+  const doCol = d && realisasiPic
     ? h('div', { class: 'wac-col', 'data-col': 'realisasi' },
         h('strong', {}, rName(d)),
         h('p', { class: 'meta' }, rEffect(d)),
         h('p', { class: running ? 'meta good' : 'meta' }, running ?? t('wac.delay', { n: d.delay })),
+        ...realisasiPic.nodes,
         actionButton(t('wac.realisasi', { cost: rupiah(realisasiCost(s, d)) }), checkRealisasi(s, d.id), () => {
-          startRealisasi(s, d.id);
+          startRealisasi(s, d.id, realisasiPic.pick);
           app.tap(15);
           redo();
         }, true),

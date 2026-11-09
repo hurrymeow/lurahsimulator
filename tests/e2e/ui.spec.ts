@@ -2627,6 +2627,19 @@ test.describe('build mode', () => {
     await expectLegible(page, 'sejahtera card');
   });
 
+  test('each Wacana column names its lead, and only Inem means no Change button', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await openPanel(page, 'wacana');
+    await page.locator('#sheet .wac-row').first().click();
+    const pics = page.locator('#sheet .wac-pic');
+    await expect(pics).toHaveCount(2);
+    await expect(pics.nth(0)).toContainText('Inem');
+    await expect(pics.nth(1)).toContainText('Inem');
+    await expect(page.locator('#sheet [data-pic-next]')).toHaveCount(0);
+    await expectLegible(page, 'wacana lead rows');
+  });
+
   test('the Staff panel shows Inem, posts a lowongan and hires an applicant, all legible', async ({ page }) => {
     await start(page);
     await dismissModals(page);
