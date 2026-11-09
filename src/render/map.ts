@@ -184,6 +184,8 @@ export class MapView {
   ghost: Ghost | null = null;
   /** While placing: 1 for every tile a valid footprint can cover, so the free spots light up. */
   valid: Uint8Array | null = null;
+  /** While placing: the valid tiles that would join a combo, by tile key. */
+  join: Set<number> | null = null;
   /** A building being moved is hidden from its old spot while its ghost shows the new one. */
   hidden: number | null = null;
   selected: number | null = null;
@@ -604,6 +606,27 @@ export class MapView {
       ctx.strokeStyle = 'rgba(246, 236, 212, 0.55)';
       ctx.lineWidth = 1;
       ctx.stroke();
+      if (this.join) {
+        // The spots that would join a combo get the same diamond in gold.
+        ctx.beginPath();
+        for (const k of this.join) {
+          if (!this.valid[k]) continue;
+          const x = k % GRID_W;
+          const y = Math.floor(k / GRID_W);
+          const c = this.tileCentre(x, y);
+          if (c.x < -hw || c.y < -hh || c.x > this.viewW + hw || c.y > this.viewH + hh) continue;
+          ctx.moveTo(c.x, c.y - hh + 2);
+          ctx.lineTo(c.x + hw - 4, c.y);
+          ctx.lineTo(c.x, c.y + hh - 2);
+          ctx.lineTo(c.x - hw + 4, c.y);
+          ctx.closePath();
+        }
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.38)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
     }
     if (this.ghost) {
       for (const g of this.ghost.tiles ?? [this.ghost]) {

@@ -12,7 +12,7 @@ import { def } from './sim/content';
 import { eventDef } from './data/events';
 import { checkChoice, eventCost, resolveEvent, sendCandidates, sendChance } from './sim/events';
 import { STAT_ICON } from './data/staff';
-import { discoverCombos } from './sim/combos';
+import { comboJoinTiles, discoverCombos } from './sim/combos';
 import { checkMove, checkPlace, moveBuilding, place } from './sim/rules';
 import { buildsInLine, linePath, placeLine, type LineTile } from './sim/line';
 import { lotAt } from './sim/area';
@@ -914,6 +914,9 @@ export class App {
         for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) out[(y + dy) * GRID_W + x + dx] = 1;
       }
     this.view.valid = out;
+    const tiles: { x: number; y: number }[] = [];
+    for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (out[y * GRID_W + x]) tiles.push({ x, y });
+    this.view.join = comboJoinTiles(this.s, id, tiles);
     return out;
   }
 
@@ -993,6 +996,7 @@ export class App {
 
   stopPlacing(): void {
     this.view.valid = null;
+    this.view.join = null;
     this.placing = null;
     this.moving = null;
     this.view.hidden = null;
