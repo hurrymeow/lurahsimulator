@@ -8,6 +8,7 @@ import { judolShare, pinjolShare } from '../src/sim/pinjol';
 import { checkRealisasi, startRealisasi } from '../src/sim/realisasi';
 import { lotAt } from '../src/sim/area';
 import { buildingIncome, tick } from '../src/sim/tick';
+import { fedBase, households } from '../src/sim/needs';
 import { GRID_H, GRID_W, setGrid } from '../src/sim/types';
 import { runBot } from './scorecard/driver';
 import { buildCost, isWorking, occupants, population } from '../src/sim/state';
@@ -61,9 +62,16 @@ export function kecWeek(s: GameState, seam: { x: number; y: number }[], all: { x
   else if (stage === 'kecamatan' && amanAcross(s) < KEC_AMAN_GOAL) makeRoomFor(s, 'lampuTaman', [...all, ...seam]);
   const short = jobless(s) > jobShare;
   // The Kecamatan asks for 250 residents, so a player stops adding homes a little past that: every resident drains Popularitas.
-  const full = population(s) >= (stage === 'kecamatan' ? KEC_POP_CAP : KEL_POP_CAP);
+  const hungry = stage === 'kecamatan' && fedBase(s) < households(s);
+  const full = population(s) >= (stage === 'kecamatan' ? KEC_POP_CAP : KEL_POP_CAP) || hungry;
   // The Kecamatan's tools for pinjol: two Koperasi Simpan Pinjam, a Balai Latihan Kerja, and Literasi Keuangan.
   if (stage === 'kecamatan') {
+    // Hungry households cost Popularitas, so a player builds food: a Toko Kelontong first, a Warung if that did not go up.
+    if (hungry) {
+      const before = s.buildings.length;
+      makeRoomFor(s, 'tokoKelontong', [...seam, ...all]);
+      if (s.buildings.length === before) makeRoomFor(s, 'warung', [...seam, ...all]);
+    }
     if (s.buildings.filter((b) => b.def === 'koperasiSP').length < 2) makeRoomFor(s, 'koperasiSP', [...seam, ...all]);
     if (!s.buildings.some((b) => b.def === 'balaiLatihanKerja')) makeRoomFor(s, 'balaiLatihanKerja', [...seam, ...all]);
     if (pinjolShare(s) >= 20 && checkRealisasi(s, 'literasiKeuangan').ok) startRealisasi(s, 'literasiKeuangan');
