@@ -10,11 +10,6 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Now
 
-- [ ] **Show where a combo piece goes.**
-  - Problem: the goal says "place side by side" and not where. The screen-only bot never formed Rapat Malam and a new player may stall too.
-  - Why: `decisions/playtest-bot-gaps.md` finding 1 (Hari, 2026-11-09).
-  - Suggested solution: while a combo's missing piece is in hand, tint the free tiles beside its partner gold. `docs/plans/combo-join-highlight.md`.
-  - `claimed · Claude · 2026-11-09 · done when:` the gold tint shows on the map for a combo piece, with a unit and an e2e check.
 - [ ] **Kecamatan starts with households that have no food.**
   - Problem: the hint path promotes with about 460 residents and food for 50 of 154 households, so pinjol sits at 55 to 71% and no Kecamatan star comes.
   - Why: `decisions/playtest-bot-gaps.md` finding 2 (Hari, 2026-11-09: fold into tuning).
@@ -97,6 +92,8 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - `open · — · — · done when:` row 22 reads Pass or Fail on the next Nightly, the bunting follows the lomba year, and row 13 has no bot-gap line. (Rows 3, 6 and 27 done in #356.)
 
 ## Done
+
+- [x] **Show where a combo piece goes.** While a combo's missing piece is in hand, free tiles beside its partner tint gold. #402, #403, `docs/plans/combo-join-highlight.md`.
 
 - [x] **Tune Wacana and Staf with the Nightly scorecard (plan T6).** Five bots on 6 seeds, before T2 against main. Bars 1, 2 and 4 pass. Bar 5 fails: the quarterly ranking calendar sets the RW and Kelurahan 3★ weeks for every bot, so even 5 to 8 times the permit time leaves a no-hire builder on the same quarter. No constant changed. Bar 5 moves to the stage-lengths item. `decisions/wacana-staff-core-T6.md`.
 - [x] **Finish the Kelurahan and Kecamatan sprite pass (follow-up to #383).** Julian's review turned the plate font into a rule: an icon, never a word (only names as short as RT or RW are lettered). Pictogram plates (Pasar basket, Terminal bus, RSUD red cross) face the street flat; Pos Satpol PP has a red and blue rotator; blinking lights through a new `blink` list on sprite art; Kantor Kelurahan in dark green with a teras; Kolam Lele level 1 grounded. Then Taman level 3 with one thing per quarter, Aspal Ulang with a road roller, Baliho with a ladder and a tukang pasang, and an overlap check of every RW, Kelurahan and Kecamatan sprite. Studi Banding was already redrawn in #390. #395, #396, `decisions/icons-not-words.md`, `decisions/kel-kec-pass-finish.md`.
