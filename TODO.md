@@ -10,11 +10,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Now
 
-- [ ] **Tune Wacana and Staf with the Nightly scorecard (plan T6).**
-  - Problem: the starting values in T2, T3 and T5 are guesses.
-  - Why: Wacana spam must not carry the rankings, and a player who never hires must slow down without being locked.
-  - Suggested solution: `docs/plans/wacana-staff-core.md` T6. Compare the Nightly scorecard before T1 and after T5, and tune only the listed constants.
-  - `open · — · — · done when:` the T6 bars pass, logged in `decisions/wacana-staff-core-T6.md`.
+- No open item. The next pick is in Next.
 
 ### Next
 
@@ -42,7 +38,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Problem: the RW takes 7 to 12 min (target about 20) and the Kelurahan 14 to 19 min (target about 30). Kel 2★ and 3★, and Kec 2★ and 3★, need yearly ranking wins, so they land on the same week for every bot. The Kecamatan waits about 23 min between goal lines.
   - Why: a star the calendar sets ignores how well the player plays (GAME-DESIGN.md §8 items 4 and 10). Short stages leave the late content thin.
   - Suggested solution: decide per stage whether a tier-win goal should count quarterly rankings, ask for fewer yearly wins, or be paired with goals that skill moves. Then retune the stage goals toward the length targets. Prove each change with the nine player types against main.
-  - Source: `decisions/smaller-map-T9.md`, notes 1, 2 and 5
+  - Source: `decisions/smaller-map-T9.md`, notes 1, 2 and 5. It also holds Wacana and Staf T6 bar 5 (a builder that never hires must reach RW 3★ and Kel 3★ 15% later): rerun that check once stars stop waiting on the calendar (`decisions/wacana-staff-core-T6.md`).
   - `claimed · Claude · 2026-11-09 · done when:` each stage is inside its length band, or a decisions file says why not, and no star lands on the same week for every bot.
 
 - [ ] **Run the scorecard bots with the road rule on.**
@@ -93,6 +89,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ## Done
 
+- [x] **Tune Wacana and Staf with the Nightly scorecard (plan T6).** Five bots on 6 seeds, before T2 against main. Bars 1, 2 and 4 pass. Bar 5 fails: the quarterly ranking calendar sets the RW and Kelurahan 3★ weeks for every bot, so even 5 to 8 times the permit time leaves a no-hire builder on the same quarter. No constant changed. Bar 5 moves to the stage-lengths item. `decisions/wacana-staff-core-T6.md`.
 - [x] **Finish the Kelurahan and Kecamatan sprite pass (follow-up to #383).** Julian's review turned the plate font into a rule: an icon, never a word (only names as short as RT or RW are lettered). Pictogram plates (Pasar basket, Terminal bus, RSUD red cross) face the street flat; Pos Satpol PP has a red and blue rotator; blinking lights through a new `blink` list on sprite art; Kantor Kelurahan in dark green with a teras; Kolam Lele level 1 grounded. Then Taman level 3 with one thing per quarter, Aspal Ulang with a road roller, Baliho with a ladder and a tukang pasang, and an overlap check of every RW, Kelurahan and Kecamatan sprite. Studi Banding was already redrawn in #390. #395, #396, `decisions/icons-not-words.md`, `decisions/kel-kec-pass-finish.md`.
 - [x] **Staff and Wacana matter (T1 to T5).** Bots hire an Asisten on a wage-aware budget; programs count in the quarterly ranking; every Wacana and Realisasi has a PIC (Gaul, Rajin, Jujur) you can change in the pop-up; permit folders grow with the stage. DeepSeek executor, #387, #388, #391, #393, #394, `docs/plans/wacana-staff-core.md`. T6 tuning stays open below.
 - [x] **Shops give jobs, and earn less short-staffed.** Penjaga Toko, Tukang Masak and Tukang Cukur, 1 to 3 posts a shop; a short-staffed shop earns up to 25% less. Late idle share fell from about 0.5 to about 0.3 for the bots; RW 2★/3★ come 0 to 11 weeks later. GAME-DESIGN.md §4. #374, `decisions/shop-jobs.md`.
