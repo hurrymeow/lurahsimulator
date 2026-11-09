@@ -10,9 +10,33 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Now
 
+- [ ] **Make staff and Wacana matter (plan T1 to T5, DeepSeek executor).**
+  - Problem: you can reach every star without hiring anyone or announcing a wacana. The scorecard bots never hire. `laporan()` is shown but nothing reads it. Inem alone keeps the permit desk short at every stage.
+  - Why: playtest feedback from joofoot and kokoliem, 2026-11-09. Staff and Wacana sit outside the core loop. Hari picked "D + soft B, then C".
+  - Suggested solution: `docs/plans/wacana-staff-core.md`. T1 makes the bots hire an Asisten. T2 counts programs in the quarterly ranking. T3 gives every Wacana and Realisasi a PIC from your staff (Gaul, Rajin, Jujur). T4 shows the PIC in the Wacana pop-up. T5 grows permit folders with the stage. Each task is tagged `(Sonnet, executor trial)`, so dispatch `deepseek-exec.yml` one task at a time, in order.
+  - `open · — · — · done when:` T1 to T5 are merged and live.
+
+- [ ] **Tune Wacana and Staf with the Nightly scorecard (plan T6).**
+  - Problem: the starting values in T2, T3 and T5 are guesses.
+  - Why: Wacana spam must not carry the rankings, and a player who never hires must slow down without being locked.
+  - Suggested solution: `docs/plans/wacana-staff-core.md` T6. Compare the Nightly scorecard before T1 and after T5, and tune only the listed constants.
+  - `open · — · — · done when:` the T6 bars pass, logged in `decisions/wacana-staff-core-T6.md`.
+
 ### Next
 
 ### Later
+
+- [ ] **Secondary goals board from Pak Camat (Kairosoft style).**
+  - Problem: staff training and programs have no short-term pull of their own. Kairosoft gives regular side goals, such as training someone, with small rewards.
+  - Why: joofoot asked for it, 2026-11-09. It also keeps players coming back to Staf between stars.
+  - Suggested solution: plan it after a playtest of `docs/plans/wacana-staff-core.md` (open questions). Use rotating tasks such as "Bimtek someone this quarter" or "Realisasi Kampung Hijau", paying Orang Inside or Rupiah and never gating stars. Check UI.md rule 13 first.
+  - `open · — · — · done when:` a plan for it is approved and on main.
+
+- [ ] **Sejahtera, the Kerja meter and Indonesia Emas change almost nothing.**
+  - Problem: Sejahtera and Kerja feed only the 2045 meter and a drop toast, so a Realisasi that moves Kerja does nothing. Emas adds a point or two to the ranking, against 8 for each resident. The 2045 ending that reads Sejahtera is not built.
+  - Why: the core satire is Laporan against Sejahtera. If doing it for real pays nothing, players only learn to announce.
+  - Suggested solution: decide what a good Sejahtera buys before the ending exists. Options include the share of iuran paid, resident arrivals, or a yearly SK bonus. Prove it with the honest and pencitraan bots. Source: `docs/plans/wacana-staff-core.md`, open questions.
+  - `open · — · — · done when:` raising Sejahtera changes a star time for the honest bot, or a decisions file says why not.
 
 - [ ] **Stage lengths, and stars that wait on the yearly ranking.**
   - Problem: the RW takes 7 to 12 min (target about 20) and the Kelurahan 14 to 19 min (target about 30). Kel 2★ and 3★, and Kec 2★ and 3★, need yearly ranking wins, so they land on the same week for every bot. The Kecamatan waits about 23 min between goal lines.
