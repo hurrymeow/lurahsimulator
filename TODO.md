@@ -18,12 +18,6 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Next
 
-- [ ] **Build Decor in rows, like Jalan Setapak.**
-  - Problem: every hiasan building (Pohon Rindang, Balai-balai Bambu, Lampu Jalan, Mural, Patung Ikon, Taman) takes its own trip through Build, a tap and Place. A row of trees or lamps along a gang takes many round trips.
-  - Why: decorating is a late-game cash sink and a pleasure; one building per trip makes it a chore (owner request, 2026-11-09).
-  - Suggested solution: place everything on the Decor tab the way paths are laid: tap the first spot, tap the last, then Yes. The preview counts only what the kas, Orang Inside and caps allow, and spaces bigger footprints.
-  - `claimed · Claude · 2026-11-09 · done when:` every Decor-tab building goes down as a row from two taps and Yes, with unit and e2e checks, and GAME-DESIGN.md says so.
-
 ### Later
 
 - [ ] **Secondary goals board from Pak Camat (Kairosoft style).**
@@ -38,12 +32,12 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Suggested solution: decide what a good Sejahtera buys before the ending exists. Options include the share of iuran paid, resident arrivals, or a yearly SK bonus. Prove it with the honest and pencitraan bots. Source: `docs/plans/wacana-staff-core.md`, open questions.
   - `open · — · — · done when:` raising Sejahtera changes a star time for the honest bot, or a decisions file says why not.
 
-- [ ] **Stage lengths, and stars that wait on the yearly ranking.**
-  - Problem: the RW takes 7 to 12 min (target about 20) and the Kelurahan 14 to 19 min (target about 30). Kel 2★ and 3★, and Kec 2★ and 3★, need yearly ranking wins, so they land on the same week for every bot. The Kecamatan waits about 23 min between goal lines.
-  - Why: a star the calendar sets ignores how well the player plays (GAME-DESIGN.md §8 items 4 and 10). Short stages leave the late content thin.
-  - Suggested solution: decide per stage whether a tier-win goal should count quarterly rankings, ask for fewer yearly wins, or be paired with goals that skill moves. Then retune the stage goals toward the length targets. Prove each change with the nine player types against main.
-  - Source: `decisions/smaller-map-T9.md`, notes 1, 2 and 5. It also holds Wacana and Staf T6 bar 5 (a builder that never hires must reach RW 3★ and Kel 3★ 15% later): rerun that check once stars stop waiting on the calendar (`decisions/wacana-staff-core-T6.md`).
-  - `claimed · Claude · 2026-11-09 · done when:` each stage is inside its length band, or a decisions file says why not, and no star lands on the same week for every bot.
+- [ ] **Stars still follow time in the stage, not how well the player plays.**
+  - Problem: since #376 tier-win goals count every quarterly ranking and no star lands on the same week for every bot, but every climbing bot still wins about 84 of 86 Kelurahan rankings (`decisions/wacana-staff-core-T6.md`). So RW 3★ and Kel 3★ come a set number of quarters after promotion, and a builder that never hires reaches them on the same weeks (Wacana and Staf T6 bar 5 fails). The RW is 13 to 16 min (target about 20) because RW 1★ comes within a minute of promotion; the Kelurahan is 22 to 26 min (target about 30).
+  - Why: GAME-DESIGN.md §8 items 4 and 10, and T6 bar 5: staff and play should move a star.
+  - Suggested solution: make the ranking close for a good player, for example a rival that tracks the player's own area score from the quarter they arrive, or a goal that skill moves (a score margin, Sejahtera) beside the win count. Make RW 1★ ask for more than three builds in Kampung Sebelah. Rerun the no-hire builder (T6 bar 5) and the nine player types against main. Also probe whether a big, fully housed kampung can sink under the Kel 3★ Popularitas bar in real play (`decisions/stage-lengths-quarterly-wins.md`, Not changed).
+  - Source: `decisions/stage-lengths-quarterly-wins.md`; `decisions/wacana-staff-core-T6.md`, Follow-ups
+  - `open · — · — · done when:` the no-hire builder reaches RW 3★ and Kel 3★ at least 15% later than the hiring one, and the RW is inside its length band or a decisions file says why not.
 
 - [ ] **Run the scorecard bots with the road rule on.**
   - Problem: `tests/setup.ts` turns the road rule off for every test, the scorecard included. Bot buildings work without a path, so bots have more room than a player and the numbers flatter the game.
@@ -93,6 +87,9 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ## Done
 
+- [x] **Build Decor one by one without leaving build mode (owner request).** Decor stays in hand after each one goes up: tap, confirm, the next, until ✕. A first try put Decor in rows (#399); the owner wanted one by one, so rows stay for paths only (#404). `decisions/decor-keep-placing.md`.
+- [x] **Stage lengths, and stars that wait on the yearly ranking.** Tier-win goals count every quarterly ranking; the March audit moves to Kel 3★; the RW and Kelurahan rivals are stronger and grow with the quarters in the stage, capped at 16. No star lands on the same week for every bot, and Act 1 ends at 50 to 55 min (was 38). Stars still follow time in the stage: narrowed into the item above. #376, `decisions/stage-lengths-quarterly-wins.md`.
+- [x] **A refused personal request no longer reads as a refused raise (owner request).** The staff card, chip and poach notice name what was refused; a Baperan quits at 25%, 50%, 75%, then always, instead of every time. #380, `decisions/staff-refusals.md`.
 - [x] **Show where a combo piece goes.** While a combo's missing piece is in hand, free tiles beside its partner tint gold. #402, #403, `docs/plans/combo-join-highlight.md`.
 
 - [x] **Tune Wacana and Staf with the Nightly scorecard (plan T6).** Five bots on 6 seeds, before T2 against main. Bars 1, 2 and 4 pass. Bar 5 fails: the quarterly ranking calendar sets the RW and Kelurahan 3★ weeks for every bot, so even 5 to 8 times the permit time leaves a no-hire builder on the same quarter. No constant changed. Bar 5 moves to the stage-lengths item. `decisions/wacana-staff-core-T6.md`.
