@@ -29,3 +29,15 @@ Fix two bot gaps found by the first-2h playtest (Hari, 2026-11-08: "fix all, use
 
 ### Rerun. Rerun and report (me)
 Nightly after T1, T2 and T3 merge. Report real game findings (Kecamatan 1★ reachable? Kantor RT cost vs RT 1★ pacing) separately from bot fixes, in `decisions/playtest-bot-gaps.md`.
+
+## Round 2 (after the first Nightly rerun, 2026-11-09)
+T1 landed but pinjol got worse (56 to 70% at 700 weeks, 0 stars on 10 of 10 seeds). Local diagnosis at 200 weeks, seed 1: 154 households, food for 50 (`fedBase`), 102 in debt, 1 Koperasi and 1 Balai Latihan Kerja working, 4 Literasi runs. A household whose food is missing counts as hungry and borrows. The bot grows to 460 residents and never adds food. A player sees the meter and builds more Warung.
+
+### T4. Kecamatan bot keeps households fed (Sonnet, executor trial)
+- Files: `tests/kec-bot-lib.ts`
+- Exact changes: import `fedBase` and `households` from `../src/sim/needs`. In `kecWeek`, for `stage === 'kecamatan'`: when `fedBase(s) < households(s)` call `makeRoomFor(s, 'tokoKelontong', [...seam, ...all])` and, if that placed nothing (building count unchanged), `makeRoomFor(s, 'warung', [...seam, ...all])`. Also treat the kampung as `full` (no new homes) while `fedBase(s) < households(s)`. Keep the rest.
+- Done when: `npm run typecheck` and `npx vitest run tests/kec-bot.test.ts` pass. Delete any scratch file you make.
+- Don't touch: `src/`, other files.
+
+## Finding (screen bot, not fixed): combo pieces are not placed side by side
+After T2 and T3 the screen bot still scores 31% (49 checkpoints, 15 right) and never reaches RT 3★. It owns Kantor RT and four Pos Ronda, the "Rapat Malam" combo never forms, and 17 later taps fail (Pos Ronda cap). The bot taps spots round the map middle and does not place a piece beside its partner. The screen shows the pieces to place "side by side" but not where. Fixing it needs a design call: make the bot find an adjacent tile on the canvas (tile geometry from the screen), or accept that a new player also has to find the spot. Reported to Hari, not built.
