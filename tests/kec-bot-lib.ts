@@ -5,6 +5,7 @@ import { promote } from '../src/sim/grow';
 import { checkDemolish, checkPlace, demolish, place } from '../src/sim/rules';
 import { amanAcross, checkRazia, startRazia } from '../src/sim/kec';
 import { judolShare, pinjolShare } from '../src/sim/pinjol';
+import { checkRealisasi, startRealisasi } from '../src/sim/realisasi';
 import { lotAt } from '../src/sim/area';
 import { buildingIncome, tick } from '../src/sim/tick';
 import { GRID_H, GRID_W, setGrid } from '../src/sim/types';
@@ -61,6 +62,12 @@ export function kecWeek(s: GameState, seam: { x: number; y: number }[], all: { x
   const short = jobless(s) > jobShare;
   // The Kecamatan asks for 250 residents, so a player stops adding homes a little past that: every resident drains Popularitas.
   const full = population(s) >= (stage === 'kecamatan' ? KEC_POP_CAP : KEL_POP_CAP);
+  // The Kecamatan's tools for pinjol: two Koperasi Simpan Pinjam, a Balai Latihan Kerja, and Literasi Keuangan.
+  if (stage === 'kecamatan') {
+    if (s.buildings.filter((b) => b.def === 'koperasiSP').length < 2) makeRoomFor(s, 'koperasiSP', [...seam, ...all]);
+    if (!s.buildings.some((b) => b.def === 'balaiLatihanKerja')) makeRoomFor(s, 'balaiLatihanKerja', [...seam, ...all]);
+    if (pinjolShare(s) >= 20 && checkRealisasi(s, 'literasiKeuangan').ok) startRealisasi(s, 'literasiKeuangan');
+  }
   kelWeek(s, seam, all, true, stage === 'kecamatan' ? KEC : [], !short && !full);
   if (!short || s.res.rupiah < 3_000_000) return;
   const conn = connectedRoad(s);
