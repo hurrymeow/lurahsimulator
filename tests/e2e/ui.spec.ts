@@ -2969,10 +2969,11 @@ test.describe('build mode', () => {
     expect(await roads()).toBe(had + 5);
   });
 
-  test('a Decor building goes down as a row: a start tile, an end tile and Yes', async ({ page }) => {
+  test('Decor stays in hand: place, confirm, place another, until Cancel', async ({ page }) => {
     await start(page);
     await dismissModals(page);
     const trees = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'pohonRindang').length);
+    const had = await trees();
     await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       app.s.stage.stars.rt = 1;
@@ -2990,12 +2991,18 @@ test.describe('build mode', () => {
       await page.mouse.click(box.x + at.x, box.y + at.y);
     };
     await tap(-2, 3);
-    await expect(page.locator('#place-info')).toContainText(lang() === 'en' ? 'Tap the last spot' : 'Ketuk tempat terakhir');
-    await tap(2, 3);
-    await expect(page.locator('#place-ok')).toBeEnabled();
-    await expectLegible(page, 'decor row preview');
     await page.locator('#place-ok').click();
-    expect(await trees()).toBeGreaterThanOrEqual(3);
+    expect(await trees()).toBe(had + 1);
+    // Still in build mode with the next tree in hand: the bar says so, and the menu stays hidden.
+    await expect(page.locator('#placebar')).toBeVisible();
+    await expect(page.locator('#place-info')).toContainText(lang() === 'en' ? 'Tap another spot' : 'Ketuk tempat lain');
+    await expectLegible(page, 'decor again');
+    await tap(2, 3);
+    await page.locator('#place-ok').click();
+    expect(await trees()).toBe(had + 2);
+    await page.locator('#place-exit').click();
+    await expect(page.locator('#placebar')).toBeHidden();
+    await expect(page.locator('#mainbar')).toBeVisible();
   });
 });
 

@@ -1,7 +1,6 @@
-// Laying a path, or a row of Decor, between two tiles. Pure, so it is unit-tested without a canvas.
+// Laying a path between two tiles. Pure, so it is unit-tested without a canvas.
 import { checkPlace, place } from './rules';
-import { def } from './content';
-import { buildCost, buildingAt, sizeOf } from './state';
+import { buildingAt } from './state';
 import { categoryOf } from '../data/categories';
 import type { BuildingDef, GameState } from './types';
 
@@ -29,27 +28,12 @@ const corner = (a: { x: number; y: number }, b: { x: number; y: number }, xFirst
 
 /** The tiles of an L-shaped path from a to b, taking whichever bend has fewer blocked tiles. */
 export function linePath(s: GameState, id: string, a: { x: number; y: number }, b: { x: number; y: number }): LineTile[] {
-  const d = def(id);
-  const { w, h } = sizeOf({ def: id, rot: 0 });
-  // A cap (Patung Ikon, Taman) leaves room for only so many more; the tiles past it are blocked.
-  const capRoom = d.maxCount === undefined ? Infinity : Math.max(0, d.maxCount - s.buildings.filter((x) => x.def === id).length);
-  // And only as many as the kas and Orang Inside pay for: the preview shows what Yes will really build.
-  const cost = buildCost(s, d);
-  const od = d.orangDalamCost ?? 0;
-  const room = Math.min(capRoom, cost ? Math.floor(s.res.rupiah / cost) : Infinity, od ? Math.floor(s.res.orangDalam / od) : Infinity);
-  const rate = (tiles: { x: number; y: number }[]): LineTile[] => {
-    const kept: { x: number; y: number }[] = [];
-    let fresh = 0;
-    return tiles.map((p) => {
+  const rate = (tiles: { x: number; y: number }[]): LineTile[] =>
+    tiles.map((p) => {
       const here = buildingAt(s, p.x, p.y);
       const have = here?.def === id;
-      // A bigger footprint takes the next spot only once it clears the one before, so a row never overlaps itself.
-      const clear = kept.every((k) => Math.abs(k.x - p.x) >= w || Math.abs(k.y - p.y) >= h);
-      let ok = have || (clear && fresh < room && checkPlace({ ...s, res: { ...s.res, rupiah: Infinity } }, id, p.x, p.y).ok);
-      if (ok && !have) { kept.push(p); fresh++; }
-      return { ...p, have, ok };
+      return { ...p, have, ok: have || checkPlace({ ...s, res: { ...s.res, rupiah: Infinity } }, id, p.x, p.y).ok };
     });
-  };
   const xFirst = rate(corner(a, b, true));
   const yFirst = rate(corner(a, b, false));
   const blocked = (l: LineTile[]) => l.filter((p) => !p.ok).length;
@@ -63,5 +47,8 @@ export function placeLine(s: GameState, id: string, tiles: LineTile[]): number {
   return n;
 }
 
-/** Builds that go down as a row from a start tile to an end tile: paths, and everything on the Decor tab. */
-export const buildsInLine = (d: BuildingDef): boolean => !!d.pathIncome || categoryOf(d) === 'decoration';
+/** Builds that go down as a row from a start tile to an end tile: paths. */
+export const buildsInLine = (d: BuildingDef): boolean => !!d.pathIncome;
+
+/** Builds that stay in hand after each one goes up, so the next is a tap away until Cancel: the rest of the Decor tab. */
+export const keepsPlacing = (d: BuildingDef): boolean => !d.pathIncome && categoryOf(d) === 'decoration';
