@@ -18,12 +18,6 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Next
 
-- [ ] **Finish the Kelurahan and Kecamatan sprite pass (follow-up to #383).**
-  - Problem: #383 gave Pos Satpam, Wifi and Kolam Lele level-by-level shapes, and gave the Kelurahan and Kecamatan buildings name plates and small details. Some items are left: the Taman (Kelurahan) level 3 has two trees bunched together on its right side and a gazebo close to them. The 3x5 plate font is slanted with the wall, which makes S and R harder to read. Baliho, Studi Banding and Aspal Ulang got no extra detail. No one has checked every RW, Kelurahan and Kecamatan sprite (Balai RW, Posyandu, Portal, Pasar Kaget, Gapura) for parts of one sprite drawn over each other, as Taman Kota level 3 was.
-  - Why: Koko's review, 2026-11-09: later-stage buildings should carry as much detail as the RT ones, with name plates where useful, and nothing overlapping.
-  - Suggested solution: render every level at its real footprint, with silhouettes. A throwaway Vite page that calls `isoURL(name, scale, level, undefined, n)` works; sizes are in `sizeFor`. Fix the overlaps by moving parts apart, never by hiding them. Tune glyphs in `GLYPHS` (`src/render/sign-art.ts`) so each letter reads after the slant. Add details with `motorAt`, `acUnit`, `bench`, `lampPost` and `namePlate`. Keep within `tests/art.test.ts` and `tests/footprint-art.test.ts`. Before and after: `docs/plans/sprite-pass-1109/`. Log in `decisions/` and update ART.md, Building levels.
-  - `claimed · Julian · 2026-11-09 · done when:` the before and after sheets show no overlapping parts, every plate is readable at 2x, and the PR is merged.
-
 ### Later
 
 - [ ] **Secondary goals board from Pak Camat (Kairosoft style).**
@@ -93,6 +87,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ## Done
 
+- [x] **Finish the Kelurahan and Kecamatan sprite pass (follow-up to #383).** Julian's review turned the plate font into a rule: an icon, never a word (only names as short as RT or RW are lettered). Pictogram plates (Pasar basket, Terminal bus, RSUD red cross) face the street flat; Pos Satpol PP has a red and blue rotator; blinking lights through a new `blink` list on sprite art; Kantor Kelurahan in dark green with a teras; Kolam Lele level 1 grounded. Then Taman level 3 with one thing per quarter, Aspal Ulang with a road roller, Baliho with a ladder and a tukang pasang, and an overlap check of every RW, Kelurahan and Kecamatan sprite. Studi Banding was already redrawn in #390. #395, #396, `decisions/icons-not-words.md`, `decisions/kel-kec-pass-finish.md`.
 - [x] **Staff and Wacana matter (T1 to T5).** Bots hire an Asisten on a wage-aware budget; programs count in the quarterly ranking; every Wacana and Realisasi has a PIC (Gaul, Rajin, Jujur) you can change in the pop-up; permit folders grow with the stage. DeepSeek executor, #387, #388, #391, #393, #394, `docs/plans/wacana-staff-core.md`. T6 tuning stays open below.
 - [x] **Shops give jobs, and earn less short-staffed.** Penjaga Toko, Tukang Masak and Tukang Cukur, 1 to 3 posts a shop; a short-staffed shop earns up to 25% less. Late idle share fell from about 0.5 to about 0.3 for the bots; RW 2★/3★ come 0 to 11 weeks later. GAME-DESIGN.md §4. #374, `decisions/shop-jobs.md`.
 - [x] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).** The agent's verdict: playable end to end; every climbing bot reaches Kelurahan 3★ on every seed, and the Kecamatan bot reaches 3★ in 57 min. The Aman goal now names the preman fix. Pacing and the road rule are new items above. #358, `decisions/smaller-map-T9.md`.
