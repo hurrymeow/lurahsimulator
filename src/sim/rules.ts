@@ -1,5 +1,6 @@
 import { bBlock, bName, t, type Key } from '../i18n';
 import { rupiah } from '../format';
+import { PERMIT_STAGE_MULT } from '../data/staff';
 import { REFUND } from './balance';
 import { lotAt, type Lot } from './area';
 import { def, gateOf, hasDef, sizeFor } from './content';
@@ -93,7 +94,7 @@ export function place(s: GameState, id: string, x: number, y: number, rot: 0 | 1
   clearPaths(s, d, x, y, undefined, rot);
   const b = addBuilding(s, id, x, y, instant ? 'active' : d.permitMonths > 0 ? 'permit' : 'building', cost);
   if (rot) b.rot = rot;
-  b.timer = instant ? 0 : d.permitMonths > 0 ? d.permitMonths : Math.max(1, d.buildMonths);
+  b.timer = instant ? 0 : d.permitMonths > 0 ? Math.max(1, Math.round(d.permitMonths * PERMIT_STAGE_MULT[s.stage.current])) : Math.max(1, d.buildMonths);
   sendBuildLetters(s, id, x, y);
   refreshAccess(s);
   return { ok: true, uid: b.uid };

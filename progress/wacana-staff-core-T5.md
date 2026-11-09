@@ -1,0 +1,1 @@
+Added `PERMIT_STAGE_MULT` in `src/data/staff.ts` and applied it to the permit timer in `src/sim/rules.ts`, documented the stage multiplier in GAME-DESIGN.md §4, and added a desk test proving the same permit building waits `permitMonths` months at the RT and `round(permitMonths * 1.5)` at the RW.

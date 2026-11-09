@@ -1,10 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { ROLE_FX } from '../src/data/staff';
+import { def } from '../src/sim/content';
 import { nextStep } from '../src/sim/nextstep';
+import { checkPlace, place } from '../src/sim/rules';
 import { clearPermits, deskCapacity, ensureStaff, permitEta, permitQueue, queueMonths } from '../src/sim/staff';
 import { addBuilding, newGame } from '../src/sim/state';
 import { tick } from '../src/sim/tick';
-import type { GameState, Staff } from '../src/sim/types';
+import { GRID_H, GRID_W, setGrid, type GameState, type Staff } from '../src/sim/types';
+
+afterEach(() => setGrid('rt'));
 
 /** A game with Inem, rich enough to build, and n permits of the given folders, placed in that order. */
 function queued(folders: number[]): GameState {
@@ -71,5 +75,24 @@ describe('the permit desk queue', () => {
     // No room on the staff: the strip goes back to waiting.
     t.stage.stars.rt = 0;
     expect(nextStep(t)?.kind).not.toBe('desk');
+  });
+
+  it('a permit is a folder a month times the stage, so the same building waits longer at the RW', () => {
+    const permitTimer = (stage: 'rt' | 'rw') => {
+      const s = newGame(4);
+      s.res.rupiah = 1e9;
+      s.stage.current = stage;
+      setGrid(stage);
+      let spot = { x: -1, y: -1 };
+      for (let y = 0; y < GRID_H && spot.x < 0; y++)
+        for (let x = 0; x < GRID_W; x++)
+          if (checkPlace(s, 'warung', x, y).ok) { spot = { x, y }; break; }
+      expect(spot.x).toBeGreaterThanOrEqual(0);
+      place(s, 'warung', spot.x, spot.y);
+      return s.buildings.find((b) => b.def === 'warung')!.timer;
+    };
+    const permitMonths = def('warung').permitMonths;
+    expect(permitTimer('rt')).toBe(permitMonths);
+    expect(permitTimer('rw')).toBe(Math.round(permitMonths * 1.5));
   });
 });
