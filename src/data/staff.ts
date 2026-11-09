@@ -112,7 +112,7 @@ export interface TraitDef {
   healing?: boolean;
   /** Retires after this many months (Pensiunan PNS). */
   retireAfter?: number;
-  /** Leaves at once if a raise is refused (Baperan). */
+  /** May leave at once when a raise or a request is refused (Baperan): BAPERAN_LEAVE_STEP x refusals so far. */
   leavesOnRefuse?: boolean;
   /** Never asks for a raise (Jam Karet). */
   noRaise?: boolean;
@@ -130,7 +130,7 @@ export const TRAITS: TraitDef[] = [
   { id: 'freshGrad', name: 'Fresh Graduate', effect: 'Low stats, levels up twice as fast.', stats: { rajin: -10, lobi: -10, jujur: -10, gaul: -10 }, xp: 2 },
   { id: 'pensiunan', name: 'Pensiunan PNS', effect: 'Lobi +25, levels half as fast, retires after 60 weeks.', stats: { lobi: 25 }, xp: 0.5, retireAfter: 60 },
   { id: 'multitalenta', name: 'Multitalenta', effect: 'Every stat +5.', stats: { rajin: 5, lobi: 5, jujur: 5, gaul: 5 } },
-  { id: 'baperan', name: 'Baperan', effect: 'Leaves at once if a raise is refused.', leavesOnRefuse: true },
+  { id: 'baperan', name: 'Baperan', effect: 'May quit when told no: 25% the first time, 25% more each time.', leavesOnRefuse: true },
 ];
 
 export const traitDef = (id: TraitId): TraitDef => TRAITS.find((t) => t.id === id)!;
@@ -171,6 +171,8 @@ export const STAFF_LEVEL_MONTHS = [0, 6, 18, 36, 60];
 export const RAISE = 0.15;
 /** Chance a month that Kampung Sebelah poaches someone whose raise was refused. */
 export const POACH_CHANCE = 0.1;
+/** A Baperan's chance to leave at a refusal: this times the refusals so far, so 25%, 50%, 75%, then always. */
+export const BAPERAN_LEAVE_STEP = 0.25;
 export const BIMTEK = { cost: 2_000_000, gain: 5, away: 1 };
 /** Bimtek picks the stat. The anti-corruption course costs the most, which is the joke. */
 export const COURSE_COST: Record<StatId, number> = { rajin: 1, lobi: 1, jujur: 1.5, gaul: 1 };

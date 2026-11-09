@@ -4,10 +4,10 @@
 // Loans come back, or don't, on the borrower's Jujur. Requests never block a star.
 import { t, type Key } from '../i18n';
 import { rupiah } from '../format';
-import { roleDef, STAT_MAX, traitDef } from '../data/staff';
+import { roleDef, STAT_MAX } from '../data/staff';
 import { gain, type Fx } from './gain';
 import { price } from './state';
-import { release } from './staff';
+import { refuse } from './staff';
 import { monthOfYear } from './calendar';
 import { addBuilding, emptyTiles, isWorking } from './state';
 import { connectedRoad, hasRoadBeside } from './access';
@@ -151,16 +151,11 @@ function openShop(s: GameState, x: Staff, fx: Fx): void {
   fx.push({ kind: 'notice', title: t('req.shopTitle', { name: x.name }), body: t('req.shop'), tone: 'good' });
 }
 
-/** Says no (or lets it lapse): a heart goes, a poach gets likelier, and a Baperan leaves at once. True if they left. */
+/** Says no (or lets it lapse): a heart goes, a poach gets likelier, and a Baperan may leave (see `refuse`). True if they left. */
 export function answerNo(s: GameState, x: Staff): boolean {
   delete x.request;
   heart(x, -1);
-  if (x.trait && traitDef(x.trait).leavesOnRefuse) {
-    release(s, x);
-    return true;
-  }
-  x.refused = true;
-  return false;
+  return refuse(s, x, 'request');
 }
 
 /** Weekly: new asks, lapsed deadlines and loans that come due. */

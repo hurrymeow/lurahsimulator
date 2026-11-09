@@ -63,12 +63,30 @@ describe('Urusan Pribadi', () => {
     expect(x.akrab).toBe(2);
     expect(x.stats[st]).toBe(before + 2 * REQUEST.perHeart);
     expect(x.refused).toBe(true);
+    // The card names a refused request, not a raise.
+    expect(x.refusedWhat).toBe('request');
   });
 
-  it('a Baperan leaves at once on a no, and a lapsed deadline counts as a no', () => {
+  it('a Baperan leaves on about 1 in 4 first refusals, and more often with each one after', () => {
+    let left = 0;
+    for (let seed = 1; seed <= 200; seed++) {
+      const s = staffed();
+      s.rng = seed * 7919;
+      const x = s.staff![0];
+      x.trait = 'baperan';
+      x.request = { kind: 'viral', line: 0, due: s.month + 4 };
+      if (answerNo(s, x)) left++;
+      else expect(x.refusals).toBe(1);
+    }
+    expect(left).toBeGreaterThan(30);
+    expect(left).toBeLessThan(70);
+  });
+
+  it('a Baperan leaves for sure on a fourth no, and a lapsed deadline counts as a no', () => {
     const s = staffed();
     const x = s.staff![0];
     x.trait = 'baperan';
+    x.refusals = 3;
     x.request = { kind: 'cuti', line: 1, due: s.month + 4, weeks: 3 };
     expect(answerNo(s, x)).toBe(true);
     expect(s.staff!.includes(x)).toBe(false);

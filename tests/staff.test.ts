@@ -93,13 +93,15 @@ describe('staff', () => {
     }
   });
 
-  it('asks for a raise at a level up; a refused Baperan walks out', () => {
+  it('asks for a raise at a level up; a Baperan refused for the fourth time walks out', () => {
     const s = game(7);
     const x = hand(s, { trait: 'baperan' });
     for (let m = 0; m < 6; m++) { s.month++; staffSystem(s, []); }
     expect(x.level).toBe(2);
     expect(x.raiseAsked).toBe(true);
-    answerRaise(s, x, false);
+    // Three refusals before: the fourth is a sure walk-out (25% a refusal).
+    x.refusals = 3;
+    expect(answerRaise(s, x, false)).toBe(true);
     expect(s.staff!.includes(x)).toBe(false);
   });
 

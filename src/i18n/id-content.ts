@@ -249,7 +249,7 @@ export const ID_CONTENT: Record<string, string> = {
   'staff.sp.pakKuis.type': 'Pembawa acara kuis TV',
   'staff.sp.pakPurna.quirk': 'Lobi 90. Tidur saat rapat.',
   'staff.sp.pakPurna.type': 'Pensiunan PNS senior',
-  'staff.trait.baperan.effect': 'Langsung pergi kalau kenaikan gaji ditolak.',
+  'staff.trait.baperan.effect': 'Bisa pergi kalau ditolak: 25% pertama kali, naik 25% tiap kali.',
   'staff.trait.baperan.name': 'Baperan',
   'staff.trait.freshGrad.effect': 'Statistik rendah, naik level dua kali lebih cepat.',
   'staff.trait.freshGrad.name': 'Fresh Graduate',
