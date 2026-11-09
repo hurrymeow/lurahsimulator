@@ -1,0 +1,1 @@
+Added `join` to `src/render/map.ts` and the gold diamond pass over valid join tiles, and wired `src/app.ts` to call `comboJoinTiles` at the end of `markValid` and clear `join` in `stopPlacing`. `npm run typecheck`, `npm test` and `npx playwright test tests/e2e/ui.spec.ts --project=phone-412-id` pass.
