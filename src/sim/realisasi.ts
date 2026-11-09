@@ -1,7 +1,9 @@
 import { rEffect, rName, t } from '../i18n';
 import { rupiah } from '../format';
 import { REALISASI, realisasiDef, type RealisasiDef } from '../data/realisasi';
+import { PIC, STAT_MAX } from '../data/staff';
 import { gain, type Fx } from './gain';
+import { picCandidates, realisasiDelay, roll } from './staff';
 import { price } from './state';
 import type { CheckResult, GameState } from './types';
 
@@ -35,16 +37,19 @@ export function checkRealisasi(s: GameState, id: string): CheckResult {
   return s.res.rupiah >= cost ? { ok: true } : { ok: false, missing: [t('sim.moneyGap', { amt: rupiah(cost - s.res.rupiah), cost: rupiah(cost) })] };
 }
 
-export function startRealisasi(s: GameState, id: string): CheckResult {
+export function startRealisasi(s: GameState, id: string, picId?: number): CheckResult {
   const check = checkRealisasi(s, id);
   if (!check.ok) return check;
   const d = realisasiDef(id)!;
+  const pool = picCandidates(s, 'rajin');
+  const pic = pool.find((x) => x.id === picId) ?? pool[0];
   const cost = realisasiCost(s, d);
   s.res.rupiah -= cost;
   s.stats.spent += cost;
   s.realisasi ??= [];
-  const landsAt = s.month + d.delay;
-  s.realisasi.push({ id, landsAt, endsAt: d.lasts ? landsAt + d.lasts : Infinity });
+  const landsAt = s.month + realisasiDelay(d.delay, pic);
+  s.realisasi.push({ id, landsAt, endsAt: d.lasts ? landsAt + d.lasts : Infinity, pic: pic.id });
+  if (!pic.inem) pic.leading = id;
   return check;
 }
 
@@ -52,7 +57,19 @@ export function startRealisasi(s: GameState, id: string): CheckResult {
 export function realisasiSystem(s: GameState, fx: Fx): void {
   for (const r of s.realisasi ?? []) {
     const d = realisasiDef(r.id);
-    if (d && r.landsAt === s.month) fx.push({ kind: 'notice', title: t('real.landedTitle', { name: rName(d) }), body: rEffect(d), tone: 'good' });
+    if (d && r.landsAt === s.month) {
+      fx.push({ kind: 'notice', title: t('real.landedTitle', { name: rName(d) }), body: rEffect(d), tone: 'good' });
+      const pic = (s.staff ?? []).find((x) => x.id === r.pic);
+      if (pic) {
+        delete pic.leading;
+        pic.stats.rajin = Math.min(STAT_MAX, pic.stats.rajin + 1);
+        const leak = PIC.leakMax * (PIC.leakBelow - pic.stats.jujur) / PIC.leakBelow;
+        if (pic.stats.jujur < PIC.leakBelow && roll(s, s.month, 300 + pic.id) < leak) {
+          gain(s, fx, 'rupiah', -price(s, d.cost) * PIC.leakShare);
+          fx.push({ kind: 'notice', title: t('staff.mishapTitle', { name: pic.name, stat: t('staff.stat.jujur'), n: pic.stats.jujur, what: t('real.leakWhat') }), body: t('real.leakBody'), tone: 'bad' });
+        }
+      }
+    }
   }
   const viral = realisasiSum(s, 'viral');
   if (viral) gain(s, fx, 'viral', viral);

@@ -183,6 +183,21 @@ export const LEVEL_STAT_GAIN = 2;
  * Jujur 30 is about 4% a week, one every half year; Jujur 60 or more never.
  */
 export const RISK = { base: 0.08, safeFrom: 60 };
+/** The PIC (lead) on a Wacana or Realisasi: how much they add, and what a low Jujur costs. */
+export const PIC = {
+  /** Wacana lead's base multiplier; each point of Gaul adds 0.01. */
+  gaulBase: 0.5,
+  /** Realisasi lead's delay multiplier at Rajin 0; each point of Rajin subtracts 0.01. */
+  rajinBase: 1.5,
+  /** Jujur below which a Realisasi lead may lose part of the budget. */
+  leakBelow: 60,
+  /** Chance of a leak at Jujur 0; it falls to 0 at leakBelow. */
+  leakMax: 0.3,
+  /** Share of the program's cost lost when it leaks. */
+  leakShare: 0.2,
+  /** Output multiplier while a staff member leads a program. */
+  busyOutput: 0.5,
+};
 export const PESANGON_MONTHS = 2;
 /** Mutasi to Ketua RT: needs this many stars and this level. */
 export const MUTASI = { stars: 3, level: 3 };
