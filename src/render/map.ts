@@ -435,6 +435,26 @@ export class MapView {
     return { x, y, left, top, art, k: k / s, flip };
   }
 
+  /**
+   * The lights a sprite marks (a siren, an ambulance beacon, lampu hias) step through their colours on the
+   * world clock, out of step per building. With reduce motion they hold their first colour.
+   */
+  private blinks(ctx: CanvasRenderingContext2D, hit: Hit, uid: number, now: number): void {
+    const { art } = hit;
+    if (!art.blink.length) return;
+    const px = hit.k * this.scale;
+    const pivot = this.corner(hit.x, hit.y).x;
+    for (const l of art.blink) {
+      const step = this.motion ? Math.floor((now + uid * 137) / l.period) % l.cycle.length : 0;
+      const c = l.cycle[step];
+      if (!c) continue;
+      let x = hit.left + l.x * px;
+      if (hit.flip) x = 2 * pivot - x - px;
+      ctx.fillStyle = c;
+      ctx.fillRect(Math.round(x), Math.round(hit.top + l.y * px), Math.ceil(px), Math.ceil(px));
+    }
+  }
+
   /** Flat 2D sprite standing on the tile centre, used for the permit sign. */
   private sign(ctx: CanvasRenderingContext2D, name: string, x: number, y: number): void {
     const c = this.tileCentre(x, y);
@@ -704,7 +724,10 @@ export class MapView {
         const born = this.spawned.get(b.uid);
         const k = born === undefined ? 1 : Math.min(1, (now - born) / 350);
         if (k >= 1) this.spawned.delete(b.uid);
-        this.hits.push(this.art(ctx, art, b.x, b.y, 0.6 + 0.4 * (1 - (1 - k) ** 3), this.squash(b, now), n, flip));
+        const squash = this.squash(b, now);
+        const hit = this.art(ctx, art, b.x, b.y, 0.6 + 0.4 * (1 - (1 - k) ** 3), squash, n, flip);
+        this.hits.push(hit);
+        if (k >= 1 && !squash) this.blinks(ctx, hit, b.uid, world);
         if (b.level > 1) this.levelPips(ctx, b.x + sh.w - 1, b.y + sh.h - 1, b.level);
         this.idle(ctx, b, world);
       }

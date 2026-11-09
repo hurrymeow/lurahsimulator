@@ -1,7 +1,7 @@
 import type { Painter } from './iso';
 import { at, canopyTree, pole, unit, win } from './kampung-art';
 import { prism, roofRect, type MassPaint } from './massing';
-import { acUnit, bench, flagAt, flowers, frontFence, garuda, gateway, lampPost, motorAt, namePlate, noticeBoard } from './sign-art';
+import { acUnit, beacon, bench, flagAt, flowers, frontFence, garuda, gateway, lampPost, motorAt, namePlate, noticeBoard, sirenBar } from './sign-art';
 import { antenna, motor, pavedLot, pot, rustyPatch } from './kampung-kit';
 
 // Level art, third silhouette pass (playtest 2026-11-07): every building here changes shape by level,
@@ -430,30 +430,38 @@ export const gapura: Art = (p, _v, level = 1) => {
 
 // ---------------------------------------------------------------- Kelurahan
 
-/** Kantor Kelurahan: a plain office and a flagpole, then a gapura porch on the front, then a two-tier limasan block with wings, tritisan and a fence. */
+/**
+ * Kantor Kelurahan: an office with a teras of white columns, then a gapura porch on the front, then a
+ * two-tier limasan block with wings, tritisan and a fence. Its roofs are dark green, never the Terminal's
+ * blue (review 2026-11-09: level 1 read as the Terminal's office).
+ */
+const KEL_ROOF = 'G';
 export const kantorKel: Art = (p, _v, level = 1) => {
   p.low();
   p.shadow(1);
   if (level <= 1) {
-    prism(p, 0.16, 0.76, 0.2, 0.72, 8, 'w', wall([0.42, 0.58], 3, 6));
-    roofRect(p, 0.16, 0.76, 0.2, 0.72, 8, 5, 'hip', 'b', 'w');
-    flag(p, 0.84, 0.86, 13);
+    prism(p, 0.2, 0.8, 0.14, 0.58, 8, 'w', wall([0.42, 0.58], 3, 6, { plinth: 'G' }));
+    roofRect(p, 0.2, 0.8, 0.14, 0.58, 8, 5, 'hip', KEL_ROOF, 'w');
+    // The teras: four white columns under a flat concrete slab along the front, the door in its shade.
+    for (const a of [0.24, 0.42, 0.6, 0.76]) prism(p, a, a + 0.03, 0.72, 0.75, 6, 'w');
+    roofRect(p, 0.2, 0.8, 0.58, 0.78, 6, 0, 'flat', 's', 'w', undefined, 0.01);
+    flag(p, 0.88, 0.9, 13);
     // The papan nama on two posts in the front yard, and a motor by the door.
-    namePlate(p, 'LURAH', 0.26, 0.5, 0.9, 4, { legs: true, style: 'emblem' });
-    motorAt(p, 0.62, 0.8, '#3d72b4');
+    namePlate(p, 'LURAH', 0.06, 0.24, 0.92, 3, { legs: true, frame: '#527f34', style: 'emblem' });
+    motorAt(p, 0.5, 0.88, '#3d72b4');
     return;
   }
   if (level >= 3) {
     // Wings either side, under lower hips.
     prism(p, 0.04, 0.3, 0.12, 0.74, 7, 'w', wall(null, 2, 5));
-    roofRect(p, 0.04, 0.3, 0.12, 0.74, 7, 3, 'hip', 'b', 'w');
+    roofRect(p, 0.04, 0.3, 0.12, 0.74, 7, 3, 'hip', KEL_ROOF, 'w');
     prism(p, 0.7, 0.96, 0.12, 0.74, 7, 'w', wall(null, 2, 5));
-    roofRect(p, 0.7, 0.96, 0.12, 0.74, 7, 3, 'hip', 'b', 'w');
+    roofRect(p, 0.7, 0.96, 0.12, 0.74, 7, 3, 'hip', KEL_ROOF, 'w');
   }
   const [a0, a1] = level >= 3 ? [0.28, 0.72] : [0.12, 0.8];
   prism(p, a0, a1, 0.12, 0.7, 9, 'w', wall([0.4, 0.6], 3, 7, { band: [8, 't'] }));
-  roofRect(p, a0, a1, 0.12, 0.7, 9, 4, 'hip', 'b', 'w', undefined, level >= 3 ? 0.06 : 0.03);
-  if (level >= 3) roofRect(p, a0 + 0.1, a1 - 0.1, 0.24, 0.58, 13, 4, 'hip', 'b', 'w', undefined, 0.01);
+  roofRect(p, a0, a1, 0.12, 0.7, 9, 4, 'hip', KEL_ROOF, 'w', undefined, level >= 3 ? 0.06 : 0.03);
+  if (level >= 3) roofRect(p, a0 + 0.1, a1 - 0.1, 0.24, 0.58, 13, 4, 'hip', KEL_ROOF, 'w', undefined, 0.01);
   // The gapura porch: two pillars and a small pelana over the door.
   const pa = (a0 + a1) / 2;
   prism(p, pa - 0.12, pa - 0.08, 0.74, 0.86, 7, 'w');
@@ -512,7 +520,8 @@ export const puskesmasPembantu: Art = (p, _v, level = 1) => {
   if (level <= 1) {
     block(0.18, 0.72, 0.16, 0.6, 2, true);
     igd(0.26, 0.5, 0.6);
-    namePlate(p, 'RSUD', 0.5, 0.8, 0.88, 3, { legs: true, frame: GREEN });
+    // The red cross on a white board in the yard: bigger than the Apotek's green plus, and never a word.
+    namePlate(p, 'RSUD', 0.56, 0.82, 0.9, 3, { legs: true, frame: GREEN, style: 'emblem' });
     return;
   }
   if (level === 2) {
@@ -521,7 +530,8 @@ export const puskesmasPembantu: Art = (p, _v, level = 1) => {
     block(0.08, 0.62, 0.12, 0.6, 2, true);
     igd(0.16, 0.44, 0.6);
     bus(p, 0.6, 0.8, 0.78, 0.86, 'w', 'r');
-    namePlate(p, 'RSUD', 0.2, 0.48, 0.6, 13, { frame: GREEN });
+    ambulanceLight(p, 0.7, 0.82);
+    namePlate(p, 'RSUD', 0.24, 0.46, 0.6, 13, { frame: GREEN, style: 'emblem' });
     motorAt(p, 0.12, 0.92);
     return;
   }
@@ -533,7 +543,9 @@ export const puskesmasPembantu: Art = (p, _v, level = 1) => {
   roofRect(p, 0.3, 0.7, 0.56, 0.86, 6, 2, 'hip', GREEN, 'w', undefined, 0.01);
   bus(p, 0.38, 0.58, 0.66, 0.74, 'w', 'r');
   bus(p, 0.76, 0.94, 0.76, 0.84, 'w', 'r');
-  namePlate(p, 'RSUD', 0.36, 0.64, 0.56, 17, { frame: GREEN });
+  ambulanceLight(p, 0.48, 0.7);
+  ambulanceLight(p, 0.85, 0.8, 130);
+  namePlate(p, 'RSUD', 0.4, 0.6, 0.56, 17, { frame: GREEN, style: 'emblem' });
   motorAt(p, 0.08, 0.92);
 };
 
@@ -547,7 +559,7 @@ export const pasar: Art = (p, _v, level = 1) => {
     // Baskets of produce on the ground and a gerobak parked by the los.
     for (const [a, c] of [[0.3, 'g'], [0.4, 'o'], [0.5, 'r']] as [number, string][]) prism(p, a, a + 0.06, 0.84, 0.9, 2, 'a', (face) => (face === 'T' ? c : undefined));
     prism(p, 0.66, 0.84, 0.84, 0.92, 3, 'b', (face, _u, j) => (face === 'T' ? 'w' : j === 0 ? 'k' : undefined));
-    namePlate(p, 'PASAR', 0.34, 0.66, 0.5, 13, { frame: '#a8321f', bg: '#f4b935', style: 'raised', lift: 4 });
+    namePlate(p, 'PASAR', 0.4, 0.6, 0.5, 13, { frame: '#a8321f', bg: '#f6ecd4', style: 'raised', lift: 4, icon: true });
     return;
   }
   // A row of kios along the back, rolling doors half up.
@@ -558,7 +570,7 @@ export const pasar: Art = (p, _v, level = 1) => {
       stalls(p, a0 + 0.04, a1 - 0.04, 0.4, 0.82);
       shed(p, a0, a1, 0.34, 0.9, 8, 5, 'hip', ZINC, zinc);
     }
-    namePlate(p, 'PASAR', 0.3, 0.7, 0.66, 11, { frame: '#a8321f', bg: '#f4b935', style: 'raised', lift: 6 });
+    namePlate(p, 'PASAR', 0.4, 0.6, 0.66, 11, { frame: '#a8321f', bg: '#f6ecd4', style: 'raised', lift: 6, icon: true });
     motorAt(p, 0.46, 0.92);
     return;
   }
@@ -569,7 +581,9 @@ export const pasar: Art = (p, _v, level = 1) => {
   for (const k of [0, 1, 2, 3]) roofRect(p, 0.3 + k * 0.1, 0.4 + k * 0.1, 0.48, 0.76, 12, 2, 'shed', ZINC, 'w', zinc, 0);
   umbul(p, [[0.06, 0.96], [0.94, 0.96]], 14);
   // The market's name on the crown, payung of the pedagang outside, motors and a gerobak.
-  namePlate(p, 'PASAR', 0.32, 0.68, 0.7, 12, { frame: '#a8321f', bg: '#f4b935', style: 'raised', lift: 6 });
+  namePlate(p, 'PASAR', 0.4, 0.6, 0.7, 12, { frame: '#a8321f', bg: '#f6ecd4', style: 'raised', lift: 6, icon: true });
+  // Strings of lampu hias along the front eave that twinkle in turn.
+  for (let k = 0; k < 6; k++) beacon(p, 0.14 + k * 0.14, 0.93, 8, k % 2 ? ['#f4b935', '#ffe9a8'] : ['#ffe9a8', '#f4b935'], 700);
   for (const [a, c] of [[0.18, 'b'], [0.78, 'g']] as [number, string][]) {
     pole(p, a + 0.04, 0.95, 6, 'S');
     roofRect(p, a, a + 0.08, 0.91, 0.99, 6, 2, 'hip', c, 'w', (x) => (Math.floor(x / 2) % 2 ? 'w' : undefined), 0.01);
@@ -588,8 +602,9 @@ export const terminal: Art = (p, _v, level = 1) => {
   prism(p, 0.06, big ? 0.6 : 0.4, 0.06, 0.3, 8, 'w', wall([0.4, 0.55], 3, 6, { band: [7, 'y'] }));
   roofRect(p, 0.06, big ? 0.6 : 0.4, 0.06, 0.3, 8, 4, 'hip', 'b', 'w');
   if (big) {
-    // The terminal's name raised on posts over the front platform canopy.
-    namePlate(p, 'TERMINAL', 0.3, 0.64, 0.72, 8, { bg: '#3d72b4', fg: '#f6ecd4', frame: '#27427c', style: 'raised', lift: 8 });
+    // A bus pictogram raised on posts over the front platform canopy, its lamp blinking for the next departure.
+    namePlate(p, 'TERMINAL', 0.4, 0.54, 0.72, 8, { bg: '#f6ecd4', frame: '#27427c', style: 'raised', lift: 8, icon: true });
+    beacon(p, 0.47, 0.72, 19, ['#f4b935', null], 600);
   }
   // Benches under the canopy and ojek waiting by the office.
   bench(p, 0.2, 0.32, 0.36);
@@ -669,6 +684,11 @@ export const kantorKec: Art = (p, _v, level = 1) => {
   }
 };
 
+/** An ambulance's beacon on the roof of a bus() parked at lot point (a, b): red, then blue, out of step by phase. */
+function ambulanceLight(p: Painter, a: number, b: number, phase = 0): void {
+  beacon(p, a, b, 6, phase ? [null, '#ff4a3a', null, '#5aa8ff'] : ['#ff4a3a', null, '#5aa8ff', null], 220);
+}
+
 /** Pos Satpol PP: a small post, then a lookout on the roof and a mast, then a garage with the patrol pick-up and a barrier. */
 export const posSatpol: Art = (p, _v, level = 1) => {
   p.low();
@@ -690,8 +710,11 @@ export const posSatpol: Art = (p, _v, level = 1) => {
     roofRect(p, ma - 0.1, ma + 0.1, mb - 0.12, mb + 0.12, 13, 2, 'hip', 'b', 'y');
     pole(p, a1 - 0.04, b1 - 0.04, 16, 'S');
   }
-  // The post's name on its parapet, a patrol motor and traffic cones by the door.
-  namePlate(p, level <= 1 ? 'POL PP' : 'SATPOL', a0 + 0.02, a1 - 0.02, b1, 8, { frame: '#27427c', bg: '#f4b935', style: 'raised' });
+  // The rotator on the roof is its sign: red and blue, flashing in turn on the map. Then a patrol motor
+  // and traffic cones by the door.
+  // At level 1 it sits on the flat roof; from level 2 it crowns the lookout.
+  if (level >= 2) sirenBar(p, (a0 + a1) / 2, (b0 + b1) / 2, 15);
+  else sirenBar(p, (a0 + a1) / 2, (b0 + b1) / 2, 8);
   motorAt(p, 0.18, 0.86, '#f6ecd4');
   if (level >= 2) for (const a of [0.36, 0.44]) prism(p, a, a + 0.03, 0.86, 0.89, 3, 'o', (face, _u, j) => (j === 1 && face !== 'T' ? 'w' : undefined));
 };
