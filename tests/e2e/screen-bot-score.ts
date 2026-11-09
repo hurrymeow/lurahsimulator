@@ -31,7 +31,12 @@ function unmet(s: GameState): { i: number; have: number; need: number }[] {
 
 const pending = (s: GameState): boolean => s.buildings.some((b) => b.status === 'permit' || b.status === 'building');
 
-export function score(kind: 'build' | 'sk' | 'wait' | 'cant-tell', before: GameState, after: GameState): { verdict: Verdict; reason: string } {
+export function score(
+  kind: 'build' | 'sk' | 'wait' | 'cant-tell',
+  before: GameState,
+  after: GameState,
+  unaffordable = false,
+): { verdict: Verdict; reason: string } {
   if (kind === 'cant-tell') return { verdict: 'cant-tell', reason: 'the screen named no action' };
   if (kind === 'sk') return { verdict: before.stage.sk === 'offered' ? 'right' : 'wrong', reason: 'SK accepted' };
   const b = unmet(before);
@@ -43,6 +48,7 @@ export function score(kind: 'build' | 'sk' | 'wait' | 'cant-tell', before: GameS
     return !y || y.have > x.have;
   });
   if (moved.length) return { verdict: 'right', reason: `moved: line ${moved.map((m) => m.i + 1).join(',')}` };
+  if (kind === 'wait' && unaffordable) return { verdict: 'right', reason: 'saving: could not afford the named building' };
   if (kind === 'wait' && pending(before)) return { verdict: 'right', reason: 'waiting on a build under way' };
   return { verdict: 'wrong', reason: 'no unmet star line moved' };
 }

@@ -3,7 +3,9 @@ import { type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { act, closeSheet, decide, dismissPopup, readCards, readScreen } from './screen-bot';
 import { gameSeconds, score, type Verdict } from './screen-bot-score';
-import { setLang } from '../../src/i18n';
+import { bName, setLang } from '../../src/i18n';
+import { allDefs } from '../../src/sim/content';
+import { buildCost } from '../../src/sim/state';
 import type { GameState } from '../../src/sim/types';
 
 /**
@@ -102,11 +104,21 @@ test('screen-only bot plays the first stars from visible text', async ({ page },
   const final = await snapshot(page);
   if (final.stage.stars.rt === 3 && stars3At === null) stars3At = gameSeconds(final);
 
+  // A wait is right when every named building the player does not own costs more than they had in `before`.
+  const unaffordable = (r: Row): boolean => {
+    const text = [r.goal, r.rows].join(' ');
+    const named = allDefs().filter((d) => text.includes(bName(d)));
+    const saving = named.filter((d) => !r.before.buildings.some((b) => b.def === d.id));
+    return saving.length > 0 && saving.every((d) => buildCost(r.before, d) > r.before.res.rupiah);
+  };
+
   // Scorer: each row against the next snapshot, about 60s of game time on (the last row against the final state).
   const scored = rows.map((r, i) => {
     const next = rows.slice(i + 1).find((x) => x.t >= r.t + 45)?.before ?? final;
     const kind = r.action.startsWith('build') ? 'build' : (r.action as 'sk' | 'wait' | 'cant-tell');
-    const sc = r.tapped ? score(kind, r.before, next) : { verdict: 'wrong' as Verdict, reason: 'the tap path failed: no spot or card found' };
+    const sc = r.tapped
+      ? score(kind, r.before, next, kind === 'wait' && unaffordable(r))
+      : { verdict: 'wrong' as Verdict, reason: 'the tap path failed: no spot or card found' };
     return { ...r, ...sc };
   });
   const right = scored.filter((r) => r.verdict === 'right').length;
