@@ -14,7 +14,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Problem: you can reach every star without hiring anyone or announcing a wacana. The scorecard bots never hire. `laporan()` is shown but nothing reads it. Inem alone keeps the permit desk short at every stage.
   - Why: playtest feedback from joofoot and kokoliem, 2026-11-09. Staff and Wacana sit outside the core loop. Hari picked "D + soft B, then C".
   - Suggested solution: `docs/plans/wacana-staff-core.md`. T1 makes the bots hire an Asisten. T2 counts programs in the quarterly ranking. T3 gives every Wacana and Realisasi a PIC from your staff (Gaul, Rajin, Jujur). T4 shows the PIC in the Wacana pop-up. T5 grows permit folders with the stage. Each task is tagged `(Sonnet, executor trial)`, so dispatch `deepseek-exec.yml` one task at a time, in order.
-  - `claimed · Claude (DeepSeek dispatch) · 2026-11-09 · done when:` T1 to T5 are merged and live. T1 merged (#387). In progress: T2 (T3 to T5 follow one at a time; collaborators may pick any task not marked here).
+  - `claimed · Claude (DeepSeek dispatch) · 2026-11-09 · done when:` T1 to T5 are merged and live. T1, T2 merged (#387, #388). In progress: T3 (T4 and T5 follow one at a time; collaborators may pick any task not marked here).
 
 - [ ] **Tune Wacana and Staf with the Nightly scorecard (plan T6).**
   - Problem: the starting values in T2, T3 and T5 are guesses.

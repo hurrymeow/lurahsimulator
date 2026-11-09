@@ -20,7 +20,7 @@ function playerCellView(s: GameState, n: Neighbour): GameState {
   const buildings = s.buildings.filter((b) => inCell(n, b));
   const beds = housing({ ...s, buildings });
   const pop = Math.min(beds, Math.round((population(s) * beds) / Math.max(1, housing(s))));
-  return { ...s, buildings, residents: s.residents.slice(0, pop), discovered: n.discovered, comboShare: comboShare(s), ranking: n.ranking, emas: 0 };
+  return { ...s, buildings, residents: s.residents.slice(0, pop), discovered: n.discovered, comboShare: comboShare(s), ranking: n.ranking, emas: 0, wacana: [], realisasi: [] };
 }
 
 /** The AI RT as a state of its own, so the player's scoring, combo and star code can read it unchanged. */
@@ -39,6 +39,8 @@ export function viewOf(s: GameState, n: Neighbour): GameState {
     comboShare: comboShare(s),
     ranking: n.ranking,
     emas: 0,
+    wacana: [],
+    realisasi: [],
     res: { ...s.res, sabar: Math.min(NEIGHBOUR.sabarMax, NEIGHBOUR.sabarBase + NEIGHBOUR.sabarPerSocial * social + NEIGHBOUR.sabarPerPosyandu * posyandu) },
   };
 }
