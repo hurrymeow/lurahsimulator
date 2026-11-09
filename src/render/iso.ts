@@ -788,57 +788,93 @@ const ART: Record<string, ArtFn> = {
     });
   },
   wifi: (p, _v, level = 1) => {
+    const dot = (x: number, y: number, c: string) => p.px(p.gx + x, p.gy + y, c);
     if (level <= 1) {
-      // An RT/RW net mast: a galvanised pipe on a concrete foot, held by three guy wires, with two sector
-      // panels at the top, a grid dish halfway up and the router box with its cable at the foot. Thin all
-      // the way up so it never reads as a pole with a head.
-      const dot = (x: number, y: number, c: string) => p.px(p.gx + x, p.gy + y, c);
-      p.shadow(5);
-      p.box(5, 2, 'S');
-      p.stroke(0, -2, 0, -26, 2, 's');
-      p.stroke(0, -2, 0, -26, 1, 'S', false);
-      for (const y of [-7, -13, -19]) dot(-1, y, 'S');
-      // Sector panels on a short bracket either side of the top.
+      // An RT/RW net mast, the smallest and plainest: a galvanised pipe on a concrete foot, one pair of
+      // sector panels at the top, the router box at the foot with its cable, two guy wires.
+      p.shadow(7);
+      p.box(6, 2, 'S');
+      p.stroke(0, -2, 0, -20, 2, 's');
+      p.stroke(0, -2, 0, -20, 1, 'S', false);
       p.id++;
-      for (const x of [-3, 2]) for (let y = -25; y <= -21; y++) { dot(x, y, 'w'); dot(x + 1, y, x < 0 ? 'w' : 'c'); }
-      dot(-2, -23, 'S');
-      dot(1, -23, 'S');
-      // The grid dish on the left, facing out over the kampung.
+      for (const x of [-3, 2]) for (let y = -19; y <= -16; y++) { dot(x, y, 'w'); dot(x + 1, y, x < 0 ? 'w' : 'c'); }
       p.id++;
-      for (const [x, y, c] of [[-4, -18, 'c'], [-5, -17, 'w'], [-4, -17, 'w'], [-5, -16, 'w'], [-4, -16, 'c'], [-5, -15, 'w'], [-4, -15, 'w'], [-4, -14, 'c']] as [number, number, string][]) dot(x, y, c);
-      dot(-3, -16, 'S');
-      dot(-2, -16, 'S');
-      // The router box with a green light, under a scrap of seng.
-      p.id++;
-      for (let y = -10; y <= -7; y++) for (let x = 1; x <= 3; x++) dot(x, y, y === -10 ? ZINC : 'k');
-      dot(2, -8, 'g');
-      dot(0, -27, 'r');
-      dot(-1, -27, 'r');
+      for (let y = -8; y <= -6; y++) for (let x = 1; x <= 3; x++) dot(x, y, y === -8 ? ZINC : 'k');
+      dot(2, -7, 'g');
       p.overlay.push((q) => {
         const put = (x: number, y: number, c: string) => {
           const X = q.gx + x, Y = q.gy + y;
           if (X < 0 || Y < 0 || X >= q.w || Y >= q.h) return;
-          const k = (Y * q.w + X) * 4;
-          // Wires pass in front of the bare map and the yard, never across the mast or its parts.
-          if (q.data[k + 3] && (X === q.gx || X === q.gx - 1 || Y < q.gy - 6)) return;
+          if (q.data[(Y * q.w + X) * 4 + 3] && (X === q.gx || X === q.gx - 1 || Y < q.gy - 6)) return;
           q.px(X, Y, c);
         };
-        // Three guy wires from high on the mast down to pegs at the lot's side and front corners.
-        for (const [x1, y1] of [[-12, 1], [12, 1], [3, 6]]) {
-          const steps = Math.max(Math.abs(x1), Math.abs(y1 + 20));
-          for (let k = 1; k <= steps; k++) put(Math.round((x1 * k) / steps), Math.round(-20 + ((y1 + 20) * k) / steps), '#9a968e');
+        for (const [x1, y1] of [[-10, 2], [10, 2]]) {
+          const steps = Math.max(Math.abs(x1), Math.abs(y1 + 15));
+          for (let k = 1; k <= steps; k++) put(Math.round((x1 * k) / steps), Math.round(-15 + ((y1 + 15) * k) / steps), '#9a968e');
         }
-        // The cable sags from the router to the ground.
-        for (const [x, y] of [[3, -6], [4, -5], [4, -4], [4, -3], [3, -2]]) put(x, y, '#2a2a2a');
+        for (const [x, y] of [[3, -5], [4, -4], [4, -3], [3, -2]]) put(x, y, '#2a2a2a');
       });
       return;
     }
-    p.shadow(6);
-    p.box(5, 3, 'S');
-    p.box(7, 28, 's', (face, _u, j) => (face !== 'T' && j % 4 === 0 ? 'S' : undefined), 3);
-    const ax = TW / 2;
-    const ay = TOP + TH / 2 - 32;
-    for (const [dx, dy] of [[-4, -1], [-5, -3], [-4, -5], [4, -1], [5, -3], [4, -5], [-7, -3], [7, -3], [0, -2], [0, -3]]) p.set(ax + dx, ay + dy, dx === 0 ? 'r' : 'c');
+    // Level 2: a BTS lattice tower. Four steel legs taper from a concrete pad to a platform with three sector
+    // panels, a microwave dish halfway up, cross bracing every few rows, a grey equipment cabinet with its
+    // cooling vent at the foot, and a chain-link fence round the compound.
+    p.shadow(3);
+    p.box(4, 2, 'S');
+    // The cabinet on the right, behind the tower's front leg.
+    prism(p, 0.62, 0.84, 0.3, 0.52, 6, 's', (face, u, j) => (face === 'T' ? 'w' : face === 'L' && within(u, 0.2, 0.5) && within(j, 1, 5) ? 'S' : face === 'R' && within(j, 3, 5) && Math.floor(u * 8) % 2 ? 'S' : undefined), 2);
+    const H = 27;
+    const half = (y: number) => 6 - (4 * (y - 2)) / (H - 2);
+    // The lattice is drawn after the ink pass, in 1px steel lines, so the sky shows through it: back legs a
+    // shade darker, cross bracing every six rows, then the front legs.
+    p.overlay.push((q) => {
+      const put = (x: number, y: number, c: string) => q.px(q.gx + x, q.gy + y, c);
+      for (let y = 2; y <= H; y++) {
+        const w = Math.round(half(y));
+        put(-w, -y, '#6d635a');
+        put(w, -y, '#6d635a');
+        put(0, -y - Math.round(w / 2), '#8f8a82');
+      }
+      for (let y0 = 2; y0 < H - 1; y0 += 5)
+        for (let k = 0; k <= 5; k++) {
+          const y = y0 + k;
+          const w = Math.round(half(y));
+          const x = Math.round(-w + (2 * w * k) / 5);
+          put(x, -y, '#bdb4a3');
+          put(-x, -y, '#bdb4a3');
+          if (k === 0) for (let xx = -w; xx <= w; xx++) put(xx, -y, '#9a968e');
+        }
+      for (let y = 2; y <= H; y++) put(0, -y + Math.round(half(y) / 2), '#d8d0c0');
+    });
+    // The platform and three sector panels round the top.
+    p.id++;
+    for (let x = -4; x <= 4; x++) dot(x, -H - 1, 'S');
+    for (const x of [-5, -1, 3]) for (let y = -H - 7; y <= -H - 2; y++) { dot(x, y, 'w'); dot(x + 1, y, x > 0 ? 'c' : 'w'); }
+    // The microwave dish on the left leg, two thirds up.
+    p.id++;
+    for (const [x, y, c] of [[-7, -19, 'w'], [-8, -18, 'w'], [-7, -18, 'w'], [-6, -18, 'c'], [-8, -17, 'w'], [-7, -17, 'w'], [-6, -17, 'c'], [-7, -16, 'w']] as [number, number, string][]) dot(x, y, c);
+    dot(-5, -17, 'S');
+    // The lightning rod and the red light's housing at the very top.
+    p.stroke(0, -H - 7, 0, -H - 9, 1, 'S');
+    dot(0, -H - 10, 'r');
+    p.overlay.push((q) => {
+      // The chain-link fence round the compound: a post every few pixels, a mesh top line.
+      const fence = (a0: number, b0: number, a1: number, b1: number) => {
+        const g = (a: number, b: number) => [q.gx + (a - b) * (TW / 2) * q.n, q.gy + (a + b - 1) * (TH / 2) * q.n];
+        const [x0, y0] = g(a0, b0);
+        const [x1, y1] = g(a1, b1);
+        const steps = Math.ceil(Math.abs(x1 - x0));
+        for (let k = 0; k <= steps; k++) {
+          const x = Math.round(x0 + ((x1 - x0) * k) / steps);
+          const y = Math.round(y0 + ((y1 - y0) * k) / steps);
+          q.px(x, y - 4, '#bdb4a3');
+          if (k % 2 === 0) q.px(x, y - 2, '#9a968e');
+          if (k % 6 === 0) for (let d = 0; d <= 4; d++) q.px(x, y - d, '#6d635a');
+        }
+      };
+      fence(0.06, 0.94, 0.94, 0.94);
+      fence(0.94, 0.06, 0.94, 0.94);
+    });
   },
   // Kos-kosan: tall and narrow from day one, with a steel stair up the outside. Level 1 is two floors
   // of rooms under a pelana; level 2 adds a third floor, a flat dak with a tandon and a jemuran on it.
@@ -1126,6 +1162,8 @@ const NO_POT_RIGHT = new Set(['barbershop', 'wifi', 'kantorRT', 'apotek']);
 /** The yard's life on a paved square lot: a pot plant at each side corner, a bigger one from level 2. */
 function yardKit(p: Painter, name: string, level: number): void {
   if (!PAVED.has(name) || p.long || p.site) return;
+  // The level 1 pos satpam is a bare booth: its pots come with the level 2 upgrade.
+  if (name === 'posSatpam' && level < 2) return;
   const side = p.n === 1 ? [-12, 10] : [-28, 25];
   if (!NO_POT_LEFT.has(name)) pot(p, side[0], 0, level >= 2);
   if (!NO_POT_RIGHT.has(name)) pot(p, side[1], 0, level >= 3);

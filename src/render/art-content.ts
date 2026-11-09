@@ -1,4 +1,5 @@
 import { dither, type Painter, type RoofShape } from './iso';
+import { kolamLele } from './farm-art';
 import { kolamPancing, panggungSenam, tamanBermain } from './park-art';
 
 // Sprites for the content wave: selokan, decorations, farm, shops and facilities. Same rules as ART.md:
@@ -106,16 +107,7 @@ export const CONTENT_ART: Record<string, (p: Painter, variant?: string, level?: 
     p.blob(7, 2, 2.2, 'w');
     p.set(TW / 2 + 9, TOP + TH / 2 - 3, 'r');
   },
-  kolamLele: (p) => {
-    p.bare = true;
-    p.ground((a, b, px) => {
-      const e = Math.min(a, b, 1 - a, 1 - b);
-      if (e < 1.2 * px) return 'B';
-      if (e < 2.4 * px) return 'b';
-      // Murky green water, as a lele pond is: the fish show as dark shapes moving in it.
-      return Math.floor((a * 7 + b * 3) * 2) % 5 === 0 ? '#9cc4a0' : '#7fae8e';
-    });
-  },
+  kolamLele,
 
   // Praktik Bidan: a cream house with a pink pelana, a teal door, and the practice board on a post by the corner.
   bidan: (p) => {

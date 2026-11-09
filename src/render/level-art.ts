@@ -100,17 +100,21 @@ export const warungMakan: Art = (p) => {
 /** Pos Satpam: a wooden booth, then a blue booth with a barrier, then a concrete post with a flat roof, a canopy over the lane, a lamp and a camera. */
 export const posSatpam: Art = (p, _v, level = 1) => {
   if (level <= 1) {
-    p.shadow(6);
-    prism(p, 0.34, 0.66, 0.34, 0.66, 7, 'n', (face, u, j) => (face === 'L' && within(u, 0.2, 0.8) && within(j, 3, 6) ? 'l' : undefined));
-    roofRect(p, 0.34, 0.66, 0.34, 0.66, 7, 2, 'shed', 's', 'n', (x) => (x % 2 ? 'S' : undefined));
+    // The smallest: a narrow plank booth with one window and a scrap of zinc for a roof, a stool by the door.
+    p.shadow(8);
+    prism(p, 0.38, 0.62, 0.4, 0.62, 7, 'n', (face, u, j, i) => (face === 'L' && within(u, 0.25, 0.75) && within(j, 3, 5) ? 'l' : face !== 'T' && i % 3 === 0 ? 'N' : undefined));
+    roofRect(p, 0.35, 0.65, 0.37, 0.66, 7, 1, 'shed', ZINC, 'n', zinc, 0.02);
+    prism(p, 0.66, 0.72, 0.5, 0.56, 2, 'N', (face) => (face === 'T' ? 'n' : undefined));
     return;
   }
   if (level === 2) {
     p.shadow(5);
     prism(p, 0.3, 0.7, 0.3, 0.7, 8, 'b', (face, u, j) => (face === 'L' && within(u, 0.15, 0.85) && within(j, 3, 6) ? 'l' : face === 'R' && within(u, 0.3, 0.7) && j < 6 ? 'k' : undefined));
     roofRect(p, 0.3, 0.7, 0.3, 0.7, 8, 3, 'hip', 'B', 'b');
-    prism(p, 0.08, 0.3, 0.8, 0.84, 1, 'w', (face, u) => (face === 'T' ? undefined : Math.floor(u * 6) % 2 ? 'r' : 'w'), 4);
-    pole(p, 0.3, 0.82, 5, 'S');
+    // The portal arm across the lane: a striped boom on a post, raised off the ground, and a bench by the door.
+    prism(p, 0.72, 0.78, 0.76, 0.82, 4, 'S', (face) => (face === 'T' ? 'y' : undefined));
+    prism(p, 0.04, 0.74, 0.77, 0.81, 1, 'w', (face, u) => (face === 'T' ? undefined : Math.floor(u * 8) % 2 ? 'r' : 'w'), 4);
+    prism(p, 0.3, 0.5, 0.74, 0.78, 2, 'n', (face) => (face === 'T' ? 't' : undefined));
     return;
   }
   p.shadow(3);

@@ -322,8 +322,16 @@ faceless, so the map stays readable.
   of roster, a small crown) in green zinc, then red tile with a concrete kanopi on white columns, then
   a pendopo under a joglo roof. The merah putih flies from a grey pole with a concrete foot in the
   front yard at levels 1 and 2.
-  Menara Wifi level 1 is an RT/RW net mast, a thin galvanised pipe on three guy wires with two sector
-  panels, a grid dish and a router box, never a pole with a head; level 2 is the lattice tower.
+  Menara Wifi level 1 is a short RT/RW net mast, the smallest and plainest: a galvanised pipe on two
+  guy wires with one pair of sector panels and a router box, never a pole with a head. Level 2 is a BTS
+  lattice tower in see-through 1px steel with three sector panels, a microwave dish, an equipment
+  cabinet and a chain-link fence.
+  Pos Satpam: a narrow plank booth under a scrap of zinc with a stool, no pots; a blue booth under a
+  hip with a striped portal arm and a bench; a concrete post with a canopy over the lane, a lamp and a
+  camera. Kolam Lele: one round blue terpal pond; a square terpal pond on a plank frame under a
+  paranet, with a hose and sacks of pelet; a raised whitewashed concrete pond with a divider, a painted
+  sign, a low zinc roof over its back half, a water pipe, an aerator and a drum. The lele swim on the
+  water at its height (`LELE_WATER` in `farm-art.ts`).
 - Shops (`toko-art.ts`): Rumah Makan is a plank warung makan with a spanduk, a warkop lean-to, then a
   warteg with a false-front nameboard. Fotokopi is a kiosk, a toko with its banner over the roof, then
   a ruko. Apotek has no house roof: a flat dak with a deep green fascia and a plus-shaped green
