@@ -10,12 +10,6 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Now
 
-- [ ] **Make staff and Wacana matter (plan T1 to T5, DeepSeek executor).**
-  - Problem: you can reach every star without hiring anyone or announcing a wacana. The scorecard bots never hire. `laporan()` is shown but nothing reads it. Inem alone keeps the permit desk short at every stage.
-  - Why: playtest feedback from joofoot and kokoliem, 2026-11-09. Staff and Wacana sit outside the core loop. Hari picked "D + soft B, then C".
-  - Suggested solution: `docs/plans/wacana-staff-core.md`. T1 makes the bots hire an Asisten. T2 counts programs in the quarterly ranking. T3 gives every Wacana and Realisasi a PIC from your staff (Gaul, Rajin, Jujur). T4 shows the PIC in the Wacana pop-up. T5 grows permit folders with the stage. Each task is tagged `(Sonnet, executor trial)`, so dispatch `deepseek-exec.yml` one task at a time, in order.
-  - `claimed · Claude (DeepSeek dispatch) · 2026-11-09 · done when:` T1 to T5 are merged and live. T1 to T4 merged (#387, #388, #391, #393). In progress: T5 (last; collaborators may pick any task not marked here).
-
 - [ ] **Tune Wacana and Staf with the Nightly scorecard (plan T6).**
   - Problem: the starting values in T2, T3 and T5 are guesses.
   - Why: Wacana spam must not carry the rankings, and a player who never hires must slow down without being locked.
@@ -99,6 +93,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ## Done
 
+- [x] **Staff and Wacana matter (T1 to T5).** Bots hire an Asisten on a wage-aware budget; programs count in the quarterly ranking; every Wacana and Realisasi has a PIC (Gaul, Rajin, Jujur) you can change in the pop-up; permit folders grow with the stage. DeepSeek executor, #387, #388, #391, #393, #394, `docs/plans/wacana-staff-core.md`. T6 tuning stays open below.
 - [x] **Shops give jobs, and earn less short-staffed.** Penjaga Toko, Tukang Masak and Tukang Cukur, 1 to 3 posts a shop; a short-staffed shop earns up to 25% less. Late idle share fell from about 0.5 to about 0.3 for the bots; RW 2★/3★ come 0 to 11 weeks later. GAME-DESIGN.md §4. #374, `decisions/shop-jobs.md`.
 - [x] **Playtest the smaller map from RT 3★ to Kelurahan 3★ (T9).** The agent's verdict: playable end to end; every climbing bot reaches Kelurahan 3★ on every seed, and the Kecamatan bot reaches 3★ in 57 min. The Aman goal now names the preman fix. Pacing and the road rule are new items above. #358, `decisions/smaller-map-T9.md`.
 - [x] **The scorecard harness reads the T2 specs (scorecard follow-ups, part 2).** `npm run scorecard:t2` runs `tests/e2e/scorecard-t2.spec.ts` at 412px in id and en into the scorecard cache, and a new nightly job runs it. Rows 3, 6 and 27 now read Pass, Pass and Fail instead of Unknown. The row 6 spec no longer flakes on a pending event. #356, `decisions/scorecard-t2-harness.md`.
