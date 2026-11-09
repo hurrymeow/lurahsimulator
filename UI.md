@@ -300,10 +300,10 @@ Kairosoft's wiki pages cover mechanics, not UI, and most Kairosoft games are lan
 - **Ask:** when a building earns or costs, does a number appear over it?
 - **What good looks like:**
   > "when a game displays a succinct animation that's precisely tied to a successful action, players can instantly get the message without being distracted from their gameplay." (HIG-Motion)
-- **Good here:** a coin pop over the building that earned, at most one per building per second.
+- **Good here:** a coin pop over the building that earned, at most one per building per second. Upkeep and losses show in the money chip and the report, not on the map.
 - **Bad here:** money changes only in the top bar. Or a blizzard of tiny pops.
 - **Sub-checks:** per-building income events in the timeline against pops drawn over that building, with effects on. Cost pop on every placement.
-- **Pass:** ≥90% of per-building income events get a pop. Never over 1 pop per building per second.
+- **Pass:** ≥90% of per-building positive income events get a pop. Never over 1 pop per building per second. No money pop for upkeep or a loss.
 
 #### 13. Interruptions are rare and safe [PR]
 - **Ask:** do pop-ups wait for a good moment and never stack?
