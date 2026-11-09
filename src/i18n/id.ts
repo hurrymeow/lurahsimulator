@@ -577,6 +577,8 @@ export const ID: Record<Key, string> = {
   'problem.permitQueue': 'Antrean izin panjang. {list} jual fotokopi dan stempel, plus sedikit Orang Dalam.',
   'problem.preman': 'Ada preman nongkrong. {list} bisa memberinya kerja.',
   'real.landedTitle': '{name} sudah jalan',
+  'real.leakBody': 'Jujur yang rendah bikin dana bocor. Pilih PIC yang jujur lain kali.',
+  'real.leakWhat': 'sebagian dana program raib',
   'razia.body': 'Aman +{aman} selama {weeks} minggu. {n} rumah tangga pindah ke Kelurahan sebelah, yang kini punya masalahnya. Popularitas −3.',
   'razia.button': 'Gelar razia · {n} Orang Dalam',
   'razia.head': 'Razia Satpol PP',

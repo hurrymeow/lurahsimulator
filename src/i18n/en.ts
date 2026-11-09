@@ -585,6 +585,8 @@ export const EN = {
   'razia.title': 'Razia Satpol PP',
   'razia.until': 'In force: {n} weeks left',
   'real.landedTitle': '{name} is working',
+  'real.leakBody': 'Low Jujur lets money slip. Pick an honest lead next time.',
+  'real.leakWhat': 'some of the program budget went missing',
   'real.running': 'Already under way.',
   'report.best': 'Best building: {name}',
   'report.bestNone': 'Best building: none earned yet',

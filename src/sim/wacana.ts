@@ -4,6 +4,7 @@ import { EMAS } from '../data/ranking';
 import { rupiah } from '../format';
 import { addEmas } from './ranking';
 import { gain, type Fx } from './gain';
+import { picCandidates, wacanaPicMult } from './staff';
 import { price } from './state';
 import type { CheckResult, GameState, ResourceId } from './types';
 
@@ -22,15 +23,17 @@ export function checkAnnounce(s: GameState, id: string): CheckResult {
   return s.res.rupiah >= cost ? { ok: true } : { ok: false, missing: [t('sim.konsumsi', { amt: rupiah(cost - s.res.rupiah), cost: rupiah(cost) })] };
 }
 
-export function announce(s: GameState, id: string): CheckResult {
+export function announce(s: GameState, id: string, picId?: number): CheckResult {
   const check = checkAnnounce(s, id);
   if (!check.ok) return check;
   const cost = wacanaCost(s, id);
   s.res.rupiah -= cost;
   s.stats.spent += cost;
+  const pool = picCandidates(s, 'gaul');
+  const pic = (picId === undefined ? undefined : s.staff!.find((x) => x.id === picId)) ?? pool[0];
   let w = s.wacana.find((x) => x.id === id);
   if (!w) s.wacana.push((w = { id, power: 0, times: 0, lastAnnounced: s.month }));
-  w.power = WACANA_POWER * Math.max(WACANA_FATIGUE_FLOOR, 1 - WACANA_FATIGUE * w.times);
+  w.power = WACANA_POWER * Math.max(WACANA_FATIGUE_FLOOR, 1 - WACANA_FATIGUE * w.times) * wacanaPicMult(pic);
   w.times++;
   addEmas(s, EMAS.perWacana);
   w.lastAnnounced = s.month;
