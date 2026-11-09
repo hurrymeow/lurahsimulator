@@ -1,0 +1,3 @@
+# T4: show and change the PIC in the Wacana detail
+
+Each Wacana column now names the staff member who will lead it, above the action button: their name, the deciding stat (Gaul for Umumkan, Rajin for Realisasi) with its value, and the effect in plain words (the approval multiplier or the Realisasi's weeks). A secondary "Change" button cycles through `picCandidates` when there is more than one, and the chosen id is passed to `announce`/`startRealisasi` so the row matches what the sim does. The row reuses the sim's own helpers, and an unset choice keeps the sim default (the best candidate), so nothing changes for a player who never presses Change.
