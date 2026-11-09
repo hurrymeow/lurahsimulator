@@ -10,7 +10,16 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Now
 
-- No open item. The next pick is in Next.
+- [ ] **Show where a combo piece goes.**
+  - Problem: the goal says "place side by side" and not where. The screen-only bot never formed Rapat Malam and a new player may stall too.
+  - Why: `decisions/playtest-bot-gaps.md` finding 1 (Hari, 2026-11-09).
+  - Suggested solution: while a combo's missing piece is in hand, tint the free tiles beside its partner gold. `docs/plans/combo-join-highlight.md`.
+  - `claimed · Claude · 2026-11-09 · done when:` the gold tint shows on the map for a combo piece, with a unit and an e2e check.
+- [ ] **Kecamatan starts with households that have no food.**
+  - Problem: the hint path promotes with about 460 residents and food for 50 of 154 households, so pinjol sits at 55 to 71% and no Kecamatan star comes.
+  - Why: `decisions/playtest-bot-gaps.md` finding 2 (Hari, 2026-11-09: fold into tuning).
+  - Suggested solution: tune with the Wacana/Staf T6 pass (`docs/plans/wacana-staff-core.md`).
+  - `claimed · Claude · 2026-11-09 · done when:` 10 of 10 hint-path seeds earn Kecamatan 1★ in the Nightly.
 
 ### Next
 
