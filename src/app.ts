@@ -14,7 +14,7 @@ import { checkChoice, eventCost, resolveEvent, sendCandidates, sendChance } from
 import { STAT_ICON } from './data/staff';
 import { discoverCombos } from './sim/combos';
 import { checkMove, checkPlace, moveBuilding, place } from './sim/rules';
-import { linePath, placeLine, type LineTile } from './sim/line';
+import { buildsInLine, linePath, placeLine, type LineTile } from './sim/line';
 import { lotAt } from './sim/area';
 import { promote } from './sim/grow';
 import { CELL_H, CELL_W, GRID_H, GRID_W, RT_H, RT_W, type FirstKind } from './sim/types';
@@ -891,7 +891,7 @@ export class App {
     document.getElementById('placebar')!.hidden = false;
     // Nothing lands under the thumb: every free spot glows, and the first tap on one puts the building there.
     // If none is in view, the map pans to the best one.
-    if (!def(id).pathIncome) {
+    if (!buildsInLine(def(id))) {
       this.markValid();
       const best = this.bestSpot();
       const { w, h } = this.handSize();
@@ -1006,8 +1006,8 @@ export class App {
   private tapPlacing(tile: { x: number; y: number }): void {
     const id = this.placing!;
     const d = def(id);
-    if (d.pathIncome) {
-      // Paths take two taps, a start and an end, then Yes.
+    if (buildsInLine(d)) {
+      // Paths and Decor take two taps, a start and an end, then Yes: a whole row in one go.
       if (!this.line || this.line.b) this.line = { a: tile, b: null };
       else this.line.b = tile;
       this.refreshLine();
@@ -1035,6 +1035,8 @@ export class App {
       if (!n) return;
       const last = this.lineTiles[this.lineTiles.length - 1];
       this.view.burst(last.x, last.y);
+      const cost = buildCost(this.s, d) * n;
+      if (cost) this.view.pop(last.x, last.y, 'rupiah', -cost);
       this.haptic(15);
       audio.play('build');
       // Keep going: the next two taps start another path. Cancel leaves build mode.
@@ -1083,12 +1085,14 @@ export class App {
     const title = h('strong', {}, mover ? t('build.moveTitle', { name: bName(d) }) : `${bName(d)} · ${rupiah(buildCost(this.s, d))}`);
     float.hidden = !g;
     document.getElementById('place-exit')!.hidden = !!g;
-    document.getElementById('place-rot')!.hidden = !!d.pathIncome;
+    const row = buildsInLine(d);
+    const path = !!d.pathIncome;
+    document.getElementById('place-rot')!.hidden = row;
     if (this.line && g?.tiles) {
       const fresh = this.lineTiles.filter((p) => p.ok && !p.have).length;
       const blocked = this.lineTiles.filter((p) => !p.ok).length;
       if (!this.line.b) {
-        info.replaceChildren(title, h('span', {}, t('build.lineEnd')));
+        info.replaceChildren(title, h('span', {}, t(path ? 'build.lineEnd' : 'build.rowEnd')));
         float.hidden = true;
         document.getElementById('place-exit')!.hidden = false;
         btn.disabled = true;
@@ -1097,13 +1101,13 @@ export class App {
       btn.disabled = fresh === 0;
       btn.textContent = '✓';
       btn.setAttribute('aria-label', t('page.yes'));
-      info.replaceChildren(title, h('span', {}, fresh ? t('build.lineGo', { n: fresh, cost: rupiah(buildCost(this.s, d) * fresh) }) : t('build.lineNone')), ...(blocked ? [h('span', { class: 'meta' }, t('build.lineBlocked', { n: blocked }))] : []));
+      info.replaceChildren(title, h('span', {}, fresh ? t(path ? 'build.lineGo' : 'build.rowGo', { n: fresh, cost: rupiah(buildCost(this.s, d) * fresh) }) : t('build.lineNone')), ...(blocked ? [h('span', { class: 'meta' }, t('build.lineBlocked', { n: blocked }))] : []));
       return;
     }
     btn.textContent = '✓';
     btn.setAttribute('aria-label', t('page.place'));
     if (!g) {
-      info.replaceChildren(title, h('span', {}, d.pathIncome ? t('build.lineStart') : t('build.tapToPlace')));
+      info.replaceChildren(title, h('span', {}, row ? t(path ? 'build.lineStart' : 'build.rowStart') : t('build.tapToPlace')));
       btn.disabled = true;
       return;
     }

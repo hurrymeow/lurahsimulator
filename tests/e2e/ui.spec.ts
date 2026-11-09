@@ -2968,6 +2968,35 @@ test.describe('build mode', () => {
     await page.locator('#place-ok').click();
     expect(await roads()).toBe(had + 5);
   });
+
+  test('a Decor building goes down as a row: a start tile, an end tile and Yes', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const trees = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'pohonRindang').length);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.stage.stars.rt = 1;
+      app.s.res.rupiah = 50_000_000;
+      if (!app.s.unlocked.includes('pohonRindang')) app.s.unlocked.push('pohonRindang');
+      app.startPlacing('pohonRindang');
+    });
+    const box = (await page.locator('#map').boundingBox())!;
+    const tap = async (dx: number, dy: number) => {
+      const at = await page.evaluate(([x, y]) => {
+        const app = (window as unknown as { pakrt: any }).pakrt;
+        const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+        return app.view.tileCentre(k.x + x, k.y + y);
+      }, [dx, dy]);
+      await page.mouse.click(box.x + at.x, box.y + at.y);
+    };
+    await tap(-2, 3);
+    await expect(page.locator('#place-info')).toContainText(lang() === 'en' ? 'Tap the last spot' : 'Ketuk tempat terakhir');
+    await tap(2, 3);
+    await expect(page.locator('#place-ok')).toBeEnabled();
+    await expectLegible(page, 'decor row preview');
+    await page.locator('#place-ok').click();
+    expect(await trees()).toBeGreaterThanOrEqual(3);
+  });
 });
 
 test.describe('moving and turning', () => {
