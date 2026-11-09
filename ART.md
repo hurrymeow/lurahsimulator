@@ -355,6 +355,14 @@ faceless, so the map stays readable.
   back corner, a slide, a climbing wall, monkey bars, a seesaw) with its shade tree clear in the right
   corner. Panggung Senam has umbul-umbul with bent tips and swaying pennants; Kolam Pancing a saung,
   a jetty with anglers, lily pads and a payung.
+  Kelurahan and Kecamatan buildings carry a name plate in the plate font (`namePlate` in
+  `sign-art.ts`: 3x5 capitals, a framed board slanted with the front-left wall, drawn after the ink
+  pass so the letters stay crisp): LURAH, PUSTU, PASAR, TERMINAL, TAMAN, CAMAT, SATPOL (POL PP at level
+  1), KSP and BLK. At level 1 it stands on two posts in the front yard as a papan nama; from level 2 it
+  rides on the eave, parapet or crown. They also carry the small life the RT buildings have: parked
+  motors, AC units, benches, lamp posts, cones, a spanduk, payung and baskets at the pasar, the camat's
+  dinas car. Taman Kota keeps its trees at the back and sides, never in front of the fountain, so no
+  part of the lot hides another.
   Gapura and Portal level 1 are smaller than their level 2. Sawah and Kebun Sayur grow their plants:
   rice from seedlings to golden heads, vegetables from sprouts to fruiting plants.
 - Houses grow, not just fence in. Rumah: the bungalow with a wooden dapur under a zinc lean-to, then
