@@ -24,6 +24,12 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Next
 
+- [ ] **Finish the Kelurahan and Kecamatan sprite pass (follow-up to #383).**
+  - Problem: #383 gave Pos Satpam, Wifi and Kolam Lele level-by-level shapes, and gave the Kelurahan and Kecamatan buildings name plates and small details. Some items are left: the Taman (Kelurahan) level 3 has two trees bunched together on its right side and a gazebo close to them. The 3x5 plate font is slanted with the wall, which makes S and R harder to read. Baliho, Studi Banding and Aspal Ulang got no extra detail. No one has checked every RW, Kelurahan and Kecamatan sprite (Balai RW, Posyandu, Portal, Pasar Kaget, Gapura) for parts of one sprite drawn over each other, as Taman Kota level 3 was.
+  - Why: Koko's review, 2026-11-09: later-stage buildings should carry as much detail as the RT ones, with name plates where useful, and nothing overlapping.
+  - Suggested solution: render every level at its real footprint, with silhouettes. A throwaway Vite page that calls `isoURL(name, scale, level, undefined, n)` works; sizes are in `sizeFor`. Fix the overlaps by moving parts apart, never by hiding them. Tune glyphs in `GLYPHS` (`src/render/sign-art.ts`) so each letter reads after the slant. Add details with `motorAt`, `acUnit`, `bench`, `lampPost` and `namePlate`. Keep within `tests/art.test.ts` and `tests/footprint-art.test.ts`. Before and after: `docs/plans/sprite-pass-1109/`. Log in `decisions/` and update ART.md, Building levels.
+  - `claimed · Julian · 2026-11-09 · done when:` the before and after sheets show no overlapping parts, every plate is readable at 2x, and the PR is merged.
+
 ### Later
 
 - [ ] **Secondary goals board from Pak Camat (Kairosoft style).**
