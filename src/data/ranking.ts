@@ -16,7 +16,7 @@ export const RIVAL_START = { rw: 8, kelurahan: 17, kecamatan: 15 } as const;
 /** From the RW on, the rival stops growing after this many quarters in the stage: a kampung that has passed it stays ahead, and a stalled one is not run down by losses. */
 export const RIVAL_GROWTH_QUARTERS = 16;
 
-export const SCORE = { perResident: 8, perBuilding: 5, perCombo: 10, perSabar: 0.5, perEmas: 20 };
+export const SCORE = { perResident: 8, perBuilding: 5, perCombo: 10, perSabar: 0.5, perEmas: 20, perWacana: 6, perRealisasiLive: 20, perRealisasiDone: 5 };
 
 export const WIN = { sabar: 10, orangDalam: 1, emas: 0.03 };
 export const LOSE = { sabar: -5 };

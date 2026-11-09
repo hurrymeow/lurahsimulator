@@ -7,16 +7,24 @@ import { lombaMult } from './kel';
 import { popReportBonus } from './rw';
 import { randInt } from './rng';
 import { isWorking, population } from './state';
+import { WACANA_POWER } from '../data/wacana';
+import { liveRealisasi, realisasiDone } from './realisasi';
 import type { GameState } from './types';
 
-/** The parts of a score, for screens that explain it: what residents, working buildings, combos and Popularitas add. */
-export function scoreParts(s: GameState): { residents: number; buildings: number; combos: number; sabar: number; total: number } {
+/** The points the player's programs add: each wacana by its current approval, each working Realisasi, each one carried out for good. */
+export function programScore(s: GameState): number {
+  return SCORE.perWacana * s.wacana.reduce((n, w) => n + w.power / WACANA_POWER, 0) + SCORE.perRealisasiLive * liveRealisasi(s).length + SCORE.perRealisasiDone * realisasiDone(s);
+}
+
+/** The parts of a score, for screens that explain it: what residents, working buildings, combos, Popularitas and programs add. */
+export function scoreParts(s: GameState): { residents: number; buildings: number; combos: number; sabar: number; programs: number; total: number } {
   const working = s.buildings.filter((b) => isWorking(b) && b.def !== 'rumah' && b.def !== 'parkir' && !isCover(def(b.def))).length;
   const parts = {
     residents: Math.round(population(s) * SCORE.perResident),
     buildings: Math.round(working * SCORE.perBuilding),
     combos: Math.round(s.discovered.length * SCORE.perCombo),
     sabar: Math.round(s.res.sabar * SCORE.perSabar),
+    programs: Math.round(programScore(s)),
   };
   return { ...parts, total: score(s) };
 }
@@ -24,7 +32,7 @@ export function scoreParts(s: GameState): { residents: number; buildings: number
 export function score(s: GameState): number {
   const working = s.buildings.filter((b) => isWorking(b) && b.def !== 'rumah' && b.def !== 'parkir' && !isCover(def(b.def))).length;
   return Math.round(
-    population(s) * SCORE.perResident + working * SCORE.perBuilding + s.discovered.length * SCORE.perCombo + s.res.sabar * SCORE.perSabar + s.emas * SCORE.perEmas,
+    population(s) * SCORE.perResident + working * SCORE.perBuilding + s.discovered.length * SCORE.perCombo + s.res.sabar * SCORE.perSabar + s.emas * SCORE.perEmas + programScore(s),
   );
 }
 

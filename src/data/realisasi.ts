@@ -1,6 +1,6 @@
 // Every policy has two ways to go. Wacana (in data/wacana.ts) is the announcement: cheap, instant, it buys
 // Popularitas and fills the Laporan, and nothing happens. Realisasi is the program done for real: it costs
-// more, takes months to land, and moves a meter the warga feel. Promotion reads the Laporan; the ending
+// more, takes months to land, and moves a meter the warga feel. The quarterly ranking reads programs; the ending
 // reads Sejahtera. So the game keeps asking: announce it, or do it?
 
 export interface RealisasiDef {
