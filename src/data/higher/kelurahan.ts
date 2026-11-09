@@ -41,7 +41,7 @@ export const KEL_BUILDINGS: StageBuildingDef[] = [
   },
   {
     id: 'puskesmasPembantu',
-    name: 'Puskesmas Pembantu',
+    name: 'RSUD',
     blurb: '+2 Popularitas a week. The queue is long and the paracetamol is free.',
     cost: 12_000_000,
     upkeep: 300_000,

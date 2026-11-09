@@ -213,7 +213,7 @@ Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 
 #### 1★
 
-- Unlocks Puskesmas Pembantu and the Honorer job. Kelurahan gets Pasar.
+- Unlocks RSUD and the Honorer job. Kelurahan gets Pasar.
 - **Goal for 2★:** RW 2 at 2★ or above, **8** Piala Kelurahan wins, and the player's own kampung at **120** residents and Popularitas **45**.
 
 #### 2★
@@ -229,7 +229,7 @@ Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 
 - **Anggaran:** the new verb. A yearly budget arrives each January. Each unspent % cuts next year's budget by the same %. December brings a forced Serapan rush.
 - **Kantor Kelurahan:** **4** PNS slots.
-- **Puskesmas Pembantu:** **+2** Sabar a month.
+- **RSUD** (Rumah Sakit Umum Daerah; was Puskesmas Pembantu, id `puskesmasPembantu`): **+2** Sabar a month.
 - **Aspal Ulang:** costs Rp, adds **0** value, counts as spent.
 - **Studi Banding:** costs **Rp 2jt**, returns one random wacana.
 - **Macet Abadi** combo (Pasar + Terminal + Parkir): income **x1.6**, **-3** Sabar.
@@ -335,7 +335,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
 - **Inspections** (from month 15, then 10 months after each visit): a warning event 2 months ahead, then the visit scores 4 criteria of **25** points each. **70** pays 2 Orang Dalam and +5 Popularitas, **45** pays 1 Orang Dalam, less costs 4 Popularitas. Each warning offers a free choice and two shortcuts (Rupiah or 1 Orang Dalam) that add points for that visit only; a pass carried by shortcuts gets its own line. The first visit is Kampung Bersih; after that any other team, never the same twice in a row:
   - Kampung Bersih (Kecamatan): drainage, Popularitas, tertib (no mangkrak or damaged buildings), parkir liar.
   - Ketertiban (Satpol PP): parkir liar, tertib, Aman, Popularitas.
-  - Kampung Sehat (Puskesmas): drainage, Perut, health posts (Apotek, Posyandu, Puskesmas Pembantu), Popularitas.
+  - Kampung Sehat (Puskesmas): drainage, Perut, health posts (Apotek, Posyandu, RSUD), Popularitas.
   - Kampung Digital (Diskominfo): WiFi, Viral, tertib, Popularitas.
 - **Wacana or Realisasi:** each policy has a real version (Wifi Gratis di Balai, Kerja Bakti Rutin, Biopori Massal, Pelatihan UMKM, Bansos Sembako). It costs Rp 1 to 3 juta, lands after 1 to 3 months and moves a meter for a time (Biopori for good). Announcing fills the Laporan as well as doing does; only doing moves Sejahtera. The quarterly ranking counts programs too: each wacana by its current approval (6 points at full), each Realisasi at work 20, and each one carried out 5 for good.
 - **PIC:** every program has a lead from your staff, preselected as the best free person for the stat; Inem can always lead. A wacana's lead sets how much it lands (×0.5 + Gaul/100). A Realisasi's lead sets how fast (delay × (1.5 − Rajin/100), at least 1 week), works at half output until it lands, then gains 1 Rajin; below Jujur 60 they may lose 20% of the budget (up to a 30% chance at Jujur 0).

@@ -243,31 +243,63 @@ function letters(text: string): boolean[][] {
  * A name plate on the front-left of a building: a framed board along a (from a0 to a1) at b, its bottom z
  * art pixels up, with the name lettered in the plate font, centred and slanted with the wall like paint.
  * Drawn after the ink pass in native pixels so the letters stay crisp on any lot. legs stands it on two
- * thin posts from the ground (a papan nama in the front yard); otherwise it rides where z puts it.
+ * thin posts from the ground (a papan nama in the front yard); otherwise it rides where z puts it. style
+ * 'raised' lifts it on two posts above z (a sign on the roof); 'emblem' draws the building's 5x5 pictogram
+ * instead of the word, for sprites where lettering made the front too busy.
  */
-export function namePlate(p: Painter, text: string, a0: number, a1: number, b: number, z: number, opts: { bg?: string; fg?: string; frame?: string; legs?: boolean } = {}): void {
-  const { bg = '#f6ecd4', fg = '#2a1810', frame = '#27427c', legs = false } = opts;
+export function namePlate(p: Painter, text: string, a0: number, a1: number, b: number, z: number, opts: { bg?: string; fg?: string; frame?: string; legs?: boolean; style?: 'text' | 'raised' | 'emblem'; lift?: number } = {}): void {
+  const { bg = '#f6ecd4', fg = '#2a1810', frame = '#27427c', legs = false, style = 'text' } = opts;
   if (p.site) return;
   p.overlay.push((q) => {
-    const ink = letters(text);
-    const w = ink.length + 4;
+    const ink = style === 'emblem' ? emblem(text) : letters(text).map((col) => col.map((on) => (on ? fg : null)));
+    // A raised plate stands on two posts well clear of the roof it rides on, so it reads as a sign on top.
+    const lift = style === 'raised' ? (opts.lift ?? 8) : 0;
+    const pad = 2;
+    const w = ink.length + 2 * pad;
     const h = 7;
-    // Centred on the span a0..a1, slanted with the wall: each column one pixel lower every two.
-    const [xm, ym] = spot(q, (a0 + a1) / 2, b, z);
+    const [xm, ym] = spot(q, (a0 + a1) / 2, b, z + lift);
     const X0 = Math.round(xm - w / 2);
     const Y0 = ym - w / 4;
+    // The posts stand where the span a0..a1 is, so they land on the roof or wall below, never in the air
+    // past the building's edge when the plate is wider than its front.
+    const inset = Math.min(0.04, (a1 - a0) / 4);
+    const postCols = [a0 + inset, a1 - inset].map((a) => Math.max(1, Math.min(w - 2, Math.round(spot(q, a, b, z + lift)[0]) - X0)));
     for (let c = 0; c < w; c++) {
       const base = Math.round(Y0 + c / 2);
       for (let r = 0; r < h; r++) {
         const edge = r === 0 || r === h - 1 || c === 0 || c === w - 1;
-        const col = ink[c - 2];
-        const on = !edge && col && r >= 1 && r <= 5 && col[r - 1];
-        q.px(X0 + c, base - h + 1 + r, edge ? frame : on ? fg : bg);
+        const col = ink[c - pad];
+        const tr = r - 1;
+        const on = !edge && col && tr >= 0 && tr <= 4 ? col[tr] : null;
+        q.px(X0 + c, base - h + 1 + r, edge ? frame : on ?? bg);
       }
-      // The two posts down to the ground.
-      if (legs && (c === 1 || c === w - 2)) for (let d = 1; d <= z * q.zs; d++) q.px(X0 + c, base + d, '#6d635a');
+      // Posts: down to the ground for a yard plate, down to the roof for a raised one.
+      const post = (legs ? z + lift : lift) * q.zs;
+      if ((legs || lift) && postCols.includes(c)) for (let d = 1; d <= post; d++) q.px(X0 + c, base + d, '#6d635a');
     }
   });
+}
+
+// 5x5 pictograms for the emblem plate style, one per building, keyed by the plate's name.
+const EMBLEMS: Record<string, string[]> = {
+  LURAH: ['..y..', '.yyy.', 'yyyyy', '.y.y.', 'y...y'],
+  PASAR: ['.n.n.', 'nnnnn', 'ngoyn', 'nnnnn', '.nnn.'],
+  TERMINAL: ['bbbbb', 'bcbcb', 'bbbbb', 'bbbbb', '.k.k.'],
+  TAMAN: ['.ggg.', 'ggggg', '.ggg.', '..n..', '..n..'],
+  CAMAT: ['..y..', 'yyyyy', '.yyy.', '.y.y.', 'y...y'],
+  SATPOL: ['bbbbb', 'byyyb', 'byyyb', '.byb.', '..b..'],
+  'POL PP': ['bbbbb', 'byyyb', 'byyyb', '.byb.', '..b..'],
+  KSP: ['.yyy.', 'yaaay', 'yayay', 'yaaay', '.yyy.'],
+  BLK: ['.S.S.', 'SSSSS', 'SS.SS', 'SSSSS', '.S.S.'],
+};
+const EMBLEM_C: Record<string, string> = { y: '#f4b935', a: '#c98a2e', r: '#df4a2c', n: '#a8652f', g: '#6aa443', o: '#e57d2e', b: '#3d72b4', c: '#82bfdc', k: '#2a1810', S: '#6d635a' };
+
+/** The emblem for a plate name as columns of colours (null is the plate's background). */
+function emblem(text: string): (string | null)[][] {
+  const g = EMBLEMS[text] ?? EMBLEMS.LURAH;
+  const cols: (string | null)[][] = [];
+  for (let c = 0; c < 5; c++) cols.push(g.map((row) => (row[c] === '.' ? null : EMBLEM_C[row[c]])));
+  return cols;
 }
 
 /** A motor parked side-on at ground (a, b), in native pixels: two wheels, a body in its colour, a seat. */
