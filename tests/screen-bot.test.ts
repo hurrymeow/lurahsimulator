@@ -24,6 +24,16 @@ describe('screen-only bot', () => {
     expect(decide({ goal: '', rows: [] }, [])).toMatchObject({ kind: 'cant-tell' });
   });
 
+  it('waits for a locked building the goal names instead of building another', () => {
+    setLang('en');
+    const screen = { goal: '', rows: ['Kantor RT, Pos Ronda'] };
+    expect(decide(screen, [card('Kantor RT', { locked: true }), card('Pos Ronda', { owned: 1 })])).toMatchObject({
+      kind: 'wait',
+      why: 'saving for: Kantor RT',
+    });
+    expect(decide(screen, [card('Kantor RT'), card('Pos Ronda', { owned: 1 })])).toMatchObject({ kind: 'build', name: 'Kantor RT' });
+  });
+
   it('scores a checkpoint by whether a star line moved', () => {
     const a = newGame(1);
     const b = structuredClone(a);
