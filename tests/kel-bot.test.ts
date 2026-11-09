@@ -48,7 +48,8 @@ describe('Kelurahan bot', () => {
     // 14 ranking wins at Kel 3★ (decisions/stage-lengths-quarterly-wins.md). This shortcut kampung starts small, so it loses its first year.
     expect(three.every((g) => g.at[2] >= 240 && g.at[2] <= 330), msg).toBe(true);
     expect(three.every((g) => g.pop >= 200), msg).toBe(true);
-  }, 480_000);
+    // Three seeds of up to about 330 weeks each since #376: allow a slow machine.
+  }, 900_000);
 
   it('a kampung that overgrew to about 400 residents still climbs back over the 3-star Popularitas bar', () => {
     const got = [3, 4, 6].map((seed) => {
@@ -70,5 +71,5 @@ describe('Kelurahan bot', () => {
       return { seed, at, pop: population(s), sabar: Math.round(s.res.sabar) };
     });
     expect(got.every((g) => g.at.length === 3), JSON.stringify(got)).toBe(true);
-  }, 480_000);
+  }, 900_000);
 });
