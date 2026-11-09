@@ -14,7 +14,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Problem: the starting values in T2, T3 and T5 are guesses.
   - Why: Wacana spam must not carry the rankings, and a player who never hires must slow down without being locked.
   - Suggested solution: `docs/plans/wacana-staff-core.md` T6. Compare the Nightly scorecard before T1 and after T5, and tune only the listed constants.
-  - `open · — · — · done when:` the T6 bars pass, logged in `decisions/wacana-staff-core-T6.md`.
+  - `claimed · Julian (Claude) · 2026-11-09 · done when:` the T6 bars pass, logged in `decisions/wacana-staff-core-T6.md`.
 
 ### Next
 
