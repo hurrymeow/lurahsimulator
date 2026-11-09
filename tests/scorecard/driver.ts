@@ -1,6 +1,7 @@
 // The scorecard bots and the timeline they leave behind. See GAME-DESIGN.md section 8.
 // A bot is a plain routine that plays one sim tick at a time. The recorder logs every tick and every event.
 import { eventDef } from '../../src/data/events';
+import { REALISASI } from '../../src/data/realisasi';
 import { cellOf, cellOrigin, lotAt } from '../../src/sim/area';
 import { STEMPEL } from '../../src/sim/balance';
 import { connectedRoad, FLAT, hasRoadBeside } from '../../src/sim/access';
@@ -9,7 +10,9 @@ import { def, placeableDefs } from '../../src/sim/content';
 import { checkRepair, monthlyNet, repair, resolveEvent } from '../../src/sim/events';
 import { fundNeighbour, setAutoFund } from '../../src/sim/grow';
 import { meters, sejahtera, laporan } from '../../src/sim/needs';
+import { checkRealisasi, realisasiCost, startRealisasi } from '../../src/sim/realisasi';
 import { checkRestart, restart } from '../../src/sim/projects';
+import { answerRaise, hire, lowonganCost, postLowongan } from '../../src/sim/staff';
 import { demolish, checkPlace, checkUpgrade, place, requirementGaps, siteGaps, skipPermit, upgrade } from '../../src/sim/rules';
 import { COMBO_HINT_MONTH, easiestCombo, nextStep } from '../../src/sim/nextstep';
 import { hasProblem } from '../../src/sim/problems';
@@ -326,6 +329,30 @@ function buildCombo(c: Ctx, buffer: number, only?: string[]): void {
   }
 }
 
+function staffWhen(c: Ctx, p: Plan): void {
+  const { s } = c;
+  if (!p.hire) return;
+  for (const x of s.staff ?? []) if (x.raiseAsked) answerRaise(s, x, true);
+  if (s.lowongan) {
+    const applicants = s.lowongan.applicants;
+    if (applicants.length) {
+      const best = [...applicants].sort((a, b) => b.stats.lobi - a.stats.lobi || a.id - b.id)[0];
+      if (hire(s, best.id)) c.acts++;
+    }
+  } else if (c.t % 4 === 0 && s.res.rupiah >= lowonganCost(s, 'grupWa') + p.buffer) {
+    if (postLowongan(s, 'asisten', 'grupWa').ok) c.acts++;
+  }
+}
+
+function realisasiWhen(c: Ctx, p: Plan): void {
+  const { s } = c;
+  if (!p.realisasi || c.t % 4 !== 0) return;
+  const d = REALISASI.find((r) => checkRealisasi(s, r.id).ok && s.res.rupiah >= realisasiCost(s, r) + p.buffer);
+  if (!d) return;
+  startRealisasi(s, d.id);
+  c.acts++;
+}
+
 function announceWhen(c: Ctx, mode: 'never' | 'low' | 'always'): void {
   const { s } = c;
   if (mode === 'never') return;
@@ -350,6 +377,10 @@ interface Plan {
   combo: 'book' | 'hint' | 'none';
   /** First tick at which the bot reads the book. Before it, money goes to growth. */
   comboFrom: number;
+  /** Hire, answer raises, and post an Asisten lowongan when the kas allows it. */
+  hire: boolean;
+  /** Start the first affordable Realisasi every fourth tick. */
+  realisasi: boolean;
   /** Per-kind limits that replace the default of 3. */
   caps?: Record<string, number>;
 }
@@ -362,14 +393,14 @@ const safetyFirst = (s: GameState): string[] => ['posRonda', 'posSatpam', 'lampu
 const noNeeds = (s: GameState): string[] => builderOrder(s).filter((id) => !['posSatpam', 'kebunSayur', 'lampuTaman', 'bidan', 'sawah', 'kandangAyam', 'kolamLele', 'paud'].includes(id));
 const needsFirst = (s: GameState): string[] => ['kebunSayur', 'posSatpam', 'lampuTaman', ...builderOrder(s)];
 
-const BASE: Plan = { every: 1, buffer: 200_000, perTick: 2, upgradeAt: 2_000_000, announce: 'low', event: 'free', fund: true, order: builderOrder, combo: 'book', comboFrom: COMBO_HINT_MONTH };
+const BASE: Plan = { every: 1, buffer: 200_000, perTick: 2, upgradeAt: 2_000_000, announce: 'low', event: 'free', fund: true, order: builderOrder, combo: 'book', comboFrom: COMBO_HINT_MONTH, hire: true, realisasi: false };
 const PLANS: Partial<Record<BotId, Plan>> = {
   builder: BASE,
   shopkeeper: { ...BASE, order: shopsFirst },
   safety: { ...BASE, order: safetyFirst, event: 'paid', caps: { posRonda: 2, posSatpam: 1, lampuTaman: 2, bidan: 1 } },
-  cheapskate: { ...BASE, every: 4, buffer: 3_000_000, perTick: 1, upgradeAt: null, announce: 'never' },
+  cheapskate: { ...BASE, every: 4, buffer: 3_000_000, perTick: 1, upgradeAt: null, announce: 'never', hire: false },
   pencitraan: { ...BASE, order: noNeeds, announce: 'always', upgradeAt: 4_000_000 },
-  honest: { ...BASE, order: needsFirst, announce: 'never' },
+  honest: { ...BASE, order: needsFirst, announce: 'never', realisasi: true },
   hint: { ...BASE, combo: 'hint' },
 };
 
@@ -415,6 +446,8 @@ function playPlan(c: Ctx, p: Plan): void {
   // The RW combo line points to Build, Combo, so a player who reads it puts the pieces side by side.
   if ((nextStarChecklist(s) ?? []).some((l) => !l.done && l.goal.kind === 'rwCombos')) buildCombo(c, p.buffer, RW_PIECES);
   buildFrom(c, p.order(s), p.buffer, p.perTick, p.caps);
+  staffWhen(c, p);
+  realisasiWhen(c, p);
   announceWhen(c, p.announce);
 }
 

@@ -1,0 +1,3 @@
+# T1 progress
+
+`tests/scorecard/driver.ts` now has the `hire`/`realisasi` plan flags, `staffWhen` and `realisasiWhen`, and `tests/scorecard/harness.test.ts` has the new hire test. `npm run typecheck` passes; the full suite passes except the new test (660 passed, 9 skipped, 1 failed). The test is stopped because the prescribed affordability trigger hires two Asisten at RT 1★ on seed 3, their wages (Rp 825k/week with Inem) exceed early income, the builder's kas goes negative by t=24 and it never recovers, so neither at 400 nor at the 800 cap does the final state hold two Asisten. The coordinator needs to pick a fix; see `decisions/wacana-staff-core-T1.md`.
