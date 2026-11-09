@@ -1,0 +1,1 @@
+Added the T1 staff and Realisasi behaviour to `tests/scorecard/driver.ts` and a harness test in `tests/scorecard/harness.test.ts`. `npm run typecheck` passes. `npm test` has one failure, the new test itself, because the desk hint never appears for builder on seed 3 (permit queue peaks about 6 against the threshold of 12); the other 660 tests pass. No source files were changed.

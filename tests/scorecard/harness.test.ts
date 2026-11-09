@@ -3,6 +3,7 @@ import { BOTS, runBot } from './driver';
 import { takeover } from './takeover';
 import { buildScorecard, lintTraitsCombos, simText } from './scorecard';
 import { TRAITS } from '../../src/data/staff';
+import type { GameState } from '../../src/sim/types';
 import { parseT2Report, t2Verdict, type T2Result } from './t2';
 
 // Fast checks that the harness itself works. The full scorecard runs with `npm run scorecard`.
@@ -13,6 +14,14 @@ describe('scorecard harness', () => {
       expect(tl.rows.length, bot).toBe(40);
       for (const r of tl.rows) for (const v of Object.values(r)) expect(Number.isFinite(v) || typeof v === 'string', `${bot} row ${r.t}`).toBe(true);
     }
+  }, 30_000);
+
+  it('a builder hires an Asisten once the desk hint shows', () => {
+    const out: { s?: GameState } = {};
+    runBot('builder', 3, 400, { out });
+    const asisten = (out.s?.staff ?? []).filter((x) => x.role === 'asisten');
+    expect(asisten.length).toBeGreaterThanOrEqual(2);
+    expect(asisten.some((x) => x.inem)).toBe(true);
   }, 30_000);
 
   it('the same bot and seed give the same timeline', () => {
