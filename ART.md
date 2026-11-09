@@ -375,7 +375,12 @@ faceless, so the map stays readable.
   kabupaten hospital: whitewashed blocks with a hospital-green band between storeys, ribbon windows,
   a flat dak, a red cross and a canopied IGD entrance in red; one two-storey block, then a ward wing
   and an ambulance, then a three-storey main block between two wings with a drop-off canopy.
-  dinas car. Kantor Kelurahan has dark green roofs and a teras of white columns at level 1, so it
+  dinas car. Taman (Kelurahan) puts one thing in each quarter of its lot, so nothing bunches: trees
+  at the back, right and left at level 2, the back tree giving way to a gazebo at level 3, flowers in
+  front. Baliho has a steel ladder up its left leg and rolled spanduk at its foot from level 2, and a
+  tukang pasang on the level 3 catwalk. Aspal Ulang is half fresh black asphalt with a small yellow
+  road roller and half the old grey road, cones along the join.
+  Kantor Kelurahan has dark green roofs and a teras of white columns at level 1, so it
   never reads as the Terminal's blue office. Taman Kota keeps its trees at the back and sides, never in front of the fountain, so no
   part of the lot hides another.
   Higher-stage buildings carry simple lights the map animates (`blink` on the art, `beacon` in
