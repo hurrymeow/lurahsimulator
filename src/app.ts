@@ -221,7 +221,8 @@ export class App {
       if (p) p.amount += f.amount;
       else pops.set(key, { ...f });
     }
-    for (const p of pops.values()) if (Math.abs(p.amount) >= (p.res === 'rupiah' ? 1 : 0.5)) this.view.pop(p.x, p.y, p.res, p.amount);
+    // Money pops show earnings only. Upkeep and losses stay off the map (decisions/calm-income-pops.md).
+    for (const p of pops.values()) if (p.res === 'rupiah' ? p.amount >= 1 : Math.abs(p.amount) >= 0.5) this.view.pop(p.x, p.y, p.res, p.amount);
     this.flyCoins([...pops.values()].filter((p) => p.res === 'rupiah' && p.amount > 0));
     for (const f of fx) {
       if (f.kind === 'pop') continue;

@@ -827,9 +827,12 @@ export class MapView {
       placed.push({ x: cx, y: base - lift, w });
       const py = base - (this.effects ? k * rise : 0) - lift;
       ctx.globalAlpha = this.effects ? Math.min(1, 2 - 2 * k) : 1;
-      ctx.fillStyle = 'rgba(11, 11, 12, 0.85)';
-      ctx.fillRect(cx - w / 2 - 2, py - 10, w + 4, 20);
+      // No box: a 2px dark outline keeps the number readable on grass and roofs (decisions/calm-income-pops.md).
       ctx.drawImage(sprite(p.res, undefined, ICONS), cx - w / 2 + 2, py - 5, 10, 10);
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#0b0b0c';
+      ctx.strokeText(p.text, cx + 6, py + 1);
       ctx.fillStyle = RES_COLOUR[p.res];
       ctx.fillText(p.text, cx + 6, py + 1);
       ctx.globalAlpha = 1;
