@@ -531,6 +531,8 @@ export interface GameState {
   lowongan?: Lowongan | null;
   /** Inem's gigs done, by id. */
   gigs?: string[];
+  /** Pak Camat's board of side goals (docs/plans/camat-board.md). Absent until RT 1★; never gates a star. */
+  board?: BoardState;
   wacana: WacanaState[];
   modifiers: Modifier[];
   ranking: RankingResult[];
@@ -637,3 +639,22 @@ export const mapSpan = (): { w: number; h: number } => ({ w: (GRID_W + SEAM) / C
 /** Grid size before the map was expanded (save v1). Old saves are centred in the new grid. */
 export const OLD_GRID_W = 9;
 export const OLD_GRID_H = 13;
+
+export type BoardGoalId = 'bimtek' | 'hire' | 'realisasi' | 'noWacana' | 'stempelClear' | 'fund' | 'decor' | 'aman';
+export type BoardReward = 'orangDalam' | 'rupiah' | 'sabar' | 'stempel';
+
+export interface BoardGoal {
+  id: BoardGoalId;
+  /** Week it went up. */
+  since: number;
+  /** The count it started from (Bimtek done, Realisasi landed...), or the weeks in a row for Aman. */
+  base: number;
+  done: boolean;
+  claimed: boolean;
+}
+
+export interface BoardState {
+  goals: BoardGoal[];
+  /** Counts the sim keeps nowhere else: Bimtek courses and Dana sent to neighbours. */
+  tally: { bimtek: number; fund: number };
+}

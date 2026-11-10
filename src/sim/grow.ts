@@ -1,4 +1,5 @@
 // The growing map: promotion, and the AI-run RTs that fill the new space.
+import { tallyBoard } from './board';
 import { RANKING_WEEKS } from './calendar';
 import { t } from '../i18n';
 import { RIVAL_BASE, RIVAL_PER_YEAR } from '../data/ranking';
@@ -196,6 +197,7 @@ export function fundNeighbour(s: GameState, n: Neighbour, count = 1): string | n
   s.stats.spent += fundCost(s) * k;
   n.funded += k;
   n.everFunded = true;
+  tallyBoard(s, 'fund', k);
   return null;
 }
 
