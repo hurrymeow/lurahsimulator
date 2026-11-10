@@ -20,11 +20,11 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Later
 
-- [ ] **Secondary goals board from Pak Camat (Kairosoft style).**
-  - Problem: staff training and programs have no short-term pull of their own. Kairosoft gives regular side goals, such as training someone, with small rewards.
-  - Why: joofoot asked for it, 2026-11-09. It also keeps players coming back to Staf between stars.
-  - Suggested solution: plan it after a playtest of `docs/plans/wacana-staff-core.md` (open questions). Use rotating tasks such as "Bimtek someone this quarter" or "Realisasi Kampung Hijau", paying Orang Inside or Rupiah and never gating stars. Check UI.md rule 13 first.
-  - `open · — · — · done when:` a plan for it is approved and on main.
+- [ ] **Build Pak Camat's board of side goals.**
+  - Problem: the plan is on main (`docs/plans/camat-board.md`, #406) but nothing is built. Between stars the open goal lines move slowly, and Staf and Wacana have no short-term pull.
+  - Why: joofoot asked for it (2026-11-09); it aims at scorecard rows 7 (goal gaps), 13 (Orang Inside unspent) and 14 (cash piles up).
+  - Suggested solution: tasks T1 to T4 of the plan: board state and pool in the sim, the Menu row and sheet, the bots claiming goals, then the docs. Defaults for the three open questions are in the plan.
+  - `open · — · — · done when:` T1 to T4 are merged and the T3 bot bars are recorded in decisions/.
 
 - [ ] **Sejahtera, the Kerja meter and Indonesia Emas change almost nothing.**
   - Problem: Sejahtera and Kerja feed only the 2045 meter and a drop toast, so a Realisasi that moves Kerja does nothing. Emas adds a point or two to the ranking, against 8 for each resident. The 2045 ending that reads Sejahtera is not built.
@@ -87,6 +87,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ## Done
 
+- [x] **Secondary goals board from Pak Camat (Kairosoft style): the plan.** Three side goals at a time from RT 1★, one new each quarter, small sure rewards, never gating a star; one Menu row and one sheet. Building it is the item above. #406, `docs/plans/camat-board.md`, `decisions/camat-board-plan.md`.
 - [x] **Build Decor one by one without leaving build mode (owner request).** Decor stays in hand after each one goes up: tap, confirm, the next, until ✕. A first try put Decor in rows (#399); the owner wanted one by one, so rows stay for paths only (#404). `decisions/decor-keep-placing.md`.
 - [x] **Stage lengths, and stars that wait on the yearly ranking.** Tier-win goals count every quarterly ranking; the March audit moves to Kel 3★; the RW and Kelurahan rivals are stronger and grow with the quarters in the stage, capped at 16. No star lands on the same week for every bot, and Act 1 ends at 50 to 55 min (was 38). Stars still follow time in the stage: narrowed into the item above. #376, `decisions/stage-lengths-quarterly-wins.md`.
 - [x] **A refused personal request no longer reads as a refused raise (owner request).** The staff card, chip and poach notice name what was refused; a Baperan quits at 25%, 50%, 75%, then always, instead of every time. #380, `decisions/staff-refusals.md`.
