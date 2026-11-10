@@ -1,3 +1,4 @@
+import { boardQuarter, boardSystem } from './board';
 import { bBlurb, bName, t, type Key } from '../i18n';
 import {
   ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, PRICE_REASONS, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
@@ -240,6 +241,7 @@ export function decay(s: GameState): void {
 export function rankingEnd(s: GameState, fx: Fx): void {
   neighboursYearEnd(s, s.month / RANKING_WEEKS);
   yearlyRanking(s, fx, s.month / RANKING_WEEKS);
+  boardQuarter(s);
 }
 
 export function yearEnd(s: GameState, fx: Fx): void {
@@ -293,6 +295,7 @@ export const SYSTEMS: ((s: GameState, fx: Fx) => void)[] = [
   lineSystem,
   camatCallSystem,
   quarterSystem,
+  boardSystem,
 ];
 
 /** Systems whose Popularitas loss the first-drop warning can name. */

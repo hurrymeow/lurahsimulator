@@ -3,6 +3,7 @@
 // stream that events and arrivals draw from.
 import { atMonth } from './calendar';
 import { rand } from './rng';
+import { tallyBoard } from './board';
 import { gName, gReward, t, type Key } from '../i18n';
 import { rupiah } from '../format';
 import {
@@ -380,6 +381,7 @@ export function bimtek(s: GameState, x: Staff, stat: StatId = roleDef(x.role).st
   const st = stat;
   x.stats[st] = Math.min(STAT_MAX, x.stats[st] + BIMTEK.gain);
   x.away = BIMTEK.away;
+  tallyBoard(s, 'bimtek');
   return true;
 }
 
