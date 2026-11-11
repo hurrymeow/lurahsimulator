@@ -16,6 +16,12 @@ export const NEEDS = {
   household: 3,
   /** Households a Warung Sembako feeds at levels 1, 2 and 3. A retired Toko Kelontong feeds as level 3. */
   feeds: [4, 7, 10],
+  /**
+   * Households other food sources feed, whatever their level: minimarkets and markets sell sembako, farms grow it,
+   * a Rumah Makan cooks a little. The Warung stays the main source early; a big kampung needs the rest
+   * (decisions/kec-food.md).
+   */
+  feedsBy: { indomaret: 6, alfamart: 6, pasar: 20, pasarKaget: 8, rumahMakan: 2, kebunSayur: 2, sawah: 4, kandangAyam: 2, kolamLele: 2 } as Record<string, number>,
   /** Popularitas a month for each household nobody feeds. */
   hungrySabar: 0.1,
   /** Harga Sembako Naik (the cabai event) cuts what the warung can feed. */
@@ -59,6 +65,7 @@ export function fedBase(s: GameState): number {
     if (!isWorking(b)) continue;
     if (b.def === 'warung') n += NEEDS.feeds[Math.min(NEEDS.feeds.length, b.level) - 1];
     else if (b.def === 'tokoKelontong') n += NEEDS.feeds[2];
+    else n += NEEDS.feedsBy[b.def] ?? 0;
   }
   if (s.modifiers.some((m) => m.target === 'warung' && m.incomeMult < 1)) n *= 1 - NEEDS.priceCut;
   return Math.floor(n + households(s) * realisasiSum(s, 'perutCover'));
