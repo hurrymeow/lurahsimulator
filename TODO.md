@@ -14,7 +14,8 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Problem: the hint path promotes with about 460 residents and food for 50 of 154 households, so pinjol sits at 55 to 71% and no Kecamatan star comes.
   - Why: `decisions/playtest-bot-gaps.md` finding 2 (Hari, 2026-11-09: fold into tuning).
   - Suggested solution: tune with the Wacana/Staf T6 pass (`docs/plans/wacana-staff-core.md`).
-  - `claimed · Claude · 2026-11-09 · done when:` 10 of 10 hint-path seeds earn Kecamatan 1★ in the Nightly.
+  - Taken over 2026-11-11 by the daily sweep: the 2026-11-09 claim had no PR or commit after 2 days.
+  - `claimed · Claude (sweep) · 2026-11-11 · done when:` 10 of 10 hint-path seeds earn Kecamatan 1★ in the Nightly.
 
 ### Next
 
@@ -23,7 +24,8 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 - [ ] **Build Pak Camat's board of side goals.**
   - Problem: the plan is on main (`docs/plans/camat-board.md`, #406) but nothing is built. Between stars the open goal lines move slowly, and Staf and Wacana have no short-term pull.
   - Why: joofoot asked for it (2026-11-09); it aims at scorecard rows 7 (goal gaps), 13 (Orang Inside unspent) and 14 (cash piles up).
-  - Suggested solution: tasks T1 to T4 of the plan: board state and pool in the sim, the Menu row and sheet, the bots claiming goals, then the docs. Defaults for the three open questions are in the plan.
+  - T1 (board state and pool in the sim) is merged: #408, `decisions/camat-board-T1.md`.
+  - Suggested solution: tasks T2 to T4 of the plan: the Menu row and sheet, the bots claiming goals, then the docs. Defaults for the three open questions are in the plan.
   - `open · — · — · done when:` T1 to T4 are merged and the T3 bot bars are recorded in decisions/.
 
 - [ ] **Sejahtera, the Kerja meter and Indonesia Emas change almost nothing.**
