@@ -26,10 +26,10 @@ Nine player types, seeds 1 to 6, main against this branch (median minutes at 1x)
 - Every climbing type keeps every star from RT 1★ to Kel 3★, except the builder's Kel 2★ and 3★, 0.8 min later (one seed one quarter later).
 - Popularitas at the end of the run is 5 to 10 points higher for every type that builds (builder 44 to 54, hint 45 to 55, honest 49 to 55, shopkeeper 54 to 61): fewer hungry households drain it.
 - Random placer: RT 3★ on 6 of 6 seeds (was 5). Cheapskate: RW 2★ on 0 of 6 (was 1); it stays not stranded (`decisions/stage-lengths-quarterly-wins.md`).
-- The scripted Kecamatan bot (`KEC_BOT=1 SEEDS=3,4`): KEC_RESULT.
+- The scripted Kecamatan bot (`KEC_BOT=1 SEEDS=3,4`): passes on both seeds, stars at the same weeks as before (113, 250 and 425 after promotion, 57 min), pinjol at the end 0 to 1%.
 
 ## Not changed
-- Judol and Viral. The hint path sits at Viral 85 to 87 through the Kelurahan and the Kecamatan, and three in four households end on judol. With food in place they no longer borrow, but judol still takes 30% of their shop income. Whether Viral that high should be normal is a separate call; logged in TODO.
+- Judol and Viral. The hint path sits at Viral 85 to 87 through the Kelurahan and the Kecamatan, and three in four households end on judol. With food in place they no longer borrow, but judol still takes 30% of their shop income. Whether Viral that high should be normal is a separate call, for a TODO item in the next sweep.
 - The goal's done-when reads "10 of 10 hint-path seeds in the Nightly". Four seeds ran here; the Nightly confirms the other six.
 
 Verdict: self-approved under the TODO rule. GAME-DESIGN.md §2 (Perut) is updated. §8 row 18 (slowest over fastest) is unchanged, since star times barely move.
