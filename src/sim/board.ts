@@ -1,5 +1,6 @@
 // Pak Camat's board (docs/plans/camat-board.md): three side goals at a time, from RT 1★, one new a quarter.
-// Small sure rewards; a board goal is never a star line. The sheet and the card come in T2.
+// Small sure rewards; a board goal is never a star line. The sheet is src/ui/board.ts.
+import { t, type Key } from '../i18n';
 import { BOARD, BOARD_GOALS, boardGoalDef } from '../data/board';
 import { STAT_MAX, roleDef } from '../data/staff';
 import { categoryOf } from '../data/categories';
@@ -59,13 +60,44 @@ function met(s: GameState, b: BoardState, g: BoardGoal): boolean {
   }
 }
 
-/** Puts one new goal up, picked among those doable now and not already on the board. */
-function addGoal(s: GameState, b: BoardState): void {
+/** A goal's one line, as Pak Camat sets it. */
+export const boardGoalText = (id: BoardGoalId): string => {
+  const d = boardGoalDef(id);
+  return t(`board.g.${id}` as Key, { n: d.n, min: BOARD.amanMin });
+};
+
+/** How far a goal has come, in its own count. Only goals that ask for more than one show it. */
+export function boardProgress(s: GameState, g: BoardGoal): { have: number; need: number } {
+  const b = s.board!;
+  const need = boardGoalDef(g.id).n;
+  const have = g.done ? need
+    : g.id === 'fund' ? b.tally.fund - g.base
+    : g.id === 'aman' ? g.base
+    : 0;
+  return { have: Math.min(need, Math.max(0, have)), need };
+}
+
+/** Goals that want a look: new since the board was last opened, or done and not yet claimed. */
+export function boardWaiting(s: GameState): number {
+  const b = s.board;
+  if (!b) return 0;
+  return b.goals.filter((g) => !g.claimed && (g.done || g.since > (b.seen ?? -1))).length;
+}
+
+/** The player opened the board: every goal on it has been seen. */
+export function markBoardSeen(s: GameState): void {
+  if (s.board) s.board.seen = s.month;
+}
+
+/** Puts one new goal up, picked among those doable now and not already on the board. Pak Camat names it in a toast. */
+function addGoal(s: GameState, b: BoardState, fx: Fx): void {
   const pool = BOARD_GOALS.map((g) => g.id).filter((id) => !b.goals.some((g) => g.id === id) && offerable(s, id));
   if (!pool.length) return;
   // Picked by the week, not the game's dice, so the board never shifts any other random roll.
   const id = pool[Math.floor(s.month / RANKING_WEEKS) % pool.length];
   b.goals.push({ id, since: s.month, base: baseOf(s, b, id), done: false, claimed: false });
+  // A toast, never a card: it lands in the same week as the ranking card (UI.md checklist item 13).
+  fx.push({ kind: 'notice', title: t('sim.camatTitle'), body: t('board.newGoal', { goal: boardGoalText(id) }), tone: 'info' });
 }
 
 /** Counts something the sim keeps nowhere else. A no-op until the board exists. */
@@ -74,11 +106,11 @@ export function tallyBoard(s: GameState, key: keyof BoardState['tally'], n = 1):
 }
 
 /** Weekly: the board opens at RT 1★ with one goal; each goal on it is marked done once met. */
-export function boardSystem(s: GameState): void {
+export function boardSystem(s: GameState, fx: Fx = []): void {
   if (!s.board) {
     if (s.stage.current === 'rt' && s.stage.stars.rt < 1) return;
     s.board = { goals: [], tally: { bimtek: 0, fund: 0 } };
-    addGoal(s, s.board);
+    addGoal(s, s.board, fx);
     return;
   }
   const b = s.board;
@@ -90,7 +122,7 @@ export function boardSystem(s: GameState): void {
 }
 
 /** Each quarterly ranking: claimed goals leave, and one new goal comes, pushing out the oldest open one when full. */
-export function boardQuarter(s: GameState): void {
+export function boardQuarter(s: GameState, fx: Fx = []): void {
   const b = s.board;
   if (!b) return;
   b.goals = b.goals.filter((g) => !g.claimed);
@@ -100,7 +132,7 @@ export function boardQuarter(s: GameState): void {
     if (!oldest) return;
     b.goals = b.goals.filter((g) => g !== oldest);
   }
-  addGoal(s, b);
+  addGoal(s, b, fx);
 }
 
 /** What a goal pays when claimed, in its own unit. */

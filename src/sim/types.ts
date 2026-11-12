@@ -657,4 +657,6 @@ export interface BoardState {
   goals: BoardGoal[];
   /** Counts the sim keeps nowhere else: Bimtek courses and Dana sent to neighbours. */
   tally: { bimtek: number; fund: number };
+  /** Week the player last opened the board. A goal that went up after it is new; absent means never opened. */
+  seen?: number;
 }

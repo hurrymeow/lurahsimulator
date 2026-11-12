@@ -2142,6 +2142,56 @@ test.describe('Lomba Agustusan', () => {
   });
 });
 
+// Pak Camat's board (docs/plans/camat-board.md, T2): a Menu tile with a count, one sheet, a done goal claims once.
+test.describe("Pak Camat's board", () => {
+  test('the Menu tile opens the board, and a done goal pays once', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    await seed(page);
+    const od = () => page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.res.orangDalam as number);
+    await page.evaluate(() => {
+      const a = (window as unknown as { pakrt: any }).pakrt;
+      a.speed = 0;
+      const m = a.s.month;
+      a.s.board = {
+        goals: [
+          { id: 'bimtek', since: m, base: 0, done: true, claimed: false },
+          { id: 'fund', since: m, base: 0, done: false, claimed: false },
+          { id: 'aman', since: m, base: 3, done: false, claimed: false },
+        ],
+        tally: { bimtek: 1, fund: 1 },
+      };
+      a.refresh();
+    });
+    // Three goals went up since the board was last opened: Menu and the tile both say so.
+    await expect(page.locator('#menu-btn .count-tag')).toBeVisible();
+    await page.locator('#menu-btn').click();
+    await expect(page.locator('#act-board .count-tag')).toHaveText('3');
+    await page.locator('#act-board').click();
+    await expect(page.locator('#sheet .board-goal')).toHaveCount(3);
+    await expect(page.locator('#sheet .board-goal[data-goal="fund"] .meta').first()).toContainText('1/2');
+    // UI.md rule 14: one primary, the claim on the done goal.
+    await expect(page.locator('#sheet .btn-primary')).toHaveCount(1);
+    await expectLegible(page, 'camat board');
+    const r = await countScreen(page, 'board', '#sheet');
+    expect(r).not.toBeNull();
+    for (const k of Object.keys(LIMITS) as (keyof typeof LIMITS)[]) expect(r![k], `board ${k}`).toBeLessThanOrEqual(LIMITS[k]);
+    expect(await scanLabelWords(page)).toEqual([]);
+    const before = await od();
+    await page.locator('#sheet .board-goal[data-goal="bimtek"] .board-claim').click();
+    await expect(page.locator('#sheet .board-goal[data-goal="bimtek"]')).toHaveAttribute('data-state', 'claimed');
+    await expect(page.locator('#sheet .board-claim')).toHaveCount(0);
+    expect(await od()).toBe(before + 1);
+    // Opened and claimed: nothing waits any more.
+    await page.locator('#sheet .sheet-head .btn-icon').last().click();
+    await page.locator('#menu-btn').click();
+    await expect(page.locator('#act-board .count-tag')).toHaveCount(0);
+    await page.locator('#act-board').click();
+    await expect(page.locator('#sheet .board-claim')).toHaveCount(0);
+    expect(await od()).toBe(before + 1);
+  });
+});
+
 test.describe('RW stage', () => {
   test('the SK is a ceremony: its card accepts it, and while it waits the goal pill brings the card back', async ({ page }) => {
     await start(page);
@@ -2710,13 +2760,23 @@ test.describe('build mode', () => {
     }
     expect(await waiting()).toBe(n);
     await expect(page.locator('#dock-staff .count-tag')).toHaveText(String(n));
-    await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
+    // Applicants count on the Staf dock button, never on Menu. Menu counts only its own panels:
+    // at RT 1★ that is Pak Camat's board (goals new or done and unclaimed).
+    const menuCount = async () => {
+      const board = await page.evaluate(() => {
+        const b = (window as unknown as { pakrt: any }).pakrt.s.board;
+        return b ? b.goals.filter((g: any) => !g.claimed && (g.done || g.since > (b.seen ?? -1))).length : 0;
+      });
+      if (board) await expect(page.locator('#menu-btn .count-tag')).toHaveText(String(board));
+      else await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
+    };
+    await menuCount();
     await expectLegible(page, 'dock with applicants');
     await page.locator('#dock-staff').click();
     await page.locator('#sheet .staff-applicant .btn-primary').first().click();
     await expect(page.locator('#sheet .staff-card')).toHaveCount(2);
     await page.locator('.sheet-head .btn-icon').click();
-    await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
+    await menuCount();
   });
 
   test('a personal request shows on the row, reads as a speech bubble, and yes adds a heart', async ({ page }) => {
