@@ -241,7 +241,7 @@ export function decay(s: GameState): void {
 export function rankingEnd(s: GameState, fx: Fx): void {
   neighboursYearEnd(s, s.month / RANKING_WEEKS);
   yearlyRanking(s, fx, s.month / RANKING_WEEKS);
-  boardQuarter(s);
+  boardQuarter(s, fx);
 }
 
 export function yearEnd(s: GameState, fx: Fx): void {

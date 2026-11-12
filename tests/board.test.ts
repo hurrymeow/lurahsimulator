@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { BOARD } from '../src/data/board';
-import { boardQuarter, boardSystem, claimBoard, offerable, tallyBoard } from '../src/sim/board';
+import { BOARD, BOARD_GOALS } from '../src/data/board';
+import { setLang, t } from '../src/i18n';
+import { boardGoalText, boardProgress, boardQuarter, boardSystem, boardWaiting, claimBoard, markBoardSeen, offerable, tallyBoard } from '../src/sim/board';
+import type { Fx } from '../src/sim/gain';
 import { starChecklist } from '../src/sim/stages';
 import { newGame } from '../src/sim/state';
 import type { GameState } from '../src/sim/types';
@@ -81,6 +83,59 @@ describe("Pak Camat's board", () => {
     t.month += 12;
     boardSystem(t);
     expect(t.board.goals[0].done).toBe(false);
+  });
+
+  it('Pak Camat names each new goal in a toast, never a card', () => {
+    const s = rt1();
+    const fx: Fx = [];
+    boardSystem(s, fx);
+    s.month += 12;
+    boardQuarter(s, fx);
+    const notes = fx.filter((f) => f.kind === 'notice');
+    expect(notes).toHaveLength(2);
+    for (const n of notes) {
+      if (n.kind !== 'notice') continue;
+      expect(n.card).toBeFalsy();
+      expect(n.fanfare).toBeFalsy();
+    }
+    expect(notes.map((n) => (n.kind === 'notice' ? n.body : ''))).toEqual(s.board!.goals.map((g) => t('board.newGoal', { goal: boardGoalText(g.id) })));
+  });
+
+  it('counts goals that are new or done and unclaimed, until the board is opened', () => {
+    const s = rt1();
+    boardSystem(s);
+    expect(boardWaiting(s)).toBe(1);
+    markBoardSeen(s);
+    expect(boardWaiting(s)).toBe(0);
+    s.month += 12;
+    boardQuarter(s);
+    expect(boardWaiting(s)).toBe(1);
+    markBoardSeen(s);
+    s.board!.goals[0].done = true;
+    expect(boardWaiting(s)).toBe(1);
+    claimBoard(s, 0, []);
+    expect(boardWaiting(s)).toBe(0);
+  });
+
+  it('shows progress for goals that ask for more than one', () => {
+    const s = rt1();
+    s.board = { goals: [{ id: 'fund', since: s.month, base: 2, done: false, claimed: false }, { id: 'aman', since: s.month, base: 3, done: false, claimed: false }], tally: { bimtek: 0, fund: 3 } };
+    expect(boardProgress(s, s.board.goals[0])).toEqual({ have: 1, need: 2 });
+    expect(boardProgress(s, s.board.goals[1])).toEqual({ have: 3, need: 8 });
+    s.board.goals[0].done = true;
+    expect(boardProgress(s, s.board.goals[0])).toEqual({ have: 2, need: 2 });
+  });
+
+  it('every goal has a line in both languages', () => {
+    for (const g of BOARD_GOALS) {
+      for (const lang of ['en', 'id'] as const) {
+        setLang(lang);
+        const line = boardGoalText(g.id);
+        expect(line, `${lang} ${g.id}`).not.toMatch(/board\.g\.|\{/);
+        expect(line.split(/\s+/).length, `${lang} ${g.id} words`).toBeLessThanOrEqual(12);
+      }
+    }
+    setLang('en');
   });
 
   it('is never a star line', () => {
