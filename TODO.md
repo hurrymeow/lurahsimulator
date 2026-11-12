@@ -26,7 +26,8 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Why: joofoot asked for it (2026-11-09); it aims at scorecard rows 7 (goal gaps), 13 (Orang Inside unspent) and 14 (cash piles up).
   - T1 (board state and pool in the sim) is merged: #408, `decisions/camat-board-T1.md`.
   - Suggested solution: tasks T2 to T4 of the plan: the Menu row and sheet, the bots claiming goals, then the docs. Defaults for the three open questions are in the plan.
-  - `open · — · — · done when:` T1 to T4 are merged and the T3 bot bars are recorded in decisions/.
+  - T2 (the Menu tile, the sheet and Pak Camat's notice) claimed by voidinside99 (Claude) on 2026-11-12.
+  - `claimed · voidinside99 · 2026-11-12 · done when:` T1 to T4 are merged and the T3 bot bars are recorded in decisions/.
 
 - [ ] **Sejahtera, the Kerja meter and Indonesia Emas change almost nothing.**
   - Problem: Sejahtera and Kerja feed only the 2045 meter and a drop toast, so a Realisasi that moves Kerja does nothing. Emas adds a point or two to the ranking, against 8 for each resident. The 2045 ending that reads Sejahtera is not built.
