@@ -2760,13 +2760,23 @@ test.describe('build mode', () => {
     }
     expect(await waiting()).toBe(n);
     await expect(page.locator('#dock-staff .count-tag')).toHaveText(String(n));
-    await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
+    // Applicants count on the Staf dock button, never on Menu. Menu counts only its own panels:
+    // at RT 1★ that is Pak Camat's board (goals new or done and unclaimed).
+    const menuCount = async () => {
+      const board = await page.evaluate(() => {
+        const b = (window as unknown as { pakrt: any }).pakrt.s.board;
+        return b ? b.goals.filter((g: any) => !g.claimed && (g.done || g.since > (b.seen ?? -1))).length : 0;
+      });
+      if (board) await expect(page.locator('#menu-btn .count-tag')).toHaveText(String(board));
+      else await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
+    };
+    await menuCount();
     await expectLegible(page, 'dock with applicants');
     await page.locator('#dock-staff').click();
     await page.locator('#sheet .staff-applicant .btn-primary').first().click();
     await expect(page.locator('#sheet .staff-card')).toHaveCount(2);
     await page.locator('.sheet-head .btn-icon').click();
-    await expect(page.locator('#menu-btn .count-tag')).toHaveCount(0);
+    await menuCount();
   });
 
   test('a personal request shows on the row, reads as a speech bubble, and yes adds a heart', async ({ page }) => {
