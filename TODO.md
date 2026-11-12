@@ -10,13 +10,6 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Now
 
-- [ ] **Kecamatan starts with households that have no food.**
-  - Problem: the hint path promotes with about 460 residents and food for 50 of 154 households, so pinjol sits at 55 to 71% and no Kecamatan star comes.
-  - Why: `decisions/playtest-bot-gaps.md` finding 2 (Hari, 2026-11-09: fold into tuning).
-  - Suggested solution: tune with the Wacana/Staf T6 pass (`docs/plans/wacana-staff-core.md`).
-  - Taken over 2026-11-11 by the daily sweep: the 2026-11-09 claim had no PR or commit after 2 days.
-  - `claimed · Claude (sweep) · 2026-11-11 · done when:` 10 of 10 hint-path seeds earn Kecamatan 1★ in the Nightly.
-
 ### Next
 
 ### Later
@@ -25,9 +18,16 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Problem: the plan is on main (`docs/plans/camat-board.md`, #406) but nothing is built. Between stars the open goal lines move slowly, and Staf and Wacana have no short-term pull.
   - Why: joofoot asked for it (2026-11-09); it aims at scorecard rows 7 (goal gaps), 13 (Orang Inside unspent) and 14 (cash piles up).
   - T1 (board state and pool in the sim) is merged: #408, `decisions/camat-board-T1.md`.
-  - Suggested solution: tasks T2 to T4 of the plan: the Menu row and sheet, the bots claiming goals, then the docs. Defaults for the three open questions are in the plan.
-  - T2 (the Menu tile, the sheet and Pak Camat's notice) claimed by voidinside99 (Claude) on 2026-11-12.
+  - Suggested solution: tasks T3 and T4 of the plan: the bots claiming goals, then the docs. Defaults for the three open questions are in the plan.
+  - T2 (the Menu tile, the sheet and Pak Camat's notice) is merged: #412, `decisions/camat-board-T2.md`. The tile uses the shared fallback icon until the next icon sheet.
   - `claimed · voidinside99 · 2026-11-12 · done when:` T1 to T4 are merged and the T3 bot bars are recorded in decisions/.
+
+- [ ] **Viral sits at 85+ from the Kelurahan on, so most Kecamatan households gamble.**
+  - Problem: the hint path keeps Viral at 85 to 87 through the Kelurahan and the Kecamatan. Each 10 Viral above 20 adds 1% a week to judol starts, so three in four households end on judol, which takes 30% of their shop income. Since #410 fed households no longer borrow, so pinjol is no longer the symptom.
+  - Why: Viral is meant to swing with Wacana and events, not sit near its cap; and the Kecamatan's judol pressure should respond to play.
+  - Suggested solution: find which Kelurahan sources hold Viral up (Taman +1 a week, Mural, Baliho, events) against `VIRAL_DECAY`, then decide between a faster decay at high Viral, smaller late sources, or a judol curve that flattens. Prove it with the hint path's judol share and the nine player types.
+  - Source: `decisions/kec-food.md`, Not changed.
+  - `open · — · — · done when:` the hint path's Viral and judol share respond to play, or a decisions file says why the high level is right.
 
 - [ ] **Sejahtera, the Kerja meter and Indonesia Emas change almost nothing.**
   - Problem: Sejahtera and Kerja feed only the 2045 meter and a drop toast, so a Realisasi that moves Kerja does nothing. Emas adds a point or two to the ranking, against 8 for each resident. The 2045 ending that reads Sejahtera is not built.
@@ -90,6 +90,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ## Done
 
+- [x] **Kecamatan starts with households that have no food.** Pasar, Pasar Kaget, the minimarkets, farms and Rumah Makan feed households, not only the Warung. The hint path now earns Kecamatan 1★ on 10 of 10 seeds at week 113 after promotion (seeds 1 to 4 in the PR, 5 to 10 rerun on main after the Nightly; pinjol 5 to 21%, was 55 to 71%). #410, `decisions/kec-food.md`.
 - [x] **Secondary goals board from Pak Camat (Kairosoft style): the plan.** Three side goals at a time from RT 1★, one new each quarter, small sure rewards, never gating a star; one Menu row and one sheet. Building it is the item above. #406, `docs/plans/camat-board.md`, `decisions/camat-board-plan.md`.
 - [x] **Build Decor one by one without leaving build mode (owner request).** Decor stays in hand after each one goes up: tap, confirm, the next, until ✕. A first try put Decor in rows (#399); the owner wanted one by one, so rows stay for paths only (#404). `decisions/decor-keep-placing.md`.
 - [x] **Stage lengths, and stars that wait on the yearly ranking.** Tier-win goals count every quarterly ranking; the March audit moves to Kel 3★; the RW and Kelurahan rivals are stronger and grow with the quarters in the stage, capped at 16. No star lands on the same week for every bot, and Act 1 ends at 50 to 55 min (was 38). Stars still follow time in the stage: narrowed into the item above. #376, `decisions/stage-lengths-quarterly-wins.md`.
