@@ -3,7 +3,7 @@
 import { eventDef } from '../../src/data/events';
 import { cellOf, cellOrigin, lotAt } from '../../src/sim/area';
 import { STEMPEL } from '../../src/sim/balance';
-import { connectedRoad, FLAT, hasRoadBeside } from '../../src/sim/access';
+import { connectedRoad, FLAT, hasRoadBeside, setRoadRule } from '../../src/sim/access';
 import { liveCombos, parseNeed } from '../../src/sim/combos';
 import { def, placeableDefs } from '../../src/sim/content';
 import { checkRepair, monthlyNet, repair, resolveEvent } from '../../src/sim/events';
@@ -489,6 +489,8 @@ export interface RunOpts {
 /** Plays one bot on one seed and returns what happened, tick by tick. */
 export function runBot(bot: BotId, seed: number, ticks: number, opts: RunOpts = {}, plan?: Plan): Timeline {
   setGrid('rt');
+  // tests/setup.ts switches the road rule off. A bot is judged as a player is, so a building with no path beside it does not work.
+  setRoadRule(true);
   const s = opts.from ?? newGame(seed);
   if (opts.from) setGrid(s.stage.current);
   const rnd = mulberry(seed * 7919 + BOTS.indexOf(bot));
@@ -547,6 +549,7 @@ export function runBot(bot: BotId, seed: number, ticks: number, opts: RunOpts = 
     }
   } finally {
     setGrid('rt');
+    setRoadRule(false);
   }
   if (opts.out) opts.out.s = s;
   const m = meters(s);
