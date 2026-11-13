@@ -2,12 +2,12 @@
 // A bot is a plain routine that plays one sim tick at a time. The recorder logs every tick and every event.
 import { eventDef } from '../../src/data/events';
 import { cellOf, cellOrigin, lotAt } from '../../src/sim/area';
-import { STEMPEL } from '../../src/sim/balance';
+import { NEIGHBOUR, STEMPEL } from '../../src/sim/balance';
 import { connectedRoad, FLAT, hasRoadBeside, setRoadRule } from '../../src/sim/access';
 import { liveCombos, parseNeed } from '../../src/sim/combos';
 import { def, placeableDefs } from '../../src/sim/content';
 import { checkRepair, monthlyNet, repair, resolveEvent } from '../../src/sim/events';
-import { fundNeighbour, setAutoFund } from '../../src/sim/grow';
+import { checkVisit, fundNeighbour, setAutoFund, visit } from '../../src/sim/grow';
 import { meters, sejahtera, laporan } from '../../src/sim/needs';
 import { checkRestart, restart } from '../../src/sim/projects';
 import { demolish, checkPlace, checkUpgrade, place, requirementGaps, siteGaps, skipPermit, upgrade } from '../../src/sim/rules';
@@ -252,6 +252,14 @@ function fundAll(c: Ctx, over = 3_000_000): void {
   for (const n of s.neighbours) if (s.res.rupiah > over && fundNeighbour(s, n) === null) c.acts++;
 }
 
+/** Kunjungan: one Orang Dalam buys a free build and a few warga at the next RT that can take a visit. */
+function visitNext(c: Ctx): void {
+  const { s } = c;
+  if (s.res.orangDalam < NEIGHBOUR.visitOd) return;
+  const n = s.neighbours.find((x) => checkVisit(s, x) === null);
+  if (n && visit(s, n) === null) c.acts++;
+}
+
 /** Houses first when beds run short, then the shared list. */
 function keepBeds(c: Ctx, buffer: number): void {
   const { s } = c;
@@ -381,6 +389,8 @@ interface Plan {
   caps?: Record<string, number>;
   /** Hires staff and answers raises. */
   hire: boolean;
+  /** Spends spare Orang Dalam on Kunjungan at the AI-run RTs. */
+  visit: boolean;
   /** Runs Realisasi programs. */
   realisasi: boolean;
 }
@@ -393,10 +403,10 @@ const safetyFirst = (s: GameState): string[] => ['posRonda', 'posSatpam', 'lampu
 const noNeeds = (s: GameState): string[] => builderOrder(s).filter((id) => !['posSatpam', 'kebunSayur', 'lampuTaman', 'bidan', 'sawah', 'kandangAyam', 'kolamLele', 'paud'].includes(id));
 const needsFirst = (s: GameState): string[] => ['kebunSayur', 'posSatpam', 'lampuTaman', ...builderOrder(s)];
 
-const BASE: Plan = { every: 1, buffer: 200_000, perTick: 2, upgradeAt: 2_000_000, announce: 'low', event: 'free', fund: true, order: builderOrder, combo: 'book', comboFrom: COMBO_HINT_MONTH, hire: true, realisasi: false };
+const BASE: Plan = { every: 1, buffer: 200_000, perTick: 2, upgradeAt: 2_000_000, announce: 'low', event: 'free', fund: true, order: builderOrder, combo: 'book', comboFrom: COMBO_HINT_MONTH, hire: true, visit: false, realisasi: false };
 const PLANS: Partial<Record<BotId, Plan>> = {
-  builder: BASE,
-  shopkeeper: { ...BASE, order: shopsFirst },
+  builder: { ...BASE, visit: true },
+  shopkeeper: { ...BASE, order: shopsFirst, visit: true },
   safety: { ...BASE, order: safetyFirst, event: 'paid', caps: { posRonda: 2, posSatpam: 1, lampuTaman: 2, bidan: 1 } },
   cheapskate: { ...BASE, every: 4, buffer: 3_000_000, perTick: 1, upgradeAt: null, announce: 'never', hire: false },
   pencitraan: { ...BASE, order: noNeeds, announce: 'always', upgradeAt: 4_000_000 },
@@ -426,6 +436,7 @@ function playPlan(c: Ctx, p: Plan): void {
   if (c.t === 0) laySetapak(c);
   maintain(c, p.upgradeAt);
   if (p.fund && s.stage.current !== 'rt') fundAll(c);
+  if (p.visit) visitNext(c);
   keepBeds(c, p.buffer);
   keepDrains(c, p.buffer);
   if (p.combo === 'book' && c.t >= p.comboFrom) buildCombo(c, p.buffer);
