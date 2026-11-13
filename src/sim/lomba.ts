@@ -156,6 +156,6 @@ export function finishLomba(s: GameState, won: Record<string, boolean>, fx: Fx):
 
 /** The trophy stands by the Kantor RT for a year after a clean sweep. */
 /** July and August (weeks 24 to 31) once the lomba has started: the kampung puts up bunting and umbul-umbul. */
-export const agustusan = (s: GameState): boolean => s.month + 1 >= LOMBA.fromMonth && weeksToDay(s) < 2 * WEEKS_PER_MONTH;
+export const agustusan = (s: GameState): boolean => s.month + 1 >= LOMBA.fromMonth && weeksToDay(s) < 2 * WEEKS_PER_MONTH && year(s) % LOMBA.everyYears === 0;
 
 export const showTrophy = (s: GameState): boolean => (s.pialaUntil ?? -1) > s.month;

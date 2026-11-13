@@ -145,10 +145,23 @@ describe('Agustusan decorations', () => {
       s.month = m;
       return agustusan(s);
     };
-    // July and August are weeks 24 to 31 of each year; the lomba runs from year 1.
+    // July and August are weeks 24 to 31 of each year; the lomba runs from year 0, every second year.
     expect([at(22), at(23)]).toEqual([false, false]);
     expect([at(24), at(31)]).toEqual([true, true]);
     expect([at(32), at(40)]).toEqual([false, false]);
-    expect([at(72), at(79), at(80)]).toEqual([true, true, false]);
+    // None in a skipped year (year 1), back in a lomba year (year 2).
+    expect([at(72), at(79), at(80)]).toEqual([false, false, false]);
+    expect([at(120), at(127), at(128)]).toEqual([true, true, false]);
+  });
+
+  it('only in a lomba year: weeks 24 to 31 of yearsDone 0, and not of yearsDone 1', () => {
+    const s = newGame(1);
+    const at = (m: number) => {
+      s.month = m;
+      return agustusan(s);
+    };
+    const weeks = [24, 25, 26, 27, 28, 29, 30, 31];
+    expect(weeks.map(at)).toEqual(weeks.map(() => true));
+    expect(weeks.map((m) => at(m + 48))).toEqual(weeks.map(() => false));
   });
 });

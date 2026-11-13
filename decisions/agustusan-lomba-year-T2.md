@@ -1,0 +1,3 @@
+# Agustusan bunting only in a lomba year
+
+`agustusan()` in `src/sim/lomba.ts` now also requires `year(s) % LOMBA.everyYears === 0`, the same gate the panitia announce line in `lombaSystem` uses, so the July and August bunting and umbul-umbul go up only in a lomba year (`yearsDone` 0, 2, 4, …). This closes the follow-up noted when the lomba moved to every second year: a skipped year showed decorations with no lomba. The day (`LOMBA.dayWeek` 31) falls in the same year as weeks 24 to 31, so `year(s)` is the year `weeksToDay` points at and no extra lookup was needed. The existing decorations test now checks the skipped year 1 and the lomba year 2, and a new test covers weeks 24 to 31 in `yearsDone` 0 and 1.
