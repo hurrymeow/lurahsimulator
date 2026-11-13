@@ -12,8 +12,8 @@ A builder that never hires reaches RW 3★ and Kel 3★ at least 15% later than 
 ## Tasks
 
 ### T1. Rival chases the player (Sonnet, executor trial)
-- Files: `src/data/ranking.ts`, `src/sim/ranking.ts`, `tests/ranking.test.ts`
-- Exact changes: add `export const RIVAL_TRACK = 0.9;` to `src/data/ranking.ts`. In `yearlyRanking` in `src/sim/ranking.ts`, when `stage !== 'rt'`, find the latest entry in `s.ranking` with `tier === stage`. If one exists, `them = Math.max(them, Math.round(prev.us * RIVAL_TRACK))`. Add a test in `tests/ranking.test.ts`: in the RW, with a previous entry of `us: 1000`, the rival scores at least 900; at the RT the same entry changes nothing; with no previous entry in the stage nothing changes.
+- Files: `src/data/ranking.ts`, `src/sim/ranking.ts`, `tests/ranking-track.test.ts` (new file)
+- Exact changes: add `export const RIVAL_TRACK = 0.9;` to `src/data/ranking.ts`. In `yearlyRanking` in `src/sim/ranking.ts`, when `stage !== 'rt'`, find the latest entry in `s.ranking` with `tier === stage`. If one exists, `them = Math.max(them, Math.round(prev.us * RIVAL_TRACK))`. Create `tests/ranking-track.test.ts` with a test: in the RW, with a previous entry of `us: 1000`, the rival scores at least 900; at the RT the same entry changes nothing; with no previous entry in the stage nothing changes.
 - Done when: `npm run typecheck` and `npm test` pass; `decisions/stars-follow-play-T1.md` and `progress/stars-follow-play-T1.md` exist and say what changed and that tuning is T2.
 - Don't touch: other stages' constants, goals, bots, seeds, TODO.md, any file not listed. No e2e. If an existing test fails because of the new rule, stop with the test name and numbers; do not edit it.
 
