@@ -785,9 +785,9 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing
 - **Why:** an 8h run is 20–30 sessions on a phone. Every return is a mini first-time experience.
 - **Kairosoft:** inferred. The game resumes on the map, mid-month.
 - **Good:** resume on the map with the current goal and what changed since last time.
-- **Bad:** resume on a menu, or with no goal shown.
+- **Bad:** resume on a menu, with no goal shown, or with the goal's name cut off.
 - **Evidence:** T2. Save, reload, screenshot at 5s.
-- **Pass:** current goal and its progress on screen within 5s, in both languages.
+- **Pass:** current goal on screen within 5s, in both languages. Its progress is one tap away (the closed goal pill stays one line; `decisions/goal-line-one-goal.md`).
 
 ### T3 human check (3 questions, 15 min)
 

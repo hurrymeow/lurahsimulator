@@ -74,15 +74,15 @@ describe('scorecard harness', () => {
     const oneLang: T2Result[] = [{ row: 27, lang: 'id', status: 'expected' }];
     expect(t2Verdict(27, oneLang, '').verdict).toBe('Unknown');
     expect(t2Verdict(3, [{ row: 3, lang: 'id', status: 'skipped' }], '').verdict).toBe('Unknown');
-    // Row 27: a passing spec that records the progress as hidden reads Fail in the scorecard.
+    // Row 27: the goal line on screen is the bar; progress one tap away still passes.
     const r27 = [
       ...parseT2Report({ specs: [{ title: 'row 27: coming back', tests: ['id', 'en'].map((l) => ({ projectName: `phone-412-${l}`, status: 'expected', annotations: [{ type: 'progress-on-screen', description: 'false' }] })) }] }),
     ];
     expect(r27[0].notes).toEqual({ 'progress-on-screen': 'false' });
     const runs = { builder: [runBot('builder', 1, 20)] };
     const row = (t2: T2Result[]) => buildScorecard(runs, [], '', t2).find((r) => r.n === 27)!;
-    expect(row(r27).verdict).toBe('Fail');
+    expect(row(r27).verdict).toBe('Pass');
     expect(row(r27.map((x) => ({ ...x, notes: { 'progress-on-screen': 'true' } }))).verdict).toBe('Pass');
-    expect(row(r27.map((x) => ({ ...x, notes: undefined }))).verdict).toBe('Unknown');
+    expect(row(r27.map((x) => ({ ...x, notes: undefined }))).verdict).toBe('Pass');
   });
 });
