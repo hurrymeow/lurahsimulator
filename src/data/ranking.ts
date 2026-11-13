@@ -5,6 +5,8 @@ export const RIVAL_NAMES = { rt: 'Kampung Sebelah', rw: 'RW Sebelah', kelurahan:
 /** Scales the rival's score to the size of the area being ranked: 1, 2 or 4 RTs, of which the AI ones score lower than the player. */
 export const RIVAL_SCALE = { rt: 1, rw: 3.6, kelurahan: 6, kecamatan: 4.75 } as const;
 export const RIVAL_BASE = 55;
+/** From the RW on, the rival never scores below this share of the player's last score in the stage, so it follows a strong player up. */
+export const RIVAL_TRACK = 0.9;
 export const RIVAL_PER_YEAR = 26;
 export const RIVAL_JITTER = 8;
 /**
