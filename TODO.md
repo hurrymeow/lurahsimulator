@@ -47,21 +47,21 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Why: the scorecard judges balance for real play.
   - Suggested solution: turn the rule on for the scorecard runs (`tests/scorecard/`), teach the driver to lay a path when a spot has none, and compare the nine player types before and after.
   - Source: `decisions/smaller-map-T9.md`, note 4; `decisions/smaller-map-balance.md`
-  - `open · — · — · done when:` the scorecard runs with the road rule on and its numbers are refreshed.
+  - `claimed · Claude (scorecard thread) · 2026-11-13 · done when:` the scorecard runs with the road rule on and its numbers are refreshed.
 
 - [ ] **Scorecard row 27: the goal's progress is a tap away.**
   - Problem: row 27 reads Fail since #356. GAME-DESIGN.md §8 item 27 asks for "current goal and its progress on screen within 5s". `decisions/goal-line-one-goal.md` keeps have and need off the closed goal pill, so after a reload the goal shows but its progress needs a tap.
   - Why: the bar and the pill decision disagree, so the row cannot pass without changing one of them.
   - Suggested solution: decide which changes. Either show a short progress (for example "12/25") on the closed pill if it fits without cutting the line (UI.md rule 5), or reword the §8 bar to "progress one tap away" with a decisions/ note. The T2 spec records `progress-on-screen`, so the row flips to Pass by itself if the pill shows progress.
   - Source: `decisions/scorecard-t2-harness.md`; `decisions/goal-line-one-goal.md`
-  - `open · — · — · done when:` row 27 reads Pass, or the §8 bar is reworded with a decisions/ note.
+  - `claimed · Claude (scorecard thread) · 2026-11-13 · done when:` row 27 reads Pass, or the §8 bar is reworded with a decisions/ note.
 
 - [ ] **Fix the remaining scorecard Fails that have a clear cause.**
   - Problem: the scorecard of 2026-11-04 reads 3 Pass, 14 Fail, 10 Unknown. Still failing with a cause: Viral pinned at 100 from B2 on (5, claimed: #319 adds a soft cap; B0 and B1 sit at 0 before any Viral source), goal gaps over the band (7, 10), novelty gaps (11), one reward kind per star (12), cash piles up for up to 52 min with no late sink (14), income outruns costs (15), Pencitraan never reaching Kel 1★ (17), Hint reader finds only 41% of combos (21, bar 65 to 85%). Kelurahan 2★ and 3★ still miss the goal-gap limit by 40 to 136 s (`decisions/second-rt-load.md`, cause not traced).
   - Why: each Fail is a place the game is too easy, too flat or can strand a player.
   - Suggested solution: one small PR per row, each proved by a Nightly rerun. Cash sink and late Popularitas sources are content, so check them against the Act 2 plan first.
   - Source: `scorecard/scorecard.md`; `decisions/rt-3star-pace.md`; `decisions/combo-stack-cap.md`; `decisions/cheapskate-bar.md`
-  - `open · — · — · done when:` each balance row passes or has a stated reason in decisions/.
+  - `claimed · Claude (scorecard thread) · 2026-11-13 · done when:` each balance row passes or has a stated reason in decisions/.
 
 - [ ] **Finish the scorecard: the 10 Unknown rows and the bot gaps.**
   - #311 linted traits and combos (item 2, now Pass) and added Dana, Stempel and Anggaran to the timeline (item 13).
@@ -69,7 +69,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Why: section 8 stays partly blind until each row can be judged. The nightly run is also untested on GitHub.
   - Suggested solution: add goal ETAs to the recorder, a forced event chain and per-action ablation runs. Add T2 specs for items 3, 6 and 27. Check the first nightly run time (bar 20 min) and trim seeds if needed.
   - Source: `scorecard/scorecard.md`; `decisions/scorecard-harness.md`
-  - `open · — · — · done when:` no row reads Unknown for a reason the harness could fix, and a nightly run finishes under 20 minutes.
+  - `claimed · Claude (scorecard thread) · 2026-11-13 · done when:` no row reads Unknown for a reason the harness could fix, and a nightly run finishes under 20 minutes.
 
 - [ ] **Scorecard bots: the last RT stalls.**
   - #313 fixed two combo loops in the bots (a leveled combo piece and an uncapped copy fallback); the builder now misses RT 3★ in 1 seed of 10, not 8. The 2nd RT was not the cause.
@@ -79,14 +79,14 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - The Pencitraan stall is a strategy collapse on slow-growth seeds, not a bot bug (`decisions/scorecard-pencitraan-probe.md`); fixing it is a balance call that belongs with the scorecard Fails item.
   - Suggested solution: probe the 208s wait and the late RT 2★ the same way (state and building counts at the stall) and tell a bot bug from a balance gap.
   - Source: `decisions/scorecard-bot-combo-loop.md`
-  - `open · — · — · done when:` the builder reaches RT 3★ in 10 of 10 seeds, and item 1 is under 60s or has a recorded balance reason.
+  - `claimed · Claude (scorecard thread) · 2026-11-13 · done when:` the builder reaches RT 3★ in 10 of 10 seeds, and item 1 is under 60s or has a recorded balance reason.
 
 - [ ] **Scorecard follow-ups from the 2026-11-07 calls.**
   - Problem: three things the calls left open (`decisions/scorecard-calls.md`). 1) Row 22 now Fails: the Lomba Agustusan returns every 6.4 min, bar 10 min. 2) Rows 3, 6, 27 need one Playwright slice (sprites per star, cause shown on screen, save and reload at 5s in both languages). 3) Row 13: builder bots never spend Orang Dalam (B1, B4) and Stempel is never earned in B4.
   - Why: they turn three rows from Unknown or Fail into a real verdict.
   - Suggested solution: 1) Done: the Lomba is held every second year (#361; `decisions/lomba-every-second-year-T1.md`). Follow-up: `agustusan()` bunting still shows every year; gate it on the lomba year, and check row 22 on the next Nightly. 2) Done: specs in #350, harness reads them in #356 (row 3 Pass, row 6 Pass, row 27 Fail). 3) Teach the builder bot to spend Orang Dalam on the quarterly visit.
   - Source: `decisions/scorecard-calls.md`
-  - `open · — · — · done when:` row 22 reads Pass or Fail on the next Nightly, the bunting follows the lomba year, and row 13 has no bot-gap line. (Rows 3, 6 and 27 done in #356.)
+  - `claimed · Claude (scorecard thread) · 2026-11-13 · done when:` row 22 reads Pass or Fail on the next Nightly, the bunting follows the lomba year, and row 13 has no bot-gap line. (Rows 3, 6 and 27 done in #356.)
 
 ## Done
 
