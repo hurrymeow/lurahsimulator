@@ -27,20 +27,20 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Why: Viral is meant to swing with Wacana and events, not sit near its cap; and the Kecamatan's judol pressure should respond to play.
   - Suggested solution: find which Kelurahan sources hold Viral up (Taman +1 a week, Mural, Baliho, events) against `VIRAL_DECAY`, then decide between a faster decay at high Viral, smaller late sources, or a judol curve that flattens. Prove it with the hint path's judol share and the nine player types.
   - Source: `decisions/kec-food.md`, Not changed.
-  - `open · — · — · done when:` the hint path's Viral and judol share respond to play, or a decisions file says why the high level is right.
+  - `claimed · Claude balance thread · 2026-11-13 · done when:` the hint path's Viral and judol share respond to play, or a decisions file says why the high level is right.
 
 - [ ] **Sejahtera, the Kerja meter and Indonesia Emas change almost nothing.**
   - Problem: Sejahtera and Kerja feed only the 2045 meter and a drop toast, so a Realisasi that moves Kerja does nothing. Emas adds a point or two to the ranking, against 8 for each resident. The 2045 ending that reads Sejahtera is not built.
   - Why: the core satire is Laporan against Sejahtera. If doing it for real pays nothing, players only learn to announce.
   - Suggested solution: decide what a good Sejahtera buys before the ending exists. Options include the share of iuran paid, resident arrivals, or a yearly SK bonus. Prove it with the honest and pencitraan bots. Source: `docs/plans/wacana-staff-core.md`, open questions.
-  - `open · — · — · done when:` raising Sejahtera changes a star time for the honest bot, or a decisions file says why not.
+  - `claimed · Claude balance thread · 2026-11-13 · done when:` raising Sejahtera changes a star time for the honest bot, or a decisions file says why not.
 
 - [ ] **Stars still follow time in the stage, not how well the player plays.**
   - Problem: since #376 tier-win goals count every quarterly ranking and no star lands on the same week for every bot, but every climbing bot still wins about 84 of 86 Kelurahan rankings (`decisions/wacana-staff-core-T6.md`). So RW 3★ and Kel 3★ come a set number of quarters after promotion, and a builder that never hires reaches them on the same weeks (Wacana and Staf T6 bar 5 fails). The RW is 13 to 16 min (target about 20) because RW 1★ comes within a minute of promotion; the Kelurahan is 22 to 26 min (target about 30).
   - Why: GAME-DESIGN.md §8 items 4 and 10, and T6 bar 5: staff and play should move a star.
   - Suggested solution: make the ranking close for a good player, for example a rival that tracks the player's own area score from the quarter they arrive, or a goal that skill moves (a score margin, Sejahtera) beside the win count. Make RW 1★ ask for more than three builds in Kampung Sebelah. Rerun the no-hire builder (T6 bar 5) and the nine player types against main. Also probe whether a big, fully housed kampung can sink under the Kel 3★ Popularitas bar in real play (`decisions/stage-lengths-quarterly-wins.md`, Not changed).
   - Source: `decisions/stage-lengths-quarterly-wins.md`; `decisions/wacana-staff-core-T6.md`, Follow-ups
-  - `open · — · — · done when:` the no-hire builder reaches RW 3★ and Kel 3★ at least 15% later than the hiring one, and the RW is inside its length band or a decisions file says why not.
+  - `claimed · Claude balance thread · 2026-11-13 · done when:` the no-hire builder reaches RW 3★ and Kel 3★ at least 15% later than the hiring one, and the RW is inside its length band or a decisions file says why not.
 
 - [ ] **Run the scorecard bots with the road rule on.**
   - Problem: `tests/setup.ts` turns the road rule off for every test, the scorecard included. Bot buildings work without a path, so bots have more room than a player and the numbers flatter the game.
