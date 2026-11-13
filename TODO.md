@@ -26,7 +26,8 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Problem: the no-hire builder reaches every star within 3% of the hiring one, so staff do not change play (`decisions/stars-follow-play.md`).
   - Why: GAME-DESIGN.md §8 items 4 and 10, and T6 bar 5: staff and play should move a star.
   - Suggested solution: let a hired Asisten add programs, Sejahtera or permit speed that the ranking or a goal counts. Needs a design call on the staff plan. Then rerun the no-hire builder and set RW 1★ to ask for more than three builds in Kampung Sebelah (it lands about a minute after promotion).
-  - `open · — · — · done when:` the no-hire builder reaches RW 3★ and Kel 3★ at least 15% later than the hiring one, or a decisions file says why not.
+  - Design call made: programs carried out become a star line, and from the RW Inem leads one at a time (`docs/plans/staff-move-stars.md`, `decisions/staff-move-stars-plan.md`). Tasks T1 to T3.
+  - `claimed · Claude (sweep) · 2026-11-13 · done when:` the no-hire builder reaches RW 3★ and Kel 3★ at least 15% later than the hiring one, or a decisions file says why not.
 
 - [ ] **Run the scorecard bots with the road rule on.**
   - Problem: `tests/setup.ts` turns the road rule off for every test, the scorecard included. Bot buildings work without a path, so bots have more room than a player and the numbers flatter the game.
