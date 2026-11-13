@@ -1,5 +1,5 @@
 import { t } from '../i18n';
-import { LOSE, RIVAL_BASE, RIVAL_JITTER, RIVAL_NAMES, RIVAL_PER_YEAR, RIVAL_GROWTH_QUARTERS, RIVAL_SCALE, RIVAL_START, SCORE, WIN } from '../data/ranking';
+import { LOSE, RIVAL_BASE, RIVAL_JITTER, RIVAL_NAMES, RIVAL_PER_YEAR, RIVAL_GROWTH_QUARTERS, RIVAL_SCALE, RIVAL_START, RIVAL_TRACK, SCORE, WIN } from '../data/ranking';
 import { def, isCover } from './content';
 import { gain, type Fx } from './gain';
 import { viewOf } from './neighbourView';
@@ -55,7 +55,12 @@ export function yearlyRanking(s: GameState, fx: Fx, year: number): void {
   const stage = s.stage.current;
   const RIVAL_NAME = RIVAL_NAMES[stage];
   const us = areaScore(s);
-  const them = Math.round((RIVAL_BASE + RIVAL_PER_YEAR * rivalYear(s, year) + randInt(s, -RIVAL_JITTER, RIVAL_JITTER)) * RIVAL_SCALE[stage]);
+  let them = Math.round((RIVAL_BASE + RIVAL_PER_YEAR * rivalYear(s, year) + randInt(s, -RIVAL_JITTER, RIVAL_JITTER)) * RIVAL_SCALE[stage]);
+  // From the RW on the rival follows the player's last score in the stage, so a strong kampung is still chased.
+  if (stage !== 'rt') {
+    const prev = s.ranking.filter((r) => r.tier === stage).at(-1);
+    if (prev) them = Math.max(them, Math.round(prev.us * RIVAL_TRACK));
+  }
   const won = us > them;
   s.ranking.push({ tier: stage, year, us, them, won });
   const hq = s.buildings.find((b) => b.def === 'kantorRT');
