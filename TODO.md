@@ -22,25 +22,11 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - T2 (the Menu tile, the sheet and Pak Camat's notice) is merged: #412, `decisions/camat-board-T2.md`. The tile uses the shared fallback icon until the next icon sheet.
   - `claimed · voidinside99 · 2026-11-12 · done when:` T1 to T4 are merged and the T3 bot bars are recorded in decisions/.
 
-- [ ] **Viral sits at 85+ from the Kelurahan on, so most Kecamatan households gamble.**
-  - Problem: the hint path keeps Viral at 85 to 87 through the Kelurahan and the Kecamatan. Each 10 Viral above 20 adds 1% a week to judol starts, so three in four households end on judol, which takes 30% of their shop income. Since #410 fed households no longer borrow, so pinjol is no longer the symptom.
-  - Why: Viral is meant to swing with Wacana and events, not sit near its cap; and the Kecamatan's judol pressure should respond to play.
-  - Suggested solution: find which Kelurahan sources hold Viral up (Taman +1 a week, Mural, Baliho, events) against `VIRAL_DECAY`, then decide between a faster decay at high Viral, smaller late sources, or a judol curve that flattens. Prove it with the hint path's judol share and the nine player types.
-  - Source: `decisions/kec-food.md`, Not changed.
-  - `claimed · Claude balance thread · 2026-11-13 · done when:` the hint path's Viral and judol share respond to play, or a decisions file says why the high level is right.
-
-- [ ] **Sejahtera, the Kerja meter and Indonesia Emas change almost nothing.**
-  - Problem: Sejahtera and Kerja feed only the 2045 meter and a drop toast, so a Realisasi that moves Kerja does nothing. Emas adds a point or two to the ranking, against 8 for each resident. The 2045 ending that reads Sejahtera is not built.
-  - Why: the core satire is Laporan against Sejahtera. If doing it for real pays nothing, players only learn to announce.
-  - Suggested solution: decide what a good Sejahtera buys before the ending exists. Options include the share of iuran paid, resident arrivals, or a yearly SK bonus. Prove it with the honest and pencitraan bots. Source: `docs/plans/wacana-staff-core.md`, open questions.
-  - `claimed · Claude balance thread · 2026-11-13 · done when:` raising Sejahtera changes a star time for the honest bot, or a decisions file says why not.
-
-- [ ] **Stars still follow time in the stage, not how well the player plays.**
-  - Problem: since #376 tier-win goals count every quarterly ranking and no star lands on the same week for every bot, but every climbing bot still wins about 84 of 86 Kelurahan rankings (`decisions/wacana-staff-core-T6.md`). So RW 3★ and Kel 3★ come a set number of quarters after promotion, and a builder that never hires reaches them on the same weeks (Wacana and Staf T6 bar 5 fails). The RW is 13 to 16 min (target about 20) because RW 1★ comes within a minute of promotion; the Kelurahan is 22 to 26 min (target about 30).
+- [ ] **Hired staff must move the score or a star gate.**
+  - Problem: the no-hire builder reaches every star within 3% of the hiring one, so staff do not change play (`decisions/stars-follow-play.md`).
   - Why: GAME-DESIGN.md §8 items 4 and 10, and T6 bar 5: staff and play should move a star.
-  - Suggested solution: make the ranking close for a good player, for example a rival that tracks the player's own area score from the quarter they arrive, or a goal that skill moves (a score margin, Sejahtera) beside the win count. Make RW 1★ ask for more than three builds in Kampung Sebelah. Rerun the no-hire builder (T6 bar 5) and the nine player types against main. Also probe whether a big, fully housed kampung can sink under the Kel 3★ Popularitas bar in real play (`decisions/stage-lengths-quarterly-wins.md`, Not changed).
-  - Source: `decisions/stage-lengths-quarterly-wins.md`; `decisions/wacana-staff-core-T6.md`, Follow-ups
-  - `claimed · Claude balance thread · 2026-11-13 · done when:` the no-hire builder reaches RW 3★ and Kel 3★ at least 15% later than the hiring one, and the RW is inside its length band or a decisions file says why not.
+  - Suggested solution: let a hired Asisten add programs, Sejahtera or permit speed that the ranking or a goal counts. Needs a design call on the staff plan. Then rerun the no-hire builder and set RW 1★ to ask for more than three builds in Kampung Sebelah (it lands about a minute after promotion).
+  - `open · — · — · done when:` the no-hire builder reaches RW 3★ and Kel 3★ at least 15% later than the hiring one, or a decisions file says why not.
 
 - [ ] **Run the scorecard bots with the road rule on.**
   - Problem: `tests/setup.ts` turns the road rule off for every test, the scorecard included. Bot buildings work without a path, so bots have more room than a player and the numbers flatter the game.
@@ -89,6 +75,10 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - `claimed · Claude (scorecard thread) · 2026-11-13 · done when:` row 22 reads Pass or Fail on the next Nightly, the bunting follows the lomba year, and row 13 has no bot-gap line. (Rows 3, 6 and 27 done in #356.)
 
 ## Done
+
+- [x] **Viral sits at 85+ from the Kelurahan on.** Cause: every Influencer slot auto-fills, so all bots end at 85 to 89. Judol cancels most of the income gain past Viral 60 (net shop income x1.10 at 85, x1.04 at 60), so the high level is right. `decisions/viral-high-level.md`.
+- [x] **Sejahtera, the Kerja meter and Indonesia Emas change almost nothing.** Shops earn up to 25% more as Sejahtera climbs from 50 to 100, nothing below 50, so Perut, Kerja and Aman pay. Emas and the 2045 ending are not changed. #416, `decisions/sejahtera-pays.md`.
+- [x] **Stars still follow time in the stage.** The rival now chases the player's last score (#417), but no ranking rule separates hiring from no-hire: staff barely move the score. `decisions/stars-follow-play.md`; two new items above.
 
 - [x] **Kecamatan starts with households that have no food.** Pasar, Pasar Kaget, the minimarkets, farms and Rumah Makan feed households, not only the Warung. The hint path now earns Kecamatan 1★ on 10 of 10 seeds at week 113 after promotion (seeds 1 to 4 in the PR, 5 to 10 rerun on main after the Nightly; pinjol 5 to 21%, was 55 to 71%). #410, `decisions/kec-food.md`.
 - [x] **Secondary goals board from Pak Camat (Kairosoft style): the plan.** Three side goals at a time from RT 1★, one new each quarter, small sure rewards, never gating a star; one Menu row and one sheet. Building it is the item above. #406, `docs/plans/camat-board.md`, `decisions/camat-board-plan.md`.
