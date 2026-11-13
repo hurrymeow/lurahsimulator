@@ -1,0 +1,3 @@
+# Agustusan bunting only in a lomba year
+
+Gated the Agustusan bunting on the lomba year: `agustusan()` in `src/sim/lomba.ts:159` gained `&& year(s) % LOMBA.everyYears === 0`, matching the announce condition in `lombaSystem`. `tests/lomba.test.ts` adds a test that weeks 24 to 31 are bunting in `yearsDone` 0 and bare in `yearsDone` 1, and the older decorations test now covers the skipped year 1 and the lomba year 2. `npm run typecheck`, `npm test` (692 passed, 9 skipped) and `npm test -- tests/lomba.test.ts` (11 passed) are green. No e2e run: the map draw path is untouched and only reads the predicate.
