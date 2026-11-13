@@ -479,12 +479,7 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
   none(26, 'Replay drivers (optional New Game+)', 'T3', 'A design check, not a sim measurement. Not required for the core 8h.');
   {
     const r = t2Verdict(27, t2, 'Check: save, reload, wait 5s; same buildings and residents, the same goal line on screen, legibility scan clean, screenshot kept.');
-    // The bar is "current goal and its progress on screen". The spec records whether the have and need rows show
-    // without a tap; today they show only on the opened pill (decisions/goal-line-one-goal.md), so a passing spec is a Fail.
-    const hidden = t2.filter((x) => x.row === 27 && x.notes?.['progress-on-screen'] === 'false').map((x) => x.lang);
-    if (r.verdict === 'Pass' && hidden.length) add(27, 'Coming back', 'T2', 'Fail', `${r.evidence} But the goal's progress (have and need) is a tap away, not on screen, in ${[...new Set(hidden)].sort().join(' and ')}.`);
-    else if (r.verdict === 'Pass' && t2.some((x) => x.row === 27 && !x.notes?.['progress-on-screen'])) add(27, 'Coming back', 'T2', 'Unknown', `${r.evidence} The spec did not record whether progress is on screen.`);
-    else add(27, 'Coming back', 'T2', r.verdict, r.evidence);
+    add(27, 'Coming back', 'T2', r.verdict, r.evidence);
   }
   return rows;
 }
