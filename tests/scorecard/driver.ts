@@ -151,7 +151,10 @@ function spotFor(s: GameState, id: string, around?: { x: number; y: number }): {
   const taken = new Set(s.buildings.filter((b) => b.def !== 'jalan').flatMap((b) => tilesOf(b).map((q) => q.x + q.y * GRID_W)));
   const cells = allCells().filter((p) => !taken.has(p.x + p.y * GRID_W));
   if (around) {
-    return [...cells].sort((p, q) => dist(p, around) - dist(q, around)).find((p) => free(s, id, p));
+    // Beside a combo piece, but on a street: a building with no path beside it does not work, so it would not join the combo.
+    const conn = connectedRoad(s);
+    const onStreet = (p: { x: number; y: number }) => d.category === 'decoration' || FLAT.has(id) || id.startsWith('kantor') || scope !== 'rt' || hasRoadBeside(conn, { def: id, x: p.x, y: p.y });
+    return [...cells].sort((p, q) => dist(p, around) - dist(q, around)).find((p) => onStreet(p) && free(s, id, p));
   }
   if (scope !== 'rt') {
     const lots = cells.filter((p) => lotAt(p.x, p.y) === scope);
@@ -312,6 +315,13 @@ function buildCombo(c: Ctx, buffer: number, only?: string[]): void {
     for (const id of ids) {
       if (s.buildings.some((b) => b.def === id)) continue;
       if (buy(c, id, buffer, member ? { x: member.x, y: member.y } : undefined)) return;
+    }
+    // A flat piece (Kebun Sayur) stands in a gap far from its road-fed partner: a player builds a new flat piece beside the partner.
+    const flat = ids.find((id) => FLAT.has(id));
+    const solid = ids.find((id) => !FLAT.has(id));
+    if (flat && solid && ids.every((id) => s.buildings.some((b) => b.def === id))) {
+      const partner = s.buildings.find((b) => b.def === solid && !b.noRoad);
+      if (partner && count(s, flat) < capOf(flat) + 3 && buy(c, flat, buffer, { x: partner.x, y: partner.y })) return;
     }
     // A piece that needs a level (Pecel Lele wants a Rumah Makan at 3): upgrade the copy nearest the anchor, as a
     // player would, and never buy more copies for it. Before this, the bot bought a new copy every tick.
