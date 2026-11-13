@@ -2,7 +2,7 @@ import { boardQuarter, boardSystem } from './board';
 import { bBlurb, bName, t, type Key } from '../i18n';
 import {
   ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, PRICE_REASONS, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
-  EXPECT_KEC, EXPECT_KEL, EXPECT_PER_RESIDENT, EXPECT_TAPER, NOVELTY_GAP, QUEUE_SABAR_DRAIN, SETORAN_RATE, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, TUKANG_MAX, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
+  EXPECT_KEC, EXPECT_KEL, EXPECT_PER_RESIDENT, EXPECT_TAPER, NOVELTY_GAP, QUEUE_SABAR_DRAIN, SETORAN_RATE, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, TUKANG_MAX, SEJAHTERA_SHOP, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
 } from './balance';
 import { accessSystem, connectedRoad, hasRoadBeside } from './access';
 import { comboIncomeMult, comboSystem } from './combos';
@@ -29,7 +29,7 @@ import { problemSystem } from './problems';
 import { lombaSystem } from './lomba';
 import { monthWarnings, type SabarCause } from './warnings';
 import { parkirSystem } from './parkir';
-import { needsSystem, premanTake } from './needs';
+import { meters, needsSystem, premanTake, sejahtera } from './needs';
 import { judolIncomeCut, pinjolSystem } from './pinjol';
 import { buildBoost, clearPermits, permitQueue, queueMonths, staffSystem, upkeepCut } from './staff';
 import { requestSystem } from './requests';
@@ -47,9 +47,12 @@ export type { Fx };
 export function incomeMult(s: GameState, b: Building): number {
   let m = comboIncomeMult(s, b);
   for (const mod of s.modifiers) if (mod.target === '*' || mod.target === b.def) m *= mod.incomeMult;
-  if (def(b.def).shop) m *= (1 + s.res.viral * VIRAL_INCOME) * (1 - judolIncomeCut(s));
+  if (def(b.def).shop) m *= (1 + s.res.viral * VIRAL_INCOME) * (1 - judolIncomeCut(s)) * sejahteraShopMult(s);
   return m;
 }
+
+/** Doing the work pays: shops earn more when the warga are fed, in work and safe. Uses the meters from the last tick. */
+export const sejahteraShopMult = (s: GameState): number => 1 + SEJAHTERA_SHOP * Math.max(0, sejahtera(s.meters ?? meters(s)) - 50) / 50;
 
 export function buildingIncome(s: GameState, b: Building): number {
   if (!isWorking(b)) return 0;

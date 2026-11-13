@@ -3,6 +3,8 @@ import { YEAR_SCALE } from './calendar';
 export const START = { rupiah: 5_000_000, sabar: 60, orangDalam: 1, viral: 0 };
 export const START_RESIDENTS = 4;
 export const IURAN = 25_000;
+/** Shops earn up to this much more as Sejahtera climbs from 50 to 100. Nothing below 50, so a young kampung is never taxed. */
+export const SEJAHTERA_SHOP = 0.25;
 export const INFLATION_PER_YEAR = Math.round(((1.03 ** YEAR_SCALE) - 1) * 10000) / 10000;
 /** Reasons in the yearly price banner (`price.reason.N`), from decisions/staff-requests.md section 4. */
 export const PRICE_REASONS = 12;
