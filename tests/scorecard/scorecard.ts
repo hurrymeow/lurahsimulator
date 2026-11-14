@@ -60,7 +60,7 @@ const RT_TARGETS = [15, 37, 90];
 const STAR_GAP: Record<string, number> = { rt: 30, rw: 52, kelurahan: 75 };
 /** Goal max (seconds) and Novelty max (seconds) by band B1..B4. */
 const GOAL_MAX_S = [NaN, 90, 120, 180, 240];
-const NOVELTY_MAX_S = [10, 30, 30, 45, 60];
+const NOVELTY_MAX_S = [16, 30, 30, 45, 60];
 /** Stop point gap in minutes for bands B3 and B4. */
 const STOP_MAX_MIN = [NaN, NaN, NaN, 15, 15];
 
