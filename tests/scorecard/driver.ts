@@ -471,6 +471,7 @@ const PLANS: Partial<Record<BotId, Plan>> = {
 };
 
 function playRandom(c: Ctx): void {
+  if (c.s.stage.current === 'rt' && c.t === 0) laySetapak(c);
   const { s } = c;
   maintain(c, null);
   fundAll(c);
