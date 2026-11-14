@@ -5,7 +5,7 @@ import { COMBOS } from '../../src/data/combos';
 import { TRAITS } from '../../src/data/staff';
 import { EVENTS } from '../../src/data/events';
 import { STAGES } from '../../src/data/stages';
-import { placeableDefs, stageFx } from '../../src/sim/content';
+import { hasDef, placeableDefs, stageFx } from '../../src/sim/content';
 import { setGrid, type StageId, type StarDef } from '../../src/sim/types';
 import { newGame } from '../../src/sim/state';
 import { starChecklist } from '../../src/sim/stages';
@@ -131,6 +131,51 @@ export function longestSystemRun(rows: StarKindRow[]): number {
 }
 
 const stageLabel = (id: StageId): string => (id === 'kelurahan' ? 'Kel' : id === 'kecamatan' ? 'Kec' : id.toUpperCase());
+
+// ---------------------------------------------------------------- item 16 spend proxy
+
+/** Basics every strategy needs, exempt from the item 16 spend bar (GAME-DESIGN.md section 8). */
+const SPEND_EXEMPT = new Set(['rumah', 'warung', 'jalan']);
+
+export interface SpendTop {
+  band: number;
+  kind: string;
+  /** This kind's share of the band's counted spend, 0 to 1. */
+  share: number;
+  /** Total Rupiah spent on counted buildings in the band. */
+  total: number;
+}
+
+/**
+ * Item 16 proxy: the building kind with the largest share of Rupiah spent in each band, summed from the
+ * builder's `built` events. Bands with no counted build are skipped; ties go to the id that sorts first.
+ */
+export function topSpendByBand(tls: Timeline[]): SpendTop[] {
+  const byBand = new Map<number, Map<string, number>>();
+  for (const tl of tls) {
+    for (const e of tl.events) {
+      if (e.kind !== 'built' || SPEND_EXEMPT.has(e.id) || !hasDef(e.id)) continue;
+      const band = bandOf(e.t);
+      const spent = byBand.get(band) ?? new Map<string, number>();
+      spent.set(e.id, (spent.get(e.id) ?? 0) + def(e.id).cost);
+      byBand.set(band, spent);
+    }
+  }
+  return [...byBand.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([band, spent]) => {
+      const total = sum([...spent.values()]);
+      const [kind, cost] = [...spent.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+      return { band, kind, share: cost / total, total };
+    });
+}
+
+/** Kinds that take the top spend share in more than two bands (the section 8 item 16 bar). */
+export function dominantSpendKinds(tls: Timeline[]): { kind: string; bands: number }[] {
+  const counts = new Map<string, number>();
+  for (const r of topSpendByBand(tls)) counts.set(r.kind, (counts.get(r.kind) ?? 0) + 1);
+  return [...counts.entries()].filter(([, n]) => n > 2).map(([kind, bands]) => ({ kind, bands }));
+}
 
 // ---------------------------------------------------------------- rows
 
@@ -405,8 +450,13 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
     add(15, 'Cost curve and snowball', 'T1', verdict(ok), `Seconds of income to afford the dearest key item, B0 to B4: median ${med.toFixed(0)}s (bar 30 to 120s), 95th percentile ${p95?.toFixed(0)}s (bar 300s). Income over cost growth RT to RW ${growth[0]?.toFixed(2)}x, RW to Kelurahan ${growth[1]?.toFixed(2)}x (bar 0.7 to 1.5).`);
   }
 
-  // 16. Diminishing returns.
-  none(16, 'Diminishing returns', 'T1', 'Needs ablation runs (remove one action, measure star time). Not built.');
+  // 16. Diminishing returns. Proxy: Rupiah spent per building kind per band, not star time saved.
+  {
+    const tops = topSpendByBand(builder);
+    const over = dominantSpendKinds(builder);
+    const detail = tops.map((r) => `${BANDS[r.band]} ${r.kind} ${(r.share * 100).toFixed(0)}%`).join(', ');
+    add(16, 'Diminishing returns', 'T1', verdict(over.length === 0), `Top spend share by building kind per band (proxy: spend share, not star time saved; Rumah, Warung and Jalan Setapak exempt): ${detail || 'no counted builds'}. ${over.length ? `Top in more than 2 bands: ${over.map((o) => `${o.kind} ${o.bands}`).join(', ')}.` : 'No kind leads more than 2 bands.'}`);
+  }
 
   // 17. No dominant strategy.
   {

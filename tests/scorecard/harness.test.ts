@@ -129,6 +129,30 @@ describe('scorecard harness', () => {
     expect(rowOf({ ...flat, kelurahan: flat.kelurahan * 2 }).verdict).toBe('Fail');
   });
 
+  it('item 16 reads the spend share per kind per band', () => {
+    const rows: Row[] = Array.from({ length: 101 }, (_, t) => ({
+      t, stage: 'rt', stars: 0, rupiah: 0, sabar: 0, viral: 0, odn: 0, dana: 0, stempel: 0, anggaran: 0, pop: 0, beds: 0, buildings: 0,
+      aman: 0, sejahtera: 0, laporan: 0, net: 0, nextKey: 0, dearKey: 0, useful: true, goalsDone: 0, goalsTotal: 1, acts: 0,
+    }));
+    const timeline = (events: TLEvent[]): Timeline => ({ bot: 'builder', seed: 1, rows, events, ticks: rows.length, end: { stage: 'rt', stars: 0, sejahtera: 0, laporan: 0, discovered: [] }, starTicks: [], stageTicks: { rt: 0 } });
+    const built = (t: number, id: string): TLEvent => ({ t, kind: 'built', id });
+    const rowOf = (events: TLEvent[]) => buildScorecard({ builder: [timeline(events)] }, [], '', []).find((r) => r.n === 16)!;
+    // Ticks map to bands: 15 B1, 60 B2, 150 B3, 300 B4, 500 B5.
+    // Two bands each for posRonda and wifi: no kind leads more than 2 bands.
+    const balanced = [built(15, 'posRonda'), built(15, 'biopori'), built(60, 'posRonda'), built(60, 'biopori'), built(150, 'wifi'), built(150, 'posRonda'), built(300, 'wifi'), built(300, 'posRonda')];
+    const pass = rowOf(balanced);
+    expect(pass.verdict).toBe('Pass');
+    expect(pass.evidence).toContain('proxy: spend share, not star time saved');
+    expect(pass.evidence).toContain('B1 posRonda 67%');
+    expect(pass.evidence).toContain('B3 wifi 76%');
+    // A third band for posRonda is a Fail.
+    const fail = rowOf([...balanced, built(500, 'posRonda'), built(500, 'biopori')]);
+    expect(fail.verdict).toBe('Fail');
+    expect(fail.evidence).toContain('Top in more than 2 bands: posRonda 3');
+    // The basics are exempt, so a band that only builds Rumah and Jalan Setapak has no top kind.
+    expect(rowOf([built(3, 'rumah'), built(3, 'jalan'), built(3, 'warung')]).evidence).toContain('no counted builds');
+  });
+
   it('item 8 reads the short and mid goals from the known future', () => {
     const rows: Row[] = Array.from({ length: 101 }, (_, t) => ({
       t, stage: 'rt', stars: 0, rupiah: 0, sabar: 0, viral: 0, odn: 0, dana: 0, stempel: 0, anggaran: 0, pop: 0, beds: 0, buildings: 0,
