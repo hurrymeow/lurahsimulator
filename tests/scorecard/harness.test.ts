@@ -4,6 +4,7 @@ import { takeover } from './takeover';
 import { buildScorecard, lintTraitsCombos, longestSystemRun, simText, starKindRows, starKinds, type StarKindRow } from './scorecard';
 import { TRAITS } from '../../src/data/staff';
 import { STAGES } from '../../src/data/stages';
+import { EVENTS, type EventDef } from '../../src/data/events';
 import { def } from '../../src/sim/content';
 import type { GameState, StageId } from '../../src/sim/types';
 import { parseT2Report, t2Verdict, type T2Result } from './t2';
@@ -170,5 +171,31 @@ describe('scorecard harness', () => {
     expect(rowOf(every(20, star)).verdict).toBe('Fail');
     // The Lomba counts as the mid goal, with no stars.
     expect(rowOf([...every(10, goal), ...every(20, lomba)]).verdict).toBe('Pass');
+  });
+
+  it('item 18 compares rolled outcomes on their mean and reads Pass or Fail', () => {
+    const runs = { builder: [runBot('builder', 1, 20)] };
+    const rowOf = () => buildScorecard(runs, [], '', []).find((r) => r.n === 18)!;
+    const withEvents = (events: EventDef[], fn: () => void): void => {
+      const saved = EVENTS.splice(0, EVENTS.length, ...events);
+      try { fn(); } finally { EVENTS.splice(0, EVENTS.length, ...saved); }
+    };
+    const canary = (choices: EventDef['choices']): EventDef => ({ id: 'canaryDom', name: 'Canary', body: '', when: { chance: 0 }, choices });
+    // A rolled option that is worse on average than a fixed one is named, and the row fails.
+    withEvents([canary([
+      { label: 'Risky', outcomes: [{ weight: 1, res: { sabar: 1 }, result: '' }, { weight: 1, res: { sabar: -3 }, result: '' }], result: '' },
+      { label: 'Safe', res: { sabar: 2 }, result: '' },
+    ])], () => {
+      const row = rowOf();
+      expect(row.verdict).toBe('Fail');
+      expect(row.evidence).toContain('canaryDom#0 "Risky"');
+    });
+    // Equal means and equal costs: neither dominates, so Pass, never Unknown.
+    withEvents([canary([
+      { label: 'Coin', outcomes: [{ weight: 1, res: { sabar: 2 }, result: '' }, { weight: 1, res: { sabar: -2 }, result: '' }], result: '' },
+      { label: 'Flat', res: { sabar: 0 }, result: '' },
+    ])], () => expect(rowOf().verdict).toBe('Pass'));
+    // The shipped content never reads Unknown either.
+    expect(rowOf().verdict).not.toBe('Unknown');
   });
 });

@@ -487,14 +487,23 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
   {
     const dominated: string[] = [];
     for (const e of EVENTS) {
-      const fixed = e.choices.map((c, i) => ({ c, i })).filter(({ c }) => !c.outcomes && !c.special && !c.modifier && !c.incomePct);
+      const options = e.choices.map((c, i) => ({ c, i })).filter(({ c }) => !c.special && !c.modifier && !c.incomePct);
       // Cost is a vector: a choice only beats another when it is no dearer in rupiah, Orang Dalam and income months at once.
       const price = (c: (typeof e.choices)[number]) => [c.cost?.rupiah ?? 0, c.cost?.orangDalam ?? 0, c.cost?.incomeMonths ?? 0];
-      const gain = (c: (typeof e.choices)[number]) => ({ ...(c.res ?? {}), ...(c.inspectPrep ? { inspectPrep: c.inspectPrep } : {}) });
-      for (const a of fixed) for (const b of fixed) {
+      // A rolled advice option is compared on its probability-weighted mean resource change.
+      const gain = (c: (typeof e.choices)[number]): Record<string, number> => {
+        const g: Record<string, number> = { ...(c.res ?? {}) };
+        if (c.inspectPrep) g.inspectPrep = c.inspectPrep;
+        if (c.outcomes?.length) {
+          const total = c.outcomes.reduce((n, o) => n + o.weight, 0);
+          for (const o of c.outcomes) for (const [k, v] of Object.entries(o.res ?? {})) g[k] = (g[k] ?? 0) + (v * o.weight) / total;
+        }
+        return g;
+      };
+      for (const a of options) for (const b of options) {
         if (a.i === b.i) continue;
-        const ga = gain(a.c) as Record<string, number>;
-        const gb = gain(b.c) as Record<string, number>;
+        const ga = gain(a.c);
+        const gb = gain(b.c);
         const keys = new Set([...Object.keys(ga), ...Object.keys(gb)]);
         const pa = price(a.c);
         const pb = price(b.c);
@@ -502,11 +511,11 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
         const geq = [...keys].every((k) => (gb[k] ?? 0) >= (ga[k] ?? 0));
         const gt = [...keys].some((k) => (gb[k] ?? 0) > (ga[k] ?? 0)) || pb.some((v, k) => v < pa[k]);
         // Gunting Pita is the first popup: a light joke with one clear winner on purpose (GAME-DESIGN.md target 3).
-        if (e.id !== 'guntingPita' && cheaper && geq && gt) dominated.push(`${e.id}#${a.i}`);
+        if (e.id !== 'guntingPita' && cheaper && geq && gt) dominated.push(`${e.id}#${a.i} "${a.c.label}"`);
       }
     }
-    add(18, 'Every choice has a cost', 'T1', verdict(dominated.length === 0), dominated.length ? `Strictly dominated options: ${[...new Set(dominated)].join(', ')}. Only options with fixed results are compared; advice with rolled outcomes is skipped.` : 'No strictly dominated option among fixed-result choices. Rolled outcomes are skipped.');
-    if (!dominated.length) rows[rows.length - 1].verdict = 'Unknown';
+    const how = 'Fixed results compared directly; rolled outcomes by their probability-weighted mean resource change.';
+    add(18, 'Every choice has a cost', 'T1', verdict(dominated.length === 0), dominated.length ? `Strictly dominated options: ${[...new Set(dominated)].join(', ')}. ${how}` : `No strictly dominated option. ${how}`);
   }
 
   // 19. Laporan vs Sejahtera.
