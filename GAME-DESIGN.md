@@ -601,7 +601,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing
 - **Ask:** is there always a short, a mid and a long goal whose progress moves?
 - **Why:** short keeps hands busy, mid gives the session a shape, long brings you back tomorrow.
 - **Kairosoft:** short = this month's build or event. Mid = next rank, Golden Week [HSS], yearly graduation [PA]. Long = the year-16 score [DV, HSS].
-- **Good:** the next star line (short), the next star or Lomba (mid), and the 2045 review (long) all visibly move.
+- **Good:** the next star line or the Now strip's step (short), the next star or Lomba (mid), and the 2045 review (long) all visibly move.
 - **Bad:** the 2045 meter is on screen but never moves, so it is not a goal.
 - **Evidence:** T1 goal ETAs; T2 that each is on screen.
 - **Pass:** a short (<2 min) and a mid (<15 min) goal in ≥90% of ticks after minute 2. The long meter changes at least once per stop point.

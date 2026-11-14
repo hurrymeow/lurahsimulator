@@ -77,6 +77,7 @@ export type TLEvent =
   | { t: number; kind: 'built'; id: string }
   | { t: number; kind: 'job' | 'level' | 'report' }
   | { t: number; kind: 'goal' }
+  | { t: number; kind: 'step' }
   | { t: number; kind: 'drop'; res: 'sabar'; amount: number; cause: boolean }
   /** Weekly income of the buildings that stood at a promotion and still stand 5 min later (item 24, second half). */
   | { t: number; kind: 'oldMap'; to: StageId; income: number };
@@ -602,6 +603,8 @@ export function runBot(bot: BotId, seed: number, ticks: number, opts: RunOpts = 
   let stars = totalStars(s);
   let pop = population(s);
   let lastGoal = goalCounts(s).done;
+  /** The Now strip's step at the last tick, so a change of kind or text is logged once. */
+  let lastStep: string | null = null;
   let t = 0;
   const noSpot = new Map<string, number>();
   /** Item 24: the buildings that stood at each promotion, read again after 5 min. */
@@ -620,6 +623,11 @@ export function runBot(bot: BotId, seed: number, ticks: number, opts: RunOpts = 
       const lombaBefore = s.lomba?.held === true || s.lomba?.due === true;
       const fx = tick(s);
       c.fx.push(...fx);
+      // The Now strip's step: a new kind or text is a short goal the player can see move. Tick 0 only sets the baseline.
+      const step = nextStep(s);
+      const stepKey = step ? `${step.kind}:${step.text}` : '';
+      if (t > 0 && stepKey !== lastStep) events.push({ t, kind: 'step' });
+      lastStep = stepKey;
       // The Lomba Agustusan day: held, or skipped when the bot picked no contests. Item 8's mid horizon counts it.
       if (!lombaBefore && (s.lomba?.held || s.lomba?.due)) events.push({ t, kind: 'lomba' });
       // A bot that answers an event after the tick sees it next tick, as a player would.
