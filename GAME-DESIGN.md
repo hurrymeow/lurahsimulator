@@ -728,7 +728,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing
 - **Kairosoft:** Mega Mall has 31 combos. The formulae for most are sold over time; the last 8 are never hinted [MMS]. Hot Springs combos fire within 2 tiles [HSS].
 - **Good:** about 3 in 4 hinted or likely by accident, 1 in 4 hidden. A clear distance rule.
 - **Bad:** all hidden, or all obvious.
-- **Evidence:** T1. A random-placement bot for accidental finds. A hint-reading bot for hinted ones.
+- **Evidence:** T1. A random-placement bot for accidental finds. A book-reading bot for hinted ones (the Combo book shows every formula; decisions/scorecard-design-calls.md).
 - **Pass:** the random bot finds ≥3 in B0–B2. The hint bot finds 65–85%. Every combo is found by some bot.
 
 ### G. Calendar and randomness

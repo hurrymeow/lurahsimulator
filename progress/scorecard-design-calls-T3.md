@@ -1,0 +1,3 @@
+# T3 progress
+
+Applied the book-reader hint share in `tests/scorecard/scorecard.ts`, updated GAME-DESIGN.md §8 item 21 Evidence, and added a skipped local measure at `tests/scorecard/measure-T3.test.ts`. Measured on main (seeds 1 to 10, 600 ticks): the random bot's combo events in the first 15 min are 0,1,0,3,0,0,0,1,0,1 (median 0), while it reaches RT 1★ in 7 of 10 seeds at 5.3, 10.4, 11.9, 12.0, 17.3, 26.7 and 28.3 min, so the planned "median cannot be 0" premise fails for the seeds whose star comes after B2. Stopped on the random-count change; typecheck and the harness suite pass with the applied edits.
