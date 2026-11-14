@@ -5,11 +5,13 @@ import { COMBOS } from '../../src/data/combos';
 import { TRAITS } from '../../src/data/staff';
 import { EVENTS } from '../../src/data/events';
 import { STAGES } from '../../src/data/stages';
-import { placeableDefs } from '../../src/sim/content';
-import { setGrid } from '../../src/sim/types';
+import { placeableDefs, stageFx } from '../../src/sim/content';
+import { setGrid, type StageId, type StarDef } from '../../src/sim/types';
 import { newGame } from '../../src/sim/state';
 import { starChecklist } from '../../src/sim/stages';
 import { def } from '../../src/sim/content';
+import { STAGE_JOBS, STAGE_METERS } from '../../src/data/higher';
+import { ROLES } from '../../src/data/staff';
 import { LOMBA } from '../../src/data/lomba';
 import { RANKING_WEEKS, WEEKS_PER_YEAR } from '../../src/sim/calendar';
 import { SECONDS_PER_TICK, type BotId, type Timeline, type TLEvent } from './driver';
@@ -84,6 +86,51 @@ function gaps(ticks: number[], from: number, to: number): { t: number; gap: numb
   const pts = [from, ...ticks.filter((t) => t >= from && t <= to), to];
   return pts.slice(1).map((t, i) => ({ t, gap: t - pts[i] }));
 }
+
+// ---------------------------------------------------------------- star reward kinds (item 12)
+
+export type RewardKind = 'building' | 'decor' | 'reward' | 'system';
+export interface StarKindRow {
+  stage: StageId;
+  star: number;
+  kinds: RewardKind[];
+}
+
+/**
+ * In-code stage flags that open a new system and have no data field: the Camat board opens at RT 1★
+ * (`src/sim/board.ts`). Everything else is read from data: a meter or job gated at the star, a staff role that
+ * opens at the star, or an unlocked building carrying a stage `fx` block.
+ */
+const FLAG_SYSTEMS: Partial<Record<StageId, number[]>> = { rt: [1] };
+
+/** The distinct kinds a star gives, by section 8 item 12: non-decor building, decor, resource reward, new system. */
+export function starKinds(stage: StageId, star: number, defn: StarDef): RewardKind[] {
+  const kinds = new Set<RewardKind>();
+  for (const id of defn.unlocks) kinds.add(def(id).category === 'decoration' ? 'decor' : 'building');
+  if (defn.reward && Object.keys(defn.reward).length > 0) kinds.add('reward');
+  const n = star + 1;
+  const gated = [...STAGE_METERS, ...STAGE_JOBS].some((x) => x.gate.stage === stage && x.gate.stars === n);
+  const fx = defn.unlocks.some((id) => stageFx(def(id)) !== undefined);
+  const role = ROLES.some((r) => r.opens.stage === stage && r.opens.stars === n);
+  if (gated || fx || role || (FLAG_SYSTEMS[stage] ?? []).includes(n)) kinds.add('system');
+  return [...kinds];
+}
+
+/** Every star in the ladder with its kinds, in star order. */
+export const starKindRows = (): StarKindRow[] => STAGES.flatMap((st) => st.stars.map((star, k) => ({ stage: st.id, star: k, kinds: starKinds(st.id, k, star) })));
+
+/** Longest run of consecutive stars with no new system. The bar is 1: a new system at least every 2 stars. */
+export function longestSystemRun(rows: StarKindRow[]): number {
+  let worst = 0;
+  let run = 0;
+  for (const r of rows) {
+    run = r.kinds.includes('system') ? 0 : run + 1;
+    worst = Math.max(worst, run);
+  }
+  return worst;
+}
+
+const stageLabel = (id: StageId): string => (id === 'kelurahan' ? 'Kel' : id === 'kecamatan' ? 'Kec' : id.toUpperCase());
 
 // ---------------------------------------------------------------- rows
 
@@ -261,12 +308,10 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
         if (row.rupiah + 4 * row.net < cheapest) bad.push(`seed ${tl.seed} ${STAR_NAMES[e.n - 1]}`);
       }
     }
-    const kinds: string[] = [];
-    STAGES.forEach((st) => st.stars.forEach((star, k) => {
-      const n = (star.unlocks.length ? 1 : 0) + (star.reward ? 1 : 0);
-      if (n < 2) kinds.push(`${st.id} ${k + 1}★`);
-    }));
-    add(12, 'Star rewards', 'T1', verdict(bad.length === 0 && kinds.length === 0), `Cheapest new non-decor building affordable within 30s: ${checked - bad.length} of ${checked} star events${bad.length ? ` (misses: ${bad.slice(0, 4).join(', ')})` : ''}. Stars with one kind of reward: ${kinds.length ? kinds.join(', ') : 'none'}.`);
+    const rows = starKindRows();
+    const thin = rows.filter((r) => r.kinds.length < 2).map((r) => `${stageLabel(r.stage)} ${r.star + 1}★`);
+    const systemRun = longestSystemRun(rows);
+    add(12, 'Star rewards', 'T1', verdict(bad.length === 0 && thin.length === 0 && systemRun <= 1), `Cheapest new non-decor building affordable within 30s: ${checked - bad.length} of ${checked} star events${bad.length ? ` (misses: ${bad.slice(0, 4).join(', ')})` : ''}. Stars with under 2 kinds: ${thin.length ? thin.join(', ') : 'none'}. Longest run without a new system: ${systemRun} star${systemRun === 1 ? '' : 's'} (bar 1).`);
   }
 
   // 13. Sources and sinks. Dana, Stempel and Anggaran only exist from the stage that brings them, so a band where
