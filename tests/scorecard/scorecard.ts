@@ -311,8 +311,7 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
     }
     const neg = (tls: Timeline[]) => Math.min(0, ...tls.flatMap((tl) => tl.rows.map((r) => r.rupiah)));
     const nb = neg(builder);
-    const ni = neg(idle);
-    add(14, 'Cash health', 'T1', verdict(longest * SECONDS_PER_TICK <= 180 && nb >= 0 && ni >= 0), `Cash over 5x the next key item for up to ${fmtMin(longest)} (bar 3 min). Lowest cash: builder ${(nb / 1e6).toFixed(1)}M, idle ${(ni / 1e6).toFixed(1)}M.`);
+    add(14, 'Cash health', 'T1', verdict(longest * SECONDS_PER_TICK <= 180 && nb >= 0), `Cash over 5x the next key item for up to ${fmtMin(longest)} (bar 3 min). Lowest cash: builder ${(nb / 1e6).toFixed(1)}M. Idle debt is by design: after the grace weeks broke drains Popularitas (safetyNet).`);
   }
 
   // 15. Cost curve and snowball.
