@@ -514,7 +514,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing
 
 | Band | Wall time | Player should | Novelty max | Goal max | Star gap | Stop point |
 | --- | --- | --- | --- | --- | --- | --- |
-| B0 Hook | 0–1 min | First house by 30s | 10s, no popups | tutorial steps | n/a | n/a |
+| B0 Hook | 0–1 min | First house by 30s | 16s (two ticks), no popups | tutorial steps | n/a | n/a |
 | B1 Learn | 1–5 min | Close the loop once, 1★ | 30s | 90s | RT 4 min | n/a |
 | B2 First session | 5–15 min | Finish RT, first SK | 30s | 2 min | RT 4 min | first SK |
 | B3 Promotion | 15–30 min | Learn RW's new rule | 45s | 3 min | RW 7 min | 15 min |
