@@ -662,7 +662,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing
 - **Good:** a safety net early. A sink late that scales with income.
 - **Bad:** millions in the bank at hour 5 with nothing to buy.
 - **Evidence:** T1. Cash against the cost of the next key item (item 15).
-- **Pass:** cash above 5x that cost never lasts over 3 min. Cash never below 0 for the builder or idle bot in any band.
+- **Pass:** cash above 5x that cost never lasts over 3 min. Cash never below 0 for the builder in any band. The idle bot's debt is by design: after the grace weeks broke drains Popularitas.
 
 #### 15. Cost curve and snowball
 - **Ask:** does time-to-afford the next key item stay in a band, and does income outgrow costs?
