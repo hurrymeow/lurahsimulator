@@ -18,7 +18,7 @@ import { REALISASI } from '../../src/data/realisasi';
 import { acceptSK, canPromote, nextStarChecklist } from '../../src/sim/stages';
 import { answerRaise, hire, lowonganCost, postLowongan } from '../../src/sim/staff';
 import { STAR_SALARY } from '../../src/data/staff';
-import { buildCost, housing, newGame, population, price, tilesOf } from '../../src/sim/state';
+import { buildCost, housing, newGame, population, price, tilesOf, withinEdges } from '../../src/sim/state';
 import { tick } from '../../src/sim/tick';
 import { announce } from '../../src/sim/wacana';
 import { GRID_H, GRID_W, RT_H, RT_W, setGrid, type GameState, type StageId } from '../../src/sim/types';
@@ -143,8 +143,11 @@ const RW_PIECES = ['posyandu', 'portal', 'pasarKaget', 'gapura', 'lapangan'];
 const wantsSebelah = (s: GameState): boolean =>
   s.stage.current === 'rw' && (nextStarChecklist(s) ?? []).some((l) => !l.done && (l.goal.kind === 'sebelahBuilds' || l.goal.kind === 'sebelahAtStars'));
 
+/** A site beside a building, optionally limited to a combo's reach of it. */
+type Around = { x: number; y: number; def?: string; radius?: number };
+
 /** Where a player would put this building: beside a street for road-fed ones, in the gaps for flat and decor pieces. */
-function spotFor(s: GameState, id: string, around?: { x: number; y: number }): { x: number; y: number } | undefined {
+function spotFor(s: GameState, id: string, around?: Around): { x: number; y: number } | undefined {
   const d = def(id);
   const scope = d.scope ?? 'rt';
   // A tile under a standing building can never be a spot (a plain path can be built over): skip it before the costly placement check.
@@ -154,7 +157,10 @@ function spotFor(s: GameState, id: string, around?: { x: number; y: number }): {
     // Beside a combo piece, but on a street: a building with no path beside it does not work, so it would not join the combo.
     const conn = connectedRoad(s);
     const onStreet = (p: { x: number; y: number }) => d.category === 'decoration' || FLAT.has(id) || id.startsWith('kantor') || scope !== 'rt' || hasRoadBeside(conn, { def: id, x: p.x, y: p.y });
-    return [...cells].sort((p, q) => dist(p, around) - dist(q, around)).find((p) => onStreet(p) && free(s, id, p));
+    // A combo piece must stand within the combo's reach, or it never joins.
+    const reach = around.radius !== undefined && around.def ? { member: { x: around.x, y: around.y, def: around.def }, radius: around.radius } : undefined;
+    const inReach = (p: { x: number; y: number }) => !reach || withinEdges({ x: p.x, y: p.y, def: id }, reach.member, reach.radius);
+    return [...cells].sort((p, q) => dist(p, around) - dist(q, around)).find((p) => onStreet(p) && inReach(p) && free(s, id, p));
   }
   if (scope !== 'rt') {
     const lots = cells.filter((p) => lotAt(p.x, p.y) === scope);
@@ -190,7 +196,7 @@ const dist = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.
 const count = (s: GameState, id: string) => s.buildings.filter((b) => b.def === id).length;
 
 /** Buys one building if it is open, affordable beyond the cash buffer, and a spot exists. */
-function buy(c: Ctx, id: string, buffer: number, around?: { x: number; y: number }): boolean {
+function buy(c: Ctx, id: string, buffer: number, around?: Around): boolean {
   const { s } = c;
   const d = def(id);
   if (!d.placeable) return false;
@@ -310,18 +316,26 @@ function buildCombo(c: Ctx, buffer: number, only?: string[]): void {
     .filter(({ ids }) => ids.every((id) => def(id).placeable && openDefs(s).some((d) => d.id === id)) && (!only || ids.every((id) => only.includes(id))))
     .map((x) => ({ ...x, cost: x.ids.reduce((sum, id) => sum + (count(s, id) ? 0 : def(id).cost), 0) }))
     .sort((a, b) => a.cost - b.cost);
-  for (const { ids, needs } of scored) {
-    const member = s.buildings.find((b) => ids.includes(b.def));
+  combos: for (const { cb, ids, needs } of scored) {
+    const member = s.buildings.find((b) => b.def === ids[0]) ?? s.buildings.find((b) => ids.includes(b.def));
     for (const id of ids) {
       if (s.buildings.some((b) => b.def === id)) continue;
-      if (buy(c, id, buffer, member ? { x: member.x, y: member.y } : undefined)) return;
+      // With nothing standing, buy the partner first: the road-fed partner needs a street, then the piece can stand beside it.
+      if (!member) {
+        const partner = ids.find((p) => p !== id && !s.buildings.some((b) => b.def === p));
+        if (partner && buy(c, partner, buffer)) return;
+        continue combos;
+      }
+      // Only a site in the combo's reach will do. A piece bought further away never joins it, so skip this combo.
+      if (buy(c, id, buffer, { x: member.x, y: member.y, def: member.def, radius: cb.radius })) return;
+      continue combos;
     }
     // A flat piece (Kebun Sayur) stands in a gap far from its road-fed partner: a player builds a new flat piece beside the partner.
     const flat = ids.find((id) => FLAT.has(id));
     const solid = ids.find((id) => !FLAT.has(id));
     if (flat && solid && ids.every((id) => s.buildings.some((b) => b.def === id))) {
       const partner = s.buildings.find((b) => b.def === solid && !b.noRoad);
-      if (partner && count(s, flat) < capOf(flat) + 3 && buy(c, flat, buffer, { x: partner.x, y: partner.y })) return;
+      if (partner && count(s, flat) < capOf(flat) + 3 && buy(c, flat, buffer, { x: partner.x, y: partner.y, def: partner.def, radius: cb.radius })) return;
     }
     // A piece that needs a level (Pecel Lele wants a Rumah Makan at 3): upgrade the copy nearest the anchor, as a
     // player would, and never buy more copies for it. Before this, the bot bought a new copy every tick.
@@ -339,11 +353,11 @@ function buildCombo(c: Ctx, buffer: number, only?: string[]): void {
       const anchor = s.buildings.find((b) => b.def === ids[0])!;
       // At most a few copies, as for any other building: when the anchor has no free tile beside it, the copy lands
       // far away, and an uncapped bot bought one every tick (142 Wifi towers by week 400).
-      if (count(s, ids[ids.length - 1]) < capOf(ids[ids.length - 1]) + 1 && buy(c, ids[ids.length - 1], buffer, { x: anchor.x, y: anchor.y })) return;
+      if (count(s, ids[ids.length - 1]) < capOf(ids[ids.length - 1]) + 1 && buy(c, ids[ids.length - 1], buffer, { x: anchor.x, y: anchor.y, def: anchor.def, radius: cb.radius })) return;
       // At its limit, so a player moves one: pull the farthest down and build it beside the first piece.
       const last = ids[ids.length - 1];
       const far = s.buildings.filter((b) => b.def === last).sort((p, q) => dist(q, anchor) - dist(p, anchor))[0];
-      if (only && far && count(s, last) >= (def(last).maxCount ?? 99) && demolish(s, far).ok && buy(c, last, buffer, { x: anchor.x, y: anchor.y })) return;
+      if (only && far && count(s, last) >= (def(last).maxCount ?? 99) && demolish(s, far).ok && buy(c, last, buffer, { x: anchor.x, y: anchor.y, def: anchor.def, radius: cb.radius })) return;
     }
   }
 }
