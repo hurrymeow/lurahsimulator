@@ -416,7 +416,7 @@ const needsFirst = (s: GameState): string[] => ['kebunSayur', 'posSatpam', 'lamp
 const BASE: Plan = { every: 1, buffer: 200_000, perTick: 2, upgradeAt: 2_000_000, announce: 'low', event: 'free', fund: true, order: builderOrder, combo: 'book', comboFrom: COMBO_HINT_MONTH, hire: true, visit: false, realisasi: false };
 const PLANS: Partial<Record<BotId, Plan>> = {
   builder: { ...BASE, visit: true },
-  shopkeeper: { ...BASE, order: shopsFirst, visit: true },
+  shopkeeper: { ...BASE, order: shopsFirst, visit: true, comboFrom: 0 },
   safety: { ...BASE, order: safetyFirst, event: 'paid', caps: { posRonda: 2, posSatpam: 1, lampuTaman: 2, bidan: 1 } },
   cheapskate: { ...BASE, every: 4, buffer: 3_000_000, perTick: 1, upgradeAt: null, announce: 'never', hire: false },
   pencitraan: { ...BASE, order: noNeeds, announce: 'always', upgradeAt: 4_000_000 },
