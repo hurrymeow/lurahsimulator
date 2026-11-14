@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { BOTS, runBot } from './driver';
+import { BOTS, runBot, type Row, type Timeline } from './driver';
 import { takeover } from './takeover';
 import { buildScorecard, lintTraitsCombos, simText } from './scorecard';
 import { TRAITS } from '../../src/data/staff';
-import type { GameState } from '../../src/sim/types';
+import { STAGES } from '../../src/data/stages';
+import { def } from '../../src/sim/content';
+import type { GameState, StageId } from '../../src/sim/types';
 import { parseT2Report, t2Verdict, type T2Result } from './t2';
 
 // Fast checks that the harness itself works. The full scorecard runs with `npm run scorecard`.
@@ -84,5 +86,31 @@ describe('scorecard harness', () => {
     expect(row(r27).verdict).toBe('Pass');
     expect(row(r27.map((x) => ({ ...x, notes: { 'progress-on-screen': 'true' } }))).verdict).toBe('Pass');
     expect(row(r27.map((x) => ({ ...x, notes: undefined }))).verdict).toBe('Pass');
+  });
+
+  it('item 15 compares income growth with unlock cost growth per stage', () => {
+    const medianOf = (xs: number[]): number => {
+      const a = [...xs].sort((p, q) => p - q);
+      return a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2;
+    };
+    const costMedian = (id: StageId): number => medianOf((STAGES.find((s) => s.id === id)?.stars.flatMap((s) => s.unlocks) ?? []).map((u) => def(u).cost));
+    const stageRow = (t: number, stage: StageId, net: number): Row => ({
+      t, stage, stars: 0, rupiah: 0, sabar: 0, viral: 0, odn: 0, dana: 0, stempel: 0, anggaran: 0, pop: 0, beds: 0, buildings: 0,
+      aman: 0, sejahtera: 0, laporan: 0, net, nextKey: 0, dearKey: net * 7.5, useful: true, goalsDone: 0, goalsTotal: 1, acts: 0,
+    });
+    const timeline = (net: Record<'rt' | 'rw' | 'kelurahan', number>): Timeline => {
+      const stages = ['rt', 'rw', 'kelurahan'] as const;
+      const rows = stages.flatMap((st, si) => Array.from({ length: 20 }, (_, i) => stageRow(5 + si * 20 + i, st, net[st])));
+      return { bot: 'builder', seed: 1, rows, events: [], ticks: 65, end: { stage: 'kelurahan', stars: 0, sejahtera: 0, laporan: 0, discovered: [] }, starTicks: [], stageTicks: { rt: 0 } };
+    };
+    const rowOf = (net: Record<'rt' | 'rw' | 'kelurahan', number>) => buildScorecard({ builder: [timeline(net)] }, [], '', []).find((r) => r.n === 15)!;
+    // Income as a fixed share of each stage's unlock cost: the growth ratio is 1.0 at both steps.
+    const flat = { rt: costMedian('rt') * 0.1, rw: costMedian('rw') * 0.1, kelurahan: costMedian('kelurahan') * 0.1 };
+    const pass = rowOf(flat);
+    expect(pass.evidence).toContain('RT to RW 1.00x');
+    expect(pass.evidence).toContain('RW to Kelurahan 1.00x');
+    expect(pass.verdict).toBe('Pass');
+    // Income that doubles against cost from RW to Kelurahan leaves the 0.7 to 1.5 band.
+    expect(rowOf({ ...flat, kelurahan: flat.kelurahan * 2 }).verdict).toBe('Fail');
   });
 });
