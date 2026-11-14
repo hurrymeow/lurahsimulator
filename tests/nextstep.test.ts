@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cellOrigin } from '../src/sim/area';
 import { promote } from '../src/sim/grow';
-import { COMBO_HINT_MONTH, nextStep, shortGoal } from '../src/sim/nextstep';
+import { COMBO_HINT_MONTH, easiestCombo, nextStep, shortGoal } from '../src/sim/nextstep';
 import { nextStarChecklist } from '../src/sim/stages';
 import { addBuilding, addResident, attractTarget, housing, newGame, population } from '../src/sim/state';
 import { setGrid } from '../src/sim/types';
@@ -27,6 +27,20 @@ describe('short goal', () => {
     expect(shortGoal(s)).toMatch(/^combo \S/);
     s.discovered.push('tongkrongan');
     expect(shortGoal(s) ?? '').not.toMatch(/combo/);
+  });
+
+  it('does not name Rapat Malam when every lot in reach of Kantor RT is taken', () => {
+    const s = newGame(1);
+    const kantor = s.buildings.find((b) => b.def === 'kantorRT')!;
+    // Fill every tile the combo's reach covers, even a path (a building may stand over one), so its missing
+    // Pos Ronda has nowhere legal to go.
+    for (let y = kantor.y - 1; y <= kantor.y + 1; y++) {
+      for (let x = kantor.x - 1; x <= kantor.x + 1; x++) {
+        if (x === kantor.x && y === kantor.y) continue;
+        addBuilding(s, 'rumah', x, y, 'active');
+      }
+    }
+    expect(easiestCombo(s)?.name).not.toBe('Rapat Malam');
   });
 
   it('says what to wait for while a build is under way', () => {
