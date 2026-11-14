@@ -286,6 +286,20 @@ function keepDrains(c: Ctx, buffer: number): void {
   if (hasProblem(c.s, 'banjir') && count(c.s, 'biopori') < 2) buy(c, 'biopori', buffer);
 }
 
+/**
+ * A building cut off from the paths sits idle. A player tears it down and rebuilds it beside a path,
+ * so a combo piece that landed in a gap can work again. Off-road decor and flat pieces need no path.
+ */
+function moveOffRoad(c: Ctx, buffer: number): void {
+  const { s } = c;
+  if (s.stage.current !== 'rt') return;
+  const b = s.buildings.find((o) => o.noRoad && def(o.def).category !== 'decoration' && !FLAT.has(o.def) && !o.def.startsWith('kantor'));
+  if (!b) return;
+  if (!spotFor(s, b.def)) return;
+  if (s.res.rupiah < buffer + buildCost(s, def(b.def))) return;
+  if (demolish(s, b).ok) buy(c, b.def, buffer);
+}
+
 /** The order a plain builder buys in: combo pieces, then what draws residents for the price, decor last. */
 function builderOrder(s: GameState): string[] {
   const core = ['posRonda', 'warung', 'wifi'];
@@ -356,9 +370,22 @@ function buildCombo(c: Ctx, buffer: number, only?: string[]): void {
       const anchor = s.buildings.find((b) => b.def === ids[0])!;
       // At most a few copies, as for any other building: when the anchor has no free tile beside it, the copy lands
       // far away, and an uncapped bot bought one every tick (142 Wifi towers by week 400).
-      if (count(s, ids[ids.length - 1]) < capOf(ids[ids.length - 1]) + 1 && buy(c, ids[ids.length - 1], buffer, { x: anchor.x, y: anchor.y })) return;
-      // At its limit, so a player moves one: pull the farthest down and build it beside the first piece.
       const last = ids[ids.length - 1];
+      const underCap = count(s, last) < capOf(last) + 1;
+      if (underCap && buy(c, last, buffer, { x: anchor.x, y: anchor.y })) return;
+      // Every road-fed tile near the anchor is taken: clear one, as the Pos Ronda swap does with Sawah, so the copy lands.
+      if (underCap) {
+        const conn = connectedRoad(s);
+        const kept = new Set(liveCombos(s).filter((cb) => s.discovered.includes(cb.id)).flatMap((cb) => cb.needs.map((n) => parseNeed(n).id)));
+        const it = s.buildings
+          .filter((b) => hasRoadBeside(conn, b) && !kept.has(b.def) && (b.def === 'sawah' || b.def === 'kebunSayur' || def(b.def).category === 'decoration'))
+          .sort((p, q) => dist(p, anchor) - dist(q, anchor))[0];
+        if (it && s.res.rupiah > buffer + buildCost(s, def(last)) && demolish(s, it).ok) {
+          buy(c, last, buffer, { x: anchor.x, y: anchor.y });
+          return;
+        }
+      }
+      // At its limit, so a player moves one: pull the farthest down and build it beside the first piece.
       const far = s.buildings.filter((b) => b.def === last).sort((p, q) => dist(q, anchor) - dist(p, anchor))[0];
       if (only && far && count(s, last) >= (def(last).maxCount ?? 99) && demolish(s, far).ok && buy(c, last, buffer, { x: anchor.x, y: anchor.y })) return;
     }
@@ -468,6 +495,7 @@ function playPlan(c: Ctx, p: Plan): void {
   if (p.visit) visitNext(c);
   keepBeds(c, p.buffer);
   keepDrains(c, p.buffer);
+  moveOffRoad(c, p.buffer);
   if (p.combo === 'book' && c.t >= p.comboFrom) buildCombo(c, p.buffer);
   if (p.combo === 'hint' && nextStep(s)?.kind === 'combo') {
     const pick = easiestCombo(s);
