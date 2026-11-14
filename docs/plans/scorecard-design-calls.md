@@ -32,7 +32,7 @@ Changes from `decisions/scorecard-calls.md` (2026-11-07): that note kept rows 8 
 
 Every task: put any local measuring in `tests/scorecard/measure-<task>.test.ts` (for example `measure-T1.test.ts`). That path is in each task's Files, so the gate accepts it; the reviewer deletes it in the review commit. Name no other scratch file; the gate rejects any path not in Files.
 
-Run one at a time on the executor, in this order (T14 replaces T1 and runs next). T1 to T6 all touch `tests/scorecard/driver.ts` or `scorecard.ts`, so a later task starts from main after the earlier one merges. After T1, T2 and T3 merge, run Nightly and re-judge items 7, 10, 17, 21 and 23.
+Run one at a time on the executor, in this order (T14 replaces T1; T15 runs next, then T2). T1 to T6 all touch `tests/scorecard/driver.ts` or `scorecard.ts`, so a later task starts from main after the earlier one merges. After T1, T2 and T3 merge, run Nightly and re-judge items 7, 10, 17, 21 and 23.
 
 ### T1. Strategy bots build the combo the strip names (Sonnet, executor trial) — done as a diagnosis; superseded by T14
 - Files: `tests/scorecard/measure-T1.test.ts`, `tests/scorecard/driver.ts`, `decisions/scorecard-design-calls-T1.md`, `progress/scorecard-design-calls-T1.md`
@@ -154,6 +154,16 @@ T1 found the cause of the shopkeeper's slow RT 1★ (`decisions/scorecard-design
   3. In `tests/scorecard/driver.ts` `playPlan`, for plans with `combo: 'book'`, when `nextStep(s)?.kind === 'combo'` and every other open line of the next star is met, build `easiestCombo(s)` pieces with `buildCombo(c, p.buffer, pick.ids)` before `buildFrom`.
 - Done when: `npm run typecheck`, `npm test` and `npx vitest run tests/scorecard/harness.test.ts` pass. Local `runBot('shopkeeper', seed, 200)` on seeds 1 to 3: report RT 1★ and RT 2★ before and after in the progress file (goal: RT 1★ under 2.5 min). If the goal is missed, say why and stop.
 - Don't touch: combo data, UI, i18n, TODO.md. No refactors. No e2e needed.
+
+### T15. buildCombo places each piece in reach of its partner (Sonnet, executor trial)
+T14's review trace (`decisions/scorecard-design-calls-T14.md`): on shopkeeper seed 2, `buildCombo` put six Kebun Sayur and four Pos Ronda where the combo never fires. The slow shopkeeper RT 1★ is this bot bug.
+- Files: `tests/scorecard/measure-T15.test.ts`, `tests/scorecard/driver.ts`, `decisions/scorecard-design-calls-T15.md`, `progress/scorecard-design-calls-T15.md`
+- Exact changes:
+  1. In `buildCombo` (`tests/scorecard/driver.ts` ~line 305), place a missing piece only on a site within the combo's `radius` of a standing member (use `withinEdges` from `src/sim/state.ts`, as `easiestCombo` in `src/sim/nextstep.ts` does). If no such site exists, skip that combo; do not buy the piece elsewhere.
+  2. If the partner piece is missing too (Sayur Segar with no Warung), buy the partner first, then the piece beside it.
+  3. Do not change which combo is picked, or any plan's order.
+- Done when: `npm run typecheck` and `npx vitest run tests/scorecard/harness.test.ts` pass. Local `runBot('shopkeeper', seed, 200)` on seeds 1 to 3: write RT 1★ and 2★ before and after in the progress file (before: 7.3/4.7/4.7 and 9.7/10.4/11.5 min). Goal RT 1★ under 2.5 min; if missed, say why and stop.
+- Don't touch: `src/`, TODO.md. No refactors. No e2e needed.
 
 ## Open questions
 - Hidden combos (about 1 in 4) wait until items 7 and 23 pass. Then decide which combos to hide.
