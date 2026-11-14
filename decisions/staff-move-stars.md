@@ -24,7 +24,7 @@ TODO item "Hired staff must move the score or a star gate". Plan: `docs/plans/st
 - The cheapskate, which never hires, is later: RW 3★ 38.4 to 43.9 min, Kel 3★ on 1 of 6 seeds (was 2). Idle and random do not reach the RW lines.
 - Act 1 stays under 60 min for the climbing types (Kel 3★ 49.6 to 57.6).
 
-Scripted tests: RW bot (3★ within 9 years) passes; Kelurahan and Kecamatan: KEL_KEC_RESULT.
+Scripted tests: RW bot (3★ within 9 years) passes; Kelurahan (3 tests) and Kecamatan bot (seeds 3 and 4) pass; the Kecamatan stars land on the same weeks after promotion as before (113, 250, 425).
 
 ## Not changed
 - The Kecamatan stars: paced by districts, so they ask for no programs. Literasi Keuangan follows the new lead rule there (a hired lead lands it in 8 weeks, Inem in 16); `tests/pinjol.test.ts` now gives it a hired lead.
