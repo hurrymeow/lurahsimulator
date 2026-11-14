@@ -38,7 +38,13 @@ export function easiestCombo(s: GameState) {
       const inReach = (x: number, y: number) => !standing.length || standing.some((m) => withinEdges({ x, y, def: d.id }, m, c.radius));
       const fed = (x: number, y: number) => !needsRoad(d) || hasRoadBeside(conn, { def: d.id, x, y });
       let room = false;
-      for (let y = 0; y < GRID_H && !room; y++) for (let x = 0; x < GRID_W && !room; x++) if (inReach(x, y) && fed(x, y) && siteGaps(s, d, x, y).length === 0) room = true;
+      // Scan only the box around standing pieces: the Kelurahan map is 52x68 and the strip asks often.
+      const pad = c.radius + 4;
+      const x0 = standing.length ? Math.max(0, Math.min(...standing.map((m) => m.x)) - pad) : 0;
+      const x1 = standing.length ? Math.min(GRID_W - 1, Math.max(...standing.map((m) => m.x)) + pad) : GRID_W - 1;
+      const y0 = standing.length ? Math.max(0, Math.min(...standing.map((m) => m.y)) - pad) : 0;
+      const y1 = standing.length ? Math.min(GRID_H - 1, Math.max(...standing.map((m) => m.y)) + pad) : GRID_H - 1;
+      for (let y = y0; y <= y1 && !room; y++) for (let x = x0; x <= x1 && !room; x++) if (inReach(x, y) && fed(x, y) && siteGaps(s, d, x, y).length === 0) room = true;
       if (!room) { usable = false; break; }
     }
     if (!usable) continue;
