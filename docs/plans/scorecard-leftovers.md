@@ -34,3 +34,13 @@ Six TODO items under "scorecard" (claimed 2026-11-13). Road rule on for bots shi
   2. In `tests/scorecard/scorecard.ts` item 13, drop the bot-gap line for B1 and B4 only if their `odn` column now falls during the run in a local run of `npx vitest run tests/scorecard/harness.test.ts`; otherwise leave the line.
 - Done when: `npm run typecheck` and `npx vitest run tests/scorecard/harness.test.ts` pass; `decisions/scorecard-visit-odn-T3.md` and `progress/scorecard-visit-odn-T3.md` exist.
 - Don't touch: `src/`, TODO.md, other bots' plans. No refactors. No e2e needed.
+
+### T4. Row 14 checks the builder's cash only (Sonnet, executor trial)
+- Files: `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-row-14-idle-debt.md`, `progress/scorecard-row-14-idle-debt.md`
+- Why: the idle bot's cash falls to -40M by design. After the grace weeks `safetyNet` in `src/sim/tick.ts` stops resetting cash to 0 and drains Popularitas instead. The recorder is right. A player who builds nothing is meant to feel the drain, so the debt is not a cash-health fault.
+- Exact changes:
+  1. In `tests/scorecard/scorecard.ts` item 14 (around lines 310 to 315), drop the `ni` constant and the `ni >= 0` term from the verdict. Keep `nb >= 0`. Change the evidence text to `Lowest cash: builder X.XM. Idle debt is by design: after the grace weeks broke drains Popularitas (safetyNet).`
+  2. If `tests/scorecard/harness.test.ts` asserts on the idle figure in the item 14 text, update it. Do not add tests otherwise.
+  3. Write `decisions/scorecard-row-14-idle-debt.md`: the bar changed and why. Counter: unbounded debt could mean the sim needs a floor; kept open, since the Popularitas drain already stops the player from idling.
+- Done when: `npm run typecheck` and `npx vitest run tests/scorecard/harness.test.ts` pass; both new files exist.
+- Don't touch: `src/`, TODO.md, other rows. No refactors. No e2e needed.
