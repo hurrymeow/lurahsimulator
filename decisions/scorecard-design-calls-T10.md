@@ -1,0 +1,3 @@
+# T10: item 16 spend proxy
+
+GAME-DESIGN.md section 8 item 16 asks for star time saved per action per band, but no ablation run exists yet. The harness now uses a proxy: it sums `def(id).cost` from the builder's `built` events per building kind (def id) per band, exempts Rumah, Warung and Jalan Setapak because every strategy needs them, and fails when one kind takes the top spend share in more than two bands. Ties go to the id that sorts first so the row is stable; unknown ids are skipped. The evidence says "proxy: spend share, not star time saved" so the row is not read as the real payoff measure.
