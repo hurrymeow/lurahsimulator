@@ -6,6 +6,8 @@ import { gain, type Fx } from './gain';
 import { picCandidates, realisasiDelay, roll } from './staff';
 import { price } from './state';
 import type { CheckResult, GameState } from './types';
+/** From the RW on, Inem's programs take this many times as long to land (docs/plans/staff-move-stars.md). */
+export const INEM_LEAD_SLOW = 2;
 
 /** Programs working this month. */
 export const liveRealisasi = (s: GameState): RealisasiDef[] =>
@@ -33,6 +35,7 @@ export function checkRealisasi(s: GameState, id: string): CheckResult {
   if (!d) return { ok: false, missing: [t('sim.unknownWacana')] };
   if (d.stage && s.stage.current !== d.stage) return { ok: false, missing: [t('sim.unknownWacana')] };
   if (runningRealisasi(s, id)) return { ok: false, missing: [t('real.running')] };
+  if (!picCandidates(s, 'rajin').length) return { ok: false, missing: [t('real.noLead')] };
   const cost = realisasiCost(s, d);
   return s.res.rupiah >= cost ? { ok: true } : { ok: false, missing: [t('sim.moneyGap', { amt: rupiah(cost - s.res.rupiah), cost: rupiah(cost) })] };
 }
@@ -47,11 +50,16 @@ export function startRealisasi(s: GameState, id: string, picId?: number): CheckR
   s.res.rupiah -= cost;
   s.stats.spent += cost;
   s.realisasi ??= [];
-  const landsAt = s.month + realisasiDelay(d.delay, pic);
-  s.realisasi.push({ id, landsAt, endsAt: d.lasts ? landsAt + d.lasts : Infinity, pic: pic.id });
-  if (!pic.inem) pic.leading = id;
+  // From the RW on, Inem leads one program at a time and takes twice as long: hiring is how more get done.
+  const inemSlow = pic.inem && s.stage.current !== 'rt';
+  const landsAt = s.month + realisasiDelay(d.delay, pic) * (inemSlow ? INEM_LEAD_SLOW : 1);
+  s.realisasi.push({ id, landsAt, endsAt: d.lasts ? landsAt + d.lasts : Infinity, pic: pic.id, stage: s.stage.current });
+  if (!pic.inem || inemSlow) pic.leading = id;
   return check;
 }
+
+/** A program started from the RW on keeps its lead busy until it ends; a lasting one (no end) frees its lead when it lands. */
+const holdsLead = (r: { stage?: string; endsAt: number }): boolean => (r.stage ?? 'rt') !== 'rt' && Number.isFinite(r.endsAt);
 
 /** Monthly: landing notices, Virality, and repairs from the programs working now. */
 export function realisasiSystem(s: GameState, fx: Fx): void {
@@ -61,7 +69,8 @@ export function realisasiSystem(s: GameState, fx: Fx): void {
       fx.push({ kind: 'notice', title: t('real.landedTitle', { name: rName(d) }), body: rEffect(d), tone: 'good' });
       const pic = (s.staff ?? []).find((x) => x.id === r.pic);
       if (pic) {
-        delete pic.leading;
+        // From the RW on, the lead stays on the program while it runs: more programs at once takes more people.
+        if (!holdsLead(r)) delete pic.leading;
         pic.stats.rajin = Math.min(STAT_MAX, pic.stats.rajin + 1);
         const leak = PIC.leakMax * (PIC.leakBelow - pic.stats.jujur) / PIC.leakBelow;
         if (pic.stats.jujur < PIC.leakBelow && roll(s, s.month, 300 + pic.id) < leak) {
@@ -69,6 +78,12 @@ export function realisasiSystem(s: GameState, fx: Fx): void {
           fx.push({ kind: 'notice', title: t('staff.mishapTitle', { name: pic.name, stat: t('staff.stat.jujur'), n: pic.stats.jujur, what: t('real.leakWhat') }), body: t('real.leakBody'), tone: 'bad' });
         }
       }
+    }
+  }
+  for (const r of s.realisasi ?? []) {
+    if (holdsLead(r) && r.endsAt === s.month) {
+      const pic = (s.staff ?? []).find((x) => x.id === r.pic);
+      if (pic?.leading === r.id) delete pic.leading;
     }
   }
   const viral = realisasiSum(s, 'viral');

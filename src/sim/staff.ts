@@ -48,11 +48,14 @@ export function ensureStaff(s: GameState): void {
 
 export const inem = (s: GameState): Staff | undefined => s.staff?.find((x) => x.inem);
 
-/** Staff who can lead a program for this stat: free, sorted best first, and always including Inem. */
+/**
+ * Staff who can lead a program for this stat: free, sorted best first. At the RT Inem can always lead; from the RW on she
+ * leads one program at a time like anyone else (docs/plans/staff-move-stars.md).
+ */
 export function picCandidates(s: GameState, stat: StatId): Staff[] {
   ensureStaff(s);
   return s.staff!
-    .filter((x) => !x.away && (x.inem || stat !== 'rajin' || !x.leading))
+    .filter((x) => !x.away && ((x.inem && s.stage.current === 'rt') || stat !== 'rajin' || !x.leading))
     .sort((a, b) => b.stats[stat] - a.stats[stat] || a.id - b.id);
 }
 

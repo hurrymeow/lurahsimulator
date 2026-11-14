@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { runPrograms } from './kel-bot-lib';
 import { checkRepair, repair, resolveEvent } from '../src/sim/events';
 import { checkRestart, restart } from '../src/sim/projects';
 import { cellOrigin } from '../src/sim/area';
@@ -32,6 +33,7 @@ function playRw(seed: number, years: number, auto = false): GameState {
   for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (lotAt(x, y) === 'rw') seam.push({ x, y });
   for (let m = 0; m < years * 12; m++) {
     if (s.pendingEvent) resolveEvent(s, [], 0);
+    runPrograms(s);
     for (const id of ['balaiRW', 'posyandu', 'portal', 'pasarKaget', 'gapura']) {
       // Build close together: combos need their members within a few tiles.
       const anchor = s.buildings.find((x) => lotAt(x.x, x.y) === 'rw') ?? seam[0];

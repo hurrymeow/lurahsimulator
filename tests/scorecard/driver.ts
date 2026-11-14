@@ -411,8 +411,13 @@ function staffWhen(c: Ctx, p: Plan): void {
 /** Runs the first Realisasi the kas can afford beyond the buffer. */
 function realisasiWhen(c: Ctx, p: Plan): void {
   const { s } = c;
-  if (!p.realisasi || c.t % 4 !== 0) return;
-  const d = REALISASI.find((x) => checkRealisasi(s, x.id).ok && s.res.rupiah >= realisasiCost(s, x) + p.buffer);
+  // From the RW on a star asks for programs carried out (docs/plans/staff-move-stars.md): every bot that plays works it,
+  // checking weekly, as a player reads the open line. The honest bot also runs programs when no line asks.
+  const asked = (nextStarChecklist(s) ?? []).some((l) => !l.done && l.goal.kind === 'realisasiDone');
+  if (asked ? false : !p.realisasi || c.t % 4 !== 0) return;
+  // The cheapest program first when a line asks, so the line moves even on a thin kas.
+  const pool = asked ? [...REALISASI].sort((x, y) => realisasiCost(s, x) - realisasiCost(s, y)) : REALISASI;
+  const d = pool.find((x) => checkRealisasi(s, x.id).ok && s.res.rupiah >= realisasiCost(s, x) + p.buffer);
   if (d && startRealisasi(s, d.id).ok) c.acts++;
 }
 
@@ -461,7 +466,7 @@ const noNeeds = (s: GameState): string[] => builderOrder(s).filter((id) => !['po
 const needsFirst = (s: GameState): string[] => ['kebunSayur', 'posSatpam', 'lampuTaman', ...builderOrder(s)];
 
 const BASE: Plan = { every: 1, buffer: 200_000, perTick: 2, upgradeAt: 2_000_000, announce: 'low', event: 'free', fund: true, order: builderOrder, combo: 'book', comboFrom: COMBO_HINT_MONTH, hire: true, visit: false, realisasi: false };
-const PLANS: Partial<Record<BotId, Plan>> = {
+export const PLANS: Partial<Record<BotId, Plan>> = {
   builder: { ...BASE, visit: true, comboFirst: true },
   shopkeeper: { ...BASE, order: shopsFirst, visit: true, comboFrom: 0 },
   safety: { ...BASE, order: safetyFirst, event: 'paid', caps: { posRonda: 2, posSatpam: 1, lampuTaman: 2, bidan: 1 } },
