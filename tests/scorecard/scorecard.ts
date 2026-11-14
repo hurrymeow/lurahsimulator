@@ -487,16 +487,20 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
   {
     const dominated: string[] = [];
     for (const e of EVENTS) {
-      const options = e.choices.map((c, i) => ({ c, i })).filter(({ c }) => !c.special && !c.modifier && !c.incomePct);
+      const options = e.choices.map((c, i) => ({ c, i })).filter(({ c }) => !c.special && !c.modifier);
       // Cost is a vector: a choice only beats another when it is no dearer in rupiah, Orang Dalam and income months at once.
       const price = (c: (typeof e.choices)[number]) => [c.cost?.rupiah ?? 0, c.cost?.orangDalam ?? 0, c.cost?.incomeMonths ?? 0];
-      // A rolled advice option is compared on its probability-weighted mean resource change.
+      // A rolled advice option is compared on its probability-weighted mean resource change, income swings included.
       const gain = (c: (typeof e.choices)[number]): Record<string, number> => {
         const g: Record<string, number> = { ...(c.res ?? {}) };
         if (c.inspectPrep) g.inspectPrep = c.inspectPrep;
+        if (c.incomePct) g.income = (g.income ?? 0) + c.incomePct;
         if (c.outcomes?.length) {
           const total = c.outcomes.reduce((n, o) => n + o.weight, 0);
-          for (const o of c.outcomes) for (const [k, v] of Object.entries(o.res ?? {})) g[k] = (g[k] ?? 0) + (v * o.weight) / total;
+          for (const o of c.outcomes) {
+            if (o.incomePct) g.income = (g.income ?? 0) + (o.incomePct * o.weight) / total;
+            for (const [k, v] of Object.entries(o.res ?? {})) g[k] = (g[k] ?? 0) + (v * o.weight) / total;
+          }
         }
         return g;
       };
@@ -505,13 +509,17 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
         const ga = gain(a.c);
         const gb = gain(b.c);
         const keys = new Set([...Object.keys(ga), ...Object.keys(gb)]);
+        // Viral is two-sided: more gives free repairs and chain steps, but raises judol starts and inspection risk.
+        // A Viral difference is a trade, so neither option dominates; equal Viral is not compared.
+        const viralDiffers = (ga.viral ?? 0) !== (gb.viral ?? 0);
+        keys.delete('viral');
         const pa = price(a.c);
         const pb = price(b.c);
         const cheaper = pb.every((v, k) => v <= pa[k]);
         const geq = [...keys].every((k) => (gb[k] ?? 0) >= (ga[k] ?? 0));
         const gt = [...keys].some((k) => (gb[k] ?? 0) > (ga[k] ?? 0)) || pb.some((v, k) => v < pa[k]);
         // Gunting Pita is the first popup: a light joke with one clear winner on purpose (GAME-DESIGN.md target 3).
-        if (e.id !== 'guntingPita' && cheaper && geq && gt) dominated.push(`${e.id}#${a.i} "${a.c.label}"`);
+        if (e.id !== 'guntingPita' && !viralDiffers && cheaper && geq && gt) dominated.push(`${e.id}#${a.i} "${a.c.label}"`);
       }
     }
     const how = 'Fixed results compared directly; rolled outcomes by their probability-weighted mean resource change.';

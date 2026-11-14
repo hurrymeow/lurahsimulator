@@ -1,0 +1,3 @@
+# T1: item 18 reads income swings and two-sided Viral — shipped
+
+The item 18 reader now folds each rolled outcome's `incomePct` into a probability-weighted `income` key, reads a top-level choice `incomePct`, and no longer filters `incomePct` choices out. Viral is treated as two-sided: when two options differ in Viral the pair is not comparable, so neither dominates, and `viral` is left out of the `geq`/`gt` keys otherwise. This closes the reader gap in `docs/plans/scorecard-design-rows.md` decision 1: all 9 flagged options were flagged only because the reader dropped income swings and counted more Viral as strictly better. No event data changed. `GAME-DESIGN.md` §8 item 18 Evidence records the rule, and the row now reads Pass with no strictly dominated option.
