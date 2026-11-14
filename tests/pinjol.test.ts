@@ -1,3 +1,4 @@
+import { ensureStaff } from '../src/sim/staff';
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { JUDOL, PINJOL, RAZIA } from '../src/data/higher/kecamatan';
@@ -254,7 +255,11 @@ describe('responses', () => {
     const plain = kec();
     const taught = kec();
     taught.res.rupiah = 1e8;
-    expect(startRealisasi(taught, 'literasiKeuangan').ok).toBe(true);
+    // A hired lead at Rajin 50 lands it on time; from the RW on, Inem alone would take twice as long (staff-move-stars).
+    ensureStaff(taught);
+    const leadId = taught.nextStaffId!;
+    taught.staff!.push({ id: taught.nextStaffId!++, name: 'Bu Lead', role: 'penagih', stars: 3, stats: { rajin: 50, lobi: 40, jujur: 80, gaul: 40 }, salary: 450_000, xp: 0, level: 1, hiredAt: taught.month });
+    expect(startRealisasi(taught, 'literasiKeuangan', leadId).ok).toBe(true);
     expect(realisasiSum(taught, 'pinjolCut')).toBe(0);
     taught.month += REALISASI.find((r) => r.id === 'literasiKeuangan')!.delay;
     plain.month = taught.month;

@@ -1,3 +1,6 @@
+import { REALISASI } from '../src/data/realisasi';
+import { checkRealisasi, realisasiCost, startRealisasi } from '../src/sim/realisasi';
+import { nextStarChecklist } from '../src/sim/stages';
 import { checkRepair, repair, resolveEvent } from '../src/sim/events';
 import { checkRestart, restart } from '../src/sim/projects';
 import { fundNeighbour, promote, setAutoFund } from '../src/sim/grow';
@@ -6,7 +9,7 @@ import { lotAt } from '../src/sim/area';
 import { def, placeableDefs } from '../src/sim/content';
 import { checkPlace, checkUpgrade, place, requirementGaps, skipPermit, upgrade } from '../src/sim/rules';
 import { housing, newGame, population } from '../src/sim/state';
-import { checkPost, hire, postLowongan, queueMonths } from '../src/sim/staff';
+import { checkPost, hire, picCandidates, postLowongan, queueMonths } from '../src/sim/staff';
 import { ROLE_FX } from '../src/data/staff';
 import { GRID_H, GRID_W, type GameState } from '../src/sim/types';
 
@@ -36,8 +39,21 @@ export function kelSetup(seed: number, auto = false) {
   return { s, seam, all };
 }
 
+/** When a star asks for programs carried out (docs/plans/staff-move-stars.md), start the cheapest one a free lead can take. */
+export function runPrograms(s: GameState): void {
+  if (!(nextStarChecklist(s) ?? []).some((l) => !l.done && l.goal.kind === 'realisasiDone')) return;
+  const d = [...REALISASI].sort((a, b) => realisasiCost(s, a) - realisasiCost(s, b)).find((x) => checkRealisasi(s, x.id).ok);
+  if (d) return void startRealisasi(s, d.id);
+  // Nobody free to lead, as the line's how-to says: hire someone, the best Rajin of the applicants.
+  if (picCandidates(s, 'rajin').length) return;
+  if (!s.lowongan && checkPost(s, 'asisten', 'online').ok) postLowongan(s, 'asisten', 'online');
+  const apps = s.lowongan?.applicants ?? [];
+  if (apps.length) hire(s, [...apps].sort((a, b) => b.stats.rajin - a.stats.rajin)[0].id);
+}
+
 /** One week of the Kelurahan bot's routine, before the tick. `extra` lists more stage buildings to place on a seam lot. */
 export function kelWeek(s: GameState, seam: { x: number; y: number }[], all: { x: number; y: number }[], auto: boolean, extra: string[] = [], homes = true): void {
+    runPrograms(s);
     // Tim Audit: pay for the clean audit the 2-star goal asks for, as a player would. Otherwise the first choice.
     if (s.pendingEvent) resolveEvent(s, [], s.pendingEvent === 'timAudit' && s.kel.cleanAudits < 1 && s.res.rupiah > 3_000_000 ? 1 : 0);
     if (!auto) for (const n of s.neighbours) if (s.res.rupiah > 3_000_000) fundNeighbour(s, n);

@@ -179,6 +179,6 @@ describe('goal short lines', () => {
       }
     }
     setLang('en');
-    expect(kinds.size).toBe(20);
+    expect(kinds.size).toBe(21);
   });
 });
