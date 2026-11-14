@@ -10,6 +10,12 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Now
 
+- **Fix the flaky "Place and Cancel sit right under the chosen tile" e2e test.**
+  - Problem: `tests/e2e/ui.spec.ts:2489` fails both tries on some runs, at 320px and 430px. It turned main red at 9442893 (run 43569616236) and failed first CI on several scorecard-only executor PRs (#439, #440, #441) that touch no UI.
+  - Why: a red main blocks deploy, and each flake costs a full CI rerun. The failing check is `toBeLessThan`, so the float lands more than 160px from the tile or off-centre on some runs.
+  - Suggested solution: log `fb` and `at` on failure, then wait for the map pan or camera to settle before reading the tile centre (or read it after the float shows). Keep the bars; fix the timing.
+  - `[ ] open · · · done when:` the spec passes 20 repeats at 320px and 430px (`--repeat-each=20`) and two PR CI runs in a row show no retry on it.
+
 ### Next
 
 ### Later
