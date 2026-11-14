@@ -289,6 +289,10 @@ function keepDrains(c: Ctx, buffer: number): void {
 /** The order a plain builder buys in: combo pieces, then what draws residents for the price, decor last. */
 function builderOrder(s: GameState): string[] {
   const core = ['posRonda', 'warung', 'wifi'];
+  // RT 1★ opens the first permit building. A plain builder puts a Kosan up as soon as it can afford one:
+  // its two-month permit waits for the desk, so skipping it spends the Orang Dalam the star pays.
+  const permit = s.stage.stars.rt >= 1 && count(s, 'kosan') === 0 ? ['kosan'] : [];
+  if (permit.length) return permit;
   const rest = openDefs(s)
     .filter((d) => !core.includes(d.id) && !d.housing && d.category !== 'decoration')
     .sort((a, b) => (b.attract + b.income / 100_000) / b.cost - (a.attract + a.income / 100_000) / a.cost)
