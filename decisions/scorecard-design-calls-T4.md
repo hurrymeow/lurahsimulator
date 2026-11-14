@@ -1,0 +1,3 @@
+# T4: item 1 counts any goal-moving action
+
+Task T4 of the scorecard design calls. Item 1's stall proxy was "the cash is under the cheapest unowned non-decor kind", which can miss a run where the player has money but the next building is locked behind a requirement, a bed, a combo piece, an upgrade, a repair, a permit or a visit. `Row.useful` now records, tick by tick, whether any of those goal-moving actions is affordable now, and item 1 counts a stall only while `!useful` and the star list is unfinished. The 60s bar and the builder-only scope stay. `nextKey` is untouched, since items 14 and 15 still use it. Tests in `tests/scorecard/measure-T4.test.ts` cover a counted stall and a run with a useful action each cycle.

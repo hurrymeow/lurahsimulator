@@ -10,7 +10,7 @@ import { checkRepair, monthlyNet, repair, resolveEvent } from '../../src/sim/eve
 import { checkVisit, fundNeighbour, setAutoFund, visit } from '../../src/sim/grow';
 import { meters, sejahtera, laporan } from '../../src/sim/needs';
 import { checkRestart, restart } from '../../src/sim/projects';
-import { demolish, checkPlace, checkUpgrade, place, requirementGaps, siteGaps, skipPermit, upgrade } from '../../src/sim/rules';
+import { demolish, checkPlace, checkSkipPermit, checkUpgrade, place, requirementGaps, siteGaps, skipPermit, upgrade } from '../../src/sim/rules';
 import { COMBO_HINT_MONTH, easiestCombo, nextStep } from '../../src/sim/nextstep';
 import { hasProblem } from '../../src/sim/problems';
 import { checkRealisasi, realisasiCost, startRealisasi } from '../../src/sim/realisasi';
@@ -54,6 +54,8 @@ export interface Row {
   net: number;
   /** Cost of the cheapest non-decor building the bot could place next, or 0 if none. */
   nextKey: number;
+  /** Whether an action that moves the game on is affordable now: the scorecard item 1 proxy. */
+  useful: boolean;
   goalsDone: number;
   goalsTotal: number;
   acts: number;
@@ -498,6 +500,25 @@ function nextKeyCost(s: GameState): number {
   return costs.length ? Math.min(...costs) : 0;
 }
 
+/**
+ * Whether any action that moves the game on is affordable now: a new non-decor kind, a Rumah while five beds short,
+ * the missing piece of the easiest combo, an upgrade, a repair, a permit skip or a neighbour visit. Item 1's stall
+ * proxy, so a banked kas with nothing to spend it on counts as a stall.
+ */
+function usefulNow(s: GameState): boolean {
+  const newKind = openDefs(s).filter((d) => d.category !== 'decoration' && count(s, d.id) === 0);
+  if (newKind.some((d) => requirementGaps(s, d).length === 0 && s.res.rupiah >= buildCost(s, d))) return true;
+  const house = def('rumah');
+  if (housing(s) < population(s) + 5 && requirementGaps(s, house).length === 0 && s.res.rupiah >= buildCost(s, house)) return true;
+  if (s.buildings.some((b) => checkUpgrade(s, b).ok)) return true;
+  if (s.buildings.some((b) => checkRepair(s, b).ok)) return true;
+  if (s.buildings.some((b) => checkSkipPermit(s, b).ok)) return true;
+  if (s.neighbours.some((n) => checkVisit(s, n) === null)) return true;
+  // Easiest last: its map scan is the costly check, and any other useful move already answers the question.
+  const combo = easiestCombo(s);
+  return !!combo && combo.ids.some((id) => count(s, id) === 0 && s.res.rupiah >= buildCost(s, def(id)));
+}
+
 export interface RunOpts {
   /** Stop when this many stars are earned across stages (9 = the end of the content). */
   stopStars?: number;
@@ -564,7 +585,7 @@ export function runBot(bot: BotId, seed: number, ticks: number, opts: RunOpts = 
         t, stage: s.stage.current, stars: s.stage.stars[s.stage.current], rupiah: s.res.rupiah, sabar: s.res.sabar, viral: s.res.viral,
         odn: s.res.orangDalam, dana: s.neighbours.reduce((n, nb) => n + nb.funded, 0), stempel: s.stempel?.stock ?? 0,
         anggaran: Math.max(0, s.kel.budget - Math.max(0, s.stats.spent - s.kel.spentBase)), pop: p, beds: housing(s), buildings: s.buildings.length, aman: m.aman, sejahtera: sejahtera(m), laporan: laporan(s),
-        net: monthlyNet(s), nextKey: nextKeyCost(s), goalsDone: g.done, goalsTotal: g.total, acts: c.acts,
+        net: monthlyNet(s), nextKey: nextKeyCost(s), useful: usefulNow(s), goalsDone: g.done, goalsTotal: g.total, acts: c.acts,
       });
       if (opts.stopStars && now >= opts.stopStars) { t++; break; }
     }
