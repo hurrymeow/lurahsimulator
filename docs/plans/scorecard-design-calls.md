@@ -104,10 +104,10 @@ Run one at a time on the executor, in this order (T14 replaces T1. T15 and T2 ar
 - Don't touch: `src/data/`, TODO.md. No e2e needed.
 
 ### T9. Item 8 from hindsight ETAs (Sonnet, executor trial)
-- Files: `tests/scorecard/measure-T9.test.ts`, `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T9.md`, `progress/scorecard-design-calls-T9.md`
+- Files: `tests/scorecard/measure-T9.test.ts`, `tests/scorecard/scorecard.ts`, `tests/scorecard/driver.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T9.md`, `progress/scorecard-design-calls-T9.md`
 - Exact changes:
   1. For each builder tick after minute 2: short = a `goal` event within the next 2 min; mid = a `star`, `sk` or Lomba event within the next 15 min. Pass if both hold in at least 90% of ticks, per §8.
-  2. Long: the Emas bar (or the closest stored value; name it) changes at least once between consecutive stop points. If no such value is in the row, add it to the row in `driver.ts` and list the file under Files in the PR.
+  2. Long: the Emas bar (or the closest stored value; name it) changes at least once between consecutive stop points. If no such value is in the row, add it to the row in `driver.ts`.
   3. Replace the `none(8, ...)` line with the verdict.
 - Done when: typecheck and harness tests pass.
 - Don't touch: `src/`, TODO.md. No e2e needed.
