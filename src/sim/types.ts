@@ -40,6 +40,8 @@ export type Goal =
   | { kind: 'noDebtMonths'; n: number }
   /** Months in a row with serapan at or above `pct` percent. */
   | { kind: 'serapanMonths'; n: number; pct: number }
+  /** Programs carried out (Realisasi landed) in the current stage (docs/plans/staff-move-stars.md). */
+  | { kind: 'realisasiDone'; n: number }
   | { kind: 'cleanAudits'; n: number }
   // Kecamatan kinds. They read GameState.kec (sim/kec.ts).
   /** Kelurahan holding at least `stars`: the player's own and the three modelled ones. */
@@ -314,6 +316,8 @@ export interface RealisasiState {
   landsAt: number;
   /** Month it stops working. Infinity for a lasting one. */
   endsAt: number;
+  /** Stage it was started in, for the programs-carried-out goal. Missing in older saves: the RT. */
+  stage?: StageId;
 }
 
 export interface Requirement {

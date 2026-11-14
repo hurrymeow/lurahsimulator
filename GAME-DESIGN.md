@@ -177,6 +177,7 @@ Stage 1: RT          Stage 2: RW              Stage 3: Kelurahan
   - **2** RW combos
   - **2** wins in a row, and **8** wins against RW Sebelah in all
   - no debt for **24** weeks
+  - **3** programs carried out (Realisasi landed) in the RW
 
 #### 3★ RW Teladan
 
@@ -215,12 +216,12 @@ Kelurahan is dense and shop-heavy. The Desa path was cut (Hari, 2026-10-31).
 #### 1★
 
 - Unlocks RSUD and the Honorer job. Kelurahan gets Pasar.
-- **Goal for 2★:** RW 2 at 2★ or above, **8** Piala Kelurahan wins, and the player's own kampung at **120** residents and Popularitas **45**.
+- **Goal for 2★:** RW 2 at 2★ or above, **8** Piala Kelurahan wins, **3** programs carried out in the Kelurahan, and the player's own kampung at **120** residents and Popularitas **45**.
 
 #### 2★
 
 - Unlocks Terminal and Taman. Terminal is the one 3x3 building, the Kelurahan landmark: **Rp 25jt**, and shops within **3** tiles earn **20%** more. A 3x3 never fits a 2-tile seam, so it stands inside the player's RT lots.
-- **Goal for 3★:** **14** Piala wins, RW 2 at 3★, a clean Tim Audit, and the player's own kampung at **200** residents and Popularitas **35**. A bigger kampung expects more, so holding Popularitas while growing is the work of this stage. Residents past **200** expect half as much, and a warga with no bed moves to the neighbours (one a week), so a kampung that overgrew can always climb back over the bar (decisions/big-kampung-taper.md).
+- **Goal for 3★:** **14** Piala wins, **7** programs carried out in the Kelurahan, RW 2 at 3★, a clean Tim Audit, and the player's own kampung at **200** residents and Popularitas **35**. A bigger kampung expects more, so holding Popularitas while growing is the work of this stage. Residents past **200** expect half as much, and a warga with no bed moves to the neighbours (one a week), so a kampung that overgrew can always climb back over the bar (decisions/big-kampung-taper.md).
 
 #### 3★ Lurah Teladan
 
@@ -339,7 +340,7 @@ How the numbers work, gathered from every stage. The numbers themselves live in 
   - Kampung Sehat (Puskesmas): drainage, Perut, health posts (Apotek, Posyandu, RSUD), Popularitas.
   - Kampung Digital (Diskominfo): WiFi, Viral, tertib, Popularitas.
 - **Wacana or Realisasi:** each policy has a real version (Wifi Gratis di Balai, Kerja Bakti Rutin, Biopori Massal, Pelatihan UMKM, Bansos Sembako). It costs Rp 1 to 3 juta, lands after 1 to 3 months and moves a meter for a time (Biopori for good). Announcing fills the Laporan as well as doing does; only doing moves Sejahtera. The quarterly ranking counts programs too: each wacana by its current approval (6 points at full), each Realisasi at work 20, and each one carried out 5 for good.
-- **PIC:** every program has a lead from your staff, preselected as the best free person for the stat; Inem can always lead. A wacana's lead sets how much it lands (×0.5 + Gaul/100). A Realisasi's lead sets how fast (delay × (1.5 − Rajin/100), at least 1 week), works at half output until it lands, then gains 1 Rajin; below Jujur 60 they may lose 20% of the budget (up to a 30% chance at Jujur 0).
+- **PIC:** every program has a lead from your staff, preselected as the best free person for the stat. At the RT Inem can always lead. From the RW on she leads one program at a time and her programs take twice as long, and a lead stays on a program until it ends (a lasting one frees its lead when it lands), so more programs at once takes more hires (decisions/staff-move-stars.md). A wacana's lead sets how much it lands (×0.5 + Gaul/100). A Realisasi's lead sets how fast (delay × (1.5 − Rajin/100), at least 1 week), works at half output until it lands, then gains 1 Rajin; below Jujur 60 they may lose 20% of the budget (up to a 30% chance at Jujur 0).
 - **Popularitas soft cap:** above **80**, gains shrink toward nothing at 100, so a full kampung settles around 90 instead of sitting at the cap. Each employed resident gives **0.04** (was 0.08), each resident expects **0.14** (was 0.1; **0.7x** at the Kelurahan, where the kampung spans two RTs, and half that again past **200** residents), and a Satpam gives **0.5** (was 1).
 - **Viral soft cap:** each Viral gain is cut by the share already filled (at **80**, a gain of 10 adds 2). With the **10%** weekly decay, a kampung earning 10 a week settles near **47** and one earning 100 a week near **90**, never on the cap.
 - **Staff** (`src/data/staff.ts`): the people the player manages, as Kairosoft's staff are; warga still pick their own jobs. Inem is staff number 1 (the first Asisten at the Kantor desk, see the desk queue below) and never leaves. Slots: 1 at the start, 3 at RT 1★, 4 at RT 3★, 6 at RW, 8 at Kelurahan, 9 at Kecamatan, never more than **10**.
