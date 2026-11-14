@@ -29,20 +29,6 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Design call made: programs carried out become a star line, and from the RW Inem leads one at a time (`docs/plans/staff-move-stars.md`, `decisions/staff-move-stars-plan.md`). Tasks T1 to T3.
   - `claimed · Claude (sweep) · 2026-11-13 · done when:` the no-hire builder reaches RW 3★ and Kel 3★ at least 15% later than the hiring one, or a decisions file says why not.
 
-- [ ] **Run the scorecard bots with the road rule on.**
-  - Problem: `tests/setup.ts` turns the road rule off for every test, the scorecard included. Bot buildings work without a path, so bots have more room than a player and the numbers flatter the game.
-  - Why: the scorecard judges balance for real play.
-  - Suggested solution: turn the rule on for the scorecard runs (`tests/scorecard/`), teach the driver to lay a path when a spot has none, and compare the nine player types before and after.
-  - Source: `decisions/smaller-map-T9.md`, note 4; `decisions/smaller-map-balance.md`
-  - `claimed · Claude (scorecard thread) · 2026-11-13 · done when:` the scorecard runs with the road rule on and its numbers are refreshed.
-
-- [ ] **Scorecard row 27: the goal's progress is a tap away.**
-  - Problem: row 27 reads Fail since #356. GAME-DESIGN.md §8 item 27 asks for "current goal and its progress on screen within 5s". `decisions/goal-line-one-goal.md` keeps have and need off the closed goal pill, so after a reload the goal shows but its progress needs a tap.
-  - Why: the bar and the pill decision disagree, so the row cannot pass without changing one of them.
-  - Suggested solution: decide which changes. Either show a short progress (for example "12/25") on the closed pill if it fits without cutting the line (UI.md rule 5), or reword the §8 bar to "progress one tap away" with a decisions/ note. The T2 spec records `progress-on-screen`, so the row flips to Pass by itself if the pill shows progress.
-  - Source: `decisions/scorecard-t2-harness.md`; `decisions/goal-line-one-goal.md`
-  - `claimed · Claude (scorecard thread) · 2026-11-13 · done when:` row 27 reads Pass, or the §8 bar is reworded with a decisions/ note.
-
 - [ ] **Fix the remaining scorecard Fails that have a clear cause.**
   - Problem: the scorecard of 2026-11-04 reads 3 Pass, 14 Fail, 10 Unknown. Still failing with a cause: Viral pinned at 100 from B2 on (5, claimed: #319 adds a soft cap; B0 and B1 sit at 0 before any Viral source), goal gaps over the band (7, 10), novelty gaps (11), one reward kind per star (12), cash piles up for up to 52 min with no late sink (14), income outruns costs (15), Pencitraan never reaching Kel 1★ (17), Hint reader finds only 41% of combos (21, bar 65 to 85%). Kelurahan 2★ and 3★ still miss the goal-gap limit by 40 to 136 s (`decisions/second-rt-load.md`, cause not traced).
   - Why: each Fail is a place the game is too easy, too flat or can strand a player.
@@ -77,6 +63,9 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ## Done
 
+- [x] **Scorecard bots run with the road rule on.** A bot gap in combo placement doubled star times; fixed, builder RT 3★ back to 10.7 min. #415, #422, `decisions/scorecard-road-rule-ab.md`, `decisions/scorecard-road-rule-bot-fix.md`, `decisions/scorecard-nightly-after-bot-fix.md`.
+- [x] **Scorecard row 27 passes.** The bar is a goal on screen with progress one tap away; bunting follows the lomba year; builder and shopkeeper bots visit neighbours. #419, #420, #421, `decisions/scorecard-row-27-bar.md`.
+- [x] **Scorecard row 14 checks the builder's cash only.** Idle debt is by design. #428, `decisions/scorecard-row-14-idle-debt.md`.
 - [x] **Viral sits at 85+ from the Kelurahan on.** Cause: every Influencer slot auto-fills, so all bots end at 85 to 89. Judol cancels most of the income gain past Viral 60 (net shop income x1.10 at 85, x1.04 at 60), so the high level is right. `decisions/viral-high-level.md`.
 - [x] **Sejahtera, the Kerja meter and Indonesia Emas change almost nothing.** Shops earn up to 25% more as Sejahtera climbs from 50 to 100, nothing below 50, so Perut, Kerja and Aman pay. Emas and the 2045 ending are not changed. #416, `decisions/sejahtera-pays.md`.
 - [x] **Stars still follow time in the stage.** The rival now chases the player's last score (#417), but no ranking rule separates hiring from no-hire: staff barely move the score. `decisions/stars-follow-play.md`; two new items above.
