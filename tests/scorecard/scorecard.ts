@@ -14,7 +14,7 @@ import { STAGE_JOBS, STAGE_METERS } from '../../src/data/higher';
 import { ROLES } from '../../src/data/staff';
 import { LOMBA } from '../../src/data/lomba';
 import { RANKING_WEEKS, WEEKS_PER_YEAR } from '../../src/sim/calendar';
-import { SECONDS_PER_TICK, type BotId, type Timeline, type TLEvent } from './driver';
+import { OLD_MAP_TICKS, SECONDS_PER_TICK, type BotId, type Timeline, type TLEvent } from './driver';
 import { t2Verdict, type T2Result } from './t2';
 import type { KecRun } from '../kec-bot-lib';
 
@@ -615,10 +615,12 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
         if (first - entered > STAR_GAP[st]) bad.push(`seed ${tl.seed} ${st} 1★ after ${fmtMin(first - entered)}`);
         firstStar.push(`${st} ${fmtMin(first - entered)}`);
       }
-      const promotions = tl.events.filter((e) => e.kind === 'promote').length;
+      // A promotion in the run's last 5 min has no reading yet, so it is not counted.
+      const promotes = tl.events.filter((e) => e.kind === 'promote');
+      const promotions = promotes.filter((e) => e.t + OLD_MAP_TICKS < tl.ticks).length;
       const readings = tl.events.filter((e): e is Extract<TLEvent, { kind: 'oldMap' }> => e.kind === 'oldMap');
       const quiet = readings.filter((r) => r.income <= 0);
-      if (promotions === 0) bad.push(`seed ${tl.seed} never promoted`);
+      if (promotes.length === 0) bad.push(`seed ${tl.seed} never promoted`);
       else if (readings.length < promotions) bad.push(`seed ${tl.seed} ${promotions - readings.length} promotion(s) unread after 5 min`);
       else if (quiet.length) bad.push(`seed ${tl.seed} old map earns nothing after ${quiet.map((r) => r.to).join(', ')}`);
       else payingSeeds++;

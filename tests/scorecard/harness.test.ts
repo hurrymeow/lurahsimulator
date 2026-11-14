@@ -161,7 +161,7 @@ describe('scorecard harness', () => {
     }));
     // Two promotions per seed, each with a reading five minutes later.
     const timeline = (seed: number, readings: number[]): Timeline => ({
-      bot: 'builder', seed, rows, ticks: rows.length,
+      bot: 'builder', seed, rows, ticks: 100,
       events: [
         { t: 0, kind: 'promote', to: 'rw' as StageId },
         { t: 2, kind: 'promote', to: 'kelurahan' as StageId },
