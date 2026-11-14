@@ -10,3 +10,5 @@ Builder at 700 ticks, star minutes 1..6:
 - seed 3: `0.3/8.5/10.1/11.1/21.6/27.2`
 
 Against T2, only 5★ moved: seed 2 `20.1` to `21.3` (+1.2 min over the 1 min guard) and seed 3 `20.9` to `21.6` (+0.7 min). Every other star is unchanged.
+
+Reviewer: merged. Seeds 3 and 5 carried to the next plan (decisions file).
