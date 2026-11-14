@@ -1,0 +1,3 @@
+# T9 progress: item 8 three horizons
+
+Item 8 replaces the `none(8, ...)` line with a measured verdict. On builder seeds 1 to 3 (600 ticks, stop at 9 stars) the short horizon holds on about 34 to 41% of ticks after minute 2 and the mid horizon on 100%, so both hold on 38% against the 90% bar; Sejahtera, the 2045 Emas bar, changed between 85 of 123 consecutive stop points. The row therefore reads Fail, with the per-horizon shares and the long-meter count in its evidence. A harness test covers the Pass and Fail paths and the Lomba as a mid goal; `npm run typecheck`, the harness spec and the full `npm test` pass.

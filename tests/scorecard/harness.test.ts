@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BOTS, runBot, type Row, type Timeline } from './driver';
+import { BOTS, runBot, type Row, type Timeline, type TLEvent } from './driver';
 import { takeover } from './takeover';
 import { buildScorecard, lintTraitsCombos, longestSystemRun, simText, starKindRows, starKinds, type StarKindRow } from './scorecard';
 import { TRAITS } from '../../src/data/staff';
@@ -127,5 +127,24 @@ describe('scorecard harness', () => {
     expect(pass.verdict).toBe('Pass');
     // Income that doubles against cost from RW to Kelurahan leaves the 0.7 to 1.5 band.
     expect(rowOf({ ...flat, kelurahan: flat.kelurahan * 2 }).verdict).toBe('Fail');
+  });
+
+  it('item 8 reads the short and mid goals from the known future', () => {
+    const rows: Row[] = Array.from({ length: 101 }, (_, t) => ({
+      t, stage: 'rt', stars: 0, rupiah: 0, sabar: 0, viral: 0, odn: 0, dana: 0, stempel: 0, anggaran: 0, pop: 0, beds: 0, buildings: 0,
+      aman: 0, sejahtera: t, laporan: 0, net: 0, nextKey: 0, dearKey: 0, useful: true, goalsDone: 0, goalsTotal: 1, acts: 0,
+    }));
+    const goal = (t: number): TLEvent => ({ t, kind: 'goal' });
+    const star = (t: number): TLEvent => ({ t, kind: 'star', stage: 'rt', n: 1 });
+    const lomba = (t: number): TLEvent => ({ t, kind: 'lomba' });
+    const timeline = (events: TLEvent[]): Timeline => ({ bot: 'builder', seed: 1, rows, events, ticks: rows.length, end: { stage: 'rt', stars: 0, sejahtera: 0, laporan: 0, discovered: [] }, starTicks: [], stageTicks: { rt: 0 } });
+    const rowOf = (events: TLEvent[]) => buildScorecard({ builder: [timeline(events)] }, [], '', []).find((r) => r.n === 8)!;
+    const every = (n: number, make: (t: number) => TLEvent): TLEvent[] => Array.from({ length: 101 / n + 1 }, (_, i) => make(i * n));
+    // A checklist line every 80s and a star every 160s; the Emas bar (Sejahtera) moves between stops.
+    expect(rowOf([...every(10, goal), ...every(20, star)]).verdict).toBe('Pass');
+    // No goal line met: the short horizon is missing on every tick.
+    expect(rowOf(every(20, star)).verdict).toBe('Fail');
+    // The Lomba counts as the mid goal, with no stars.
+    expect(rowOf([...every(10, goal), ...every(20, lomba)]).verdict).toBe('Pass');
   });
 });
