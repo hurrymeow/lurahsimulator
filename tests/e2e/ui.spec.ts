@@ -2492,23 +2492,41 @@ test.describe('build mode', () => {
     await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.startPlacing('rumah'));
     // Nothing is dropped under the thumb: no buttons float until a tile is tapped.
     await expect(page.locator('#place-float')).toBeHidden();
+    // Showing the placement bar resizes the map on the next ResizeObserver callback, which moves every tile. Wait until the
+    // map box and the target tile hold still for two frames, so the tap lands where it was aimed.
+    const settled = () => page.evaluate(() => new Promise<string>((done) => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      const read = () => { const r = document.getElementById('map')!.getBoundingClientRect(); const c = app.view.tileCentre(k.x, k.y - 1); return `${r.x},${r.y},${r.width},${r.height},${c.x},${c.y}`; };
+      const first = read();
+      requestAnimationFrame(() => requestAnimationFrame(() => done(first === read() ? first : '')));
+    }));
+    await expect.poll(settled).not.toBe('');
     const box = (await page.locator('#map').boundingBox())!;
-    const at = await page.evaluate(() => {
+    const aim = await page.evaluate(() => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
       return app.view.tileCentre(k.x, k.y - 1);
     });
-    await page.mouse.click(box.x + at.x, box.y + at.y);
+    await page.mouse.click(box.x + aim.x, box.y + aim.y);
     const float = page.locator('#place-float');
     await expect(float).toBeVisible();
     const fb = (await float.boundingBox())!;
+    // Measure against the tile the ghost sits on now, read after the float shows: on failure the message says where both were.
+    const now = (await page.locator('#map').boundingBox())!;
+    const at = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      const g = app.view.ghost;
+      return app.view.tileCentre(g.x, g.y);
+    });
+    const where = JSON.stringify({ fb, at, box: now });
     // Below the tile, or above it when the tile sits near the bottom edge. Never over the tile itself.
-    const cy = box.y + at.y;
-    expect(fb.y + fb.height <= cy - 4 || fb.y >= cy - 4).toBe(true);
-    expect(Math.abs(fb.y + fb.height / 2 - cy)).toBeLessThan(160);
-    expect(fb.y).toBeGreaterThanOrEqual(box.y);
-    expect(fb.y + fb.height).toBeLessThanOrEqual(box.y + box.height);
-    expect(Math.abs(fb.x + fb.width / 2 - (box.x + at.x))).toBeLessThan(fb.width);
+    const cy = now.y + at.y;
+    expect(fb.y + fb.height <= cy - 4 || fb.y >= cy - 4, where).toBe(true);
+    expect(Math.abs(fb.y + fb.height / 2 - cy), where).toBeLessThan(160);
+    expect(fb.y, where).toBeGreaterThanOrEqual(now.y);
+    expect(fb.y + fb.height, where).toBeLessThanOrEqual(now.y + now.height);
+    expect(Math.abs(fb.x + fb.width / 2 - (now.x + at.x)), where).toBeLessThan(fb.width);
     await expectLegible(page, 'place buttons under the tile');
     await page.locator('#place-ok').click();
     await expect(float).toBeHidden();
