@@ -67,7 +67,7 @@ Run one at a time on the executor, in this order (T14 replaces T1. T15 and T2 ar
 - Done when: typecheck and harness tests pass, with one test for a stall and one for no stall.
 - Don't touch: `nextKey` (items 14 and 15 use it), `src/`, TODO.md. No e2e needed.
 
-### T5. Builder uses the RT 1★ unlock and its Orang Dalam (Sonnet, executor trial)
+### T5. Builder uses the RT 1★ unlock and its Orang Dalam (Sonnet, executor trial) — closed, see decisions/scorecard-design-calls-T5.md
 - Files: `tests/scorecard/measure-T5.test.ts`, `tests/scorecard/driver.ts`, `decisions/scorecard-design-calls-T5.md`, `progress/scorecard-design-calls-T5.md`
 - Exact changes:
   1. Check why the builder's `odn` never falls in B1 (1 to 5 min). If it never places a permit building there, make `builderOrder` place one Kosan (or Barbershop) right after RT 1★ when affordable. `maintain` already skips the permit.
@@ -168,6 +168,7 @@ T14's review trace (`decisions/scorecard-design-calls-T14.md`): on shopkeeper se
 ## Open questions
 - T15 and T2 are done in #434: shopkeeper RT 1★ is now 0.5 min, and T2 needed no code (`decisions/scorecard-design-calls-T15-bots.md`). Builder RT 2★ is still 8.1 to 9.3 min, against the 5 min target (section 3 target 4) and the 4 min star gap. After the remaining executor tasks merge, run Nightly and re-judge rows 7, 10, 17 and 23. If RT 2★ is still late, the next plan eases the RT 2★ combo line (decision 2).
 - Hidden combos (about 1 in 4) wait until items 7 and 23 pass. Then decide which combos to hide.
+- T5 (#443, closed): with the builder's generic buy list off, builder RT 2★ drops from about 9 to about 5 min on seeds 1 to 3. The late RT 2★ is mostly bot spending. Next plan: the builder buys its generic list only after the next star's combo line is met, then re-measure on 10 seeds before touching the RT 2★ combo line. Item 13's Orang Dalam sink bar moves from B1 to B2, since the only RT 1★ permit kind (Kosan) is too dear for B1.
 - T8 (#438) result: Kec 1★ has one reward kind. RW 3★, Kel 3★, Kec 2★ and Kec 3★ give no unlock or reward at all. That content goes in the next plan. The longest run without a new system is 5 stars (bar 1).
 - Item 12 reads `star.unlocks` only, so Kel 2★ shows no kinds although `PATH_UNLOCKS` opens Terminal and Taman there. The next plan should make item 12 read path unlocks too.
 - T3 finding: the random bot never lays a path, because `playRandom` returns before `laySetapak`. Fix it in the next bot pass so random runs face the road rule.
