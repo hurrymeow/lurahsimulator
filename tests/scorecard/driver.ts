@@ -54,6 +54,8 @@ export interface Row {
   net: number;
   /** Cost of the cheapest non-decor building the bot could place next, or 0 if none. */
   nextKey: number;
+  /** Cost of the dearest non-decor, non-housing kind the bot could build next and does not own, or 0 if none. */
+  dearKey: number;
   /** Whether an action that moves the game on is affordable now: the scorecard item 1 proxy. */
   useful: boolean;
   goalsDone: number;
@@ -500,6 +502,14 @@ function nextKeyCost(s: GameState): number {
   return costs.length ? Math.min(...costs) : 0;
 }
 
+/** The dearest kind the player could build now and does not own yet: the thing worth saving for. */
+function dearKeyCost(s: GameState): number {
+  const costs = openDefs(s)
+    .filter((d) => d.category !== 'decoration' && !d.housing && count(s, d.id) === 0 && requirementGaps(s, d, { ignoreLimit: true }).length === 0)
+    .map((d) => buildCost(s, d));
+  return costs.length ? Math.max(...costs) : 0;
+}
+
 /**
  * Whether any action that moves the game on is affordable now: a new non-decor kind, a Rumah while five beds short,
  * the missing piece of the easiest combo, an upgrade, a repair, a permit skip or a neighbour visit. Item 1's stall
@@ -585,7 +595,7 @@ export function runBot(bot: BotId, seed: number, ticks: number, opts: RunOpts = 
         t, stage: s.stage.current, stars: s.stage.stars[s.stage.current], rupiah: s.res.rupiah, sabar: s.res.sabar, viral: s.res.viral,
         odn: s.res.orangDalam, dana: s.neighbours.reduce((n, nb) => n + nb.funded, 0), stempel: s.stempel?.stock ?? 0,
         anggaran: Math.max(0, s.kel.budget - Math.max(0, s.stats.spent - s.kel.spentBase)), pop: p, beds: housing(s), buildings: s.buildings.length, aman: m.aman, sejahtera: sejahtera(m), laporan: laporan(s),
-        net: monthlyNet(s), nextKey: nextKeyCost(s), useful: usefulNow(s), goalsDone: g.done, goalsTotal: g.total, acts: c.acts,
+        net: monthlyNet(s), nextKey: nextKeyCost(s), dearKey: dearKeyCost(s), useful: usefulNow(s), goalsDone: g.done, goalsTotal: g.total, acts: c.acts,
       });
       if (opts.stopStars && now >= opts.stopStars) { t++; break; }
     }

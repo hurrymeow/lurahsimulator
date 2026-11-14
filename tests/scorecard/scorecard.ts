@@ -317,10 +317,18 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
   // 15. Cost curve and snowball.
   {
     const secs: number[] = [];
-    for (const tl of builder) for (const r of tl.rows) if (bandOf(r.t) <= 4 && r.nextKey > 0 && r.net > 0 && r.t >= 5) secs.push((r.nextKey / r.net) * SECONDS_PER_TICK);
+    for (const tl of builder) for (const r of tl.rows) if (bandOf(r.t) <= 4 && r.dearKey > 0 && r.net > 0 && r.t >= 5) secs.push((r.dearKey / r.net) * SECONDS_PER_TICK);
     const med = median(secs);
     const p95 = [...secs].sort((a, b) => a - b)[Math.floor(secs.length * 0.95)];
-    add(15, 'Cost curve and snowball', 'T1', partial(med >= 30 && med <= 120 && p95 <= 300), `Seconds of income to afford the next key item, B0 to B4: median ${med.toFixed(0)}s (bar 30 to 120s), 95th percentile ${p95?.toFixed(0)}s (bar 300s). Income against cost growth per stage is not measured.`);
+    // Income over the median cost of the stage's star unlocks, then how that ratio moves from stage to stage.
+    const ratios = (['rt', 'rw', 'kelurahan'] as const).map((id) => {
+      const net = median(builder.flatMap((tl) => tl.rows.filter((r) => r.stage === id).map((r) => r.net)));
+      const cost = median((STAGES.find((st) => st.id === id)?.stars.flatMap((st) => st.unlocks) ?? []).map((u) => def(u).cost));
+      return net / cost;
+    });
+    const growth = ratios.slice(1).map((r, i) => r / ratios[i]);
+    const ok = med >= 30 && med <= 120 && p95 <= 300 && growth.every((g) => Number.isFinite(g) && g >= 0.7 && g <= 1.5);
+    add(15, 'Cost curve and snowball', 'T1', verdict(ok), `Seconds of income to afford the dearest key item, B0 to B4: median ${med.toFixed(0)}s (bar 30 to 120s), 95th percentile ${p95?.toFixed(0)}s (bar 300s). Income over cost growth RT to RW ${growth[0]?.toFixed(2)}x, RW to Kelurahan ${growth[1]?.toFixed(2)}x (bar 0.7 to 1.5).`);
   }
 
   // 16. Diminishing returns.
