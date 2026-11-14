@@ -18,7 +18,7 @@ import { REALISASI } from '../../src/data/realisasi';
 import { acceptSK, canPromote, nextStarChecklist } from '../../src/sim/stages';
 import { answerRaise, hire, lowonganCost, postLowongan } from '../../src/sim/staff';
 import { STAR_SALARY } from '../../src/data/staff';
-import { buildCost, housing, newGame, population, price, tilesOf } from '../../src/sim/state';
+import { buildCost, housing, newGame, population, price, tilesOf, upgradeCost } from '../../src/sim/state';
 import { buildingIncome, tick } from '../../src/sim/tick';
 import { announce } from '../../src/sim/wacana';
 import { GRID_H, GRID_W, RT_H, RT_W, setGrid, type GameState, type StageId } from '../../src/sim/types';
@@ -317,7 +317,15 @@ function buildCombo(c: Ctx, buffer: number, only?: string[]): void {
   const scored = todo
     .map((cb) => ({ cb, needs: cb.needs.map(parseNeed), ids: cb.needs.map((n) => parseNeed(n).id) }))
     .filter(({ ids }) => ids.every((id) => def(id).placeable && openDefs(s).some((d) => d.id === id)) && (!only || ids.every((id) => only.includes(id))))
-    .map((x) => ({ ...x, cost: x.ids.reduce((sum, id) => sum + (count(s, id) ? 0 : def(id).cost), 0) }))
+    .map((x) => ({
+      ...x,
+      cost: x.ids.reduce((sum, id) => sum + (count(s, id) ? 0 : def(id).cost), 0) +
+        // A combo that wants a level (Pecel Lele wants a Rumah Makan at 3) also costs the upgrades to get there.
+        x.needs.filter((n) => n.level > 1).reduce((sum, n) => {
+          const top = s.buildings.filter((b) => b.def === n.id).sort((a, b) => b.level - a.level)[0];
+          return sum + (top && top.level < n.level ? upgradeCost(s, top) * (n.level - top.level) : 0);
+        }, 0),
+    }))
     .sort((a, b) => a.cost - b.cost);
   for (const { ids, needs } of scored) {
     const member = s.buildings.find((b) => ids.includes(b.def));

@@ -1,0 +1,3 @@
+# Scorecard bot fixes T2: buildCombo counts the upgrade
+
+A combo that needs a level (`rumahMakan@3`, `warung@3`) was scored only by the cost of the pieces it did not have yet, so the book could rank it ahead of a cheaper combo and then stall on the upgrade the bot could not afford. `buildCombo` now adds `upgradeCost(s, copy) * (need.level - copy.level)` for every need above level 1 when a standing copy exists below that level, leaving the cost unchanged when no copy stands (the piece's own price already counts). The import comes from `src/sim/state`; the sort by cost and the existing upgrade branch are unchanged.
