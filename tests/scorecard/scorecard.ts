@@ -423,10 +423,12 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
     const total = COMBOS.length;
     const found = new Set<string>();
     for (const tls of Object.values(runs)) for (const tl of tls ?? []) for (const id of tl.end.discovered) found.add(id);
-    const hint = runsOf(runs, 'hint');
-    const hintShare = hint.length ? median(hint.map((tl) => tl.end.discovered.length)) / Math.max(1, found.size) : NaN;
-    const ok = median(early) >= 3 && hintShare >= 0.65 && hintShare <= 0.85;
-    add(21, 'Combo discovery', 'T1', verdict(ok), `Random placer finds a median ${median(early)} combos in the first 15 min (bar 3). Hint reader finds ${(hintShare * 100).toFixed(0)}% of the ${found.size} combos any bot found (bar 65 to 85%). Bots found ${found.size} different combos in all (${total} base combos plus stage combos exist).`);
+    // The book shows every formula, so the builder's book reading is the hinted share (decisions/scorecard-design-calls.md).
+    const share = (tls: Timeline[]) => (tls.length ? median(tls.map((tl) => tl.end.discovered.length)) / Math.max(1, found.size) : NaN);
+    const bookShare = share(builder);
+    const hintShare = share(runsOf(runs, 'hint'));
+    const ok = median(early) >= 3 && bookShare >= 0.65 && bookShare <= 0.85;
+    add(21, 'Combo discovery', 'T1', verdict(ok), `Random placer finds a median ${median(early)} combos in the first 15 min (bar 3). Book reader finds ${(bookShare * 100).toFixed(0)}% of the ${found.size} combos any bot found (bar 65 to 85%). Strip only finds ${(hintShare * 100).toFixed(0)}%. Bots found ${found.size} different combos in all (${total} base combos plus stage combos exist).`);
   }
 
   // 22. Calendar rhythm.
