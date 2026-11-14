@@ -29,6 +29,7 @@ export const RW_STAGE: StageDef = {
         { kind: 'noDebtMonths', n: 24 },
       ],
       unlocks: [],
+      reward: { rupiah: 5_000_000 },
     },
   ],
 };
@@ -46,10 +47,12 @@ export const KELURAHAN_STAGE: StageDef = {
     {
       goals: [{ kind: 'rw2AtStars', n: 2 }, { kind: 'tierWins', n: 8, tier: 'kelurahan' }, { kind: 'residents', n: 120 }, { kind: 'sabar', n: 45 }],
       unlocks: [],
+      reward: { rupiah: 10_000_000 },
     },
     {
       goals: [{ kind: 'tierWins', n: 14, tier: 'kelurahan' }, { kind: 'rw2AtStars', n: 3 }, { kind: 'cleanAudits', n: 1 }, { kind: 'residents', n: 200 }, { kind: 'sabar', n: 35 }],
       unlocks: [],
+      reward: { rupiah: 15_000_000 },
     },
   ],
 };
@@ -63,14 +66,17 @@ export const KECAMATAN_STAGE: StageDef = {
     {
       goals: [{ kind: 'built', n: 1, def: 'kantorKec' }, { kind: 'kelsAtStars', n: 4, stars: 1 }, { kind: 'pinjolUnder', n: 25 }, { kind: 'residents', n: 250 }],
       unlocks: ['baliho', 'tamanKota'],
+      reward: { rupiah: 20_000_000 },
     },
     {
       goals: [{ kind: 'kelsAtStars', n: 4, stars: 2 }, { kind: 'tierWins', n: 4, tier: 'kecamatan' }, { kind: 'amanWeeks', n: 24, min: 60 }, { kind: 'sabar', n: 35 }],
       unlocks: [],
+      reward: { rupiah: 20_000_000 },
     },
     {
       goals: [{ kind: 'kelsAtStars', n: 4, stars: 3 }, { kind: 'tierWins', n: 12, tier: 'kecamatan' }, { kind: 'pinjolUnder', n: 10 }, { kind: 'amanNow', n: 65 }, { kind: 'noRaziaWeeks', n: 48 }],
       unlocks: [],
+      reward: { rupiah: 20_000_000 },
     },
   ],
 };
