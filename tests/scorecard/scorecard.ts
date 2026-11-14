@@ -96,17 +96,17 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
   const none = (n: number, title: string, tier: ScoreRow['tier'], why: string) => add(n, title, tier, 'Unknown', why);
   if (!builder.length) throw new Error('scorecard needs builder runs');
 
-  // 1. Always a useful next move. Proxy: a stall is a run of ticks where the cheapest next building costs more than the cash in hand.
+  // 1. Always a useful next move. Proxy: a stall is a run of ticks where no goal-moving action is affordable.
   {
     let worst = 0;
     for (const tl of builder) {
       let run = 0;
       for (const r of tl.rows) {
-        run = r.nextKey > 0 && r.rupiah < r.nextKey && r.goalsDone < r.goalsTotal ? run + 1 : 0;
+        run = !r.useful && r.goalsDone < r.goalsTotal ? run + 1 : 0;
         worst = Math.max(worst, run);
       }
     }
-    add(1, 'Always a useful next move', 'T1', verdict(worst * SECONDS_PER_TICK <= 60), `Longest wait with nothing affordable: ${worst * SECONDS_PER_TICK}s at 1x (bar 60s). Proxy: the cheapest kind not owned yet, not the goal ETA.`);
+    add(1, 'Always a useful next move', 'T1', verdict(worst * SECONDS_PER_TICK <= 60), `Longest wait with nothing affordable: ${worst * SECONDS_PER_TICK}s at 1x (bar 60s). Proxy: a new non-decor kind, a Rumah with beds short, the easiest combo's missing piece, an allowed upgrade, a repair, a permit skip or a neighbour visit. Not the goal ETA.`);
   }
 
   // 2. Data lint.

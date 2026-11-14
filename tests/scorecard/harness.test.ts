@@ -12,7 +12,7 @@ describe('scorecard harness', () => {
     for (const bot of BOTS) {
       const tl = runBot(bot, 3, 40);
       expect(tl.rows.length, bot).toBe(40);
-      for (const r of tl.rows) for (const v of Object.values(r)) expect(Number.isFinite(v) || typeof v === 'string', `${bot} row ${r.t}`).toBe(true);
+      for (const r of tl.rows) for (const v of Object.values(r)) expect(Number.isFinite(v) || typeof v === 'string' || typeof v === 'boolean', `${bot} row ${r.t}`).toBe(true);
     }
   }, 30_000);
 
