@@ -212,6 +212,7 @@ describe('scorecard harness', () => {
     const goal = (t: number): TLEvent => ({ t, kind: 'goal' });
     const star = (t: number): TLEvent => ({ t, kind: 'star', stage: 'rt', n: 1 });
     const lomba = (t: number): TLEvent => ({ t, kind: 'lomba' });
+    const step = (t: number): TLEvent => ({ t, kind: 'step' });
     const timeline = (events: TLEvent[]): Timeline => ({ bot: 'builder', seed: 1, rows, events, ticks: rows.length, end: { stage: 'rt', stars: 0, sejahtera: 0, laporan: 0, discovered: [] }, starTicks: [], stageTicks: { rt: 0 } });
     const rowOf = (events: TLEvent[]) => buildScorecard({ builder: [timeline(events)] }, [], '', []).find((r) => r.n === 8)!;
     const every = (n: number, make: (t: number) => TLEvent): TLEvent[] => Array.from({ length: 101 / n + 1 }, (_, i) => make(i * n));
@@ -221,6 +222,9 @@ describe('scorecard harness', () => {
     expect(rowOf(every(20, star)).verdict).toBe('Fail');
     // The Lomba counts as the mid goal, with no stars.
     expect(rowOf([...every(10, goal), ...every(20, lomba)]).verdict).toBe('Pass');
+    // The Now strip's step alone, every 90s (11.25 ticks), is a short goal on every counted tick: no checklist line needed.
+    const strip = Array.from({ length: 10 }, (_, i) => step(Math.round((i * 90) / 8)));
+    expect(rowOf(strip).evidence).toContain('within 2 min on 100%');
   });
 
   it('item 18 compares rolled outcomes on their mean and reads Pass or Fail', () => {

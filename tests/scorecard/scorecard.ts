@@ -295,7 +295,7 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
     let pairs = 0;
     let moved = 0;
     for (const tl of builder) {
-      const goals = tl.events.filter((e) => e.kind === 'goal').map((e) => e.t);
+      const goals = tl.events.filter((e) => e.kind === 'goal' || e.kind === 'step').map((e) => e.t);
       const mids = tl.events.filter((e) => e.kind === 'star' || e.kind === 'sk' || e.kind === 'lomba').map((e) => e.t);
       const soon = (ts: number[], t: number, withinS: number) => ts.some((x) => x >= t && (x - t) * SECONDS_PER_TICK <= withinS);
       for (const r of tl.rows) {
@@ -314,7 +314,7 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
       }
     }
     const pct = (n: number) => (ticks ? ((n / ticks) * 100).toFixed(0) : '0');
-    add(8, 'Three horizons at once', 'T1', verdict(ticks > 0 && both / ticks >= 0.9 && moved === pairs), `Short goal (a checklist line met) within 2 min on ${pct(shortOk)}% of ${ticks} builder ticks after minute 2, mid goal (a star, SK or Lomba) within 15 min on ${pct(midOk)}% (both ${pct(both)}%, bar 90%). Long: Sejahtera, the value the 2045 Emas bar shows, changed between ${moved} of ${pairs} consecutive stop points.`);
+    add(8, 'Three horizons at once', 'T1', verdict(ticks > 0 && both / ticks >= 0.9 && moved === pairs), `Short goal (a checklist line met or the Now strip's step) within 2 min on ${pct(shortOk)}% of ${ticks} builder ticks after minute 2, mid goal (a star, SK or Lomba) within 15 min on ${pct(midOk)}% (both ${pct(both)}%, bar 90%). Long: Sejahtera, the value the 2045 Emas bar shows, changed between ${moved} of ${pairs} consecutive stop points.`);
   }
 
   // 9. Goals say what is missing.
