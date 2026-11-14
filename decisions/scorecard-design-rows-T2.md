@@ -1,3 +1,5 @@
 # T2: item 12 reads path unlocks and the SK; item 13 judges Orang Dalam from B2 — shipped
 
 Item 12's star-kind reader now adds `PATH_UNLOCKS[stage].stars[i]` to the unlocks of star `i + 1`, so the Kelurahan path buildings the reader was dropping (Pasar on 1★, Terminal and Taman on 2★) count as rewards, and their `fx` blocks count toward "new system". It also counts a 3★ as a new system when the stage has a next stage, because the SK at 3★ promotes into it. No game data changed; the only kind counts that moved were RW 3★ (0 to 1), Kelurahan 2★ (0 to 1) and Kelurahan 3★ (0 to 1), and the longest system run fell from 5 stars to 3. Item 13 now skips Orang Dalam before B2, because the first permit kind (Kosan at RT 1★) is too dear for B1 at the builder's buffer (`decisions/scorecard-design-calls-T5.md`), and both evidence branches say so. `GAME-DESIGN.md` §8 item 13 Pass records the same rule, per the conformance protocol.
+
+Reviewer: merged. Item 13 now shows Orang Dalam never spent in B3 and B4, so T4 of the plan switches its star reward from Orang Dalam to a Rupiah grant, and adds Kel 2★ (still one kind).
