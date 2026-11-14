@@ -19,7 +19,7 @@ import { acceptSK, canPromote, nextStarChecklist } from '../../src/sim/stages';
 import { answerRaise, hire, lowonganCost, postLowongan } from '../../src/sim/staff';
 import { STAR_SALARY } from '../../src/data/staff';
 import { buildCost, housing, newGame, population, price, tilesOf } from '../../src/sim/state';
-import { tick } from '../../src/sim/tick';
+import { buildingIncome, tick } from '../../src/sim/tick';
 import { announce } from '../../src/sim/wacana';
 import { GRID_H, GRID_W, RT_H, RT_W, setGrid, type GameState, type StageId } from '../../src/sim/types';
 import type { Fx } from '../../src/sim/gain';
@@ -29,6 +29,8 @@ export const BOTS: BotId[] = ['idle', 'builder', 'shopkeeper', 'safety', 'cheaps
 
 /** One sim tick is 8s of wall time at 1x (one week). */
 export const SECONDS_PER_TICK = 8;
+/** Ticks from a promotion to the old-map income reading: the first tick at or after 5 min of wall time. */
+export const OLD_MAP_TICKS = Math.ceil((5 * 60) / SECONDS_PER_TICK);
 export const WACANA_IDS = ['hijau', 'warung', 'gotong', 'digital', 'genangan'];
 
 // ---------------------------------------------------------------- timeline
@@ -75,7 +77,9 @@ export type TLEvent =
   | { t: number; kind: 'built'; id: string }
   | { t: number; kind: 'job' | 'level' | 'report' }
   | { t: number; kind: 'goal' }
-  | { t: number; kind: 'drop'; res: 'sabar'; amount: number; cause: boolean };
+  | { t: number; kind: 'drop'; res: 'sabar'; amount: number; cause: boolean }
+  /** Weekly income of the buildings that stood at a promotion and still stand 5 min later (item 24, second half). */
+  | { t: number; kind: 'oldMap'; to: StageId; income: number };
 
 export interface Timeline {
   bot: BotId;
@@ -558,6 +562,8 @@ export function runBot(bot: BotId, seed: number, ticks: number, opts: RunOpts = 
   let lastGoal = goalCounts(s).done;
   let t = 0;
   const noSpot = new Map<string, number>();
+  /** Item 24: the buildings that stood at each promotion, read again after 5 min. */
+  const oldMap: { due: number; to: StageId; uids: number[] }[] = [];
   try {
     for (; t < ticks; t++) {
       const c: Ctx = { s, fx: [], rnd, acts: 0, t, noSpot };
@@ -566,6 +572,7 @@ export function runBot(bot: BotId, seed: number, ticks: number, opts: RunOpts = 
       if (s.stage.current !== stage) {
         events.push({ t, kind: 'promote', to: s.stage.current });
         stageTicks[s.stage.current] = t;
+        oldMap.push({ due: t + OLD_MAP_TICKS, to: s.stage.current, uids: s.buildings.map((b) => b.uid) });
       }
       const sabarBefore = s.res.sabar;
       const lombaBefore = s.lomba?.held === true || s.lomba?.due === true;
@@ -580,6 +587,13 @@ export function runBot(bot: BotId, seed: number, ticks: number, opts: RunOpts = 
         else if (e.kind === 'job') events.push({ t, kind: 'job' });
         else if (e.kind === 'level') events.push({ t, kind: 'level' });
         else if (e.kind === 'report') events.push({ t, kind: 'report' });
+      }
+      // Item 24: the old map keeps paying. Sum the weekly income of the buildings that stood at the promotion and still stand.
+      for (const o of oldMap) {
+        if (o.due !== t) continue;
+        const kept = new Set(o.uids);
+        const income = s.buildings.filter((b) => kept.has(b.uid)).reduce((n, b) => n + buildingIncome(s, b), 0);
+        events.push({ t, kind: 'oldMap', to: o.to, income });
       }
       const drop = s.res.sabar - sabarBefore;
       if (drop < -2) events.push({ t, kind: 'drop', res: 'sabar', amount: drop, cause: fx.some((e) => e.kind === 'pop' && e.res === 'sabar' && e.amount < 0) || fx.some((e) => e.kind === 'notice' && e.tone === 'bad') });
