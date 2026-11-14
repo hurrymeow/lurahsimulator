@@ -8,9 +8,9 @@ import { STAGES } from '../../src/data/stages';
 import { hasDef, placeableDefs, stageFx } from '../../src/sim/content';
 import { setGrid, type StageId, type StarDef } from '../../src/sim/types';
 import { newGame } from '../../src/sim/state';
-import { starChecklist } from '../../src/sim/stages';
+import { stageDef, starChecklist } from '../../src/sim/stages';
 import { def } from '../../src/sim/content';
-import { STAGE_JOBS, STAGE_METERS } from '../../src/data/higher';
+import { PATH_UNLOCKS, STAGE_JOBS, STAGE_METERS } from '../../src/data/higher';
 import { ROLES } from '../../src/data/staff';
 import { LOMBA } from '../../src/data/lomba';
 import { RANKING_WEEKS, WEEKS_PER_YEAR } from '../../src/sim/calendar';
@@ -106,13 +106,18 @@ const FLAG_SYSTEMS: Partial<Record<StageId, number[]>> = { rt: [1] };
 /** The distinct kinds a star gives, by section 8 item 12: non-decor building, decor, resource reward, new system. */
 export function starKinds(stage: StageId, star: number, defn: StarDef): RewardKind[] {
   const kinds = new Set<RewardKind>();
-  for (const id of defn.unlocks) kinds.add(def(id).category === 'decoration' ? 'decor' : 'building');
+  // The Kelurahan path opens its own buildings by star, on top of the stage's unlocks.
+  const pathStars = (PATH_UNLOCKS as Partial<Record<StageId, { stars: [string[], string[], string[]] }>>)[stage]?.stars[star] ?? [];
+  const unlocks = [...defn.unlocks, ...pathStars];
+  for (const id of unlocks) kinds.add(def(id).category === 'decoration' ? 'decor' : 'building');
   if (defn.reward && Object.keys(defn.reward).length > 0) kinds.add('reward');
   const n = star + 1;
   const gated = [...STAGE_METERS, ...STAGE_JOBS].some((x) => x.gate.stage === stage && x.gate.stars === n);
-  const fx = defn.unlocks.some((id) => stageFx(def(id)) !== undefined);
+  const fx = unlocks.some((id) => stageFx(def(id)) !== undefined);
   const role = ROLES.some((r) => r.opens.stage === stage && r.opens.stars === n);
-  if (gated || fx || role || (FLAG_SYSTEMS[stage] ?? []).includes(n)) kinds.add('system');
+  // The 3★ SK promotes to the next stage, which is a new system, if there is a next stage.
+  const sk = n === 3 && stageDef(stage).next !== undefined;
+  if (gated || fx || role || sk || (FLAG_SYSTEMS[stage] ?? []).includes(n)) kinds.add('system');
   return [...kinds];
 }
 
@@ -395,8 +400,11 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
     type R = Timeline['rows'][number];
     const res: Record<string, (r: R) => number> = { Rupiah: (r) => r.rupiah, Popularitas: (r) => r.sabar, Viral: (r) => r.viral, 'Orang Dalam': (r) => r.odn, Dana: (r) => r.dana, Stempel: (r) => r.stempel, Anggaran: (r) => r.anggaran };
     const late = new Set(['Dana', 'Stempel', 'Anggaran']);
+    const odnB2 = 'Orang Dalam is judged from B2 (decisions/scorecard-design-calls-T5.md).';
     for (const [name, get] of Object.entries(res)) {
       for (let b = 0; b < BANDS.length; b++) {
+        // The first permit kind is too dear for B1 (decisions/scorecard-design-calls-T5.md).
+        if (name === 'Orang Dalam' && b < 2) continue;
         let up = false;
         let down = false;
         let n = 0;
@@ -415,7 +423,7 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
         if (!up || !down) bad.push(`${name} ${BANDS[b]} ${!up ? 'never earned' : 'never spent'}`);
       }
     }
-    add(13, 'Sources and sinks', 'T1', verdict(bad.length === 0), bad.length ? `${bad.join(', ')}.` : 'Every resource, Dana, Stempel and Anggaran included, moves up and down in every band it exists in.');
+    add(13, 'Sources and sinks', 'T1', verdict(bad.length === 0), bad.length ? `${bad.join(', ')}. ${odnB2}` : `Every resource, Dana, Stempel and Anggaran included, moves up and down in every band it exists in. ${odnB2}`);
   }
 
   // 14. Cash health.

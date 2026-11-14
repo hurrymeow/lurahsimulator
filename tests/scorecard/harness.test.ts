@@ -104,6 +104,17 @@ describe('scorecard harness', () => {
     expect(starKindRows()).toHaveLength(STAGES.length * 3);
   });
 
+  it('item 12 reads the path unlocks and the 3★ SK as a new system', () => {
+    // (1) A path star adds its buildings: Terminal and Taman open on Kelurahan 2★.
+    expect(starKinds('kelurahan', 1, { goals: [], unlocks: [] })).toEqual(['building']);
+    // A stage with no path entry gets nothing from the path table.
+    expect(starKinds('rt', 1, { goals: [], unlocks: [] })).toEqual([]);
+    // (2) A 3★ that opens the SK into a next stage is a new system, even with no unlocks.
+    expect(starKinds('rw', 2, { goals: [], unlocks: [] })).toEqual(['system']);
+    // The last stage has no next stage, so its 3★ is not a system by itself.
+    expect(starKinds('kecamatan', 2, { goals: [], unlocks: [] })).toEqual([]);
+  });
+
   it('item 15 compares income growth with unlock cost growth per stage', () => {
     const medianOf = (xs: number[]): number => {
       const a = [...xs].sort((p, q) => p - q);

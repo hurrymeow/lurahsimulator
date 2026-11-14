@@ -653,7 +653,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing
 - **Good:** each resource has a steady sink (upkeep, salary) and a lumpy sink (a big build, an event).
 - **Bad:** a resource that only goes up.
 - **Evidence:** T1 data check plus the bot spend log.
-- **Pass:** every resource is earned and spent in every band where it exists.
+- **Pass:** every resource is earned and spent in every band where it exists. Orang Dalam is judged from B2, because the first permit kind is too dear for B1 (decisions/scorecard-design-calls-T5.md).
 
 #### 14. Cash health
 - **Ask:** does cash pile up with nothing to buy, or run out with no way back?
