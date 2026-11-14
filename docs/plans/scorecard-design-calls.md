@@ -166,6 +166,7 @@ T14's review trace (`decisions/scorecard-design-calls-T14.md`): on shopkeeper se
 - Don't touch: `src/`, TODO.md. No refactors. No e2e needed.
 
 ## Open questions
+- T15 and T2 are done in #434: shopkeeper RT 1★ is now 0.5 min, and T2 needed no code (`decisions/scorecard-design-calls-T15-bots.md`). Builder RT 2★ is still 8.1 to 9.3 min, against the 5 min target (section 3 target 4) and the 4 min star gap. After the remaining executor tasks merge, run Nightly and re-judge rows 7, 10, 17 and 23. If RT 2★ is still late, the next plan eases the RT 2★ combo line (decision 2).
 - Hidden combos (about 1 in 4) wait until items 7 and 23 pass. Then decide which combos to hide.
 - Stars still at one reward kind after T8 need content. That goes in the next plan.
 - The Kecamatan stars-only stop gap (78 min) belongs to the Kecamatan playtest work, not here.
