@@ -1,0 +1,3 @@
+# T12: item 24 old map keeps paying
+
+`tests/scorecard/driver.ts` now notes the building uids at each promotion and emits an `oldMap` event with their summed weekly income 38 ticks later (the first tick at or after 5 min); `tests/scorecard/scorecard.ts` item 24 checks that sum for every promotion, uses `verdict` instead of `partial`, and drops the "is T2" text. Added a synthetic 10-seed test in `harness.test.ts` and a MEASURE-gated `measure-T12.test.ts` that prints the readings for seeds 1 to 10. Local measure on builder seeds 1 to 10: every seed has 2 promotions and 2 readings, all above 0 (RW 4.4M to 6.8M a week, Kelurahan 29M to 39M). `npm run typecheck` and `npm test` pass (699 passed, 11 skipped).

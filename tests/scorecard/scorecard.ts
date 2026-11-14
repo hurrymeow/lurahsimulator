@@ -14,7 +14,7 @@ import { STAGE_JOBS, STAGE_METERS } from '../../src/data/higher';
 import { ROLES } from '../../src/data/staff';
 import { LOMBA } from '../../src/data/lomba';
 import { RANKING_WEEKS, WEEKS_PER_YEAR } from '../../src/sim/calendar';
-import { SECONDS_PER_TICK, type BotId, type Timeline, type TLEvent } from './driver';
+import { OLD_MAP_TICKS, SECONDS_PER_TICK, type BotId, type Timeline, type TLEvent } from './driver';
 import { t2Verdict, type T2Result } from './t2';
 import type { KecRun } from '../kec-bot-lib';
 
@@ -599,11 +599,13 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
     add(23, 'Reliability: seeds, bad luck, recovery', 'T1', partial(bad.length === 0), `${bad.length ? bad.join('; ') + '. ' : `RT 1★ to 3★ on target in ${builder.length} of ${builder.length} seeds, spread under 1.5x. `}Soft-lock check: a builder bot took over an idle game at mid-state in ${takeovers.filter((t) => t.gained).length} of ${takeovers.length} runs and still earned a star or a goal. The forced worst-event chain is not built.`);
   }
 
-  // 24. Stage change feels new.
+  // 24. Stage change feels new. Second half: the driver notes the buildings that stood at each promotion and sums
+  // their weekly income 5 min later. The old map keeps paying when that sum is above 0 for every promotion in the seed.
   {
     const bad: string[] = [];
     for (const st of STAGES) st.stars.forEach((star, k) => { if (k === 0 && !star.unlocks.length) bad.push(`${st.id} 1★ unlocks nothing`); });
     const firstStar: string[] = [];
+    let payingSeeds = 0;
     for (const tl of builder) {
       for (const [si, st] of (['rw', 'kelurahan'] as const).entries()) {
         const entered = tl.stageTicks[st];
@@ -613,8 +615,18 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
         if (first - entered > STAR_GAP[st]) bad.push(`seed ${tl.seed} ${st} 1★ after ${fmtMin(first - entered)}`);
         firstStar.push(`${st} ${fmtMin(first - entered)}`);
       }
+      // A promotion in the run's last 5 min has no reading yet, so it is not counted.
+      const promotes = tl.events.filter((e) => e.kind === 'promote');
+      const promotions = promotes.filter((e) => e.t + OLD_MAP_TICKS < tl.ticks).length;
+      const readings = tl.events.filter((e): e is Extract<TLEvent, { kind: 'oldMap' }> => e.kind === 'oldMap');
+      const quiet = readings.filter((r) => r.income <= 0);
+      if (promotes.length === 0) bad.push(`seed ${tl.seed} never promoted`);
+      else if (readings.length < promotions) bad.push(`seed ${tl.seed} ${promotions - readings.length} promotion(s) unread after 5 min`);
+      else if (quiet.length) bad.push(`seed ${tl.seed} old map earns nothing after ${quiet.map((r) => r.to).join(', ')}`);
+      else payingSeeds++;
     }
-    add(24, 'Stage change feels new', 'T1', partial(bad.length === 0), bad.length ? `${bad.slice(0, 4).join('; ')}.` : `Each stage's first star opens buildings, and arrives within the star gap of promotion. Whether the old map stays useful is T2.`);
+    const paying = `Old map weekly income 5 min after each promotion is above 0 in ${payingSeeds} of ${builder.length} seeds.`;
+    add(24, 'Stage change feels new', 'T1', verdict(bad.length === 0), bad.length ? `${bad.slice(0, 4).join('; ')}.` : `Each stage's first star opens buildings, and arrives within the star gap of promotion. ${paying}`);
   }
 
   none(25, 'The run ends', 'T1', 'Act 3 and the endings do not exist yet. The builder bot finishes all content at minute ' + median(builder.map((t) => min(t.ticks))).toFixed(0) + ' at 1x against a target near 480.');

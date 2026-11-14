@@ -154,6 +154,45 @@ describe('scorecard harness', () => {
     expect(rowOf([built(3, 'rumah'), built(3, 'jalan'), built(3, 'warung')]).evidence).toContain('no counted builds');
   });
 
+  it('item 24 reads the old map five minutes after each promotion', () => {
+    const rows: Row[] = Array.from({ length: 10 }, (_, t) => ({
+      t, stage: 'rt', stars: 0, rupiah: 0, sabar: 0, viral: 0, odn: 0, dana: 0, stempel: 0, anggaran: 0, pop: 0, beds: 0, buildings: 0,
+      aman: 0, sejahtera: 0, laporan: 0, net: 0, nextKey: 0, dearKey: 0, useful: true, goalsDone: 0, goalsTotal: 1, acts: 0,
+    }));
+    // Two promotions per seed, each with a reading five minutes later.
+    const timeline = (seed: number, readings: number[]): Timeline => ({
+      bot: 'builder', seed, rows, ticks: 100,
+      events: [
+        { t: 0, kind: 'promote', to: 'rw' as StageId },
+        { t: 2, kind: 'promote', to: 'kelurahan' as StageId },
+        ...readings.map((income, i) => ({ t: 40 + i, kind: 'oldMap' as const, to: (i === 0 ? 'rw' : 'kelurahan') as StageId, income })),
+      ],
+      end: { stage: 'kelurahan', stars: 0, sejahtera: 0, laporan: 0, discovered: [] },
+      starTicks: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+      stageTicks: { rt: 0, rw: 0, kelurahan: 2 },
+    });
+    const seeds = (readings: (i: number) => number[]) => Array.from({ length: 10 }, (_, i) => timeline(i + 1, readings(i)));
+    const rowOf = (tls: Timeline[]) => buildScorecard({ builder: tls }, [], '', []).find((r) => r.n === 24)!;
+    const pass = rowOf(seeds(() => [120_000, 90_000]));
+    expect(pass.verdict).toBe('Pass');
+    expect(pass.evidence).toContain('above 0 in 10 of 10 seeds');
+    expect(pass.evidence).not.toContain('T2');
+    // A seed whose old map earns nothing fails, and the stage is named.
+    const quiet = rowOf(seeds((i) => (i === 9 ? [0, 90_000] : [120_000, 90_000])));
+    expect(quiet.verdict).toBe('Fail');
+    expect(quiet.evidence).toContain('old map earns nothing after rw');
+    // A promotion with no reading five minutes later cannot pass either.
+    const unread = seeds(() => [120_000, 90_000]);
+    unread[0].events = unread[0].events.filter((e) => !(e.kind === 'oldMap' && e.to === 'rw'));
+    expect(rowOf(unread).evidence).toContain('1 promotion(s) unread after 5 min');
+    // A seed that never promotes does not demonstrate the old map paying.
+    const still = seeds(() => [120_000, 90_000]);
+    still[0].events = [];
+    still[0].stageTicks = { rt: 0 };
+    still[0].starTicks = [];
+    expect(rowOf(still).verdict).toBe('Fail');
+  });
+
   it('item 8 reads the short and mid goals from the known future', () => {
     const rows: Row[] = Array.from({ length: 101 }, (_, t) => ({
       t, stage: 'rt', stars: 0, rupiah: 0, sabar: 0, viral: 0, odn: 0, dana: 0, stempel: 0, anggaran: 0, pop: 0, beds: 0, buildings: 0,
