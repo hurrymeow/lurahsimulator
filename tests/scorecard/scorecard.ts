@@ -235,8 +235,37 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
     add(7, 'Goal cadence and stop points', 'T1', verdict(bad.length === 0), bad.length ? `${bad.length} misses, for example ${bad.slice(0, 3).join('; ')}. ${notes[0]}` : `All gaps inside Goal max and Stop point. ${notes[0]}`);
   }
 
-  // 8. Three horizons.
-  none(8, 'Three horizons at once', 'T1', 'Needs goal ETAs, which the timeline does not compute yet. The long goal (2045 review) also does not exist beyond the Emas bar.');
+  // 8. Three horizons. Bots replay a known future, so a goal's ETA is the tick the timeline records it
+  // (decisions/scorecard-design-calls.md). The long value is Sejahtera, what the 2045 Emas bar shows.
+  {
+    let ticks = 0;
+    let shortOk = 0;
+    let midOk = 0;
+    let both = 0;
+    let pairs = 0;
+    let moved = 0;
+    for (const tl of builder) {
+      const goals = tl.events.filter((e) => e.kind === 'goal').map((e) => e.t);
+      const mids = tl.events.filter((e) => e.kind === 'star' || e.kind === 'sk' || e.kind === 'lomba').map((e) => e.t);
+      const soon = (ts: number[], t: number, withinS: number) => ts.some((x) => x >= t && (x - t) * SECONDS_PER_TICK <= withinS);
+      for (const r of tl.rows) {
+        if (min(r.t) <= 2) continue;
+        ticks++;
+        const short = soon(goals, r.t, 2 * 60);
+        const mid = soon(mids, r.t, 15 * 60);
+        if (short) shortOk++;
+        if (mid) midOk++;
+        if (short && mid) both++;
+      }
+      const stops = [...new Set(tl.events.filter((e) => e.kind === 'star' || e.kind === 'promote' || e.kind === 'report').map((e) => e.t))].sort((a, b) => a - b);
+      for (let i = 1; i < stops.length; i++) {
+        pairs++;
+        if (new Set(tl.rows.filter((r) => r.t >= stops[i - 1] && r.t <= stops[i]).map((r) => r.sejahtera)).size > 1) moved++;
+      }
+    }
+    const pct = (n: number) => (ticks ? ((n / ticks) * 100).toFixed(0) : '0');
+    add(8, 'Three horizons at once', 'T1', verdict(ticks > 0 && both / ticks >= 0.9 && moved === pairs), `Short goal (a checklist line met) within 2 min on ${pct(shortOk)}% of ${ticks} builder ticks after minute 2, mid goal (a star, SK or Lomba) within 15 min on ${pct(midOk)}% (both ${pct(both)}%, bar 90%). Long: Sejahtera, the value the 2045 Emas bar shows, changed between ${moved} of ${pairs} consecutive stop points.`);
+  }
 
   // 9. Goals say what is missing.
   {

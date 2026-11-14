@@ -67,6 +67,7 @@ export type TLEvent =
   | { t: number; kind: 'star'; stage: StageId; n: number }
   | { t: number; kind: 'sk' }
   | { t: number; kind: 'promote'; to: StageId }
+  | { t: number; kind: 'lomba' }
   | { t: number; kind: 'popup'; id: string }
   | { t: number; kind: 'combo'; id: string }
   | { t: number; kind: 'unlock'; id: string }
@@ -567,8 +568,11 @@ export function runBot(bot: BotId, seed: number, ticks: number, opts: RunOpts = 
         stageTicks[s.stage.current] = t;
       }
       const sabarBefore = s.res.sabar;
+      const lombaBefore = s.lomba?.held === true || s.lomba?.due === true;
       const fx = tick(s);
       c.fx.push(...fx);
+      // The Lomba Agustusan day: held, or skipped when the bot picked no contests. Item 8's mid horizon counts it.
+      if (!lombaBefore && (s.lomba?.held || s.lomba?.due)) events.push({ t, kind: 'lomba' });
       // A bot that answers an event after the tick sees it next tick, as a player would.
       for (const e of fx) {
         if (e.kind === 'event') events.push({ t, kind: 'popup', id: e.eventId });
