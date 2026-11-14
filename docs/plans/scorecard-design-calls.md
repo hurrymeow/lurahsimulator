@@ -30,7 +30,7 @@ Changes from `decisions/scorecard-calls.md` (2026-11-07): that note kept rows 8 
 
 ## Tasks
 
-Every task: put any local measuring in `tests/scorecard/measure-<task>.test.ts` (for example `measure-T1.test.ts`). That path is in each task's Files, so the gate accepts it; the reviewer deletes it in the review commit. Name no other scratch file; the gate rejects any path not in Files.
+Every task: put any local measuring in `tests/scorecard/measure-<task>.test.ts` (for example `measure-T1.test.ts`). That path is in each task's Files, so the gate accepts it; the reviewer deletes it in the review commit. Use exactly that one file name for all scratch work: no second file such as `measure-T3b.test.ts`, and no other new test file unless Files names it. The gate rejects the whole run for any path not in Files.
 
 Run one at a time on the executor, in this order (T14 replaces T1. T15 and T2 are bot tuning for a Sonnet thread; the executor runs T7, T3, T4, T6, T8 to T12, then T5 and T13). T1 to T6 all touch `tests/scorecard/driver.ts` or `scorecard.ts`, so a later task starts from main after the earlier one merges. After T1, T2 and T3 merge, run Nightly and re-judge items 7, 10, 17, 21 and 23.
 
