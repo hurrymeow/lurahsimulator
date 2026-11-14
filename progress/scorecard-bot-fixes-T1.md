@@ -1,0 +1,10 @@
+seed 1: 0.3, 8.4, 10.0, 10.9, 21.2, 27.2 | end kecamatan 0
+seed 2: 0.3, 7.7, 9.2, 10.0, 21.7, 25.6 | end kecamatan 0
+seed 3: 0.3, 8.9, 10.4, 11.2, 24.0, 27.2 | end kecamatan 0
+seed 4: 0.3, 7.9, 9.5, 10.5, 23.5, 25.6 | end kecamatan 0
+seed 5: 0.3, 8.1, 9.9, 10.8, 23.3, 25.6 | end kecamatan 0
+seed 6: 0.3, 7.9, 9.9, 10.7, 22.1, 24.1 | end kecamatan 0
+seed 7: 0.3, 7.9, 8.9, 9.9, 22.3, 27.2 | end kecamatan 0
+seed 8: 0.3, 8.3, 10.4, 11.2, 23.7, 27.2 | end kecamatan 0
+seed 9: 0.3, 8.4, 9.7, 10.7, 22.8, 25.6 | end kecamatan 0
+seed 10: 0.3, 7.7, 10.5, 11.7, 22.4, 25.6 | end kecamatan 0

@@ -404,6 +404,8 @@ interface Plan {
   combo: 'book' | 'hint' | 'none';
   /** First tick at which the bot reads the book. Before it, money goes to growth. */
   comboFrom: number;
+  /** Buys only the combo core (`posRonda`, `warung`, `wifi`) while a combo line of the next star is open. */
+  comboFirst?: boolean;
   /** Per-kind limits that replace the default of 3. */
   caps?: Record<string, number>;
   /** Hires staff and answers raises. */
@@ -424,7 +426,7 @@ const needsFirst = (s: GameState): string[] => ['kebunSayur', 'posSatpam', 'lamp
 
 const BASE: Plan = { every: 1, buffer: 200_000, perTick: 2, upgradeAt: 2_000_000, announce: 'low', event: 'free', fund: true, order: builderOrder, combo: 'book', comboFrom: COMBO_HINT_MONTH, hire: true, visit: false, realisasi: false };
 const PLANS: Partial<Record<BotId, Plan>> = {
-  builder: { ...BASE, visit: true },
+  builder: { ...BASE, visit: true, comboFirst: true },
   shopkeeper: { ...BASE, order: shopsFirst, visit: true, comboFrom: 0 },
   safety: { ...BASE, order: safetyFirst, event: 'paid', caps: { posRonda: 2, posSatpam: 1, lampuTaman: 2, bidan: 1 } },
   cheapskate: { ...BASE, every: 4, buffer: 3_000_000, perTick: 1, upgradeAt: null, announce: 'never', hire: false },
@@ -475,7 +477,10 @@ function playPlan(c: Ctx, p: Plan): void {
   if (p.combo === 'hint' && nextStep(s)?.kind === 'rwCombo' && count(s, 'balaiRW') === 0) buy(c, 'balaiRW', p.buffer);
   // The RW combo line points to Build, Combo, so a player who reads it puts the pieces side by side.
   if ((nextStarChecklist(s) ?? []).some((l) => !l.done && l.goal.kind === 'rwCombos')) buildCombo(c, p.buffer, RW_PIECES);
-  buildFrom(c, p.order(s), p.buffer, p.perTick, p.caps);
+  // A player who reads the checklist builds the combo before the generic list, but keeps buying the core three.
+  const comboOpen = (nextStarChecklist(s) ?? []).some((l) => !l.done && (l.goal.kind === 'combos' || l.goal.kind === 'rwCombos'));
+  const order = p.comboFirst && comboOpen ? p.order(s).filter((id) => ['posRonda', 'warung', 'wifi'].includes(id)) : p.order(s);
+  buildFrom(c, order, p.buffer, p.perTick, p.caps);
   staffWhen(c, p);
   realisasiWhen(c, p);
   announceWhen(c, p.announce);
