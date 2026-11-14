@@ -30,6 +30,8 @@ Changes from `decisions/scorecard-calls.md` (2026-11-07): that note kept rows 8 
 
 ## Tasks
 
+Every task: measure with a scratch test file if needed, then delete it before you finish. Commit only the paths in Files; the executor gate rejects any other path.
+
 Run one at a time on the executor, in this order. T1 to T6 all touch `tests/scorecard/driver.ts` or `scorecard.ts`, so a later task starts from main after the earlier one merges. After T1, T2 and T3 merge, run Nightly and re-judge items 7, 10, 17, 21 and 23.
 
 ### T1. Strategy bots build the combo the strip names (Sonnet, executor trial)
