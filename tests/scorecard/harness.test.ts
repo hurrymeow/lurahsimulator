@@ -234,6 +234,16 @@ describe('scorecard harness', () => {
       { label: 'Coin', outcomes: [{ weight: 1, res: { sabar: 2 }, result: '' }, { weight: 1, res: { sabar: -2 }, result: '' }], result: '' },
       { label: 'Flat', res: { sabar: 0 }, result: '' },
     ])], () => expect(rowOf().verdict).toBe('Pass'));
+    // An outcome's income swing counts: the gamble's mean sabar gain is paid for with a 40% chance of -5% income,
+    // which the flat decline avoids, so neither dominates the other.
+    withEvents([canary([
+      { label: 'Gamble', outcomes: [{ weight: 3, res: { sabar: 2 }, result: '' }, { weight: 2, incomePct: -0.05, result: '' }], result: '' },
+      { label: 'Decline', res: { sabar: -1 }, result: '' },
+    ])], () => {
+      const row = rowOf();
+      expect(row.verdict).toBe('Pass');
+      expect(row.evidence).not.toContain('canaryDom');
+    });
     // The shipped content never reads Unknown either.
     expect(rowOf().verdict).not.toBe('Unknown');
   });

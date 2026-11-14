@@ -699,7 +699,7 @@ Approved by Hari, 2026-10-31. The baseline agents use to judge mechanics, pacing
 - **Kairosoft:** in a dungeon, adventurers earn nothing for the town [DV]. Harder contracts pay more, but failing costs reputation [GDS].
 - **Good:** each option names what you give up.
 - **Bad:** a free option that is also the best.
-- **Evidence:** T1 data check on event options.
+- **Evidence:** T1 data check on event options. Rolled outcomes count by their weighted mean, income swings included. Viral cuts both ways, so a Viral difference is a trade.
 - **Pass:** 0 strictly dominated options.
 
 #### 19. Laporan vs Sejahtera
