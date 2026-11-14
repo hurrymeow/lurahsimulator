@@ -1,0 +1,7 @@
+# T1: strategy bots build the combo the strip names — stopped
+
+The exact change was implemented and measured, then reverted: it does not meet T1's own done-when. `shopkeeper` RT 1★ moved from 4.7 to 7.9-8.8 min on seeds 1-3 (seed 1: 7.3 → 8.0), and `npx vitest run tests/scorecard/harness.test.ts` failed the Asisten test (1 Asisten, needs 2) because the extra targeted `buildCombo` call spends the builder's cash. The cause is not `shopsFirst` spending cash on the tick the combo call runs: the call already sits before `buildFrom` in `playPlan`. `shopsFirst` fills the map first, not the kas.
+
+At week 0 the shopkeeper places Rumah Makan at (6,7), Warung at (5,7) and Rumah Makan at (7,7) — the only three road-fed lots within radius 1 of the Kantor RT at (6,8). The strip does not name a combo until tick 4, after the residents line is met (`starWaitsOnCombo`), and `easiestCombo` then names Rapat Malam (Kantor RT + Pos Ronda; 800k before a Pos Ronda exists, 0 after). By tick 4 every legal near lot is taken, so `buildCombo`'s extra Pos Ronda lands at (8,9) and (5,10), two tiles or more from the Kantor, and its move branch needs `def('posRonda').maxCount` (8) copies, which the 3+1 cap never reaches. A player reading the strip at that point could not place the piece either without first clearing a lot.
+
+No code change is shipped. Local evidence is in `tests/scorecard/measure-T1.test.ts`; before/after times are in `progress/scorecard-design-calls-T1.md`.
