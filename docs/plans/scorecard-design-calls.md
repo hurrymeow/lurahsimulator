@@ -32,7 +32,7 @@ Changes from `decisions/scorecard-calls.md` (2026-11-07): that note kept rows 8 
 
 Every task: put any local measuring in `tests/scorecard/measure-<task>.test.ts` (for example `measure-T1.test.ts`). That path is in each task's Files, so the gate accepts it; the reviewer deletes it in the review commit. Name no other scratch file; the gate rejects any path not in Files.
 
-Run one at a time on the executor, in this order (T14 replaces T1; T15 runs next, then T2). T1 to T6 all touch `tests/scorecard/driver.ts` or `scorecard.ts`, so a later task starts from main after the earlier one merges. After T1, T2 and T3 merge, run Nightly and re-judge items 7, 10, 17, 21 and 23.
+Run one at a time on the executor, in this order (T14 replaces T1. T15 and T2 are bot tuning for a Sonnet thread; the executor runs T7, T3, T4, T6, T8 to T12, then T5 and T13). T1 to T6 all touch `tests/scorecard/driver.ts` or `scorecard.ts`, so a later task starts from main after the earlier one merges. After T1, T2 and T3 merge, run Nightly and re-judge items 7, 10, 17, 21 and 23.
 
 ### T1. Strategy bots build the combo the strip names (Sonnet, executor trial) — done as a diagnosis; superseded by T14
 - Files: `tests/scorecard/measure-T1.test.ts`, `tests/scorecard/driver.ts`, `decisions/scorecard-design-calls-T1.md`, `progress/scorecard-design-calls-T1.md`
@@ -155,7 +155,7 @@ T1 found the cause of the shopkeeper's slow RT 1★ (`decisions/scorecard-design
 - Done when: `npm run typecheck`, `npm test` and `npx vitest run tests/scorecard/harness.test.ts` pass. Local `runBot('shopkeeper', seed, 200)` on seeds 1 to 3: report RT 1★ and RT 2★ before and after in the progress file (goal: RT 1★ under 2.5 min). If the goal is missed, say why and stop.
 - Don't touch: combo data, UI, i18n, TODO.md. No refactors. No e2e needed.
 
-### T15. buildCombo places each piece in reach of its partner (Sonnet, executor trial)
+### T15. buildCombo places each piece in reach of its partner (Sonnet thread, not executor: PR #432 regressed the builder, see decisions/scorecard-design-calls-T15.md)
 T14's review trace (`decisions/scorecard-design-calls-T14.md`): on shopkeeper seed 2, `buildCombo` put six Kebun Sayur and four Pos Ronda where the combo never fires. The slow shopkeeper RT 1★ is this bot bug.
 - Files: `tests/scorecard/measure-T15.test.ts`, `tests/scorecard/driver.ts`, `decisions/scorecard-design-calls-T15.md`, `progress/scorecard-design-calls-T15.md`
 - Exact changes:
