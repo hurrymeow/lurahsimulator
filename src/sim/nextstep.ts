@@ -2,17 +2,18 @@ import { COMBOS } from '../data/combos';
 import { bName, cName, t } from '../i18n';
 import { STEMPEL } from './balance';
 import { def } from './content';
-import { parseNeed, ruleCanHold } from './combos';
+import { connectedRoad, FLAT, hasRoadBeside } from './access';
+import { baseDef, parseNeed, ruleCanHold } from './combos';
 import { RW_COMBOS } from '../data/higher/rw';
 import { gateOpen } from './gate';
-import { requirementGaps } from './rules';
-import { attractTarget, buildCost, count, housing, population } from './state';
+import { requirementGaps, siteGaps } from './rules';
+import { attractTarget, buildCost, count, housing, population, withinEdges } from './state';
 import { placeableDefs } from './content';
 import { canPromote, nextStarChecklist, starChecklist } from './stages';
 import { viewOf } from './neighbourView';
 import { openRoles, queueMonths, staffSlots } from './staff';
 import { ROLE_FX } from '../data/staff';
-import type { GameState } from './types';
+import { GRID_H, GRID_W, type GameState } from './types';
 
 /** Game month when the first combo is pointed out by name: about 1.6 minutes at 1x (8s a week), so a player who has not found one still earns 1★ within 2 minutes. */
 export const COMBO_HINT_MONTH = 12;
@@ -22,8 +23,25 @@ export function easiestCombo(s: GameState) {
   let best: { name: string; pieces: string; ids: string[]; cost: number } | null = null;
   for (const c of COMBOS) {
     if (c.retired || s.discovered.includes(c.id)) continue;
-    const defs = c.needs.map((n) => def(parseNeed(n).id));
+    const ids = c.needs.map((n) => parseNeed(n).id);
+    const defs = ids.map((id) => def(id));
     if (defs.some((d) => !d.placeable || requirementGaps(s, d, { ignoreLimit: true }).length)) continue;
+    // A hint the player cannot act on is worse than none: every missing piece needs a free legal site in reach of a
+    // piece that already stands (or anywhere, when none does).
+    const standing = s.buildings.filter((b) => ids.includes(baseDef(b)));
+    const conn = connectedRoad(s);
+    // A piece that needs a path only counts as placeable where it would work, or the combo would never fire.
+    const needsRoad = (d: (typeof defs)[number]) => !d.roadless && !FLAT.has(d.id) && d.category !== 'decoration' && !d.id.startsWith('kantor') && (d.scope ?? 'rt') === 'rt';
+    let usable = true;
+    for (const d of defs) {
+      if (count(s, d.id)) continue;
+      const inReach = (x: number, y: number) => !standing.length || standing.some((m) => withinEdges({ x, y, def: d.id }, m, c.radius));
+      const fed = (x: number, y: number) => !needsRoad(d) || hasRoadBeside(conn, { def: d.id, x, y });
+      let room = false;
+      for (let y = 0; y < GRID_H && !room; y++) for (let x = 0; x < GRID_W && !room; x++) if (inReach(x, y) && fed(x, y) && siteGaps(s, d, x, y).length === 0) room = true;
+      if (!room) { usable = false; break; }
+    }
+    if (!usable) continue;
     const cost = defs.reduce((sum, d) => sum + (count(s, d.id) ? 0 : d.cost), 0);
     if (!best || cost < best.cost) best = { name: cName(c), pieces: defs.map(bName).join(', '), ids: defs.map((d) => d.id), cost };
   }

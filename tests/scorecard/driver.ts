@@ -466,6 +466,14 @@ function playPlan(c: Ctx, p: Plan): void {
   if (p.combo === 'hint' && nextStep(s)?.kind === 'rwCombo' && count(s, 'balaiRW') === 0) buy(c, 'balaiRW', p.buffer);
   // The RW combo line points to Build, Combo, so a player who reads it puts the pieces side by side.
   if ((nextStarChecklist(s) ?? []).some((l) => !l.done && l.goal.kind === 'rwCombos')) buildCombo(c, p.buffer, RW_PIECES);
+  // When the strip names a combo and nothing else is open on the next star, a book reader builds that combo first.
+  if (p.combo === 'book' && nextStep(s)?.kind === 'combo') {
+    const open = (nextStarChecklist(s) ?? []).filter((l) => !l.done);
+    if (open.length > 0 && open.every((l) => l.goal.kind === 'combos')) {
+      const pick = easiestCombo(s);
+      if (pick) buildCombo(c, p.buffer, pick.ids);
+    }
+  }
   buildFrom(c, p.order(s), p.buffer, p.perTick, p.caps);
   staffWhen(c, p);
   realisasiWhen(c, p);
