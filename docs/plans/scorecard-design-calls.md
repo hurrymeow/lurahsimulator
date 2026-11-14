@@ -30,12 +30,12 @@ Changes from `decisions/scorecard-calls.md` (2026-11-07): that note kept rows 8 
 
 ## Tasks
 
-Every task: measure with a scratch test file if needed, then delete it before you finish. Commit only the paths in Files; the executor gate rejects any other path.
+Every task: put any local measuring in `tests/scorecard/measure-<task>.test.ts` (for example `measure-T1.test.ts`). That path is in each task's Files, so the gate accepts it; the reviewer deletes it in the review commit. Name no other scratch file; the gate rejects any path not in Files.
 
 Run one at a time on the executor, in this order. T1 to T6 all touch `tests/scorecard/driver.ts` or `scorecard.ts`, so a later task starts from main after the earlier one merges. After T1, T2 and T3 merge, run Nightly and re-judge items 7, 10, 17, 21 and 23.
 
 ### T1. Strategy bots build the combo the strip names (Sonnet, executor trial)
-- Files: `tests/scorecard/driver.ts`, `decisions/scorecard-design-calls-T1.md`, `progress/scorecard-design-calls-T1.md`
+- Files: `tests/scorecard/measure-T1.test.ts`, `tests/scorecard/driver.ts`, `decisions/scorecard-design-calls-T1.md`, `progress/scorecard-design-calls-T1.md`
 - Exact changes:
   1. In `playPlan`, before `buildFrom`, for any plan with `combo: 'book'`: when `nextStep(s)?.kind === 'combo'`, take `easiestCombo(s)` and call `buildCombo(c, p.buffer, pick.ids)`, as the `hint` branch does. Leave the `hint`, `random`, `idle` and `cheapskate` plans as they are.
   2. Find why shopkeeper's first combo lands at 4.9 min although `buildCombo` runs from `COMBO_HINT_MONTH`. If `shopsFirst` spends the cash first, move the combo call ahead of the order for the tick the strip names a combo. Note the cause in the decisions file.
@@ -43,14 +43,14 @@ Run one at a time on the executor, in this order. T1 to T6 all touch `tests/scor
 - Don't touch: `src/`, TODO.md, `tests/e2e/`. No refactors. No e2e needed.
 
 ### T2. Safety bot reads the RW combo line (Sonnet, executor trial)
-- Files: `tests/scorecard/driver.ts`, `decisions/scorecard-design-calls-T2.md`, `progress/scorecard-design-calls-T2.md`
+- Files: `tests/scorecard/measure-T2.test.ts`, `tests/scorecard/driver.ts`, `decisions/scorecard-design-calls-T2.md`, `progress/scorecard-design-calls-T2.md`
 - Exact changes:
   1. Check that the `rwCombos` branch in `playPlan` (`buildCombo(c, p.buffer, RW_PIECES)`) also runs for `safety`, and that its `caps` do not block a piece. If `count(s, 'balaiRW') === 0` blocks it, buy Balai RW first for every plan, not only `hint`.
 - Done when: typecheck and `npx vitest run tests/scorecard/harness.test.ts` pass. A local safety run on seeds 1 to 3 to RW 2★ shows the RW 1★ to 2★ gap; write the before and after in the progress file.
 - Don't touch: `src/`, other plans' orders, TODO.md. No refactors. No e2e needed.
 
 ### T3. Item 21 counts combos right and measures hints by the book (Sonnet, executor trial)
-- Files: `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `GAME-DESIGN.md`, `decisions/scorecard-design-calls-T3.md`, `progress/scorecard-design-calls-T3.md`
+- Files: `tests/scorecard/measure-T3.test.ts`, `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `GAME-DESIGN.md`, `decisions/scorecard-design-calls-T3.md`, `progress/scorecard-design-calls-T3.md`
 - Exact changes:
   1. In item 21, check `min(e.t) < 15` and the `combo` events for the random bot. Random reaches RT 1★ (needs a combo) in 7 of 10 seeds by minute 12, so the median count cannot be 0. Fix the count.
   2. Hint share: use the builder runs' median `end.discovered.length` over `found.size`, and say "book reader" in the evidence text. Keep the `hint` bot's share in the text as "strip only".
@@ -60,7 +60,7 @@ Run one at a time on the executor, in this order. T1 to T6 all touch `tests/scor
 - Don't touch: `src/`, the combo data, TODO.md. No e2e needed.
 
 ### T4. Item 1 counts any goal-moving action (Sonnet, executor trial)
-- Files: `tests/scorecard/driver.ts`, `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T4.md`, `progress/scorecard-design-calls-T4.md`
+- Files: `tests/scorecard/measure-T4.test.ts`, `tests/scorecard/driver.ts`, `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T4.md`, `progress/scorecard-design-calls-T4.md`
 - Exact changes:
   1. Add a row field `useful: boolean`: true when any of these is affordable now: a new non-decor kind; a Rumah when beds are under residents plus 5; the missing piece of `easiestCombo(s)`; an upgrade that `checkUpgrade` allows; a repair; a permit skip; a neighbour visit (`checkVisit`).
   2. Item 1 counts a stall run while `!r.useful && r.goalsDone < r.goalsTotal`. Keep the 60s bar. Update the evidence text to name the action set.
@@ -68,7 +68,7 @@ Run one at a time on the executor, in this order. T1 to T6 all touch `tests/scor
 - Don't touch: `nextKey` (items 14 and 15 use it), `src/`, TODO.md. No e2e needed.
 
 ### T5. Builder uses the RT 1★ unlock and its Orang Dalam (Sonnet, executor trial)
-- Files: `tests/scorecard/driver.ts`, `decisions/scorecard-design-calls-T5.md`, `progress/scorecard-design-calls-T5.md`
+- Files: `tests/scorecard/measure-T5.test.ts`, `tests/scorecard/driver.ts`, `decisions/scorecard-design-calls-T5.md`, `progress/scorecard-design-calls-T5.md`
 - Exact changes:
   1. Check why the builder's `odn` never falls in B1 (1 to 5 min). If it never places a permit building there, make `builderOrder` place one Kosan (or Barbershop) right after RT 1★ when affordable. `maintain` already skips the permit.
   2. If `odn` does fall but inside the same tick as the +1 reward, record that in the decisions file instead and leave the driver.
@@ -76,7 +76,7 @@ Run one at a time on the executor, in this order. T1 to T6 all touch `tests/scor
 - Don't touch: `src/`, other plans, TODO.md. No e2e needed.
 
 ### T6. Item 15 uses the thing worth saving for, and the growth ratio (Sonnet, executor trial)
-- Files: `tests/scorecard/driver.ts`, `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T6.md`, `progress/scorecard-design-calls-T6.md`
+- Files: `tests/scorecard/measure-T6.test.ts`, `tests/scorecard/driver.ts`, `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T6.md`, `progress/scorecard-design-calls-T6.md`
 - Exact changes:
   1. Add a row field `dearKey`: the dearest non-decor, non-housing kind the player can build now and does not own (same filter as `nextKeyCost`, `Math.max`).
   2. Item 15 uses `dearKey` in place of `nextKey`. Keep the bars (median 30 to 120s, 95th percentile 300s).
@@ -85,7 +85,7 @@ Run one at a time on the executor, in this order. T1 to T6 all touch `tests/scor
 - Don't touch: item 14 and `nextKey`, `src/`, TODO.md. No e2e needed.
 
 ### T7. B0 novelty bar is two ticks (Haiku)
-- Files: `GAME-DESIGN.md`, `tests/scorecard/scorecard.ts`, `decisions/scorecard-design-calls-T7.md`, `progress/scorecard-design-calls-T7.md`
+- Files: `tests/scorecard/measure-T7.test.ts`, `GAME-DESIGN.md`, `tests/scorecard/scorecard.ts`, `decisions/scorecard-design-calls-T7.md`, `progress/scorecard-design-calls-T7.md`
 - Exact changes:
   1. In `GAME-DESIGN.md`, replace `| B0 Hook | 0–1 min | First house by 30s | 10s, no popups | tutorial steps | n/a | n/a |` with `| B0 Hook | 0–1 min | First house by 30s | 16s (two ticks), no popups | tutorial steps | n/a | n/a |`
   2. In `tests/scorecard/scorecard.ts` line 63, replace `const NOVELTY_MAX_S = [10, 30, 30, 45, 60];` with `const NOVELTY_MAX_S = [16, 30, 30, 45, 60];`
@@ -95,7 +95,7 @@ Run one at a time on the executor, in this order. T1 to T6 all touch `tests/scor
 - Don't touch: other bars, `src/`, TODO.md. No refactors. No e2e needed.
 
 ### T8. Item 12 counts reward kinds by category (Sonnet, executor trial)
-- Files: `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T8.md`, `progress/scorecard-design-calls-T8.md`
+- Files: `tests/scorecard/measure-T8.test.ts`, `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T8.md`, `progress/scorecard-design-calls-T8.md`
 - Exact changes:
   1. Count kinds per star as distinct members of: non-decor building (`category !== 'decoration'`), decor, resource reward (`star.reward`), new system (a stage flag or verb the star opens; list how you found them in the decisions file).
   2. Add "a new system at least every 2 stars" to the check, per §8.
@@ -104,7 +104,7 @@ Run one at a time on the executor, in this order. T1 to T6 all touch `tests/scor
 - Don't touch: `src/data/`, TODO.md. No e2e needed.
 
 ### T9. Item 8 from hindsight ETAs (Sonnet, executor trial)
-- Files: `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T9.md`, `progress/scorecard-design-calls-T9.md`
+- Files: `tests/scorecard/measure-T9.test.ts`, `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T9.md`, `progress/scorecard-design-calls-T9.md`
 - Exact changes:
   1. For each builder tick after minute 2: short = a `goal` event within the next 2 min; mid = a `star`, `sk` or Lomba event within the next 15 min. Pass if both hold in at least 90% of ticks, per §8.
   2. Long: the Emas bar (or the closest stored value; name it) changes at least once between consecutive stop points. If no such value is in the row, add it to the row in `driver.ts` and list the file under Files in the PR.
@@ -113,7 +113,7 @@ Run one at a time on the executor, in this order. T1 to T6 all touch `tests/scor
 - Don't touch: `src/`, TODO.md. No e2e needed.
 
 ### T10. Item 16 spend proxy (Sonnet, executor trial)
-- Files: `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T10.md`, `progress/scorecard-design-calls-T10.md`
+- Files: `tests/scorecard/measure-T10.test.ts`, `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T10.md`, `progress/scorecard-design-calls-T10.md`
 - Exact changes:
   1. From builder `built` events, sum `def(id).cost` per kind per band, excluding Rumah, Warung and Jalan Setapak. Fail if one kind has the top share in more than 2 bands.
   2. Evidence text says "proxy: spend share, not star time saved".
@@ -121,7 +121,7 @@ Run one at a time on the executor, in this order. T1 to T6 all touch `tests/scor
 - Don't touch: `src/`, TODO.md. No e2e needed.
 
 ### T11. Item 18 compares rolled options on average (Sonnet, executor trial)
-- Files: `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T11.md`, `progress/scorecard-design-calls-T11.md`
+- Files: `tests/scorecard/measure-T11.test.ts`, `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T11.md`, `progress/scorecard-design-calls-T11.md`
 - Exact changes:
   1. For options with rolled outcomes, use the probability-weighted mean of each resource change. Then run the same dominance check.
   2. Name any dominated option in the evidence, and give the verdict Pass or Fail, not Unknown.
@@ -129,7 +129,7 @@ Run one at a time on the executor, in this order. T1 to T6 all touch `tests/scor
 - Don't touch: `src/data/events*.ts`, TODO.md. No e2e needed.
 
 ### T12. Item 24 old map keeps paying (Sonnet, executor trial)
-- Files: `tests/scorecard/driver.ts`, `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T12.md`, `progress/scorecard-design-calls-T12.md`
+- Files: `tests/scorecard/measure-T12.test.ts`, `tests/scorecard/driver.ts`, `tests/scorecard/scorecard.ts`, `tests/scorecard/harness.test.ts`, `decisions/scorecard-design-calls-T12.md`, `progress/scorecard-design-calls-T12.md`
 - Exact changes:
   1. At each promotion, note the uids of buildings that exist. 5 min later, sum the weekly income of those still standing.
   2. Item 24 passes the second half when that sum is above 0 for every promotion in 10 of 10 seeds. Drop "is T2" from the text and use `verdict`, not `partial`.
@@ -137,7 +137,7 @@ Run one at a time on the executor, in this order. T1 to T6 all touch `tests/scor
 - Don't touch: `src/`, TODO.md. No e2e needed.
 
 ### T13. Diagnose the stuck shopkeeper seed and the two stalled takeovers (Sonnet, executor trial)
-- Files: `decisions/scorecard-design-calls-T13.md`, `progress/scorecard-design-calls-T13.md`, and `tests/scorecard/driver.ts` only if the cause is in a bot
+- Files: `tests/scorecard/measure-T13.test.ts`, `decisions/scorecard-design-calls-T13.md`, `progress/scorecard-design-calls-T13.md`, and `tests/scorecard/driver.ts` only if the cause is in a bot
 - Exact changes:
   1. Run `runBot('shopkeeper', 10, …)` locally and find the RT 2★ line it never meets, and why.
   2. Run the takeover test (`tests/scorecard/run-takeover.test.ts`) and find the 2 runs that gain nothing. Name the state and the cause.
