@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BOTS, runBot, type Row, type Timeline } from './driver';
 import { takeover } from './takeover';
-import { buildScorecard, lintTraitsCombos, simText } from './scorecard';
+import { buildScorecard, lintTraitsCombos, longestSystemRun, simText, starKindRows, starKinds, type StarKindRow } from './scorecard';
 import { TRAITS } from '../../src/data/staff';
 import { STAGES } from '../../src/data/stages';
 import { def } from '../../src/sim/content';
@@ -86,6 +86,21 @@ describe('scorecard harness', () => {
     expect(row(r27).verdict).toBe('Pass');
     expect(row(r27.map((x) => ({ ...x, notes: { 'progress-on-screen': 'true' } }))).verdict).toBe('Pass');
     expect(row(r27.map((x) => ({ ...x, notes: undefined }))).verdict).toBe('Pass');
+  });
+
+  it('item 12 counts reward kinds by category and a system every 2 stars', () => {
+    // A star that opens a shop and a decor, and pays a resource, gives three kinds.
+    expect(starKinds('rt', 0, { goals: [], unlocks: ['kosan', 'pohonRindang'], reward: { orangDalam: 1 } }).sort()).toEqual(['building', 'decor', 'reward', 'system']);
+    // A stage building with an `fx` block is a new system, even with no decor and no reward.
+    expect(starKinds('rw', 0, { goals: [], unlocks: ['posyandu'] }).sort()).toEqual(['building', 'system']);
+    // Two plain buildings are one kind.
+    expect(starKinds('kecamatan', 0, { goals: [], unlocks: ['baliho', 'tamanKota'] })).toEqual(['building']);
+    // The bar: a run of 2 stars without a new system fails, a run of 1 passes.
+    const rows = (systems: boolean[]): StarKindRow[] => systems.map((on, i) => ({ stage: 'rt', star: i, kinds: on ? ['system'] : ['building'] }));
+    expect(longestSystemRun(rows([true, false, true]))).toBe(1);
+    expect(longestSystemRun(rows([false, false, true]))).toBe(2);
+    // Every star of the ladder is covered.
+    expect(starKindRows()).toHaveLength(STAGES.length * 3);
   });
 
   it('item 15 compares income growth with unlock cost growth per stage', () => {

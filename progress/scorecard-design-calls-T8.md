@@ -1,0 +1,5 @@
+# T8: item 12 counts reward kinds by category
+
+Item 12 in `tests/scorecard/scorecard.ts` now counts each star's distinct reward kinds (non-decor building, decor, resource reward, new system) and checks that a new system arrives at least every 2 stars; `starKinds`, `starKindRows` and `longestSystemRun` are exported and `tests/scorecard/harness.test.ts` covers the counting and the bar. On today's stage data the row reads Fail: several stars have under 2 kinds and the longest run without a new system is 5 stars. No stage data changed.
+
+The stars still at one kind: **Kecamatan 1★** (Baliho and Taman Kota, both plain non-decor buildings). Stars with no unlock or reward kind at all: **RW 3★, Kelurahan 2★, Kelurahan 3★, Kecamatan 2★, Kecamatan 3★**. Every other star passes the 2+ kinds bar: RT 1★ (building, decor, reward, system), RT 2★ (building, decor), RT 3★ (building, decor, system), RW 1★ (building, system), RW 2★ (building, system) and Kelurahan 1★ (building, system). Kelurahan 2★ shows no kinds because its Terminal and Taman open from `PATH_UNLOCKS`, which this row does not read (see the decisions file).
