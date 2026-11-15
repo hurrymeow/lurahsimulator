@@ -2533,6 +2533,26 @@ test.describe('build mode', () => {
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.buildings.filter((b: any) => b.def === 'rumah').length)).toBe(3);
   });
 
+  test('the Place and Cancel float is under its tile in the same frame it appears', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    // Move the ghost and read the float in one JavaScript turn: no animation frame runs in between. It used to show at the
+    // map's top-left corner for a frame before it was placed, which made the test above flaky.
+    const r = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.startPlacing('rumah');
+      const k = app.s.buildings.find((b: any) => b.def === 'kantorRT');
+      app.moveGhost({ x: k.x, y: k.y - 1 });
+      const f = document.getElementById('place-float')!.getBoundingClientRect();
+      const m = document.getElementById('map')!.getBoundingClientRect();
+      const c = app.view.tileCentre(app.view.ghost.x, app.view.ghost.y);
+      return { hidden: document.getElementById('place-float')!.hidden, midX: f.x + f.width / 2 - m.x, midY: f.y + f.height / 2 - m.y, tileX: c.x, tileY: c.y };
+    });
+    expect(r.hidden).toBe(false);
+    expect(Math.abs(r.midY - r.tileY), JSON.stringify(r)).toBeLessThan(160);
+    expect(Math.abs(r.midX - r.tileX), JSON.stringify(r)).toBeLessThan(200);
+  });
+
   test('picking a building drops nothing until a free tile is tapped; then the ghost can be dragged', async ({ page }) => {
     await start(page);
     await dismissModals(page);
