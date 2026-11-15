@@ -1091,7 +1091,13 @@ export class App {
     }
   }
 
+  /** Refreshes the placement bar and float, and positions the float at once: left to the next frame, it flashed at the map's corner. */
   private updatePlacing(): void {
+    this.fillPlacing();
+    this.positionPlace();
+  }
+
+  private fillPlacing(): void {
     if (!this.placing) return;
     const d = def(this.placing);
     const info = document.getElementById('place-info')!;
