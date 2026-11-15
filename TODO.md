@@ -14,7 +14,8 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Problem: `tests/e2e/ui.spec.ts:2489` fails both tries on some runs, at 320px and 430px. It turned main red at 9442893 (run 43569616236) and failed first CI on several scorecard-only executor PRs (#439, #440, #441) that touch no UI.
   - Why: a red main blocks deploy, and each flake costs a full CI rerun. The failing check is `toBeLessThan`, so the float lands more than 160px from the tile or off-centre on some runs.
   - Suggested solution: log `fb` and `at` on failure, then wait for the map pan or camera to settle before reading the tile centre (or read it after the float shows). Keep the bars; fix the timing.
-  - `[ ] open · · · done when:` the spec passes 20 repeats at 320px and 430px (`--repeat-each=20`) and two PR CI runs in a row show no retry on it.
+  - #454 made the test wait for the map to settle; it still flaked once at 320px in #454's and #455's CI. Real cause: the float showed for one frame at the map's corner before it was placed. #456 places it at once and adds a same-frame check (`decisions/place-float-first-frame.md`).
+  - `claimed · Claude (sweep) · 2026-11-15 · done when:` the spec passes 20 repeats at 320px and 430px (`--repeat-each=20`) and two PR CI runs in a row show no retry on it.
 
 ### Next
 
@@ -27,13 +28,6 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Suggested solution: tasks T3 and T4 of the plan: the bots claiming goals, then the docs. Defaults for the three open questions are in the plan.
   - T2 (the Menu tile, the sheet and Pak Camat's notice) is merged: #412, `decisions/camat-board-T2.md`. The tile uses the shared fallback icon until the next icon sheet.
   - `claimed · voidinside99 · 2026-11-12 · done when:` T1 to T4 are merged and the T3 bot bars are recorded in decisions/.
-
-- [ ] **Hired staff must move the score or a star gate.**
-  - Problem: the no-hire builder reaches every star within 3% of the hiring one, so staff do not change play (`decisions/stars-follow-play.md`).
-  - Why: GAME-DESIGN.md §8 items 4 and 10, and T6 bar 5: staff and play should move a star.
-  - Suggested solution: let a hired Asisten add programs, Sejahtera or permit speed that the ranking or a goal counts. Needs a design call on the staff plan. Then rerun the no-hire builder and set RW 1★ to ask for more than three builds in Kampung Sebelah (it lands about a minute after promotion).
-  - Design call made: programs carried out become a star line, and from the RW Inem leads one at a time (`docs/plans/staff-move-stars.md`, `decisions/staff-move-stars-plan.md`). Tasks T1 to T3.
-  - `claimed · Claude (sweep) · 2026-11-13 · done when:` the no-hire builder reaches RW 3★ and Kel 3★ at least 15% later than the hiring one, or a decisions file says why not.
 
 - [ ] **Fix the remaining scorecard Fails that have a clear cause.**
   - Problem: the scorecard of 2026-11-04 reads 3 Pass, 14 Fail, 10 Unknown. Still failing with a cause: Viral pinned at 100 from B2 on (5, claimed: #319 adds a soft cap; B0 and B1 sit at 0 before any Viral source), goal gaps over the band (7, 10), novelty gaps (11), one reward kind per star (12), cash piles up for up to 52 min with no late sink (14), income outruns costs (15), Pencitraan never reaching Kel 1★ (17), Hint reader finds only 41% of combos (21, bar 65 to 85%). Kelurahan 2★ and 3★ still miss the goal-gap limit by 40 to 136 s (`decisions/second-rt-load.md`, cause not traced).
@@ -69,6 +63,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ## Done
 
+- [x] **Hired staff must move the score or a star gate.** Programs carried out are a star line at RW 3★ (3), Kel 2★ (3) and Kel 3★ (7); from the RW on Inem leads one at a time at double delay and a lead stays on a program until it ends. The no-hire builder reaches RW 3★ 16 to 27% and Kel 3★ 27 to 32% later; hiring types unchanged. #455, `decisions/staff-move-stars.md`.
 - [x] **Scorecard bots run with the road rule on.** A bot gap in combo placement doubled star times; fixed, builder RT 3★ back to 10.7 min. #415, #422, `decisions/scorecard-road-rule-ab.md`, `decisions/scorecard-road-rule-bot-fix.md`, `decisions/scorecard-nightly-after-bot-fix.md`.
 - [x] **Scorecard row 27 passes.** The bar is a goal on screen with progress one tap away; bunting follows the lomba year; builder and shopkeeper bots visit neighbours. #419, #420, #421, `decisions/scorecard-row-27-bar.md`.
 - [x] **Scorecard row 14 checks the builder's cash only.** Idle debt is by design. #428, `decisions/scorecard-row-14-idle-debt.md`.
