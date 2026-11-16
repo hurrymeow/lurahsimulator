@@ -144,3 +144,18 @@ describe("Pak Camat's board", () => {
     for (const st of [0, 1, 2] as const) for (const l of starChecklist(s, 'rt', st) ?? []) expect(String(l.goal.kind)).not.toMatch(/board/);
   });
 });
+
+describe("Pak Camat's board, played by a bot", () => {
+  it('a playing bot claims the goals it finishes, and the idle bot claims none', async () => {
+    const { runBot } = await import('./scorecard/driver');
+    const out: { s?: GameState } = {};
+    runBot('builder', 1, 200, { out });
+    expect(out.s!.board).toBeDefined();
+    const doneUnclaimed = out.s!.board!.goals.filter((g) => g.done && !g.claimed).length;
+    // Claimed goals leave at the next quarter, so at most the last quarter's are still on the board; none waits unclaimed.
+    expect(doneUnclaimed).toBe(0);
+    const idle: { s?: GameState } = {};
+    runBot('idle', 1, 200, { out: idle });
+    expect((idle.s!.board?.goals ?? []).some((g) => g.claimed)).toBe(false);
+  }, 120_000);
+});
