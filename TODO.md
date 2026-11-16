@@ -27,7 +27,8 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - T1 (board state and pool in the sim) is merged: #408, `decisions/camat-board-T1.md`.
   - Suggested solution: tasks T3 and T4 of the plan: the bots claiming goals, then the docs. Defaults for the three open questions are in the plan.
   - T2 (the Menu tile, the sheet and Pak Camat's notice) is merged: #412, `decisions/camat-board-T2.md`. The tile uses the shared fallback icon until the next icon sheet.
-  - `claimed · voidinside99 · 2026-11-12 · done when:` T1 to T4 are merged and the T3 bot bars are recorded in decisions/.
+  - Taken over 2026-11-16 by the daily sweep: voidinside99's claim (2026-11-12) has had no commit or PR since T2 merged that day.
+  - `claimed · Claude (sweep) · 2026-11-16 · done when:` T1 to T4 are merged and the T3 bot bars are recorded in decisions/.
 
 - [ ] **Fix the remaining scorecard Fails that have a clear cause.**
   - Problem: the scorecard of 2026-11-04 reads 3 Pass, 14 Fail, 10 Unknown. Still failing with a cause: Viral pinned at 100 from B2 on (5, claimed: #319 adds a soft cap; B0 and B1 sit at 0 before any Viral source), goal gaps over the band (7, 10), novelty gaps (11), one reward kind per star (12), cash piles up for up to 52 min with no late sink (14), income outruns costs (15), Pencitraan never reaching Kel 1★ (17), Hint reader finds only 41% of combos (21, bar 65 to 85%). Kelurahan 2★ and 3★ still miss the goal-gap limit by 40 to 136 s (`decisions/second-rt-load.md`, cause not traced).
