@@ -16,7 +16,7 @@ import { hasProblem } from '../../src/sim/problems';
 import { checkRealisasi, realisasiCost, startRealisasi } from '../../src/sim/realisasi';
 import { REALISASI } from '../../src/data/realisasi';
 import { acceptSK, canPromote, nextStarChecklist } from '../../src/sim/stages';
-import { answerRaise, bimtek, bimtekCost, checkBimtek, hire, lowonganCost, postLowongan } from '../../src/sim/staff';
+import { answerRaise, bimtek, checkBimtek, hire, lowonganCost, postLowongan } from '../../src/sim/staff';
 import { claimBoard } from '../../src/sim/board';
 import { categoryOf } from '../../src/data/categories';
 import { STAR_SALARY } from '../../src/data/staff';
@@ -555,19 +555,22 @@ function claimBoardGoals(c: Ctx): void {
 /** The hint reader reads the board after its star hints and works the goals one action closes: a Bimtek, a Decor, Dana. */
 function workBoard(c: Ctx, p: Plan): void {
   const { s } = c;
+  // Side goals take spare money, never the star path's: from the RW on, once a month, with the kas well past the upgrade bar.
+  const spare = 3 * (p.upgradeAt ?? 2_000_000);
+  if (s.stage.current === 'rt' || c.t % 4 !== 0 || s.res.rupiah < spare) return;
   for (const g of s.board?.goals ?? []) {
     if (g.done) continue;
     if (g.id === 'bimtek') {
       const x = (s.staff ?? []).find((y) => !y.inem && checkBimtek(s, y).ok);
-      if (x && s.res.rupiah > bimtekCost(s) + p.buffer && bimtek(s, x)) return void c.acts++;
+      if (x && bimtek(s, x)) return void c.acts++;
     }
     if (g.id === 'decor') {
       const d = openDefs(s).filter((x) => categoryOf(x) === 'decoration' && !x.pathIncome).sort((a, b) => buildCost(s, a) - buildCost(s, b))[0];
-      if (d && buy(c, d.id, p.buffer)) return;
+      if (d && buy(c, d.id, spare)) return;
     }
     if (g.id === 'fund') {
       const n = s.neighbours.find((x) => x.run !== 'player' && !x.absorbed);
-      if (n && s.res.rupiah > p.buffer && fundNeighbour(s, n) === null) return void c.acts++;
+      if (n && fundNeighbour(s, n) === null) return void c.acts++;
     }
   }
 }
