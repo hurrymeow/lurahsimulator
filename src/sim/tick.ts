@@ -135,7 +135,10 @@ export function collectIncome(s: GameState, fx: Fx): void {
 export function expectations(s: GameState, fx: Fx): void {
   const pop = population(s);
   const weighed = s.stage.current === 'kelurahan' && pop > EXPECT_TAPER.from ? EXPECT_TAPER.from + (pop - EXPECT_TAPER.from) * EXPECT_TAPER.share : pop;
-  gain(s, fx, 'sabar', -weighed * EXPECT_PER_RESIDENT * (s.stage.current === 'kecamatan' ? EXPECT_KEC.share : s.stage.current === 'kelurahan' ? EXPECT_KEL.share : 1));
+  // The drain shows as a heart pop at the Kantor, so a week's fall has a cause on the map (GAME-DESIGN.md §8 item 6). It merges
+  // with the hunger pop on the same tile. Hearts keep both signs on the map (decisions/calm-income-pops.md).
+  const kantor = s.buildings.find((b) => b.def.startsWith('kantor'));
+  gain(s, fx, 'sabar', -weighed * EXPECT_PER_RESIDENT * (s.stage.current === 'kecamatan' ? EXPECT_KEC.share : s.stage.current === 'kelurahan' ? EXPECT_KEL.share : 1), kantor);
 }
 
 /** Year 1 safety net: upkeep can never push the kas below zero. */
