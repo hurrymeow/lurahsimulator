@@ -11,6 +11,6 @@ GAME-DESIGN.md §8 item 6 counts a weekly Popularitas fall of more than 2 as leg
 ## Checks
 - `tests/expectations-pop.test.ts`: the drain pushes a sabar pop at the Kantor equal to the fall.
 - Idle, random, shopkeeper and Pencitraan bots, seeds 1 to 10: **0 of 3,399** Popularitas drops over 2 lack a cause (before: 16 in 6 seeds of the same bots). Star times cannot move: only effects were added.
-- `npm test`, and the pop and legibility e2e specs at 360 id and 412 en: E2E_RESULT.
+- `npm test`, and the pop and legibility e2e specs at 360 id and 412 en: 705 unit tests and 104 e2e tests pass.
 
 Verdict: self-approved under the TODO rule. Row 6 should read 0 uncaused drops on the next Nightly.
