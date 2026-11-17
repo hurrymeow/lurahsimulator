@@ -10,32 +10,18 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Now
 
-- **Fix the flaky "Place and Cancel sit right under the chosen tile" e2e test.**
-  - Problem: `tests/e2e/ui.spec.ts:2489` fails both tries on some runs, at 320px and 430px. It turned main red at 9442893 (run 43569616236) and failed first CI on several scorecard-only executor PRs (#439, #440, #441) that touch no UI.
-  - Why: a red main blocks deploy, and each flake costs a full CI rerun. The failing check is `toBeLessThan`, so the float lands more than 160px from the tile or off-centre on some runs.
-  - Suggested solution: log `fb` and `at` on failure, then wait for the map pan or camera to settle before reading the tile centre (or read it after the float shows). Keep the bars; fix the timing.
-  - #454 made the test wait for the map to settle; it still flaked once at 320px in #454's and #455's CI. Real cause: the float showed for one frame at the map's corner before it was placed. #456 places it at once and adds a same-frame check (`decisions/place-float-first-frame.md`).
-  - `claimed · Claude (sweep) · 2026-11-15 · done when:` the spec passes 20 repeats at 320px and 430px (`--repeat-each=20`) and two PR CI runs in a row show no retry on it.
-
 ### Next
 
 ### Later
-
-- [ ] **Build Pak Camat's board of side goals.**
-  - Problem: the plan is on main (`docs/plans/camat-board.md`, #406) but nothing is built. Between stars the open goal lines move slowly, and Staf and Wacana have no short-term pull.
-  - Why: joofoot asked for it (2026-11-09); it aims at scorecard rows 7 (goal gaps), 13 (Orang Inside unspent) and 14 (cash piles up).
-  - T1 (board state and pool in the sim) is merged: #408, `decisions/camat-board-T1.md`.
-  - Suggested solution: tasks T3 and T4 of the plan: the bots claiming goals, then the docs. Defaults for the three open questions are in the plan.
-  - T2 (the Menu tile, the sheet and Pak Camat's notice) is merged: #412, `decisions/camat-board-T2.md`. The tile uses the shared fallback icon until the next icon sheet.
-  - Taken over 2026-11-16 by the daily sweep: voidinside99's claim (2026-11-12) has had no commit or PR since T2 merged that day.
-  - `claimed · Claude (sweep) · 2026-11-16 · done when:` T1 to T4 are merged and the T3 bot bars are recorded in decisions/.
 
 - [ ] **Fix the remaining scorecard Fails that have a clear cause.**
   - Problem: the scorecard of 2026-11-04 reads 3 Pass, 14 Fail, 10 Unknown. Still failing with a cause: Viral pinned at 100 from B2 on (5, claimed: #319 adds a soft cap; B0 and B1 sit at 0 before any Viral source), goal gaps over the band (7, 10), novelty gaps (11), one reward kind per star (12), cash piles up for up to 52 min with no late sink (14), income outruns costs (15), Pencitraan never reaching Kel 1★ (17), Hint reader finds only 41% of combos (21, bar 65 to 85%). Kelurahan 2★ and 3★ still miss the goal-gap limit by 40 to 136 s (`decisions/second-rt-load.md`, cause not traced).
   - Why: each Fail is a place the game is too easy, too flat or can strand a player.
   - Suggested solution: one small PR per row, each proved by a Nightly rerun. Cash sink and late Popularitas sources are content, so check them against the Act 2 plan first.
   - Source: `scorecard/scorecard.md`; `decisions/rt-3star-pace.md`; `decisions/combo-stack-cap.md`; `decisions/cheapskate-bar.md`
-  - `claimed · Claude (scorecard thread) · 2026-11-13 · done when:` each balance row passes or has a stated reason in decisions/.
+  - Latest verdict: `decisions/scorecard-bot-fixes-nightly.md` (Nightly at ee8d05a, 10 Pass, 15 Fail), with a next plan: rows 10 and 15 (RW 1★ to 2★ cost), rows 7 and 8 (a checklist line between stars), row 13 (an Orang Dalam sink in the Kelurahan and Kecamatan), row 6 (one uncaused Popularitas drop), row 12 (Kec 2★ and 3★ with Kecamatan slice 2). Pak Camat's board did not move rows 13 and 14: bots end with about 900 Orang Dalam either way, and its Rupiah rewards add cash (`decisions/camat-board-T3.md`).
+  - Taken over 2026-11-17 by the daily sweep: the scorecard thread's claim (2026-11-13) has had no commit since 2026-11-14 and no open PR.
+  - `claimed · Claude (sweep) · 2026-11-17 · done when:` each balance row passes or has a stated reason in decisions/.
 
 - [ ] **Finish the scorecard: the 10 Unknown rows and the bot gaps.**
   - #311 linted traits and combos (item 2, now Pass) and added Dana, Stempel and Anggaran to the timeline (item 13).
@@ -64,6 +50,8 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ## Done
 
+- [x] **Pak Camat's board of side goals.** Up to three side goals from RT 1★, one new a quarter, a claim that pays once; the Menu tile and sheet; the bots claim, and board goals count in the goal-gap measure, which about halves at the RW and Kelurahan. #408, #412, #459, `decisions/camat-board-T1.md`, `-T2.md`, `-T3.md`.
+- [x] **The flaky "Place and Cancel sit right under the chosen tile" e2e test.** The float showed for one frame at the map's corner before it was placed; it is now placed the moment it shows, with a same-frame e2e check. No retry in #456's and #459's CI. #454, #456, `decisions/place-float-first-frame.md`.
 - [x] **Hired staff must move the score or a star gate.** Programs carried out are a star line at RW 3★ (3), Kel 2★ (3) and Kel 3★ (7); from the RW on Inem leads one at a time at double delay and a lead stays on a program until it ends. The no-hire builder reaches RW 3★ 16 to 27% and Kel 3★ 27 to 32% later; hiring types unchanged. #455, `decisions/staff-move-stars.md`.
 - [x] **Scorecard bots run with the road rule on.** A bot gap in combo placement doubled star times; fixed, builder RT 3★ back to 10.7 min. #415, #422, `decisions/scorecard-road-rule-ab.md`, `decisions/scorecard-road-rule-bot-fix.md`, `decisions/scorecard-nightly-after-bot-fix.md`.
 - [x] **Scorecard row 27 passes.** The bar is a goal on screen with progress one tap away; bunting follows the lomba year; builder and shopkeeper bots visit neighbours. #419, #420, #421, `decisions/scorecard-row-27-bar.md`.
