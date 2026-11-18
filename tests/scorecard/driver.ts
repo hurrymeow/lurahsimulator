@@ -348,6 +348,13 @@ function buildCombo(c: Ctx, buffer: number, only?: string[]): void {
     const member = s.buildings.find((b) => ids.includes(b.def));
     for (const id of ids) {
       if (s.buildings.some((b) => b.def === id)) continue;
+      // The build sheet says "Need a working Balai RW" on a Posyandu: a player builds that first. Before this, only
+      // the hint bot did, and the others sat on Rp 20jt to 80jt for 100 weeks with the RW 2★ combo line open.
+      const first = (def(id).requires?.buildings ?? []).find((r) => count(s, r) === 0);
+      if (first) {
+        if (buy(c, first, buffer)) return;
+        continue;
+      }
       if (buy(c, id, buffer, member ? { x: member.x, y: member.y } : undefined)) return;
     }
     // A flat piece (Kebun Sayur) stands in a gap far from its road-fed partner: a player builds a new flat piece beside the partner.
@@ -624,6 +631,8 @@ export interface RunOpts {
   from?: GameState;
   /** Receives the final state, for a run that hands over to another bot. */
   out?: { s?: GameState };
+  /** Called after each tick, for probes that read the state as the bot plays. */
+  onTick?: (s: GameState, t: number) => void;
 }
 
 /** Plays one bot on one seed and returns what happened, tick by tick. */
@@ -709,6 +718,7 @@ export function runBot(bot: BotId, seed: number, ticks: number, opts: RunOpts = 
         anggaran: Math.max(0, s.kel.budget - Math.max(0, s.stats.spent - s.kel.spentBase)), pop: p, beds: housing(s), buildings: s.buildings.length, aman: m.aman, sejahtera: sejahtera(m), laporan: laporan(s),
         net: monthlyNet(s), nextKey: nextKeyCost(s), dearKey: dearKeyCost(s), useful: usefulNow(s), goalsDone: g.done, goalsTotal: g.total, acts: c.acts,
       });
+      opts.onTick?.(s, t);
       if (opts.stopStars && now >= opts.stopStars) { t++; break; }
     }
   } finally {

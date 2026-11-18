@@ -181,19 +181,24 @@ export function price(s: GameState, base: number): number {
   return Math.round((base * s.inflation) / 1000) * 1000;
 }
 
-/** 1 for a small kampung, then SPRAWL_STEP more for every building past SPRAWL_FREE. Paths and an absorbed RT's own buildings do not count. */
-export function sprawl(s: GameState): number {
-  const n = s.buildings.filter((b) => !def(b.def).pathIncome).length;
-  const joined = s.neighbours.reduce((sum, nb) => sum + (nb.joined ?? 0), 0);
+/**
+ * 1 for a small kampung, then SPRAWL_STEP more for every building past SPRAWL_FREE. Paths and an absorbed RT's own buildings
+ * do not count. The RW seams sprawl on their own (decisions/sprawl-rw-seams.md): a Balai RW, Posyandu or Portal counts only
+ * the pieces on RW lots. Before, a big home RT made every RW piece 3x dearer and the RW 2★ combo line waited 100 weeks.
+ */
+export function sprawl(s: GameState, scope: 'rt' | 'rw' | 'kel' = 'rt'): number {
+  const seam = scope === 'rw';
+  const n = s.buildings.filter((b) => !def(b.def).pathIncome && (!seam || def(b.def).scope === 'rw')).length;
+  const joined = seam ? 0 : s.neighbours.reduce((sum, nb) => sum + (nb.joined ?? 0), 0);
   return 1 + SPRAWL_STEP * Math.max(0, n - joined - SPRAWL_FREE);
 }
 
 export function buildCost(s: GameState, d: BuildingDef): number {
-  return price(s, d.cost * sprawl(s));
+  return price(s, d.cost * sprawl(s, d.scope ?? 'rt'));
 }
 
 export function upgradeCost(s: GameState, b: Building): number {
-  return price(s, def(b.def).cost * b.level * sprawl(s));
+  return price(s, def(b.def).cost * b.level * sprawl(s, def(b.def).scope ?? 'rt'));
 }
 
 /** Buildings within radius tiles of the tile or footprint, not counting the building itself. */

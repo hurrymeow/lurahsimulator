@@ -43,6 +43,16 @@ describe('money sinks', () => {
     expect(buildCost(s, d)).toBeGreaterThan(base);
   });
 
+  it('the RW seams sprawl on their own: a big RT does not make RW pieces dearer', () => {
+    const s = newGame(1);
+    const posyandu = placeableDefs().find((p) => p.id === 'posyandu')!;
+    const base = buildCost(s, posyandu);
+    for (let i = 0; i < 30; i++) addBuilding(s, 'rumah', i % 10, 10 + Math.floor(i / 10), 'active');
+    expect(sprawl(s)).toBeGreaterThan(1);
+    expect(sprawl(s, 'rw')).toBe(1);
+    expect(buildCost(s, posyandu)).toBe(base);
+  });
+
   it('a bigger kampung expects more every month', () => {
     const s = newGame(1);
     s.res.sabar = 80;
