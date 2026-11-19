@@ -36,6 +36,13 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Taken over 2026-11-19 by the daily sweep: the scorecard thread's claim (2026-11-13) has had no commit since 2026-11-14 and no open PR.
   - `claimed · Claude (sweep) · 2026-11-19 · done when:` a Nightly finishes under 20 minutes and row 23 runs a forced worst-event chain.
 
+- [ ] **The Nightly screen bot fails every night.**
+  - Problem: `screen-bot (screenbot-412-en)` scores 3 of 46 checkpoints (bar 90%) and does not reach RT 3★; `screenbot-360-id` stops on a click timeout after about 5 min. Both have failed on every Nightly since 2026-11-14 at least, so the Nightly is always red and a new failure there goes unseen.
+  - Why: the screen bot is the only check that a player who reads only the screen can follow the goals (docs/plans/first-2h-playtest.md T2). Red every night, it checks nothing.
+  - Suggested solution: read the bot's CSV artifact (time, visible goal, chosen action, verdict) for the first wrong checkpoint at 412-en. Tell a bot gap (it cannot see tint, `decisions/scorecard-bot-fixes-nightly.md`) from a real screen gap, fix the bot or the screen, and find the 360-id click that times out. Artifacts can only be fetched by a person or a session with artifact access; otherwise reproduce locally with `SCREEN_BOT=1 npx playwright test --project=screenbot-412-en`.
+  - Source: Nightly runs 44216009370 and 44432894622; `decisions/nightly-under-20.md`
+  - `[ ] open · — · — · done when:` both screen-bot jobs pass on a Nightly, or the bar has a recorded reason to change.
+
 ## Done
 
 - [x] **Scorecard bots: the last RT stalls.** The builder reaches RT 3★ on every seed and row 1 waits 0 s (bar 60). RT 2★ late in 6 of 6 seeds moves to the scorecard Fails item. #313, #348, local report 2026-11-19.
