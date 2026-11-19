@@ -12,7 +12,7 @@ Nightly run 44432894622 (2026-11-19) took 28.9 min. Job times:
 - **`scorecard-kec` runs one seed per job** (10 jobs, was 5 pairs). `run-kec` already writes one `kec-<seed>.json` per seed, and the report reads them all, so nothing else changes. Expected: about 11 min a job, the report by about 13 min.
 - **The screen bot runs with `--retries=0`.** It still fails when it fails, with the same artifact and summary; it just stops replaying the same game. Expected: about 15 min.
 
-No test is skipped and no bar moves.
+No test is skipped and no bar moves. TESTING.md ("CI keeps 1 retry") is about the PR suite, where a retry tells a flake from a failure. It still holds there. The screen bot is a Nightly-only, deterministic playthrough, so a retry cannot reveal a flake.
 
 ## Not changed
 - The screen bot's failure itself (412-en 3 of 46 checkpoints, bar 90%; 360-id a click timeout). It is chronic, known since the bot landed, and is a new TODO item.
