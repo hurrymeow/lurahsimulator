@@ -201,7 +201,7 @@ export const ID: Record<Key, string> = {
   'exp.emas.edge': 'Wacana tak pernah menggerakkannya. Hanya program yang dikerjakan.',
   'exp.emas.up': 'Warung Sembako yang memberi makan semua rumah tangga, kerja untuk semua, lampu, ronda, dan program nyata (Realisasi).',
   'exp.emas.what': 'Sejahtera: hidup warga yang sebenarnya, rata-rata Perut, Kerja, dan Aman. Sidang Emas 2045 membacanya.',
-  'exp.orangDalam.down': 'Melewati antrean, dan beberapa pilihan kejadian.',
+  'exp.orangDalam.down': 'Melewati antrean, dan beberapa pilihan kejadian. Utang budi cepat dilupakan: turun 5% tiap minggu.',
   'exp.orangDalam.edge': 'Kalau 0, kamu antre seperti yang lain.',
   'exp.orangDalam.up': 'Kantor RT menghasilkannya pelan-pelan. Menang peringkat menambah lagi.',
   'exp.orangDalam.what': 'Koneksi. Pakai satu untuk melewati antrean izin.',

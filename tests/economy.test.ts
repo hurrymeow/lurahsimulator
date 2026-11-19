@@ -3,7 +3,8 @@ import { WACANA } from '../src/data/wacana';
 import { placeableDefs } from '../src/sim/content';
 import { buildCost, newGame, sprawl } from '../src/sim/state';
 import { addBuilding } from '../src/sim/state';
-import { expectations } from '../src/sim/tick';
+import { decay, expectations } from '../src/sim/tick';
+import { ORANG_DALAM_FADE } from '../src/sim/balance';
 import { announce, wacanaCost, wacanaSystem } from '../src/sim/wacana';
 
 describe('policies are a trade', () => {
@@ -34,6 +35,18 @@ describe('policies are a trade', () => {
 });
 
 describe('money sinks', () => {
+  it('Orang Inside fades 5% a week, so a steady income settles instead of piling up', () => {
+    const s = newGame(1);
+    s.res.orangDalam = 100;
+    decay(s);
+    expect(s.res.orangDalam).toBeCloseTo(100 * (1 - ORANG_DALAM_FADE));
+    // Earning 3 a week, as a late Kelurahan does, settles near 3 / 0.05 = 60, not at 800.
+    s.res.orangDalam = 0;
+    for (let w = 0; w < 400; w++) { s.res.orangDalam += 3; decay(s); }
+    expect(s.res.orangDalam).toBeGreaterThan(50);
+    expect(s.res.orangDalam).toBeLessThan(60);
+  });
+
   it('buildings get dearer once the kampung sprawls', () => {
     const s = newGame(1);
     const d = placeableDefs().find((p) => !p.pathIncome)!;
