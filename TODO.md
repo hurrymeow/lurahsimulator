@@ -19,41 +19,27 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Why: each Fail is a place the game is too easy, too flat or can strand a player.
   - Suggested solution: one small PR per row, each proved by a Nightly rerun. Cash sink and late Popularitas sources are content, so check them against the Act 2 plan first.
   - Source: `scorecard/scorecard.md`; `decisions/rt-3star-pace.md`; `decisions/combo-stack-cap.md`; `decisions/cheapskate-bar.md`
-  - Latest verdict: `decisions/scorecard-bot-fixes-nightly.md` (Nightly at ee8d05a, 10 Pass, 15 Fail), with a next plan: rows 10 and 15 (RW 1★ to 2★ cost), rows 7 and 8 (a checklist line between stars), row 13 (an Orang Dalam sink in the Kelurahan and Kecamatan), row 12 (Kec 2★ and 3★ with Kecamatan slice 2). Pak Camat's board did not move rows 13 and 14: bots end with about 900 Orang Dalam either way, and its Rupiah rewards add cash (`decisions/camat-board-T3.md`).
+  - Latest verdict: `decisions/scorecard-bot-fixes-nightly.md` (Nightly at ee8d05a, 10 Pass, 15 Fail), with a next plan: rows 7 and 8 (a checklist line between stars), row 13 (an Orang Dalam sink in the Kelurahan and Kecamatan), row 12 (Kec 2★ and 3★ with Kecamatan slice 2). Pak Camat's board did not move rows 13 and 14: bots end with about 900 Orang Dalam either way, and its Rupiah rewards add cash (`decisions/camat-board-T3.md`).
+  - Row 10 done in #463: RW seam pieces sprawl on their own, so RW 2★ no longer waits on a combo priced for the home RT (27 misses to 4 on seeds 1 to 6; the 4 left are RT 2★, under "the last RT stalls"). Row 15 stays a Fail: its growth half (2.76x and 3.20x, bar 0.7 to 1.5) never moved, and its median fell from 32 s to 25 s (bar 30 to 120) (`decisions/sprawl-rw-seams.md`).
   - Row 6 done in #461: the expectations drain now pops at the Kantor (`decisions/expectations-pop.md`).
+  - Also open: RT 2★ is late in 6 of 6 seeds (rows 10 and 23; honest at 8.8 min, bar 8). It came from the closed "last RT stalls" item.
+  - Local report 2026-11-19 (seeds 1 to 6, main at c954245): 9 Pass, 13 Fail, 5 Unknown. Row 14 now passes; row 13 fails only on Orang Dalam unspent in B4.
   - Taken over 2026-11-17 by the daily sweep: the scorecard thread's claim (2026-11-13) has had no commit since 2026-11-14 and no open PR.
   - `claimed · Claude (sweep) · 2026-11-17 · done when:` each balance row passes or has a stated reason in decisions/.
 
-- [ ] **Finish the scorecard: the 10 Unknown rows and the bot gaps.**
-  - #311 linted traits and combos (item 2, now Pass) and added Dana, Stempel and Anggaran to the timeline (item 13).
-  - Problem: the scorecard (`scorecard/scorecard.md`) still has 10 Unknown rows. Missing: goal ETAs (item 8), the screen checks (3, 27, T2), ablation runs (16), warning lead of fixed beats (22: decide first which beats count as warned, such as the Lomba announcement card), a worst-event chain (23), the cause shown on screen (6). The hint bot stalls at 1★ because the combo pointer fires late.
-  - Why: section 8 stays partly blind until each row can be judged. The nightly run is also untested on GitHub.
-  - Suggested solution: add goal ETAs to the recorder, a forced event chain and per-action ablation runs. Add T2 specs for items 3, 6 and 27. Check the first nightly run time (bar 20 min) and trim seeds if needed.
+- [ ] **Finish the scorecard: a Nightly under 20 minutes and the forced worst-event chain.**
+  - #311 linted traits and combos and added Dana, Stempel and Anggaran to the timeline. A local report on 2026-11-19 (main at c954245, seeds 1 to 6) leaves 5 Unknown rows, none the harness can fix here: 3, 6 and 27 are judged by the Nightly's T2 job, 25 waits on Act 3, 26 is optional. Rows 8, 16 and 22 now have verdicts.
+  - Problem: the Nightly takes 21 to 30 min (bar 20), and row 23 says "the forced worst-event chain is not built".
+  - Why: a slow Nightly costs CI minutes every day, and row 23 cannot judge recovery from bad luck without the chain.
+  - Suggested solution: time the Nightly's jobs from `gh run view` and trim the slowest (seeds per job, the screen bots); add a forced chain (Banjir, then a scandal, then a pinjol wave) to the takeover harness and check the bot still earns a star.
   - Source: `scorecard/scorecard.md`; `decisions/scorecard-harness.md`
   - Taken over 2026-11-19 by the daily sweep: the scorecard thread's claim (2026-11-13) has had no commit since 2026-11-14 and no open PR.
-  - `claimed · Claude (sweep) · 2026-11-19 · done when:` no row reads Unknown for a reason the harness could fix, and a nightly run finishes under 20 minutes.
-
-- [ ] **Scorecard bots: the last RT stalls.**
-  - #313 fixed two combo loops in the bots (a leveled combo piece and an uncapped copy fallback); the builder now misses RT 3★ in 1 seed of 10, not 8. The 2nd RT was not the cause.
-  - Problem: item 1 still waits 192s with nothing affordable (bar 60s; in #303 the longest waits were at the Kecamatan, for a building of Rp 171jt to Rp 250jt), RT 2★ is late in 10 of 10 seeds, and the Pencitraan bot never reaches RT 2★ (item 17).
-  - Why: the scorecard cannot judge pace or strategy balance while bots stall.
-  - Seed 4 RT 3★ is fixed (#348, `decisions/last-rt-stall-bot.md`): a bot gap, not balance. All five main bots now reach RT 3★ on 10 of 10 seeds. Open question from it: when the RT is full, what does the Popularitas goal tell a person to do? (Swap a Sawah for a Pos Ronda.)
-  - The Pencitraan stall is a strategy collapse on slow-growth seeds, not a bot bug (`decisions/scorecard-pencitraan-probe.md`); fixing it is a balance call that belongs with the scorecard Fails item.
-  - Suggested solution: probe the 208s wait and the late RT 2★ the same way (state and building counts at the stall) and tell a bot bug from a balance gap.
-  - Source: `decisions/scorecard-bot-combo-loop.md`
-  - Taken over 2026-11-19 by the daily sweep: the scorecard thread's claim (2026-11-13) has had no commit since 2026-11-14 and no open PR.
-  - `claimed · Claude (sweep) · 2026-11-19 · done when:` the builder reaches RT 3★ in 10 of 10 seeds, and item 1 is under 60s or has a recorded balance reason.
-
-- [ ] **Scorecard follow-ups from the 2026-11-07 calls.**
-  - Problem: three things the calls left open (`decisions/scorecard-calls.md`). 1) Row 22 now Fails: the Lomba Agustusan returns every 6.4 min, bar 10 min. 2) Rows 3, 6, 27 need one Playwright slice (sprites per star, cause shown on screen, save and reload at 5s in both languages). 3) Row 13: builder bots never spend Orang Dalam (B1, B4) and Stempel is never earned in B4.
-  - Why: they turn three rows from Unknown or Fail into a real verdict.
-  - Suggested solution: 1) Done: the Lomba is held every second year (#361; `decisions/lomba-every-second-year-T1.md`). Follow-up: `agustusan()` bunting still shows every year; gate it on the lomba year, and check row 22 on the next Nightly. 2) Done: specs in #350, harness reads them in #356 (row 3 Pass, row 6 Pass, row 27 Fail). 3) Teach the builder bot to spend Orang Dalam on the quarterly visit.
-  - Source: `decisions/scorecard-calls.md`
-  - Taken over 2026-11-19 by the daily sweep: the scorecard thread's claim (2026-11-13) has had no commit since 2026-11-14 and no open PR.
-  - `claimed · Claude (sweep) · 2026-11-19 · done when:` row 22 reads Pass or Fail on the next Nightly, the bunting follows the lomba year, and row 13 has no bot-gap line. (Rows 3, 6 and 27 done in #356.)
+  - `claimed · Claude (sweep) · 2026-11-19 · done when:` a Nightly finishes under 20 minutes and row 23 runs a forced worst-event chain.
 
 ## Done
 
+- [x] **Scorecard bots: the last RT stalls.** The builder reaches RT 3★ on every seed and row 1 waits 0 s (bar 60). RT 2★ late in 6 of 6 seeds moves to the scorecard Fails item. #313, #348, local report 2026-11-19.
+- [x] **Scorecard follow-ups from the 2026-11-07 calls.** The Lomba is held every second year and row 22 passes (every 12.8 min, bar 10); the bunting follows the lomba year (#420); rows 3, 6 and 27 have T2 specs (#350, #356); builder and shopkeeper visit and spend Orang Dalam, so row 13 has no bot-gap line (its Fail is the missing late sink, under the Fails item). #361, #420, #421.
 - [x] **Pak Camat's board of side goals.** Up to three side goals from RT 1★, one new a quarter, a claim that pays once; the Menu tile and sheet; the bots claim, and board goals count in the goal-gap measure, which about halves at the RW and Kelurahan. #408, #412, #459, `decisions/camat-board-T1.md`, `-T2.md`, `-T3.md`.
 - [x] **The flaky "Place and Cancel sit right under the chosen tile" e2e test.** The float showed for one frame at the map's corner before it was placed; it is now placed the moment it shows, with a same-frame e2e check. No retry in #456's and #459's CI. #454, #456, `decisions/place-float-first-frame.md`.
 - [x] **Hired staff must move the score or a star gate.** Programs carried out are a star line at RW 3★ (3), Kel 2★ (3) and Kel 3★ (7); from the RW on Inem leads one at a time at double delay and a lead stays on a program until it ends. The no-hire builder reaches RW 3★ 16 to 27% and Kel 3★ 27 to 32% later; hiring types unchanged. #455, `decisions/staff-move-stars.md`.
