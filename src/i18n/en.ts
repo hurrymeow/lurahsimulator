@@ -200,7 +200,7 @@ export const EN = {
   'exp.emas.edge': 'Announcing (Wacana) never moves it. Only programs carried out do.',
   'exp.emas.up': 'Warung Sembako feeding every household, jobs for everyone, lamps, ronda and real programs (Realisasi).',
   'exp.emas.what': 'Sejahtera: how your warga really live, the average of Perut, Kerja and Aman. Sidang Emas 2045 reads it.',
-  'exp.orangDalam.down': 'Skipping a queue, and some event choices.',
+  'exp.orangDalam.down': 'Skipping a queue, and some event choices. Favours are forgotten: it fades 5% a week.',
   'exp.orangDalam.edge': 'At 0 you wait in the queue like everyone else.',
   'exp.orangDalam.up': 'Kantor RT earns it slowly. Winning the ranking adds more.',
   'exp.orangDalam.what': 'Connections. One spends one to skip a permit queue.',

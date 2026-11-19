@@ -17,6 +17,8 @@ export const MIN_RESIDENTS = 2;
 export const QUEUE_SABAR_DRAIN = 1;
 export const BROKE_SABAR_DRAIN = 1;
 export const VIRAL_DECAY = 0.1;
+/** Favours are forgotten: Orang Inside fades 5% a week, so it settles near 20x its weekly income instead of piling up (decisions/orang-inside-fades.md). */
+export const ORANG_DALAM_FADE = 0.05;
 export const SABAR_MAX = 100;
 export const VIRAL_MAX = 100;
 /** Each building past the first SPRAWL_FREE makes the next one dearer: land, permits and "uang rapat" grow with the kampung. */

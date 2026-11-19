@@ -2,7 +2,7 @@ import { boardQuarter, boardSystem } from './board';
 import { bBlurb, bName, t, type Key } from '../i18n';
 import {
   ARRIVE_MIN_SABAR, BROKE_SABAR_DRAIN, INFLATION_PER_YEAR, IURAN, PRICE_REASONS, LEAVE_BELOW_SABAR, MIN_RESIDENTS,
-  EXPECT_KEC, EXPECT_KEL, EXPECT_PER_RESIDENT, EXPECT_TAPER, NOVELTY_GAP, QUEUE_SABAR_DRAIN, SETORAN_RATE, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, TUKANG_MAX, SEJAHTERA_SHOP, VIRAL_DECAY, VIRAL_INCOME, VIRAL_MAX,
+  EXPECT_KEC, EXPECT_KEL, EXPECT_PER_RESIDENT, EXPECT_TAPER, NOVELTY_GAP, QUEUE_SABAR_DRAIN, SETORAN_RATE, SABAR_MAX, SABAR_REGEN, SABAR_REGEN_BELOW, TUKANG_MAX, SEJAHTERA_SHOP, VIRAL_DECAY, ORANG_DALAM_FADE, VIRAL_INCOME, VIRAL_MAX,
 } from './balance';
 import { accessSystem, connectedRoad, hasRoadBeside } from './access';
 import { comboIncomeMult, comboSystem } from './combos';
@@ -239,6 +239,7 @@ export function sabarRegen(s: GameState, fx: Fx): void {
 
 export function decay(s: GameState): void {
   s.res.viral *= 1 - VIRAL_DECAY;
+  s.res.orangDalam *= 1 - ORANG_DALAM_FADE;
   for (const m of s.modifiers) m.monthsLeft--;
   s.modifiers = s.modifiers.filter((m) => m.monthsLeft > 0);
 }
