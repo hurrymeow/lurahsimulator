@@ -3,7 +3,7 @@ import { bName, cName, t } from '../i18n';
 import { STEMPEL } from './balance';
 import { def } from './content';
 import { connectedRoad, FLAT, hasRoadBeside } from './access';
-import { baseDef, parseNeed, ruleCanHold } from './combos';
+import { baseDef, needName, parseNeed, ruleCanHold } from './combos';
 import { RW_COMBOS } from '../data/higher/rw';
 import { gateOpen } from './gate';
 import { requirementGaps, siteGaps } from './rules';
@@ -49,7 +49,9 @@ export function easiestCombo(s: GameState) {
     }
     if (!usable) continue;
     const cost = defs.reduce((sum, d) => sum + (count(s, d.id) ? 0 : d.cost), 0);
-    if (!best || cost < best.cost) best = { name: cName(c), pieces: defs.map(bName).join(', '), ids: defs.map((d) => d.id), cost };
+    // Pieces wanted at a level say so ("Warung Sembako (level 3+)"): before, Sayur Segar was named for up to 50 weeks and the
+    // step never said the Warung must reach level 3.
+    if (!best || cost < best.cost) best = { name: cName(c), pieces: c.needs.map(needName).join(', '), ids: defs.map((d) => d.id), cost };
   }
   return best;
 }
