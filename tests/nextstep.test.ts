@@ -5,6 +5,7 @@ import { COMBO_HINT_MONTH, easiestCombo, nextStep, shortGoal } from '../src/sim/
 import { nextStarChecklist } from '../src/sim/stages';
 import { addBuilding, addResident, attractTarget, housing, newGame, population } from '../src/sim/state';
 import { setGrid } from '../src/sim/types';
+import { runBot } from './scorecard/driver';
 
 afterEach(() => setGrid('rt'));
 
@@ -41,6 +42,15 @@ describe('short goal', () => {
       }
     }
     expect(easiestCombo(s)?.name).not.toBe('Rapat Malam');
+  });
+
+  it('names the level a combo piece must reach: Sayur Segar wants a Warung at level 3', () => {
+    // The builder's game at week 12 (RT 1★): the step points at Sayur Segar, which needs the Warung upgraded twice.
+    const out: { s?: import('../src/sim/types').GameState } = {};
+    runBot('builder', 1, 12, { out });
+    const pick = easiestCombo(out.s!);
+    expect(pick?.name).toBe('Sayur Segar');
+    expect(pick?.pieces).toBe('Kebun Sayur, Warung Sembako (level 3+)');
   });
 
   it('says what to wait for while a build is under way', () => {
