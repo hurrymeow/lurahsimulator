@@ -4,6 +4,7 @@ import type { KecRun } from '../kec-bot-lib';
 import { BOTS, type BotId } from './driver';
 import { CACHE, readCache } from './plan';
 import { readT2 } from './t2';
+import type { ChainRun } from './takeover';
 import { buildScorecard, renderMarkdown, sourceText, trendOf, type Runs, type Takeover, type Trend } from './scorecard';
 
 describe.skipIf(!process.env.SCORECARD)('scorecard report', () => {
@@ -11,7 +12,8 @@ describe.skipIf(!process.env.SCORECARD)('scorecard report', () => {
     const runs: Runs = {};
     for (const bot of BOTS as BotId[]) runs[bot] = readCache(bot);
     const takeovers: Takeover[] = JSON.parse(readFileSync(`${CACHE}/takeover.json`, 'utf8'));
-    const rows = buildScorecard(runs, takeovers, sourceText(), readT2(CACHE));
+    const chains: ChainRun[] = existsSync(`${CACHE}/chain.json`) ? JSON.parse(readFileSync(`${CACHE}/chain.json`, 'utf8')) : [];
+    const rows = buildScorecard(runs, takeovers, sourceText(), readT2(CACHE), chains);
     expect(rows.map((r) => r.n)).toEqual(Array.from({ length: 27 }, (_, i) => i + 1));
     for (const r of rows) expect(r.evidence.length, `row ${r.n}`).toBeGreaterThan(10);
     const kec: KecRun[] = existsSync(CACHE) ? readdirSync(CACHE).filter((f) => /^kec-\d+\.json$/.test(f)).map((f) => JSON.parse(readFileSync(`${CACHE}/${f}`, 'utf8')) as KecRun) : [];

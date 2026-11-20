@@ -1,5 +1,6 @@
 // Turns bot timelines into the GAME-DESIGN.md section 8 scorecard: one row per checklist item, Pass, Fail or Unknown.
 // A row is Unknown when the harness cannot judge it yet. It never reads Pass on a check that was not run.
+import { WORST_CHAIN, type ChainRun } from './takeover';
 import { readFileSync, readdirSync } from 'node:fs';
 import { COMBOS } from '../../src/data/combos';
 import { TRAITS } from '../../src/data/staff';
@@ -185,7 +186,7 @@ export function dominantSpendKinds(tls: Timeline[]): { kind: string; bands: numb
 // ---------------------------------------------------------------- rows
 
 /** `t2` holds the Playwright results for rows 3, 6 and 27 (`./t2`). Without them those rows read Unknown. */
-export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: string, t2: T2Result[] = []): ScoreRow[] {
+export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: string, t2: T2Result[] = [], chains: ChainRun[] = []): ScoreRow[] {
   const builder = runsOf(runs, 'builder');
   const idle = runsOf(runs, 'idle');
   const rows: ScoreRow[] = [];
@@ -612,7 +613,14 @@ export function buildScorecard(runs: Runs, takeovers: Takeover[], srcText: strin
     }
     const stuck = takeovers.filter((t) => !t.gained);
     if (stuck.length) bad.push(`soft-lock: ${stuck.length} of ${takeovers.length} takeovers did not progress`);
-    add(23, 'Reliability: seeds, bad luck, recovery', 'T1', partial(bad.length === 0), `${bad.length ? bad.join('; ') + '. ' : `RT 1★ to 3★ on target in ${builder.length} of ${builder.length} seeds, spread under 1.5x. `}Soft-lock check: a builder bot took over an idle game at mid-state in ${takeovers.filter((t) => t.gained).length} of ${takeovers.length} runs and still earned a star or a goal. The forced worst-event chain is not built.`);
+    // The forced worst-event chain (tests/scorecard/takeover.ts): the next star within 2x its target.
+    const chainLate = chains.filter((c) => c.took === undefined || c.took > c.limit);
+    if (chainLate.length) bad.push(`worst chain: next star over 2x target in ${chainLate.length} of ${chains.length} runs (${chainLate.slice(0, 3).map((c) => `seed ${c.seed} after ${STAR_NAMES[c.after]} ${c.took === undefined ? 'never' : fmtMin(c.took)}`).join(', ')})`);
+    const worst = chains.filter((c) => c.took !== undefined).reduce((m, c) => Math.max(m, c.took! / c.limit), 0);
+    const chainText = chains.length
+      ? `Worst chain (${WORST_CHAIN.join(', ')}, one a week after RT 1★ and RW 1★, free choice): next star within 2x target in ${chains.length - chainLate.length} of ${chains.length} runs, slowest at ${(worst * 2).toFixed(2)}x target.`
+      : 'The forced worst-event chain was not run (no chain.json in the cache).';
+    add(23, 'Reliability: seeds, bad luck, recovery', 'T1', partial(bad.length === 0), `${bad.length ? bad.join('; ') + '. ' : `RT 1★ to 3★ on target in ${builder.length} of ${builder.length} seeds, spread under 1.5x. `}Soft-lock check: a builder bot took over an idle game at mid-state in ${takeovers.filter((t) => t.gained).length} of ${takeovers.length} runs and still earned a star or a goal. ${chainText}`);
   }
 
   // 24. Stage change feels new. Second half: the driver notes the buildings that stood at each promotion and sums
