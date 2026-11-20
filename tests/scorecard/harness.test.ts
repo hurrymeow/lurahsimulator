@@ -1,3 +1,4 @@
+import type { ChainRun } from './takeover';
 import { describe, expect, it } from 'vitest';
 import { BOTS, runBot, type Row, type Timeline, type TLEvent } from './driver';
 import { takeover } from './takeover';
@@ -261,5 +262,20 @@ describe('scorecard harness', () => {
     });
     // The shipped content never reads Unknown either.
     expect(rowOf().verdict).not.toBe('Unknown');
+  });
+  it('item 23 judges the forced worst-event chain: the next star within 2x target', () => {
+    const rows: Row[] = Array.from({ length: 30 }, (_, t) => ({
+      t, stage: 'rt', stars: 0, rupiah: 0, sabar: 0, viral: 0, odn: 0, dana: 0, stempel: 0, anggaran: 0, pop: 0, beds: 0, buildings: 0,
+      aman: 0, sejahtera: 0, laporan: 0, net: 0, nextKey: 0, dearKey: 0, useful: true, goalsDone: 0, goalsTotal: 1, acts: 0,
+    }));
+    const builder: Timeline = { bot: 'builder', seed: 1, rows, events: [], ticks: 30, end: { stage: 'rt', stars: 0, sejahtera: 0, laporan: 0, discovered: [] }, starTicks: [], stageTicks: { rt: 0 } };
+    const row = (chains: ChainRun[]) => buildScorecard({ builder: [builder] }, [], '', [], chains).find((r) => r.n === 23)!;
+    expect(row([]).evidence).toContain('not run');
+    const ok = row([{ seed: 1, after: 0, took: 60, limit: 74 }, { seed: 1, after: 3, took: 80, limit: 104 }]);
+    expect(ok.evidence).toContain('within 2x target in 2 of 2 runs');
+    const late = row([{ seed: 4, after: 0, took: 103, limit: 74 }, { seed: 5, after: 3, limit: 104 }]);
+    expect(late.evidence).toContain('over 2x target in 2 of 2 runs');
+    expect(late.evidence).toContain('after RW 1★ never');
+    expect(late.verdict).not.toBe('Pass');
   });
 });
