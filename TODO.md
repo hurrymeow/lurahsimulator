@@ -19,22 +19,24 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Why: each Fail is a place the game is too easy, too flat or can strand a player.
   - Suggested solution: one small PR per row, each proved by a Nightly rerun. Cash sink and late Popularitas sources are content, so check them against the Act 2 plan first.
   - Source: `scorecard/scorecard.md`; `decisions/rt-3star-pace.md`; `decisions/combo-stack-cap.md`; `decisions/cheapskate-bar.md`
-  - Latest verdict: `decisions/scorecard-bot-fixes-nightly.md` (Nightly at ee8d05a, 10 Pass, 15 Fail), with a next plan: rows 7 and 8 (a checklist line between stars), row 13 (an Orang Dalam sink in the Kelurahan and Kecamatan), row 12 (Kec 2★ and 3★ with Kecamatan slice 2). Pak Camat's board did not move rows 13 and 14: bots end with about 900 Orang Dalam either way, and its Rupiah rewards add cash (`decisions/camat-board-T3.md`).
+  - Latest verdict: `decisions/scorecard-bot-fixes-nightly.md` (Nightly at ee8d05a, 10 Pass, 15 Fail), with a next plan: rows 7 and 8 (a checklist line between stars), row 12 (Kec 2★ and 3★ with Kecamatan slice 2). Pak Camat's board did not move rows 13 and 14: bots end with about 900 Orang Dalam either way, and its Rupiah rewards add cash (`decisions/camat-board-T3.md`).
+  - Row 13 done in #465: Orang Inside fades 5% a week, so it settles at 11 to 70 instead of piling up to about 800; star times unchanged for all nine types (`decisions/orang-inside-fades.md`).
   - Row 10 done in #463: RW seam pieces sprawl on their own, so RW 2★ no longer waits on a combo priced for the home RT (27 misses to 4 on seeds 1 to 6; the 4 left are RT 2★, under "the last RT stalls"). Row 15 stays a Fail: its growth half (2.76x and 3.20x, bar 0.7 to 1.5) never moved, and its median fell from 32 s to 25 s (bar 30 to 120) (`decisions/sprawl-rw-seams.md`).
   - Row 6 done in #461: the expectations drain now pops at the Kantor (`decisions/expectations-pop.md`).
   - Also open: RT 2★ is late in 6 of 6 seeds (rows 10 and 23; honest at 8.8 min, bar 8). It came from the closed "last RT stalls" item.
-  - Local report 2026-11-19 (seeds 1 to 6, main at c954245): 9 Pass, 13 Fail, 5 Unknown. Row 14 now passes; row 13 fails only on Orang Dalam unspent in B4.
+  - Local report 2026-11-19 (seeds 1 to 6, main at c954245): 9 Pass, 13 Fail, 5 Unknown. Row 14 now passes.
   - Taken over 2026-11-17 by the daily sweep: the scorecard thread's claim (2026-11-13) has had no commit since 2026-11-14 and no open PR.
   - `claimed · Claude (sweep) · 2026-11-17 · done when:` each balance row passes or has a stated reason in decisions/.
 
-- [ ] **Finish the scorecard: a Nightly under 20 minutes and the forced worst-event chain.**
+- [ ] **Finish the scorecard: the forced worst-event chain.**
   - #311 linted traits and combos and added Dana, Stempel and Anggaran to the timeline. A local report on 2026-11-19 (main at c954245, seeds 1 to 6) leaves 5 Unknown rows, none the harness can fix here: 3, 6 and 27 are judged by the Nightly's T2 job, 25 waits on Act 3, 26 is optional. Rows 8, 16 and 22 now have verdicts.
-  - Problem: the Nightly takes 21 to 30 min (bar 20), and row 23 says "the forced worst-event chain is not built".
-  - Why: a slow Nightly costs CI minutes every day, and row 23 cannot judge recovery from bad luck without the chain.
-  - Suggested solution: time the Nightly's jobs from `gh run view` and trim the slowest (seeds per job, the screen bots); add a forced chain (Banjir, then a scandal, then a pinjol wave) to the takeover harness and check the bot still earns a star.
+  - The Nightly is under 20 min since #466: run 44650098697 took 15.4 min, and the scorecard report finished at 11.2 min (`decisions/nightly-under-20.md`).
+  - Problem: row 23 says "the forced worst-event chain is not built".
+  - Why: row 23 cannot judge recovery from bad luck without the chain.
+  - Suggested solution: add a forced chain (Banjir, then a scandal, then a pinjol wave) to the takeover harness and check the bot still earns a star.
   - Source: `scorecard/scorecard.md`; `decisions/scorecard-harness.md`
   - Taken over 2026-11-19 by the daily sweep: the scorecard thread's claim (2026-11-13) has had no commit since 2026-11-14 and no open PR.
-  - `claimed · Claude (sweep) · 2026-11-19 · done when:` a Nightly finishes under 20 minutes and row 23 runs a forced worst-event chain.
+  - `claimed · Claude (sweep) · 2026-11-19 · done when:` row 23 runs a forced worst-event chain.
 
 - [ ] **The Nightly screen bot fails every night.**
   - Problem: `screen-bot (screenbot-412-en)` scores 3 of 46 checkpoints (bar 90%) and does not reach RT 3★; `screenbot-360-id` stops on a click timeout after about 5 min. Both have failed on every Nightly since 2026-11-14 at least, so the Nightly is always red and a new failure there goes unseen.
