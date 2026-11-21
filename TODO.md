@@ -23,20 +23,10 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Row 13 done in #465: Orang Inside fades 5% a week, so it settles at 11 to 70 instead of piling up to about 800; star times unchanged for all nine types (`decisions/orang-inside-fades.md`).
   - Row 10 done in #463: RW seam pieces sprawl on their own, so RW 2★ no longer waits on a combo priced for the home RT (27 misses to 4 on seeds 1 to 6; the 4 left are RT 2★, under "the last RT stalls"). Row 15 stays a Fail: its growth half (2.76x and 3.20x, bar 0.7 to 1.5) never moved, and its median fell from 32 s to 25 s (bar 30 to 120) (`decisions/sprawl-rw-seams.md`).
   - Row 6 done in #461: the expectations drain now pops at the Kantor (`decisions/expectations-pop.md`).
-  - Also open: RT 2★ is late in 6 of 6 seeds (rows 10 and 23; honest at 8.8 min, bar 8). It came from the closed "last RT stalls" item.
+  - Also open: RT 2★ is late in 6 of 6 seeds (rows 10 and 23; honest at 8.8 min, bar 8), and after the forced worst-event chain (#469) RT 2★ is over 2x target on 3 of 5 seeds (87 to 110 weeks, bar 74). Traced in #470 (`decisions/rt2-combo-level.md`): the second combo is the last RT 2★ line on every seed (week 40 to 64). The step now names the Warung's level. Ranking combos by upgrade cost made the hint bot slower, so the pace is a balance call: a cheaper second combo near the start, "1 combo" plus another RT 2★ line, or a combo rank that counts layout.
   - Local report 2026-11-19 (seeds 1 to 6, main at c954245): 9 Pass, 13 Fail, 5 Unknown. Row 14 now passes.
   - Taken over 2026-11-17 by the daily sweep: the scorecard thread's claim (2026-11-13) has had no commit since 2026-11-14 and no open PR.
   - `claimed · Claude (sweep) · 2026-11-17 · done when:` each balance row passes or has a stated reason in decisions/.
-
-- [ ] **Finish the scorecard: the forced worst-event chain.**
-  - #311 linted traits and combos and added Dana, Stempel and Anggaran to the timeline. A local report on 2026-11-19 (main at c954245, seeds 1 to 6) leaves 5 Unknown rows, none the harness can fix here: 3, 6 and 27 are judged by the Nightly's T2 job, 25 waits on Act 3, 26 is optional. Rows 8, 16 and 22 now have verdicts.
-  - The Nightly is under 20 min since #466: run 44650098697 took 15.4 min, and the scorecard report finished at 11.2 min (`decisions/nightly-under-20.md`).
-  - Problem: row 23 says "the forced worst-event chain is not built".
-  - Why: row 23 cannot judge recovery from bad luck without the chain.
-  - Suggested solution: add a forced chain (Banjir, then a scandal, then a pinjol wave) to the takeover harness and check the bot still earns a star.
-  - Source: `scorecard/scorecard.md`; `decisions/scorecard-harness.md`
-  - Taken over 2026-11-19 by the daily sweep: the scorecard thread's claim (2026-11-13) has had no commit since 2026-11-14 and no open PR.
-  - `claimed · Claude (sweep) · 2026-11-19 · done when:` row 23 runs a forced worst-event chain.
 
 - [ ] **The Nightly screen bot fails every night.**
   - Problem: `screen-bot (screenbot-412-en)` scores 3 of 46 checkpoints (bar 90%) and does not reach RT 3★; `screenbot-360-id` stops on a click timeout after about 5 min. Both have failed on every Nightly since 2026-11-14 at least, so the Nightly is always red and a new failure there goes unseen.
@@ -47,6 +37,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ## Done
 
+- [x] **Finish the scorecard: a Nightly under 20 minutes and the forced worst-event chain.** The Nightly takes about 15 min (one Kecamatan seed per job, no replay of the screen bot); row 23 runs Banjir, Cabai, Truk Sampah and Padam after RT 1★ and RW 1★ and judges the next star against 2x target. The 5 Unknown rows left are T2, Act 3 or optional. #466, #469, `decisions/nightly-under-20.md`, `decisions/worst-event-chain.md`.
 - [x] **Scorecard bots: the last RT stalls.** The builder reaches RT 3★ on every seed and row 1 waits 0 s (bar 60). RT 2★ late in 6 of 6 seeds moves to the scorecard Fails item. #313, #348, local report 2026-11-19.
 - [x] **Scorecard follow-ups from the 2026-11-07 calls.** The Lomba is held every second year and row 22 passes (every 12.8 min, bar 10); the bunting follows the lomba year (#420); rows 3, 6 and 27 have T2 specs (#350, #356); builder and shopkeeper visit and spend Orang Dalam, so row 13 has no bot-gap line (its Fail is the missing late sink, under the Fails item). #361, #420, #421.
 - [x] **Pak Camat's board of side goals.** Up to three side goals from RT 1★, one new a quarter, a claim that pays once; the Menu tile and sheet; the bots claim, and board goals count in the goal-gap measure, which about halves at the RW and Kelurahan. #408, #412, #459, `decisions/camat-board-T1.md`, `-T2.md`, `-T3.md`.
