@@ -37,7 +37,7 @@ export const MORE_COMBOS: ComboDef[] = [
   {
     id: 'sayurSegar',
     name: 'Sayur Segar',
-    needs: ['kebunSayur', 'warung@3'],
+    needs: ['kebunSayur', 'warung@2'],
     radius: 1,
     hint: 'Greens, a short walk from the shelf.',
     story: 'The kangkung is still wet. The price tag says "impor".',

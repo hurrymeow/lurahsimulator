@@ -3427,20 +3427,20 @@ test.describe('level art and menu icons', () => {
       const app = (window as unknown as { pakrt: any }).pakrt;
       const s = app.s;
       s.res.rupiah = 1e9;
-      // Sayur Segar needs a Kebun Sayur beside a Warung at level 3. An empty corner, the Warung at 2.
+      // Sayur Segar needs a Kebun Sayur beside a Warung at level 2. An empty corner, the Warung at 1.
       const add = (def: string, x: number, y: number, level: number) => {
         const b = { uid: s.nextUid++, def, x, y, level, status: 'active', timer: 0, invested: 0, placedAt: s.month };
         s.buildings.push(b);
         return b;
       };
-      const w = add('warung', 0, 0, 2);
+      const w = add('warung', 0, 0, 1);
       add('kebunSayur', 1, 0, 1);
       app.inspect(w.uid);
       return w.uid;
     });
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.discovered.includes('sayurSegar'))).toBe(false);
-    await page.locator('#sheet .btn', { hasText: lang() === 'en' ? 'Upgrade to Lv 3' : 'Naikkan ke Lv 3' }).click();
-    expect(await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.s.buildings.find((b: any) => b.uid === u).level, uid)).toBe(3);
+    await page.locator('#sheet .btn', { hasText: lang() === 'en' ? 'Upgrade to Lv 2' : 'Naikkan ke Lv 2' }).click();
+    expect(await page.evaluate((u) => (window as unknown as { pakrt: any }).pakrt.s.buildings.find((b: any) => b.uid === u).level, uid)).toBe(2);
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.discovered.includes('sayurSegar'))).toBe(true);
     // The card comes at the next quiet moment, without a week passing.
     await page.locator('#sheet .sheet-head .btn-icon').last().click();
