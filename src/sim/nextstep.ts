@@ -49,8 +49,8 @@ export function easiestCombo(s: GameState) {
     }
     if (!usable) continue;
     const cost = defs.reduce((sum, d) => sum + (count(s, d.id) ? 0 : d.cost), 0);
-    // Pieces wanted at a level say so ("Warung Sembako (level 3+)"): before, Sayur Segar was named for up to 50 weeks and the
-    // step never said the Warung must reach level 3.
+    // Pieces wanted at a level say so ("Warung Sembako (level 2+)"): before, Sayur Segar was named for up to 50 weeks and the
+    // step never said the Warung must be upgraded.
     if (!best || cost < best.cost) best = { name: cName(c), pieces: c.needs.map(needName).join(', '), ids: defs.map((d) => d.id), cost };
   }
   return best;

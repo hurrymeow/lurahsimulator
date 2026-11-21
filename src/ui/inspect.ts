@@ -153,7 +153,7 @@ export function inspect(app: App, uid: number): void {
   if (b.level < d.maxLevel) {
     lines.push(actionButton(t('insp.upgradeTo', { n: b.level + 1, cost: rupiah(upgradeCost(s, b)) }), upCheck, () => {
       upgrade(s, b);
-      // A combo that needs this level (Sayur Segar wants a Warung at 3) lights up now, with its notice, not next week.
+      // A combo that needs this level (Pecel Lele wants a Rumah Makan at 3) lights up now, with its notice, not next week.
       const fx: SimEffect[] = [];
       discoverCombos(s, fx);
       app.handleFx(fx);
