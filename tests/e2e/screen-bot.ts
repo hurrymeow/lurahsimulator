@@ -128,6 +128,10 @@ async function placeOnMap(page: Page): Promise<boolean> {
     for (let dx = -Math.floor(box.width / 2 / step) + 1; dx < box.width / 2 / step; dx++) spots.push([dx * step, dy * step]);
   spots.sort((a, b) => a[0] ** 2 + a[1] ** 2 - (b[0] ** 2 + b[1] ** 2));
   for (const [dx, dy] of spots.slice(0, 160)) {
+    // Tap the map, never the Place/Cancel float that sits under the last tile tried: a tap on its ✕ ended placing,
+    // and from the 5th Rumah on every build failed that way (decisions/screen-bot-taps-float.md).
+    const onMap = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.id === 'map', [cx + dx, cy + dy]);
+    if (!onMap) continue;
     await page.mouse.click(cx + dx, cy + dy);
     if (await ok.isEnabled()) {
       await ok.click();
