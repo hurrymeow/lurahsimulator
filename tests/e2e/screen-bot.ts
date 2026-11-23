@@ -116,7 +116,51 @@ export function decide(screen: Screen, cards: Card[]): Action {
   return { kind: 'cant-tell', why: 'no building named on screen' };
 }
 
-/** Taps the map in rings round its middle until the placement bar's Place button turns on, then taps it. */
+/**
+ * Gold pixels on the map canvas, as a cell bitmap: what a player sees as the combo tint (src/render/map.ts draws the
+ * spots that would join a combo in rgba(250, 204, 21)). Pixels only, read off the canvas like a screenshot.
+ */
+const GOLD_CELL = 6;
+export async function goldCells(page: Page): Promise<number[]> {
+  return page.evaluate((cell) => {
+    const cv = document.getElementById('map') as HTMLCanvasElement | null;
+    const ctx = cv?.getContext('2d');
+    if (!cv || !ctx) return [];
+    const k = cv.width / cv.getBoundingClientRect().width;
+    const px = ctx.getImageData(0, 0, cv.width, cv.height).data;
+    const cols = Math.ceil(cv.width / k / cell);
+    const rows = Math.ceil(cv.height / k / cell);
+    const hits = new Array<number>(cols * rows).fill(0);
+    for (let y = 0; y < cv.height; y++)
+      for (let x = 0; x < cv.width; x++) {
+        const i = (y * cv.width + x) * 4;
+        const r = px[i], g = px[i + 1], b = px[i + 2];
+        if (r > 150 && g > 120 && b < 0.5 * Math.min(r, g)) hits[Math.floor(y / k / cell) * cols + Math.floor(x / k / cell)]++;
+      }
+    const need = (cell * k) ** 2 * 0.3;
+    return hits.map((h): number => (h >= need ? 1 : 0)).concat([cols]);
+  }, GOLD_CELL);
+}
+
+/**
+ * Where to tap first: cells gold now that were not gold before the card was picked. Those are the tinted combo
+ * spots, in page coordinates, the biggest patch's middle first.
+ */
+export function tintSpots(before: number[], after: number[], box: { x: number; y: number }): [number, number][] {
+  const cols = after[after.length - 1];
+  const out: [number, number][] = [];
+  for (let i = 0; i < after.length - 1; i++)
+    if (after[i] && !before[i]) out.push([box.x + ((i % cols) + 0.5) * GOLD_CELL, box.y + (Math.floor(i / cols) + 0.5) * GOLD_CELL]);
+  // A cell with gold all round is the middle of a diamond, not its rim: try those first.
+  // A stray cell (an animated sprite, a field at the map's edge) has few gold neighbours; a tinted tile is a patch.
+  const score = ([x, y]: [number, number]): number => out.filter(([a, b]) => Math.abs(a - x) <= GOLD_CELL && Math.abs(b - y) <= GOLD_CELL).length;
+  return out.map((p) => [p, score(p)] as const).filter(([, n]) => n >= 6).sort((a, b) => b[1] - a[1]).map(([p]) => p);
+}
+
+/**
+ * Taps the map until the placement bar's Place button turns on, then taps it. The gold combo tint comes first, so a
+ * named combo's piece goes beside its partner as a player would put it; then rings round the map's middle.
+ */
 async function placeOnMap(page: Page): Promise<boolean> {
   const box = (await page.locator('#map').boundingBox())!;
   const cx = box.x + box.width / 2;
@@ -127,12 +171,31 @@ async function placeOnMap(page: Page): Promise<boolean> {
   for (let dy = -Math.floor(box.height / 2 / step) + 1; dy < box.height / 2 / step; dy++)
     for (let dx = -Math.floor(box.width / 2 / step) + 1; dx < box.width / 2 / step; dx++) spots.push([dx * step, dy * step]);
   spots.sort((a, b) => a[0] ** 2 + a[1] ** 2 - (b[0] ** 2 + b[1] ** 2));
-  for (const [dx, dy] of spots.slice(0, 160)) {
-    // Tap the map, never the Place/Cancel float that sits under the last tile tried: a tap on its ✕ ended placing,
-    // and from the 5th Rumah on every build failed that way (decisions/screen-bot-taps-float.md).
-    const onMap = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.id === 'map', [cx + dx, cy + dy]);
-    if (!onMap) continue;
+  // Tap the map, never the Place/Cancel float that sits under the last tile tried: a tap on its ✕ ended placing,
+  // and from the 5th Rumah on every build failed that way (decisions/screen-bot-taps-float.md).
+  const onMap = (x: number, y: number): Promise<boolean> => page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.id === 'map', [x, y]);
+  // The free tiles, gold ones among them, glow only once the building is on the map, so the first tap comes before
+  // the look for gold.
+  const before = await goldCells(page);
+  let tint: [number, number][] = [];
+  let looked = false;
+  for (let i = 0; i < Math.min(spots.length, 160) + tint.length; i++) {
+    const [dx, dy] = i < tint.length ? tint[i] : spots[i - tint.length];
+    if (!(await onMap(cx + dx, cy + dy))) continue;
     await page.mouse.click(cx + dx, cy + dy);
+    if (!looked) {
+      looked = true;
+      // The building in hand now stands at the tapped tile, and its sprite can be yellow: gold there is not the tint.
+      tint = tintSpots(before, await goldCells(page), box)
+        .map(([x, y]) => [x - cx, y - cy] as [number, number])
+        .filter(([x, y]) => Math.hypot(x - dx, y - dy) > 40)
+        .slice(0, 24);
+      if (process.env.SCREEN_BOT_LOG && tint.length) console.log('gold tint spots', tint.length);
+      if (tint.length) {
+        i = -1;
+        continue;
+      }
+    }
     if (await ok.isEnabled()) {
       await ok.click();
       return true;
