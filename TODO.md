@@ -34,7 +34,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Why: the screen bot is the only check that a player who reads only the screen can follow the goals (docs/plans/first-2h-playtest.md T2). Red every night, it checks nothing.
   - Suggested solution: read the bot's CSV artifact (time, visible goal, chosen action, verdict) for the first wrong checkpoint at 412-en. Tell a bot gap (it cannot see tint, `decisions/scorecard-bot-fixes-nightly.md`) from a real screen gap, fix the bot or the screen, and find the 360-id click that times out. Artifacts can only be fetched by a person or a session with artifact access; otherwise reproduce locally with `SCREEN_BOT=1 npx playwright test --project=screenbot-412-en`.
   - Source: Nightly runs 44216009370 and 44432894622; `decisions/nightly-under-20.md`
-  - `[ ] open · — · — · done when:` both screen-bot jobs pass on a Nightly, or the bar has a recorded reason to change.
+  - `claimed · Claude · 2026-11-23 · done when:` both screen-bot jobs pass on a Nightly, or the bar has a recorded reason to change.
 
 ## Done
 
