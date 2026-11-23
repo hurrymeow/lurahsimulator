@@ -304,6 +304,15 @@ describe('the RW rival', () => {
     // The RT keeps the calendar.
     expect(rivalYear(newGame(1), 5)).toBe(5);
   });
+
+  it('is never ahead of the calendar, so an early arrival meets the rival of its own quarter', () => {
+    const s = newGame(1);
+    promote(s, []);
+    // The RW reached in quarter 5, before the typical quarter 8: the first RW ranking uses quarter 5, not 9.
+    expect(rivalYear(s, 5)).toBe(5);
+    s.ranking.push({ tier: 'rw', year: 5, us: 1, them: 2, won: false });
+    expect(rivalYear(s, 6)).toBe(6);
+  });
 });
 
 describe('the rival from the RW on', () => {

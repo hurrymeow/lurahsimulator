@@ -403,8 +403,8 @@ describe('RW goals and Stempel', () => {
   const line = (s: ReturnType<typeof newGame>, kind: string) => nextStarChecklist(s, s.stage.current)!.find((l) => l.goal.kind === kind)!;
 
   it('piles letters up when builds outrun the stamps, and costs Sabar', () => {
-    const s = grown('kelurahan');
-    s.stage.current = 'kelurahan';
+    // Letters exist in the RW only; they stop at the Kelurahan (decisions/rival-never-ahead.md).
+    const s = grown();
     s.stempel.backlog = 9;
     s.res.sabar = 60;
     step(s);
@@ -412,6 +412,17 @@ describe('RW goals and Stempel', () => {
     expect(s.stempel.backlog).toBe(8);
     expect(s.stempel.clear).toBe(0);
     expect(s.res.sabar).toBeLessThan(60);
+  });
+
+  it('stops at the Kelurahan: the promotion clears the stamps with the letters, and no stamp refills there', () => {
+    const s = grown();
+    s.stempel.stock = 4;
+    s.stempel.backlog = 3;
+    promote(s, []);
+    expect(s.stage.current).toBe('kelurahan');
+    expect(s.stempel).toMatchObject({ stock: 0, backlog: 0 });
+    step(s);
+    expect(s.stempel.stock).toBe(0);
   });
 
   it('counts clear months in a row, and a Balai RW adds a stamp', () => {
