@@ -452,9 +452,9 @@ export function neighboursSystem(s: GameState, fx: Fx): void {
   }
 }
 
-/** Stamps refill, letters get stamped, and every letter left waiting costs Sabar. */
+/** Stamps refill, letters get stamped, and every letter left waiting costs Sabar. RW only: letters stop at the Kelurahan. */
 export function stempelSystem(s: GameState, fx: Fx): void {
-  if (s.stage.current === 'rt') return;
+  if (s.stage.current !== 'rw') return;
   const st = s.stempel;
   const balai = s.buildings.filter((b) => b.def === 'balaiRW' && b.status === 'active').length;
   st.stock = Math.min(STEMPEL.stockMax, st.stock + STEMPEL.base + balai * STEMPEL.perBalai);
@@ -514,7 +514,11 @@ export function promote(s: GameState, fx: Fx): boolean {
     if (sebelah) absorb(s, sebelah);
   }
   // Letters stop at the Kelurahan: Kampung Sebelah is plain land by then, and RW 2 stamps its own.
-  if (next === 'kelurahan') s.stempel.backlog = 0;
+  // The stamps go with them: before, they refilled to the cap and sat there, a resource with no use (decisions/rival-never-ahead.md).
+  if (next === 'kelurahan') {
+    s.stempel.backlog = 0;
+    s.stempel.stock = 0;
+  }
   // Grup Chat Warga needs two AI RTs that think alike, so the draw never leaves every AI trait different.
   const ai = s.neighbours.filter((n) => n.run !== 'player');
   if (ai.length > 1 && new Set(ai.map((n) => n.trait)).size === ai.length) ai[ai.length - 1].trait = ai[0].trait;

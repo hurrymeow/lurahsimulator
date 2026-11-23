@@ -1,5 +1,5 @@
 import { t } from '../i18n';
-import { LOSE, RIVAL_BASE, RIVAL_JITTER, RIVAL_NAMES, RIVAL_PER_YEAR, RIVAL_GROWTH_QUARTERS, RIVAL_SCALE, RIVAL_START, RIVAL_TRACK, SCORE, WIN } from '../data/ranking';
+import { LOSE, RIVAL_BASE, RIVAL_JITTER, RIVAL_NAMES, RIVAL_PER_YEAR, RIVAL_GROWTH_QUARTERS, RIVAL_SCALE, RIVAL_LEAD, RIVAL_START, RIVAL_TRACK, SCORE, WIN } from '../data/ranking';
 import { def, isCover } from './content';
 import { gain, type Fx } from './gain';
 import { viewOf } from './neighbourView';
@@ -43,11 +43,16 @@ export function addEmas(s: GameState, amount: number): void {
   s.emas = Math.max(0, s.emas + amount);
 }
 
-/** The quarter the rival's score is set by: the calendar at the RT; from the RW on, the quarters spent in the stage, up to RIVAL_GROWTH_QUARTERS. */
+/**
+ * The quarter the rival's score is set by: the calendar at the RT; from the RW on, the quarters spent in the stage, up to
+ * RIVAL_GROWTH_QUARTERS, but never ahead of the calendar. A kampung that arrives early meets the rival of its own quarter,
+ * not the typical arrival's: before, an RW reached at week 56 met a rival 4 quarters ahead and lost 6 to 10 rankings in a
+ * row (decisions/rival-never-ahead.md).
+ */
 export function rivalYear(s: GameState, year: number): number {
   const stage = s.stage.current;
   if (stage === 'rt') return year;
-  return RIVAL_START[stage] + Math.min(RIVAL_GROWTH_QUARTERS, s.ranking.filter((r) => (r.tier ?? 'rt') === stage).length + 1);
+  return Math.min(year + RIVAL_LEAD, RIVAL_START[stage] + Math.min(RIVAL_GROWTH_QUARTERS, s.ranking.filter((r) => (r.tier ?? 'rt') === stage).length + 1));
 }
 
 /** Runs at each year end. Win: Sabar, Orang Dalam and a sliver of Emas. Lose: a little Sabar. */

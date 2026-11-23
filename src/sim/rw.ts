@@ -84,10 +84,11 @@ export function rwYearEnd(s: GameState, fx: Fx): void {
   }
 }
 
-/** A Calo turns Rupiah into a stamp. Returns true if a scandal ended the job. */
+/** A Calo turns Rupiah into a stamp, in the RW only. Returns true if a scandal ended the job. */
 export function caloMonth(s: GameState, fx: Fx, name: string, site: Building | undefined, job: { converts: { rupiah: number; stempel?: number; orangDalam?: number }; scandal?: { chance: number; sabar: number } }): boolean {
   const cost = price(s, -job.converts.rupiah);
-  if (s.res.rupiah >= cost) {
+  // Letters stop at the Kelurahan, so from then on there is nothing to fix and the deal stops; the scandal risk stays.
+  if (s.stage.current === 'rw' && s.res.rupiah >= cost) {
     gain(s, fx, 'rupiah', -cost, site);
     s.stats.spent += cost;
     // The stamp clears a waiting letter first, and otherwise sits in stock.

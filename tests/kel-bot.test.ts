@@ -36,7 +36,7 @@ describe('Kelurahan bot', () => {
     expect(got.every((g) => g.at[0] !== undefined && g.at[0] >= 48), msg).toBe(true);
   }, 120_000);
 
-  it('reaches 3 stars on Auto-dana in weeks 240 to 330 on every seed, with the player\'s own kampung full', () => {
+  it('reaches 3 stars on Auto-dana in weeks 160 to 240 on every seed, with the player\'s own kampung full', () => {
     const got = [3, 4, 6].map((seed) => {
       const { s, at } = playKel(seed, 28, true);
       return { seed, at, pop: population(s), sabar: Math.round(s.res.sabar), rts: s.neighbours.map((n) => n.stars).join('') };
@@ -45,8 +45,10 @@ describe('Kelurahan bot', () => {
     // Every seed: a big kampung no longer settles under the Popularitas bar (decisions/big-kampung-taper.md).
     const three = got.filter((g) => g.at.length === 3);
     expect(three.length, msg).toBe(3);
-    // 14 ranking wins at Kel 3★ (decisions/stage-lengths-quarterly-wins.md). This shortcut kampung starts small, so it loses its first year.
-    expect(three.every((g) => g.at[2] >= 240 && g.at[2] <= 330), msg).toBe(true);
+    // 14 ranking wins at Kel 3★ take at least 168 weeks (decisions/stage-lengths-quarterly-wins.md). This shortcut kampung starts
+    // the Kelurahan at week 0; the rival is never ahead of the calendar (decisions/rival-never-ahead.md), so it no longer loses
+    // its first year to a rival from quarter 17: 169 to 193 weeks, was 253 to 301.
+    expect(three.every((g) => g.at[2] >= 160 && g.at[2] <= 240), msg).toBe(true);
     expect(three.every((g) => g.pop >= 200), msg).toBe(true);
     // Three seeds of up to about 330 weeks each since #376: allow a slow machine.
   }, 900_000);
