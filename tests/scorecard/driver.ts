@@ -230,7 +230,9 @@ function maintain(c: Ctx, upgradeAt: number | null): void {
     if (b.status === 'permit') { if (skipPermit(s, b).ok) c.acts++; }
     else if (b.status === 'damaged' && checkRepair(s, b).ok) { repair(s, b); c.acts++; }
     else if (b.status === 'mangkrak' && checkRestart(s, b).ok) { restart(s, b); c.acts++; }
-    else if (upgradeAt !== null && b.status === 'active' && s.res.rupiah > upgradeAt && checkUpgrade(s, b).ok) { upgrade(s, b); c.acts++; }
+    // Upgrades come out of spare money: the kas stays over upgradeAt after paying. Before, the check came before the cost, so a
+    // Rp 7jt upgrade could take the kas to 0 and the week's costs below it (builder seed 3, week 120; decisions/bot-upgrade-buffer.md).
+    else if (upgradeAt !== null && b.status === 'active' && s.res.rupiah - upgradeCost(s, b) > upgradeAt && checkUpgrade(s, b).ok) { upgrade(s, b); c.acts++; }
   }
 }
 
