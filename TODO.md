@@ -185,4 +185,4 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
   - Why: Less income per year than before.
   - Suggested solution: Playtest, then adjust `GRADE_BONUS` if it feels thin.
   - Source: `decisions/41-half-year-report-night-tint.md`
-  - `open · — · — · done when:` the economy is playtested and `GRADE_BONUS` is kept or tuned, with a note in `decisions/`.
+  - `claimed · voidinside99 · 2026-11-24 · done when:` the economy is playtested and `GRADE_BONUS` is kept or tuned, with a note in `decisions/`.
