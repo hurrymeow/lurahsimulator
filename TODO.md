@@ -38,6 +38,7 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ## Done
 
+- [x] **Tune `GRADE_BONUS`.** Kept as it is: it pays only Popularitas and Orang Inside, no Rupiah, and with the bonus off, as is or doubled, 22 of 24 bot seeds reach every star on the same minute (the other 2 move by at most 1.8 min). A bigger bonus would mostly pay the idle bot. The lever for a thin economy is income and costs (rows 14 and 15). #479, `decisions/grade-bonus.md`.
 - [x] **Finish the scorecard: a Nightly under 20 minutes and the forced worst-event chain.** The Nightly takes about 15 min (one Kecamatan seed per job, no replay of the screen bot); row 23 runs Banjir, Cabai, Truk Sampah and Padam after RT 1★ and RW 1★ and judges the next star against 2x target. The 5 Unknown rows left are T2, Act 3 or optional. #466, #469, `decisions/nightly-under-20.md`, `decisions/worst-event-chain.md`.
 - [x] **Scorecard bots: the last RT stalls.** The builder reaches RT 3★ on every seed and row 1 waits 0 s (bar 60). RT 2★ late in 6 of 6 seeds moves to the scorecard Fails item. #313, #348, local report 2026-11-19.
 - [x] **Scorecard follow-ups from the 2026-11-07 calls.** The Lomba is held every second year and row 22 passes (every 12.8 min, bar 10); the bunting follows the lomba year (#420); rows 3, 6 and 27 have T2 specs (#350, #356); builder and shopkeeper visit and spend Orang Dalam, so row 13 has no bot-gap line (its Fail is the missing late sink, under the Fails item). #361, #420, #421.
@@ -179,10 +180,3 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 - [x] **Rename only buildings, behind a pencil, and skip screenshot baselines outside CI.** #142, `progress/rename-gate-and-pencil.md`.
 
 ## Ideas
-
-- [ ] **Tune `GRADE_BONUS`.**
-  - Problem: The economy may feel thin after grade bonuses went half-yearly.
-  - Why: Less income per year than before.
-  - Suggested solution: Playtest, then adjust `GRADE_BONUS` if it feels thin.
-  - Source: `decisions/41-half-year-report-night-tint.md`
-  - `claimed · voidinside99 · 2026-11-24 · done when:` the economy is playtested and `GRADE_BONUS` is kept or tuned, with a note in `decisions/`.
