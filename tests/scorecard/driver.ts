@@ -224,15 +224,15 @@ function openDefs(s: GameState) {
 }
 
 /** Permits skipped, damage mended, stalled projects restarted: what a player does without thinking. */
-function maintain(c: Ctx, upgradeAt: number | null): void {
+function maintain(c: Ctx, upgradeAt: number | null, buffer = 0): void {
   const { s } = c;
   for (const b of s.buildings) {
     if (b.status === 'permit') { if (skipPermit(s, b).ok) c.acts++; }
     else if (b.status === 'damaged' && checkRepair(s, b).ok) { repair(s, b); c.acts++; }
     else if (b.status === 'mangkrak' && checkRestart(s, b).ok) { restart(s, b); c.acts++; }
-    // Upgrades come out of spare money: the kas stays over upgradeAt after paying. Before, the check came before the cost, so a
-    // Rp 7jt upgrade could take the kas to 0 and the week's costs below it (builder seed 3, week 120; decisions/bot-upgrade-buffer.md).
-    else if (upgradeAt !== null && b.status === 'active' && s.res.rupiah - upgradeCost(s, b) > upgradeAt && checkUpgrade(s, b).ok) { upgrade(s, b); c.acts++; }
+    // An upgrade leaves the bot's cash buffer in the kas, as a purchase does. Before, a Rp 7jt upgrade could take the kas to 0
+    // and the week's costs below it (builder seed 3, week 120; decisions/bot-upgrade-buffer.md).
+    else if (upgradeAt !== null && b.status === 'active' && s.res.rupiah > upgradeAt && s.res.rupiah - upgradeCost(s, b) >= buffer && checkUpgrade(s, b).ok) { upgrade(s, b); c.acts++; }
   }
 }
 
@@ -508,7 +508,7 @@ function playPlan(c: Ctx, p: Plan): void {
   const { s } = c;
   if (c.t % p.every !== 0) return;
   if (c.t === 0) laySetapak(c);
-  maintain(c, p.upgradeAt);
+  maintain(c, p.upgradeAt, p.buffer);
   if (p.fund && s.stage.current !== 'rt') fundAll(c);
   if (p.visit) visitNext(c);
   keepBeds(c, p.buffer);
