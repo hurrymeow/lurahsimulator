@@ -12,6 +12,16 @@ function isIos(): boolean {
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
 }
 
+// The Play Store app (TWA) opens the game with ?src=twa. Remember it for the session so the install button stays hidden.
+function isTwa(): boolean {
+  try {
+    if (new URLSearchParams(location.search).get('src') === 'twa') sessionStorage.setItem('twa', '1');
+    return sessionStorage.getItem('twa') === '1';
+  } catch {
+    return false;
+  }
+}
+
 let deferred: BeforeInstallPromptEvent | null = null;
 let listening = false;
 const buttons = new Set<HTMLButtonElement>();
@@ -21,7 +31,7 @@ const setHidden = (hidden: boolean) => buttons.forEach((b) => (b.hidden = hidden
 // iOS has no prompt, so the button shows Add to Home Screen steps instead.
 // Call once per button (Menu, home screen): they share one prompt and hide together.
 export function setupInstall(button: HTMLButtonElement, showHint: (text: string) => void): void {
-  if (isStandalone()) return;
+  if (isStandalone() || isTwa()) return;
   buttons.add(button);
   button.hidden = !(deferred || isIos());
 
