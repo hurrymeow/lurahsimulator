@@ -213,6 +213,7 @@ html.no-effects #dof { display: none; }
 .build-row .card-btn { flex: 1; min-width: 0; margin-bottom: 0; }
 .build-info { flex: none; width: var(--touch); min-height: var(--touch); }
 .card-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0; }
+.card-fx { display: inline-flex; align-items: center; gap: 4px; font-size: 16px; font-weight: 700; color: var(--muted); white-space: nowrap; }
 .card-house { display: inline-flex; align-items: center; gap: 4px; font-size: 16px; font-weight: 700; color: var(--muted); }
 .build-detail-pic { display: flex; justify-content: center; }
 /* The Build sheet always fills to its max height, so the tab row stays put when switching. */

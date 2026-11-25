@@ -42,7 +42,7 @@ async function open(page: Page): Promise<void> {
 /** Starts a new game from the fixed seed with the first-launch tutorial out of the way. */
 async function play(page: Page): Promise<void> {
   await page.locator('#home-start').click();
-  await page.locator('#home-new').click();
+  if (await page.locator('#home-new').isVisible()) await page.locator('#home-new').click();
   // Fixed names, so the screenshots never change with the dice.
   await page.locator('#home-name').fill('Budi');
   await page.locator('#home-kampung').fill('Kenanga');

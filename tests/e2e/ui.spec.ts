@@ -21,7 +21,8 @@ async function passHome(page: Page): Promise<void> {
   const cont = page.locator('#home-continue');
   if (await cont.isVisible()) await cont.click();
   else {
-    await page.locator('#home-new').click();
+    // With no save, Mulai goes straight to naming; with one, it asks Continue or New game first.
+    if (await page.locator('#home-new').isVisible()) await page.locator('#home-new').click();
     await page.locator('#home-begin').click();
   }
   await expect(page.locator('#home')).toHaveCount(0);
@@ -2376,10 +2377,9 @@ test.describe('home screen', () => {
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.running)).toBe(false);
     await expectLegible(page, 'home');
     await page.locator('#home-start').click();
-    // No save yet: New game only, no Continue.
+    // No save yet: nothing to choose, so Mulai goes straight to naming (2 taps to the map, playtest 2026-11-25).
     await expect(page.locator('#home-continue')).toHaveCount(0);
-    await expectLegible(page, 'home choice, no save');
-    await page.locator('#home-new').click();
+    await expect(page.locator('#home-new')).toHaveCount(0);
     // New game asks who the player is first; the dice fill both names.
     await expect(page.locator('#home-name')).not.toHaveValue('');
     await expect(page.locator('#home-kampung')).not.toHaveValue('');
@@ -2402,6 +2402,9 @@ test.describe('home screen', () => {
     await page.locator('#home-begin').click();
     await expect(page.locator('#home')).toHaveCount(0);
     expect(await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.player)).toEqual({ title: 'Bu', name: 'Sari', kampung: 'Kampung Melati' });
+    // Bangun is the primary button until the first build, as Cara main says to tap it; Menu is plain until then.
+    await expect(page.locator('#dock-build')).toHaveClass(/btn-primary/);
+    await expect(page.locator('#menu-btn')).not.toHaveClass(/btn-primary/);
     await expect(page.locator('#howto')).toBeVisible();
   });
 
@@ -3697,8 +3700,8 @@ test.describe('vertical centring', () => {
     await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
     await page.evaluate(() => document.fonts.ready);
     await check('home');
+    // No save: Mulai goes straight to naming.
     await page.locator('#home-start').click();
-    await page.locator('#home-new').click();
     await check('setup');
     await page.locator('#home-begin').click();
     await dismissModals(page);
@@ -3814,9 +3817,8 @@ test.describe('density and hierarchy', () => {
     await page.waitForFunction(() => (window as unknown as { pakrt?: unknown }).pakrt);
     await page.evaluate(() => document.fonts.ready);
     await take('home', '#home');
+    // No save: Mulai goes straight to naming, so there is no choose screen to take.
     await page.locator('#home-start').click();
-    await take('home choose', '#home');
-    await page.locator('#home-new').click();
     await take('setup', '#home');
     await page.locator('#home-begin').click();
     await dismiss();

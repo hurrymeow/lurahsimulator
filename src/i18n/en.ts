@@ -24,6 +24,8 @@ export const EN = {
   'board.title': "Pak Camat's board",
   'build.atLimit': 'Limit reached',
   'build.attracts': 'Attracts new residents',
+  'build.draws': 'Draws warga',
+  'build.perWeek': '{bits}/wk',
   'build.cat.decoration': 'Decor',
   'build.cat.empty': 'Nothing here yet.',
   'build.cat.facilities': 'Public',

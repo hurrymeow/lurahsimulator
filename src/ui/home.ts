@@ -16,8 +16,9 @@ const hasSave = () => deserialize(storage.get(SAVE_KEY)) !== null;
 
 /**
  * Launch screen. The map shows behind it with the game held. Only Start and a
- * settings gear. Start asks Continue or New game, and New game confirms before it
- * overwrites a save. The first-launch tutorial follows New game.
+ * settings gear. With a save, Start asks Continue or New game, and New game confirms
+ * before it overwrites a save; with none, Start goes straight to naming. The
+ * first-launch tutorial follows New game.
  */
 export function showHome(app: App, install: HTMLButtonElement): void {
   const root = document.getElementById('app')!;
@@ -103,7 +104,9 @@ export function showHome(app: App, install: HTMLButtonElement): void {
       ),
     );
   };
-  start.addEventListener('click', choose);
+  // With no save there is nothing to choose: Mulai goes straight to naming, so a new player is on the map in 2 taps
+  // (playtest 2026-11-25: Mulai, Game baru, then Mulai again).
+  start.addEventListener('click', () => (hasSave() ? choose() : naming()));
 
   app.held = true;
   root.classList.add('home-open');

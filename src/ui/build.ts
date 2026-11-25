@@ -1,11 +1,11 @@
 import { bBlurb, bName, t, type Key } from '../i18n';
 import type { App } from '../app';
-import { rupiah } from '../format';
+import { rupiah, rupiahHud } from '../format';
 import { CATEGORIES, categoryOf } from '../data/categories';
 import { buildingURL, isoURL } from '../render/iso';
 import { placeableDefs, sizeFor } from '../sim/content';
 import { requirementGaps } from '../sim/rules';
-import { attractTarget, buildCost, housing, population } from '../sim/state';
+import { attractTarget, buildCost, housing, population, price } from '../sim/state';
 import { nextStarChecklist } from '../sim/stages';
 import type { BuildCategory, GameState } from '../sim/types';
 import { h, missingList } from './dom';
@@ -139,6 +139,11 @@ export function openBuild(app: App): void {
     const ok = missing.length === 0;
     // One line per card: what it is, what it costs, how many you have. The rest waits behind the info button.
     const house = d.housing ? h('span', { class: 'card-house' }, h('img', { src: menuIconURL('build') ?? '', alt: '', width: 16, height: 16, class: 'pixel' }), String(d.housing)) : null;
+    const fx = effectLine(s, d);
+    // Numbers only, like the HUD's weekly pops, to stay inside UI.md rule 13's 50 words; the draw is an icon with its words in the label.
+    const gives = fx.draws
+      ? h('span', { class: 'card-fx', 'aria-label': t('build.draws'), title: t('build.draws') }, h('img', { src: menuIconURL('warga') ?? '', alt: '', width: 16, height: 16, class: 'pixel' }))
+      : fx.text ? h('span', { class: 'card-fx', 'aria-label': t('build.perWeek', { bits: fx.text }) }, fx.text) : null;
     const cardBtn = h('button', { class: `card-btn ${ok ? '' : 'locked'}`, 'aria-disabled': String(!ok), onclick: () => {
       seenNow(d.id);
       if (ok) app.startPlacing(d.id);
@@ -146,7 +151,7 @@ export function openBuild(app: App): void {
       buildingImg(d.id),
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title' }, h('strong', {}, bName(d), fresh.has(d.id) ? newTag() : null), h('span', { class: 'cost' }, rupiah(cost))),
-        h('p', { class: 'card-sub' }, h('span', { class: 'owned', 'aria-label': ownedLabel(s, d) }, ownedShort(s, d)), house),
+        h('p', { class: 'card-sub' }, h('span', { class: 'owned', 'aria-label': ownedLabel(s, d) }, ownedShort(s, d)), house, gives),
         // One reason on the card; the detail lists them all. A full cap says so in two words.
         ok ? null : missingList([missing[0] === t('sim.limit', { n: d.maxCount ?? 0 }) ? t('build.atLimit') : missing[0]]),
       ),
@@ -233,6 +238,19 @@ export function openBuild(app: App): void {
       hasUnseenCombo(s) ? newTag(true) : null);
   }
   showBuild();
+}
+
+/**
+ * What a building gives, in at most two short tokens, from its own numbers: weekly income and Popularitas, or
+ * "draws warga" for a building that only pulls people in. Sheets show "Rp" and "Popularitas" as their icons.
+ * Playtest 2026-11-25: a shop card showed only price and count, so what it did needed a tap on the info button.
+ */
+export function effectLine(s: GameState, d: { income: number; perMonth?: Partial<Record<string, number>>; housing?: number; attract?: number }): { text: string; draws: boolean } {
+  const bits: string[] = [];
+  if (d.income > 0) bits.push(`+Rp ${rupiahHud(price(s, d.income))}`);
+  const pop = d.perMonth?.sabar ?? 0;
+  if (pop) bits.push(`${pop > 0 ? '+' : ''}${pop} Popularitas`);
+  return { text: bits.slice(0, 2).join(' '), draws: !bits.length && !d.housing && (d.attract ?? 0) > 0 };
 }
 
 export { buildingImg, spriteImg };

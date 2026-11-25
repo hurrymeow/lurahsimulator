@@ -25,6 +25,8 @@ export const ID: Record<Key, string> = {
   'board.title': 'Papan Camat',
   'build.atLimit': 'Batas tercapai',
   'build.attracts': 'Menarik warga baru',
+  'build.draws': 'Menarik warga',
+  'build.perWeek': '{bits}/mgg',
   'build.cat.decoration': 'Hiasan',
   'build.cat.empty': 'Belum ada.',
   'build.cat.facilities': 'Fasilitas',
