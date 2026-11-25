@@ -279,7 +279,7 @@ export const EN = {
   'grow.boost': '+{n}% boost',
   'grow.boostHelp': 'Each Dana pays for one build. Bank more and the RT builds faster: the boost shows how much.',
   'grow.combosShared': "Combos count across RTs: every RT's combo goal uses the most combos any RT has found, yours included.",
-  'grow.fund': 'Dana ×{n}',
+  'grow.fund': 'Dana ×{n} · {cost}',
   'grow.fundFull': 'The bank is full: {n} builds paid for.',
   'grow.fundMoney': 'Need {amt} more to fund this RT.',
   'grow.funded': 'Dana for {n} more builds.',

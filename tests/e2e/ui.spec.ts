@@ -1676,9 +1676,15 @@ test.describe('growing map', () => {
     const before = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.funded));
     // Each row opens its own detail, where the funding buttons live.
     await page.locator('[data-nb-row]').first().click();
+    // The price is on the button before the tap (playtest 2026-11-25: a Dana took Rp 8,6jt unseen).
+    // Sheets show "Rp" as the money icon, so the text holds the amount.
+    await expect(page.locator('.sheet [data-fund="1"]')).toContainText(/\d(rb|jt)/);
+    await expect(page.locator('.sheet [data-fund="6"]')).toContainText(/\d(rb|jt)/);
     await page.locator('.sheet [data-fund="1"]').click();
     const after = await page.evaluate(() => (window as unknown as { pakrt: any }).pakrt.s.neighbours.map((n: any) => n.funded));
     expect(after[1]).toBe(before[1] + 1);
+    // And the sheet shows what the Dana bought.
+    await expect(page.locator('.sheet .nb-banked')).toBeVisible();
     await expectLegible(page, 'neighbours panel after funding');
     // A big Dana banks six builds.
     await page.locator('.sheet [data-fund="6"]').click();

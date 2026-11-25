@@ -1,7 +1,8 @@
 import { t, type Key } from '../i18n';
 import type { App } from '../app';
 import { NEIGHBOUR } from '../sim/balance';
-import { aiGoals, cellName, checkFund, checkVisit, fundNeighbour, setAutoFund, visit } from '../sim/grow';
+import { aiGoals, boostOf, cellName, checkFund, checkVisit, fundCost, fundNeighbour, setAutoFund, visit } from '../sim/grow';
+import { rupiahHud } from '../format';
 import { cellOrigin } from '../sim/area';
 import { RT_H, RT_W } from '../sim/types';
 import { viewOf } from '../sim/neighbourView';
@@ -101,10 +102,14 @@ function detail(app: App, view: { kind: 'detail'; i: number }): void {
       reopen();
     };
     const why = checkVisit(s, n);
+    // The price is on the button, for the builds that still fit in the bank (playtest 2026-11-25: a tap took Rp 8,6jt unseen).
+    const price = (k: number) => `Rp ${rupiahHud(fundCost(s) * Math.max(1, Math.min(k, NEIGHBOUR.fundMax - n.funded)))}`;
+    // What the Dana bought, so a tap visibly changes the sheet: builds paid for and how much faster the RT builds.
+    if (n.funded > 0) body.push(h('p', { class: 'nb-banked' }, t('grow.funded', { n: n.funded }), n.funded > 1 ? ` · ${t('grow.boost', { n: Math.round(boostOf(n) * 100) })}` : ''));
     body.push(
       h('div', { class: 'row nb-fund' },
-        h('button', { class: 'btn btn-primary', type: 'button', 'data-fund': String(NEIGHBOUR.fundBulk), disabled: !!bulk, onclick: () => fund(NEIGHBOUR.fundBulk) }, t('grow.fund', { n: NEIGHBOUR.fundBulk })),
-        h('button', { class: 'btn', type: 'button', 'data-fund': '1', disabled: !!one, onclick: () => fund(1) }, t('grow.fund', { n: 1 })),
+        h('button', { class: 'btn btn-primary', type: 'button', 'data-fund': String(NEIGHBOUR.fundBulk), disabled: !!bulk, onclick: () => fund(NEIGHBOUR.fundBulk) }, t('grow.fund', { n: NEIGHBOUR.fundBulk, cost: price(NEIGHBOUR.fundBulk) })),
+        h('button', { class: 'btn', type: 'button', 'data-fund': '1', disabled: !!one, onclick: () => fund(1) }, t('grow.fund', { n: 1, cost: price(1) })),
       ),
     );
     const fundWhy = one ?? bulk;
