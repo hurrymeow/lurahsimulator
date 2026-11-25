@@ -12,6 +12,50 @@ Ranked 2026-11-01: Now, Next, Later, top first within a tier. Rank by player pai
 
 ### Next
 
+Feel items from an agent playtest on 2026-11-25: RT by hand at 412px in id, then the `rw` and `kec` seeds through `pakrt.loadSeed` (`?debug`). Audio was not heard. Fun that works and should be kept: the map filling up, the satire lines, combos with the 0/24 book, the spend-or-shrink Anggaran, the map widening at each promotion, naming the pejabat and kampung.
+
+- [ ] **Popups pile up at the big beats.**
+  - Problem: accepting the Lurah SK queued 6 cards and notices within about 2 game weeks: the promotion, a combo, 2 buildings unlocked, Pak Camat's call and the Anggaran. The first minute of a new game shows 4 blocking cards: Cara main, the "Tempat dan alasan" tip, the Menara Wifi unlock and the combo tip.
+  - Why: every card has the same weight, so the promotion is buried under routine news. B0 in GAME-DESIGN.md §8 asks for no popups in the first minute.
+  - Suggested solution: after an SK, hold routine cards (unlocks, tips, board calls) for a few weeks or merge them into one "what's new" card. Turn unlocks into the BARU badge plus a toast instead of a blocking card. Measure with the timeline's popup events per band.
+  - `open · — · — · done when:` no band has more than 2 blocking cards in any 30 s at 1x, and B0 has none after Cara main.
+
+- [ ] **The promotion has no visual payoff.**
+  - Problem: "SK-mu: Pak Lurah!" uses the same cream card as a tip (#336 fixed the wording, not the moment). Accepting it cuts straight to another card while the map widens behind the dimmer.
+  - Why: the promotion is the biggest reward in Act 1. Kairosoft gives its rank-ups a screen of their own.
+  - Suggested solution: a stamp slams onto the SK, the camera pulls back over the new map before any other card shows, then the new post's name appears on the HUD. Use the existing `fanfare` sound and `fx.ts`, and skip the motion when effects are off.
+  - `open · — · — · done when:` each SK has its own animated beat, and no card shows until it ends.
+
+- [ ] **Funding a neighbour feels silent.**
+  - Problem: in Tetangga, "Dana ×6" shows no price. Tapping it took Rp 8.6jt, and the sheet still read "10 warga (punya 2)" with no change on screen.
+  - Why: this is the Kelurahan's main action (the target is "bawa RW 2 ke 1★"), and spending with no visible result feels like a loss.
+  - Suggested solution: show the price on the button, and after a tap show the funded builds filling up in the sheet (`grow.funded`). Pop a build puff on that RT's map, or pan to it.
+  - `open · — · — · done when:` a Dana tap shows its price before the tap and a visible change in the sheet or on the map after it.
+
+- [ ] **Big cash jumps have no explanation.**
+  - Problem: on the `rw` seed after the SK, money went from Rp 11jt to Rp 180jt in one week. The cause, "Anggaran turun", is a small toast that is easy to miss.
+  - Why: an unexplained 15x jump reads as a bug, and it hides the spend-or-shrink rule, which is one of the best hooks in the game.
+  - Suggested solution: when the Anggaran lands, fly coins into the money chip and show the budget as its own bar or chip, apart from personal cash, with the time left to spend it.
+  - `open · — · — · done when:` the yearly budget arrival is shown on screen with its amount and deadline.
+
+- [ ] **Late event choices cost nothing.**
+  - Problem: on the `kec` seed with 113 Orang Inside, the Inspeksi Ketertiban option cost 1 Orang Inside. Padam offered "wait" (−3 Popularitas, income x0.85 for 2 weeks) against a genset at Rp 16jt, so one side is always obviously right.
+  - Why: event cards are the game's main moments of choice. A dilemma with no cost is just a tap. This links to the late cash and Orang Dalam pile-up under the scorecard Fails item (rows 13 to 15).
+  - Suggested solution: scale event option costs with the stage, or as a share of current stock, so each side costs about the same. Log the chosen side per bot as a check.
+  - `open · — · — · done when:` in the timeline, no event option is picked by every climbing bot on every seed from the Kelurahan on.
+
+- [ ] **Road access is hard to read while placing.**
+  - Problem: a tile inside the starting road loop that looks next to the road was refused with "Belum ada jalan di samping petak ini", and rotating did not help. Before the first tap, the glowing valid tiles are very faint on the grass at 412px.
+  - Why: the first build is the first thing the player does (B0 asks for the first house by 30 s), and a refusal with no visible reason feels unfair.
+  - Suggested solution: make the valid-tile tint stronger, or outline the road edges a building can use. When a tile is refused, flash the nearest valid tile.
+  - `open · — · — · done when:` on a new game at 412px, the valid tiles can be told apart from the rest in a screenshot, and a refused tile points to a valid one.
+
+- [ ] **Small first-session friction.**
+  - Problem: starting takes Mulai, then Game baru, then Mulai again. The Cara main card says to tap Bangun, but the green primary button on the bar is Menu. Shop cards in Bangun show only price and count, so what a shop does needs a tap on ⓘ.
+  - Why: each one is small, but together they slow the first 30 s and blur which button matters.
+  - Suggested solution: skip the Game baru step when there is no save. Make Bangun the primary button until the first build. Add a one-line effect to each build card (for example "+income, warga datang"), within UI.md's 6-word label limit.
+  - `open · — · — · done when:` a new player reaches the map in 2 taps, Bangun is primary until the first build, and each build card names its effect.
+
 ### Later
 
 - [ ] **Fix the remaining scorecard Fails that have a clear cause.**
