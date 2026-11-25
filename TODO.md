@@ -30,7 +30,7 @@ Feel items from an agent playtest on 2026-11-25: RT by hand at 412px in id, then
   - Problem: in Tetangga, "Dana ×6" shows no price. Tapping it took Rp 8.6jt, and the sheet still read "10 warga (punya 2)" with no change on screen.
   - Why: this is the Kelurahan's main action (the target is "bawa RW 2 ke 1★"), and spending with no visible result feels like a loss.
   - Suggested solution: show the price on the button, and after a tap show the funded builds filling up in the sheet (`grow.funded`). Pop a build puff on that RT's map, or pan to it.
-  - `open · — · — · done when:` a Dana tap shows its price before the tap and a visible change in the sheet or on the map after it.
+  - `claimed · Claude (sweep) · 2026-11-26 · done when:` a Dana tap shows its price before the tap and a visible change in the sheet or on the map after it.
 
 - [ ] **Big cash jumps have no explanation.**
   - Problem: on the `rw` seed after the SK, money went from Rp 11jt to Rp 180jt in one week. The cause, "Anggaran turun", is a small toast that is easy to miss.
@@ -54,7 +54,7 @@ Feel items from an agent playtest on 2026-11-25: RT by hand at 412px in id, then
   - Problem: starting takes Mulai, then Game baru, then Mulai again. The Cara main card says to tap Bangun, but the green primary button on the bar is Menu. Shop cards in Bangun show only price and count, so what a shop does needs a tap on ⓘ.
   - Why: each one is small, but together they slow the first 30 s and blur which button matters.
   - Suggested solution: skip the Game baru step when there is no save. Make Bangun the primary button until the first build. Add a one-line effect to each build card (for example "+income, warga datang"), within UI.md's 6-word label limit.
-  - `open · — · — · done when:` a new player reaches the map in 2 taps, Bangun is primary until the first build, and each build card names its effect.
+  - `claimed · Claude (sweep) · 2026-11-26 · done when:` a new player reaches the map in 2 taps, Bangun is primary until the first build, and each build card names its effect.
 
 ### Later
 
