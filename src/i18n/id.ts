@@ -280,7 +280,7 @@ export const ID: Record<Key, string> = {
   'grow.boost': '+{n}% lebih cepat',
   'grow.boostHelp': 'Satu Dana membiayai satu pembangunan. Tabung lebih banyak, RT membangun lebih cepat: boost menunjukkan seberapa.',
   'grow.combosShared': 'Combo dihitung bersama: target combo tiap RT memakai combo terbanyak yang ditemukan RT mana pun, termasuk RT-mu.',
-  'grow.fund': 'Dana ×{n}',
+  'grow.fund': 'Dana ×{n} · {cost}',
   'grow.fundFull': 'Tabungan penuh: {n} pembangunan sudah dibayar.',
   'grow.fundMoney': 'Kurang {amt} untuk mendanai RT ini.',
   'grow.funded': 'Dana untuk {n} pembangunan lagi.',
