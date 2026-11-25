@@ -19,7 +19,7 @@ async function passHome(page: Page): Promise<void> {
   const cont = page.locator('#home-continue');
   if (await cont.isVisible()) await cont.click();
   else {
-    await page.locator('#home-new').click();
+    if (await page.locator('#home-new').isVisible()) await page.locator('#home-new').click();
     await page.locator('#home-begin').click();
   }
   await expect(page.locator('#home')).toHaveCount(0);

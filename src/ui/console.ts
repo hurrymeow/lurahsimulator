@@ -63,6 +63,11 @@ export function setupConsole(app: App): void {
       if (fresh && !tag) buildBtn.append(newTag(true));
       else if (!fresh && tag) tag.remove();
       buildBtn.classList.toggle('has-new', fresh);
+      // Bangun is the primary button until the first build, as Cara main says to tap it; then Menu is again
+      // (playtest 2026-11-25: the tutorial pointed at Bangun while the green button was Menu).
+      const firstBuild = app.s.stats.spent === 0;
+      buildBtn.classList.toggle('btn-primary', firstBuild);
+      menuBtn.classList.toggle('btn-primary', !firstBuild);
     });
   }
   const setCount = (btn: HTMLElement, n: number) => {

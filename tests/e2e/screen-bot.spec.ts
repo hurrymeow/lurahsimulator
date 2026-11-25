@@ -38,7 +38,7 @@ const snapshot = (page: Page): Promise<GameState> => page.evaluate(() => JSON.pa
 
 async function passHome(page: Page): Promise<void> {
   await page.locator('#home-start').click();
-  await page.locator('#home-new').click();
+  if (await page.locator('#home-new').isVisible()) await page.locator('#home-new').click();
   await page.locator('#home-begin').click();
   await expect(page.locator('#home')).toHaveCount(0);
   if (await page.locator('#howtoGo').isVisible()) await page.locator('#howtoGo').click();
