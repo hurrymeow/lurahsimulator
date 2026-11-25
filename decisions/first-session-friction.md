@@ -16,6 +16,7 @@ TODO item "Small first-session friction" (agent playtest 2026-11-25, #484).
 - **Unit:** `tests/build-effect.test.ts` checks the effect line for a shop, a Popularitas building, a draw-only building and a house.
 - 180 e2e tests (home, build, coach, density, legibility, centring) pass at 320 id and 412 en. `npm run typecheck` and `npm test` pass.
 - Screenshots at 320 id were checked by eye: the dock, and the Hunian, Toko and Fasilitas tabs.
+- **Visual baselines:** three at 412 id (HUD at start, event popup, tip card) show the dock, so they changed with Bangun as primary. They were redrawn with the Update baselines workflow (commit 6b90b23); in the new HUD baseline only the dock's two buttons differ.
 
 ## Verdict
 Self-approved under the TODO rule (UI.md rules 13, 14 and 16; CONTRIBUTING.md). Done-when met: a new player reaches the map in 2 taps, Bangun is primary until the first build, and each build card names its effect.
