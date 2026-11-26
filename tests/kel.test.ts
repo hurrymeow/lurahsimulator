@@ -3,7 +3,7 @@ import { YEAR_SCALE } from '../src/sim/calendar';
 import { activeCombos } from '../src/sim/combos';
 import { resolveEvent } from '../src/sim/events';
 import { assign, liveJobs } from '../src/sim/jobs';
-import { kelSystem, serapan, wacanaNoReceipt } from '../src/sim/kel';
+import { budgetLeft, kelSystem, serapan, wacanaNoReceipt } from '../src/sim/kel';
 import { onBuildingFinished } from '../src/sim/projects';
 import { areaScore } from '../src/sim/ranking';
 import { nextStarChecklist } from '../src/sim/stages';
@@ -52,6 +52,17 @@ describe('Anggaran and serapan', () => {
     at(s, 1);
     expect(s.kel.budget).toBe(24_000_000 * YEAR_SCALE * s.inflation);
     expect(s.res.rupiah).toBe(s.kel.budget);
+  });
+
+  it('shows what is left of the year and the weeks to spend it, and the arrival pops at the Kantor', () => {
+    expect(budgetLeft(newGame(1))).toBeNull();
+    const s = kel();
+    const fx = at(s, 1);
+    expect(fx.some((e) => e.kind === 'pop' && e.res === 'rupiah' && e.amount === s.kel.budget)).toBe(true);
+    expect(budgetLeft(s)).toEqual({ amt: s.kel.budget, weeks: 47 });
+    s.stats.spent += 1_000_000;
+    s.month = 10;
+    expect(budgetLeft(s)).toEqual({ amt: s.kel.budget - 1_000_000, weeks: 38 });
   });
 
   it('cuts next year by the unspent share, never below the floor', () => {
