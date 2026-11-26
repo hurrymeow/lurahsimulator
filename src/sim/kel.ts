@@ -23,6 +23,12 @@ const inKel = (s: GameState) => s.stage.current === 'kelurahan';
 
 const spentThisYear = (s: GameState) => Math.max(0, s.stats.spent - s.kel.spentBase);
 
+/** The year's Anggaran still unspent and the weeks left to spend it, for the HUD chip. Null outside the Kelurahan. */
+export function budgetLeft(s: GameState): { amt: number; weeks: number } | null {
+  if (!inKel(s) || s.kel.budget <= 0) return null;
+  return { amt: Math.max(0, s.kel.budget - spentThisYear(s)), weeks: WEEKS_PER_YEAR - weekOfYear(s.month) };
+}
+
 /** Percent of the budget due so far that has been spent. 100 before any budget arrives. */
 export function serapan(s: GameState): number {
   const due = (s.kel.budget * (weekOfYear(s.month - 1) + 1)) / WEEKS_PER_YEAR;
@@ -72,7 +78,8 @@ export function kelSystem(s: GameState, fx: Fx): void {
     const was = k.budget;
     k.budget = nextBudget(s);
     k.spentBase = s.stats.spent;
-    gain(s, fx, 'rupiah', k.budget);
+    // The money pops at the Kantor, so a 15x jump in the kas has a visible source (playtest 2026-11-25).
+    gain(s, fx, 'rupiah', k.budget, s.buildings.find((b) => b.def === 'kantorKel') ?? s.buildings.find((b) => b.def === 'kantorRT'));
     const cut = was > 0 ? Math.round((1 - k.budget / price(s, KEL.anggaranPerYear)) * 100) : 0;
     fx.push({ kind: 'notice', title: t('sim.anggaranTitle'), body: t('sim.anggaranBody', { amt: k.budget, cut }), tone: cut > 0 ? 'bad' : 'good' });
   }

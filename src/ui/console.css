@@ -99,8 +99,12 @@ button.goal-row { display: block; width: 100%; min-height: 28px; padding: 2px 0;
 /* Repair all: under the satellite view, or bottom-right where that is hidden. */
 .cs-fix { position: absolute; top: 112px; right: 6px; z-index: 3; min-height: 48px; padding: 4px 12px; font-size: 16px; font-weight: 700; background: var(--cs-cream); color: var(--cs-ink); border: 1px solid var(--cs-line); border-left: 4px solid #d9791c; box-shadow: 2px 2px 0 var(--cs-shadow); }
 .cs-fix[hidden] { display: none; }
+/* The yearly Anggaran chip takes the fix chip's place; the fix chip moves under it when both show. */
+.cs-budget { position: absolute; top: 112px; right: 6px; z-index: 3; min-height: 48px; padding: 4px 12px; font-size: 16px; font-weight: 700; background: var(--cs-cream); color: var(--cs-ink); border: 1px solid var(--cs-line); border-left: 4px solid #1d6b35; box-shadow: 2px 2px 0 var(--cs-shadow); }
+.cs-budget[hidden] { display: none; }
+.cs-budget:not([hidden]) ~ .cs-fix { top: 168px; }
 .cs-fix.poor { opacity: 0.7; }
-@media (max-width: 359px) { .cs-fix { top: auto; bottom: 8px; } }
+@media (max-width: 359px) { .cs-fix, .cs-budget { top: auto; bottom: 8px; } .cs-budget:not([hidden]) ~ .cs-fix { top: auto; bottom: 64px; } }
 /* The fold button: a small 28px square under the satellite view (or alone in its place when folded), inside a
    48px tap area (UI.md rule 1). The tap area is transparent, so it hides little of the map. */
 .cs-sat-toggle { position: absolute; top: 62px; right: 0; z-index: 3; width: 48px; height: 48px; padding: 0; display: flex; align-items: center; justify-content: center; background: none; border: 0; cursor: pointer; }
@@ -108,7 +112,8 @@ button.goal-row { display: block; width: 100%; min-height: 28px; padding: 2px 0;
 .cs-sat-toggle[hidden] { display: none; }
 #stage.sat-min .cs-sat { display: none; }
 #stage.sat-min .cs-sat-toggle { top: 0; }
-#stage.sat-min .cs-fix { top: 50px; }
+#stage.sat-min .cs-fix, #stage.sat-min .cs-budget { top: 50px; }
+#stage.sat-min .cs-budget:not([hidden]) ~ .cs-fix { top: 106px; }
 #stage.sat-min #goal.cs-goal-float { right: 50px; }
 #cs-sat-map { display: block; width: 88px; height: 60px; image-rendering: pixelated; }
 

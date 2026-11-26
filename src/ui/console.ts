@@ -6,6 +6,7 @@ import { t } from '../i18n';
 import type { App } from '../app';
 import { dateLabel, rupiahHud } from '../format';
 import { damagedList, repairAll, repairCost } from '../sim/events';
+import { budgetLeft } from '../sim/kel';
 import { TH, TW } from '../render/iso';
 import { iconURL } from '../render/sprites';
 import { WORLD_OX, WORLD_OY } from '../render/scenery';
@@ -108,7 +109,13 @@ export function setupConsole(app: App): void {
     app.refresh();
     app.notice({ title: t('cs.fixDone', { n: fixed.length }), body: left ? t('cs.fixLeft', { n: left }) : t('cs.fixSpent', { cost: rupiahHud(spent) }), tone: left ? 'bad' : 'good' });
   } });
-  stage.append(fixAll);
+  // The Kelurahan's yearly Anggaran: what is left and the weeks to spend it, apart from the kas (playtest 2026-11-25:
+  // the kas jumped 15x with only a toast to say why). Tap for the spend-or-shrink rule.
+  const budget = h('button', { class: 'btn cs cs-budget', id: 'cs-budget', type: 'button', hidden: true, onclick: () => {
+    app.tap(10);
+    app.notice({ title: t('cs.budgetTitle'), body: t('cs.budgetHelp'), tone: 'info' });
+  } });
+  stage.append(budget, fixAll);
 
   // The date follows the month; the satellite label follows the language.
   app.refreshers.push(() => {
@@ -125,6 +132,9 @@ export function setupConsole(app: App): void {
     satToggle.setAttribute('aria-pressed', String(!!app.settings.satMin));
     const broken = damagedList(app.s);
     const total = broken.reduce((n, b) => n + repairCost(app.s, b), 0);
+    const left = budgetLeft(app.s);
+    budget.hidden = !left || !document.getElementById('placebar')!.hidden || document.getElementById('app')!.classList.contains('home-open');
+    if (left) budget.textContent = t('cs.budget', { amt: rupiahHud(left.amt), weeks: left.weeks });
     fixAll.hidden = !broken.length || !document.getElementById('placebar')!.hidden || document.getElementById('app')!.classList.contains('home-open');
     fixAll.textContent = total ? t('cs.fixAll', { n: broken.length, cost: rupiahHud(total) }) : t('cs.fixAllFree', { n: broken.length });
     fixAll.classList.toggle('poor', total > app.s.res.rupiah);

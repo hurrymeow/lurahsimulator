@@ -1657,6 +1657,32 @@ test.describe('stars', () => {
 });
 
 test.describe('growing map', () => {
+  test('at the Kelurahan the yearly Anggaran shows as its own chip, with what is left and the weeks to spend it', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    // The RT has no budget, so no chip.
+    await expect(page.locator('#cs-budget')).toBeHidden();
+    await seed(page);
+    await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.speed = 0;
+      app.promote();
+      app.promote();
+      app.s.kel.budget = 120_000_000;
+      app.s.kel.spentBase = app.s.stats.spent;
+      app.refresh();
+    });
+    await dismissModals(page);
+    const chip = page.locator('#cs-budget');
+    await expect(chip).toBeVisible();
+    await expect(chip).toContainText('120jt');
+    await expect(chip).toContainText(lang() === 'en' ? 'wk' : 'mgg');
+    await expectLegible(page, 'Anggaran chip');
+    // A tap says the rule: spend it by December or next year shrinks.
+    await chip.click();
+    await expect(page.locator('#ticker')).toContainText(lang() === 'en' ? 'December' : 'Desember');
+  });
+
   test('at the Kelurahan neighbours show in the Menu, and funding one works', async ({ page }) => {
     await start(page);
     await dismissModals(page);
