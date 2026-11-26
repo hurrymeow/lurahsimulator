@@ -26,12 +26,6 @@ Feel items from an agent playtest on 2026-11-25: RT by hand at 412px in id, then
   - Suggested solution: a stamp slams onto the SK, the camera pulls back over the new map before any other card shows, then the new post's name appears on the HUD. Use the existing `fanfare` sound and `fx.ts`, and skip the motion when effects are off.
   - `open · — · — · done when:` each SK has its own animated beat, and no card shows until it ends.
 
-- [ ] **Funding a neighbour feels silent.**
-  - Problem: in Tetangga, "Dana ×6" shows no price. Tapping it took Rp 8.6jt, and the sheet still read "10 warga (punya 2)" with no change on screen.
-  - Why: this is the Kelurahan's main action (the target is "bawa RW 2 ke 1★"), and spending with no visible result feels like a loss.
-  - Suggested solution: show the price on the button, and after a tap show the funded builds filling up in the sheet (`grow.funded`). Pop a build puff on that RT's map, or pan to it.
-  - `claimed · Claude (sweep) · 2026-11-26 · done when:` a Dana tap shows its price before the tap and a visible change in the sheet or on the map after it.
-
 - [ ] **Big cash jumps have no explanation.**
   - Problem: on the `rw` seed after the SK, money went from Rp 11jt to Rp 180jt in one week. The cause, "Anggaran turun", is a small toast that is easy to miss.
   - Why: an unexplained 15x jump reads as a bug, and it hides the spend-or-shrink rule, which is one of the best hooks in the game.
@@ -49,12 +43,6 @@ Feel items from an agent playtest on 2026-11-25: RT by hand at 412px in id, then
   - Why: the first build is the first thing the player does (B0 asks for the first house by 30 s), and a refusal with no visible reason feels unfair.
   - Suggested solution: make the valid-tile tint stronger, or outline the road edges a building can use. When a tile is refused, flash the nearest valid tile.
   - `open · — · — · done when:` on a new game at 412px, the valid tiles can be told apart from the rest in a screenshot, and a refused tile points to a valid one.
-
-- [ ] **Small first-session friction.**
-  - Problem: starting takes Mulai, then Game baru, then Mulai again. The Cara main card says to tap Bangun, but the green primary button on the bar is Menu. Shop cards in Bangun show only price and count, so what a shop does needs a tap on ⓘ.
-  - Why: each one is small, but together they slow the first 30 s and blur which button matters.
-  - Suggested solution: skip the Game baru step when there is no save. Make Bangun the primary button until the first build. Add a one-line effect to each build card (for example "+income, warga datang"), within UI.md's 6-word label limit.
-  - `claimed · Claude (sweep) · 2026-11-26 · done when:` a new player reaches the map in 2 taps, Bangun is primary until the first build, and each build card names its effect.
 
 ### Later
 
@@ -83,6 +71,8 @@ Feel items from an agent playtest on 2026-11-25: RT by hand at 412px in id, then
 
 ## Done
 
+- [x] **Funding a neighbour feels silent.** The Dana buttons show their price ("Dana ×6 · Rp 8,6jt"), and an RT's sheet shows the builds paid for and the speed-up after a tap. A build puff or pan on the map was left out; the sheet line meets the done-when. #486, `decisions/dana-shows-price.md`.
+- [x] **Small first-session friction.** With no save, Mulai goes straight to naming (2 taps to the map); Bangun is the primary button until the first build; build cards show weekly income, Popularitas or a warga icon for a draw. #487, `decisions/first-session-friction.md`.
 - [x] **Tune `GRADE_BONUS`.** Kept as it is: it pays only Popularitas and Orang Inside, no Rupiah, and with the bonus off, as is or doubled, 22 of 24 bot seeds reach every star on the same minute (the other 2 move by at most 1.8 min). A bigger bonus would mostly pay the idle bot. The lever for a thin economy is income and costs (rows 14 and 15). #479, `decisions/grade-bonus.md`.
 - [x] **Finish the scorecard: a Nightly under 20 minutes and the forced worst-event chain.** The Nightly takes about 15 min (one Kecamatan seed per job, no replay of the screen bot); row 23 runs Banjir, Cabai, Truk Sampah and Padam after RT 1★ and RW 1★ and judges the next star against 2x target. The 5 Unknown rows left are T2, Act 3 or optional. #466, #469, `decisions/nightly-under-20.md`, `decisions/worst-event-chain.md`.
 - [x] **Scorecard bots: the last RT stalls.** The builder reaches RT 3★ on every seed and row 1 waits 0 s (bar 60). RT 2★ late in 6 of 6 seeds moves to the scorecard Fails item. #313, #348, local report 2026-11-19.
