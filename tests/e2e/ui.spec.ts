@@ -1124,6 +1124,44 @@ test.describe('text is legible and never cut off', () => {
     await expectLegible(page, 'placement with missing requirements');
   });
 
+  test('spots beside a road get the strong tint, and a spot with no road points to the nearest one that has it', async ({ page }) => {
+    await start(page);
+    await dismissModals(page);
+    const r = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.s.res.rupiah = 50_000_000;
+      app.startPlacing('warung');
+      // A new game is one RT: 13 tiles wide (RT_W).
+      const W = 13;
+      const v: Uint8Array = app.view.valid;
+      const f: Uint8Array | null = app.view.fed;
+      let fed = 0;
+      let idle: { x: number; y: number } | null = null;
+      for (let k = 0; k < v.length; k++) {
+        if (f?.[k]) fed++;
+        else if (v[k] && !idle) idle = { x: k % W, y: Math.floor(k / W) };
+      }
+      if (!idle) return { fed, idle: false, point: null, pointFed: false };
+      app.moveGhost(idle, true);
+      const p = app.view.pointTo;
+      return { fed, idle: true, point: p, pointFed: !!p && !!f?.[p.y * W + p.x] };
+    });
+    // Spots beside a road that reaches the Kantor are marked for the strong tint.
+    expect(r.fed).toBeGreaterThan(0);
+    // A spot the building could stand on but where it would sit idle points to a road-fed spot.
+    expect(r.idle).toBe(true);
+    expect(r.point).not.toBeNull();
+    expect(r.pointFed).toBe(true);
+    await expect(page.locator('#place-info .warn')).toBeVisible();
+    // Done placing: the overlays go with it.
+    const cleared = await page.evaluate(() => {
+      const app = (window as unknown as { pakrt: any }).pakrt;
+      app.stopPlacing();
+      return app.view.fed === null && app.view.pointTo === null;
+    });
+    expect(cleared).toBe(true);
+  });
+
   test('the placement bar turns the building before it is placed, and it keeps that facing', async ({ page }) => {
     await start(page);
     await dismissModals(page);

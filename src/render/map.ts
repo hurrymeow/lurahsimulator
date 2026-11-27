@@ -186,6 +186,10 @@ export class MapView {
   valid: Uint8Array | null = null;
   /** While placing: the valid tiles that would join a combo, by tile key. */
   join: Set<number> | null = null;
+  /** While placing: 1 for every valid tile whose spot has a connected road beside it, so it will work once built. */
+  fed: Uint8Array | null = null;
+  /** While the ghost sits where no road reaches: the nearest road-fed spot, which pulses (playtest 2026-11-25). */
+  pointTo: { x: number; y: number; w: number; h: number } | null = null;
   /** A building being moved is hidden from its old spot while its ghost shows the new one. */
   hidden: number | null = null;
   selected: number | null = null;
@@ -585,7 +589,8 @@ export class MapView {
       ctx.fillStyle = 'rgba(244, 244, 245, 0.25)';
       ctx.fill();
     }
-    if (this.valid && this.ghost && !this.ghost.tiles) {
+    // From the moment a building is in hand, before the first tap: the bar says "tap a glowing tile", so they must glow.
+    if (this.valid && !this.ghost?.tiles) {
       // Every free spot gets a faint diamond, so it is plain the building goes on the grid.
       ctx.beginPath();
       const hw = (TW * sc) / 2;
@@ -606,6 +611,36 @@ export class MapView {
       ctx.strokeStyle = 'rgba(246, 236, 212, 0.55)';
       ctx.lineWidth = 1;
       ctx.stroke();
+      if (this.fed) {
+        // Spots beside a road that reaches the Kantor are where the building works: a strong light tint, so they stand out
+        // from the grass at 412px and from the faint spots a building could stand on but would sit idle.
+        ctx.beginPath();
+        for (let y = 0; y < GRID_H; y++)
+          for (let x = 0; x < GRID_W; x++) {
+            if (!this.fed[y * GRID_W + x]) continue;
+            const c = this.tileCentre(x, y);
+            if (c.x < -hw || c.y < -hh || c.x > this.viewW + hw || c.y > this.viewH + hh) continue;
+            ctx.moveTo(c.x, c.y - hh + 2);
+            ctx.lineTo(c.x + hw - 4, c.y);
+            ctx.lineTo(c.x, c.y + hh - 2);
+            ctx.lineTo(c.x - hw + 4, c.y);
+            ctx.closePath();
+          }
+        ctx.fillStyle = 'rgba(255, 251, 235, 0.5)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      if (this.pointTo) {
+        // A pulsing outline on the nearest road-fed spot, so a spot with no road points to one that has it.
+        const p = this.pointTo;
+        const a = this.effects ? 0.55 + 0.45 * Math.sin(now / 180) : 1;
+        this.diamond(ctx, p.x, p.y, 0, p.w, p.h);
+        ctx.strokeStyle = `rgba(74, 222, 128, ${a.toFixed(2)})`;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
       if (this.join) {
         // The spots that would join a combo get the same diamond in gold.
         ctx.beginPath();
