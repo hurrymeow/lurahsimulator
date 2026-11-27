@@ -92,6 +92,9 @@ export function inemHead(): HTMLElement {
   );
 }
 
+/** Buildings that sit idle with no connected road beside them, as `build.noRoad` says. */
+const needsRoadFor = (d: { id: string; scope?: string }): boolean => !FLAT.has(d.id) && !d.id.startsWith('kantor') && (d.scope ?? 'rt') === 'rt';
+
 export class App {
   s: GameState;
   settings: Settings;
@@ -910,17 +913,44 @@ export class App {
     const rot = this.placeRot;
     const mover = this.moving === null ? undefined : byUid(this.s, this.moving);
     const out = new Uint8Array(GRID_W * GRID_H);
+    // Spots with a connected road beside them, where the building will work: they get the strong tint.
+    const fed = new Uint8Array(GRID_W * GRID_H);
+    const d = def(id);
+    const road = needsRoadFor(d) ? connectedRoad(this.s) : null;
     for (let y = 0; y <= GRID_H - h; y++)
       for (let x = 0; x <= GRID_W - w; x++) {
         const ok = mover ? checkMove(this.s, mover, x, y, rot).ok : checkPlace(this.s, id, x, y, rot).ok;
         if (!ok) continue;
-        for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) out[(y + dy) * GRID_W + x + dx] = 1;
+        const works = !road || hasRoadBeside(road, { def: id, x, y, rot });
+        for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) {
+          out[(y + dy) * GRID_W + x + dx] = 1;
+          if (works) fed[(y + dy) * GRID_W + x + dx] = 1;
+        }
       }
     this.view.valid = out;
+    this.view.fed = road ? fed : null;
     const tiles: { x: number; y: number }[] = [];
     for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (out[y * GRID_W + x]) tiles.push({ x, y });
     this.view.join = comboJoinTiles(this.s, id, tiles);
     return out;
+  }
+
+  /** The road-fed spot nearest the ghost, as a footprint, or null when there is none. */
+  private nearestFed(g: { x: number; y: number }): { x: number; y: number; w: number; h: number } | null {
+    const id = this.placing;
+    if (!id) return null;
+    const { w, h } = this.handSize();
+    const rot = this.placeRot;
+    const road = connectedRoad(this.s);
+    let best: { x: number; y: number; d: number } | null = null;
+    for (let y = 0; y <= GRID_H - h; y++)
+      for (let x = 0; x <= GRID_W - w; x++) {
+        const d = Math.abs(x - g.x) + Math.abs(y - g.y);
+        if (best && d >= best.d) continue;
+        if (!checkPlace(this.s, id, x, y, rot).ok || !hasRoadBeside(road, { def: id, x, y, rot })) continue;
+        best = { x, y, d };
+      }
+    return best ? { x: best.x, y: best.y, w, h } : null;
   }
 
   /** True when at least one tile the building could cover is on screen. */
@@ -943,7 +973,7 @@ export class App {
     const rot = this.placeRot;
     const kantor = this.s.buildings.find((b) => b.def.startsWith('kantor'));
     const mid = this.view.centreTile() ?? (kantor ? { x: kantor.x, y: kantor.y } : { x: 0, y: 0 });
-    const needsRoad = !FLAT.has(d.id) && !d.id.startsWith('kantor') && (d.scope ?? 'rt') === 'rt';
+    const needsRoad = needsRoadFor(d);
     const road = needsRoad ? connectedRoad(this.s) : null;
     let best: { x: number; y: number; score: number } | null = null;
     for (let y = 0; y <= GRID_H - h; y++)
@@ -999,6 +1029,8 @@ export class App {
 
   stopPlacing(): void {
     this.view.valid = null;
+    this.view.fed = null;
+    this.view.pointTo = null;
     this.view.join = null;
     this.placing = null;
     this.moving = null;
@@ -1137,7 +1169,9 @@ export class App {
     g.ok = check.ok;
     btn.disabled = !check.ok;
     const instant = d.permitMonths <= 0 && d.buildMonths <= 0;
-    const noRoad = check.ok && !FLAT.has(d.id) && !d.id.startsWith('kantor') && (d.scope ?? 'rt') === 'rt' && !hasRoadBeside(connectedRoad(this.s), { def: d.id, x: g.x, y: g.y, rot: this.placeRot });
+    const noRoad = check.ok && needsRoadFor(d) && !hasRoadBeside(connectedRoad(this.s), { def: d.id, x: g.x, y: g.y, rot: this.placeRot });
+    // On a spot no road reaches, the nearest spot that has one pulses, so the warning points somewhere.
+    this.view.pointTo = noRoad ? this.nearestFed(g) : null;
     info.replaceChildren(title, check.ok ? h('span', noRoad ? { class: 'warn' } : {}, noRoad ? t('build.noRoad') : mover ? t('build.moveFree') : instant ? t('build.noPermit') : t('build.permitShort', { permit: d.permitMonths, build: d.buildMonths })) : missingList(check.missing));
   }
 
