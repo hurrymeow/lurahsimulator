@@ -26,12 +26,6 @@ Feel items from an agent playtest on 2026-11-25: RT by hand at 412px in id, then
   - Suggested solution: a stamp slams onto the SK, the camera pulls back over the new map before any other card shows, then the new post's name appears on the HUD. Use the existing `fanfare` sound and `fx.ts`, and skip the motion when effects are off.
   - `open · — · — · done when:` each SK has its own animated beat, and no card shows until it ends.
 
-- [ ] **Big cash jumps have no explanation.**
-  - Problem: on the `rw` seed after the SK, money went from Rp 11jt to Rp 180jt in one week. The cause, "Anggaran turun", is a small toast that is easy to miss.
-  - Why: an unexplained 15x jump reads as a bug, and it hides the spend-or-shrink rule, which is one of the best hooks in the game.
-  - Suggested solution: when the Anggaran lands, fly coins into the money chip and show the budget as its own bar or chip, apart from personal cash, with the time left to spend it.
-  - `open · — · — · done when:` the yearly budget arrival is shown on screen with its amount and deadline.
-
 - [ ] **Late event choices cost nothing.**
   - Problem: on the `kec` seed with 113 Orang Inside, the Inspeksi Ketertiban option cost 1 Orang Inside. Padam offered "wait" (−3 Popularitas, income x0.85 for 2 weeks) against a genset at Rp 16jt, so one side is always obviously right.
   - Why: event cards are the game's main moments of choice. A dilemma with no cost is just a tap. This links to the late cash and Orang Dalam pile-up under the scorecard Fails item (rows 13 to 15).
@@ -42,7 +36,7 @@ Feel items from an agent playtest on 2026-11-25: RT by hand at 412px in id, then
   - Problem: a tile inside the starting road loop that looks next to the road was refused with "Belum ada jalan di samping petak ini", and rotating did not help. Before the first tap, the glowing valid tiles are very faint on the grass at 412px.
   - Why: the first build is the first thing the player does (B0 asks for the first house by 30 s), and a refusal with no visible reason feels unfair.
   - Suggested solution: make the valid-tile tint stronger, or outline the road edges a building can use. When a tile is refused, flash the nearest valid tile.
-  - `open · — · — · done when:` on a new game at 412px, the valid tiles can be told apart from the rest in a screenshot, and a refused tile points to a valid one.
+  - `claimed · Claude (sweep) · 2026-11-28 · done when:` on a new game at 412px, the valid tiles can be told apart from the rest in a screenshot, and a refused tile points to a valid one.
 
 ### Later
 
@@ -71,6 +65,7 @@ Feel items from an agent playtest on 2026-11-25: RT by hand at 412px in id, then
 
 ## Done
 
+- [x] **Big cash jumps have no explanation.** At the Kelurahan a chip shows the yearly Anggaran left and the weeks to December, and a tap gives the spend-or-shrink rule; the arrival pops at the Kantor. Coins flying into the money chip were left out; the chip meets the done-when. #489, `decisions/anggaran-chip.md`.
 - [x] **Funding a neighbour feels silent.** The Dana buttons show their price ("Dana ×6 · Rp 8,6jt"), and an RT's sheet shows the builds paid for and the speed-up after a tap. A build puff or pan on the map was left out; the sheet line meets the done-when. #486, `decisions/dana-shows-price.md`.
 - [x] **Small first-session friction.** With no save, Mulai goes straight to naming (2 taps to the map); Bangun is the primary button until the first build; build cards show weekly income, Popularitas or a warga icon for a draw. #487, `decisions/first-session-friction.md`.
 - [x] **Tune `GRADE_BONUS`.** Kept as it is: it pays only Popularitas and Orang Inside, no Rupiah, and with the bonus off, as is or doubled, 22 of 24 bot seeds reach every star on the same minute (the other 2 move by at most 1.8 min). A bigger bonus would mostly pay the idle bot. The lever for a thin economy is income and costs (rows 14 and 15). #479, `decisions/grade-bonus.md`.
