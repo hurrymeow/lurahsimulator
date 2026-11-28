@@ -36,6 +36,9 @@ jobs:
         run: |
           # Use the runner's preinstalled SDK, with licences accepted.
           SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          # Bubblewrap only accepts an SDK that has a tools/ or bin/ folder.
+          [ -e "$SDK/tools" ] || sudo ln -s "$SDK/cmdline-tools/latest" "$SDK/tools"
+          ls "$SDK"
           yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
           mkdir -p "$HOME/.bubblewrap"
           cat > "$HOME/.bubblewrap/config.json" <<EOF
