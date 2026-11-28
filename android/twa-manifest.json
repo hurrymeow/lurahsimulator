@@ -23,6 +23,7 @@
   "signingKey": { "path": "./android.keystore", "alias": "upload" },
   "targetSdkVersion": 36,
   "minSdkVersion": 23,
+  "splashScreenFadeOutDuration": 300,
   "fallbackType": "customtabs",
   "isChromeOSOnly": false,
   "isMetaQuest": false,
